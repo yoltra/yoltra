@@ -1,15 +1,19 @@
-![Quo.js logo](https://github.com/quojs/quojs/blob/main/assets/logo.svg)
+![Quo.js logo](../../assets/logo.svg)
 
 # Quo.js The state of things, rewritten.
 
-**Quo.js** is a modern, framework-agnostic state management library inspired by
-Redux — without the Toolkit bloat. It introduces **channels + events**, **native async middleware
-& effects**, and **atomic subscriptions**.
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp; 👉
+> [ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md)
 
-> Works in **browsers and Node**. No DOM assumptions. Suitable for Node 18+, Bun, and Deno
-> (with ESM).
+**Quo.js** is a modern, framework-agnostic state management library inspired by Redux — without
+the Toolkit bloat. It introduces **channels + events**, **native async middleware & effects**,
+and **atomic subscriptions**.
 
-> [Version en español](./README.es.md)
+> Works in **browsers and Node**. No DOM assumptions. Suitable for Node 18+, Bun, and Deno (with
+> ESM).
+
+> [Versión en Español](./README.es.md)
 
 ## Install
 
@@ -28,7 +32,8 @@ npm i @quojs/core
 
 ## Docs
 
-- [Developer Docs](https://docs.quojs.dev/en/v0/core): quick-start guide, tutorial, recipes, etc.
+- [Developer Docs](https://quojs.dev/?lang=en): quick-start guide, tutorial, recipes,
+  etc.
 - [TypeDoc](./docs/en/README.md): a more technical documentation extracted using TypeDoc.
 
 ## Links
@@ -40,7 +45,7 @@ npm i @quojs/core
 
 ## Status
 
-**RC-stage**. Stable APIs (potentially changing), strict types, production use. Feedback and PRs welcome.
+**RC-stage**. Stable APIs (potentially changing), strict types, production use. Feedback and PRs
+welcome.
 
-Made in <img src="../../assets/mx.svg" alt="Mexico" width="16" height="16" /> for the
-world.
+Made in 🇲🇽 for the world.

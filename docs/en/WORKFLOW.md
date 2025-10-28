@@ -1,4 +1,11 @@
+![Quo.js logo](../../assets/logo.svg)
+
 # Ongoing Workflow (Independent Versions)
+
+> [ 🇲🇽 Versión en Español](../es/WORKFLOW.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](../pt/WORKFLOW.md)&nbsp; |
+> &nbsp; 👉 [ 🇺🇸 English Version](./WORKFLOW.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](../fr/WORKFLOW.md)
 
 This document describes the ongoing development and release workflow for Quo.js packages using **independent versioning** in a Rush monorepo.
 

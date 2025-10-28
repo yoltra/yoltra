@@ -1,6 +1,11 @@
+![Quo.js logo](./assets/logo.svg)
+
 # Contributing to Quo.js
 
-> [Version en español](./CONTRIBUTING.es.md)
+> [ 🇲🇽 Versión en Español](./docs/es/CONTRIBUTING.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](./docs/pt/CONTRIBUTING.md)&nbsp; |
+> &nbsp; 👉 [ 🇺🇸 English Version](./CONTRIBUTING.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](./docs/fr/CONTRIBUTING.md)
 
 Thanks for your interest in contributing! 🎉 This project is open-source under **MPL-2.0** with a welcoming, lightweight governance model.
 

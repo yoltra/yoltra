@@ -1,14 +1,16 @@
+![Quo.js logo](./assets/logo.svg)
+
 # Quo.js
 
-![Quo.js logo](./assets/logo.svg)
+> [ 🇲🇽 Versión en Español](./docs/es/README.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](./docs/pt/README.md)&nbsp; | &nbsp; 👉
+> [ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./docs/fr/README.md)
 
 Declarative • Ultra‑simple • Expressive: Quo.js is a modern state management library inspired by
 Redux—but without the Redux Toolkit baggage. It brings back the simplicity and power of the
 original Redux pattern while introducing **channels + events**, **native async middleware &
 effects**, **granular subscriptions**, and **React hooks ready for Suspense and Concurrent
 Mode**.
-
-> [Version en Español](./README.es.md)
 
 ## Packages
 
@@ -75,13 +77,17 @@ See the **Developer Guide** for SDLC, caching, and releases:
 
 ### Core
 
-- [TypeDoc](./packages/core/docs/en/README.md): a more technical documentation extracted using TypeDoc.
-- [Developer Docs (WIP)](https://www.quojs.dev): quick-start guide, tutorial, recipes, etc.
+- [TypeDoc](./packages/core/docs/en/README.md): a more technical documentation extracted using
+  TypeDoc.
+- [Developer Docs (WIP)](https://www.quojs.dev/?lang=en): quick-start guide, tutorial, recipes,
+  etc.
 
 ### React bindings
 
-- [TypeDoc](./packages/react/docs/en/README.md): a more technical documentation extracted using TypeDoc.
-- [Developer Docs (WIP)](https://www.quojs.dev): quick-start guide, tutorial, recipes, etc.
+- [TypeDoc](./packages/react/docs/en/README.md): a more technical documentation extracted using
+  TypeDoc.
+- [Developer Docs (WIP)](https://www.quojs.dev/?lang=en): quick-start guide, tutorial, recipes,
+  etc.
 
 ## Contributing
 
@@ -94,7 +100,7 @@ See the **Developer Guide** for SDLC, caching, and releases:
 
 ## Status
 
-Quo.js is in **RC stage**. APIs are stable, types are strict, and it’s used in production. Feedback
-and PRs welcome.
+Quo.js is in **RC stage**. APIs are stable, types are strict, and it’s used in production.
+Feedback and PRs welcome.
 
-Made in <img src="./assets/mx.svg" alt="Mexico flag" width="16" height="16" />, for the world.
+Made in 🇲🇽, for the world.

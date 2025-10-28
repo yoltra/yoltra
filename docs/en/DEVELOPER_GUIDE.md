@@ -1,6 +1,11 @@
+![Quo.js logo](../../assets/logo.svg)
+
 # Developer Guide (Quo.js Monorepo)
 
-> [Versión en Español](../es/GUIA_DE_DESARROLLO.md)
+> [ 🇲🇽 Versión en Español](../es/DEVELOPER_GUIDE.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](../pt/DEVELOPER_GUIDE.md)&nbsp; |
+> &nbsp; 👉 [ 🇺🇸 English Version](./DEVELOPER_GUIDE.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](../fr/DEVELOPER_GUIDE.md)
 
 Single source of truth for SDLC, local setup, branching, testing/coverage, and releases using
 **Rush + PNPM**.
@@ -69,7 +74,8 @@ rushx lint
 - Default branch: `main`.
 - Work happens on `feature/*` or `fix/*` branches.
 - Open PRs against `main`.
-- Every PR that changes a publishable package must include a **change file** (see “Changes & Versioning”).
+- Every PR that changes a publishable package must include a **change file** (see “Changes &
+  Versioning”).
 
 ## Conventional commits + DCO (enforced)
 
@@ -201,7 +207,8 @@ pnpm add ./dist-tarballs/quojs-quojs-react-<ver>.tgz
 
 #### B) Full local registry publish (Verdaccio)
 
-We use **Verdaccio** to mimic a registry and test the install flow exactly as real consumers would.
+We use **Verdaccio** to mimic a registry and test the install flow exactly as real consumers
+would.
 
 1. Start Verdaccio:
 
@@ -223,11 +230,12 @@ pnpm profile set password --registry http://localhost:4873/
 common/scripts/publish-verdaccio.sh
 ```
 
-   What it does:
-   - Publishes all `@quojs/*` packages (except internal ones like `@quojs/repo-tools`)
-   - Uses the **exact versions** from `package.json` (no `-local` suffix, no dist-tags)
-   - Disables scripts and provenance to avoid husky/prepack failures
-   - Leaves Git untouched — this is a **local rehearsal only**
+What it does:
+
+- Publishes all `@quojs/*` packages (except internal ones like `@quojs/repo-tools`)
+- Uses the **exact versions** from `package.json` (no `-local` suffix, no dist-tags)
+- Disables scripts and provenance to avoid husky/prepack failures
+- Leaves Git untouched — this is a **local rehearsal only**
 
 4. Consume the packages in your apps:
 
@@ -247,9 +255,11 @@ unset npm_config_registry
 
 ### Notes
 
-- Registries don’t allow republishing the same version; bump patch for repeat rehearsals or wipe Verdaccio storage.
+- Registries don’t allow republishing the same version; bump patch for repeat rehearsals or wipe
+  Verdaccio storage.
 - Install-time registry defaults to npmjs via `common/config/rush/.npmrc`.
-- Publish-time registry is Verdaccio via `common/config/rush/.npmrc-publish` using `${NPM_AUTH_TOKEN}`.
+- Publish-time registry is Verdaccio via `common/config/rush/.npmrc-publish` using
+  `${NPM_AUTH_TOKEN}`.
 
 ## Filing bugs and PRs (GitHub)
 
@@ -270,10 +280,14 @@ See [SECURITY](../SECURITY.md). Do **not** open public issues for vulnerabilitie
 ## Troubleshooting (fast answers)
 
 - Missing change file → run `rush change`; CI also checks `rush change -v`.
-- Commit rejected locally → fix commit message to meet Conventional Commits and add DCO line; or use `git commit -s`.
-- Cache seems stale → remember `rush rebuild` ignores cache; use `rush build` to benefit from cache.
-- Verdaccio “version already exists” → bump version (via `rush change` + `rush version`) or wipe Verdaccio storage.
-- Installs unexpectedly hitting Verdaccio → ensure you didn’t export `npm_config_registry`; remove any per-project `.npmrc` overrides.
+- Commit rejected locally → fix commit message to meet Conventional Commits and add DCO line; or
+  use `git commit -s`.
+- Cache seems stale → remember `rush rebuild` ignores cache; use `rush build` to benefit from
+  cache.
+- Verdaccio “version already exists” → bump version (via `rush change` + `rush version`) or wipe
+  Verdaccio storage.
+- Installs unexpectedly hitting Verdaccio → ensure you didn’t export `npm_config_registry`;
+  remove any per-project `.npmrc` overrides.
 
 ## Editor & DX tips
 

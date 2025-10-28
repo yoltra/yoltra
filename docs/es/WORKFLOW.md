@@ -1,4 +1,11 @@
-# Flujo de trabajo continuo (Versionado independiente)
+![Quo.js logo](../../assets/logo.svg)
+
+# Flujo de trabajo continuo
+
+>  👉 [ 🇲🇽 Versión en Español](../es/WORKFLOW.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](../pt/WORKFLOW.md)&nbsp; |
+> &nbsp;[ 🇺🇸 English Version](../../WORKFLOW.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](../fr/WORKFLOW.md)
 
 Este documento describe el flujo de desarrollo y publicación de paquetes de Quo.js usando **versionado independiente** en un monorepo con Rush.
 

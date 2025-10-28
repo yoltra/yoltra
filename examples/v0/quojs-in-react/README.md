@@ -1,6 +1,6 @@
 # Quo.js vs Redux Toolkit — React Vite Demo
 
-> [Version en español](./README.es.md)
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md) 
 
 A small, focused React demo that hosts **both state implementations** side by side:
 
@@ -79,28 +79,10 @@ Then open `/quojs` or `/rtk` on the preview server.
    - Hit `Refresh` so the profiler also captures the fetching stage
    - (Optional) Enable *“Record why each component rendered”* for richer insights.
 4. Interact with the page to capture specific frames:
-   - **Add Todo**: 
-      1. __paste__ the word `test` into the Todo's Title input (we do this to prevent Frame-spamming when typing the word letter by letter)
-      2. __paste__ the word `test` into the Todo's Category input (same as above)
-      3. click **Add** after entering title/category.
-   - **Toggle statuses**: once the new todo has been added, toggle each todo status (12 in total)
 5. Inspect the flamegraph for each commit:
-   - How many frames did you capture? (expect 18)
    - Which components re-rendered?
    - How long did the commit take?
    - How much of the tree was invalidated?
-
-### Reproducing the documented frames
-
-| What to capture | Route | Interaction |
-|---|---|---|
-| Frame 1 (initial render) | `/quojs` and `/rtk` | Start recording → Reload page |
-| Frame 39/31 (add todo) | `/quojs` and `/rtk` | Type a title/category → **Add** |
-| Frame 40/32 (toggle id=1) | `/quojs` and `/rtk` | Toggle status for item id **1** |
-| Frame 41/33 (toggle id=2) | `/quojs` and `/rtk` | Toggle status for item id **2** |
-| Frame 42/34 (toggle id=3) | `/quojs` and `/rtk` | Toggle status for item id **3** |
-
-> Quo.js should show **isolated item re-renders** for the toggle steps, whereas RTK typically re-renders the **entire list** when the backing collection reference changes.
 
 ### Exporting profiles
 In the Profiler, click **Save profile…** to export a `.json` you can keep for reproducibility.

@@ -1,9 +1,11 @@
 # React bindings for Quo.js
 
-[Versión en español](./README.es.md)
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp; 👉
+> [ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md)
 
-Official React companion for **Quo.js**, a predictable state container that
-revives the simplicity of classic Redux while adding:
+Official React companion for **Quo.js**, a predictable state container that revives the
+simplicity of classic Redux while adding:
 
 - **Channels + events** instead of action types
 - **Native async middleware** and **effects**, no thunks/sagas ceremony
@@ -33,13 +35,15 @@ yarn add @quojs/core @quojs/react
 pnpm add @quojs/core @quojs/react
 ```
 
-Peer deps you’re expected to have: `react` and `react-dom` (React 18+). TypeScript is recommended.
+Peer deps you’re expected to have: `react` and `react-dom` (React 18+). TypeScript is
+recommended.
 
 ## Quick Start
 
 ### Store Setup
 
-Follow the example on **Quo.js** on [how to create a Store](../../core/docs/en/core.md#quick-start).
+Follow the example on **Quo.js** on
+[how to create a Store](https://quojs.dev/?lang=en).
 
 ### AppStore Context
 
@@ -66,6 +70,7 @@ import type { AppAM, AppState } from "./types"; // <-- grab these from the Store
 export const { useStore, useDispatch, useSelector, useSliceProp, useSliceProps, shallowEqual } =
   createQuoHooks<keyof AppState & string, AppState, AppAM>(QuoStoreContext);
 ```
+
 Wrapp your App in the Quo provider.
 
 ```tsx
@@ -116,9 +121,11 @@ export function App() {
 }
 ```
 
-That’s it. No boilerplate actions, no selectors, no thunks. You model events directly and wire reducers against `(channel, event)`.
+That’s it. No boilerplate actions, no selectors, no thunks. You model events directly and wire
+reducers against `(channel, event)`.
 
 ## Documentation
 
-- [Developer Docs](https://docs.quojs.dev/en/v0/react): quick-start guide, tutorial, recipes, etc.
+- [Developer Docs](https://quojs.dev/?lang=en): quick-start guide, tutorial, recipes,
+  etc.
 - [TypeDoc](./docs/en/README.md): a more technical documentation extracted using TypeDoc.

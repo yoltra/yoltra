@@ -1,6 +1,11 @@
+![Quo.js logo](./assets/logo.svg)
+
 # Quo.js Governance
 
-> [Version en español](./GOVERNANCE.es.md)
+> [ 🇲🇽 Versión en Español](./docs/es/GOVERNANCE.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](./docs/pt/GOVERNANCE.md)&nbsp; |
+> &nbsp; 👉 [ 🇺🇸 English Version](./GOVERNANCE.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](./docs/fr/GOVERNANCE.md)
 
 This document explains how decisions are made and how contributors become maintainers.
 

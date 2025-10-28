@@ -1,13 +1,18 @@
+![Quo.js logo](../../assets/logo.svg)
+
 # MAINTAINERS
 
-> [Version en español](./MAINTAINERS.es.md)
+> [ 🇲🇽 Versión en Español](../es/MAINTAINERS.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](../pt/MAINTAINERS.md)&nbsp; |
+> &nbsp; 👉 [ 🇺🇸 English Version](../../MAINTAINERS.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](../fr/MAINTAINERS.md)
 
 This file lists active maintainers and areas of responsibility for the Quo.js monorepo.
 
 - **Lead Maintainer:** Manu Ramirez (@pixerael), Erael Group.
-- **Project Email:** opensource@quojs.dev
-- **Security Contact:** security@quojs.dev (see `SECURITY.md`)
-- **Code of Conduct:** `CODE_OF_CONDUCT.md`
+- **Project Email:** [opensource@quojs.dev](mailto:opensource@quojs.dev)
+- **Security Contact:** security@quojs.dev (see [SECURITY.md](./SECURITY.md))
+- **Code of Conduct:** [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
 
 > Maintainers are expected to follow the workflows in `GOVERNANCE.md` and `CONTRIBUTING.md`.
 

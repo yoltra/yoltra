@@ -1,113 +1,110 @@
-# Quo.js vs Redux Toolkit — Demo React con Vite (Rush Monorepo)
+# Quo.js vs Redux Toolkit – Demo en React Vite
 
-Un pequeño demo en React enfocado que hospeda **ambas implementaciones de estado** lado a lado:
+> &nbsp;&nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md) 
 
-- **Quo.js** (almacén personalizado estilo Redux con canales/eventos y suscripciones atómicas)
-- **Redux Toolkit (RTK)** (stack Redux estándar con `createSlice` + `createAsyncThunk`)
+Una pequeña demostración enfocada en React que aloja **ambas implementaciones de estado** lado a
+lado:
 
-Usa este proyecto para ejecutar la UI localmente y reproducir el **[Análisis con React Profiler](./redux-quojs-profiler.md)**.
+- **Quo.js** (store personalizado tipo Redux con canales/eventos y suscripciones de grano fino)
+- **Redux Toolkit (RTK)** (stack estándar de Redux con `createSlice` + `createAsyncThunk`)
+
+Usa este proyecto para ejecutar la UI localmente y reproducir el
+**[Análisis del Profiler de React](./redux-quojs-profiler.es.md)**.
 
 ## Estructura del proyecto
 
-Ambas implementaciones exponen la misma UI y los mismos flujos (listar, agregar, actualizar, eliminar).  
-El shell de comparación monta cada página bajo rutas separadas para poder perfilarlas de forma aislada.
+Ambas implementaciones exponen la misma UI y flujos de usuario (listar, agregar, actualizar,
+eliminar). La aplicación de comparación monta cada página bajo rutas separadas para que puedas
+perfilarlas de forma aislada.
 
-- Ruta **/quojs** → Página de Quo.js envuelta en su propio provider  
-- Ruta **/rtk** → Página de RTK envuelta en su propio provider  
+- Ruta **/quojs** → Página de Quo.js envuelta en su propio provider
+- Ruta **/rtk** → Página de RTK envuelta en su propio provider
 
-La aplicación es un proyecto **Vite** que vive dentro de un **monorepo Rush**.
+La aplicación es un proyecto **Vite** que vive dentro de un monorepo **Rush**.
 
-## Prerrequisitos
+## Prerequisitos
 
-- **Node.js**: se recomienda LTS (ej. 18.x).  
-- **pnpm**: usado por Rush para la gestión de dependencias  
+- **Node.js**: Se recomienda LTS (ej. 18.x).
+- **pnpm**: usado por Rush para la gestión de dependencias
   ```bash
   npm i -g pnpm
   ```
-- **Rush** (CLI global)  
+- **Rush** (CLI global)
   ```bash
   npm i -g @microsoft/rush
   ```
 
-## Clonar & bootstrap
+## Clonar e inicializar
 
-Clona este repositorio, navega a la carpeta raíz y ejecuta los siguientes comandos en la terminal:
+Clona este repositorio, luego navega a la carpeta del repo y ejecuta los siguientes comandos en
+la terminal:
 
 ```bash
-# Instala todas las dependencias del monorepo
+
+# Instalar todas las dependencias del monorepo
 rush install          # o: rush update
 
-# (opcional) Compila todo
+# (opcional) Construir todo
 rush build
 ```
 
-## Ejecutar la app (modo dev)
+## Ejecutar la aplicación (desarrollo)
 
-El shell de comparación es una app de Vite que enruta hacia cada implementación.
+La aplicación de comparación es una app Vite que enruta a cada implementación.
 
 ```bash
 cd examples/quojs-in-react
-rushx dev             # equivalente a: pnpm dev
+rushx dev             # igual que: pnpm dev
 ```
 
-Abre **http://localhost:5173** (o el puerto que muestre Vite).
+Abre **http://localhost:5173** (o lo que Vite imprima).
 
-- Visita **/quojs** para la página de Quo.js.  
-- Visita **/rtk** para la página de RTK.  
+- Visita **/quojs** para la página de Quo.js.
+- Visita **/rtk** para la página de RTK.
 
-## Build de producción & preview (para números de profiling estables)
+## Build de producción y vista previa (para números estables de profiling)
 
-Las builds de desarrollo incluyen comprobaciones extra (ej. React Strict Mode, transformaciones dev).  
-Para tiempos más estables, perfila una **build de producción**:
+Los builds de desarrollo incluyen verificaciones extra (ej., efectos del Modo Estricto de React
+y transformaciones de desarrollo). Para tiempos más estables, perfila un build de
+**producción**:
 
 ```bash
 cd examples/quojs-in-react
-rushx build           # build de producción de Vite
-rushx preview         # sirve la build de producción
+rushx build           # Build de producción con Vite
+rushx preview         # Sirve el build de producción
 # por defecto: http://localhost:4173
 ```
 
-Luego abre `/quojs` o `/rtk` en el servidor de preview.
+Luego abre `/quojs` o `/rtk` en el servidor de vista previa.
 
-## Uso de React Profiler
+## Usando el Profiler de React
 
-1. **Instala React DevTools** en tu navegador (Chrome/Edge/Firefox).  
-2. Abre tu app, luego abre DevTools → pestaña **Profiler**.  
-3. En la barra de Profiler:  
-   - Activa **“Record profiling”**.  
-   - (Opcional) Habilita *“Record why each component rendered”* para más detalles.  
+1. **Instala React DevTools** en tu navegador (Chrome/Edge/Firefox).
+2. Abre tu aplicación, luego abre DevTools → pestaña **Profiler**.
+3. En la barra de herramientas del Profiler:
+   - Activa **"Record profiling"**.
+   - Presiona `Refresh` para que el profiler también capture la etapa de carga
+   - (Opcional) Habilita _"Record why each component rendered"_ para obtener información más
+     detallada.
 4. Interactúa con la página para capturar frames específicos:
-   - **Agregar Tarea**: 
-      1. __pega__ la palabla `prueba` en el campo `titulo` (hacemos esto para evitar muchos frames al escribir letra por letra)
-      2. __pega__ la palabla `prueba` en el campo `categoría` (igual que arriba)
-      3. Haz clic **Add** para crear una nueva tarea.
-   - **Cambia los estatuses**: una vez agragada la nueva tarea, cambia el estatus de cada tarea (12 en total)
-5. Inspecciona el _flamegraph_ de cada _commit_:  
-   - ¿Qué componentes se re-renderizaron?  
-   - ¿Cuánto tardó el _commit_?  
-   - ¿Qué tanto del árbol fue invalidado?  
-
-### Reproduciendo los frames documentados
-
-| Qué capturar | Ruta | Interacción |
-|---|---|---|
-| Frame 1 (render inicial) | `/quojs` y `/rtk` | Iniciar recording → recargar página |
-| Frame 39/31 (agregar todo) | `/quojs` y `/rtk` | Escribir título/categoría → **Add** |
-| Frame 40/32 (toggle id=1) | `/quojs` y `/rtk` | Cambiar estatus de item id **1** |
-| Frame 41/33 (toggle id=2) | `/quojs` y `/rtk` | Cambiar estatus de item id **2** |
-| Frame 42/34 (toggle id=3) | `/quojs` y `/rtk` | Cambiar estatus de item id **3** |
-
-> Quo.js debería mostrar **re-renders aislados por item** en los toggles, mientras que RTK típicamente re-renderiza la **lista completa** al cambiar la referencia de la colección.
+5. Inspecciona el flamegraph para cada commit:
+   - ¿Qué componentes se re-renderizaron?
+   - ¿Cuánto tiempo tomó el commit?
+   - ¿Cuánto del árbol fue invalidado?
 
 ### Exportar perfiles
 
-En Profiler, haz click en **Save profile…** para exportar un `.json` que puedes guardar para reproducibilidad.
+En el Profiler, haz clic en **Save profile…** para exportar un `.json` que puedes guardar para
+reproducibilidad.
 
 ## Fuente de datos
 
-El ejemplo de fetch usa **MSW** con datos mock de `https://jsonplaceholder.typicode.com/todos?id=0` por defecto.  
-Puedes cambiarlo en las acciones/hooks si es necesario. El acceso a red no es requerido por defecto, pero debe estar permitido por tu navegador/proxy si deshabilitas MSW.
+El ejemplo de fetch usa MSW con datos simulados de
+`https://jsonplaceholder.typicode.com/todos?id=0` por defecto. Puedes cambiar esto en las
+acciones/hooks si es necesario. El acceso a la red no es requerido por defecto y debe ser
+permitido por tu navegador / proxy de desarrollo si deshabilitas MSW.
 
 ## Licencia
 
-Este demo es para fines de comparación/documentación. Consulta la raíz del repositorio para detalles de licencia.
+Esta demostración es para propósitos de comparación/documentación. Consulta la raíz del
+repositorio para detalles de la licencia.

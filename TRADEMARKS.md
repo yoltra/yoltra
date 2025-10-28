@@ -1,8 +1,13 @@
+![Quo.js logo](./assets/logo.svg)
+
 # Trademarks
 
-> [Version en español](./TRADEMARKS.es.md)
+> [ 🇲🇽 Versión en Español](./docs/es/TRADEMARKS.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](./docs/pt/TRADEMARKS.md)&nbsp; |
+> &nbsp; 👉 [ 🇺🇸 English Version](./TRADEMARKS.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](./docs/fr/TRADEMARKS.md)
 
-The names **“Quo.js”**, **“quojs-react”**, and associated logos, wordmarks, and trade dress (collectively, the “Marks”) are trademarks of **Erael Group.** (the “Owner”).
+The names **“Quo.js”**, **“quojs-react”**, and associated logos, wordmarks, and trade dress (collectively, the “Marks”) are trademarks of **Manuel Ramirez <@pixerael> and Erael Group.** (the “Owner”).
 
 This policy governs fair and permitted use of the Marks in connection with the open-source Quo.js projects.
 
@@ -40,6 +45,6 @@ Forks and modified builds must use a **distinct name and branding**. You may say
 
 ## Contact
 
-For permissions or questions, email **legal@quojs.dev**.
+For permissions or questions, email [**legal@quojs.dev**](mailto:legal@quojs.dev).
 
 _Notice:_ Trademark rights are territorial. Erael Group. is registering and/or asserting rights in applicable jurisdictions (including Mexico via IMPI). This policy supplements local unfair-competition and passing-off laws.

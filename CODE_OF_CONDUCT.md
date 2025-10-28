@@ -1,6 +1,11 @@
+![Quo.js logo](./assets/logo.svg)
+
 # Code of Conduct
 
-> [Version en español](./CODE_OF_CONDUCT.es.md)
+> [ 🇲🇽 Versión en Español](./docs/es/CODE_OF_CONDUCT.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](./docs/pt/CODE_OF_CONDUCT.md)&nbsp; |
+> &nbsp; 👉 [ 🇺🇸 English Version](./CODE_OF_CONDUCT.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](./docs/fr/CODE_OF_CONDUCT.md)
 
 We are committed to a welcoming and inclusive community. This project follows the **Contributor Covenant** (v2.1).
 

@@ -1,10 +1,17 @@
-![Logo de Quo.js](https://github.com/quojs/quojs/blob/main/assets/logo.svg)
+![Quo.js logo](../../assets/logo.svg)
 
 # Quo.js El estado de las cosas, re-escrito.
 
-**@quojs/core** es una biblioteca moderna de gestión de estado, **agnóstica de framework** e inspirada en Redux — pero sin el peso de Toolkit. Introduce **canales + eventos**, **middleware y effects asíncronos nativos**, y **suscripciones atómicas**.
+> 👉 [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; |
+> &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md)
 
-> Funciona en **navegadores y en Node**. No asume DOM. Adecuado para Node 18+, Bun y Deno (con ESM).
+**@quojs/core** es una biblioteca moderna de gestión de estado, **agnóstica de framework** e
+inspirada en Redux — pero sin el peso de Toolkit. Introduce **canales + eventos**, **middleware
+y effects asíncronos nativos**, y **suscripciones atómicas**.
+
+> Funciona en **navegadores y en Node**. No asume DOM. Adecuado para Node 18+, Bun y Deno (con
+> ESM).
 
 ## Instalación
 
@@ -23,19 +30,19 @@ npm i @quojs/core
 
 ## Docs
 
-- [Desarrollador](https://docs.quojs.dev/es/v0/core): guía de inicio rápido, tutorial, gists, etc.
+- [Desarrollador](https://quojs.dev/?lang=es): guía de inicio rápido, tutorial, gists, etc.
 - [TypeDoc](./docs/es/README.md): una documentación más técnica extraída utilizando TypeDoc.
 
 ## Enlaces
 
-- [Monorepo](../../)
-- [Gobernanza](../../GOVERNANCE.es.md)
-- [Código de conducta](../../CODE_OF_CONDUCT.es.md)
-- [Guía de Contribución](../../CONTRIBUTING.es.md)
+- [Monorepo](../../docs/es/README.md)
+- [Gobernanza](../../docs/es/GOVERNANCE.md)
+- [Código de conducta](../../docs/es/CODE_OF_CONDUCT.md)
+- [Guía de Contribución](../../docs/es/CONTRIBUTING.md)
 
 ## Estado
 
-**Fase RC**. APIs estables (potencialmente cambiantes), tipos estrictos, uso en producción. Se agradecen comentarios y PRs.
+**Fase RC**. APIs estables (potencialmente cambiantes), tipos estrictos, uso en producción. Se
+agradecen comentarios y PRs.
 
-Hecho con ❤️ en <img src="../../assets/mx.svg" alt="Mexico flag" width="16" height="16" /> para
-el 🌎.
+Hecho con ❤️ en 🇲🇽 para el 🌎.
