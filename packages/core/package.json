@@ -10,13 +10,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "prepublishOnly": "node ../../common/scripts/copy-license.js",
-    "docs": "rushx docs:md && rushx docs:json",
-    "docs:md": "rushx docs:md:en && rushx docs:md:es",
-    "docs:md:en": "pnpm typedoc --options ./typedoc.core.en.json",
-    "docs:md:es": "pnpm typedoc --options ./typedoc.core.es.json",
-    "docs:json": "rushx docs:json:en && rushx docs:json:es",
-    "docs:json:en": "pnpm typedoc --options ./typedoc.core.en.json",
-    "docs:json:es": "pnpm typedoc --options ./typedoc.core.es.json"
+    "docs": "rushx docs:js && rushx docs:md",
+    "docs:md": "pnpm typedoc --options ./typedoc.core.json",
+    "docs:js": "pnpm typedoc --options ./typedoc.core.json --json ./.typedoc/core-en.json"
   },
   "license": "MPL-2.0",
   "author": {

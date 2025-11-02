@@ -24,6 +24,36 @@ Ce document décrit le flux de développement et de publication des paquets Quo.
      - Utilisez **mineur** pour les changements incompatibles (tant que `<1.0.0`, tous les changements majeurs sont considérés comme mineurs).
    - Ouvrez une PR → fusionnez après la révision.
 
+## Cycle de Travail TypeDoc
+
+Garder la documentation synchronisée avec le code est essentiel pour la clarté, l’intégration et la référence de l’API.
+Suivez ces étapes chaque fois que vous modifiez ou ajoutez du code :
+
+1. Documentez votre code
+
+Après avoir terminé votre implémentation, assurez-vous que tout le nouveau code (ou code mis à jour) contient des annotations TypeDoc telles que @param, @returns et @example.
+Ces annotations sont essentielles, car elles permettent au générateur de documentation d’extraire les commentaires, les types et les exemples vers les fichiers Markdown.
+
+2. Générez la documentation
+
+Exécutez la commande Rush pour reconstruire la documentation.
+
+```bash
+  rushx:docs
+```
+
+Cela appellera TypeDoc et régénérera tous les fichiers Markdown à partir de vos annotations.
+
+3. Vérifiez le résultat
+
+Ouvrez les fichiers Markdown générés et confirmez que vos modifications apparaissent correctement.
+Vérifiez que les nouvelles fonctions, classes et propriétés sont listées, que les descriptions et exemples sont à jour et qu’aucune section obsolète ne reste.
+
+4. Validez la documentation
+
+Une fois tout vérifié, validez la documentation générée en utilisant un message de commit conventionnel avec le type "docs".
+Cela garde l’historique propre et aide les workflows CI/CD à s’exécuter correctement.
+
 ## Cycle de versionnement et de publication
 
 Cela peut être manuel ou automatisé en intégration continue :

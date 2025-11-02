@@ -1,6 +1,0 @@
-{
-  "extends": ["./typedoc.react.json"],
-  "out": "docs/es",
-  "lang": "es",
-  "json": "docs/es/project.json"
-}

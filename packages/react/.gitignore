@@ -73,3 +73,4 @@ rush-logs
 # TypeDoc's output
 # ------------------------------
 doxs/
+.typedoc/

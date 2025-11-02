@@ -2,13 +2,12 @@
   "$schema": "https://typedoc.org/schema.json",
   "name": "@quojs/react",
   "entryPoints": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
+    "src/index.ts",
   ],
   "plugin": [
-    "typedoc-plugin-markdown",
-    "typedoc-plugin-localization",
+    "typedoc-plugin-markdown"
   ],
+  "tsconfig": "./tsconfig.docs.json",
   "entryPointStrategy": "resolve",
   "readme": "none",
   "logLevel": "Verbose",

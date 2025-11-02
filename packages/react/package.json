@@ -9,13 +9,8 @@
     "test": "pnpm vitest --coverage --watch=false",
     "test:watch": "vitest --coverage",
     "prepublishOnly": "node ../../common/scripts/copy-license.js",
-    "docs": "rushx docs:md && rushx docs:json",
-    "docs:md": "rushx docs:md:en && rushx docs:md:es",
-    "docs:md:en": "pnpm typedoc --options ./typedoc.react.en.json",
-    "docs:md:es": "pnpm typedoc --options ./typedoc.react.es.json",
-    "docs:json": "rushx docs:json:en && rushx docs:json:es",
-    "docs:json:en": "pnpm typedoc --options ./typedoc.react.en.json",
-    "docs:json:es": "pnpm typedoc --options ./typedoc.react.es.json"
+    "docs:md": "pnpm typedoc --options ./typedoc.react.json",
+    "docs:js": "pnpm typedoc --options ./typedoc.react.json --json ./.typedoc/react-en.json"
   },
   "license": "MPL-2.0",
   "author": {

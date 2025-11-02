@@ -127,4 +127,4 @@ Listo: sin thunks ni generadores. Modelas eventos reales y conectas tus reducers
 
 - [Desarrollador](https://quojs.dev/?lang=es): guía de inicio rápido, tutorial, gists,
   etc.
-- [TypeDoc](./docs/es/README.md): una documentación más técnica extraída utilizando TypeDoc.
+- [TypeDoc](./docs/README.md): una documentación más técnica extraída utilizando TypeDoc (en Inglés).

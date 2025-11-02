@@ -34,7 +34,7 @@ npm i @quojs/core
 
 - [Developer Docs](https://quojs.dev/?lang=en): quick-start guide, tutorial, recipes,
   etc.
-- [TypeDoc](./docs/en/README.md): a more technical documentation extracted using TypeDoc.
+- [TypeDoc](./docs/README.md): a more technical documentation extracted using TypeDoc.
 
 ## Links
 

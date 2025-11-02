@@ -2,20 +2,21 @@
   "$schema": "https://typedoc.org/schema.json",
   "name": "@quojs/core",
   "entryPoints": [
-    "src/types.ts",
-    "src/eventBus/*.ts",
-    "src/store/*.ts",
-    "src/utils/*.ts"
+    "src/index.ts"
   ],
   "plugin": [
-    "typedoc-plugin-markdown",
-    "typedoc-plugin-localization",
+    "typedoc-plugin-markdown"
   ],
+  
+  "tsconfig": "./tsconfig.json",
   "entryPointStrategy": "resolve",
   "readme": "none",
   "logLevel": "Verbose",
+
   "categorizeByGroup": true,
+  "excludeExternals": true,
   "excludePrivate": true,
   "excludeInternal": true,
   "excludeProtected": true,
+  "includeVersion": false,
 }

@@ -185,17 +185,6 @@ export type AMFromReducersStrict<RM extends ReducersMapAny> =
 
 export type DeepRO<T> = DeepReadonly<T>;
 
-export function freezeState<T>(obj: T, seen = new WeakSet()): DeepReadonly<T> {
-  if (obj === null || typeof obj !== "object" || seen.has(obj)) return obj as any;
-  if (Object.isFrozen(obj)) return obj as any;
-  seen.add(obj);
-  for (const key of Object.getOwnPropertyNames(obj)) {
-    const value = (obj as any)[key];
-    (obj as any)[key] = freezeState(value, seen);
-  }
-  return Object.freeze(obj) as any;
-}
-
 // Helper for “top-level only”
 export type TopLevelProp<R extends string, S extends Record<R, any>> =
   keyof S[R] & string;

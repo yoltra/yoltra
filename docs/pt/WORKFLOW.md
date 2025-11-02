@@ -26,6 +26,40 @@ Este documento descreve o fluxo de desenvolvimento e publicação de pacotes Quo
       quebram contam como minor).
   - Abra um PR → faça o merge após a revisão.
 
+## Fluxo de Trabalho do TypeDoc
+
+Manter nossa documentação sincronizada com o código é essencial para garantir clareza,
+integração e referência de API. Siga estes passos sempre que modificar ou adicionar código:
+
+1. Documente seu código
+
+Depois de concluir sua implementação, verifique se todo o novo código (ou código atualizado)
+inclui anotações do TypeDoc como @param, @returns e @example. Essas anotações são fundamentais,
+pois permitem que o gerador de documentação extraia comentários, tipos e exemplos para os
+arquivos Markdown.
+
+2. Gere a documentação
+
+Execute o comando Rush para reconstruir a documentação.
+
+```bash
+  rushx:docs
+```
+
+Isso invocará o TypeDoc e regenerará todos os arquivos Markdown com base nas suas anotações.
+
+3. Revise a saída
+
+Abra os arquivos Markdown gerados e confirme que suas alterações aparecem corretamente.
+Verifique se novas funções, classes e propriedades estão listadas, se as descrições e exemplos
+estão atualizados e se nenhuma seção antiga permanece.
+
+4. Faça o commit da documentação
+
+Quando tudo estiver correto, faça o commit da documentação gerada usando uma mensagem de commit
+convencional com o tipo "docs". Isso mantém o histórico limpo e ajuda os fluxos de CI/CD a serem
+executados corretamente.
+
 ## Ciclo de versionamento e publicação
 
 Pode ser manual ou automatizado em CI:

@@ -34,8 +34,8 @@ npm i @quojs/core
 ## Docs
 
 - [Développeur](https://quojs.dev/?lang=fr) : guide de démarrage rapide, tutoriel, gists, etc.
-- [TypeDoc](./docs/fr/README.md) : une documentation plus technique extraite à l'aide de
-  TypeDoc.
+- [TypeDoc](./docs/README.md) : une documentation plus technique extraite à l'aide de
+  TypeDoc (en Anglais).
 
 ## Liens
 
