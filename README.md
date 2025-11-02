@@ -77,14 +77,14 @@ See the **Developer Guide** for SDLC, caching, and releases:
 
 ### Core
 
-- [TypeDoc](./packages/core/docs/en/README.md): a more technical documentation extracted using
+- [TypeDoc](./packages/core/docs/README.md): a more technical documentation extracted using
   TypeDoc.
 - [Developer Docs (WIP)](https://www.quojs.dev/?lang=en): quick-start guide, tutorial, recipes,
   etc.
 
 ### React bindings
 
-- [TypeDoc](./packages/react/docs/en/README.md): a more technical documentation extracted using
+- [TypeDoc](./packages/react/docs/README.md): a more technical documentation extracted using
   TypeDoc.
 - [Developer Docs (WIP)](https://www.quojs.dev/?lang=en): quick-start guide, tutorial, recipes,
   etc.

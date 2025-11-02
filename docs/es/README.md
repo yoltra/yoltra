@@ -80,14 +80,14 @@ Consulta la **Guía de Desarrollo** para SDLC, caché y lanzamientos:
 
 ### Núcleo
 
-- [TypeDoc (ver. en Español en proceso)](../../packages/core/docs/es/README.md): una
-  documentación más técnica extraída utilizando TypeDoc.
+- [TypeDoc](../../packages/core/docs/README.md): una
+  documentación más técnica extraída utilizando TypeDoc (en Inglés).
 - [Desarrollador (en proceso)](https://www.quojs.dev/?lang=es): guía de inicio rápido, tutorial,
   gists, etc.
 
 ### Bindings para React
 
-- [TypeDoc](../../packages/react/docs/es/README.md): una documentación más técnica extraída
+- [TypeDoc](../../packages/react/docs/README.md): una documentación más técnica extraída
   utilizando TypeDoc.
 - [Desarrollador (en proceso)](https://www.quojs.dev/?lang=es): guía de inicio rápido, tutorial,
   gists, etc.
