@@ -1,0 +1,35 @@
+{
+  "name": "@quojs/react",
+  "entries": [
+    {
+      "version": "0.2.0",
+      "tag": "@quojs/react_v0.2.0",
+      "date": "Tue, 04 Nov 2025 06:18:56 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "initial public release"
+          }
+        ],
+        "none": [
+          {
+            "comment": "docs(core,react): regenerate API docs using TypeDoc (no API changes)"
+          }
+        ],
+        "patch": [
+          {
+            "comment": "docs(react): add multi-lang docs"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@quojs/core\" from `^0.1.0` to `0.2.0`"
+          },
+          {
+            "comment": "Updating dependency \"@quojs/core\" from `^0.1.0` to `0.2.0`"
+          }
+        ]
+      }
+    }
+  ]
+}
