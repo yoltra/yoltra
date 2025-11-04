@@ -18,7 +18,7 @@
     "email": "manu@quojs.dev"
   },
   "maintainers": [],
-  "homepage": "https://github.com/quojs/quojs#readme",
+  "homepage": "https://quojs.dev",
   "keywords": [
     "state",
     "store",
@@ -39,8 +39,7 @@
   "types": "dist/types/index.d.ts",
   "sideEffects": false,
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "files": [
     "dist/",

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@quojs/react",
+      "comment": "docs(react): add multi-lang docs",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@quojs/react"
+}

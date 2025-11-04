@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@quojs/core",
+      "comment": "docs(core): add multi-lang docs",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@quojs/core"
+}
