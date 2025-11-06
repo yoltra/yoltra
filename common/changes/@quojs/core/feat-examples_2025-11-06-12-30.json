@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@quojs/core",
+      "comment": "docs(core): update README files",
+      "type": "none"
+    }
+  ],
+  "packageName": "@quojs/core"
+}

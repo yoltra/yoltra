@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@quojs/react",
+      "comment": "chore(react): add examples update README files",
+      "type": "none"
+    }
+  ],
+  "packageName": "@quojs/react"
+}

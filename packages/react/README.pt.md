@@ -4,6 +4,14 @@
 > [ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp;
 > | &nbsp;[ 🇫🇷 Version française](./README.fr.md)
 
+![Bundle size](https://badgen.net/bundlephobia/min/@quojs/react)
+![Bundle size](https://badgen.net/bundlephobia/minzip/@quojs/react)
+![Bundle size](https://badgen.net/bundlephobia/tree-shaking/@quojs/react)
+![Bundle size](https://badgen.net/bundlephobia/dependency-count/@quojs/react)
+![npm version](https://badgen.net/npm/v/@quojs/react)
+![npm downloads](https://badgen.net/npm/dm/@quojs/react)
+![License](https://badgen.net/npm/license/@quojs/react)
+
 Ligações oficiais do React para **Quo.js**, um contêiner de estado previsível que recupera a
 simplicidade do Redux clássico e adiciona:
 

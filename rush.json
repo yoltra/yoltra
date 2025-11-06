@@ -32,6 +32,12 @@
       "projectFolder": "examples/v0/quojs-in-react",
       "reviewCategory": "examples",
       "shouldPublish": false
+    },
+    {
+      "packageName": "quojs-kinetic-logo",
+      "projectFolder": "examples/v0/quojs-kinetic-logo",
+      "reviewCategory": "examples",
+      "shouldPublish": false
     }
   ]
 }

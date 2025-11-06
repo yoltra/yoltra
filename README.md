@@ -1,10 +1,18 @@
-![Quo.js logo](./assets/logo.svg)
+![Quo.js logo](https://quojs.dev/assets/logo.svg)
 
 # Quo.js
 
-> [ 🇲🇽 Versión en Español](./docs/es/README.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](./docs/pt/README.md)&nbsp; | &nbsp; 👉
-> [ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./docs/fr/README.md)
+> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/README.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/README.md)&nbsp; | &nbsp; 👉
+> [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/README.md)
+
+![Bundle size](https://badgen.net/bundlephobia/min/@quojs/core)
+![Bundle size](https://badgen.net/bundlephobia/minzip/@quojs/core)
+![Bundle size](https://badgen.net/bundlephobia/tree-shaking/@quojs/core)
+![Bundle size](https://badgen.net/bundlephobia/dependency-count/@quojs/core)
+![npm version](https://badgen.net/npm/v/@quojs/core)
+![npm downloads](https://badgen.net/npm/dm/@quojs/core)
+![License](https://badgen.net/npm/license/@quojs/core)
 
 Declarative • Ultra‑simple • Expressive: Quo.js is a modern state management library inspired by
 Redux—but without the Redux Toolkit baggage. It brings back the simplicity and power of the
@@ -14,18 +22,24 @@ Mode**.
 
 ## Packages
 
-- **[@quojs/core](./packages/core/README.md)** — Core store, reducers, middleware, effects
+- **[@quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** — Core store, reducers, middleware, effects
   (framework‑agnostic)
-- **[@quojs/react](./packages/react/README.md)** — React provider & hooks
+- **[@quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** — React provider & hooks
   (Suspense/Concurrent‑ready)
-- **[examples/](./examples/)** — runnable samples
+
+## [Runnable Examples](https://github.com/quojs/quojs/tree/main/packages)
+
+| Example                                                                                | Description                                                                                                             | Screenshot                                                                    |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **[Quo.js in React](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/README.md)**                          | A simple TODO application (check the [React Profiler](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md) comparison) | ![Quo.js logo](https://quojs.dev/assets/examples/profiler-quojs-frame-15.png) |
+| **[Kinetic logo of Quo.js (React + SVG)](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo/README.md)** | A kinetic logo made of ~1.5k SVG circles, driven by a tiny simulation engine and synchronized with a Quo.js store       | ![Quo.js logo](https://quojs.dev/assets/examples/quojs-dots.gif)              |
 
 ## Why Quo.js?
 
 - 🗪 **Channel + Event model** — actions are `{ channel, event, payload }`; reducers subscribe at
   exactly the granularity you need.
 - 🎯 **Fine‑grained subscriptions** — subscribe to atomic props to avoid
-  [**unnecessary renders**](./examples/v0/quojs-in-react/redux-quojs-profiler.md).
+  [**unnecessary renders**](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md).
 - 🧭 **TypeScript‑first** — ergonomic typings and predictable APIs.
 - ⚡ **Built‑in middleware & effects** — async by default; no thunk/saga boilerplate.
 - 🧩 **Dynamic reducers** — add/remove reducers at runtime.
@@ -51,7 +65,7 @@ popular libraries. Each document explores:
 - **Async & effects** (how workflows and side-effects are expressed)
 - **React integration** (selectors, Suspense, concurrent mode readiness)
 
-👉 Check out the comparisons [here](./examples/v0/quojs-in-react/redux-quojs-profiler.md)
+👉 Check out the comparisons [here](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md)
 
 ## Quick Start (Monorepo)
 
@@ -71,36 +85,36 @@ rush build --from @quojs/react
 
 See the **Developer Guide** for SDLC, caching, and releases:
 
-- [Developer Guide](./docs/en/DEVELOPER_GUIDE.md)
+- [Developer Guide](https://github.com/quojs/quojs/blob/main/docs/en/DEVELOPER_GUIDE.md)
 
 ## Docs
 
 ### Core
 
-- [TypeDoc](./packages/core/docs/README.md): a more technical documentation extracted using
+- [TypeDoc](https://github.com/quojs/quojs/blob/main/packages/core/docs/README.md): a more technical documentation extracted using
   TypeDoc.
 - [Developer Docs (WIP)](https://www.quojs.dev/?lang=en): quick-start guide, tutorial, recipes,
   etc.
 
 ### React bindings
 
-- [TypeDoc](./packages/react/docs/README.md): a more technical documentation extracted using
+- [TypeDoc](https://github.com/quojs/quojs/blob/main/packages/react/docs/README.md): a more technical documentation extracted using
   TypeDoc.
 - [Developer Docs (WIP)](https://www.quojs.dev/?lang=en): quick-start guide, tutorial, recipes,
   etc.
 
 ## Contributing
 
-- Start here — [Contributing guide](./CONTRIBUTING.md)
-- [Code of Conduct](./CODE_OF_CONDUCT.md)
-- [Governance](./GOVERNANCE.md)
-- [Maintainers](./MAINTAINERS.md)
-- [Security](./SECURITY.md)
-- [Trademarks](./TRADEMARKS.md)
+- Start here — [Contributing guide](https://github.com/quojs/quojs/blob/main/CONTRIBUTING.md)
+- [Code of Conduct](https://github.com/quojs/quojs/blob/main/CODE_OF_CONDUCT.md)
+- [Governance](https://github.com/quojs/quojs/blob/main/GOVERNANCE.md)
+- [Maintainers](https://github.com/quojs/quojs/blob/main/MAINTAINERS.md)
+- [Security](https://github.com/quojs/quojs/blob/main/SECURITY.md)
+- [Trademarks](https://github.com/quojs/quojs/blob/main/TRADEMARKS.md)
 
 ## Status
 
-Quo.js is in **RC stage**. APIs are stable, types are strict, and it’s used in production.
+Quo.js is in **RC stage**. APIs are stable and **probably going to change**, types are strict, and it’s used in production.
 Feedback and PRs welcome.
 
 Made in 🇲🇽, for the world.

@@ -7,6 +7,14 @@
 > &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp; 👉
 > [ 🇫🇷 Version française](./README.fr.md)
 
+![Bundle size](https://badgen.net/bundlephobia/min/@quojs/core)
+![Bundle size](https://badgen.net/bundlephobia/minzip/@quojs/core)
+![Bundle size](https://badgen.net/bundlephobia/tree-shaking/@quojs/core)
+![Bundle size](https://badgen.net/bundlephobia/dependency-count/@quojs/core)
+![npm version](https://badgen.net/npm/v/@quojs/core)
+![npm downloads](https://badgen.net/npm/dm/@quojs/core)
+![License](https://badgen.net/npm/license/@quojs/core)
+
 **@quojs/core** es una biblioteca moderna de gestión de estado, **agnóstica de framework** e
 inspirada en Redux — pero sin el peso de Toolkit. Introduisez **canaux + événements**,
 **middleware et effets asynchrones natifs**, et **abonnements atomiques**.
