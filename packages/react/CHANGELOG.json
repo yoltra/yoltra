@@ -2,6 +2,23 @@
   "name": "@quojs/react",
   "entries": [
     {
+      "version": "0.3.0",
+      "tag": "@quojs/react_v0.3.0",
+      "date": "Fri, 07 Nov 2025 02:20:41 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Rename to useAtomicProp(s); add deprecation warnings; no breaking changes"
+          }
+        ],
+        "none": [
+          {
+            "comment": "chore(react): add examples update README files"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.2.0",
       "tag": "@quojs/react_v0.2.0",
       "date": "Tue, 04 Nov 2025 06:18:56 GMT",
