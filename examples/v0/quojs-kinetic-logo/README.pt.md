@@ -20,9 +20,9 @@ Mostra o Quo.js como um contêiner de estado **previsível, tipado e orientado a
 ## Por que Quo.js aqui?
 
 - **Canais + eventos (sem sopa de action types):** despachamos no canal `"logo"` com eventos como `"batchUpdate"`, `"fps"`, etc.
-- **Seletores granulares:** cada `<Circle/>` assina seu **próprio** nó `logo[group][id]` via `useSliceProp`, evitando re‑renders do slice inteiro.
+- **Seletores granulares:** cada `<Circle/>` assina seu **próprio** nó `logo[group][id]` via `useAtomicProp`, evitando re‑renders do slice inteiro.
 - **Reducer imutável e ergonômico:** um único reducer (`Logo.reducer.ts`) lida com updates atômicos e em lote sem mágica.
-- **Hooks tipados:** `createQuoHooks` gera `useStore`, `useDispatch`, `useSelector`, `useSliceProp`, `useSliceProps` com inferência total de TS.
+- **Hooks tipados:** `createQuoHooks` gera `useStore`, `useDispatch`, `useSelector`, `useAtomicProp`, `useAtomicProps` com inferência total de TS.
 - **Efeitos de eventos:** o motor escuta efeitos do store (ex.: `"logo":"start" | "stop"`) para coordenar o ciclo de vida da simulação.
 
 Resultado: **60fps suaves** em máquinas capazes, com o React tocando o DOM apenas para os círculos que realmente se moveram.
@@ -44,7 +44,7 @@ Resultado: **60fps suaves** em máquinas capazes, com o React tocando o DOM apen
    - O reducer faz upsert apenas dos nós que mudaram, mantendo o store pequeno e o React preciso.
 
 4. **Renderização granular**  
-   - Cada `<Circle group id>` assina `logo[group][id]` via `useSliceProp`. Se um círculo não se moveu, ele **não re‑renderiza**.
+   - Cada `<Circle group id>` assina `logo[group][id]` via `useAtomicProp`. Se um círculo não se moveu, ele **não re‑renderiza**.
 
 5. **Conclusão da intro + métricas**  
    - Enquanto a intro ocorre, `logo/introProgress` acompanha o restante. Quando todos chegam em casa, despachamos `logo/introComplete`.
@@ -83,7 +83,7 @@ src/
   App.tsx                       # inicia Engine, extrai specs do PNG do logo, liga Simulation → Store
   components/screen/Screen.*    # invólucro de tela (SVG), lê store.size, renderiza a lista de <Circle/>
   components/screen/items/circle/
-    Circle.component.tsx        # assina seu próprio nó logo[group][id] via useSliceProp
+    Circle.component.tsx        # assina seu próprio nó logo[group][id] via useAtomicProp
   context/Store.context.tsx     # contexto React para o store tipado do Quo
   state/
     types.ts                    # AppState, LogoState, mapas de ações tipados (LogoAM, AppAM)
@@ -103,7 +103,7 @@ src/
 ## Específicos do Quo.js aqui
 
 - **`batchUpdate`**: uma ação, muitos updates → menos trabalho do reducer e menos commits do React.
-- **`useSliceProp`**: assinatura direta em um caminho profundo (`logo["d"]["circle_d_42"]`). Sem pegadinhas de memo, sem seletores que alocam objetos novos a cada render.
+- **`useAtomicProp`**: assinatura direta em um caminho profundo (`logo["d"]["circle_d_42"]`). Sem pegadinhas de memo, sem seletores que alocam objetos novos a cada render.
 - **API de efeitos** (`store.onEffect("logo", "start" | "stop")`): o motor reage a eventos de estado sem a cerimônia de Redux‑saga/thunk.
 - **Reducer puro e imutável**: `upsertItem()` garante no‑op quando nada mudou → menos atualizações se propagam.
 

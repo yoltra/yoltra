@@ -10,9 +10,8 @@
 ![Bundle size](https://badgen.net/bundlephobia/minzip/@quojs/core)
 ![Bundle size](https://badgen.net/bundlephobia/tree-shaking/@quojs/core)
 ![Bundle size](https://badgen.net/bundlephobia/dependency-count/@quojs/core)
-![npm version](https://badgen.net/npm/v/@quojs/core)
 ![npm downloads](https://badgen.net/npm/dm/@quojs/core)
-![License](https://badgen.net/npm/license/@quojs/core)
+![License](https://img.shields.io/npm/l/@quojs/core)
 
 Declarativo • Ultra-simples • Expressivo: Quo.js é uma biblioteca moderna de gerenciamento de
 estado inspirada no Redux—mas sem a bagagem do Redux Toolkit. Traz de volta a simplicidade e o

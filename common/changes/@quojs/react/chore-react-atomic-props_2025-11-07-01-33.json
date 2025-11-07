@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@quojs/react",
+      "comment": "Rename to useAtomicProp(s); add deprecation warnings; no braking changes",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@quojs/react"
+}

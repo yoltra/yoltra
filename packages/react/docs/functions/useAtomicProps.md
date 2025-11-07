@@ -2,13 +2,13 @@
 
 ***
 
-[@quojs/react](../README.md) / useSliceProps
+[@quojs/react](../README.md) / useAtomicProps
 
-# Function: useSliceProps()
+# Function: useAtomicProps()
 
-> **useSliceProps**\<`R`, `S`, `T`\>(`specs`, `selector`, `isEqual`): `T`
+> **useAtomicProps**\<`R`, `S`, `T`\>(`specs`, `selector`, `isEqual`): `T`
 
-Defined in: [hooks/hooks.ts:306](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/hooks.ts#L306)
+Defined in: [hooks/hooks.ts:346](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/hooks.ts#L346)
 
 **Multi-path** fine-grained selector.
 
@@ -62,7 +62,7 @@ Equality comparator for the derived value (defaults to `Object.is`).
 ## Example
 
 ```tsx
-const total = useSliceProps<'todos' | 'filter', AppState, number>(
+const total = useAtomicProps<'todos' | 'filter', AppState, number>(
   [
     { reducer: 'todos',  property: ['items.**'] },
     { reducer: 'filter', property: 'q' }

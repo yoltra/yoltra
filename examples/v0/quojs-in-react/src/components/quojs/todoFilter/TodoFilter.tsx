@@ -1,7 +1,7 @@
 import type { ChangeEvent } from "react";
 
 import { eTodoStatus, type iFilterState } from "../../../types";
-import { useDispatch, useSliceProps } from "../../../state/quojs/hooks";
+import { useDispatch, useAtomicProps } from "../../../state/quojs/hooks";
 
 import "./TodoFilter.style.scss";
 
@@ -9,7 +9,7 @@ interface iTodoFilterPorps { }
 
 export const TodoFilter = (_: iTodoFilterPorps) => {
     const dispatch = useDispatch();
-    const { filter } = useSliceProps(
+    const { filter } = useAtomicProps(
         [
             { reducer: "todo", property: "filter" },
         ],

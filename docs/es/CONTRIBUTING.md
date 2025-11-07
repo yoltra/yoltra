@@ -73,7 +73,7 @@ body (optional)
 
 **Ejemplos**
 - `feat(quojs): add deep-path wildcard subscriptions`
-- `fix(quojs-react): normalize leading dot in useSliceProp`
+- `fix(quojs-react): normalize leading dot in useAtomicProp`
 - `test(store): cover devtools DISPATCH apply state`
 
 **DCO sign-off** — cada *commit* debe incluir una línea de firma:

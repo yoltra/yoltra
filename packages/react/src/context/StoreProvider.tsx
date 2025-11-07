@@ -10,7 +10,7 @@ import { StoreContext } from "./StoreContext";
  *
  * @remarks
  * - Wrap your app (or a subtree) to make the store available via `useContext(StoreContext)`
- *   or any higher-level hooks you expose (e.g., `useSlice`, `useDispatch`).
+ *   or any higher-level hooks you expose (e.g., `useAtomicProp`, `useDispatch`).
  * - You may nest multiple `StoreProvider`s to scope different stores to different subtrees.
  * - In Next.js App Router, this component must be used in a **client** boundary.
  *

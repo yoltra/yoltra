@@ -2,15 +2,15 @@
 
 ***
 
-[@quojs/react](../README.md) / UseSliceProp
+[@quojs/react](../README.md) / UseAtomicProp
 
-# Type Alias: UseSliceProp()\<R, S\>
+# Type Alias: UseAtomicProp()\<R, S\>
 
-> **UseSliceProp**\<`R`, `S`\> = \{\<`R1`, `P`\>(`spec`): `PathValue`\<`S`\[`R1`\], `P`\>; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \}
+> **UseAtomicProp**\<`R`, `S`\> = \{\<`R1`, `P`\>(`spec`): `PathValue`\<`S`\[`R1`\], `P`\>; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \}
 
-Defined in: [hooks/createQuoHooks.ts:24](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/createQuoHooks.ts#L24)
+Defined in: [hooks/createQuoHooks.ts:24](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/createQuoHooks.ts#L24)
 
-Overload shape for the `useSliceProp` hook returned by [createQuoHooks](../functions/createQuoHooks.md).
+Overload shape for the `useAtomicProp` hook returned by [createQuoHooks](../functions/createQuoHooks.md).
 Exported so TypeDoc can include and cross-link it from factory docs.
 
 ## Type Parameters
@@ -19,7 +19,7 @@ Exported so TypeDoc can include and cross-link it from factory docs.
 
 `R` *extends* `string`
 
-Slice name union.
+Reducer name union.
 
 ### S
 

@@ -6,9 +6,9 @@
 
 # Interface: SuspenseSlicePropsOptions\<T, S\>
 
-Defined in: [hooks/suspense.ts:254](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/suspense.ts#L254)
+Defined in: [hooks/suspense.ts:235](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/suspense.ts#L235)
 
-Options for [useSuspenseSliceProps](../functions/useSuspenseSliceProps.md).
+Options for [useSuspenseAtomicProps](../functions/useSuspenseAtomicProps.md).
 
 ## Type Parameters
 
@@ -30,7 +30,7 @@ State record keyed by reducer names.
 
 > `optional` **key**: `string`
 
-Defined in: [hooks/suspense.ts:268](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/suspense.ts#L268)
+Defined in: [hooks/suspense.ts:241](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/suspense.ts#L241)
 
 Extra cache key segment to distinguish different derived computations.
 
@@ -40,7 +40,7 @@ Extra cache key segment to distinguish different derived computations.
 
 > **load**: (`state`) => `T` \| `Promise`\<`T`\>
 
-Defined in: [hooks/suspense.ts:258](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/suspense.ts#L258)
+Defined in: [hooks/suspense.ts:237](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/suspense.ts#L237)
 
 Loader given the **full state** to produce `T` (may be async).
 
@@ -60,6 +60,6 @@ Loader given the **full state** to produce `T` (may be async).
 
 > `optional` **staleTime**: `number`
 
-Defined in: [hooks/suspense.ts:263](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/suspense.ts#L263)
+Defined in: [hooks/suspense.ts:239](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/suspense.ts#L239)
 
-Stale time in ms (see [SuspenseSlicePropOptions.staleTime](SuspenseSlicePropOptions.md#staletime) for semantics).
+Stale time in ms (see [SuspenseSlicePropOptions.staleTime](SuspenseSlicePropOptions.md#staletime)).

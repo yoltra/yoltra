@@ -1,7 +1,7 @@
-// file: quojs/packages/react/src/hooks/suspense.ts
 import { useMemo, useSyncExternalStore } from "react";
 import type { ActionMapBase, StoreInstance, Dotted, WithGlob } from "@quojs/core";
 import { useStore } from "./hooks";
+import { warnOnce } from "../utils/warnOnce";
 
 /** @internal */
 function hasWildcard(p: string): boolean { return p.includes("*"); }
@@ -93,24 +93,11 @@ class SuspenseCache {
     throw promise;
   }
 
-  /**
-   * Removes a single cache entry.
-   * @param key - Cache key to invalidate.
-   * @internal
-   */
+  /** Removes a single cache entry. */
   invalidate(key: CacheKey) { this.store.delete(key); }
-
-  /**
-   * Removes all entries whose keys start with `prefix`.
-   * @param prefix - Key prefix to match.
-   * @internal
-   */
+  /** Removes all entries whose keys start with `prefix`. */
   invalidatePrefix(prefix: string) { for (const k of this.store.keys()) { if (k.startsWith(prefix)) this.store.delete(k); } }
-
-  /**
-   * Clears the entire cache.
-   * @internal
-   */
+  /** Clears the entire cache. */
   clear() { this.store.clear(); }
 }
 
@@ -127,17 +114,14 @@ class SuspenseCache {
  */
 export const suspenseCache = new SuspenseCache();
 
-/**
- * Builds a canonical cache key from reducer + property (supports arrays) + optional extra key.
- * @internal
- */
+/** @internal: builds a canonical cache key from reducer + property (+ optional extra key). */
 function buildKey(reducer: string, props: string[] | string, extraKey?: string): string {
   const p = Array.isArray(props) ? props.map(normalizePath).sort().join("|") : normalizePath(props);
   return extraKey ? `${reducer}::${p}::${extraKey}` : `${reducer}::${p}`;
 }
 
 /**
- * Options for {@link useSuspenseSliceProp}.
+ * Options for {@link useSuspenseAtomicProp}.
  *
  * @typeParam T - The value produced by `load`.
  * @typeParam S - The store state record keyed by reducer names.
@@ -147,7 +131,7 @@ function buildKey(reducer: string, props: string[] | string, extraKey?: string):
 export interface SuspenseSlicePropOptions<T, S> {
   /**
    * Loader that can be sync or async.
-   * Called with the **value at the path** (or the whole slice for glob paths) and the **slice** itself.
+   * Called with the **value at the path** (or the whole reducer for glob paths) and the **reducer state** itself.
    */
   load: (valueAtPath: any, slice: S[keyof S]) => Promise<T> | T;
 
@@ -167,13 +151,16 @@ export interface SuspenseSlicePropOptions<T, S> {
   key?: string;
 }
 
+/** Alias with the new naming for ergonomics. */
+export type SuspenseAtomicPropOptions<T, S> = SuspenseSlicePropOptions<T, S>;
+
 /**
- * Suspense version of a single-path selector (similar to `useSliceProp`).
+ * Suspense version of a single-path selector (atomic subscription).
  *
  * Subscribes to an **exact** `reducer.property` path, invalidates the cache on changes,
  * and reads through a Suspense cache—**throwing a promise** while the `load` function resolves.
  *
- * @typeParam R - Slice name union.
+ * @typeParam R - Reducer name union.
  * @typeParam S - State record keyed by `R`.
  * @typeParam P - Dotted path type inside `S[R]` (exact path).
  * @typeParam T - Value type returned by `options.load`.
@@ -182,38 +169,17 @@ export interface SuspenseSlicePropOptions<T, S> {
  * @param options   - Loader/staleTime/key options.
  * @returns The loaded value `T`. Will **suspend** while loading and rethrow errors in the error boundary.
  *
- * @remarks
- * - If you pass a **glob** path (with `*`/`**`), the path is treated as “match anything” and the loader
- *   receives the **entire slice** as `valueAtPath`. (TypeScript will not enforce globs here.)
- * - For “cache until path changes”, use `staleTime: null`. Passing `0` expires immediately.
- *
- * @example Basic Suspense usage
- * ```tsx
- * import { Suspense } from 'react';
- * 
- * function UserPanel({ id }: { id: string }) {
- *   const user = useSuspenseSliceProp<'users', AppState, 'entities.${string}', User>(
- *     { reducer: 'users', property: `entities.${id}` as any },
- *     {
- *       load: (entity, slice) => entity ?? fetch(`/api/users/${id}`).then(r => r.json()),
- *       staleTime: 60_000 // 1 minute freshness
- *     }
- *   );
- *   return <div>{user.name}</div>;
- * }
- * 
- * export function Page() {
- *   return (
- *     <Suspense fallback="loading...">
- *       <UserPanel id="42" />
- *     </Suspense>
- *   );
- * }
- * ```
- *
  * @public
  */
-export function useSuspenseSliceProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>, T>(
+export function useSuspenseAtomicProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>, T>(
+  storeSpec: { reducer: R; property: P },
+  options: SuspenseSlicePropOptions<T, S>
+): T {
+  return _useSuspenseSlicePropImpl<R, S, P, T>(storeSpec, options);
+}
+
+/** @internal (original impl shared by both names) */
+function _useSuspenseSlicePropImpl<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>, T>(
   storeSpec: { reducer: R; property: P },
   options: SuspenseSlicePropOptions<T, S>
 ): T {
@@ -244,7 +210,22 @@ export function useSuspenseSliceProp<R extends string, S extends Record<R, any>,
 }
 
 /**
- * Options for {@link useSuspenseSliceProps}.
+ * @deprecated Use {@link useSuspenseAtomicProp} instead. Will be removed in `0.5.0`.
+ * Suspense version of a single-path selector (legacy name).
+ */
+export function useSuspenseSliceProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>, T>(
+  storeSpec: { reducer: R; property: P },
+  options: SuspenseSlicePropOptions<T, S>
+): T {
+  warnOnce(
+    "quo:suspense:useSuspenseSliceProp",
+    "[@quojs/react] `useSuspenseSliceProp()` is deprecated and will be removed in 0.5.0. Use `useSuspenseAtomicProp()`."
+  );
+  return _useSuspenseSlicePropImpl<R, S, P, T>(storeSpec, options);
+}
+
+/**
+ * Options for {@link useSuspenseAtomicProps}.
  *
  * @typeParam T - Value produced by `load`.
  * @typeParam S - State record keyed by reducer names.
@@ -252,71 +233,39 @@ export function useSuspenseSliceProp<R extends string, S extends Record<R, any>,
  * @public
  */
 export interface SuspenseSlicePropsOptions<T, S> {
-  /**
-   * Loader given the **full state** to produce `T` (may be async).
-   */
+  /** Loader given the **full state** to produce `T` (may be async). */
   load: (state: S) => Promise<T> | T;
-
-  /**
-   * Stale time in ms (see {@link SuspenseSlicePropOptions.staleTime} for semantics).
-   */
+  /** Stale time in ms (see {@link SuspenseSlicePropOptions.staleTime}). */
   staleTime?: number;
-
-  /**
-   * Extra cache key segment to distinguish different derived computations.
-   */
-  key?: string; // extra cache key to distinguish variants
+  /** Extra cache key segment to distinguish different derived computations. */
+  key?: string;
 }
 
+/** Alias with the new naming for ergonomics. */
+export type SuspenseAtomicPropsOptions<T, S> = SuspenseSlicePropsOptions<T, S>;
+
 /**
- * Suspense version of a multi-path selector (similar to `useSliceProps`).
+ * Suspense version of a multi-path selector (atomic subscriptions).
  *
  * Subscribes to **multiple** `reducer.property` paths (supports globs),
  * invalidates the cache when **any** subscribed path changes, and returns a value
  * loaded through the Suspense cache.
  *
- * @typeParam R - Slice name union.
+ * @typeParam R - Reducer name union.
  * @typeParam S - State record keyed by `R`.
  * @typeParam T - Value type returned by `options.load`.
  *
- * @param specs   - Array of `{ reducer, property }`, where `property` can be a dotted string,
- *                  a glob (`*`/`**`), or an array of globs.
- * @param options - Loader/staleTime/key options.
- *
- * @example Derived list with Suspense
- * ```tsx
- * import { Suspense } from 'react';
- *
- * function VisibleTodos() {
- *   const items = useSuspenseSliceProps<
- *     'todos' | 'filter',
- *     AppState,
- *     { id: string; title: string }[]
- *   >(
- *     [
- *       { reducer: 'todos',  property: 'items.**' },
- *       { reducer: 'filter', property: 'q' }
- *     ],
- *     {
- *       load: (s) => s.todos.items.filter(x => x.title.includes(s.filter.q)),
- *       staleTime: null // cache until any of the subscribed paths change
- *     }
- *   );
- *   return <ul>{items.map(i => <li key={i.id}>{i.title}</li>)}</ul>;
- * }
- *
- * export function Page() {
- *   return (
- *     <Suspense fallback="loading...">
- *       <VisibleTodos />
- *     </Suspense>
- *   );
- * }
- * ```
- *
  * @public
  */
-export function useSuspenseSliceProps<R extends string, S extends Record<R, any>, T>(
+export function useSuspenseAtomicProps<R extends string, S extends Record<R, any>, T>(
+  specs: Array<{ reducer: R; property: Dotted<S[R]> | WithGlob<Dotted<S[R]>> | ReadonlyArray<WithGlob<Dotted<S[R]>>> }>,
+  options: SuspenseSlicePropsOptions<T, S>
+): T {
+  return _useSuspenseSlicePropsImpl<R, S, T>(specs, options);
+}
+
+/** @internal (original impl shared by both names) */
+function _useSuspenseSlicePropsImpl<R extends string, S extends Record<R, any>, T>(
   specs: Array<{ reducer: R; property: Dotted<S[R]> | WithGlob<Dotted<S[R]>> | ReadonlyArray<WithGlob<Dotted<S[R]>>> }>,
   options: SuspenseSlicePropsOptions<T, S>
 ): T {
@@ -357,34 +306,73 @@ export function useSuspenseSliceProps<R extends string, S extends Record<R, any>
 }
 
 /**
+ * @deprecated Use {@link useSuspenseAtomicProps} instead. Will be removed in `0.5.0`.
+ * Suspense version of a multi-path selector (legacy name).
+ */
+export function useSuspenseSliceProps<R extends string, S extends Record<R, any>, T>(
+  specs: Array<{ reducer: R; property: Dotted<S[R]> | WithGlob<Dotted<S[R]>> | ReadonlyArray<WithGlob<Dotted<S[R]>>> }>,
+  options: SuspenseSlicePropsOptions<T, S>
+): T {
+  warnOnce(
+    "quo:suspense:useSuspenseSliceProps",
+    "[@quojs/react] `useSuspenseSliceProps()` is deprecated and will be removed in 0.5.0. Use `useSuspenseAtomicProps()`."
+  );
+  return _useSuspenseSlicePropsImpl<R, S, T>(specs, options);
+}
+
+/**
  * Invalidates the cache entry for a particular `(reducer, property)` key.
  *
- * @param reducer  - Slice name.
+ * @param reducer  - Reducer name.
  * @param property - Dotted path (or glob) string.
  * @param extraKey - Optional extra key used when loading.
  *
  * @example
  * ```ts
- * invalidateSliceProp('todos', 'items.**'); // force refetch for that key
+ * invalidateAtomicProp('todos', 'items.**'); // force refetch for that key
  * ```
  *
  * @public
  */
-export function invalidateSliceProp(reducer: string, property: string, extraKey?: string) {
+export function invalidateAtomicProp(reducer: string, property: string, extraKey?: string) {
   suspenseCache.invalidate(buildKey(reducer, property, extraKey));
 }
 
 /**
- * Invalidates **all** cache entries under a given reducer (slice).
+ * @deprecated Use {@link invalidateAtomicProp} instead. Will be removed in `0.5.0`.
+ */
+export function invalidateSliceProp(reducer: string, property: string, extraKey?: string) {
+  warnOnce(
+    "quo:suspense:invalidateSliceProp",
+    "[@quojs/react] `invalidateSliceProp()` is deprecated and will be removed in 0.5.0. Use `invalidateAtomicProp()`."
+  );
+  return invalidateAtomicProp(reducer, property, extraKey);
+}
+
+/**
+ * Invalidates **all** cache entries under a given reducer.
  *
  * @example
  * ```ts
- * invalidateSlicePropsByReducer('todos');
+ * invalidateAtomicPropsByReducer('todos');
  * ```
  *
  * @public
  */
-export function invalidateSlicePropsByReducer(reducer: string) { suspenseCache.invalidatePrefix(`${reducer}::`); }
+export function invalidateAtomicPropsByReducer(reducer: string) {
+  suspenseCache.invalidatePrefix(`${reducer}::`);
+}
+
+/**
+ * @deprecated Use {@link invalidateAtomicPropsByReducer} instead. Will be removed in `0.5.0`.
+ */
+export function invalidateSlicePropsByReducer(reducer: string) {
+  warnOnce(
+    "quo:suspense:invalidateSlicePropsByReducer",
+    "[@quojs/react] `invalidateSlicePropsByReducer()` is deprecated and will be removed in 0.5.0. Use `invalidateAtomicPropsByReducer()`."
+  );
+  return invalidateAtomicPropsByReducer(reducer);
+}
 
 /**
  * Clears the entire Suspense cache.

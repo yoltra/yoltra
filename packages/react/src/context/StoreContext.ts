@@ -23,6 +23,5 @@ import type { StoreInstance } from "@quojs/core";
  * }
  * ```
  *
- * @public
- */
+ * @public */
 export const StoreContext = createContext<StoreInstance<any, any, any> | null>(null);

@@ -4,13 +4,11 @@
 
 [@quojs/react](../README.md) / invalidateSliceProp
 
-# Function: invalidateSliceProp()
+# ~~Function: invalidateSliceProp()~~
 
 > **invalidateSliceProp**(`reducer`, `property`, `extraKey?`): `void`
 
-Defined in: [hooks/suspense.ts:373](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/suspense.ts#L373)
-
-Invalidates the cache entry for a particular `(reducer, property)` key.
+Defined in: [hooks/suspense.ts:344](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/suspense.ts#L344)
 
 ## Parameters
 
@@ -18,26 +16,18 @@ Invalidates the cache entry for a particular `(reducer, property)` key.
 
 `string`
 
-Slice name.
-
 ### property
 
 `string`
-
-Dotted path (or glob) string.
 
 ### extraKey?
 
 `string`
 
-Optional extra key used when loading.
-
 ## Returns
 
 `void`
 
-## Example
+## Deprecated
 
-```ts
-invalidateSliceProp('todos', 'items.**'); // force refetch for that key
-```
+Use [invalidateAtomicProp](invalidateAtomicProp.md) instead. Will be removed in `0.5.0`.

@@ -3,7 +3,7 @@ import { type ChangeEvent } from "react";
 import { SaveOutlined } from "@ant-design/icons";
 
 import { eTodoStatus, type iTodo } from "../../../types";
-import { useDispatch, useSliceProp } from "../../../state/quojs/hooks";
+import { useDispatch, useAtomicProp } from "../../../state/quojs/hooks";
 
 export interface iTodoItemEditProps {
     id: string,
@@ -15,7 +15,7 @@ export const TodoItemEdit: React.FC<iTodoItemEditProps> = ({
     onSave
 }: iTodoItemEditProps) => {
     const dispatch = useDispatch();
-    const data = useSliceProp(
+    const data = useAtomicProp(
         { reducer: "todo", property: `data.${id}` },
         v => v as iTodo
     );

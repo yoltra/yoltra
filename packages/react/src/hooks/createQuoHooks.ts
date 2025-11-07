@@ -1,4 +1,3 @@
-// file: quojs/packages/react/src/hooks/createQuoHooks.ts
 import * as React from "react";
 import { useContext, useMemo, useRef, useSyncExternalStore } from "react";
 
@@ -12,16 +11,17 @@ import type {
   ConnectDeep,
 } from "@quojs/core";
 import { PathValue } from "./hooks";
+import { warnOnce } from "../utils/warnOnce";
 
 /**
- * Overload shape for the `useSliceProp` hook returned by {@link createQuoHooks}.
+ * Overload shape for the `useAtomicProp` hook returned by {@link createQuoHooks}.
  * Exported so TypeDoc can include and cross-link it from factory docs.
  *
- * @typeParam R - Slice name union.
+ * @typeParam R - Reducer name union.
  * @typeParam S - State record keyed by `R`.
  * @public
  */
-export type UseSliceProp<R extends string, S extends Record<R, any>> = {
+export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
   // Exact path, no map -> PathValue<S[R1], P>
   <R1 extends R, P extends Dotted<S[R1]>>(
     spec: { reducer: R1; property: P },
@@ -34,7 +34,7 @@ export type UseSliceProp<R extends string, S extends Record<R, any>> = {
     isEqual?: (a: T, b: T) => boolean,
   ): T;
 
-  // Glob path + map -> T (map receives the whole slice)
+  // Glob path + map -> T (map receives the whole reducer state)
   <R1 extends R, P extends WithGlob<Dotted<S[R1]>>, T>(
     spec: { reducer: R1; property: P },
     map: (value: unknown) => T,
@@ -43,14 +43,14 @@ export type UseSliceProp<R extends string, S extends Record<R, any>> = {
 };
 
 /**
- * Overload shape for the `useSliceProps` hook returned by {@link createQuoHooks}.
+ * Overload shape for the `useAtomicProps` hook returned by {@link createQuoHooks}.
  * Exported so TypeDoc can include and cross-link it from factory docs.
  *
  * @typeParam R - Slice name union.
  * @typeParam S - State record keyed by `R`.
  * @public
  */
-export type UseSliceProps<R extends string, S extends Record<R, any>> = {
+export type UseAtomicProps<R extends string, S extends Record<R, any>> = {
   <R1 extends R, T>(
     specs: Array<{
       reducer: R1;
@@ -103,7 +103,7 @@ export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T) {
   for (const k of ka) {
     if (!Object.is(a[k], (b as Record<string, unknown>)[k])) return false;
   }
-  
+
   return true;
 }
 
@@ -112,7 +112,7 @@ export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T) {
  *
  * Call this **once per app** (or per store instance type) and export the returned hooks.
  *
- * @typeParam R  - Slice name union (string literal union).
+ * @typeParam R  - Reducer name union (string literal union).
  * @typeParam S  - State record keyed by `R`.
  * @typeParam AM - Action map for `(channel → event → payload)`.
  *
@@ -122,23 +122,19 @@ export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T) {
  * - `useStore()` – access the store from context (throws if missing).
  * - `useDispatch()` – stable dispatch reference.
  * - `useSelector(selector, isEqual?)` – external-store selector with memoized equality.
- * - `useSliceProp(spec, map?, isEqual?)` – subscribe to a **single** dotted path (or glob).
- * - `useSliceProps(specs, selector, isEqual?)` – subscribe to **many** paths/globs and compute a derived value.
+ * - `useAtomicProp(spec, map?, isEqual?)` – subscribe to a **single** dotted path (or glob).
+ * - `useAtomicProps(specs, selector, isEqual?)` – subscribe to **many** paths/globs and compute a derived value.
+ * - `useSliceProp` / `useSliceProps` – **deprecated wrappers** that warn in dev.
  * - `shallowEqual` – helper equality for objects.
  *
  * @example
  * ```tsx
  * // hooks.ts
  * import { StoreContext } from '../context/StoreContext';
- * export const { useStore, useDispatch, useSelector, useSliceProp, useSliceProps } =
- *   createQuoHooks<'counter' | 'todos', AppState, AM>(StoreContext);
- *
- * // component.tsx
- * function Counter() {
- *   const value = useSliceProp({ reducer: 'counter', property: 'value' });
- *   const dispatch = useDispatch();
- *   return <button onClick={() => dispatch('ui','increment',1)}>{value}</button>;
- * }
+ * export const {
+ *   useStore, useDispatch, useSelector,
+ *   useAtomicProp, useAtomicProps,
+ * } = createQuoHooks<'counter' | 'todos', AppState, AM>(StoreContext);
  * ```
  *
  * @public
@@ -148,54 +144,16 @@ export function createQuoHooks<
   S extends Record<R, any>,
   AM extends ActionMapBase
 >(StoreContext: React.Context<StoreInstance<R, S, AM> | null>) {
-  /**
-   * Returns the current {@link StoreInstance} from context.
-   * Throws if used outside of a {@link StoreProvider}.
-   *
-   * @example
-   * ```tsx
-   * const store = useStore();
-   * const state = store.getState();
-   * ```
-   *
-   * @public
-   */
   function useStore(): StoreInstance<R, S, AM> {
     const ctx = useContext(StoreContext);
     if (!ctx) throw new Error("useStore must be used inside <StoreProvider>");
-    
     return ctx;
   }
 
-  /**
-   * Returns the store’s `dispatch` function (stable reference).
-   *
-   * @example
-   * ```tsx
-   * const dispatch = useDispatch();
-   * dispatch('ui','toggle',true);
-   * ```
-   *
-   * @public
-   */
   function useDispatch(): Dispatch<AM> {
     return useStore().dispatch;
   }
 
-  /**
-   * Selects a derived value from the store using an external-store subscription.
-   *
-   * @param selector - `(state) => value` derived from the current immutable state.
-   * @param isEqual  - Optional equality check (defaults to `Object.is`) to suppress re-renders.
-   * @returns The selected value, memoized by `isEqual`.
-   *
-   * @example
-   * ```tsx
-   * const total = useSelector(s => s.todos.items.length);
-   * ```
-   *
-   * @public
-   */
   function useSelector<T>(
     selector: (state: DeepReadonly<S>) => T,
     isEqual: (a: T, b: T) => boolean = Object.is
@@ -210,7 +168,6 @@ export function createQuoHooks<
 
       return () => {
         const next = selector(store.getState());
-
         return isEqual(last, next) ? last : (last = next);
       };
     }, [store, selector, isEqual]);
@@ -218,56 +175,8 @@ export function createQuoHooks<
     return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   }
 
-  /**
-   * Hook overloads for subscribing to a **single** property path (or glob) inside a slice.
-   *
-   * - Exact path returns the **typed value** at that path.
-   * - Exact path + `map` returns `T`.
-   * - Glob path (with `*`/`**`) requires `map`, which receives the **whole slice**.
-   *
-   * @example Exact path
-   * ```tsx
-   * const title = useSliceProp({ reducer: 'todos', property: 'items.0.title' });
-   * ```
-   *
-   * @example Exact path with map
-   * ```tsx
-   * const len = useSliceProp({ reducer: 'todos', property: 'items' }, items => items.length);
-   * ```
-   *
-   * @example Glob pattern
-   * ```tsx
-   * // Recompute when any title changes anywhere under items
-   * const titles = useSliceProp(
-   *   { reducer: 'todos', property: 'items.**' },
-   *   slice => slice.items.map(x => x.title),
-   *   shallowEqual
-   * );
-   * ```
-   *
-   * @public
-   */
   /** @internal */
-  type UseSlicePropOverloads = {
-    // Exact path, no map -> PathValue<S[R1], P>
-    <R1 extends R, P extends Dotted<S[R1]>>(
-      spec: { reducer: R1; property: P },
-    ): PathValue<S[R1], P>;
-
-    // Exact path + map -> T
-    <R1 extends R, P extends Dotted<S[R1]>, T>(
-      spec: { reducer: R1; property: P },
-      map: (value: PathValue<S[R1], P>) => T,
-      isEqual?: (a: T, b: T) => boolean,
-    ): T;
-
-    // Glob path + map -> T (map receives the whole slice)
-    <R1 extends R, P extends WithGlob<Dotted<S[R1]>>, T>(
-      spec: { reducer: R1; property: P },
-      map: (value: unknown) => T,
-      isEqual?: (a: T, b: T) => boolean,
-    ): T;
-  };
+  type UseAtomicPropOverloads = UseAtomicProp<R, S>;
 
   /** @internal */
   const useSlicePropImpl = (
@@ -295,7 +204,7 @@ export function createQuoHooks<
       const isGlob = hasWildcard(normalizedSpec.property);
       const read = () => {
         const full = store.getState() as DeepReadonly<S>;
-        // @ts-expect-error This is a standard for TS overloads so we must bail-out TS
+        // @ts-expect-error standard pattern for TS overloads
         const slice = full[normalizedSpec.reducer];
         const source = isGlob ? slice : getAtPath(slice, normalizedSpec.property);
         return map ? map(source) : source;
@@ -312,42 +221,26 @@ export function createQuoHooks<
     return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   };
 
-  /**
-   * Subscribe to a **single** path/glob within a slice and return the selected value.
-   * See overload signatures above.
-   *
-   * @public
-   */
-  const useSliceProp = useSlicePropImpl as unknown as UseSliceProp<R, S>;
+  /** Subscribe to a **single** path/glob. */
+  const useAtomicProp = useSlicePropImpl as unknown as UseAtomicPropOverloads;
 
   /**
-   * Subscribe to **multiple** paths/globs and compute a derived value from the whole state.
-   *
-   * Re-runs `selector(state)` only when any of the specified paths/globs emit a change.
-   *
-   * @example
-   * ```tsx
-   * const total = useSliceProps(
-   *   [
-   *     { reducer: 'todos',  property: ['items.**'] },
-   *     { reducer: 'filter', property: 'q' }
-   *   ],
-   *   (s) => s.todos.items.filter(x => x.title.includes(s.filter.q)).length
-   * );
-   * ```
-   *
-   * @public
+   * @deprecated Use `useAtomicProp` instead. Will be removed in `0.5.0`.
+   * Back-compat wrapper that warns once in dev.
    */
+  const useSliceProp = ((...args: unknown[]) => {
+    warnOnce(
+      "quo:createHooks:useSliceProp",
+      "[@quojs/react] `useSliceProp()` is deprecated and will be removed in 0.5.0. Use `useAtomicProp()`."
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (useAtomicProp as any)(...args);
+  }) as unknown as UseAtomicPropOverloads;
+
   /** @internal */
   type OneOrMany<T> = T | readonly T[];
   /** @internal */
-  type UseSlicePropsOverloads = {
-    <R1 extends R, T>(
-      specs: Array<{ reducer: R1; property: OneOrMany<WithGlob<Dotted<S[R1]>>> }>,
-      selector: (state: DeepReadonly<S>) => T,
-      isEqual?: (a: T, b: T) => boolean
-    ): T;
-  };
+  type UseAtomicPropsOverloads = UseAtomicProps<R, S>;
 
   /** @internal */
   const useSlicePropsImpl = <T,>(
@@ -405,19 +298,35 @@ export function createQuoHooks<
     return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   };
 
+  /** Subscribe to **many** paths/globs. */
+  const useAtomicProps = useSlicePropsImpl as unknown as UseAtomicPropsOverloads;
+
   /**
-   * Subscribe to **many** paths/globs and return a memoized derived value.
-   * See overload signatures above.
-   *
-   * @public
+   * @deprecated Use `useAtomicProps` instead. Will be removed in `0.5.0`.
+   * Back-compat wrapper that warns once in dev.
    */
-  const useSliceProps = useSlicePropsImpl as unknown as UseSliceProps<R, S>;
+  const useSliceProps = (<T,>(
+    specs: Array<{ reducer: R; property: OneOrMany<WithGlob<Dotted<S[R]>>> }>,
+    selector: (state: DeepReadonly<S>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T => {
+    warnOnce(
+      "quo:createHooks:useSliceProps",
+      "[@quojs/react] `useSliceProps()` is deprecated and will be removed in 0.5.0. Use `useAtomicProps()`."
+    );
+    
+    return useAtomicProps(specs as any, selector as any, isEqual as any);
+  }) as unknown as UseAtomicPropsOverloads;
 
   return {
     useStore,
     useDispatch,
     useSelector,
+    useAtomicProp,
+    useAtomicProps,
+    /** @deprecated Use {@link useAtomicProp} instead. */
     useSliceProp,
+    /** @deprecated Use {@link useAtomicProps} instead. */
     useSliceProps,
     shallowEqual,
   };

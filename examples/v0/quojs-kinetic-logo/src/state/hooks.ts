@@ -9,7 +9,7 @@ export const {
   useStore,
   useDispatch,
   useSelector,
-  useSliceProp,
-  useSliceProps,
+  useAtomicProp,
+  useAtomicProps,
   shallowEqual,
 } = createQuoHooks<keyof AppState & string, AppState, AppAM>(AppStoreContext);

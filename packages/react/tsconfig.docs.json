@@ -3,7 +3,7 @@
         "./tsconfig.json"
     ],
     "compilerOptions": {
-        "types": []
+        "types": ["node"]
     },
     "include": [
         "src"

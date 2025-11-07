@@ -8,6 +8,7 @@ import type {
   WithGlob,
   ConnectDeep,
 } from "@quojs/core";
+import { warnOnce } from "../utils/warnOnce";
 
 /**
  * Resolves the value type at a **dotted path** `P` inside object/array `T`.
@@ -27,20 +28,20 @@ import type {
  */
 export type PathValue<T, P extends string> =
   P extends `${infer K}.${infer Rest}`
-  ? K extends `${number}`
-  ? T extends readonly (infer U)[]
-  ? PathValue<U, Rest>
-  : any
-  : K extends keyof T
-  ? PathValue<T[K], Rest>
-  : any
-  : P extends `${number}`
-  ? T extends readonly (infer U)[]
-  ? U
-  : any
-  : P extends keyof T
-  ? T[P]
-  : any;
+    ? K extends `${number}`
+      ? T extends readonly (infer U)[]
+        ? PathValue<U, Rest>
+        : any
+      : K extends keyof T
+        ? PathValue<T[K], Rest>
+        : any
+    : P extends `${number}`
+      ? T extends readonly (infer U)[]
+        ? U
+        : any
+      : P extends keyof T
+        ? T[P]
+        : any;
 
 /**
  * Accepts either a single value or a readonly array of that value.
@@ -85,7 +86,7 @@ function getAtPath(obj: any, path: string): any {
  * Throws if used outside of a `<StoreProvider>`.
  *
  * @typeParam AM - Action map type.
- * @typeParam R  - Slice name union.
+ * @typeParam R  - Reducer name union.
  * @typeParam S  - State record keyed by `R`.
  *
  * @example
@@ -185,7 +186,7 @@ export function useSelector<S extends Record<any, any>, T>(
 }
 
 /**
- * Fine-grained **single-path** selector for a slice.
+ * Fine-grained **single-path** selector for a Reducer' state.
  *
  * Re-renders only when the specified `reducer.property` (dotted path) actually changes.
  *
@@ -197,48 +198,57 @@ export function useSelector<S extends Record<any, any>, T>(
  * **Overloads**
  * - Exact path (no `*`): returns the precise `PathValue` when `map` is omitted
  * - Exact path + `map`: returns `T` from `map(value)`
- * - Glob path (with `*`/`**`): requires `map` and returns `T` from `map(slice)`
+ * - Glob path (with `*`/`**`): requires `map` and returns `T` from `map(state)`
  *
  * @example Exact path
  * ```tsx
- * const title = useSliceProp<'todos', AppState, 'items.0.title'>(
+ * const title = useAtomicProp<'todos', AppState, 'items.0.title'>(
  *   { reducer: 'todos', property: 'items.0.title' }
  * );
  * ```
  *
  * @example Map over exact path
  * ```tsx
- * const len = useSliceProp(
+ * const len = useAtomicProp(
  *   { reducer: 'todos', property: 'items' },
  *   items => items.length
  * );
  * ```
  *
- * @example Glob pattern over slice
+ * @example Glob pattern over state
  * ```tsx
- * const titles = useSliceProp(
+ * const titles = useAtomicProp(
  *   { reducer: 'todos', property: 'items.**' },
- *   slice => slice.items.map(x => x.title),
+ *   state => state.items.map(x => x.title),
  *   shallowEqual
  * );
  * ```
  *
  * @public
  */
-export function useSliceProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>>(
+export function useAtomicProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>>(
   spec: { reducer: R; property: P },
 ): PathValue<S[R], P>;
-export function useSliceProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>, T>(
+export function useAtomicProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>, T>(
   spec: { reducer: R; property: P },
   map: (value: PathValue<S[R], P>) => T,
   isEqual?: (a: T, b: T) => boolean,
 ): T;
-export function useSliceProp<R extends string, S extends Record<R, any>, P extends WithGlob<Dotted<S[R]>>, T>(
+export function useAtomicProp<R extends string, S extends Record<R, any>, P extends WithGlob<Dotted<S[R]>>, T>(
   spec: { reducer: R; property: P },
   map: (value: any) => T,
   isEqual?: (a: T, b: T) => boolean,
 ): T;
-export function useSliceProp<R extends string, S extends Record<R, any>, T = any>(
+export function useAtomicProp<R extends string, S extends Record<R, any>, T = any>(
+  spec: { reducer: R; property: string },
+  map?: (value: any) => T,
+  isEqual: (a: T, b: T) => boolean = Object.is
+): T {
+  return _useAtomicPropImpl<R, S, T>(spec, map, isEqual);
+}
+
+/** @internal (was `_useSlicePropImpl`; renamed to avoid the TS overload check) */
+function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>(
   spec: { reducer: R; property: string },
   map?: (value: any) => T,
   isEqual: (a: T, b: T) => boolean = Object.is
@@ -251,7 +261,8 @@ export function useSliceProp<R extends string, S extends Record<R, any>, T = any
   }, [spec.reducer, spec.property]);
 
   const subscribe = useMemo(
-    () => (notify: () => void) => store.connect(normalizedSpec as unknown as ConnectDeep<R, S>, () => notify()),
+    () => (notify: () => void) =>
+      store.connect(normalizedSpec as unknown as ConnectDeep<R, S>, () => notify()),
     [store, normalizedSpec]
   );
 
@@ -277,6 +288,35 @@ export function useSliceProp<R extends string, S extends Record<R, any>, T = any
 }
 
 /**
+ * @deprecated Use {@link useAtomicProp} instead. Will be removed in `0.5.0`.
+ * Fine-grained **single-path** selector for a Reducer.
+ */
+export function useSliceProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>>(
+  spec: { reducer: R; property: P },
+): PathValue<S[R], P>;
+export function useSliceProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>, T>(
+  spec: { reducer: R; property: P },
+  map: (value: PathValue<S[R], P>) => T,
+  isEqual?: (a: T, b: T) => boolean,
+): T;
+export function useSliceProp<R extends string, S extends Record<R, any>, P extends WithGlob<Dotted<S[R]>>, T>(
+  spec: { reducer: R; property: P },
+  map: (value: any) => T,
+  isEqual?: (a: T, b: T) => boolean,
+): T;
+export function useSliceProp<R extends string, S extends Record<R, any>, T = any>(
+  spec: { reducer: R; property: string },
+  map?: (value: any) => T,
+  isEqual: (a: T, b: T) => boolean = Object.is
+): T {
+  warnOnce(
+    "quo:useSliceProp",
+    "[@quojs/react] `useSliceProp()` is deprecated and will be removed in 0.5.0. Use `useAtomicProp()`."
+  );
+  return _useAtomicPropImpl<R, S, T>(spec, map, isEqual);
+}
+
+/**
  * **Multi-path** fine-grained selector.
  *
  * Subscribes to several `reducer.property` paths (supports deep & wildcard)
@@ -292,7 +332,7 @@ export function useSliceProp<R extends string, S extends Record<R, any>, T = any
  *
  * @example
  * ```tsx
- * const total = useSliceProps<'todos' | 'filter', AppState, number>(
+ * const total = useAtomicProps<'todos' | 'filter', AppState, number>(
  *   [
  *     { reducer: 'todos',  property: ['items.**'] },
  *     { reducer: 'filter', property: 'q' }
@@ -303,7 +343,16 @@ export function useSliceProp<R extends string, S extends Record<R, any>, T = any
  *
  * @public
  */
-export function useSliceProps<R extends string, S extends Record<R, any>, T>(
+export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
+  specs: Array<{ reducer: R; property: OneOrMany<WithGlob<Dotted<S[R]>>> }>,
+  selector: (state: S) => T,
+  isEqual: (a: T, b: T) => boolean = Object.is
+): T {
+  return _useSlicePropsImpl<R, S, T>(specs, selector, isEqual);
+}
+
+/** @internal (old slicy impl) */
+function _useSlicePropsImpl<R extends string, S extends Record<R, any>, T>(
   specs: Array<{ reducer: R; property: OneOrMany<WithGlob<Dotted<S[R]>>> }>,
   selector: (state: S) => T,
   isEqual: (a: T, b: T) => boolean = Object.is
@@ -328,7 +377,7 @@ export function useSliceProps<R extends string, S extends Record<R, any>, T>(
     () => (notify: () => void) => {
       const tick = () => { versionRef.current++; notify(); };
 
-      // Connect once per property (handles array or single string)
+      // connect once per property (handles array or single string)
       const unsubs = normalizedSpecs.flatMap((sp) => {
         const props = Array.isArray(sp.property) ? sp.property : [sp.property];
 
@@ -360,4 +409,20 @@ export function useSliceProps<R extends string, S extends Record<R, any>, T>(
   }, [store, selector, isEqual]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+/**
+ * @deprecated Use {@link useAtomicProps} instead. Will be removed in `0.5.0`.
+ * Multi-path fine-grained selector.
+ */
+export function useSliceProps<R extends string, S extends Record<R, any>, T>(
+  specs: Array<{ reducer: R; property: OneOrMany<WithGlob<Dotted<S[R]>>> }>,
+  selector: (state: S) => T,
+  isEqual: (a: T, b: T) => boolean = Object.is
+): T {
+  warnOnce(
+    "quo:useSliceProps",
+    "[@quojs/react] `useSliceProps()` is deprecated and will be removed in 0.5.0. Use `useAtomicProps()`."
+  );
+  return _useSlicePropsImpl<R, S, T>(specs, selector, isEqual);
 }

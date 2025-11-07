@@ -8,7 +8,7 @@
 
 > **useStore**\<`AM`, `R`, `S`\>(): `StoreInstance`\<`R`, `S`, `AM`\>
 
-Defined in: [hooks/hooks.ts:99](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/hooks.ts#L99)
+Defined in: [hooks/hooks.ts:100](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/hooks.ts#L100)
 
 Returns the current StoreInstance from [StoreContext](../variables/StoreContext.md).
 Throws if used outside of a `<StoreProvider>`.
@@ -25,7 +25,7 @@ Action map type.
 
 `R` *extends* `string`
 
-Slice name union.
+Reducer name union.
 
 ### S
 

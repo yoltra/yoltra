@@ -4,33 +4,6 @@
 
 # @quojs/react
 
-## Hooks
-
-Atomic subscriptions:
-- [useSliceProp](hooks/useSliceProp.md)
-- [useSliceProps](hooks/useSliceProps.md)
-
-Store and Dispatch:
-- [useStore](hooks/useStore.md)
-- [useDispatch](hooks/useDispatch.md)
-
-Suspense:
-- [useSuspenseSliceProp](hooks/useSuspenseSliceProp.md)
-- [useSuspenseSliceProps](hooks/useSuspenseSliceProps.md)
-
-If you ever need a selector:
-- [useSelector](hooks/useSelector.md)
-
-## Functions
-
-What you really care about is [**createQuoHooks**](functions/createQuoHooks.md), it allows you to craft
-typed hooks for your Store. the rest are used internally:
-
-- [clearSuspenseCache](functions/clearSuspenseCache.md)
-- [invalidateSliceProp](functions/invalidateSliceProp.md)
-- [invalidateSlicePropsByReducer](functions/invalidateSlicePropsByReducer.md)
-- [shallowEqual](functions/shallowEqual.md)
-
 ## Interfaces
 
 - [SuspenseSlicePropOptions](interfaces/SuspenseSlicePropOptions.md)
@@ -38,10 +11,33 @@ typed hooks for your Store. the rest are used internally:
 
 ## Type Aliases
 
-- [UseSliceProp](type-aliases/UseSliceProp.md)
-- [UseSliceProps](type-aliases/UseSliceProps.md)
+- [SuspenseAtomicPropOptions](type-aliases/SuspenseAtomicPropOptions.md)
+- [SuspenseAtomicPropsOptions](type-aliases/SuspenseAtomicPropsOptions.md)
+- [UseAtomicProp](type-aliases/UseAtomicProp.md)
+- [UseAtomicProps](type-aliases/UseAtomicProps.md)
 
 ## Variables
 
 - [StoreContext](variables/StoreContext.md)
 - [StoreProvider](variables/StoreProvider.md)
+
+## Functions
+
+- [clearSuspenseCache](functions/clearSuspenseCache.md)
+- [createQuoHooks](functions/createQuoHooks.md)
+- [invalidateAtomicProp](functions/invalidateAtomicProp.md)
+- [invalidateAtomicPropsByReducer](functions/invalidateAtomicPropsByReducer.md)
+- [~~invalidateSliceProp~~](functions/invalidateSliceProp.md)
+- [~~invalidateSlicePropsByReducer~~](functions/invalidateSlicePropsByReducer.md)
+- [shallowEqual](functions/shallowEqual.md)
+- [useAtomicProp](functions/useAtomicProp.md)
+- [useAtomicProps](functions/useAtomicProps.md)
+- [useDispatch](functions/useDispatch.md)
+- [useSelector](functions/useSelector.md)
+- [~~useSliceProp~~](functions/useSliceProp.md)
+- [~~useSliceProps~~](functions/useSliceProps.md)
+- [useStore](functions/useStore.md)
+- [useSuspenseAtomicProp](functions/useSuspenseAtomicProp.md)
+- [useSuspenseAtomicProps](functions/useSuspenseAtomicProps.md)
+- [~~useSuspenseSliceProp~~](functions/useSuspenseSliceProp.md)
+- [~~useSuspenseSliceProps~~](functions/useSuspenseSliceProps.md)

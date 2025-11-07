@@ -5,12 +5,12 @@ import type { iFilterState, iTodo } from "../../../types";
 import { TodoItem } from "../todoItem/TodoItem";
 
 import "./TodoList.style.scss";
-import { useSliceProps } from "../../../state/quojs/hooks";
+import { useAtomicProps } from "../../../state/quojs/hooks";
 
 export interface iTodoListProps { }
 
 export const TodoList: React.FC<iTodoListProps> = (_: iTodoListProps) => {
-    const { data, filter } = useSliceProps(
+    const { data, filter } = useAtomicProps(
         [
             { reducer: "todo", property: "filter" },
         ],

@@ -4,13 +4,11 @@
 
 [@quojs/react](../README.md) / invalidateSlicePropsByReducer
 
-# Function: invalidateSlicePropsByReducer()
+# ~~Function: invalidateSlicePropsByReducer()~~
 
 > **invalidateSlicePropsByReducer**(`reducer`): `void`
 
-Defined in: [hooks/suspense.ts:387](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/suspense.ts#L387)
-
-Invalidates **all** cache entries under a given reducer (slice).
+Defined in: [hooks/suspense.ts:369](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/suspense.ts#L369)
 
 ## Parameters
 
@@ -22,8 +20,6 @@ Invalidates **all** cache entries under a given reducer (slice).
 
 `void`
 
-## Example
+## Deprecated
 
-```ts
-invalidateSlicePropsByReducer('todos');
-```
+Use [invalidateAtomicPropsByReducer](invalidateAtomicPropsByReducer.md) instead. Will be removed in `0.5.0`.

@@ -6,9 +6,9 @@
 
 # Interface: SuspenseSlicePropOptions\<T, S\>
 
-Defined in: [hooks/suspense.ts:147](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/suspense.ts#L147)
+Defined in: [hooks/suspense.ts:131](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/suspense.ts#L131)
 
-Options for [useSuspenseSliceProp](../functions/useSuspenseSliceProp.md).
+Options for [useSuspenseAtomicProp](../functions/useSuspenseAtomicProp.md).
 
 ## Type Parameters
 
@@ -30,7 +30,7 @@ The store state record keyed by reducer names.
 
 > `optional` **key**: `string`
 
-Defined in: [hooks/suspense.ts:167](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/suspense.ts#L167)
+Defined in: [hooks/suspense.ts:151](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/suspense.ts#L151)
 
 Optional extra key to distinguish different usages over the same path.
 Useful when the same path has different `load` behaviors or parameters.
@@ -41,10 +41,10 @@ Useful when the same path has different `load` behaviors or parameters.
 
 > **load**: (`valueAtPath`, `slice`) => `T` \| `Promise`\<`T`\>
 
-Defined in: [hooks/suspense.ts:152](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/suspense.ts#L152)
+Defined in: [hooks/suspense.ts:136](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/suspense.ts#L136)
 
 Loader that can be sync or async.
-Called with the **value at the path** (or the whole slice for glob paths) and the **slice** itself.
+Called with the **value at the path** (or the whole reducer for glob paths) and the **reducer state** itself.
 
 #### Parameters
 
@@ -66,7 +66,7 @@ Called with the **value at the path** (or the whole slice for glob paths) and th
 
 > `optional` **staleTime**: `number`
 
-Defined in: [hooks/suspense.ts:161](https://github.com/quojs/quojs/blob/2d6b527415c15d6d74080cf0fe76f6103c5ec172/packages/react/src/hooks/suspense.ts#L161)
+Defined in: [hooks/suspense.ts:145](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/suspense.ts#L145)
 
 Optional cache **stale time** in milliseconds.
 

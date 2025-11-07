@@ -10,7 +10,7 @@ import {
 } from "@ant-design/icons";
 
 import { eTodoStatus, type iTodo } from "../../../types";
-import { useDispatch, useSliceProp } from "../../../state/quojs/hooks";
+import { useDispatch, useAtomicProp } from "../../../state/quojs/hooks";
 import { TodoItemEdit } from "./TodoItemEdit";
 
 import "./TodoItem.style.scss";
@@ -25,7 +25,7 @@ export const TodoItem: React.FC<iTodoItemProps> = ({
     const [isEditing, setIsEditing] = useState(false);
     const dispatch = useDispatch();
 
-    const data: iTodo = useSliceProp(
+    const data: iTodo = useAtomicProp(
         { reducer: "todo", property: `data.${id}` },
         v => v as iTodo
     );

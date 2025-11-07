@@ -1,4 +1,4 @@
-import { useSliceProp } from "../../../../state/hooks";
+import { useAtomicProp } from "../../../../state/hooks";
 
 import "./Circle.style.scss";
 
@@ -15,7 +15,7 @@ export const Circle = ({
     group,
 }: RectComponentProps) => {
     const path = `${group}.${id}` as const; // capture exact literal
-    const { x, y } = useSliceProp({
+    const { x, y } = useAtomicProp({
         reducer: 'logo',
         property: path,
     }) ?? { x: 0, y: 0 }; // have to wait for the first sim frame

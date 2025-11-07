@@ -2,7 +2,7 @@ import { useRef } from "react";
 
 import { Circle } from "./items/circle/Circle.component";
 
-import { useDispatch, useSliceProp } from "../../state/hooks";
+import { useDispatch, useAtomicProp } from "../../state/hooks";
 import { eventToSvgUserCoords } from "../../utils";
 
 import "./Screen.style.scss";
@@ -14,15 +14,15 @@ export const Screen = ({ }: ScreenComponentProps) => {
     const dispatch = useDispatch();
 
     // atomic subscriptions to specific props
-    const { height, width } = useSliceProp({
+    const { height, width } = useAtomicProp({
         reducer: 'logo',
         property: "size",
     });
-    const isEnabled = useSliceProp({
+    const isEnabled = useAtomicProp({
         reducer: 'logo',
         property: "enabled",
     });
-    const itemCount = useSliceProp({
+    const itemCount = useAtomicProp({
         reducer: 'logo',
         property: "itemCount",
     });

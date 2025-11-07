@@ -73,7 +73,7 @@ corpo (opcional)
 
 **Exemplos**
 - `feat(quojs): adicionar assinaturas de curingas de caminho profundo`
-- `fix(quojs-react): normaliza o ponto inicial em useSliceProp`
+- `fix(quojs-react): normaliza o ponto inicial em useAtomicProp`
 - `test(store): cobrir devtools DISPATCH aplicar estado`
 
 **Assinatura DCO** — cada *commit* deve incluir uma linha de assinatura:
