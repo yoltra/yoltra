@@ -1,6 +1,6 @@
 {
   "name": "@quojs/react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "React bindings for Quo.js",
   "scripts": {
     "build": "tsc && vite build",
