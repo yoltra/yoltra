@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@quojs/core",
+      "comment": "chore(core): devDeps – bump Vite for security",
+      "type": "none"
+    }
+  ],
+  "packageName": "@quojs/core"
+}
