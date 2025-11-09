@@ -2,13 +2,26 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
+
+    // Keep default tsc runs happy (no output from this config)
     "noEmit": true,
+
+    // Make TS lenient toward deps and quicker
     "skipLibCheck": true,
-    "types": ["vitest/globals"],
-    "downlevelIteration": false,
+
+    // Helpers & compat
+    "downlevelIteration": true,
     "importHelpers": true,
     "noEmitHelpers": true,
+    "esModuleInterop": true,
+
+    // IMPORTANT: avoid NodeNext's extension rules and keep TS-friendly bare imports
+    "moduleResolution": "Bundler",
+    "module": "ESNext",
+
+    // Test-only types are handled by tsconfig.test.json / vitest
+    "types": ["node"]
   },
-  "include": ["src", "tests"],
-  "exclude": ["dist", "node_modules"]
+  "include": ["src"],            // <-- exclude tests from the default "tsc"
+  "exclude": ["dist", "node_modules", "tests"]
 }

@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "description": "React bindings for Quo.js",
   "scripts": {
-    "build": "tsc && vite build",
+    "build": "tsc -p tsconfig.build.json && vite build",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix",
     "test": "pnpm vitest --coverage --watch=false",
@@ -34,8 +34,8 @@
     "url": "https://github.com/quojs/quojs/issues"
   },
   "type": "module",
-  "main": "dist/quojs-react.cjs.js",
-  "module": "dist/quojs-react.esm.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
   "types": "dist/types/index.d.ts",
   "sideEffects": false,
   "publishConfig": {
@@ -91,10 +91,20 @@
     "typescript": "5.9.3",
     "typedoc": "^0.28.13",
     "typedoc-plugin-markdown": "4.9.0",
-    "typedoc-plugin-localization":"3.0.6",
+    "typedoc-plugin-localization": "3.0.6",
     "vite-plugin-dts": "^4.5.4",
     "vite-tsconfig-paths": "^4.3.2",
     "vite": "^7.1.11",
     "vitest": "3.2.4"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "react-native": "./dist/index.mjs",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
   }
 }

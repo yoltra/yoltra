@@ -2,8 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import dts from "vite-plugin-dts";
 import banner from "vite-plugin-banner";
-import tsconfigPaths from 'vite-tsconfig-paths';
-import path from 'node:path';
+import tsconfigPaths from "vite-tsconfig-paths";
 
 import pkg from "./package.json" assert { type: "json" };
 
@@ -25,20 +24,18 @@ export default defineConfig({
       include: ["src"],
       logLevel: "silent"
     }),
-    tsconfigPaths(),
-    banner(licenseText),
+    tsconfigPaths({
+      projects: ["./tsconfig.json"],
+      ignoreConfigErrors: true
+    }),
+    banner(licenseText)
   ],
   build: {
     lib: {
       entry: "src/index.ts",
       name: "quojs-react",
-      formats: ["es", "cjs", "umd"],
-      fileName: (format) =>
-        format === "cjs"
-          ? "quojs-react.cjs.js"
-          : format === "es"
-            ? "quojs-react.esm.js"
-            : "quojs-react.umd.js",
+      formats: ["es", "cjs"],
+      fileName: (format) => (format === "cjs" ? "index.cjs" : "index.mjs")
     },
     outDir: "dist",
     sourcemap: true,
@@ -46,28 +43,23 @@ export default defineConfig({
     minify: true,
     emptyOutDir: true,
     rollupOptions: {
-      external: ["react", "react-dom", "tslib"],
+      external: ["react", "react-dom", "@quojs/core", "tslib"],
       output: {
         compact: true,
         globals: {
           react: "React",
           "react-dom": "ReactDOM",
-          tslib: "tslib",
-        },
+          tslib: "tslib"
+        }
       },
-      treeshake: true,
+      treeshake: true
     }
   },
   resolve: {
-    dedupe: ["tslib"],
-    alias: {
-      tslib: "tslib/tslib.es6.js",
-      "@quojs/core": path.resolve(__dirname, "../core/src/index.ts")
-    }
+    dedupe: ["tslib"]
   },
-
   optimizeDeps: {
     include: [],
-    exclude: ["tslib"]
+    exclude: ["tslib", "@quojs/core"]
   }
 });

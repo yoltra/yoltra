@@ -6,13 +6,13 @@ set -Eeuo pipefail
 #
 # What it does:
 #   - Verifies Verdaccio reachability.
-#   - Ensures NPM_AUTH_TOKEN for //localhost:4873/.
+#   - Ensures NPM_TOKEN for //localhost:4873/.
 #   - Optionally bumps versions via "rush version".
-#   - Publishes all @quojs/* packages to Verdaccio with:
+#   - Publishes @quojs/* packages to Verdaccio only if the EXACT version
+#     does not already exist (skips duplicates to avoid 409).
 #       --registry <verdaccio>
 #       --access public (scoped)
 #       --ignore-scripts (avoid husky & prepack mishaps)
-#       --provenance=false (npm 9/10 provenance breaks on non-npmjs)
 #
 # Usage:
 #   common/scripts/publish-verdaccio.sh [--registry URL]
@@ -53,7 +53,6 @@ done
 
 need curl
 need node
-need npm
 need pnpm
 need rush
 
@@ -68,13 +67,13 @@ log "Verdaccio ping OK."
 
 # 2) Token
 HOST="$(printf "%s" "$REGISTRY" | sed -E 's|^https?://||; s|/.*$||')"
-if [[ -z "${NPM_AUTH_TOKEN:-}" ]]; then
+if [[ -z "${NPM_TOKEN:-}" ]]; then
   if [[ -f "$HOME/.npmrc" ]]; then
     TOKEN="$(awk -v h="$HOST" 'match($0, "^//"h"/:_authToken=(.+)$", a){print a[1]}' "$HOME/.npmrc" | tail -n1 || true)"
-    [[ -n "$TOKEN" ]] && export NPM_AUTH_TOKEN="$TOKEN"
+    [[ -n "$TOKEN" ]] && export NPM_TOKEN="$TOKEN"
   fi
 fi
-[[ -n "${NPM_AUTH_TOKEN:-}" ]] || die "NPM_AUTH_TOKEN not set for //$HOST/. Run: npm adduser --registry ${REGISTRY}"
+[[ -n "${NPM_TOKEN:-}" ]] || die "NPM_TOKEN not set for //$HOST/. Run: npm adduser --registry ${REGISTRY}"
 
 # 3) Optional bump
 if [[ "$SKIP_BUMP" != "true" ]]; then
@@ -86,16 +85,83 @@ else
   warn "Skipping version bump (--skip-bump)."
 fi
 
-# 4) Publish all public packages (@quojs/*) without Git pushes
-log "Publishing all @quojs/* packages to ${REGISTRY}…"
-pnpm -r --filter "@quojs/*" --filter "!@quojs/repo-tools" --filter "!@quojs/quojs" \
-  exec -- npm publish \
-    --registry "$REGISTRY" \
-    --access public \
-    --ignore-scripts \
-    --provenance=false
+# 4) Discover publish targets strictly under ./packages/*/package.json
+log "Discovering @quojs/* publish targets…"
 
-log "Publish completed."
+# Outputs lines: "<name>\t<version>\t<absPath>"
+PUBLISH_LIST="$(
+  find "$REPO_ROOT/packages" -mindepth 2 -maxdepth 2 -type f -name package.json -print0 \
+    | xargs -0 -I{} bash -c '
+        set -euo pipefail
+        PKG_JSON="{}"
+        DIR="$(dirname "$PKG_JSON")"
+
+        # Read fields via Node; pass the path as argv[1] to avoid quoting issues
+        name=$(node -p "(() => { try { const p = require(process.argv[1]); return p.name ?? \"\" } catch { return \"\" } })()" "$PKG_JSON")
+        version=$(node -p "(() => { try { const p = require(process.argv[1]); return p.version ?? \"\" } catch { return \"\" } })()" "$PKG_JSON")
+        is_private=$(node -p "(() => { try { const p = require(process.argv[1]); return p.private ? 1 : 0 } catch { return 0 } })()" "$PKG_JSON")
+
+        # Filters: scoped, not private, has version; exclude meta/tools packages
+        if [[ "$name" == @quojs/* && "$is_private" -eq 0 && -n "$version" ]]; then
+          if [[ "$name" != "@quojs/repo-tools" && "$name" != "@quojs/quojs" ]]; then
+            printf "%s\t%s\t%s\n" "$name" "$version" "$DIR"
+          fi
+        fi
+      ' \
+    | sort -u
+)"
+
+if [[ -z "$PUBLISH_LIST" ]]; then
+  warn "No publishable @quojs/* packages found under ./packages."
+fi
+
+# 4b) Check registry and publish only missing versions (via pnpm)
+if [[ -z "$PUBLISH_LIST" ]]; then
+  warn "No publishable @quojs/* workspaces found."
+else
+  log "Checking which versions are missing on the registry…"
+  MISSING=()
+  while IFS=$'\t' read -r NAME VERSION PKG_DIR; do
+    [[ -z "${NAME:-}" ]] && continue
+    if pnpm view --registry "$REGISTRY" "$NAME@$VERSION" version >/dev/null 2>&1; then
+      log "SKIP  $NAME@$VERSION (already on registry)"
+    else
+      log "NEEDS $NAME@$VERSION"
+      MISSING+=("$NAME"$'\t'"$VERSION"$'\t'"$PKG_DIR")
+    fi
+  done <<< "$PUBLISH_LIST"
+
+  if (( ${#MISSING[@]} == 0 )); then
+    log "Nothing to publish. All versions already exist."
+  else
+    log "Publishing ${#MISSING[@]} package(s)…"
+    for LINE in "${MISSING[@]}"; do
+      NAME="${LINE%%$'\t'*}"
+      REST="${LINE#*$'\t'}"; VERSION="${REST%%$'\t'*}"
+      PKG_DIR="${LINE##*$'\t'}"
+
+      log "Publishing $NAME@$VERSION from $PKG_DIR"
+      (
+        cd "$PKG_DIR"
+        # pnpm publish to Verdaccio; ignore scripts; no provenance flag needed
+        if ! pnpm publish \
+              --registry "$REGISTRY" \
+              --access public \
+              --ignore-scripts \
+              --no-git-checks; then
+          code=$?
+          warn "Publish failed for $NAME@$VERSION (exit $code). Checking if it’s just already published…"
+          if pnpm view --registry "$REGISTRY" "$NAME@$VERSION" version >/dev/null 2>&1; then
+            warn "It appears published now; continuing."
+          else
+            die "Hard failure publishing $NAME@$VERSION (exit $code)."
+          fi
+        fi
+      )
+    done
+    log "Publish step completed."
+  fi
+fi
 
 # 5) Optional example install/build smoke (against Verdaccio)
 if [[ "$SKIP_TESTS" == "true" ]]; then
