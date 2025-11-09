@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import banner from "vite-plugin-banner";
-
 import pkg from "./package.json" assert { type: "json" };
 
 const year = new Date().getFullYear();
@@ -22,10 +21,10 @@ export default defineConfig({
         "src/**/*.test.ts",
         "src/**/*.spec.ts",
         "tests/**/*.test.ts",
-        "tests/**/*.spec.ts",
-      ],
+        "tests/**/*.spec.ts"
+      ]
     }),
-    banner(licenseText),
+    banner(licenseText)
   ],
   build: {
     lib: {
@@ -33,30 +32,19 @@ export default defineConfig({
       name: "quojs",
       formats: ["cjs", "es", "umd"],
       fileName: (format) =>
-        format === "cjs" ? "quojs.cjs.js" : format === "es" ? "quojs.esm.js" : "quojs.umd.js",
+        format === "cjs"
+          ? "quojs.cjs.js"
+          : format === "es"
+          ? "quojs.esm.js"
+          : "quojs.umd.js"
     },
-    rollupOptions: {
-      external: ["tslib"],
-      output: {
-        globals: {
-          tslib: "tslib",
-        },
-      },
-    },
+    rollupOptions: {},
     outDir: "dist",
     sourcemap: true,
-    target: "es2019",
+    target: "es2020",
     minify: true,
-    emptyOutDir: true,
+    emptyOutDir: true
   },
-  resolve: {
-    dedupe: ["tslib"],
-    alias: {
-      tslib: "tslib/tslib.es6.js",
-    }
-  },
-  optimizeDeps: {
-    include: [],
-    exclude: ['tslib']
-  }
+  resolve: {},
+  optimizeDeps: { include: [] }
 });

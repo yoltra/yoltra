@@ -13,7 +13,7 @@ export default defineConfig({
       "./src/types.ts",
       "global.d.ts",
       "vite.config.ts",
-      "/.rollup.config.js",
+      "/.rollup.config.js"
     ],
     coverage: {
       reporter: ["text", "html", "lcov"],
@@ -22,10 +22,11 @@ export default defineConfig({
         "./src/types.ts",
         "**/*.d.ts",
         "**/*.config.ts",
-        "/.rollup.config.js",
+        "/.rollup.config.js"
       ],
-      thresholds: { lines: 0.95, branches: 0.95, functions: 0.95, statements: 0.95 },
+      thresholds: { lines: 0.95, branches: 0.95, functions: 0.95, statements: 0.95 }
     },
-    typecheck: { tsconfig: "tsconfig.test.json" },
-  },
+    // point to the renamed vitest tsconfig
+    typecheck: { tsconfig: "tsconfig.vitest.json" }
+  }
 });

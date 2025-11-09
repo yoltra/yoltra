@@ -177,7 +177,7 @@ export class Store<AM extends ActionMapBase, R extends string, S extends Record<
     this.name = spec.name ?? "Quo.js Store";
     this.reducerBus = new EventBus<AM>();
     this.connectorBus = new LooseEventBus();
-    this.middleware = [...spec.middleware] as any;
+    this.middleware = [...(spec.middleware ?? [])] as any;
     this.reducers = {} as Record<R, Reducer<S[R], AM>>;
     this.state = {} as any;
 
@@ -195,9 +195,16 @@ export class Store<AM extends ActionMapBase, R extends string, S extends Record<
       for (const eff of spec.effects) this.effects.add(eff);
     }
 
+    type DevtoolsConn = {
+      init: (state: any) => void;
+      send: (action: any, state: any) => void;
+      subscribe?: (listener: (message: any) => void) => void;
+    };
+
     const ext = (typeof window !== 'undefined' && (window as any).__REDUX_DEVTOOLS_EXTENSION__) as
-      | { connect: (opts: any) => { init: (state: any) => void; send: (action: any, state: any) => void } }
+      | { connect: (opts: any) => DevtoolsConn }
       | undefined;
+
 
     if (process.env.NODE_ENV !== 'production' && ext) {
       const instanceId = spec.name ?? "Quo.js Store";
@@ -217,7 +224,7 @@ export class Store<AM extends ActionMapBase, R extends string, S extends Record<
      * DevTools wiring
      */
     this.devtools?.init(this.state);
-    this.devtools?.subscribe((msg: any) => {
+    this.devtools?.subscribe?.((msg: any) => {
       if (msg.type !== "DISPATCH") return;
       const kind = msg.payload?.type as string | undefined;
 
@@ -606,7 +613,7 @@ export class Store<AM extends ActionMapBase, R extends string, S extends Record<
   public registerReducer(name: string, spec: ReducerSpec<any, AM>): () => void {
     if (name in this.reducers) throw new Error(`Reducer ${name} already exists`);
 
-    this.mountSlice(name as R, spec as ReducerSpec<S[Extract<R, string>], AM>, {
+    this.mountSlice(name as R, spec as ReducerSpec<S[R], AM>, {
       preserveState: false,
     });
 
