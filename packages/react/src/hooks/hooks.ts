@@ -226,6 +226,16 @@ export function useSelector<S extends Record<any, any>, T>(
  *
  * @public
  */
+// Light first overloads to avoid deep Dotted<> instantiation on large types
+export function useAtomicProp<R extends string, S extends Record<R, any>>(
+  spec: { reducer: R; property: string },
+): unknown;
+export function useAtomicProp<R extends string, S extends Record<R, any>, T>(
+  spec: { reducer: R; property: string },
+  map: (value: any) => T,
+  isEqual?: (a: T, b: T) => boolean,
+): T;
+// Precise overloads (kept)
 export function useAtomicProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>>(
   spec: { reducer: R; property: P },
 ): PathValue<S[R], P>;
@@ -343,17 +353,40 @@ export function useSliceProp<R extends string, S extends Record<R, any>, T = any
  *
  * @public
  */
+// Light first overload to keep callsites simple
+export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
+  specs: Array<{ reducer: R; property: OneOrMany<string> }>,
+  selector: (state: S) => T,
+  isEqual?: (a: T, b: T) => boolean
+): T;
+// Precise overload (kept)
 export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
   specs: Array<{ reducer: R; property: OneOrMany<WithGlob<Dotted<S[R]>>> }>,
   selector: (state: S) => T,
+  isEqual?: (a: T, b: T) => boolean
+): T;
+// Implementation widened to be compatible with both overloads
+export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
+  specs: Array<{
+    reducer: R;
+    property:
+      | OneOrMany<string>
+      | OneOrMany<WithGlob<Dotted<S[R]>>>;
+  }>,
+  selector: (state: S) => T,
   isEqual: (a: T, b: T) => boolean = Object.is
 ): T {
-  return _useSlicePropsImpl<R, S, T>(specs, selector, isEqual);
+  return _useSlicePropsImpl<R, S, T>(specs as any, selector, isEqual);
 }
 
 /** @internal (old slicy impl) */
 function _useSlicePropsImpl<R extends string, S extends Record<R, any>, T>(
-  specs: Array<{ reducer: R; property: OneOrMany<WithGlob<Dotted<S[R]>>> }>,
+  specs: Array<{
+    reducer: R;
+    property:
+      | OneOrMany<string>
+      | OneOrMany<WithGlob<Dotted<S[R]>>>;
+  }>,
   selector: (state: S) => T,
   isEqual: (a: T, b: T) => boolean = Object.is
 ): T {
@@ -367,7 +400,7 @@ function _useSlicePropsImpl<R extends string, S extends Record<R, any>, T>(
     return specs.map((sp) => ({
       reducer: sp.reducer,
       property: Array.isArray(sp.property)
-        ? (sp.property as readonly string[]).map((p) => normalizePath(p))
+        ? (sp.property as readonly string[]).map((p) => normalizePath(p as string))
         : normalizePath(sp.property as string),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -424,5 +457,5 @@ export function useSliceProps<R extends string, S extends Record<R, any>, T>(
     "quo:useSliceProps",
     "[@quojs/react] `useSliceProps()` is deprecated and will be removed in 0.5.0. Use `useAtomicProps()`."
   );
-  return _useSlicePropsImpl<R, S, T>(specs, selector, isEqual);
+  return _useSlicePropsImpl<R, S, T>(specs as any, selector as any, isEqual as any);
 }

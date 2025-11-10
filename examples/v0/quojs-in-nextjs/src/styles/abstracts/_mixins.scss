@@ -1,0 +1,53 @@
+@mixin focus-ring($offset: 0.2rem) {
+  outline: none;
+  box-shadow: 0 0 0 $offset var(--focus-ring-offset, transparent),
+  0 0 0 calc(#{$offset} + 0.2rem) var(--focus-ring, color(display-p3 0 0.5 1 / 0.6));
+}
+
+@mixin surface($bg, $fg: auto, $border: var(--border-color)) {
+  background: $bg;
+  color: if($fg ==auto, var(--color-text), $fg);
+  border: 0.1rem solid $border;
+  border-radius: var(--radius-md);
+}
+
+@mixin clickable {
+  cursor: pointer;
+  transition:
+    background-color .15s ease,
+    color .15s ease,
+    border-color .15s ease,
+    box-shadow .15s ease,
+    transform .06s ease;
+
+  &:active {
+    transform: translateY(0.1rem);
+  }
+}
+
+@mixin section-accent($name) {
+  --accent: var(--section-#{$name});
+  --accent-ink: var(--section-#{$name}-on);
+}
+
+@mixin button-tonal($bg, $fg) {
+  background: $bg;
+  color: $fg;
+  border: 0.1rem solid color-mix(in srgb, $bg 70%, var(--border-color));
+  padding: 1.0rem 1.6rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+
+  &:hover {
+    background: color-mix(in srgb, $bg 88%, black);
+  }
+
+  &:focus-visible {
+    @include focus-ring();
+  }
+
+  &:disabled {
+    opacity: .5;
+    pointer-events: none;
+  }
+}

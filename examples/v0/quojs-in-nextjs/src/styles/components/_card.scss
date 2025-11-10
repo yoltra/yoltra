@@ -1,0 +1,53 @@
+@use "../abstracts/mixins" as *;
+
+.card {
+  @include surface(var(--elev-1));
+  box-shadow: var(--shadow-1);
+  padding: 1.6rem;
+  border-radius: var(--radius-lg);
+
+  &__title {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    color: var(--color-text);
+    line-height: var(--leading-tight);
+  }
+
+  &__meta {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    margin-bottom: 1.2rem;
+  }
+
+  &::before {
+    content: "";
+    display: block;
+    height: 0.4rem;
+    margin-bottom: 1.2rem;
+    background: var(--accent, var(--color-charcoal-400));
+    border-radius: 9999px;
+  }
+
+  /**
+   * Section accent context */
+  .section--cyan & {
+    @include section-accent(cyan);
+  }
+
+  .section--green & {
+    @include section-accent(green);
+  }
+
+  .section--amber & {
+    @include section-accent(amber);
+  }
+
+  .section--coral & {
+    @include section-accent(coral);
+  }
+
+  .section--magenta & {
+    @include section-accent(magenta);
+  }
+}

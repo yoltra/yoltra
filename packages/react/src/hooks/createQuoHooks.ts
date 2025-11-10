@@ -22,6 +22,10 @@ import { warnOnce } from "../utils/warnOnce";
  * @public
  */
 export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
+  // Light overloads to avoid deep Dotted<> instantiation at callsites
+  <R1 extends R>(spec: { reducer: R1; property: string }): unknown;
+  <R1 extends R, T>(spec: { reducer: R1; property: string }, map: (value: unknown) => T, isEqual?: (a: T, b: T) => boolean): T;
+
   // Exact path, no map -> PathValue<S[R1], P>
   <R1 extends R, P extends Dotted<S[R1]>>(
     spec: { reducer: R1; property: P },
@@ -51,6 +55,13 @@ export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
  * @public
  */
 export type UseAtomicProps<R extends string, S extends Record<R, any>> = {
+  // Light overload to avoid heavy type instantiation
+  <R1 extends R, T>(
+    specs: Array<{ reducer: R1; property: string | readonly string[] }>,
+    selector: (state: DeepReadonly<S>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T;
+
   <R1 extends R, T>(
     specs: Array<{
       reducer: R1;

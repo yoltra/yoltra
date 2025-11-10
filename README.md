@@ -3,8 +3,9 @@
 # Quo.js
 
 > [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/README.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/README.md)&nbsp; | &nbsp; 👉
-> [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/README.md)
+> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/README.md)&nbsp;
+> | &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/README.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/README.md)
 
 ![Bundle size](https://badgen.net/bundlephobia/min/@quojs/core)
 ![Bundle size](https://badgen.net/bundlephobia/minzip/@quojs/core)
@@ -21,17 +22,18 @@ Mode**.
 
 ## Packages
 
-- **[@quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** — Core store, reducers, middleware, effects
-  (framework‑agnostic)
-- **[@quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** — React provider & hooks
-  (Suspense/Concurrent‑ready)
+- **[@quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** — Core
+  store, reducers, middleware, effects (framework‑agnostic)
+- **[@quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** — React
+  provider & hooks (Suspense/Concurrent‑ready)
 
 ## [Runnable Examples](https://github.com/quojs/quojs/tree/main/packages)
 
-| Example                                                                                | Description                                                                                                             | Screenshot                                                                    |
-| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| **[Quo.js in React](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/README.md)**                          | A simple TODO application (check the [React Profiler](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md) comparison) | ![Quo.js logo](https://quojs.dev/assets/examples/profiler-quojs-frame-15.png) |
-| **[Kinetic logo of Quo.js (React + SVG)](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo/README.md)** | A kinetic logo made of ~1.5k SVG circles, driven by a tiny simulation engine and synchronized with a Quo.js store       | ![Quo.js logo](https://quojs.dev/assets/examples/quojs-dots.gif)              |
+| Example                                                                                                                             | Description                                                                                                                                                                  | Screenshot                                                                            |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **[Quo.js in React](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/README.md)**                                | A simple TODO application (check the [React Profiler](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md) comparison)               | ![Quo.js logo](https://quojs.dev/assets/examples/profiler-quojs-frame-15.png)         |
+| **[Kinetic logo of Quo.js (React + SVG)](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo/README.md)**       | A kinetic logo made of ~1.5k SVG circles, driven by a tiny simulation engine and synchronized with a Quo.js store                                                            | ![Quo.js logo](https://quojs.dev/assets/examples/quojs-dots.gif)                      |
+| **[Theme switcher App (Next.js v16 + Quo.js)](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-nextjs/README.md)** | a simple **theme switcher** (light ↔ dark) powered by `@quojs/core` and `@quojs/react`, proving Quo.js can manage application state seamlessly in **React 19 + Next.js 16**. | ![Quo.js logo](https://quojs.dev/assets/examples/quojs-in-nextjs--theme-switcher.png) |
 
 ## Why Quo.js?
 
@@ -64,7 +66,8 @@ popular libraries. Each document explores:
 - **Async & effects** (how workflows and side-effects are expressed)
 - **React integration** (selectors, Suspense, concurrent mode readiness)
 
-👉 Check out the comparisons [here](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md)
+👉 Check out the comparisons
+[here](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md)
 
 ## Quick Start (Monorepo)
 
@@ -90,15 +93,15 @@ See the **Developer Guide** for SDLC, caching, and releases:
 
 ### Core
 
-- [TypeDoc](https://github.com/quojs/quojs/blob/main/packages/core/docs/README.md): a more technical documentation extracted using
-  TypeDoc.
+- [TypeDoc](https://github.com/quojs/quojs/blob/main/packages/core/docs/README.md): a more
+  technical documentation extracted using TypeDoc.
 - [Developer Docs (WIP)](https://www.quojs.dev/?lang=en): quick-start guide, tutorial, recipes,
   etc.
 
 ### React bindings
 
-- [TypeDoc](https://github.com/quojs/quojs/blob/main/packages/react/docs/README.md): a more technical documentation extracted using
-  TypeDoc.
+- [TypeDoc](https://github.com/quojs/quojs/blob/main/packages/react/docs/README.md): a more
+  technical documentation extracted using TypeDoc.
 - [Developer Docs (WIP)](https://www.quojs.dev/?lang=en): quick-start guide, tutorial, recipes,
   etc.
 
@@ -113,7 +116,7 @@ See the **Developer Guide** for SDLC, caching, and releases:
 
 ## Status
 
-Quo.js is in **RC stage**. APIs are stable and **probably going to change**, types are strict, and it’s used in production.
-Feedback and PRs welcome.
+Quo.js is in **RC stage**. APIs are stable and **probably going to change**, types are strict,
+and it’s used in production. Feedback and PRs welcome.
 
 Made in 🇲🇽, for the world.

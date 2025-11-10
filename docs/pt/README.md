@@ -32,6 +32,7 @@ Concorrente**.
 | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | **[Quo.js em React](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/README.pt.md)**                          | Um aplicativo de tarefas simples (Confira a [comparação do React Profiler](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.pt.md)) | ![Quo.js logo](https://quojs.dev/assets/examples/profiler-quojs-frame-15.png) |
 | **[Logotipo Cinético do Quo.js (React + SVG)](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo/README.pt.md)** | Um logotipo cinético composto por aproximadamente 1.500 círculos SVG, controlado por um pequeno mecanismo de simulação e sincronizado com um armazenamento Quo.js. | ![Quo.js logo](https://quojs.dev/assets/examples/quojs-dots.gif)              |
+| **[Alternador de Tema](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-nextjs/README.md)**     | Um simples **alternador de tema** (claro ↔ escuro) alimentado por `@quojs/core` e `@quojs/react`, provando que o Quo.js pode gerenciar o estado do aplicativo perfeitamente em **React 19 + Next.js 16**. | ![Quo.js logo](https://quojs.dev/assets/examples/quojs-in-nextjs--theme-switcher.png) |
 
 ## Por que Quo.js?
 

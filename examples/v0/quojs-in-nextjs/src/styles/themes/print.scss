@@ -1,0 +1,21 @@
+/**
+ * @module Theme: Print */
+
+.theme-print {
+  --bg: #ffffff;
+  --color-text: #000000;
+  --border-color: #000000;
+
+  color: var(--color-text);
+  background: var(--bg);
+
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+  }
+}

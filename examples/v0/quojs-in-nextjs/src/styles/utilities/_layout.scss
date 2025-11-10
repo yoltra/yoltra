@@ -1,0 +1,12 @@
+.container {
+  width: min(100% - 3.2rem, var(--container-max));
+  margin-inline: auto;
+}
+
+.stack>*+* {
+  margin-top: var(--stack-gap, 1.6rem);
+}
+
+.inline>*+* {
+  margin-left: var(--inline-gap, 1.2rem);
+}

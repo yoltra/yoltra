@@ -1,0 +1,39 @@
+@use "../abstracts/mixins" as *;
+
+.button {
+  @include clickable;
+
+  &--primary {
+    @include button-tonal(var(--color-charcoal-900), var(--color-on-charcoal));
+  }
+
+  &--section {
+    background: var(--accent, var(--color-charcoal-700));
+    color: var(--accent-ink, var(--color-text));
+    border: 0.1rem solid color-mix(in srgb, var(--accent) 60%, var(--border-color));
+
+    &:hover {
+      background: color-mix(in srgb, var(--accent) 86%, black);
+    }
+
+    &:focus-visible {
+      @include focus-ring();
+    }
+  }
+  
+  &--success {
+    @include button-tonal(var(--aux-success), #0b120f);
+  }
+
+  &--warning {
+    @include button-tonal(var(--aux-warning), #0f0a00);
+  }
+
+  &--info {
+    @include button-tonal(var(--aux-info), #070b12);
+  }
+
+  &--error {
+    @include button-tonal(var(--aux-error), #110707);
+  }
+}

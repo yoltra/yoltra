@@ -33,6 +33,7 @@ et le Mode Concurrent**.
 | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | **[Quo.js dans React](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/README.fr.md)**                          | Une application TODO simple (consultez l'article [comparatif React Profiler](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.fr.md)) | ![Quo.js logo](https://quojs.dev/assets/examples/profiler-quojs-frame-15.png) |
 | **[Logo cinétique de Quo.js (React + SVG)](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo/README.fr.md)** | Un logo cinétique composé d'environ 1 500 cercles SVG, animé par un petit moteur de simulation et synchronisé avec une boutique Quo.js | ![Quo.js logo](https://quojs.dev/assets/examples/quojs-dots.gif)              |
+| **[Commutateur de Thème](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-nextjs/README.md)**     | Un simple **commutateur de thème** (clair ↔ sombre) propulsé par `@quojs/core` et `@quojs/react`, prouvant que Quo.js peut gérer l’état d’une application sans friction dans **React 19 + Next.js 16**. | ![Quo.js logo](https://quojs.dev/assets/examples/quojs-in-nextjs--theme-switcher.png) |
 
 ## Pourquoi Quo.js ?
 
