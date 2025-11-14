@@ -22,10 +22,6 @@ import { warnOnce } from "../utils/warnOnce";
  * @public
  */
 export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
-  // Light overloads to avoid deep Dotted<> instantiation at callsites
-  <R1 extends R>(spec: { reducer: R1; property: string }): unknown;
-  <R1 extends R, T>(spec: { reducer: R1; property: string }, map: (value: unknown) => T, isEqual?: (a: T, b: T) => boolean): T;
-
   // Exact path, no map -> PathValue<S[R1], P>
   <R1 extends R, P extends Dotted<S[R1]>>(
     spec: { reducer: R1; property: P },
@@ -44,6 +40,10 @@ export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
     map: (value: unknown) => T,
     isEqual?: (a: T, b: T) => boolean,
   ): T;
+
+  // Light overloads to avoid deep Dotted<> instantiation at call-sites
+  <R1 extends R>(spec: { reducer: R1; property: string }): unknown;
+  <R1 extends R, T>(spec: { reducer: R1; property: string }, map: (value: unknown) => T, isEqual?: (a: T, b: T) => boolean): T;
 };
 
 /**
@@ -215,8 +215,8 @@ export function createQuoHooks<
       const isGlob = hasWildcard(normalizedSpec.property);
       const read = () => {
         const full = store.getState() as DeepReadonly<S>;
-        // @ts-expect-error standard pattern for TS overloads
-        const slice = full[normalizedSpec.reducer];
+        // Fix the indexing issue by using type assertion
+        const slice = (full as any)[normalizedSpec.reducer];
         const source = isGlob ? slice : getAtPath(slice, normalizedSpec.property);
         return map ? map(source) : source;
       };
@@ -325,7 +325,7 @@ export function createQuoHooks<
       "quo:createHooks:useSliceProps",
       "[@quojs/react] `useSliceProps()` is deprecated and will be removed in 0.5.0. Use `useAtomicProps()`."
     );
-    
+
     return useAtomicProps(specs as any, selector as any, isEqual as any);
   }) as unknown as UseAtomicPropsOverloads;
 
