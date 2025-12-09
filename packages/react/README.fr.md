@@ -13,23 +13,23 @@
 ![npm downloads](https://badgen.net/npm/dm/@quojs/react)
 ![License](https://badgen.net/npm/license/@quojs/react)
 
-Extension officielle **React** pour **Quo.js**, un conteneur d’état prévisible qui redonne
-vie à la simplicité de Redux classique tout en ajoutant :
+Extension officielle **React** pour **Quo.js**, un conteneur d’état prévisible qui redonne vie à
+la simplicité de Redux classique tout en ajoutant :
 
-- **Canaux + événements** à la place des types d’action  
-- **Middleware asynchrones natifs** et **effets**, sans la cérémonie des thunks/sagas  
-- **Abonnements précis** à des chemins pointés ou à des motifs génériques (wildcards)  
-- **Garanties d’immuabilité** avec gel profond (`deep-freeze`) et détection fine des changements  
+- **Canaux + événements** à la place des types d’action
+- **Middleware asynchrones natifs** et **effets**, sans la cérémonie des thunks/sagas
+- **Abonnements précis** à des chemins pointés ou à des motifs génériques (wildcards)
+- **Garanties d’immuabilité** avec gel profond (`deep-freeze`) et détection fine des changements
 - Une surface d’API réduite et explicite, facile à raisonner
 
 Ce package fournit :
 
-- `<StoreProvider>` pour placer un store **Quo.js** dans le contexte React  
+- `<StoreProvider>` pour placer un store **Quo.js** dans le contexte React
 - Hooks :
   - `useStore`, `useDispatch`, `useSelector`
-  - `useSliceProp` et `useSliceProps` pour des re-rendus **granulaires**
-  - `useSuspenseSliceProp` et `useSuspenseSliceProps` pour les flux de données **Suspense**
-  - Aides pour le cache de Suspense : `invalidateSliceProp`, `invalidateSlicePropsByReducer`,
+  - `useAtomicProp` et `useAtomicProps` pour des re-rendus **granulaires**
+  - `useSuspenseAtomicProp` et `useSuspenseAtomicProps` pour les flux de données **Suspense**
+  - Aides pour le cache de Suspense : `invalidateAtomicProp`, `invalidateAtomicPropsByReducer`,
     `clearSuspenseCache`
 
 ## Installation
@@ -76,8 +76,14 @@ import { createQuoHooks } from "@quojs/react";
 import { QuoStoreContext } from "./context/QuoStoreContext.ts";
 import type { AppAM, AppState } from "./types"; // <-- récupérez-les à l’étape de création du Store
 
-export const { useStore, useDispatch, useSelector, useSliceProp, useSliceProps, shallowEqual } =
-  createQuoHooks<keyof AppState & string, AppState, AppAM>(QuoStoreContext);
+export const {
+  useStore,
+  useDispatch,
+  useSelector,
+  useAtomicProp,
+  useAtomicProps,
+  shallowEqual,
+} = createQuoHooks<keyof AppState & string, AppState, AppAM>(QuoStoreContext);
 ```
 
 Enveloppez votre application dans le provider Quo :
@@ -104,11 +110,11 @@ Lisez et mettez à jour l’état depuis React à l’aide des hooks :
 
 ```tsx
 import React from "react";
-import { useDispatch, useSliceProp } from "@quojs/react";
+import { useDispatch, useAtomicProp } from "@quojs/react";
 
 export function Atomic() {
   // Granulaire : ne se re-rend que lorsque "counter.value" change réellement
-  const value = useSliceProp({
+  const value = useAtomicProp({
     reducer: "count",
     property: "value",
   });
@@ -135,6 +141,6 @@ Vous modélisez les événements directement et reliez les reducers à `(channel
 
 ## Documentation
 
-- [Documentation développeur](https://quojs.dev/?lang=fr) : guide de démarrage rapide, tutoriels,
-  recettes, etc.  
+- [Documentation développeur](https://quojs.dev/?lang=fr) : guide de démarrage rapide,
+  tutoriels, recettes, etc.
 - [TypeDoc](./docs/README.md) : documentation technique extraite avec TypeDoc (en Anglais).
