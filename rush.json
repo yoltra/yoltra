@@ -34,6 +34,12 @@
       "shouldPublish": false
     },
     {
+      "packageName": "quojs-in-nextjs",
+      "projectFolder": "examples/v0/quojs-in-nextjs",
+      "reviewCategory": "examples",
+      "shouldPublish": false
+    },
+    {
       "packageName": "quojs-kinetic-logo",
       "projectFolder": "examples/v0/quojs-kinetic-logo",
       "reviewCategory": "examples",

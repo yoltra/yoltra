@@ -1,6 +1,6 @@
 **@quojs/react**
 
-***
+---
 
 # @quojs/react
 
@@ -34,8 +34,8 @@
 - [useAtomicProps](functions/useAtomicProps.md)
 - [useDispatch](functions/useDispatch.md)
 - [useSelector](functions/useSelector.md)
-- [~~useSliceProp~~](functions/useSliceProp.md)
-- [~~useSliceProps~~](functions/useSliceProps.md)
+- [~~useAtomicProp~~](functions/useAtomicProp.md)
+- [~~useSliceProps~~](functions/useAtomicProps.md)
 - [useStore](functions/useStore.md)
 - [useSuspenseAtomicProp](functions/useSuspenseAtomicProp.md)
 - [useSuspenseAtomicProps](functions/useSuspenseAtomicProps.md)

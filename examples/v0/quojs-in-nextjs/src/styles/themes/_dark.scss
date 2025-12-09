@@ -1,0 +1,74 @@
+/**
+ * @module Theme: Dark */
+
+@use "../abstracts/tokens" as *;
+
+.theme-dark {
+  /**
+   * neutrals */
+  --color-charcoal: #{$color-charcoal};
+  --color-charcoal-900: #{$color-charcoal-900};
+  --color-charcoal-800: #{$color-charcoal-800};
+  --color-charcoal-700: #{$color-charcoal-700};
+  --color-charcoal-600: #{$color-charcoal-600};
+  --color-charcoal-500: #{$color-charcoal-500};
+  --color-charcoal-400: #{$color-charcoal-400};
+  --color-charcoal-300: #{$color-charcoal-300};
+  --color-charcoal-200: #{$color-charcoal-200};
+  --color-charcoal-100: #{$color-charcoal-100};
+  --color-charcoal-050: #{$color-charcoal-050};
+
+  /**
+   * Sections */
+  --section-cyan: #{$section-cyan};
+  --section-green: #{$section-green};
+  --section-amber: #{$section-amber};
+  --section-coral: #{$section-coral};
+  --section-magenta: #{$section-magenta};
+
+  /**
+   * Aux */
+  --aux-success: #{$aux-success};
+  --aux-warning: #{$aux-warning};
+  --aux-info: #{$aux-info};
+  --aux-error: #{$aux-error};
+
+  /**
+   * Surfaces */
+  --bg: #2a2a2c;
+  --bg-muted: #242426;
+  --elev-1: #2f2f31;
+  --elev-2: #333336;
+  --border-color: #3f3f43;
+
+  /**
+   * Text on dark surfaces */
+  --color-text: #{$text-on-dark};
+  --color-text-muted: color-mix(in srgb, var(--color-text) 70%, #{$color-charcoal-700});
+  --color-on-charcoal: #{$text-on-dark};
+
+  /**
+   * Focus */
+  --focus-ring: color(display-p3 0 0.5 1 / 0.6);
+  --focus-ring-offset: #2a2a2c;
+
+  /**
+   * Section on-colors tuned for dark */
+  --section-cyan-on: #effbff;
+  --section-green-on: #effff7;
+  --section-amber-on: #fff9e6;
+  --section-coral-on: #fff0ee;
+  --section-magenta-on: #fff0ff;
+
+  /**
+   * Radii & shadows */
+  --radius-md: #{$radius-md};
+  --radius-lg: #{$radius-lg};
+  --shadow-1: #{$shadow-1};
+  --shadow-2: 0 1.2rem 4.0rem rgba(0, 0, 0, .45);
+
+  /**
+   * Apply base colors */
+  color: var(--color-text);
+  background: var(--bg);
+}

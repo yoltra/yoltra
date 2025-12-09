@@ -1,0 +1,49 @@
+/* Brand & Neutral */
+$color-charcoal: #1c1c1e;
+$color-charcoal-900: #1c1c1e;
+$color-charcoal-800: #232326;
+$color-charcoal-700: #2a2a2c;
+$color-charcoal-600: #303033;
+$color-charcoal-500: #3a3a3e;
+$color-charcoal-400: #4a4a50;
+$color-charcoal-300: #6a6a73;
+$color-charcoal-200: #9a9aa3;
+$color-charcoal-100: #c8c8cf;
+$color-charcoal-050: #ededf0;
+
+/* Section colors */
+$section-cyan: #00b4ff;
+$section-green: #00c774;
+$section-amber: #f7b500;
+$section-coral: #ff5345;
+$section-magenta: #e935ff;
+
+/* Aux (status)  */
+$aux-success: #2eaf7d;
+$aux-warning: #ff8800;
+$aux-info: #2d8cff;
+$aux-error: #e0352f;
+
+/* Text scales for WCAG pairing */
+$text-on-light: #121212;
+$text-on-dark: #f9f9ff;
+
+/* Static whites/blacks */
+$white: #ffffff;
+$black: #000000;
+
+/* Spacing (rem, 1rem=10px) */
+$space-1: 0.4rem; // 4px
+$space-2: 0.8rem; // 8px
+$space-3: 1.2rem; // 12px
+$space-4: 1.6rem; // 16px
+$space-6: 2.4rem; // 24px
+$space-8: 3.2rem; // 32px
+
+/* Radii */
+$radius-md: 0.8rem; // 8px
+$radius-lg: 1.2rem; // 12px
+
+/* Shadows (rem-based blur/spread) */
+$shadow-1: 0 0.1rem 0.2rem rgba(0, 0, 0, 0.06), 0 0.1rem 0.3rem rgba(0, 0, 0, 0.10);
+$shadow-2: 0 0.4rem 1.6rem rgba(0, 0, 0, 0.12);

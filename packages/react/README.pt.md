@@ -26,10 +26,10 @@ Este pacote fornece:
 - `<StoreProvider>` para expor a store do Quo.js no contexto do React
 - Ganchos:
   - `useStore`, `useDispatch`, `useSelector`
-  - `useSliceProp` e `useSliceProps` para renderizações **de grão fino**
-  - `useSuspenseSliceProp` e `useSuspenseSliceProps` para fluxos com **Suspense**
-  - Utilitários de cache para Suspense: `invalidateSliceProp`, `invalidateSlicePropsByReducer`,
-    `limparCacheSuspensão`
+  - `useAtomicProp` e `useAtomicProps` para renderizações **de grão fino**
+  - `useSuspenseAtomicProp` e `useSuspenseAtomicProps` para fluxos com **Suspense**
+  - Utilitários de cache para Suspense: `invalidateAtomicProp`,
+    `invalidateAtomicPropsByReducer`, `limparCacheSuspensão`
 
 ## Instalação
 
@@ -73,8 +73,14 @@ import { createQuoHooks } from "@quojs/react";
 import { QuoStoreContext } from "./context/QuoStoreContext.ts";
 import type { AppAM, AppState } from "./types"; // <-- obten estos en la etapa de crear una store
 
-export const { useStore, useDispatch, useSelector, useSliceProp, useSliceProps, shallowEqual } =
-  createQuoHooks<keyof AppState & string, AppState, AppAM>(QuoStoreContext);
+export const {
+  useStore,
+  useDispatch,
+  useSelector,
+  useAtomicProp,
+  useAtomicProps,
+  shallowEqual,
+} = createQuoHooks<keyof AppState & string, AppState, AppAM>(QuoStoreContext);
 ```
 
 Envuelve tu App en el _provider_ de **Quo**.
@@ -101,11 +107,11 @@ Usa los hooks para conectar tus componentes a Quo.
 
 ```tsx
 import React from "react";
-import { useDispatch, useSliceProp } from "@quojs/react";
+import { useDispatch, useAtomicProp } from "@quojs/react";
 
 export function Atomic() {
   // grano fino: solo re-renderiza cuando "count.value" cambia
-  const value = useSliceProp({
+  const value = useAtomicProp({
     reducer: "count",
     property: "value",
   });

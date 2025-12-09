@@ -1,0 +1,38 @@
+header {
+  height: var(--header-height);
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 var(--global-padding);
+
+  img.quo-logo {
+    width: 13rem;
+  }
+
+  nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+
+    flex-grow: 1;
+    max-width: 75vw;
+
+    span {
+      margin-right: 1.6rem;
+      cursor: pointer;
+      
+      &:last-child {
+        margin: 0;
+      }
+    }
+
+    img {
+      width: 1.6rem;
+      height: auto;
+      cursor: pointer;
+    }
+  }
+}

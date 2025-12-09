@@ -26,9 +26,9 @@ This package provides:
 - `<StoreProvider>` to put a **Quo.js** store in React context
 - Hooks:
   - `useStore`, `useDispatch`, `useSelector`
-  - `useSliceProp` and `useSliceProps` for **fine‑grained** re-renders
-  - `useSuspenseSliceProp` and `useSuspenseSliceProps` for **Suspense** data flows
-  - Cache helpers for Suspense: `invalidateSliceProp`, `invalidateSlicePropsByReducer`,
+  - `useAtomicProp` and `useAtomicProps` for **fine‑grained** re-renders
+  - `useSuspenseAtomicProp` and `useSuspenseAtomicProps` for **Suspense** data flows
+  - Cache helpers for Suspense: `invalidateAtomicProp`, `invalidateAtomicPropsByReducer`,
     `clearSuspenseCache`
 
 ## Installation
@@ -50,8 +50,7 @@ recommended.
 
 ### Store Setup
 
-Follow the example on **Quo.js** on
-[how to create a Store](https://quojs.dev/?lang=en).
+Follow the example on **Quo.js** on [how to create a Store](https://quojs.dev/?lang=en).
 
 ### AppStore Context
 
@@ -75,8 +74,14 @@ import { createQuoHooks } from "@quojs/react";
 import { QuoStoreContext } from "./context/QuoStoreContext.ts";
 import type { AppAM, AppState } from "./types"; // <-- grab these from the Store creation stage
 
-export const { useStore, useDispatch, useSelector, useSliceProp, useSliceProps, shallowEqual } =
-  createQuoHooks<keyof AppState & string, AppState, AppAM>(QuoStoreContext);
+export const {
+  useStore,
+  useDispatch,
+  useSelector,
+  useAtomicProp,
+  useAtomicProps,
+  shallowEqual,
+} = createQuoHooks<keyof AppState & string, AppState, AppAM>(QuoStoreContext);
 ```
 
 Wrapp your App in the Quo provider.
@@ -103,11 +108,11 @@ Read & update state from React using the hooks:
 
 ```tsx
 import React from "react";
-import { useDispatch, useSliceProp } from "@quojs/react";
+import { useDispatch, useAtomicProp } from "@quojs/react";
 
 export function Atomic() {
   // Fine-grained: only re-renders when "counter.value" actually changes
-  const value = useSliceProp({
+  const value = useAtomicProp({
     reducer: "count",
     property: "value",
   });
@@ -134,6 +139,5 @@ reducers against `(channel, event)`.
 
 ## Documentation
 
-- [Developer Docs](https://quojs.dev/?lang=en): quick-start guide, tutorial, recipes,
-  etc.
+- [Developer Docs](https://quojs.dev/?lang=en): quick-start guide, tutorial, recipes, etc.
 - [TypeDoc](./docs/README.md): a more technical documentation extracted using TypeDoc.

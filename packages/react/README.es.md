@@ -26,9 +26,9 @@ Este paquete provee:
 - `<StoreProvider>` para exponer el store de Quo.js en el contexto de React
 - Hooks:
   - `useStore`, `useDispatch`, `useSelector`
-  - `useSliceProp` y `useSliceProps` para renderizados **de grano fino**
-  - `useSuspenseSliceProp` y `useSuspenseSliceProps` para flujos con **Suspense**
-  - Utilidades de caché para Suspense: `invalidateSliceProp`, `invalidateSlicePropsByReducer`,
+  - `useAtomicProp` y `useAtomicProps` para renderizados **de grano fino**
+  - `useSuspenseAtomicProp` y `useSuspenseAtomicProps` para flujos con **Suspense**
+  - Utilidades de caché para Suspense: `invalidateAtomicProp`, `invalidateAtomicPropsByReducer`,
     `clearSuspenseCache`
 
 ## Instalación
@@ -49,8 +49,7 @@ Dependencias peer que debes tener: `react` y `react-dom` (React 18+). Se recomie
 
 ### Crear una Store
 
-Sigue las instrucciones en **Quo.js** sobre
-[como crear una Store](https://quojs.dev/?lang=es).
+Sigue las instrucciones en **Quo.js** sobre [como crear una Store](https://quojs.dev/?lang=es).
 
 ### AppStore Context
 
@@ -74,8 +73,14 @@ import { createQuoHooks } from "@quojs/react";
 import { QuoStoreContext } from "./context/QuoStoreContext.ts";
 import type { AppAM, AppState } from "./types"; // <-- obten estos en la etapa de crear una store
 
-export const { useStore, useDispatch, useSelector, useSliceProp, useSliceProps, shallowEqual } =
-  createQuoHooks<keyof AppState & string, AppState, AppAM>(QuoStoreContext);
+export const {
+  useStore,
+  useDispatch,
+  useSelector,
+  useAtomicProp,
+  useAtomicProps,
+  shallowEqual,
+} = createQuoHooks<keyof AppState & string, AppState, AppAM>(QuoStoreContext);
 ```
 
 Envuelve tu App en el _provider_ de **Quo**.
@@ -102,11 +107,11 @@ Usa los hooks para conectar tus componentes a Quo.
 
 ```tsx
 import React from "react";
-import { useDispatch, useSliceProp } from "@quojs/react";
+import { useDispatch, useAtomicProp } from "@quojs/react";
 
 export function Atomic() {
   // grano fino: solo re-renderiza cuando "count.value" cambia
-  const value = useSliceProp({
+  const value = useAtomicProp({
     reducer: "count",
     property: "value",
   });
@@ -133,6 +138,6 @@ Listo: sin thunks ni generadores. Modelas eventos reales y conectas tus reducers
 
 ## Docs
 
-- [Desarrollador](https://quojs.dev/?lang=es): guía de inicio rápido, tutorial, gists,
-  etc.
-- [TypeDoc](./docs/README.md): una documentación más técnica extraída utilizando TypeDoc (en Inglés).
+- [Desarrollador](https://quojs.dev/?lang=es): guía de inicio rápido, tutorial, gists, etc.
+- [TypeDoc](./docs/README.md): una documentación más técnica extraída utilizando TypeDoc (en
+  Inglés).

@@ -171,11 +171,22 @@ export type SuspenseAtomicPropOptions<T, S> = SuspenseSlicePropOptions<T, S>;
  *
  * @public
  */
+// Light first overload to avoid deep Dotted<> at callsites
+export function useSuspenseAtomicProp<R extends string, S extends Record<R, any>, T>(
+  storeSpec: { reducer: R; property: string },
+  options: SuspenseSlicePropOptions<T, S>
+): T;
+// Precise overload (kept)
 export function useSuspenseAtomicProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>, T>(
   storeSpec: { reducer: R; property: P },
   options: SuspenseSlicePropOptions<T, S>
+): T;
+// Implementation uses the widest param; precise typing is provided by overloads
+export function useSuspenseAtomicProp<R extends string, S extends Record<R, any>, T>(
+  storeSpec: { reducer: R; property: string },
+  options: SuspenseSlicePropOptions<T, S>
 ): T {
-  return _useSuspenseSlicePropImpl<R, S, P, T>(storeSpec, options);
+  return _useSuspenseSlicePropImpl<R, S, any, T>(storeSpec as any, options);
 }
 
 /** @internal (original impl shared by both names) */
@@ -257,16 +268,37 @@ export type SuspenseAtomicPropsOptions<T, S> = SuspenseSlicePropsOptions<T, S>;
  *
  * @public
  */
+// Light first overload
+export function useSuspenseAtomicProps<R extends string, S extends Record<R, any>, T>(
+  specs: Array<{ reducer: R; property: string | readonly string[] }>,
+  options: SuspenseSlicePropsOptions<T, S>
+): T;
+// Precise overload (kept)
 export function useSuspenseAtomicProps<R extends string, S extends Record<R, any>, T>(
   specs: Array<{ reducer: R; property: Dotted<S[R]> | WithGlob<Dotted<S[R]>> | ReadonlyArray<WithGlob<Dotted<S[R]>>> }>,
   options: SuspenseSlicePropsOptions<T, S>
+): T;
+// Implementation widened to be compatible with both overloads
+export function useSuspenseAtomicProps<R extends string, S extends Record<R, any>, T>(
+  specs: Array<{ reducer: R; property:
+    | string
+    | readonly string[]
+    | Dotted<S[R]>
+    | WithGlob<Dotted<S[R]>>
+    | ReadonlyArray<WithGlob<Dotted<S[R]>>> }>,
+  options: SuspenseSlicePropsOptions<T, S>
 ): T {
-  return _useSuspenseSlicePropsImpl<R, S, T>(specs, options);
+  return _useSuspenseSlicePropsImpl<R, S, T>(specs as any, options);
 }
 
 /** @internal (original impl shared by both names) */
 function _useSuspenseSlicePropsImpl<R extends string, S extends Record<R, any>, T>(
-  specs: Array<{ reducer: R; property: Dotted<S[R]> | WithGlob<Dotted<S[R]>> | ReadonlyArray<WithGlob<Dotted<S[R]>>> }>,
+  specs: Array<{ reducer: R; property:
+    | string
+    | readonly string[]
+    | Dotted<S[R]>
+    | WithGlob<Dotted<S[R]>>
+    | ReadonlyArray<WithGlob<Dotted<S[R]>>> }>,
   options: SuspenseSlicePropsOptions<T, S>
 ): T {
   const store = useStore<ActionMapBase, R, S>() as StoreInstance<R, S, ActionMapBase>;
@@ -275,7 +307,7 @@ function _useSuspenseSlicePropsImpl<R extends string, S extends Record<R, any>, 
     () => specs.map((sp) => ({
       reducer: sp.reducer,
       property: Array.isArray(sp.property)
-        ? (sp.property as readonly string[]).map(normalizePath)
+        ? (sp.property as readonly string[]).map((p) => normalizePath(p as string))
         : normalizePath(sp.property as string),
     })),
     // eslint-disable-next-line react-hooks/exhaustive-deps

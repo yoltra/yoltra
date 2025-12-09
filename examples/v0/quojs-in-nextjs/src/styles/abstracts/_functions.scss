@@ -1,0 +1,24 @@
+/// Fetch a CSS custom property with optional fallback.
+/// @param {string} $name
+/// @param {string|null} $fallback
+@function var-color($name, $fallback: null) {
+  @if $fallback ==null {
+    @return var(--#{$name});
+  }
+
+  @return var(--#{$name}, #{$fallback});
+}
+
+/// Pick the correct on-surface text color.
+/// @param {"light"|"dark"|any} $intent
+@function on-surface($intent) {
+  @if $intent ==light {
+    @return var-color(color-text-on-light, #121212);
+  }
+
+  @else if $intent ==dark {
+    @return var-color(color-text-on-dark, #f9f9ff);
+  }
+
+  @return var-color(color-text, #121212);
+}

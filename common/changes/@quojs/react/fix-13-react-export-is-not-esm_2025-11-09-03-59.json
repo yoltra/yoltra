@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@quojs/react",
+      "comment": "fix(react): [@quojs/react] - improve react build config",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@quojs/react"
+}
