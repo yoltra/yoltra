@@ -2,6 +2,36 @@
   "name": "@quojs/react",
   "entries": [
     {
+      "version": "0.4.0",
+      "tag": "@quojs/react_v0.4.0",
+      "date": "Tue, 09 Dec 2025 02:16:26 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "chore(react): devDeps – bump Vite for security"
+          }
+        ],
+        "minor": [
+          {
+            "comment": "fix(react): [@quojs/react] - improve react build config"
+          }
+        ],
+        "patch": [
+          {
+            "comment": "fix(react): [#19] - fix type inference bug in useAtomicProp hook"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@quojs/core\" from `^0.2.0` to `0.3.0`"
+          },
+          {
+            "comment": "Updating dependency \"@quojs/core\" from `^0.2.0` to `0.3.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.3.0",
       "tag": "@quojs/react_v0.3.0",
       "date": "Fri, 07 Nov 2025 02:20:41 GMT",

@@ -1,6 +1,13 @@
 # Change Log - @quojs/core
 
-This log was last generated on Tue, 04 Nov 2025 06:18:56 GMT and should not be manually modified.
+This log was last generated on Tue, 09 Dec 2025 02:16:26 GMT and should not be manually modified.
+
+## 0.3.0
+Tue, 09 Dec 2025 02:16:26 GMT
+
+### Minor changes
+
+- fix(core): [@quojs/core] - improve core build config
 
 ## 0.2.0
 Tue, 04 Nov 2025 06:18:56 GMT

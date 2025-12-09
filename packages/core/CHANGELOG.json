@@ -2,6 +2,23 @@
   "name": "@quojs/core",
   "entries": [
     {
+      "version": "0.3.0",
+      "tag": "@quojs/core_v0.3.0",
+      "date": "Tue, 09 Dec 2025 02:16:26 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "chore(core): devDeps – bump Vite for security"
+          }
+        ],
+        "minor": [
+          {
+            "comment": "fix(core): [@quojs/core] - improve core build config"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.2.0",
       "tag": "@quojs/core_v0.2.0",
       "date": "Tue, 04 Nov 2025 06:18:56 GMT",

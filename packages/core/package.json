@@ -1,6 +1,6 @@
 {
   "name": "@quojs/core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A modern predictable state container built on the idea of channels, events, and payloads, giving you strongly typed, expressive actions",
   "scripts": {
     "dev": "vite",
