@@ -2,6 +2,18 @@
   "name": "@quojs/core",
   "entries": [
     {
+      "version": "0.4.0",
+      "tag": "@quojs/core_v0.4.0",
+      "date": "Tue, 30 Dec 2025 06:20:03 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Republish after npm unpublish (no code changes)."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.3.0",
       "tag": "@quojs/core_v0.3.0",
       "date": "Tue, 09 Dec 2025 02:16:26 GMT",
