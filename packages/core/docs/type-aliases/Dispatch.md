@@ -4,44 +4,20 @@
 
 [@quojs/core](../README.md) / Dispatch
 
-# Type Alias: Dispatch()\<AM\>
+# ~~Type Alias: Dispatch\<EM\>~~
 
-> **Dispatch**\<`AM`\> = \<`C`, `E`\>(`channel`, `event`, `payload`) => `void`
+> **Dispatch**\<`EM`\> = [`Emit`](Emit.md)\<`EM`\>
 
-Defined in: [types.ts:35](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L35)
-
-Dispatch narrowed to the developer’s ActionMap
+Defined in: [types.ts:593](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L593)
 
 ## Type Parameters
 
-### AM
+### EM
 
-`AM` *extends* [`ActionMapBase`](ActionMapBase.md)
+`EM` *extends* [`EventMapBase`](EventMapBase.md)
 
-## Type Parameters
+## Deprecated
 
-### C
+Use [Emit](Emit.md) instead. Will be removed in v1.0.0.
 
-`C` *extends* keyof `AM`
-
-### E
-
-`E` *extends* keyof `AM`\[`C`\]
-
-## Parameters
-
-### channel
-
-`C`
-
-### event
-
-`E`
-
-### payload
-
-`AM`\[`C`\]\[`E`\]
-
-## Returns
-
-`void`
+Legacy type alias. Quo.js now uses event-bus terminology.

@@ -16,7 +16,7 @@
     "docs:md": "pnpm typedoc --options ./typedoc.core.json",
     "docs:js": "pnpm typedoc --options ./typedoc.core.json --json ./.typedoc/core-en.json"
   },
-  "license": "MPL-2.0",
+  "license": "MIT",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
     "email": "manu@quojs.dev"

@@ -4,29 +4,24 @@
 
 [@quojs/react](../README.md) / useDispatch
 
-# Function: useDispatch()
+# ~~Function: useDispatch()~~
 
-> **useDispatch**\<`AM`\>(): `Dispatch`\<`AM`\>
+> **useDispatch**\<`EM`\>(): `Emit`\<`EM`\>
 
-Defined in: [hooks/hooks.ts:120](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/hooks.ts#L120)
-
-Returns the store’s `dispatch` function (stable reference).
+Defined in: [hooks/hooks.ts:488](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/hooks/hooks.ts#L488)
 
 ## Type Parameters
 
-### AM
+### EM
 
-`AM` *extends* `ActionMapBase`
-
-Action map type.
+`EM` *extends* `EventMapBase`
 
 ## Returns
 
-`Dispatch`\<`AM`\>
+`Emit`\<`EM`\>
 
-## Example
+## Deprecated
 
-```tsx
-const dispatch = useDispatch<MyAM>();
-dispatch('ui', 'toggle', true);
-```
+Use [useEmit](useEmit.md) instead. Will be removed in v1.0.0.
+
+Legacy alias for `useEmit`. Quo.js now uses event-bus terminology.

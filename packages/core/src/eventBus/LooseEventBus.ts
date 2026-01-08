@@ -1,16 +1,16 @@
 /**
- * @mergeModuleWith @quojs/core
+ * @module @quojs/core
  */
 
 /**
  * Flexible, synchronous pub/sub bus that supports **exact** and **pattern** event subscriptions.
  *
  * @typeParam C - Channel name type (defaults to `string`).
- * @typeParam E - Event name type (defaults to `string`). Events are treated as **dot-separated paths** (e.g. `"a.b.c"`).
+ * @typeParam T - Event type name type (defaults to `string`). Types are treated as **dot-separated paths** (e.g. `"a.b.c"`).
  * @typeParam P - Payload type for all events (defaults to `any`).
  *
  * @remarks
- * - **Exact handlers** subscribe to a specific `(channel, event)` pair. Event keys are **normalized** by stripping a single leading dot (`".foo"` → `"foo"`).
+ * - **Exact handlers** subscribe to a specific `(channel, type)` pair. Type keys are **normalized** by stripping a single leading dot (`".foo"` → `"foo"`).
  * - **Pattern handlers** subscribe using wildcards over dot-separated segments:
  *   - `*`   matches **one** segment.
  *   - `**`  matches **zero or more** segments (greedy).
@@ -21,10 +21,10 @@
  * @example
  * ```ts
  * type C = 'ui' | 'data';
- * type E = string;
+ * type T = string;
  * type P = unknown;
  *
- * const bus = new LooseEventBus<C, E, P>();
+ * const bus = new LooseEventBus<C, T, P>();
  *
  * // Exact
  * const offA = bus.on('ui', 'panel.open', () => console.log('panel opened'));
@@ -41,12 +41,12 @@
  *
  * @public
  */
-export class LooseEventBus<C extends string = string, E extends string = string, P = any> {
+export class LooseEventBus<C extends string = string, T extends string = string, P = any> {
   /**
-   * Exact handlers: `channel → event → [handlers]`.
+   * Exact handlers: `channel → type → [handlers]`.
    * @internal
    */
-  private handlers = new Map<C, Map<E, Array<(p: P) => void>>>();
+  private handlers = new Map<C, Map<T, Array<(p: P) => void>>>();
 
   /**
    * Pattern handlers with `*` and `**`: `channel → pattern(string) → [handlers]`.
@@ -55,10 +55,10 @@ export class LooseEventBus<C extends string = string, E extends string = string,
   private patternHandlers = new Map<C, Map<string, Array<(p: P) => void>>>();
 
   /**
-   * Subscribes a handler to either an **exact** event or a **pattern**.
+   * Subscribes a handler to either an **exact** type or a **pattern**.
    *
    * @param channel - Channel to subscribe on.
-   * @param event - Exact event (e.g. `"a.b"`) or pattern (contains `*`/`**`).
+   * @param type - Exact event type (e.g. `"a.b"`) or pattern (contains `*`/`**`).
    * @param handler - Function invoked with the emitted payload.
    * @returns An **unsubscribe** function that removes this handler.
    *
@@ -86,11 +86,11 @@ export class LooseEventBus<C extends string = string, E extends string = string,
    *
    * @public
    */
-  on(channel: C, event: E, handler: (payload: P) => void): () => void {
-    const eventStr = String(event);
-    if (!this.isPattern(eventStr)) {
+  on(channel: C, type: T, handler: (payload: P) => void): () => void {
+    const typeStr = String(type);
+    if (!this.isPattern(typeStr)) {
       // Exact subscription with normalized key (strip leading dot)
-      const key = this.normalizeEventKey(eventStr) as E;
+      const key = this.normalizeTypeKey(typeStr) as T;
 
       if (!this.handlers.has(channel)) this.handlers.set(channel, new Map());
       const map = this.handlers.get(channel)!;
@@ -102,7 +102,7 @@ export class LooseEventBus<C extends string = string, E extends string = string,
       return () => this.offExactNormalized(channel, key, handler);
     } else {
       // Pattern subscription (stored as provided; matcher handles normalization)
-      const pattern = eventStr;
+      const pattern = typeStr;
 
       if (!this.patternHandlers.has(channel)) this.patternHandlers.set(channel, new Map());
       const pmap = this.patternHandlers.get(channel)!;
@@ -115,11 +115,11 @@ export class LooseEventBus<C extends string = string, E extends string = string,
   }
 
   /**
-   * Unsubscribes an **exact** handler. The `event` key is normalized internally,
+   * Unsubscribes an **exact** handler. The `type` key is normalized internally,
    * so callers can pass `"foo"` or `".foo"` interchangeably.
    *
    * @param channel - Channel name.
-   * @param event - Exact event key to remove (normalization applied).
+   * @param type - Exact event type key to remove (normalization applied).
    * @param handler - The same handler reference previously passed to {@link LooseEventBus.on | `on`}.
    *
    * @example
@@ -132,34 +132,34 @@ export class LooseEventBus<C extends string = string, E extends string = string,
    *
    * @public
    */
-  off(channel: C, event: E, handler: (payload: P) => void): void {
-    const key = this.normalizeEventKey(String(event)) as E;
+  off(channel: C, type: T, handler: (payload: P) => void): void {
+    const key = this.normalizeTypeKey(String(type)) as T;
     this.offExactNormalized(channel, key, handler);
   }
 
   /**
-   * Internal exact unsubscription using an already **normalized** event key.
+   * Internal exact unsubscription using an already **normalized** type key.
    *
    * @param channel - Channel name.
-   * @param normalizedEvent - Event key with leading dot removed.
+   * @param normalizedType - Event type key with leading dot removed.
    * @param handler - Handler to remove.
    * @internal
    */
   private offExactNormalized(
     channel: C,
-    normalizedEvent: E,
+    normalizedType: T,
     handler: (payload: P) => void,
   ): void {
     const cMap = this.handlers.get(channel);
     if (!cMap) return;
-    const list = cMap.get(normalizedEvent);
+    const list = cMap.get(normalizedType);
     if (!list) return;
 
     const i = list.indexOf(handler);
     if (i !== -1) list.splice(i, 1);
 
     // cleanup empties
-    if (list.length === 0) cMap.delete(normalizedEvent);
+    if (list.length === 0) cMap.delete(normalizedType);
     if (cMap.size === 0) this.handlers.delete(channel);
   }
 
@@ -191,7 +191,7 @@ export class LooseEventBus<C extends string = string, E extends string = string,
    * Duplicate handler references are called **once** (de-duped).
    *
    * @param channel - Channel to emit on.
-   * @param event - Event key (subject). A leading dot is ignored for matching.
+   * @param type - Event type (subject). A leading dot is ignored for matching.
    * @param payload - Payload delivered to handlers.
    *
    * @example
@@ -206,18 +206,18 @@ export class LooseEventBus<C extends string = string, E extends string = string,
    *
    * @public
    */
-  emit(channel: C, event: E, payload: P): void {
-    const eventStr = String(event);
-    const normalizedEvent = this.normalizeEventKey(eventStr) as E;
+  emit(channel: C, type: T, payload: P): void {
+    const typeStr = String(type);
+    const normalizedType = this.normalizeTypeKey(typeStr) as T;
 
     // Exact delivery (normalized)
-    const exactList = this.handlers.get(channel)?.get(normalizedEvent) ?? [];
+    const exactList = this.handlers.get(channel)?.get(normalizedType) ?? [];
 
     // Pattern delivery (normalize subject before matching)
     const patternMap = this.patternHandlers.get(channel);
     const patternLists: Array<Array<(p: P) => void>> = [];
     if (patternMap && patternMap.size) {
-      const subject = this.normalizeEventKey(eventStr);
+      const subject = this.normalizeTypeKey(typeStr);
       for (const [pattern, handlers] of patternMap.entries()) {
         if (this.matchPattern(pattern, subject)) {
           patternLists.push(handlers);
@@ -247,7 +247,7 @@ export class LooseEventBus<C extends string = string, E extends string = string,
 
   /**
    * Determines if a string is a **pattern** (contains `*`).
-   * @param s - Event or pattern string.
+   * @param s - Event type or pattern string.
    * @returns `true` if it contains at least one `*`, else `false`.
    * @internal
    */
@@ -256,28 +256,28 @@ export class LooseEventBus<C extends string = string, E extends string = string,
   }
 
   /**
-   * Normalizes event keys for exact matching by stripping a **single** leading dot.
+   * Normalizes event type keys for exact matching by stripping a **single** leading dot.
    *
-   * @param s - Event key.
+   * @param s - Event type key.
    * @returns Normalized key without a leading dot.
    * @example
    * ```ts
-   * normalizeEventKey('.a.b') // 'a.b'
-   * normalizeEventKey('a.b')  // 'a.b'
+   * normalizeTypeKey('.a.b') // 'a.b'
+   * normalizeTypeKey('a.b')  // 'a.b'
    * ```
    * @internal
    */
-  private normalizeEventKey(s: string): string {
+  private normalizeTypeKey(s: string): string {
     return s.replace(/^\./, "");
   }
 
   /**
    * Splits a path into dot-separated segments after normalization and removes empties.
-   * @param p - Event or pattern string.
+   * @param p - Event type or pattern string.
    * @internal
    */
   private splitPath(p: string): string[] {
-    return this.normalizeEventKey(p).split(".").filter(Boolean);
+    return this.normalizeTypeKey(p).split(".").filter(Boolean);
   }
 
   /**
@@ -289,7 +289,7 @@ export class LooseEventBus<C extends string = string, E extends string = string,
    * - `**`  : matches **zero or more** remaining segments (including empty).
    *
    * @param pattern - Pattern (may include `*`/`**`).
-   * @param path - Subject event key to test.
+   * @param path - Subject event type key to test.
    * @returns `true` if the pattern matches the path; otherwise `false`.
    *
    * @example

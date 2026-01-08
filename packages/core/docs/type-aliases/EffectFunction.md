@@ -4,13 +4,13 @@
 
 [@quojs/core](../README.md) / EffectFunction
 
-# Type Alias: EffectFunction()\<S, AM\>
+# Type Alias: EffectFunction()\<S, EM\>
 
-> **EffectFunction**\<`S`, `AM`\> = \<`C`, `E`\>(`action`, `getState`, `dispatch`) => `void` \| `Promise`\<`void`\>
+> **EffectFunction**\<`S`, `EM`\> = (`event`, `getState`, `emit`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [types.ts:168](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L168)
+Defined in: [types.ts:433](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L433)
 
-Side-effect handler: runs AFTER reducers, sees the final state
+Effect handler: runs AFTER reducers, sees the final state.
 
 ## Type Parameters
 
@@ -18,33 +18,27 @@ Side-effect handler: runs AFTER reducers, sees the final state
 
 `S` = `any`
 
-### AM
+Store state (readonly).
 
-`AM` *extends* [`ActionMapBase`](ActionMapBase.md) = [`ActionMapBase`](ActionMapBase.md)
+### EM
 
-## Type Parameters
+`EM` *extends* [`EventMapBase`](EventMapBase.md) = [`EventMapBase`](EventMapBase.md)
 
-### C
-
-`C` *extends* keyof `AM`
-
-### E
-
-`E` *extends* keyof `AM`\[`C`\]
+Event map.
 
 ## Parameters
 
-### action
+### event
 
-[`Action`](../interfaces/Action.md)\<`AM`, `C`, `E`\>
+[`EventUnion`](EventUnion.md)\<`EM`\>
 
 ### getState
 
 () => `S`
 
-### dispatch
+### emit
 
-[`Dispatch`](Dispatch.md)\<`AM`\>
+[`Emit`](Emit.md)\<`EM`\>
 
 ## Returns
 

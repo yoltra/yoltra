@@ -1,18 +1,18 @@
 **@quojs/react**
 
----
+***
 
 # @quojs/react
 
 ## Interfaces
 
-- [SuspenseSlicePropOptions](interfaces/SuspenseSlicePropOptions.md)
-- [SuspenseSlicePropsOptions](interfaces/SuspenseSlicePropsOptions.md)
+- [SuspenseAtomicPropOptions](interfaces/SuspenseAtomicPropOptions.md)
+- [SuspenseAtomicPropsOptions](interfaces/SuspenseAtomicPropsOptions.md)
 
 ## Type Aliases
 
-- [SuspenseAtomicPropOptions](type-aliases/SuspenseAtomicPropOptions.md)
-- [SuspenseAtomicPropsOptions](type-aliases/SuspenseAtomicPropsOptions.md)
+- [OneOrMany](type-aliases/OneOrMany.md)
+- [PathValue](type-aliases/PathValue.md)
 - [UseAtomicProp](type-aliases/UseAtomicProp.md)
 - [UseAtomicProps](type-aliases/UseAtomicProps.md)
 
@@ -20,6 +20,7 @@
 
 - [StoreContext](variables/StoreContext.md)
 - [StoreProvider](variables/StoreProvider.md)
+- [suspenseCache](variables/suspenseCache.md)
 
 ## Functions
 
@@ -27,17 +28,12 @@
 - [createQuoHooks](functions/createQuoHooks.md)
 - [invalidateAtomicProp](functions/invalidateAtomicProp.md)
 - [invalidateAtomicPropsByReducer](functions/invalidateAtomicPropsByReducer.md)
-- [~~invalidateSliceProp~~](functions/invalidateSliceProp.md)
-- [~~invalidateSlicePropsByReducer~~](functions/invalidateSlicePropsByReducer.md)
 - [shallowEqual](functions/shallowEqual.md)
 - [useAtomicProp](functions/useAtomicProp.md)
 - [useAtomicProps](functions/useAtomicProps.md)
-- [useDispatch](functions/useDispatch.md)
+- [~~useDispatch~~](functions/useDispatch.md)
+- [useEmit](functions/useEmit.md)
 - [useSelector](functions/useSelector.md)
-- [~~useAtomicProp~~](functions/useAtomicProp.md)
-- [~~useSliceProps~~](functions/useAtomicProps.md)
 - [useStore](functions/useStore.md)
 - [useSuspenseAtomicProp](functions/useSuspenseAtomicProp.md)
 - [useSuspenseAtomicProps](functions/useSuspenseAtomicProps.md)
-- [~~useSuspenseSliceProp~~](functions/useSuspenseSliceProp.md)
-- [~~useSuspenseSliceProps~~](functions/useSuspenseSliceProps.md)

@@ -8,7 +8,7 @@
 
 > `const` **StoreContext**: `Context`\<`null` \| `StoreInstance`\<`any`, `any`, `any`\>\>
 
-Defined in: [context/StoreContext.ts:27](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/context/StoreContext.ts#L27)
+Defined in: [context/StoreContext.ts:32](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/context/StoreContext.ts#L32)
 
 React Context carrying a StoreInstance for Quo.js React bindings.
 

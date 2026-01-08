@@ -6,12 +6,9 @@
 
 # Type Alias: UseAtomicProp()\<R, S\>
 
-> **UseAtomicProp**\<`R`, `S`\> = \{\<`R1`, `P`\>(`spec`): `PathValue`\<`S`\[`R1`\], `P`\>; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \}
+> **UseAtomicProp**\<`R`, `S`\> = \{\<`R1`, `P`\>(`spec`): [`PathValue`](PathValue.md)\<`S`\[`R1`\], `P`\>; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`\>(`spec`): `unknown`; \<`R1`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \}
 
-Defined in: [hooks/createQuoHooks.ts:24](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/createQuoHooks.ts#L24)
-
-Overload shape for the `useAtomicProp` hook returned by [createQuoHooks](../functions/createQuoHooks.md).
-Exported so TypeDoc can include and cross-link it from factory docs.
+Defined in: [hooks/createQuoHooks.ts:19](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/hooks/createQuoHooks.ts#L19)
 
 ## Type Parameters
 
@@ -19,17 +16,13 @@ Exported so TypeDoc can include and cross-link it from factory docs.
 
 `R` *extends* `string`
 
-Reducer name union.
-
 ### S
 
 `S` *extends* `Record`\<`R`, `any`\>
 
-State record keyed by `R`.
-
 ## Call Signature
 
-> \<`R1`, `P`\>(`spec`): `PathValue`\<`S`\[`R1`\], `P`\>
+> \<`R1`, `P`\>(`spec`): [`PathValue`](PathValue.md)\<`S`\[`R1`\], `P`\>
 
 ### Type Parameters
 
@@ -55,7 +48,7 @@ State record keyed by `R`.
 
 ### Returns
 
-`PathValue`\<`S`\[`R1`\], `P`\>
+[`PathValue`](PathValue.md)\<`S`\[`R1`\], `P`\>
 
 ## Call Signature
 
@@ -124,6 +117,70 @@ State record keyed by `R`.
 ##### property
 
 `P`
+
+##### reducer
+
+`R1`
+
+#### map
+
+(`value`) => `T`
+
+#### isEqual?
+
+(`a`, `b`) => `boolean`
+
+### Returns
+
+`T`
+
+## Call Signature
+
+> \<`R1`\>(`spec`): `unknown`
+
+### Type Parameters
+
+#### R1
+
+`R1` *extends* `string`
+
+### Parameters
+
+#### spec
+
+##### property
+
+`string`
+
+##### reducer
+
+`R1`
+
+### Returns
+
+`unknown`
+
+## Call Signature
+
+> \<`R1`, `T`\>(`spec`, `map`, `isEqual?`): `T`
+
+### Type Parameters
+
+#### R1
+
+`R1` *extends* `string`
+
+#### T
+
+`T`
+
+### Parameters
+
+#### spec
+
+##### property
+
+`string`
 
 ##### reducer
 

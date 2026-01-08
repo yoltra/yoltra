@@ -7,9 +7,9 @@
 > &nbsp; 👉 [ 🇺🇸 English Version](./CONTRIBUTING.md)&nbsp; |
 > &nbsp;[ 🇫🇷 Version française](./docs/fr/CONTRIBUTING.md)
 
-Thanks for your interest in contributing! 🎉 This project is open-source under **MPL-2.0** with a welcoming, lightweight governance model.
+Thanks for your interest in contributing! 🎉 This project is open-source under **MIT** with a welcoming, lightweight governance model.
 
-- **Code License:** MPL-2.0  
+- **Code License:** MIT  
 - **Docs License:** CC BY 4.0 (unless noted)  
 - **Code of Conduct:** Contributor Covenant v2.1  
 - **DCO:** Developer Certificate of Origin 1.1 (sign-off required on every commit)

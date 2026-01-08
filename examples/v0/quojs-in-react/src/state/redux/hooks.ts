@@ -31,7 +31,7 @@ export function useTodoActions() {
         setTodoStatus: (id: string, status: eTodoStatus) =>
             dispatch(setTodoStatus({ id, status })),
         fetchTodos: (
-            url: string = "https://jsonplaceholder.typicode.com/todos?id=0",
+            url: string = "https://jsonplaceholder.typicode.com/todos?id=0?offset=0&limit=10",
             offset: number = 0,
             limit: number = 10
         ) => dispatch(fetchTodos({ url, offset, limit } as FetchTodosArgs)),

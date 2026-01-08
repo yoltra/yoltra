@@ -6,63 +6,90 @@
 
 # Function: useSuspenseAtomicProp()
 
-> **useSuspenseAtomicProp**\<`R`, `S`, `P`, `T`\>(`storeSpec`, `options`): `T`
+## Call Signature
 
-Defined in: [hooks/suspense.ts:174](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/suspense.ts#L174)
+> **useSuspenseAtomicProp**\<`R`, `S`, `T`\>(`storeSpec`, `options`): `T`
 
-Suspense version of a single-path selector (atomic subscription).
+Defined in: [hooks/suspense.ts:129](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/hooks/suspense.ts#L129)
 
-Subscribes to an **exact** `reducer.property` path, invalidates the cache on changes,
-and reads through a Suspense cache—**throwing a promise** while the `load` function resolves.
+Suspense version of a single-path selector.
 
-## Type Parameters
+### Type Parameters
 
-### R
+#### R
 
 `R` *extends* `string`
 
-Reducer name union.
-
-### S
+#### S
 
 `S` *extends* `Record`\<`R`, `any`\>
 
-State record keyed by `R`.
-
-### P
-
-`P` *extends* `string`
-
-Dotted path type inside `S[R]` (exact path).
-
-### T
+#### T
 
 `T`
 
-Value type returned by `options.load`.
+### Parameters
 
-## Parameters
+#### storeSpec
 
-### storeSpec
+##### property
 
-`{ reducer, property }` pointing at a single path.
+`string`
 
-#### property
-
-`P`
-
-#### reducer
+##### reducer
 
 `R`
 
-### options
+#### options
 
-[`SuspenseSlicePropOptions`](../interfaces/SuspenseSlicePropOptions.md)\<`T`, `S`\>
+[`SuspenseAtomicPropOptions`](../interfaces/SuspenseAtomicPropOptions.md)\<`T`, `S`\>
 
-Loader/staleTime/key options.
-
-## Returns
+### Returns
 
 `T`
 
-The loaded value `T`. Will **suspend** while loading and rethrow errors in the error boundary.
+## Call Signature
+
+> **useSuspenseAtomicProp**\<`R`, `S`, `P`, `T`\>(`storeSpec`, `options`): `T`
+
+Defined in: [hooks/suspense.ts:133](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/hooks/suspense.ts#L133)
+
+Suspense version of a single-path selector.
+
+### Type Parameters
+
+#### R
+
+`R` *extends* `string`
+
+#### S
+
+`S` *extends* `Record`\<`R`, `any`\>
+
+#### P
+
+`P` *extends* `string`
+
+#### T
+
+`T`
+
+### Parameters
+
+#### storeSpec
+
+##### property
+
+`P`
+
+##### reducer
+
+`R`
+
+#### options
+
+[`SuspenseAtomicPropOptions`](../interfaces/SuspenseAtomicPropOptions.md)\<`T`, `S`\>
+
+### Returns
+
+`T`

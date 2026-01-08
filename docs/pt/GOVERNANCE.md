@@ -11,8 +11,8 @@ Este documento explica como as decisões são tomadas e como as pessoas colabora
 
 ## Papéis
 
-- **Colaboradores/as**: Qualquer pessoa que envia PRs, issues ou documentação.  
-- **Mantenedores/as**: Pessoas colaboradoras de confiança com permissões de *merge* em um ou mais pacotes.  
+- **Colaboradores/as**: Qualquer pessoa que envia PRs, issues ou documentação. 
+- **Mantenedores/as**: Pessoas colaboradoras de confiança com permissões de *merge* em um ou mais pacotes. 
 - **Mantenedor/a Líder**: Coordina la hoja de ruta (*roadmap*) y los lanzamientos (inicialmente **@pixerael / Erael Group.**).
 
 A lista de mantenedores/as atuais é mantida em [MAINTAINERS.md](./MAINTAINERS.md) (se existir) ou na organização/equipe do GitHub.

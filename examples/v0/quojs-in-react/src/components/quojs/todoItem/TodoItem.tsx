@@ -10,7 +10,7 @@ import {
 } from "@ant-design/icons";
 
 import { eTodoStatus, type iTodo } from "../../../types";
-import { useDispatch, useAtomicProp } from "../../../state/quojs/hooks";
+import { useEmit, useAtomicProp } from "../../../state/quojs/hooks";
 import { TodoItemEdit } from "./TodoItemEdit";
 
 import "./TodoItem.style.scss";
@@ -23,17 +23,17 @@ export const TodoItem: React.FC<iTodoItemProps> = ({
     id,
 }: iTodoItemProps) => {
     const [isEditing, setIsEditing] = useState(false);
-    const dispatch = useDispatch();
+    const emit = useEmit();
 
     const data: iTodo = useAtomicProp(
         { reducer: "todo", property: `data.${id}` },
         v => v as iTodo
     );
 
-    const handleCompleteTodoClick = () => dispatch("todo", "setTodoStatus", { id, status: eTodoStatus.Complete });
-    const handleUncompleteTodoClick = () => dispatch("todo", "setTodoStatus", { id, status: eTodoStatus.Pending });
-    const handleCancelTodoClick = () => dispatch("todo", "setTodoStatus", { id, status: eTodoStatus.Canceled });
-    const handleRemoveTodoClick = () => dispatch("todo","deleteTodo", { id });
+    const handleCompleteTodoClick = () => emit("todo", "setTodoStatus", { id, status: eTodoStatus.Complete });
+    const handleUncompleteTodoClick = () => emit("todo", "setTodoStatus", { id, status: eTodoStatus.Pending });
+    const handleCancelTodoClick = () => emit("todo", "setTodoStatus", { id, status: eTodoStatus.Canceled });
+    const handleRemoveTodoClick = () => emit("todo","deleteTodo", { id });
 
     const handleTodoSaveCb = () => setIsEditing(false);
 

@@ -9,10 +9,11 @@
     "test": "pnpm vitest --coverage --watch=false",
     "test:watch": "vitest --coverage",
     "prepublishOnly": "node ../../common/scripts/copy-license.js",
+    "docs": "rushx docs:js && rushx docs:md",
     "docs:md": "pnpm typedoc --options ./typedoc.react.json",
     "docs:js": "pnpm typedoc --options ./typedoc.react.json --json ./.typedoc/react-en.json"
   },
-  "license": "MPL-2.0",
+  "license": "MIT",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
     "email": "manu@quojs.dev"

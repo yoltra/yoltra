@@ -4,14 +4,15 @@
 
 [@quojs/core](../README.md) / StoreInstance
 
-# Interface: StoreInstance\<R, S, AM\>
+# Interface: StoreInstance\<R, S, EM\>
 
-Defined in: [types.ts:76](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L76)
+Defined in: [types.ts:203](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L203)
 
 Public Store surface.
 
-NOTE: `S` is the *exposed* state type (already readonly at the call site).
-Your concrete Store implements this as StoreInstance<R, DeepReadonly<S>, AM>
+## Remarks
+
+The concrete Store implements this as `StoreInstance<R, DeepReadonly<S>, EM>`.
 
 ## Type Parameters
 
@@ -19,23 +20,30 @@ Your concrete Store implements this as StoreInstance<R, DeepReadonly<S>, AM>
 
 `R` *extends* `string` = `string`
 
+Reducer name union.
+
 ### S
 
 `S` *extends* `Record`\<`R`, `any`\> = `Record`\<`string`, `any`\>
 
-### AM
+State record (already readonly at the call site).
 
-`AM` *extends* [`ActionMapBase`](../type-aliases/ActionMapBase.md) = [`ActionMapBase`](../type-aliases/ActionMapBase.md)
+### EM
+
+`EM` *extends* [`EventMapBase`](../type-aliases/EventMapBase.md) = [`EventMapBase`](../type-aliases/EventMapBase.md)
+
+Event map.
 
 ## Properties
 
-### dispatch
+### emit
 
-> **dispatch**: [`Dispatch`](../type-aliases/Dispatch.md)\<`AM`\>
+> **emit**: [`Emit`](../type-aliases/Emit.md)\<`EM`\>
 
-Defined in: [types.ts:93](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L93)
+Defined in: [types.ts:222](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L222)
 
-Dispatch a typed action (channel, event, payload)
+Emit a typed event `(channel, type, payload)`.
+Returns a promise that resolves when the event has been processed.
 
 ***
 
@@ -43,11 +51,9 @@ Dispatch a typed action (channel, event, payload)
 
 > **name**: `string`
 
-Defined in: [types.ts:85](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L85)
+Defined in: [types.ts:211](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L211)
 
-Store name.
-
-This is mostly used by DevTools to identify the instance.
+Store name (used by DevTools to identify the instance).
 
 ## Methods
 
@@ -55,21 +61,31 @@ This is mostly used by DevTools to identify the instance.
 
 > **connect**(`spec`, `handler`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:103](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L103)
+Defined in: [types.ts:237](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L237)
 
-Fine-grained subscription: listen to specific reducer.property path(s).
-Accepts a string or string[] of dotted paths (e.g., "data.123.title").
-Fires only when those path(s) actually change
+Fine-grained subscription: listen to a specific `reducer.property` path.
+Accepts a dotted path string (e.g., "data.123.title").
+Fires when that path (or its ancestors) actually changes.
 
 #### Parameters
 
 ##### spec
 
-[`Connect`](../type-aliases/Connect.md)\<`R`, `S`\>
+`{ reducer, property }` where `property` is a single dotted path string.
+
+###### property
+
+`string`
+
+###### reducer
+
+`R`
 
 ##### handler
 
 (`change`) => `void`
+
+Handler receiving a [Change](Change.md) with `{ oldValue, newValue, path }`.
 
 #### Returns
 
@@ -77,37 +93,21 @@ Fires only when those path(s) actually change
 
 ***
 
-### getState()
+### ~~dispatch()~~
 
-> **getState**(): [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>
+> **dispatch**\<`C`, `T`\>(`channel`, `type`, `payload`): `Promise`\<`void`\>
 
-Defined in: [types.ts:89](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L89)
-
-Read the full state (already readonly by the time you supply `S`)
-
-#### Returns
-
-[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>
-
-***
-
-### onEffect()
-
-> **onEffect**\<`C`, `E`\>(`channel`, `event`, `handler`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
-
-Defined in: [types.ts:115](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L115)
-
-Convenience effect filter by channel & event. Returns an unsubscribe
+Defined in: [types.ts:304](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L304)
 
 #### Type Parameters
 
 ##### C
 
-`C` *extends* `string`
+`C` *extends* `string` \| `number` \| `symbol`
 
-##### E
+##### T
 
-`E` *extends* `string`
+`T` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -115,34 +115,106 @@ Convenience effect filter by channel & event. Returns an unsubscribe
 
 `C`
 
-##### event
+##### type
 
-`E`
+`T`
 
-##### handler
+##### payload
 
-(`payload`, `getState`, `dispatch`, `action`) => `void` \| `Promise`\<`void`\>
+`EM`\[`C`\]\[`T`\]
 
 #### Returns
 
-[`Unsubscribe`](../type-aliases/Unsubscribe.md)
+`Promise`\<`void`\>
+
+#### Deprecated
+
+Use [\`emit\`](#emit) instead. Will be removed in v1.0.0.
+
+Legacy alias for `emit`. Quo.js now uses event-bus terminology:
+- "dispatch" → "emit"
+- "action" → "event"
+
+***
+
+### dispose()
+
+> **dispose**(): `void`
+
+Defined in: [types.ts:258](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L258)
+
+Cleanup resources (timers, etc.) when disposing the store.
+Call this if you're dynamically creating/destroying stores.
+
+#### Returns
+
+`void`
+
+***
+
+### getState()
+
+> **getState**(): [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>
+
+Defined in: [types.ts:216](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L216)
+
+Read the full state (already readonly).
+
+#### Returns
+
+[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>
+
+***
+
+### hotReplace()
+
+> **hotReplace**(`partial`): `void`
+
+Defined in: [types.ts:290](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L290)
+
+Convenience API to replace any subset of store parts (HMR patterns).
+
+#### Parameters
+
+##### partial
+
+Partial replacement set.
+
+###### effects?
+
+[`EffectSpec`](EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
+
+###### middleware?
+
+[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
+
+###### preserveState?
+
+`boolean`
+
+###### reducer?
+
+`Record`\<`R`, [`ReducerSpec`](ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
+
+#### Returns
+
+`void`
 
 ***
 
 ### registerEffect()
 
-> **registerEffect**(`handler`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
+> **registerEffect**(`spec`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:111](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L111)
+Defined in: [types.ts:242](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L242)
 
 Register a post-reducer effect (sees final state). Returns an unsubscribe.
-`S` here is the same exposed type returned by `getState()`
 
 #### Parameters
 
-##### handler
+##### spec
 
-[`EffectFunction`](../type-aliases/EffectFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `AM`\>
+[`EffectSpec`](EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>
 
 #### Returns
 
@@ -154,15 +226,15 @@ Register a post-reducer effect (sees final state). Returns an unsubscribe.
 
 > **registerMiddleware**(`mw`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:128](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L128)
+Defined in: [types.ts:247](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L247)
 
-Dynamically add middleware
+Dynamically add middleware.
 
 #### Parameters
 
 ##### mw
 
-[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `AM`\>
+[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>
 
 #### Returns
 
@@ -174,9 +246,9 @@ Dynamically add middleware
 
 > **registerReducer**(`name`, `spec`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:132](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L132)
+Defined in: [types.ts:252](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L252)
 
-Dynamically add/remove a namespaced reducer slice at runtime
+Dynamically add/remove a namespaced reducer slice at runtime.
 
 #### Parameters
 
@@ -186,7 +258,7 @@ Dynamically add/remove a namespaced reducer slice at runtime
 
 ##### spec
 
-[`ReducerSpec`](ReducerSpec.md)\<`any`, `AM`\>
+[`ReducerSpec`](ReducerSpec.md)\<`any`, `EM`\>
 
 #### Returns
 
@@ -194,13 +266,87 @@ Dynamically add/remove a namespaced reducer slice at runtime
 
 ***
 
+### replaceEffects()
+
+> **replaceEffects**(`next`): `void`
+
+Defined in: [types.ts:272](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L272)
+
+Replaces all registered effects (HMR-friendly).
+
+#### Parameters
+
+##### next
+
+[`EffectSpec`](EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
+
+New effects array (as EffectSpecs).
+
+#### Returns
+
+`void`
+
+***
+
+### replaceMiddleware()
+
+> **replaceMiddleware**(`next`): `void`
+
+Defined in: [types.ts:265](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L265)
+
+Replaces the entire middleware pipeline (HMR-friendly).
+
+#### Parameters
+
+##### next
+
+[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
+
+New middleware array.
+
+#### Returns
+
+`void`
+
+***
+
+### replaceReducers()
+
+> **replaceReducers**(`next`, `opts?`): `void`
+
+Defined in: [types.ts:280](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L280)
+
+Replaces the entire reducer set (HMR-friendly).
+
+#### Parameters
+
+##### next
+
+`Record`\<`R`, [`ReducerSpec`](ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
+
+Map of slice specs keyed by slice name.
+
+##### opts?
+
+`{ preserveState?: boolean }` (default `true`).
+
+###### preserveState?
+
+`boolean`
+
+#### Returns
+
+`void`
+
+***
+
 ### subscribe()
 
 > **subscribe**(`listener`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:97](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L97)
+Defined in: [types.ts:227](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L227)
 
-Coarse subscription: runs after any state change
+Coarse subscription: runs after any state change (once per committed event).
 
 #### Parameters
 

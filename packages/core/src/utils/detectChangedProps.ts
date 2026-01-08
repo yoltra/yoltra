@@ -1,5 +1,5 @@
 /**
- * @mergeModuleWith @quojs/core
+ * @module @quojs/core
  */
 
 /**
@@ -15,7 +15,7 @@
  *   added/removed keys as changed at their **full path**
  *
  * Cycles and repeated object aliases are handled via **pair-wise** tracking using a
- * `WeakMap<object, WeakSet<object>>` so recursion doesn’t loop and shared subgraphs do not
+ * `WeakMap<object, WeakSet<object>>` so recursion doesn't loop and shared subgraphs do not
  * produce false negatives.
  *
  * @param oldState - Previous value to diff.

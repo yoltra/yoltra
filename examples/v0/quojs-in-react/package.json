@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A comparison between Quo.js and RTK",
   "private": true,
-  "license": "MPL-2.0",
+  "license": "MIT",
   "author": {
     "name": "Manu Ramirez",
     "email": "manu@erael.com.mx"

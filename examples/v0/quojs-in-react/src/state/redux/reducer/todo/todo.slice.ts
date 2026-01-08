@@ -33,7 +33,7 @@ export const fetchTodos = createAsyncThunk<
 >(
   "todo/fetchTodos",
   async (args) => {
-    const url = args?.url ?? "https://jsonplaceholder.typicode.com/todos?id=0";
+    const url = args?.url ?? "https://jsonplaceholder.typicode.com/todos?id=0?offset=0&limit=10";
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Request failed with ${response.status}`);

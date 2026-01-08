@@ -10,7 +10,7 @@
     "lint": "exit 0"
   },
   "private": true,
-  "license": "MPL-2.0",
+  "license": "MIT",
   "author": {
     "name": "Manu Ramirez",
     "email": "manu@erael.com.mx"

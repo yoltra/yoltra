@@ -1,14 +1,14 @@
 import type { ChangeEvent } from "react";
 
 import { eTodoStatus, type iFilterState } from "../../../types";
-import { useDispatch, useAtomicProps } from "../../../state/quojs/hooks";
+import { useEmit, useAtomicProps } from "../../../state/quojs/hooks";
 
 import "./TodoFilter.style.scss";
 
 interface iTodoFilterPorps { }
 
 export const TodoFilter = (_: iTodoFilterPorps) => {
-    const dispatch = useDispatch();
+    const emit = useEmit();
     const { filter } = useAtomicProps(
         [
             { reducer: "todo", property: "filter" },
@@ -19,11 +19,11 @@ export const TodoFilter = (_: iTodoFilterPorps) => {
     );
 
     const handleCategorySelectionChange = ({ target }: ChangeEvent<HTMLSelectElement>) => {
-        dispatch("todo", "setCategoryFilter", { by: target.value });
+        emit("todo", "setCategoryFilter", { by: target.value });
     };
 
     const handleStatusSelectionChange = ({ target }: ChangeEvent<HTMLSelectElement>) => {
-        dispatch("todo", "setStatusFilter", { by: target.value as unknown as eTodoStatus });
+        emit("todo", "setStatusFilter", { by: target.value as unknown as eTodoStatus });
     };
 
     return (

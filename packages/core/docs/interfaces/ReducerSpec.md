@@ -4,11 +4,25 @@
 
 [@quojs/core](../README.md) / ReducerSpec
 
-# Interface: ReducerSpec\<S, AM\>
+# Interface: ReducerSpec\<S, EM\>
 
-Defined in: [types.ts:137](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L137)
+Defined in: [types.ts:333](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L333)
 
-One reducer’s definition blob
+One reducer's definition blob (stateful event consumer).
+
+## Example
+
+```ts
+const counterSpec: ReducerSpec<{ value: number }, MyEM> = {
+  state: { value: 0 },
+  events: [['ui', 'increment'], ['ui', 'decrement']],
+  reducer(s, evt) {
+    if (evt.type === 'increment') return { value: s.value + evt.payload };
+    if (evt.type === 'decrement') return { value: s.value - evt.payload };
+    return s;
+  }
+};
+```
 
 ## Type Parameters
 
@@ -16,27 +30,33 @@ One reducer’s definition blob
 
 `S` = `any`
 
-### AM
+State managed by this reducer.
 
-`AM` *extends* [`ActionMapBase`](../type-aliases/ActionMapBase.md) = [`ActionMapBase`](../type-aliases/ActionMapBase.md)
+### EM
+
+`EM` *extends* [`EventMapBase`](../type-aliases/EventMapBase.md) = [`EventMapBase`](../type-aliases/EventMapBase.md)
+
+Event map.
 
 ## Properties
 
-### actions
+### events
 
-> **actions**: readonly [`ActionPair`](../type-aliases/ActionPair.md)\<`AM`\>[]
+> **events**: readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
 
-Defined in: [types.ts:139](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L139)
+Defined in: [types.ts:337](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L337)
 
-List of `[channel, event]` pairs this reducer cares about
+List of EventKeys `[channel, type]` that this reducer responds to.
 
 ***
 
 ### reducer
 
-> **reducer**: [`ReducerFunction`](../type-aliases/ReducerFunction.md)\<`S`, `AM`\>
+> **reducer**: [`ReducerFunction`](../type-aliases/ReducerFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:140](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L140)
+Defined in: [types.ts:342](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L342)
+
+Pure reducer function: `(state, event) => nextState`.
 
 ***
 
@@ -44,4 +64,6 @@ Defined in: [types.ts:140](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc
 
 > **state**: `S`
 
-Defined in: [types.ts:141](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L141)
+Defined in: [types.ts:347](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L347)
+
+Initial state for this reducer.

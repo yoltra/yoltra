@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json", // root‑level base
+  "extends": "../../../tsconfig.base.json", // root‑level base
   "files": [],
   "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
 }

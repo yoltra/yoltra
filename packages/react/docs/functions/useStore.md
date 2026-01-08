@@ -6,20 +6,20 @@
 
 # Function: useStore()
 
-> **useStore**\<`AM`, `R`, `S`\>(): `StoreInstance`\<`R`, `S`, `AM`\>
+> **useStore**\<`EM`, `R`, `S`\>(): `StoreInstance`\<`R`, `S`, `EM`\>
 
-Defined in: [hooks/hooks.ts:100](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/hooks.ts#L100)
+Defined in: [hooks/hooks.ts:100](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/hooks/hooks.ts#L100)
 
 Returns the current StoreInstance from [StoreContext](../variables/StoreContext.md).
 Throws if used outside of a `<StoreProvider>`.
 
 ## Type Parameters
 
-### AM
+### EM
 
-`AM` *extends* `ActionMapBase`
+`EM` *extends* `EventMapBase`
 
-Action map type.
+Event map type.
 
 ### R
 
@@ -35,11 +35,11 @@ State record keyed by `R`.
 
 ## Returns
 
-`StoreInstance`\<`R`, `S`, `AM`\>
+`StoreInstance`\<`R`, `S`, `EM`\>
 
 ## Example
 
 ```tsx
-const store = useStore<MyAM, 'counter' | 'todos', AppState>();
+const store = useStore<MyEM, 'counter' | 'todos', AppState>();
 const state = store.getState();
 ```

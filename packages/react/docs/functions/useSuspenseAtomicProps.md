@@ -6,46 +6,74 @@
 
 # Function: useSuspenseAtomicProps()
 
+## Call Signature
+
 > **useSuspenseAtomicProps**\<`R`, `S`, `T`\>(`specs`, `options`): `T`
 
-Defined in: [hooks/suspense.ts:260](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/suspense.ts#L260)
+Defined in: [hooks/suspense.ts:193](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/hooks/suspense.ts#L193)
 
-Suspense version of a multi-path selector (atomic subscriptions).
+Suspense version of a multi-path selector.
 
-Subscribes to **multiple** `reducer.property` paths (supports globs),
-invalidates the cache when **any** subscribed path changes, and returns a value
-loaded through the Suspense cache.
+### Type Parameters
 
-## Type Parameters
-
-### R
+#### R
 
 `R` *extends* `string`
 
-Reducer name union.
-
-### S
+#### S
 
 `S` *extends* `Record`\<`R`, `any`\>
 
-State record keyed by `R`.
-
-### T
+#### T
 
 `T`
 
-Value type returned by `options.load`.
+### Parameters
 
-## Parameters
-
-### specs
+#### specs
 
 `object`[]
 
-### options
+#### options
 
-[`SuspenseSlicePropsOptions`](../interfaces/SuspenseSlicePropsOptions.md)\<`T`, `S`\>
+[`SuspenseAtomicPropsOptions`](../interfaces/SuspenseAtomicPropsOptions.md)\<`T`, `S`\>
 
-## Returns
+### Returns
+
+`T`
+
+## Call Signature
+
+> **useSuspenseAtomicProps**\<`R`, `S`, `T`\>(`specs`, `options`): `T`
+
+Defined in: [hooks/suspense.ts:197](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/hooks/suspense.ts#L197)
+
+Suspense version of a multi-path selector.
+
+### Type Parameters
+
+#### R
+
+`R` *extends* `string`
+
+#### S
+
+`S` *extends* `Record`\<`R`, `any`\>
+
+#### T
+
+`T`
+
+### Parameters
+
+#### specs
+
+`object`[]
+
+#### options
+
+[`SuspenseAtomicPropsOptions`](../interfaces/SuspenseAtomicPropsOptions.md)\<`T`, `S`\>
+
+### Returns
 
 `T`

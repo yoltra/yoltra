@@ -1,4 +1,4 @@
-# React bindings for Quo.js
+# @quojs/react
 
 > [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; |
 > &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp; 👉
@@ -12,132 +12,571 @@
 ![npm downloads](https://badgen.net/npm/dm/@quojs/react)
 ![License](https://badgen.net/npm/license/@quojs/react)
 
-Official React companion for **Quo.js**, a predictable state container that revives the
-simplicity of classic Redux while adding:
+**React bindings for Quo.js with atomic subscriptions.**
 
-- **Channels + events** instead of action types
-- **Native async middleware** and **effects**, no thunks/sagas ceremony
-- **Fine‑grained subscriptions** to exact dotted paths or wildcard patterns
-- **Immutability guarantees** with deep‑freeze and precise change detection
-- A small, explicit API surface you can actually reason about
+`@quojs/react` provides React hooks and components for Quo.js, featuring **fine-grained re-render control**, **Suspense support**, and **Concurrent Mode compatibility**.
 
-This package provides:
+**Zero unnecessary re-renders by default.**
 
-- `<StoreProvider>` to put a **Quo.js** store in React context
-- Hooks:
-  - `useStore`, `useDispatch`, `useSelector`
-  - `useAtomicProp` and `useAtomicProps` for **fine‑grained** re-renders
-  - `useSuspenseAtomicProp` and `useSuspenseAtomicProps` for **Suspense** data flows
-  - Cache helpers for Suspense: `invalidateAtomicProp`, `invalidateAtomicPropsByReducer`,
-    `clearSuspenseCache`
+---
+
+## What is @quojs/react?
+
+Official React companion for **[@quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.md)**—an event-driven state container with:
+
+- **Atomic subscriptions** — Subscribe to exact state paths, only re-render when they change
+- **Native async support** — Built-in middleware and effects, no thunks/sagas
+- **Channel-based events** — Organize events by channel to prevent naming collisions
+- **Immutability guarantees** — Deep-freeze enforcement with precise change detection
+
+---
+
+## Key Features
+
+- 🎯 **Atomic Props** — `useAtomicProp` subscribes to exact paths (`'todos.items.0.title'`)
+- ⚡ **Zero Wasted Renders** — Only re-renders when subscribed paths actually change
+- 🔮 **Suspense Ready** — `useSuspenseAtomicProp` for data-fetching patterns
+- 🧩 **Concurrent Mode** — Fully compatible with React 18+ concurrent features
+- 🛡️ **TypeScript-First** — Excellent type inference and autocomplete
+- 📌 **Lightweight** — ~7KB (minified + gzipped)
+
+---
 
 ## Installation
 
-Install **Quo.js** and the React bindings:
-
 ```bash
-npm i @quojs/core @quojs/react
+npm install @quojs/core @quojs/react
 # or
 yarn add @quojs/core @quojs/react
 # or
 pnpm add @quojs/core @quojs/react
 ```
 
-Peer deps you’re expected to have: `react` and `react-dom` (React 18+). TypeScript is
-recommended.
+**Peer dependencies:** React 18+ (tested with React 18 and 19)
+
+---
 
 ## Quick Start
 
-### Store Setup
+### 1. Create Your Store
 
-Follow the example on **Quo.js** on [how to create a Store](https://quojs.dev/?lang=en).
+```typescript
+// store.ts
+import { createStore } from '@quojs/core';
 
-### AppStore Context
+export type AppEM = {
+  counter: {
+    increment: number;
+    decrement: number;
+    reset: null;
+  };
+};
 
-Use `React Context` to expose the store to your App:
+export const store = createStore({
+  name: 'App',
+  reducer: {
+    counter: {
+      state: { value: 0 },
+      events: [
+        ['counter', 'increment'],
+        ['counter', 'decrement'],
+        ['counter', 'reset']
+      ],
+      reducer: (state, event) => {
+        switch (event.type) {
+          case 'increment':
+            return { value: state.value + event.payload };
+          case 'decrement':
+            return { value: state.value - event.payload };
+          case 'reset':
+            return { value: 0 };
+          default:
+            return state;
+        }
+      }
+    }
+  }
+});
 
-```tsx
-// file: ./context/QuoStoreContext.ts
-import { createContext } from "react";
-import type { AppStore } from "store.ts";
-
-export const QuoStoreContext = createContext<AppStore | null>(null);
+export type AppStore = typeof store;
 ```
 
-### Hooks Setup
+### 2. Create Store Context
 
-Create and export typed hooks for your App:
+```typescript
+// StoreContext.ts
+import { createContext } from 'react';
+import type { AppStore } from './store';
 
-```tsx
-import { createQuoHooks } from "@quojs/react";
+export const StoreContext = createContext<AppStore | null>(null);
+```
 
-import { QuoStoreContext } from "./context/QuoStoreContext.ts";
-import type { AppAM, AppState } from "./types"; // <-- grab these from the Store creation stage
+### 3. Create Typed Hooks
+
+```typescript
+// hooks.ts
+import { createQuoHooks } from '@quojs/react';
+import { StoreContext } from './StoreContext';
+import type { AppEM } from './store';
 
 export const {
   useStore,
-  useDispatch,
+  useEmit,
   useSelector,
   useAtomicProp,
   useAtomicProps,
   shallowEqual,
-} = createQuoHooks<keyof AppState & string, AppState, AppAM>(QuoStoreContext);
+} = createQuoHooks<'counter', AppState, AppEM>(StoreContext);
 ```
 
-Wrapp your App in the Quo provider.
+### 4. Provide the Store
 
 ```tsx
-import React from "react";
-import { createRoot } from "react-dom/client";
-
-import { QuoStoreContext } from "./context/QuoStoreContext.ts";
-import { store, type AppStore } from "store.ts";
-
-import { App } from "./App";
-
-createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <QuoStoreContext.Provider value={store}>
-      <App />
-    </StoreProvider>
-  </React.StrictMode>
-);
-```
-
-Read & update state from React using the hooks:
-
-```tsx
-import React from "react";
-import { useDispatch, useAtomicProp } from "@quojs/react";
-
-export function Atomic() {
-  // Fine-grained: only re-renders when "counter.value" actually changes
-  const value = useAtomicProp({
-    reducer: "count",
-    property: "value",
-  });
-
-  return <h1>Counter: {value}</h1>;
-}
+// App.tsx
+import { StoreProvider } from '@quojs/react';
+import { store } from './store';
+import { Counter } from './Counter';
 
 export function App() {
-  const dispatch = useDispatch<any>();
+  return (
+    <StoreProvider store={store}>
+      <Counter />
+    </StoreProvider>
+  );
+}
+```
+
+### 5. Use Hooks in Components
+
+```tsx
+// Counter.tsx
+import { useAtomicProp, useEmit } from './hooks';
+
+export function Counter() {
+  // Only re-renders when counter.value changes
+  const value = useAtomicProp({ reducer: 'counter', property: 'value' });
+  const emit = useEmit();
 
   return (
     <div>
-      <Atomic />
-      <button onClick={() => dispatch("count", "subtract", 1)}>-1</button>
-      <button onClick={() => dispatch("count", "add", 1)}>+1</button>
-      <button onClick={() => dispatch("count", "set", 0)}>Reset</button>
+      <h1>Count: {value}</h1>
+      <button onClick={() => emit('counter', 'increment', 1)}>+</button>
+      <button onClick={() => emit('counter', 'decrement', 1)}>-</button>
+      <button onClick={() => emit('counter', 'reset', null)}>Reset</button>
     </div>
   );
 }
 ```
 
-That’s it. No boilerplate actions, no selectors, no thunks. You model events directly and wire
-reducers against `(channel, event)`.
+---
+
+## API Reference
+
+### Components
+
+#### `<StoreProvider>`
+
+Provides Quo.js store to React components via context.
+
+```tsx
+import { StoreProvider } from '@quojs/react';
+import { store } from './store';
+
+function App() {
+  return (
+    <StoreProvider store={store}>
+      <YourApp />
+    </StoreProvider>
+  );
+}
+```
+
+---
+
+### Hooks
+
+#### `useStore()`
+
+Returns the store instance.
+
+```tsx
+const store = useStore();
+const state = store.getState();
+```
+
+---
+
+#### `useEmit()`
+
+Returns the typed `emit` function.
+
+```tsx
+const emit = useEmit();
+
+// Emit events (fully typed)
+await emit('counter', 'increment', 1);
+await emit('todos', 'add', { id: '1', title: 'Buy milk' });
+```
+
+**Replaces:** `useDispatch()` (deprecated in v0.5.0)
+
+---
+
+#### `useSelector(selector, isEqual?)`
+
+Selects derived state via a selector function.
+
+```tsx
+const count = useSelector((state) => state.counter.value);
+
+// With custom equality
+import { shallowEqual } from './hooks';
+
+const todos = useSelector(
+  (state) => state.todos.items,
+  shallowEqual
+);
+```
+
+**Re-renders:** When selected value changes (per `isEqual`)
+
+---
+
+#### `useAtomicProp({ reducer, property })`
+
+**The killer feature.** Subscribes to a specific state path—only re-renders when that exact path changes.
+
+```tsx
+// Only re-renders when items[0].title changes
+const title = useAtomicProp({ 
+  reducer: 'todos', 
+  property: 'items.0.title' 
+});
+
+// With mapper function
+const count = useAtomicProp(
+  { reducer: 'todos', property: 'items' },
+  (items) => items.length
+);
+
+// Wildcard patterns
+const allTitles = useAtomicProp(
+  { reducer: 'todos', property: 'items.*.title' },
+  (state) => state.items.map(t => t.title)
+);
+```
+
+**Benefits:**
+- ✅ Zero unnecessary re-renders
+- ✅ No manual optimization required
+- ✅ Works with deep paths and wildcards
+
+---
+
+#### `useAtomicProps(specs, selector, isEqual?)`
+
+Subscribes to multiple paths, re-computes selector when any change.
+
+```tsx
+const filtered = useAtomicProps(
+  [
+    { reducer: 'todos', property: 'items.**' },
+    { reducer: 'todos', property: 'filter' }
+  ],
+  (state) => {
+    return state.todos.items.filter(
+      item => item.status === state.todos.filter
+    );
+  },
+  shallowEqual
+);
+```
+
+**Use case:** Derived state that depends on multiple slices
+
+---
+
+#### `useSuspenseAtomicProp({ reducer, property }, options)`
+
+Suspense-enabled version of `useAtomicProp`.
+
+```tsx
+const user = useSuspenseAtomicProp(
+  { reducer: 'user', property: 'profile' },
+  {
+    load: async (profile) => {
+      if (!profile) {
+        const res = await fetch('/api/user');
+        return res.json();
+      }
+      return profile;
+    },
+    staleTime: 60000, // 1 minute
+  }
+);
+
+// Component suspends while loading
+```
+
+**Features:**
+- Automatic cache management
+- Configurable stale time
+- Works with `<Suspense>` boundaries
+
+---
+
+#### `useSuspenseAtomicProps(specs, options)`
+
+Suspense-enabled version of `useAtomicProps`.
+
+```tsx
+const data = useSuspenseAtomicProps(
+  [
+    { reducer: 'user', property: 'id' },
+    { reducer: 'posts', property: 'list' }
+  ],
+  {
+    load: async (state) => {
+      const res = await fetch(`/api/posts?user=${state.user.id}`);
+      return res.json();
+    }
+  }
+);
+```
+
+---
+
+### Suspense Utilities
+
+#### `invalidateAtomicProp(reducer, property, key?)`
+
+Invalidates cache for a specific property.
+
+```tsx
+import { invalidateAtomicProp } from '@quojs/react';
+
+// After mutation
+await emit('user', 'update', newData);
+invalidateAtomicProp('user', 'profile');
+```
+
+---
+
+#### `invalidateAtomicPropsByReducer(reducer)`
+
+Invalidates all cache entries for a reducer.
+
+```tsx
+import { invalidateAtomicPropsByReducer } from '@quojs/react';
+
+invalidateAtomicPropsByReducer('todos');
+```
+
+---
+
+#### `clearSuspenseCache()`
+
+Clears the entire Suspense cache.
+
+```tsx
+import { clearSuspenseCache } from '@quojs/react';
+
+clearSuspenseCache();
+```
+
+---
+
+## Performance Comparison
+
+### Redux / Zustand (Coarse-grained)
+
+```tsx
+// ❌ Re-renders when ANY todo changes
+const todos = useSelector(state => state.todos.items);
+
+return <div>{todos.map(todo => ...)}</div>;
+```
+
+**Problem:** Entire component tree re-renders on every todo change.
+
+### Quo.js (Fine-grained)
+
+```tsx
+// ✅ Only re-renders when THIS specific todo changes
+function TodoItem({ id }) {
+  const title = useAtomicProp({ 
+    reducer: 'todos', 
+    property: `items.${id}.title` 
+  });
+  
+  return <div>{title}</div>;
+}
+```
+
+**Result:** Zero wasted renders.
+
+[See flamegraph comparison →](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md)
+
+---
+
+## TypeScript Support
+
+Quo.js React hooks are fully typed:
+
+```typescript
+type AppEM = {
+  todos: {
+    add: { id: string; title: string };
+    toggle: { id: string };
+  };
+};
+
+const emit = useEmit<AppEM>();
+
+// ✅ Autocomplete works
+await emit('todos', 'add', { 
+  id: '1',
+  title: 'Buy milk'
+});
+
+// ❌ TypeScript catches errors
+await emit('todos', 'add', { id: 1 }); // Error: id must be string
+await emit('invalid', 'event', null);  // Error: Unknown channel
+```
+
+---
+
+## React 18+ Features
+
+### Concurrent Mode
+
+Quo.js is fully compatible with React 18's concurrent rendering:
+
+```tsx
+import { startTransition } from 'react';
+
+function Search() {
+  const emit = useEmit();
+  
+  const handleSearch = (query) => {
+    startTransition(() => {
+      emit('search', 'query', query);
+    });
+  };
+  
+  return <input onChange={(e) => handleSearch(e.target.value)} />;
+}
+```
+
+### Suspense
+
+```tsx
+import { Suspense } from 'react';
+
+function App() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <UserProfile />
+    </Suspense>
+  );
+}
+
+function UserProfile() {
+  const user = useSuspenseAtomicProp(
+    { reducer: 'user', property: 'profile' },
+    {
+      load: async () => {
+        const res = await fetch('/api/user');
+        return res.json();
+      }
+    }
+  );
+  
+  return <div>Welcome, {user.name}!</div>;
+}
+```
+
+---
+
+## Migrating from v0.4.x
+
+### Hook Name Changes (v0.5.0)
+
+| Old (v0.4.x) | New (v0.5.0) | Status |
+|--------------|--------------|--------|
+| `useDispatch()` | `useEmit()` | ⚠️ Deprecated (still works with warning) |
+| `useSliceProp()` | ❌ Removed | Use `useAtomicProp()` |
+| `useSliceProps()` | ❌ Removed | Use `useAtomicProps()` |
+
+### Migration Example
+
+```tsx
+// BEFORE (v0.4.x)
+import { useDispatch, useSliceProp } from '@quojs/react';
+
+function Counter() {
+  const value = useSliceProp({ reducer: 'counter', property: 'value' });
+  const dispatch = useDispatch();
+  
+  return (
+    <button onClick={() => dispatch('counter', 'increment', 1)}>
+      {value}
+    </button>
+  );
+}
+
+// AFTER (v0.5.0)
+import { useEmit, useAtomicProp } from '@quojs/react';
+
+function Counter() {
+  const value = useAtomicProp({ reducer: 'counter', property: 'value' });
+  const emit = useEmit();
+  
+  return (
+    <button onClick={() => emit('counter', 'increment', 1)}>
+      {value}
+    </button>
+  );
+}
+```
+
+---
+
+## Examples
+
+- **[Todo App](../../examples/v0/quojs-in-react)** — Full CRUD with performance profiling
+- **[Kinetic Logo](../../examples/v0/quojs-kinetic-logo)** — 900 SVG circles + physics simulation
+- **[Next.js 15](../../examples/v0/quojs-in-nextjs)** — SSR + theme switcher
+
+---
 
 ## Documentation
 
-- [Developer Docs](https://quojs.dev/?lang=en): quick-start guide, tutorial, recipes, etc.
-- [TypeDoc](./docs/README.md): a more technical documentation extracted using TypeDoc.
+- **[Quick Start Guide](https://quojs.dev)** — Get started in 5 minutes
+- **[TypeDoc API Reference](./docs/README.md)** — Complete API documentation
+- **[Library Comparison](../../docs/library-comparison.md)** — vs Redux, Zustand, Jotai, etc.
+
+---
+
+## Contributing
+
+See:
+- [Monorepo Root](../../)
+- [Contributing Guide](../../CONTRIBUTING.md)
+- [Code of Conduct](../../CODE_OF_CONDUCT.md)
+
+---
+
+## Status
+
+**Release Candidate** — APIs are stable, used in production, minor changes possible before v1.0.
+
+---
+
+## License
+
+**MIT** — Free to use in commercial and open-source projects.
+
+---
+
+Made in 🇲🇽 for the world.

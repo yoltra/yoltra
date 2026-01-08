@@ -8,7 +8,7 @@
 
 > `const` **StoreProvider**: `React.FC`\<\{ `children`: `ReactNode`; `store`: `StoreInstance`\<`any`, `any`, `any`\>; \}\>
 
-Defined in: [context/StoreProvider.tsx:41](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/context/StoreProvider.tsx#L41)
+Defined in: [context/StoreProvider.tsx:46](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/context/StoreProvider.tsx#L46)
 
 React provider that places a StoreInstance into [StoreContext](StoreContext.md).
 
@@ -23,7 +23,7 @@ React subtree that will consume the store.
 ## Remarks
 
 - Wrap your app (or a subtree) to make the store available via `useContext(StoreContext)`
-  or any higher-level hooks you expose (e.g., `useAtomicProp`, `useDispatch`).
+  or any higher-level hooks you expose (e.g., `useAtomicProp`, `useEmit`).
 - You may nest multiple `StoreProvider`s to scope different stores to different subtrees.
 - In Next.js App Router, this component must be used in a **client** boundary.
 
@@ -39,8 +39,8 @@ const store = createStore({
   reducer: {
     counter: {
       state: { value: 0 },
-      actions: [['ui','increment']],
-      reducer(s, a) { return a.event === 'increment' ? { value: s.value + a.payload } : s; }
+      events: [['ui','increment']],
+      reducer(s, evt) { return evt.type === 'increment' ? { value: s.value + evt.payload } : s; }
     }
   }
 });

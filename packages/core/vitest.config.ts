@@ -13,16 +13,19 @@ export default defineConfig({
       "./src/types.ts",
       "global.d.ts",
       "vite.config.ts",
-      "/.rollup.config.js"
+      "/.rollup.config.js",
     ],
     coverage: {
       reporter: ["text", "html", "lcov"],
       exclude: [
+        "dist",
         "./src/index.ts",
         "./src/types.ts",
         "**/*.d.ts",
         "**/*.config.ts",
-        "/.rollup.config.js"
+        "/.rollup.config.js",
+        "tests/store-basic-flow/support/reducers.ts",
+        "tests/store-middleware-and-effects/support/setupStore.ts"
       ],
       thresholds: { lines: 0.95, branches: 0.95, functions: 0.95, statements: 0.95 }
     },

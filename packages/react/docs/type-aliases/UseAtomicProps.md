@@ -6,12 +6,9 @@
 
 # Type Alias: UseAtomicProps()\<R, S\>
 
-> **UseAtomicProps**\<`R`, `S`\> = \<`R1`, `T`\>(`specs`, `selector`, `isEqual?`) => `T`
+> **UseAtomicProps**\<`R`, `S`\> = \{\<`R1`, `T`\>(`specs`, `selector`, `isEqual?`): `T`; \<`R1`, `T`\>(`specs`, `selector`, `isEqual?`): `T`; \}
 
-Defined in: [hooks/createQuoHooks.ts:53](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/createQuoHooks.ts#L53)
-
-Overload shape for the `useAtomicProps` hook returned by [createQuoHooks](../functions/createQuoHooks.md).
-Exported so TypeDoc can include and cross-link it from factory docs.
+Defined in: [hooks/createQuoHooks.ts:42](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/hooks/createQuoHooks.ts#L42)
 
 ## Type Parameters
 
@@ -19,38 +16,70 @@ Exported so TypeDoc can include and cross-link it from factory docs.
 
 `R` *extends* `string`
 
-Slice name union.
-
 ### S
 
 `S` *extends* `Record`\<`R`, `any`\>
 
-State record keyed by `R`.
+## Call Signature
 
-## Type Parameters
+> \<`R1`, `T`\>(`specs`, `selector`, `isEqual?`): `T`
 
-### R1
+### Type Parameters
+
+#### R1
 
 `R1` *extends* `string`
 
-### T
+#### T
 
 `T`
 
-## Parameters
+### Parameters
 
-### specs
+#### specs
 
 `object`[]
 
-### selector
+#### selector
 
 (`state`) => `T`
 
-### isEqual?
+#### isEqual?
 
 (`a`, `b`) => `boolean`
 
-## Returns
+### Returns
+
+`T`
+
+## Call Signature
+
+> \<`R1`, `T`\>(`specs`, `selector`, `isEqual?`): `T`
+
+### Type Parameters
+
+#### R1
+
+`R1` *extends* `string`
+
+#### T
+
+`T`
+
+### Parameters
+
+#### specs
+
+`object`[]
+
+#### selector
+
+(`state`) => `T`
+
+#### isEqual?
+
+(`a`, `b`) => `boolean`
+
+### Returns
 
 `T`

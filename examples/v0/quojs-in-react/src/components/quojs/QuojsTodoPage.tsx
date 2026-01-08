@@ -3,13 +3,13 @@ import { useEffect } from "react";
 import { TodoList } from "./todoList/TodoList";
 import { TodoFactory } from "./todoFactory/TodoFactory";
 import { TodoFilter } from "./todoFilter/TodoFilter";
-import { store, useTodoActions } from "../../state/quojs";
+import { store, useTodoEvents } from "../../state/quojs";
 import { AppStoreContext } from "../../state/quojs/Store.context";
 
 export interface iQuojsTodoPageProps { }
 
 export const QuojsTodoPage: React.FC<iQuojsTodoPageProps> = (_: iQuojsTodoPageProps) => {
-    const { fetchTodos } = useTodoActions();
+    const { fetchTodos } = useTodoEvents();
 
     useEffect(() => {
         fetchTodos();

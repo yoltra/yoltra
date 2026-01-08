@@ -1,5 +1,10 @@
+/**
+ * @module @quojs/react
+ */
+
 import React, { type ReactNode } from "react";
 import type { StoreInstance } from "@quojs/core";
+
 import { StoreContext } from "./StoreContext";
 
 /**
@@ -10,7 +15,7 @@ import { StoreContext } from "./StoreContext";
  *
  * @remarks
  * - Wrap your app (or a subtree) to make the store available via `useContext(StoreContext)`
- *   or any higher-level hooks you expose (e.g., `useAtomicProp`, `useDispatch`).
+ *   or any higher-level hooks you expose (e.g., `useAtomicProp`, `useEmit`).
  * - You may nest multiple `StoreProvider`s to scope different stores to different subtrees.
  * - In Next.js App Router, this component must be used in a **client** boundary.
  *
@@ -25,8 +30,8 @@ import { StoreContext } from "./StoreContext";
  *   reducer: {
  *     counter: {
  *       state: { value: 0 },
- *       actions: [['ui','increment']],
- *       reducer(s, a) { return a.event === 'increment' ? { value: s.value + a.payload } : s; }
+ *       events: [['ui','increment']],
+ *       reducer(s, evt) { return evt.type === 'increment' ? { value: s.value + evt.payload } : s; }
  *     }
  *   }
  * });
