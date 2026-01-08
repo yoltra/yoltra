@@ -1,0 +1,15 @@
+{
+  "changes": [
+    {
+      "packageName": "@quojs/core",
+      "comment": "License change from Mozilla Public License 2.0 to MIT License",
+      "type": "minor"
+    },
+    {
+      "packageName": "@quojs/core",
+      "comment": "Adopt event-bus terminology for v0.5.0",
+      "type": "none"      
+    }
+  ],
+  "packageName": "@quojs/core"
+}
