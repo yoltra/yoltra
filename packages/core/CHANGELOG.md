@@ -1,6 +1,13 @@
 # Change Log - @quojs/core
 
-This log was last generated on Tue, 30 Dec 2025 06:20:03 GMT and should not be manually modified.
+This log was last generated on Thu, 08 Jan 2026 08:01:50 GMT and should not be manually modified.
+
+## 0.5.0
+Thu, 08 Jan 2026 08:01:50 GMT
+
+### Minor changes
+
+- License change from Mozilla Public License 2.0 to MIT License
 
 ## 0.4.0
 Tue, 30 Dec 2025 06:20:03 GMT
