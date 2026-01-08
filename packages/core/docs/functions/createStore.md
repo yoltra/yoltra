@@ -6,9 +6,9 @@
 
 # Function: createStore()
 
-> **createStore**\<`RM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, [`StateFromReducers`](../type-aliases/StateFromReducers.md)\<`RM`\>, [`AMFromReducersStrict`](../type-aliases/AMFromReducersStrict.md)\<`RM`\>\>
+> **createStore**\<`RM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, `StateFromReducers`\<`RM`\>, `EMFromReducersStrict`\<`RM`\>\>
 
-Defined in: [store/Store.ts:874](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L874)
+Defined in: [store/Store.ts:1134](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L1134)
 
 Factory helper to create a typed [Store](../classes/Store.md) from a reducers map.
 
@@ -16,7 +16,7 @@ Factory helper to create a typed [Store](../classes/Store.md) from a reducers ma
 
 ### RM
 
-`RM` *extends* [`ReducersMapAny`](../type-aliases/ReducersMapAny.md)
+`RM` *extends* `ReducersMapAny`
 
 Reducers map object with each slice's `ReducerSpec`.
 
@@ -28,11 +28,11 @@ Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
 
 #### effects?
 
-[`EffectFunction`](../type-aliases/EffectFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<[`StateFromReducers`](../type-aliases/StateFromReducers.md)\<`RM`\>\>, [`AMFromReducersStrict`](../type-aliases/AMFromReducersStrict.md)\<`RM`\>\>[]
+[`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`StateFromReducers`\<`RM`\>\>, `EMFromReducersStrict`\<`RM`\>\>[]
 
 #### middleware?
 
-[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<[`StateFromReducers`](../type-aliases/StateFromReducers.md)\<`RM`\>\>, [`AMFromReducersStrict`](../type-aliases/AMFromReducersStrict.md)\<`RM`\>\>[]
+[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`StateFromReducers`\<`RM`\>\>, `EMFromReducersStrict`\<`RM`\>\>[]
 
 #### name
 
@@ -44,7 +44,7 @@ Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
 
 ## Returns
 
-[`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, [`StateFromReducers`](../type-aliases/StateFromReducers.md)\<`RM`\>, [`AMFromReducersStrict`](../type-aliases/AMFromReducersStrict.md)\<`RM`\>\>
+[`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, `StateFromReducers`\<`RM`\>, `EMFromReducersStrict`\<`RM`\>\>
 
 A typed [StoreInstance](../interfaces/StoreInstance.md).
 
@@ -54,7 +54,11 @@ A typed [StoreInstance](../interfaces/StoreInstance.md).
 const store = createStore({
   name: 'App',
   reducer: {
-    counter: { state: { value: 0 }, actions: [['ui','increment']], reducer: counterFn }
+    counter: {
+      state: { value: 0 },
+      events: [['ui','increment']],
+      reducer: (s, evt) => evt.type === 'increment' ? { value: s.value + evt.payload } : s
+    }
   },
   middleware: [],
   effects: []

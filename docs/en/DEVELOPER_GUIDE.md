@@ -2,10 +2,10 @@
 
 # Developer Guide (Quo.js Monorepo)
 
-> [ 🇲🇽 Versión en Español](../es/DEVELOPER_GUIDE.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](../pt/DEVELOPER_GUIDE.md)&nbsp; |
-> &nbsp; 👉 [ 🇺🇸 English Version](./DEVELOPER_GUIDE.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](../fr/DEVELOPER_GUIDE.md)
+> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/DEVELOPER_GUIDE.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/DEVELOPER_GUIDE.md)&nbsp; |
+> &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/DEVELOPER_GUIDE.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/DEVELOPER_GUIDE.md)
 
 Single source of truth for SDLC, local setup, branching, testing/coverage, and releases using
 **Rush + PNPM**.

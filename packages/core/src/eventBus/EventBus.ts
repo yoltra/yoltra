@@ -1,35 +1,35 @@
 /**
- * @mergeModuleWith @quojs/core
+ * @module @quojs/core
  */
 
-import type { ActionMapBase } from "../types";
+import type { EventMapBase } from "../types";
 
 /**
- * Minimal, synchronous pub/sub event bus keyed by **channel** and **event**.
+ * Minimal, synchronous pub/sub event bus keyed by **channel** and **type**.
  *
- * @typeParam AM - Action map shape:
+ * @typeParam EM - Event map shape:
  * ```ts
- * type ActionMapBase = Record<string, Record<string, unknown>>;
+ * type EventMapBase = Record<string, Record<string, unknown>>;
  * // Example:
- * type AM = {
+ * type EM = {
  *   ui: { toggle: boolean };
  *   data: { loaded: { items: string[] } };
  * };
  * ```
  *
  * @remarks
- * - Handlers are stored per `(channel, event)` and invoked **synchronously** in subscription order.
+ * - Handlers are stored per `(channel, type)` and invoked **synchronously** in subscription order.
  * - Exceptions thrown by a handler are **caught and logged**, and do **not** stop other handlers.
  * - Intended for in-memory, single-process usage (no cross-tab/process broadcasting).
  *
  * @example
  * ```ts
- * type AM = {
+ * type EM = {
  *   ui: { toggle: boolean };
  *   data: { loaded: { items: string[] } };
  * };
  *
- * const bus = new EventBus<AM>();
+ * const bus = new EventBus<EM>();
  *
  * // Subscribe
  * const off = bus.on('ui', 'toggle', (on) => {
@@ -45,21 +45,21 @@ import type { ActionMapBase } from "../types";
  *
  * @public
  */
-export class EventBus<AM extends ActionMapBase> {
+export class EventBus<EM extends EventMapBase> {
   /**
-   * Internal registry: `channel → event → Set<handler>`.
+   * Internal registry: `channel → type → Set<handler>`.
    * @internal
    */
   private handlers: Map<string, Map<string, Set<(payload: any) => void>>> = new Map();
 
   /**
-   * Subscribes a handler to an exact `(channel, event)`.
+   * Subscribes a handler to an exact `(channel, type)`.
    *
-   * @typeParam C - Channel key (must be a string key of `AM`).
-   * @typeParam E - Event key within channel `C` (must be a string key of `AM[C]`).
+   * @typeParam C - Channel key (must be a string key of `EM`).
+   * @typeParam T - Type key within channel `C` (must be a string key of `EM[C]`).
    * @param channel - Channel name to subscribe to.
-   * @param event - Event name within the channel.
-   * @param handler - Function invoked with the payload type `AM[C][E]`.
+   * @param type - Event type within the channel.
+   * @param handler - Function invoked with the payload type `EM[C][T]`.
    * @returns An **unsubscribe** function that removes this handler.
    *
    * @example
@@ -74,35 +74,35 @@ export class EventBus<AM extends ActionMapBase> {
    *
    * @public
    */
-  public on<C extends keyof AM & string, E extends keyof AM[C] & string>(
+  public on<C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
-    event: E,
-    handler: (payload: AM[C][E]) => void,
+    type: T,
+    handler: (payload: EM[C][T]) => void,
   ): () => void {
-    let byEvent = this.handlers.get(channel);
-    if (!byEvent) {
-      byEvent = new Map();
-      this.handlers.set(channel, byEvent);
+    let byType = this.handlers.get(channel);
+    if (!byType) {
+      byType = new Map();
+      this.handlers.set(channel, byType);
     }
 
-    let set = byEvent.get(event);
+    let set = byType.get(type);
     if (!set) {
       set = new Set();
-      byEvent.set(event, set);
+      byType.set(type, set);
     }
 
     set.add(handler as any);
 
-    return () => this.off(channel, event, handler);
+    return () => this.off(channel, type, handler);
   }
 
   /**
    * Removes a specific handler previously added with {@link EventBus.on | `on`}.
    *
-   * @typeParam C - Channel key (string key of `AM`).
-   * @typeParam E - Event key within channel `C` (string key of `AM[C]`).
+   * @typeParam C - Channel key (string key of `EM`).
+   * @typeParam T - Type key within channel `C` (string key of `EM[C]`).
    * @param channel - Channel name of the subscription to remove.
-   * @param event - Event name of the subscription to remove.
+   * @param type - Event type of the subscription to remove.
    * @param handler - The same handler reference that was passed to `on`.
    *
    * @example
@@ -116,34 +116,34 @@ export class EventBus<AM extends ActionMapBase> {
    *
    * @public
    */
-  public off<C extends keyof AM & string, E extends keyof AM[C] & string>(
+  public off<C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
-    event: E,
-    handler: (payload: AM[C][E]) => void,
+    type: T,
+    handler: (payload: EM[C][T]) => void,
   ): void {
-    const byEvent = this.handlers.get(channel);
-    if (!byEvent) return;
+    const byType = this.handlers.get(channel);
+    if (!byType) return;
 
-    const set = byEvent.get(event);
+    const set = byType.get(type);
     if (!set) return;
 
     set.delete(handler as any);
 
-    if (set.size === 0) byEvent.delete(event);
-    if (byEvent.size === 0) this.handlers.delete(channel);
+    if (set.size === 0) byType.delete(type);
+    if (byType.size === 0) this.handlers.delete(channel);
   }
 
   /**
-   * Emits an event to all subscribers of the exact `(channel, event)`.
+   * Emits an event to all subscribers of the exact `(channel, type)`.
    *
    * Handlers are invoked **synchronously**. Any exception thrown by a handler is
    * caught and logged, and other handlers still run.
    *
-   * @typeParam C - Channel key (string key of `AM`).
-   * @typeParam E - Event key within channel `C` (string key of `AM[C]`).
+   * @typeParam C - Channel key (string key of `EM`).
+   * @typeParam T - Type key within channel `C` (string key of `EM[C]`).
    * @param channel - Channel name to emit on.
-   * @param event - Event name to emit.
-   * @param payload - Payload matching `AM[C][E]`.
+   * @param type - Event type to emit.
+   * @param payload - Payload matching `EM[C][T]`.
    *
    * @example
    * ```ts
@@ -152,15 +152,15 @@ export class EventBus<AM extends ActionMapBase> {
    *
    * @public
    */
-  public emit<C extends keyof AM & string, E extends keyof AM[C] & string>(
+  public emit<C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
-    event: E,
-    payload: AM[C][E],
+    type: T,
+    payload: EM[C][T],
   ): void {
-    const byEvent = this.handlers.get(channel);
-    if (!byEvent) return;
+    const byType = this.handlers.get(channel);
+    if (!byType) return;
 
-    const set = byEvent.get(event);
+    const set = byType.get(type);
     if (!set || set.size === 0) return;
 
     for (const h of [...set]) {
@@ -173,7 +173,7 @@ export class EventBus<AM extends ActionMapBase> {
   }
 
   /**
-   * Clears **all** listeners across all channels/events.
+   * Clears **all** listeners across all channels/types.
    *
    * Useful for tests or during HMR teardown to avoid duplicate handlers.
    *

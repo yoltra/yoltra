@@ -1,3 +1,7 @@
+/**
+ * @module @quojs/react
+ */
+
 import { createContext } from "react";
 import type { StoreInstance } from "@quojs/core";
 
@@ -23,5 +27,6 @@ import type { StoreInstance } from "@quojs/core";
  * }
  * ```
  *
- * @public */
+ * @public
+ */
 export const StoreContext = createContext<StoreInstance<any, any, any> | null>(null);

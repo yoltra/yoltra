@@ -1,65 +1,80 @@
-import type { ActionMapBase, ReducerSpec } from "@quojs/core";
+import type { StoreInstance } from "@quojs/core";
 import type { eTodoStatus, iTodoSpec, iTypiTodo } from "../../types";
 
-import { createStore, type StoreInstance } from "@quojs/core";
+import { createStore } from "@quojs/core";
 
 import { rootReducer } from "./reducer";
 import { todoMiddleware } from "./middleware";
-
-export type iAsyncActions<AM extends Record<string, Record<string, any>>> = {
-    [K in keyof AM]: {
-        loading: { channel: K; event: keyof AM[K]; payload?: AM[K][keyof AM[K]] };
-        success: { channel: K; event: keyof AM[K]; payload?: AM[K][keyof AM[K]] };
-        failure: { channel: K; event: keyof AM[K]; payload?: AM[K][keyof AM[K]] };
-    };
-}[keyof AM];
+import type { StateFromReducers } from "../../../../../../packages/core/dist/types/types";
 
 /**
- * App-specific channels */
-export type tAppAM = {
-    todo: {
-        // fetch
-        fetchTodos: {
-            url: string,
-            offset: number,
-            limit: number,
+ * Helper type for async event patterns (loading/success/failure).
+ * 
+ * @remarks
+ * This is a common pattern for async operations where you want to track
+ * the lifecycle of an async action with three events. */
+export type iAsyncEvents<EM extends Record<string, Record<string, unknown>>> = {
+  [C in keyof EM]: {
+    loading: { channel: C; type: keyof EM[C]; payload?: EM[C][keyof EM[C]] };
+    success: { channel: C; type: keyof EM[C]; payload?: EM[C][keyof EM[C]] };
+    failure: { channel: C; type: keyof EM[C]; payload?: EM[C][keyof EM[C]] };
+  };
+}[keyof EM];
 
-            actions: iAsyncActions<tAppAM>
-        },
-        fetchTodosLoading: {},
-        fetchTodosSuccess: { todos: iTypiTodo[] },
-        fetchTodosFailure: { error: string },
-
-        // crud
-        addTodo: iTodoSpec,
-        deleteTodo: { id: string },
-        setTodoStatus: { id: string, status: eTodoStatus },
-        setTodoCategory: { id: string, category: string },
-        setTodoTitle: { id: string, title: string },
-
-        // filter
-        setStatusFilter: { by: eTodoStatus },
-        setCategoryFilter: { by: string },
-        clearFilters: {}
+/**
+ * App-specific Event Map
+ * 
+ * Defines all events in the application organized by channel.
+ * Each channel contains event types and their associated payloads. */
+export type tAppEM = {
+  todo: {
+    // fetch lifecycle events
+    fetchTodos: {
+      url: string;
+      offset: number;
+      limit: number;
+      actions: iAsyncEvents<tAppEM>;
     };
+    fetchTodosLoading: null;
+    fetchTodosSuccess: { todos: iTypiTodo[] };
+    fetchTodosFailure: { error: string };
+
+    // crud events
+    addTodo: iTodoSpec;
+    deleteTodo: { id: string };
+    setTodoStatus: { id: string; status: eTodoStatus };
+    setTodoCategory: { id: string; category: string };
+    setTodoTitle: { id: string; title: string };
+
+    // filter events
+    setStatusFilter: { by: eTodoStatus };
+    setCategoryFilter: { by: string };
+    clearFilters: null;
+  };
 };
 
 /**
- * Convenience union for consumers */
-export type tAnyAM = ActionMapBase & tAppAM;
-
-export type StateFromReducers<R> = {
-    [K in keyof R]: R[K] extends ReducerSpec<infer S, any> ? S : never;
-};
+ * Extracted types for the store to avoid TS2742 portability issues. */
+export type RootReducerKeys = keyof typeof rootReducer & string;
+export type RootReducerState = StateFromReducers<typeof rootReducer>;
 
 /**
- * Create the app store with base reducers + middleware */
-export const store: StoreInstance<keyof typeof rootReducer & string, StateFromReducers<typeof rootReducer>, tAppAM> =
-    createStore({
-        name: "Quo.js Store",
-        reducer: rootReducer,
-        middleware: todoMiddleware,
-    });
+ * The main application store instance.
+ * 
+ * @remarks
+ * - Uses v0.5.0 `createStore` with explicit type annotation to avoid TS2742
+ * - Middleware is registered at construction
+ * - Type annotation ensures portability across different TypeScript setups */
+export const store: StoreInstance<RootReducerKeys, RootReducerState, tAppEM> = createStore({
+  name: "Quo.js Store",
+  reducer: rootReducer,
+  middleware: todoMiddleware,
+});
 
+/**
+ * Type of the store instance for use in type annotations. */
 export type tAppStore = typeof store;
 
+/**
+ * Convenience re-export of the event map for use in components. */
+export type { tAppEM as AppEventMap };

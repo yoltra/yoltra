@@ -27,11 +27,13 @@ export default defineConfig({
     coverage: {
       reporter: ["text", "html", "lcov"],
       exclude: [
+        "dist",
         "common",
         "src/index.ts",
         "src/types.ts",
         "**/*.d.ts",
-        "**/*.config.ts"
+        "**/*.config.ts",
+        "tests"
       ],
       thresholds: { lines: 0.95, branches: 0.95, functions: 0.95, statements: 0.95 }
     },

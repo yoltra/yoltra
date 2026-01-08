@@ -11,8 +11,8 @@ Ce document explique comment les décisions sont prises et comment les contribut
 
 ## Rôles
 
-- **Contributeurs** : Toute personne envoyant des PRs, des problèmes ou des documents.  
-- **Mainteneurs** : Contributeurs de confiance ayant des droits de fusion pour un ou plusieurs packages.  
+- **Contributeurs** : Toute personne envoyant des PRs, des problèmes ou des documents. 
+- **Mainteneurs** : Contributeurs de confiance ayant des droits de fusion pour un ou plusieurs packages. 
 - **Lead Maintainer**: Coordinates roadmap and releases (initially **@pixerael / Erael Group.**).
 
 Une liste des mainteneurs actuels est conservée dans [MAINTAINERS.md](./MAINTAINERS.md) (si présent) ou dans l'organisation/équipe GitHub.

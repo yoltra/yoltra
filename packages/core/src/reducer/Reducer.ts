@@ -1,16 +1,16 @@
 /**
- * @mergeModuleWith @quojs/core
+ * @module @quojs/core
  */
 
-import type { ActionMapBase, ActionUnion, ReducerFunction } from "../types";
+import type { EventMapBase, EventUnion, ReducerFunction } from "../types";
 
 /**
- * Thin wrapper around a pure reducer function:
- * given a state `S` and an action (from {@link ActionUnion | `ActionUnion<AM>`}),
+ * Thin wrapper around a pure reducer function (stateful event consumer):
+ * given a state `S` and an event (from {@link EventUnion | `EventUnion<EM>`}),
  * returns the next state `S`.
  *
  * @typeParam S  - State shape handled by this reducer.
- * @typeParam AM - Action map describing the valid action keys and payload types.
+ * @typeParam EM - Event map describing the valid event keys and payload types.
  *
  * @remarks
  * - The reducer function is expected to be **pure** and **side-effect free**.
@@ -20,43 +20,47 @@ import type { ActionMapBase, ActionUnion, ReducerFunction } from "../types";
  * @example Basic counter
  * ```ts
  * type State = { count: number };
- * type AM = { add: number; set: number };
+ * type EM = { math: { add: number; set: number } };
  *
- * // A reducer function that responds to 'add' and 'set'
- * const rf: ReducerFunction<State, AM> = (s, a) => {
- *   // NOTE: The exact shape of ActionUnion<AM> depends on your core types.
- *   // Replace 'type'/'payload' with your project's action keys if different.
- *   switch ((a as any).type as keyof AM) {
- *     case 'add': return { count: s.count + (a as any).payload as number };
- *     case 'set': return { count: (a as any).payload as number };
- *     default:    return s;
+ * const rf: ReducerFunction<State, EM> = (s, evt) => {
+ *   if (evt.channel === 'math' && evt.type === 'add') {
+ *     return { count: s.count + evt.payload };
  *   }
+ *   if (evt.channel === 'math' && evt.type === 'set') {
+ *     return { count: evt.payload };
+ *   }
+ *   return s;
  * };
  *
- * const r = new Reducer<State, AM>(rf);
+ * const r = new Reducer<State, EM>(rf);
  *
  * const s0 = { count: 0 };
- * const s1 = r.reduce(s0, { type: 'add', payload: 2 } as unknown as ActionUnion<AM>);
+ * const s1 = r.reduce(s0, {
+ *   channel: 'math',
+ *   type: 'add',
+ *   payload: 2,
+ *   id: Symbol()
+ * } as EventUnion<EM>);
  * // s1.count === 2
  * ```
  *
  * @public
  */
-export class Reducer<S, AM extends ActionMapBase = ActionMapBase> {
+export class Reducer<S, EM extends EventMapBase = EventMapBase> {
   /**
    * The underlying pure reducer function.
    * @internal
    */
-  private readonly _reduce: ReducerFunction<S, AM>;
+  private readonly _reduce: ReducerFunction<S, EM>;
 
   /**
    * Creates a new {@link Reducer} from a pure reducer function.
    *
-   * @param reduce - A function `(state, action) => nextState` that implements your update logic.
+   * @param reduce - A function `(state, event) => nextState` that implements your update logic.
    *
    * @example
    * ```ts
-   * const reducer = new Reducer<MyState, MyAM>((state, action) => {
+   * const reducer = new Reducer<MyState, MyEM>((state, event) => {
    *   // implement your transitions here
    *   return state;
    * });
@@ -64,7 +68,7 @@ export class Reducer<S, AM extends ActionMapBase = ActionMapBase> {
    *
    * @public
    */
-  constructor(reduce: ReducerFunction<S, AM>) {
+  constructor(reduce: ReducerFunction<S, EM>) {
     this._reduce = reduce;
   }
 
@@ -72,17 +76,17 @@ export class Reducer<S, AM extends ActionMapBase = ActionMapBase> {
    * Applies the reducer to produce the next state.
    *
    * @param state  - Current state.
-   * @param action - An action drawn from {@link ActionUnion | `ActionUnion<AM>`}.
+   * @param event - An event drawn from {@link EventUnion | `EventUnion<EM>`}.
    * @returns The next state produced by the underlying reducer function.
    *
    * @example
    * ```ts
-   * const next = reducer.reduce(curr, someAction as ActionUnion<MyAM>);
+ * const next = reducer.reduce(curr, someEvent as EventUnion<MyEM>);
    * ```
    *
    * @public
    */
-  reduce(state: S, action: ActionUnion<AM>): S {
-    return this._reduce(state, action);
+  reduce(state: S, event: EventUnion<EM>): S {
+    return this._reduce(state, event);
   }
 }

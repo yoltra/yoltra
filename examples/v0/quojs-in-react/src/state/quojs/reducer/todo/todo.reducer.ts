@@ -1,10 +1,7 @@
 import { v4 } from "uuid";
-
-import type { ActionPair, ReducerFunction, ReducerSpec } from "@quojs/core";
-import { typedActions } from "@quojs/core";
-
+import type { ReducerSpec } from "@quojs/core";
 import { eReducerStatus, eTodoStatus, type iTodo, type iTodoState } from "../../../../types";
-import type { tAppAM } from "../../store";
+import type { tAppEM } from "../../store";
 import { withImmer } from "../withImmer";
 
 export const todoInitialState: iTodoState = {
@@ -18,54 +15,41 @@ export const todoInitialState: iTodoState = {
   statusDetails: "fetching todos...",
 };
 
-const TODO_ACTIONS = [
-  ["todo", "addTodo"],
-  ["todo", "deleteTodo"],
-  ["todo", "setTodoTitle"],
-  ["todo", "setTodoCategory"],
-  ["todo", "setTodoStatus"],
-  ["todo", "setCategoryFilter"],
-  ["todo", "setStatusFilter"],
-  ["todo", "clearFilters"],
-  ["todo", "fetchTodosLoading"],
-  ["todo", "fetchTodosSuccess"],
-  ["todo", "fetchTodosFailure"],
-] as const satisfies readonly ActionPair<tAppAM>[];
-
 /**
- * todo Reducer (Immer-wrapped)
- * 
+ * Todo Reducer (Immer-wrapped)
+ *
  * The only Reducer in the Application, it stores:
- * 
- * - todoes in a dictionary, in which the key is the
+ *
+ * - todos in a dictionary, in which the key is the
  *   id and the value is the todo itself
  * - filter state
- * - status and statusDetails properties for async */
-const todoReducer: ReducerFunction<iTodoState, tAppAM> = withImmer<iTodoState, any>((draft, action) => {
-  const { event, payload } = action;
-
-  switch (event) {
+ * - status and statusDetails properties for async
+ */
+const todoReducer = withImmer<iTodoState, tAppEM>((draft, event) => {
+  switch (event.type) {
     case "addTodo": {
-      const addTodoPayload = payload as tAppAM["todo"]["addTodo"];
+      // event.payload is now typed as tAppAM["todo"]["addTodo"]
+      const { category, id: providedId, ...rest } = event.payload;
 
       // categories++
-      if (addTodoPayload.category) {
-        if (!draft.filter.categories[addTodoPayload.category]) {
-          draft.filter.categories[addTodoPayload.category] = 0;
+      if (category) {
+        if (!draft.filter.categories[category]) {
+          draft.filter.categories[category] = 0;
         }
-        draft.filter.categories[addTodoPayload.category]++;
+        draft.filter.categories[category]++;
       }
 
-      const key = addTodoPayload.id ?? v4();
+      const key = providedId ?? v4();
       draft.data[key] = {
         id: key,
-        ...addTodoPayload,
+        category,
+        ...rest,
       } as iTodo;
       return;
     }
 
     case "deleteTodo": {
-      const { id } = payload as tAppAM["todo"]["deleteTodo"];
+      const { id } = event.payload;
       const todoItem = draft.data[id];
 
       if (todoItem?.category) {
@@ -82,7 +66,7 @@ const todoReducer: ReducerFunction<iTodoState, tAppAM> = withImmer<iTodoState, a
     }
 
     case "setTodoTitle": {
-      const { id, title } = payload as tAppAM["todo"]["setTodoTitle"];
+      const { id, title } = event.payload;
       const t = draft.data[id];
 
       if (t) t.title = title;
@@ -91,13 +75,14 @@ const todoReducer: ReducerFunction<iTodoState, tAppAM> = withImmer<iTodoState, a
     }
 
     case "setTodoCategory": {
-      const { id, category } = payload as tAppAM["todo"]["setTodoCategory"];
+      const { id, category } = event.payload;
       const t = draft.data[id];
       if (!t) return;
 
       /**
        * If the todo had a previous category,
-       * we subtract from that category */
+       * we subtract from that category
+       */
       const oldCat = t.category;
       if (oldCat) {
         if (draft.filter.categories[oldCat] <= 1) {
@@ -120,7 +105,7 @@ const todoReducer: ReducerFunction<iTodoState, tAppAM> = withImmer<iTodoState, a
     }
 
     case "setTodoStatus": {
-      const { id, status } = payload as tAppAM["todo"]["setTodoStatus"];
+      const { id, status } = event.payload;
       const t = draft.data[id];
 
       if (t) t.status = status;
@@ -128,17 +113,16 @@ const todoReducer: ReducerFunction<iTodoState, tAppAM> = withImmer<iTodoState, a
       return;
     }
 
-
-    // fetched todoes
+    // fetched todos
     case "fetchTodosLoading": {
       draft.status = eReducerStatus.Loading;
-      draft.statusDetails = "fetching todoes...";
+      draft.statusDetails = "fetching todos...";
 
       return;
     }
 
     case "fetchTodosSuccess": {
-      const { todos } = payload as tAppAM["todo"]["fetchTodosSuccess"];
+      const { todos } = event.payload;
 
       draft.data = todos.reduce<Record<string, iTodo>>((todoes, todo) => {
         todoes[todo.id] = {
@@ -146,7 +130,7 @@ const todoReducer: ReducerFunction<iTodoState, tAppAM> = withImmer<iTodoState, a
           title: todo.title,
           category: "fetched",
           status: todo?.completed ? eTodoStatus.Complete : eTodoStatus.Pending,
-        }
+        };
 
         return todoes;
       }, { ...draft.data });
@@ -161,7 +145,7 @@ const todoReducer: ReducerFunction<iTodoState, tAppAM> = withImmer<iTodoState, a
     }
 
     case "fetchTodosFailure": {
-      const { error } = payload as tAppAM["todo"]["fetchTodosFailure"];
+      const { error } = event.payload;
 
       draft.status = eReducerStatus.Failure;
       draft.statusDetails = error;
@@ -171,14 +155,14 @@ const todoReducer: ReducerFunction<iTodoState, tAppAM> = withImmer<iTodoState, a
 
     // filter state
     case "setStatusFilter": {
-      const { by } = payload as tAppAM["todo"]["setStatusFilter"];
+      const { by } = event.payload;
       draft.filter.selectedStatus = by;
 
       return;
     }
 
     case "setCategoryFilter": {
-      const { by } = payload as tAppAM["todo"]["setCategoryFilter"];
+      const { by } = event.payload;
       draft.filter.selectedCategory = by;
 
       return;
@@ -186,7 +170,7 @@ const todoReducer: ReducerFunction<iTodoState, tAppAM> = withImmer<iTodoState, a
 
     case "clearFilters": {
       draft.filter.selectedCategory = "";
-      draft.filter.selectedStatus = "";
+      draft.filter.selectedStatus = "ALL";
       return;
     }
 
@@ -195,10 +179,20 @@ const todoReducer: ReducerFunction<iTodoState, tAppAM> = withImmer<iTodoState, a
   }
 });
 
-export const todoSpec: ReducerSpec<iTodoState, tAppAM> = {
-  actions: [
-    ...TODO_ACTIONS,
+export const todoSpec: ReducerSpec<iTodoState, tAppEM> = {
+  events: [
+    ["todo", "addTodo"],
+    ["todo", "deleteTodo"],
+    ["todo", "setTodoTitle"],
+    ["todo", "setTodoCategory"],
+    ["todo", "setTodoStatus"],
+    ["todo", "setCategoryFilter"],
+    ["todo", "setStatusFilter"],
+    ["todo", "clearFilters"],
+    ["todo", "fetchTodosLoading"],
+    ["todo", "fetchTodosSuccess"],
+    ["todo", "fetchTodosFailure"],
   ],
   state: todoInitialState,
-  reducer: (state = todoInitialState, action) => todoReducer(state, action),
+  reducer: todoReducer,
 };

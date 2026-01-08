@@ -2,7 +2,7 @@ import { useState, type ChangeEvent, type FC } from "react";
 
 import { eTodoStatus } from "../../../types";
 import "./TodoFactory.style.scss";
-import { useDispatch } from "../../../state/quojs/hooks";
+import { useEmit } from "../../../state/quojs/hooks";
 
 export interface iTodoFactoryProps { }
 
@@ -11,7 +11,7 @@ export const TodoFactory: FC<iTodoFactoryProps> = (_: iTodoFactoryProps) => {
     const [newTodoCategory, setNewTodoCategory] = useState("");
     const [newTodoStatus, setNewTodoStatus] = useState<eTodoStatus>(eTodoStatus.Pending);
 
-    const dispatch = useDispatch();
+    const emit = useEmit();
 
     const handleTitleInputChange = ({ target }: ChangeEvent<HTMLInputElement>) => {
         setNewTodoTitle(target.value);
@@ -26,7 +26,7 @@ export const TodoFactory: FC<iTodoFactoryProps> = (_: iTodoFactoryProps) => {
     };
 
     const handleAddTodoButtonClick = () => {
-        dispatch("todo", "addTodo", {
+        emit("todo", "addTodo", {
             title: newTodoTitle,
             category: newTodoCategory,
             status: newTodoStatus

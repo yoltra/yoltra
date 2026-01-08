@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A comparison between Quo.js and RTK",
   "private": true,
-  "license": "MPL-2.0",
+  "license": "MIT",
   "author": {
     "name": "Manu Ramirez",
     "email": "manu@erael.com.mx"
@@ -20,8 +20,8 @@
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "@quojs/core": "workspace:^0.4.0",
-    "@quojs/react": "workspace:^0.4.1",
+    "@quojs/core": "workspace:^0.5.0",
+    "@quojs/react": "workspace:^0.5.0",
     "react-redux": "9.2.0",
     "react-router": "7.8.2",
     "@reduxjs/toolkit": "2.9.0",

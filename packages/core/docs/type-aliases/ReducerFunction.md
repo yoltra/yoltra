@@ -4,13 +4,13 @@
 
 [@quojs/core](../README.md) / ReducerFunction
 
-# Type Alias: ReducerFunction()\<S, AM\>
+# Type Alias: ReducerFunction()\<S, EM\>
 
-> **ReducerFunction**\<`S`, `AM`\> = (`state`, `action`) => `S`
+> **ReducerFunction**\<`S`, `EM`\> = (`state`, `event`) => `S`
 
-Defined in: [types.ts:146](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L146)
+Defined in: [types.ts:358](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L358)
 
-Pure reducer fn
+Pure reducer function (stateful event consumer).
 
 ## Type Parameters
 
@@ -18,9 +18,13 @@ Pure reducer fn
 
 `S` = `any`
 
-### AM
+State type.
 
-`AM` *extends* [`ActionMapBase`](ActionMapBase.md) = [`ActionMapBase`](ActionMapBase.md)
+### EM
+
+`EM` *extends* [`EventMapBase`](EventMapBase.md) = [`EventMapBase`](EventMapBase.md)
+
+Event map.
 
 ## Parameters
 
@@ -28,9 +32,9 @@ Pure reducer fn
 
 `S`
 
-### action
+### event
 
-[`ActionUnion`](ActionUnion.md)\<`AM`\>
+[`EventUnion`](EventUnion.md)\<`EM`\>
 
 ## Returns
 

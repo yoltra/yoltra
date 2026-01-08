@@ -1,5 +1,5 @@
 /**
- * @mergeModuleWith @quojs/core
+ * @module @quojs/core
  */
 
 import type { DeepReadonly } from "../types";

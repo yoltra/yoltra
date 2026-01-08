@@ -2,119 +2,361 @@
 
 # Quo.js
 
-> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/README.md)  |
->   👉 [ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/README.md)  |  
-> [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/README.md)  |  [ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/README.md)
+> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/README.md)&nbsp;
+> |&nbsp; 👉 [ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/README.md)&nbsp;
+> |&nbsp;[ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/README.md)&nbsp;
+> |&nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/README.md)
 
-![Bundle size](https://badgen.net/bundlephobia/min/@quojs/core)
-![Bundle size](https://badgen.net/bundlephobia/minzip/@quojs/core)
-![Bundle size](https://badgen.net/bundlephobia/tree-shaking/@quojs/core)
-![Bundle size](https://badgen.net/bundlephobia/dependency-count/@quojs/core)
-![npm downloads](https://badgen.net/npm/dm/@quojs/core)
-![License](https://img.shields.io/npm/l/@quojs/core)
+![Tamanho do bundle](https://badgen.net/bundlephobia/min/@quojs/core)
+![Tamanho do bundle](https://badgen.net/bundlephobia/minzip/@quojs/core)
+![Tamanho do bundle](https://badgen.net/bundlephobia/tree-shaking/@quojs/core)
+![Tamanho do bundle](https://badgen.net/bundlephobia/dependency-count/@quojs/core)
+![Downloads npm](https://badgen.net/npm/dm/@quojs/core)
+![Licença](https://img.shields.io/npm/l/@quojs/core)
 
-Declarativo • Ultra-simples • Expressivo: Quo.js é uma biblioteca moderna de gerenciamento de
-estado inspirada no Redux—mas sem a bagagem do Redux Toolkit. Traz de volta a simplicidade e o
-poder do padrão Redux original enquanto introduz **canais + eventos**, **middleware assíncrono
-nativo & efeitos**, **assinaturas granulares**, e **hooks React prontos para Suspense e Modo
-Concorrente**.
+**Gerenciamento de estado orientado a eventos com assinaturas atômicas.** 
+Quo.js é um contêiner de estado moderno, async-first que combina **eventos baseados em canais**, **reatividade de granularidade fina** e **suporte nativo para async**—sem a complexidade do Redux Toolkit ou a mágica implícita do MobX.
+
+Construído para **aplicações web**, **servidores Node.js**, **ferramentas CLI** e **microsserviços**.
+
+---
+
+## O que é Quo.js?
+
+Quo.js é um **contêiner de estado orientado a eventos, async-first** projetado para resolver três problemas fundamentais:
+
+### 1. **Desempenho: Zero Re-renderizações Desnecessárias**
+
+As bibliotecas de estado tradicionais re-renderizam componentes quando *qualquer* parte do estado inscrito muda. Quo.js usa **assinaturas atômicas de caminho** para eliminar esse desperdício.
+
+```tsx
+// ❌ Redux/Zustand: Re-renderiza quando QUALQUER tarefa muda
+const todos = useSelector(state => state.todos);
+
+// ✅ Quo.js: Somente re-renderiza quando o título DESTA tarefa específica muda
+const title = useAtomicProp({ 
+  reducer: 'todos', 
+  property: 'items.0.title' 
+});
+```
+
+[Ver comparação de flamegraph →](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.pt.md)
+
+### 2. **Complexidade Assíncrona: Integrada, Não Adicionada**
+
+Quo.js trata o assíncrono como uma preocupação de primeira classe. Middleware e efeitos são `async` por padrão—sem thunks, sem sagas, sem cerimônias.
+
+```typescript
+// Middleware assíncrono integrado
+const middleware = async (state, event, emit) => {
+  if (event.type === 'fetchUser') {
+    const user = await fetch('/api/user').then(r => r.json());
+    await emit('user', 'loaded', user);
+  }
+  return true;
+};
+```
+
+### 3. **Organização: Eventos Baseados em Canais**
+
+Os eventos são organizados por namespace através de canais `(channel, type, payload)`, evitando colisões de nomes em aplicações grandes.
+
+```typescript
+emit('auth', 'login', credentials);     // Eventos de autenticação
+emit('analytics', 'track', event);      // Eventos de analytics
+emit('ui', 'toast', message);           // Eventos de UI
+```
+
+---
+
+## Recursos Principais
+
+- 🎯 **Assinaturas Atômicas** — Inscreva-se em caminhos de estado exatos; somente re-renderiza quando eles mudam
+- ⚡ **Async-First** — Middleware + efeitos async nativos; sem thunks/sagas necessários
+- 🗪 **Orientado a Eventos** — Eventos baseados em canais com garantias de ordenação FIFO
+- 🛡️ **TypeScript-First** — Excelente inferência de tipos e autocompletar
+- 🧩 **Reducers Dinâmicos** — Adicione/remova slices de estado em tempo de execução
+- 🌍 **Agnóstico de Framework** — Por enquanto, apenas React, mas já estamos trabalhando para expandir nossa cobertura.
+- 📌 **Leve** — ~15KB no total (@quojs/core + @quojs/react)
+
+---
 
 ## Pacotes
 
-* **[@quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.pt.md)** — Store central, reducers, middleware, efeitos
-  (agnóstico de framework)
-* **[@quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.pt.md)** — Provider React & hooks (pronto para
-  Suspense/Concorrente)
+- **[@quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.pt.md)** — Store principal, reducers, middleware, effects (agnóstico de framework)
+- **[@quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.pt.md)** — Hooks React e provider (compatível com Suspense/Concurrent)
 
-  ## [Exemplos Executáveis](https://github.com/quojs/quojs/tree/main/packages)
+---
 
-| Example                                                                                | Description                                                                                                             | Screenshot                                                                    |
-| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| **[Quo.js em React](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/README.pt.md)**                          | Um aplicativo de tarefas simples (Confira a [comparação do React Profiler](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.pt.md)) | ![Quo.js logo](https://quojs.dev/assets/examples/profiler-quojs-frame-15.png) |
-| **[Logotipo Cinético do Quo.js (React + SVG)](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo/README.pt.md)** | Um logotipo cinético composto por aproximadamente 1.500 círculos SVG, controlado por um pequeno mecanismo de simulação e sincronizado com um armazenamento Quo.js. | ![Quo.js logo](https://quojs.dev/assets/examples/quojs-dots.gif)              |
-| **[Alternador de Tema](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-nextjs/README.md)**     | Um simples **alternador de tema** (claro ↔ escuro) alimentado por `@quojs/core` e `@quojs/react`, provando que o Quo.js pode gerenciar o estado do aplicativo perfeitamente em **React 19 + Next.js 16**. | ![Quo.js logo](https://quojs.dev/assets/examples/quojs-in-nextjs--theme-switcher.png) |
+## Exemplo Rápido
 
-## Por que Quo.js?
+```typescript
+import { createStore } from '@quojs/core';
 
-* 🗪 **Modelo de Canal + Evento** — ações são `{ channel, event, payload }`; reducers se
-  inscrevem exatamente na granularidade que você precisa.
-* 🎯 **Assinaturas de granularidade fina** — inscreva-se em props atômicos para evitar
-  [**renderizações desnecessárias**](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md).
-* 🧭 **TypeScript em primeiro lugar** — tipagens ergonômicas e APIs previsíveis.
-* ⚡ **Middleware & efeitos integrados** — assíncrono por padrão; sem boilerplate de thunk/saga.
-* 🧩 **Reducers dinâmicos** — adicione/remova reducers em tempo de execução.
-* 📌 **Leve** — superfície pequena e focada.
-* 🧭 **Agnóstico de framework** — React hoje; mais adaptadores são bem-vindos.
+// Defina seu mapa de eventos
+type AppEM = {
+  counter: {
+    increment: number;
+    decrement: number;
+    reset: null;
+  };
+};
 
-## Como o **Quo.js** se compara a outros contêineres de estado?
+// Crie o store
+const store = createStore<AppEM>({
+  name: 'CounterApp',
+  reducer: {
+    counter: {
+      state: { value: 0 },
+      events: [
+        ['counter', 'increment'],
+        ['counter', 'decrement'],
+        ['counter', 'reset']
+      ],
+      reducer: (state, event) => {
+        switch (event.type) {
+          case 'increment':
+            return { value: state.value + event.payload };
+          case 'decrement':
+            return { value: state.value - event.payload };
+          case 'reset':
+            return { value: 0 };
+          default:
+            return state;
+        }
+      }
+    }
+  }
+});
 
-Ao avaliar um gerenciador de estado, a superfície bruta da API não é toda a história. O que mais
-importa é a filosofia por trás dele, as compensações que ele faz, e como essas escolhas afetam a
-**experiência do desenvolvedor, desempenho e escalabilidade** em projetos reais.
+// Emita eventos
+await store.emit('counter', 'increment', 1);
+await store.emit('counter', 'decrement', 1);
+await store.emit('counter', 'reset', null);
 
-Quo.js foi projetado como uma evolução pragmática das ideias originais do Redux: eventos
-explícitos, transições de estado previsíveis, tipagem forte em TypeScript, e manipulação
-integrada de async/efeitos — sem a "mágica" oculta ou boilerplate de outros ecossistemas.
-
-Para ajudá-lo a decidir se Quo.js é a escolha certa, preparamos comparações diretas com outras
-bibliotecas populares. Cada documento explora:
-
-* **Modelo conceitual** (como o estado flui através de ações, reducers e efeitos)
-* **Ergonomia do desenvolvedor** (boilerplate, tipagem, ferramentas de debug)
-* **Desempenho** (granularidade das assinaturas, eficiência de renderização)
-* **Async & efeitos** (como workflows e efeitos colaterais são expressos)
-* **Integração com React** (seletores, Suspense, prontidão para modo concorrente)
-
-👉 Confira as comparações [aqui](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.pt.md)
-
-## Início Rápido (Monorepo)
-
-```bash
-npm i -g @microsoft/rush
-rush install
-rush build
-rush test
+// Obtenha o estado
+const state = store.getState();
+console.log(state.counter.value); // 0
 ```
 
-Builds focados:
+### Integração com React
 
-```bash
-rush build --to @quojs/core
-rush build --from @quojs/react
+```tsx
+import { useAtomicProp, useEmit } from '@quojs/react';
+
+function Counter() {
+  // Somente re-renderiza quando counter.value muda
+  const value = useAtomicProp({ reducer: 'counter', property: 'value' });
+  const emit = useEmit();
+
+  return (
+    <div>
+      <h1>Contador: {value}</h1>
+      <button onClick={() => emit('counter', 'increment', 1)}>+</button>
+      <button onClick={() => emit('counter', 'decrement', 1)}>-</button>
+      <button onClick={() => emit('counter', 'reset', null)}>Reiniciar</button>
+    </div>
+  );
+}
 ```
 
-Veja o **Guia do Desenvolvedor** para SDLC, cache e releases:
+---
 
-* [Guia do Desenvolvedor](https://github.com/quojs/quojs/blob/main/docs/pt/DEVELOPER_GUIDE.md)
+## Exemplos ao Vivo
+
+| Exemplo | Descrição | Captura de tela |
+|---------|-----------|-----------------|
+| **[Aplicativo de Tarefas com Profiler](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/README.pt.md)** | Aplicativo de tarefas comparando desempenho Redux vs Quo.js ([flamegraphs](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.pt.md)) | ![Profiler](https://quojs.dev/assets/examples/profiler-quojs-frame-15.png) |
+| **[Logo Cinético (900 partículas)](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo/README.pt.md)** | ~1500 círculos SVG impulsionados por simulação de física + estado Quo.js | ![Logo](https://quojs.dev/assets/examples/quojs-dots.gif) |
+| **[Alternador de Tema Next.js 15](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-nextjs/README.pt.md)** | Alternador de tema no Next.js 15 App Router (React 19 + Quo.js) | ![Tema](https://quojs.dev/assets/examples/quojs-in-nextjs--theme-switcher.png) |
+
+---
+
+## Como Quo.js se Compara?
+
+Quo.js ocupa um espaço único entre a estrutura do Redux e a simplicidade do Zustand:
+
+| Biblioteca | Arquitetura | Suporte Async | Assinaturas | Tamanho do Bundle |
+|------------|-------------|---------------|-------------|-------------------|
+| **Redux Toolkit** | Centralizado | Thunks/RTK Query | Nível de slice | ~45KB |
+| **Zustand** | Centralizado | Manual | Nível de seletor | ~1KB |
+| **Jotai** | Distribuído (átomos) | Manual | Nível de átomo | ~3KB |
+| **MobX** | Observable | `runInAction` | Nível de observable | ~16KB |
+| **XState** | Máquinas de Estado | Integrado | Nível de estado | ~30KB |
+| **Quo.js** | Orientado a eventos | **Integrado** | **Nível de caminho** | ~15KB |
+
+**Diferenciadores-Chave:**
+- ✅ Assinaturas de granularidade fina **por padrão** (sem otimização manual)
+- ✅ Pipeline async nativo (middleware + effects)
+- ✅ Garantias de ordenação de eventos (fila FIFO)
+
+👉 **[Leia a comparação completa →](https://github.com/quojs/quojs/blob/main/docs/pt/design/state-management-library-comparison.md)**
+
+---
+
+## Quando Você Deveria Usar Quo.js?
+
+### ✅ Ótimo Para
+
+- Aplicações onde o **desempenho** (otimização de re-renderização) é crítico
+- Projetos que precisam de **padrões async nativos** (sem thunks/sagas)
+- **Bases de código grandes** onde a organização por canais previne colisões
+- **Aplicações universais** (web + servidores/microsserviços Node.js)
+- Equipes que querem **fluxo de eventos explícito** para depuração
+
+### ⚠️ Considere Alternativas Se
+
+- Você precisa de **tamanho de bundle mínimo** (<5KB) → Experimente Zustand
+- Sua equipe está **fortemente comprometida com Redux** → Experimente Redux Toolkit
+- Você prefere **estado baseado em átomos** → Experimente Jotai
+- Você está modelando **fluxos de trabalho complexos** → Experimente XState
+
+---
+
+## Instalação e Configuração
+
+### 1. Instalar Pacotes
+
+```bash
+npm install @quojs/core @quojs/react
+# ou
+yarn add @quojs/core @quojs/react
+# ou
+pnpm add @quojs/core @quojs/react
+```
+
+### 2. Defina Seu Mapa de Eventos
+
+```typescript
+// types.ts
+export type AppEM = {
+  todos: {
+    add: { id: string; title: string };
+    toggle: { id: string };
+    delete: { id: string };
+  };
+  ui: {
+    setTheme: 'light' | 'dark';
+  };
+};
+```
+
+### 3. Crie o Store
+
+```typescript
+// store.ts
+import { createStore } from '@quojs/core';
+import type { AppEM } from './types';
+
+export const store = createStore({
+  name: 'MyApp',
+  reducer: {
+    todos: {
+      state: { items: [] },
+      events: [
+        ['todos', 'add'],
+        ['todos', 'toggle'],
+        ['todos', 'delete']
+      ],
+      reducer: (state, event) => {
+        // Sua lógica de reducer
+      }
+    }
+  }
+});
+```
+
+### 4. Use no React
+
+```tsx
+// App.tsx
+import { StoreProvider } from '@quojs/react';
+import { store } from './store';
+
+function App() {
+  return (
+    <StoreProvider store={store}>
+      <YourApp />
+    </StoreProvider>
+  );
+}
+```
+
+---
 
 ## Documentação
 
-### Core
+- **[Guia de Início Rápido](https://github.com/quojs/quojs/blob/main/docs/pt/QUICK_START_GUIDE.md)** — Comece em 5 minutos
+- **[Referência da API (@quojs/core)](https://github.com/quojs/quojs/blob/main/packages/core/docs/README.md)** — TypeDoc para o pacote core
+- **[Referência da API (@quojs/react)](https://github.com/quojs/quojs/blob/main/packages/react/docs/README.md)** — TypeDoc para hooks React
+- **[Comparação de Bibliotecas](https://github.com/quojs/quojs/blob/main/docs/pt/design/library-comparison.md)** — Como Quo.js se compara ao Redux, Zustand, Jotai, etc.
+- **[Arquitetura de Fila de Eventos](https://github.com/quojs/quojs/blob/main/docs/pt/design/event-queue-architecture.md)** — Análise técnica profunda
 
-* [TypeDoc](https://github.com/quojs/quojs/blob/main/packages/core/docs/README.md): documentação mais técnica extraída usando
-  TypeDoc.
-* [Docs do Desenvolvedor (WIP)](https://www.quojs.dev?lang=pt): guia de início rápido, tutorial,
-  receitas, etc.
-
-### Bindings React
-
-* [TypeDoc](https://github.com/quojs/quojs/blob/main/packages/react/docs/README.md): documentação mais técnica extraída usando
-  TypeDoc.
-* [Docs do Desenvolvedor (WIP)](https://www.quojs.dev?lang=pt): guia de início rápido, tutorial,
-  receitas, etc.
+---
 
 ## Contribuindo
 
-* Comece aqui — [Guia de Contribuição](https://github.com/quojs/quojs/blob/main/docs/pt/CONTRIBUTING.md)
-* [Código de Conduta](https://github.com/quojs/quojs/blob/main/docs/pt/CODE_OF_CONDUCT.md)
-* [Governança](https://github.com/quojs/quojs/blob/main/docs/pt/GOVERNANCE.md)
-* [Mantenedores](https://github.com/quojs/quojs/blob/main/docs/pt/MAINTAINERS.md)
-* [Segurança](https://github.com/quojs/quojs/blob/main/docs/pt/SECURITY.md)
-* [Marcas Registradas](https://github.com/quojs/quojs/blob/main/docs/pt/TRADEMARKS.md)
+Damos boas-vindas a contribuições! Por favor leia:
+
+- [Guia de Contribuição](https://github.com/quojs/quojs/blob/main/docs/pt/CONTRIBUTING.md)
+- [Código de Conduta](https://github.com/quojs/quojs/blob/main/docs/pt/CODE_OF_CONDUCT.md)
+- [Governança](https://github.com/quojs/quojs/blob/main/docs/pt/GOVERNANCE.md)
+- [Mantenedores](https://github.com/quojs/quojs/blob/main/docs/pt/MAINTAINERS.md)
+- [Política de Segurança](https://github.com/quojs/quojs/blob/main/docs/pt/SECURITY.md)
+
+---
+
+## Desenvolvimento (Monorepo)
+
+```bash
+# Instale Rush globalmente
+npm i -g @microsoft/rush
+
+# Instale dependências
+rush install
+
+# Construa todos os pacotes
+rush build
+
+# Execute testes
+rush test
+
+# Construa um pacote específico
+rush build --to @quojs/core
+
+# Construa a partir de um pacote específico
+rush build --from @quojs/react
+```
+
+Consulte o **[Guia do Desenvolvedor](https://github.com/quojs/quojs/blob/main/docs/pt/DEVELOPER_GUIDE.md)** para mais detalhes.
+
+---
 
 ## Status
 
-Quo.js está em **estágio RC**. As APIs são estáveis ​​e **provavelmente sofrerão alterações**, os tipos são estritos e está sendo usado em produção.
-Feedback e PRs são bem-vindos.
+Quo.js está em estágio de **Release Candidate**:
+- ✅ As APIs são estáveis (terminologia v0.5.0 finalizada)
+- ✅ Os tipos TypeScript são estritos e abrangentes
+- ✅ Usado em aplicações em produção
+- ⚠️ APIs menores ainda podem evoluir antes da v1.0
 
-Feito no 🇲🇽, para o mundo.
+**Feedback e PRs são bem-vindos!**
+
+---
+
+## Licença
+
+**MIT** — Livre para usar em projetos comerciais e de código aberto.
+
+Consulte [LICENSE](https://github.com/quojs/quojs/blob/main/LICENSE) para detalhes.
+
+---
+
+## Comunidade
+
+- Visite o **[site oficial do Quo.js](https://quojs.dev/?lang=pt)**
+- **Twitter/X:** [@quojs_dev](https://twitter.com/quojs_dev)
+- **GitHub Discussions:** [Junte-se à conversa](https://github.com/quojs/quojs/discussions)
+- **Issues:** [Reporte bugs ou solicite recursos](https://github.com/quojs/quojs/issues)
+
+Feito no 🇲🇽 para o mundo.

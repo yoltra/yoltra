@@ -89,8 +89,10 @@ In the Profiler, click **Save profile…** to export a `.json` you can keep for 
 
 ## Data source
 
-The fetch example uses MSW with mock data from `https://jsonplaceholder.typicode.com/todos?id=0` by default. You can change this in the actions/hooks if needed. Network access is not required by default and it must be allowed by your browser / dev proxy if you disable MSW.
+The fetch example uses MSW with mock data from `https://jsonplaceholder.typicode.com/todos?id=0&limit=10` by default. You can change this in the actions/hooks if needed. Network access is not required by default and it must be allowed by your browser / dev proxy if you disable MSW.
 
 ## License
 
-This demo is for comparison/documentation purposes. See repository root for license details.
+MIT
+
+This demo is for comparison/documentation purposes.

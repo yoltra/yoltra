@@ -8,7 +8,7 @@
 
 > **useSelector**\<`S`, `T`\>(`selector`, `isEqual`): `T`
 
-Defined in: [hooks/hooks.ts:165](https://github.com/quojs/quojs/blob/4b080313e808fe306ce36b57ad9b04440da9effc/packages/react/src/hooks/hooks.ts#L165)
+Defined in: [hooks/hooks.ts:170](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/hooks/hooks.ts#L170)
 
 Selects a derived value from the store using an external-store subscription.
 Re-renders when the selected value changes per `isEqual`.

@@ -7,11 +7,11 @@
 > &nbsp;[ 🇺🇸 English Version](../../CONTRIBUTING.md)&nbsp; |
 > &nbsp;[ 🇫🇷 Version française](../fr/CONTRIBUTING.md)
 
-¡Gracias por tu interés en contribuir! 🎉 Este proyecto es de código abierto bajo **MPL-2.0** con un modelo de gobernanza ligero y acogedor.
+¡Gracias por tu interés en contribuir! 🎉 Este proyecto es de código abierto bajo **MIT** con un modelo de gobernanza ligero y acogedor.
 
-- **Licencia de código:** MPL-2.0  
-- **Licencia de documentación:** CC BY 4.0 (salvo indicación)  
-- **Código de Conducta:** Contributor Covenant v2.1  
+- **Licencia de código:** MIT 
+- **Licencia de documentación:** CC BY 4.0 (salvo indicación) 
+- **Código de Conducta:** Contributor Covenant v2.1 
 - **DCO:** Developer Certificate of Origin 1.1 (se requiere *sign-off* en cada *commit*)
 
 > Para el flujo de ingeniería completo y el proceso de publicación, consulta la **Guía de Desarrollo**: [./DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md). Este archivo es un inicio rápido para contribuyentes y autores de PR.
@@ -52,7 +52,7 @@ Cada paquete publicable tiene su propio `package.json`. La carpeta raíz es priv
 1. **Crea una rama** desde `main`: `feature/<issue>-<slug>` o `fix/<issue>-<slug>`.
 2. **Desarrolla** con pruebas y documentación.
 3. **Verifica** deben pasar: `rush build`, `rush test`, `rush lint`.
-4. **Archivo de cambios** (si cambió un paquete publicable):  
+4. **Archivo de cambios** (si cambió un paquete publicable): 
    ```bash
    rush change
    ```

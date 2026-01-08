@@ -7,10 +7,10 @@
 > &nbsp;[ 🇺🇸 English Version](../../CONTRIBUTING.md)&nbsp; |
 > &nbsp; 👉 [ 🇫🇷 Version française](./CONTRIBUTING.md)
 
-Merci de votre intérêt à contribuer ! 🎉 Ce projet est open-source sous **MPL-2.0** avec un
+Merci de votre intérêt à contribuer ! 🎉 Ce projet est open-source sous **MIT** avec un
 modèle de gouvernance accueillant et léger.
 
-- **Licence du code :** MPL-2.0
+- **Licence du code :** MIT
 - **Licence des documents :** CC BY 4.0 (sauf indication contraire)
 - **Code de conduite :** Contributor Covenant v2.1
 - **DCO :** Developer Certificate of Origin 1.1 (signature requise sur chaque commit)

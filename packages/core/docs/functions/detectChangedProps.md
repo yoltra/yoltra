@@ -8,7 +8,7 @@
 
 > **detectChangedProps**(`oldState`, `newState`, `path`, `seenPairs`): `string`[]
 
-Defined in: [utils/detectChangedProps.ts:68](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/utils/detectChangedProps.ts#L68)
+Defined in: [utils/detectChangedProps.ts:68](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/utils/detectChangedProps.ts#L68)
 
 Computes the list of **dotted leaf paths** that changed between two values.
 
@@ -22,7 +22,7 @@ The algorithm performs a deep structural comparison with special handling for:
   added/removed keys as changed at their **full path**
 
 Cycles and repeated object aliases are handled via **pair-wise** tracking using a
-`WeakMap<object, WeakSet<object>>` so recursion doesn’t loop and shared subgraphs do not
+`WeakMap<object, WeakSet<object>>` so recursion doesn't loop and shared subgraphs do not
 produce false negatives.
 
 ## Parameters

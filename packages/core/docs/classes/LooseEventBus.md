@@ -4,15 +4,15 @@
 
 [@quojs/core](../README.md) / LooseEventBus
 
-# Class: LooseEventBus\<C, E, P\>
+# Class: LooseEventBus\<C, T, P\>
 
-Defined in: [eventBus/LooseEventBus.ts:44](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/eventBus/LooseEventBus.ts#L44)
+Defined in: [eventBus/LooseEventBus.ts:44](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/eventBus/LooseEventBus.ts#L44)
 
 Flexible, synchronous pub/sub bus that supports **exact** and **pattern** event subscriptions.
 
 ## Remarks
 
-- **Exact handlers** subscribe to a specific `(channel, event)` pair. Event keys are **normalized** by stripping a single leading dot (`".foo"` → `"foo"`).
+- **Exact handlers** subscribe to a specific `(channel, type)` pair. Type keys are **normalized** by stripping a single leading dot (`".foo"` → `"foo"`).
 - **Pattern handlers** subscribe using wildcards over dot-separated segments:
   - `*`   matches **one** segment.
   - `**`  matches **zero or more** segments (greedy).
@@ -24,10 +24,10 @@ Flexible, synchronous pub/sub bus that supports **exact** and **pattern** event 
 
 ```ts
 type C = 'ui' | 'data';
-type E = string;
+type T = string;
 type P = unknown;
 
-const bus = new LooseEventBus<C, E, P>();
+const bus = new LooseEventBus<C, T, P>();
 
 // Exact
 const offA = bus.on('ui', 'panel.open', () => console.log('panel opened'));
@@ -50,11 +50,11 @@ offA(); offB(); offC(); // unsubscribe
 
 Channel name type (defaults to `string`).
 
-### E
+### T
 
-`E` *extends* `string` = `string`
+`T` *extends* `string` = `string`
 
-Event name type (defaults to `string`). Events are treated as **dot-separated paths** (e.g. `"a.b.c"`).
+Event type name type (defaults to `string`). Types are treated as **dot-separated paths** (e.g. `"a.b.c"`).
 
 ### P
 
@@ -66,11 +66,11 @@ Payload type for all events (defaults to `any`).
 
 ### Constructor
 
-> **new LooseEventBus**\<`C`, `E`, `P`\>(): `LooseEventBus`\<`C`, `E`, `P`\>
+> **new LooseEventBus**\<`C`, `T`, `P`\>(): `LooseEventBus`\<`C`, `T`, `P`\>
 
 #### Returns
 
-`LooseEventBus`\<`C`, `E`, `P`\>
+`LooseEventBus`\<`C`, `T`, `P`\>
 
 ## Methods
 
@@ -78,7 +78,7 @@ Payload type for all events (defaults to `any`).
 
 > **clear**(): `void`
 
-Defined in: [eventBus/LooseEventBus.ts:364](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/eventBus/LooseEventBus.ts#L364)
+Defined in: [eventBus/LooseEventBus.ts:364](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/eventBus/LooseEventBus.ts#L364)
 
 Removes **all** listeners (exact and pattern). Useful for tests/HMR teardown.
 
@@ -96,9 +96,9 @@ afterEach(() => bus.clear());
 
 ### emit()
 
-> **emit**(`channel`, `event`, `payload`): `void`
+> **emit**(`channel`, `type`, `payload`): `void`
 
-Defined in: [eventBus/LooseEventBus.ts:209](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/eventBus/LooseEventBus.ts#L209)
+Defined in: [eventBus/LooseEventBus.ts:209](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/eventBus/LooseEventBus.ts#L209)
 
 Emits an event to all exact subscribers first, then to **matching pattern** subscribers.
 Duplicate handler references are called **once** (de-duped).
@@ -111,11 +111,11 @@ Duplicate handler references are called **once** (de-duped).
 
 Channel to emit on.
 
-##### event
+##### type
 
-`E`
+`T`
 
-Event key (subject). A leading dot is ignored for matching.
+Event type (subject). A leading dot is ignored for matching.
 
 ##### payload
 
@@ -142,11 +142,11 @@ bus.emit('ui', 'panel.open', { id: 1 });
 
 ### off()
 
-> **off**(`channel`, `event`, `handler`): `void`
+> **off**(`channel`, `type`, `handler`): `void`
 
-Defined in: [eventBus/LooseEventBus.ts:135](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/eventBus/LooseEventBus.ts#L135)
+Defined in: [eventBus/LooseEventBus.ts:135](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/eventBus/LooseEventBus.ts#L135)
 
-Unsubscribes an **exact** handler. The `event` key is normalized internally,
+Unsubscribes an **exact** handler. The `type` key is normalized internally,
 so callers can pass `"foo"` or `".foo"` interchangeably.
 
 #### Parameters
@@ -157,11 +157,11 @@ so callers can pass `"foo"` or `".foo"` interchangeably.
 
 Channel name.
 
-##### event
+##### type
 
-`E`
+`T`
 
-Exact event key to remove (normalization applied).
+Exact event type key to remove (normalization applied).
 
 ##### handler
 
@@ -186,11 +186,11 @@ bus.off('ui', '.panel.open', h);
 
 ### on()
 
-> **on**(`channel`, `event`, `handler`): () => `void`
+> **on**(`channel`, `type`, `handler`): () => `void`
 
-Defined in: [eventBus/LooseEventBus.ts:89](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/eventBus/LooseEventBus.ts#L89)
+Defined in: [eventBus/LooseEventBus.ts:89](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/eventBus/LooseEventBus.ts#L89)
 
-Subscribes a handler to either an **exact** event or a **pattern**.
+Subscribes a handler to either an **exact** type or a **pattern**.
 
 #### Parameters
 
@@ -200,11 +200,11 @@ Subscribes a handler to either an **exact** event or a **pattern**.
 
 Channel to subscribe on.
 
-##### event
+##### type
 
-`E`
+`T`
 
-Exact event (e.g. `"a.b"`) or pattern (contains `*`/`**`).
+Exact event type (e.g. `"a.b"`) or pattern (contains `*`/`**`).
 
 ##### handler
 

@@ -1,6 +1,6 @@
 {
   "name": "@quojs/react",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "React bindings for Quo.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && vite build",
@@ -9,10 +9,11 @@
     "test": "pnpm vitest --coverage --watch=false",
     "test:watch": "vitest --coverage",
     "prepublishOnly": "node ../../common/scripts/copy-license.js",
+    "docs": "rushx docs:js && rushx docs:md",
     "docs:md": "pnpm typedoc --options ./typedoc.react.json",
     "docs:js": "pnpm typedoc --options ./typedoc.react.json --json ./.typedoc/react-en.json"
   },
-  "license": "MPL-2.0",
+  "license": "MIT",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
     "email": "manu@quojs.dev"
@@ -49,7 +50,7 @@
     "node": ">=18.18"
   },
   "peerDependencies": {
-    "@quojs/core": "^0.4.0",
+    "@quojs/core": "^0.5.0",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19"
   },
@@ -62,7 +63,7 @@
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@quojs/core": "workspace:^0.4.0",
+    "@quojs/core": "workspace:^0.5.0",
     "@quojs/repo-tools": "workspace:*",
     "@eslint/js": "^9.30.1",
     "@rollup/plugin-commonjs": "^25.0.7",

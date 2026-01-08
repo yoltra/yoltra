@@ -4,27 +4,27 @@
 
 [@quojs/core](../README.md) / EventBus
 
-# Class: EventBus\<AM\>
+# Class: EventBus\<EM\>
 
-Defined in: [eventBus/EventBus.ts:48](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/eventBus/EventBus.ts#L48)
+Defined in: [eventBus/EventBus.ts:48](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/eventBus/EventBus.ts#L48)
 
-Minimal, synchronous pub/sub event bus keyed by **channel** and **event**.
+Minimal, synchronous pub/sub event bus keyed by **channel** and **type**.
 
 ## Remarks
 
-- Handlers are stored per `(channel, event)` and invoked **synchronously** in subscription order.
+- Handlers are stored per `(channel, type)` and invoked **synchronously** in subscription order.
 - Exceptions thrown by a handler are **caught and logged**, and do **not** stop other handlers.
 - Intended for in-memory, single-process usage (no cross-tab/process broadcasting).
 
 ## Example
 
 ```ts
-type AM = {
+type EM = {
   ui: { toggle: boolean };
   data: { loaded: { items: string[] } };
 };
 
-const bus = new EventBus<AM>();
+const bus = new EventBus<EM>();
 
 // Subscribe
 const off = bus.on('ui', 'toggle', (on) => {
@@ -40,15 +40,15 @@ off();
 
 ## Type Parameters
 
-### AM
+### EM
 
-`AM` *extends* [`ActionMapBase`](../type-aliases/ActionMapBase.md)
+`EM` *extends* [`EventMapBase`](../type-aliases/EventMapBase.md)
 
-Action map shape:
+Event map shape:
 ```ts
-type ActionMapBase = Record<string, Record<string, unknown>>;
+type EventMapBase = Record<string, Record<string, unknown>>;
 // Example:
-type AM = {
+type EM = {
   ui: { toggle: boolean };
   data: { loaded: { items: string[] } };
 };
@@ -58,11 +58,11 @@ type AM = {
 
 ### Constructor
 
-> **new EventBus**\<`AM`\>(): `EventBus`\<`AM`\>
+> **new EventBus**\<`EM`\>(): `EventBus`\<`EM`\>
 
 #### Returns
 
-`EventBus`\<`AM`\>
+`EventBus`\<`EM`\>
 
 ## Methods
 
@@ -70,9 +70,9 @@ type AM = {
 
 > **clear**(): `void`
 
-Defined in: [eventBus/EventBus.ts:188](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/eventBus/EventBus.ts#L188)
+Defined in: [eventBus/EventBus.ts:188](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/eventBus/EventBus.ts#L188)
 
-Clears **all** listeners across all channels/events.
+Clears **all** listeners across all channels/types.
 
 Useful for tests or during HMR teardown to avoid duplicate handlers.
 
@@ -91,11 +91,11 @@ afterEach(() => bus.clear());
 
 ### emit()
 
-> **emit**\<`C`, `E`\>(`channel`, `event`, `payload`): `void`
+> **emit**\<`C`, `T`\>(`channel`, `type`, `payload`): `void`
 
-Defined in: [eventBus/EventBus.ts:155](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/eventBus/EventBus.ts#L155)
+Defined in: [eventBus/EventBus.ts:155](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/eventBus/EventBus.ts#L155)
 
-Emits an event to all subscribers of the exact `(channel, event)`.
+Emits an event to all subscribers of the exact `(channel, type)`.
 
 Handlers are invoked **synchronously**. Any exception thrown by a handler is
 caught and logged, and other handlers still run.
@@ -106,13 +106,13 @@ caught and logged, and other handlers still run.
 
 `C` *extends* `string`
 
-Channel key (string key of `AM`).
+Channel key (string key of `EM`).
 
-##### E
+##### T
 
-`E` *extends* `string`
+`T` *extends* `string`
 
-Event key within channel `C` (string key of `AM[C]`).
+Type key within channel `C` (string key of `EM[C]`).
 
 #### Parameters
 
@@ -122,17 +122,17 @@ Event key within channel `C` (string key of `AM[C]`).
 
 Channel name to emit on.
 
-##### event
+##### type
 
-`E`
+`T`
 
-Event name to emit.
+Event type to emit.
 
 ##### payload
 
-`AM`\[`C`\]\[`E`\]
+`EM`\[`C`\]\[`T`\]
 
-Payload matching `AM[C][E]`.
+Payload matching `EM[C][T]`.
 
 #### Returns
 
@@ -148,9 +148,9 @@ bus.emit('ui', 'toggle', false);
 
 ### off()
 
-> **off**\<`C`, `E`\>(`channel`, `event`, `handler`): `void`
+> **off**\<`C`, `T`\>(`channel`, `type`, `handler`): `void`
 
-Defined in: [eventBus/EventBus.ts:119](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/eventBus/EventBus.ts#L119)
+Defined in: [eventBus/EventBus.ts:119](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/eventBus/EventBus.ts#L119)
 
 Removes a specific handler previously added with [\`on\`](#on).
 
@@ -160,13 +160,13 @@ Removes a specific handler previously added with [\`on\`](#on).
 
 `C` *extends* `string`
 
-Channel key (string key of `AM`).
+Channel key (string key of `EM`).
 
-##### E
+##### T
 
-`E` *extends* `string`
+`T` *extends* `string`
 
-Event key within channel `C` (string key of `AM[C]`).
+Type key within channel `C` (string key of `EM[C]`).
 
 #### Parameters
 
@@ -176,11 +176,11 @@ Event key within channel `C` (string key of `AM[C]`).
 
 Channel name of the subscription to remove.
 
-##### event
+##### type
 
-`E`
+`T`
 
-Event name of the subscription to remove.
+Event type of the subscription to remove.
 
 ##### handler
 
@@ -206,11 +206,11 @@ bus.off('math', 'inc', h);
 
 ### on()
 
-> **on**\<`C`, `E`\>(`channel`, `event`, `handler`): () => `void`
+> **on**\<`C`, `T`\>(`channel`, `type`, `handler`): () => `void`
 
-Defined in: [eventBus/EventBus.ts:77](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/eventBus/EventBus.ts#L77)
+Defined in: [eventBus/EventBus.ts:77](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/eventBus/EventBus.ts#L77)
 
-Subscribes a handler to an exact `(channel, event)`.
+Subscribes a handler to an exact `(channel, type)`.
 
 #### Type Parameters
 
@@ -218,13 +218,13 @@ Subscribes a handler to an exact `(channel, event)`.
 
 `C` *extends* `string`
 
-Channel key (must be a string key of `AM`).
+Channel key (must be a string key of `EM`).
 
-##### E
+##### T
 
-`E` *extends* `string`
+`T` *extends* `string`
 
-Event key within channel `C` (must be a string key of `AM[C]`).
+Type key within channel `C` (must be a string key of `EM[C]`).
 
 #### Parameters
 
@@ -234,17 +234,17 @@ Event key within channel `C` (must be a string key of `AM[C]`).
 
 Channel name to subscribe to.
 
-##### event
+##### type
 
-`E`
+`T`
 
-Event name within the channel.
+Event type within the channel.
 
 ##### handler
 
 (`payload`) => `void`
 
-Function invoked with the payload type `AM[C][E]`.
+Function invoked with the payload type `EM[C][T]`.
 
 #### Returns
 

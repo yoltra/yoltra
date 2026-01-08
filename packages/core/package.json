@@ -1,6 +1,6 @@
 {
   "name": "@quojs/core",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A modern predictable state container built on the idea of channels, events, and payloads, giving you strongly typed, expressive actions",
   "scripts": {
     "dev": "vite",
@@ -16,7 +16,7 @@
     "docs:md": "pnpm typedoc --options ./typedoc.core.json",
     "docs:js": "pnpm typedoc --options ./typedoc.core.json --json ./.typedoc/core-en.json"
   },
-  "license": "MPL-2.0",
+  "license": "MIT",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
     "email": "manu@quojs.dev"

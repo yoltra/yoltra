@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "Repo-level tooling (eslint, commitlint, etc.)",
-  "license": "MPL-2.0",
+  "license": "MIT",
   "bin": {
     "repo-eslint": "bin/repo-eslint.cjs",
     "typedoc-locales": "bin/typedoc-es"

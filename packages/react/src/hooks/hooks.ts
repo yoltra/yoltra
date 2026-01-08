@@ -1,12 +1,16 @@
+/**
+ * @module @quojs/react
+ */
+
 import { useContext, useMemo, useRef, useSyncExternalStore } from "react";
 import { StoreContext } from "../context/StoreContext";
 import type {
-  ActionMapBase,
-  Dispatch,
+  EventMapBase,
+  Emit,
   StoreInstance,
   Dotted,
   WithGlob,
-  ConnectDeep,
+  DeepReadonly,
 } from "@quojs/core";
 import { warnOnce } from "../utils/warnOnce";
 
@@ -26,14 +30,13 @@ import { warnOnce } from "../utils/warnOnce";
  *
  * @public
  */
-export type PathValue<T, P extends string> =
-  P extends `${infer K}.${infer Rest}`
+export type PathValue<T, P extends string> = P extends `${infer K}.${infer Rest}`
   ? K extends keyof T
-  ? PathValue<T[K], Rest>
-  : never
+    ? PathValue<T[K], Rest>
+    : never
   : P extends keyof T
-  ? T[P]
-  : never;
+    ? T[P]
+    : never;
 
 /**
  * Accepts either a single value or a readonly array of that value.
@@ -46,16 +49,22 @@ export type PathValue<T, P extends string> =
  * takeIds(['a','b'] as const);
  * ```
  *
- * @internal
+ * @public
  */
 export type OneOrMany<T> = T | readonly T[];
 
 /** @internal */
-function hasWildcard(p: string): boolean { return p.includes("*"); }
+function hasWildcard(p: string): boolean {
+  return p.includes("*");
+}
 /** @internal */
-function normalizePath(p: string): string { return p.replace(/^\./, ""); }
+function normalizePath(p: string): string {
+  return p.replace(/^\./, "");
+}
 /** @internal */
-function splitPath(p: string): string[] { return normalizePath(p).split(".").filter(Boolean); }
+function splitPath(p: string): string[] {
+  return normalizePath(p).split(".").filter(Boolean);
+}
 /**
  * Reads a dotted path from an object; returns `undefined` when a segment is missing.
  * @internal
@@ -66,7 +75,6 @@ function getAtPath(obj: any, path: string): any {
   let cur = obj;
   for (const seg of splitPath(path)) {
     if (cur == null) return undefined;
-
     cur = cur[seg as any];
   }
 
@@ -77,40 +85,44 @@ function getAtPath(obj: any, path: string): any {
  * Returns the current {@link StoreInstance} from {@link StoreContext}.
  * Throws if used outside of a `<StoreProvider>`.
  *
- * @typeParam AM - Action map type.
+ * @typeParam EM - Event map type.
  * @typeParam R  - Reducer name union.
  * @typeParam S  - State record keyed by `R`.
  *
  * @example
  * ```tsx
- * const store = useStore<MyAM, 'counter' | 'todos', AppState>();
+ * const store = useStore<MyEM, 'counter' | 'todos', AppState>();
  * const state = store.getState();
  * ```
  *
  * @public
  */
-export function useStore<AM extends ActionMapBase, R extends string, S extends Record<R, any>>(): StoreInstance<R, S, AM> {
+export function useStore<
+  EM extends EventMapBase,
+  R extends string,
+  S extends Record<R, any>,
+>(): StoreInstance<R, S, EM> {
   const ctx = useContext(StoreContext);
   if (!ctx) throw new Error("useStore must be used inside <StoreProvider>");
 
-  return ctx as StoreInstance<R, S, AM>;
+  return ctx as StoreInstance<R, S, EM>;
 }
 
 /**
- * Returns the store's `dispatch` function (stable reference).
+ * Returns the store's `emit` function (stable reference).
  *
- * @typeParam AM - Action map type.
+ * @typeParam EM - Event map type.
  *
  * @example
  * ```tsx
- * const dispatch = useDispatch<MyAM>();
- * dispatch('ui', 'toggle', true);
+ * const emit = useEmit<MyEM>();
+ * await emit('ui', 'toggle', true);
  * ```
  *
  * @public
  */
-export function useDispatch<AM extends ActionMapBase>(): Dispatch<AM> {
-  return useStore<AM, any, any>().dispatch;
+export function useEmit<EM extends EventMapBase>(): Emit<EM> {
+  return useStore<EM, any, any>().emit;
 }
 
 /**
@@ -128,7 +140,8 @@ export function shallowEqual<T extends Record<string, any>>(a: T, b: T) {
   if (Object.is(a, b)) return true;
   if (!a || !b) return false;
 
-  const ka = Object.keys(a), kb = Object.keys(b);
+  const ka = Object.keys(a),
+    kb = Object.keys(b);
   if (ka.length !== kb.length) return false;
 
   for (const k of ka) {
@@ -155,21 +168,20 @@ export function shallowEqual<T extends Record<string, any>>(a: T, b: T) {
  * @public
  */
 export function useSelector<S extends Record<any, any>, T>(
-  selector: (state: S) => T,
-  isEqual: (a: T, b: T) => boolean = Object.is
+  selector: (state: DeepReadonly<S>) => T,
+  isEqual: (a: T, b: T) => boolean = Object.is,
 ): T {
   const store = useStore<any, any, S>();
 
   const subscribe = useMemo(
     () => (notify: () => void) => store.subscribe(notify),
-    [store]
+    [store],
   );
 
   const getSnapshot = useMemo(() => {
-    let last = selector(store.getState() as S);
+    let last = selector(store.getState() as DeepReadonly<S>);
     return () => {
-      const next = selector(store.getState() as S);
-
+      const next = selector(store.getState() as DeepReadonly<S>);
       return isEqual(last, next) ? last : (last = next);
     };
   }, [store, selector, isEqual]);
@@ -178,9 +190,12 @@ export function useSelector<S extends Record<any, any>, T>(
 }
 
 // Strongly-typed implementation for the common case
-function useAtomicPropImpl<R extends string, S extends Record<R, any>, R1 extends R, P extends Dotted<S[R1]>>(
-  spec: { reducer: R1; property: P },
-): PathValue<S[R1], P> {
+function useAtomicPropImpl<
+  R extends string,
+  S extends Record<R, any>,
+  R1 extends R,
+  P extends Dotted<S[R1]>,
+>(spec: { reducer: R1; property: P }): PathValue<S[R1], P> {
   const store = useStore<any, R, S>();
 
   const normalizedSpec = useMemo(() => {
@@ -190,15 +205,17 @@ function useAtomicPropImpl<R extends string, S extends Record<R, any>, R1 extend
 
   const subscribe = useMemo(
     () => (notify: () => void) =>
-      store.connect(normalizedSpec as unknown as ConnectDeep<R, S>, () => notify()),
-    [store, normalizedSpec]
+      store.connect(
+        { reducer: normalizedSpec.reducer, property: normalizedSpec.property },
+        () => notify(),
+      ),
+    [store, normalizedSpec],
   );
 
   const getSnapshot = useMemo(() => {
     const isGlob = hasWildcard(normalizedSpec.property);
     const read = () => {
       const full = store.getState() as S;
-      // Fix the indexing issue by using type assertion
       const slice = (full as any)[normalizedSpec.reducer];
       const source = isGlob ? slice : getAtPath(slice, normalizedSpec.property);
       return source;
@@ -218,7 +235,7 @@ function useAtomicPropImpl<R extends string, S extends Record<R, any>, R1 extend
 function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>(
   spec: { reducer: R; property: string },
   map?: (value: any) => T,
-  isEqual: (a: T, b: T) => boolean = Object.is
+  isEqual: (a: T, b: T) => boolean = Object.is,
 ): T {
   const store = useStore<any, R, S>();
 
@@ -229,25 +246,25 @@ function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>
 
   const subscribe = useMemo(
     () => (notify: () => void) =>
-      store.connect(normalizedSpec as unknown as ConnectDeep<R, S>, () => notify()),
-    [store, normalizedSpec]
+      store.connect(
+        { reducer: normalizedSpec.reducer, property: normalizedSpec.property },
+        () => notify(),
+      ),
+    [store, normalizedSpec],
   );
 
   const getSnapshot = useMemo(() => {
     const isGlob = hasWildcard(normalizedSpec.property);
     const read = () => {
       const full = store.getState() as S;
-      // Fix the indexing issue by using type assertion
       const slice = (full as any)[normalizedSpec.reducer];
       const source = isGlob ? slice : getAtPath(slice, normalizedSpec.property);
-
       return map ? map(source) : (source as unknown as T);
     };
 
     let last = read();
     return () => {
       const next = read();
-
       return isEqual(last, next) ? last : (last = next);
     };
   }, [store, normalizedSpec, map, isEqual]);
@@ -256,7 +273,7 @@ function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>
 }
 
 /**
- * Fine-grained **single-path** selector for a Reducer' state.
+ * Fine-grained **single-path** selector for a reducer's state.
  *
  * Re-renders only when the specified `reducer.property` (dotted path) actually changes.
  *
@@ -296,24 +313,38 @@ function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>
  *
  * @public
  */
-// Specific overloads first for better type inference
-export function useAtomicProp<R extends string, S extends Record<R, any>, R1 extends R, P extends Dotted<S[R1]>>(
-  spec: { reducer: R1; property: P },
-): PathValue<S[R1], P>;
-export function useAtomicProp<R extends string, S extends Record<R, any>, R1 extends R, P extends Dotted<S[R1]>, T>(
+export function useAtomicProp<
+  R extends string,
+  S extends Record<R, any>,
+  R1 extends R,
+  P extends Dotted<S[R1]>,
+>(spec: { reducer: R1; property: P }): PathValue<S[R1], P>;
+export function useAtomicProp<
+  R extends string,
+  S extends Record<R, any>,
+  R1 extends R,
+  P extends Dotted<S[R1]>,
+  T,
+>(
   spec: { reducer: R1; property: P },
   map: (value: PathValue<S[R1], P>) => T,
   isEqual?: (a: T, b: T) => boolean,
 ): T;
-export function useAtomicProp<R extends string, S extends Record<R, any>, R1 extends R, P extends WithGlob<Dotted<S[R1]>>, T>(
+export function useAtomicProp<
+  R extends string,
+  S extends Record<R, any>,
+  R1 extends R,
+  P extends WithGlob<Dotted<S[R1]>>,
+  T,
+>(
   spec: { reducer: R1; property: P },
   map: (value: any) => T,
   isEqual?: (a: T, b: T) => boolean,
 ): T;
-// Light overloads to avoid deep Dotted<> instantiation on large types - PUT THESE LAST
-export function useAtomicProp<R extends string, S extends Record<R, any>>(
-  spec: { reducer: R; property: string },
-): unknown;
+export function useAtomicProp<R extends string, S extends Record<R, any>>(spec: {
+  reducer: R;
+  property: string;
+}): unknown;
 export function useAtomicProp<R extends string, S extends Record<R, any>, T>(
   spec: { reducer: R; property: string },
   map: (value: any) => T,
@@ -322,42 +353,11 @@ export function useAtomicProp<R extends string, S extends Record<R, any>, T>(
 export function useAtomicProp<R extends string, S extends Record<R, any>, T = any>(
   spec: { reducer: R; property: string },
   map?: (value: any) => T,
-  isEqual: (a: T, b: T) => boolean = Object.is
+  isEqual: (a: T, b: T) => boolean = Object.is,
 ): T {
-  // For the simple case without mapper, use the strongly-typed implementation
   if (!map && !hasWildcard(spec.property)) {
     return useAtomicPropImpl<R, S, any, any>(spec) as any;
   }
-
-  return _useAtomicPropImpl<R, S, T>(spec, map, isEqual);
-}
-
-/**
- * @deprecated Use {@link useAtomicProp} instead. Will be removed in `0.5.0`.
- * Fine-grained **single-path** selector for a Reducer.
- */
-export function useSliceProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>>(
-  spec: { reducer: R; property: P },
-): PathValue<S[R], P>;
-export function useSliceProp<R extends string, S extends Record<R, any>, P extends Dotted<S[R]>, T>(
-  spec: { reducer: R; property: P },
-  map: (value: PathValue<S[R], P>) => T,
-  isEqual?: (a: T, b: T) => boolean,
-): T;
-export function useSliceProp<R extends string, S extends Record<R, any>, P extends WithGlob<Dotted<S[R]>>, T>(
-  spec: { reducer: R; property: P },
-  map: (value: any) => T,
-  isEqual?: (a: T, b: T) => boolean,
-): T;
-export function useSliceProp<R extends string, S extends Record<R, any>, T = any>(
-  spec: { reducer: R; property: string },
-  map?: (value: any) => T,
-  isEqual: (a: T, b: T) => boolean = Object.is
-): T {
-  warnOnce(
-    "quo:useSliceProp",
-    "[@quojs/react] `useSliceProp()` is deprecated and will be removed in 0.5.0. Use `useAtomicProp()`."
-  );
   return _useAtomicPropImpl<R, S, T>(spec, map, isEqual);
 }
 
@@ -379,7 +379,7 @@ export function useSliceProp<R extends string, S extends Record<R, any>, T = any
  * ```tsx
  * const total = useAtomicProps<'todos' | 'filter', AppState, number>(
  *   [
- *     { reducer: 'todos',  property: ['items.**'] },
+ *     { reducer: 'todos',  property: 'items.**' },
  *     { reducer: 'filter', property: 'q' }
  *   ],
  *   (s) => s.todos.items.filter(x => x.title.includes(s.filter.q)).length
@@ -388,44 +388,37 @@ export function useSliceProp<R extends string, S extends Record<R, any>, T = any
  *
  * @public
  */
-// Light first overload to keep callsites simple
 export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
   specs: Array<{ reducer: R; property: OneOrMany<string> }>,
-  selector: (state: S) => T,
-  isEqual?: (a: T, b: T) => boolean
+  selector: (state: DeepReadonly<S>) => T,
+  isEqual?: (a: T, b: T) => boolean,
 ): T;
-// Precise overload (kept)
 export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
   specs: Array<{ reducer: R; property: OneOrMany<WithGlob<Dotted<S[R]>>> }>,
-  selector: (state: S) => T,
-  isEqual?: (a: T, b: T) => boolean
+  selector: (state: DeepReadonly<S>) => T,
+  isEqual?: (a: T, b: T) => boolean,
 ): T;
-// Implementation widened to be compatible with both overloads
 export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
   specs: Array<{
     reducer: R;
-    property:
-    | OneOrMany<string>
-    | OneOrMany<WithGlob<Dotted<S[R]>>>;
+    property: OneOrMany<string> | OneOrMany<WithGlob<Dotted<S[R]>>>;
   }>,
-  selector: (state: S) => T,
-  isEqual: (a: T, b: T) => boolean = Object.is
+  selector: (state: DeepReadonly<S>) => T,
+  isEqual: (a: T, b: T) => boolean = Object.is,
 ): T {
-  return _useSlicePropsImpl<R, S, T>(specs as any, selector, isEqual);
+  return _useAtomicPropsImpl<R, S, T>(specs as any, selector, isEqual);
 }
 
-/** @internal (old slicy impl) */
-function _useSlicePropsImpl<R extends string, S extends Record<R, any>, T>(
+/** @internal */
+function _useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
   specs: Array<{
     reducer: R;
-    property:
-    | OneOrMany<string>
-    | OneOrMany<WithGlob<Dotted<S[R]>>>;
+    property: OneOrMany<string> | OneOrMany<WithGlob<Dotted<S[R]>>>;
   }>,
-  selector: (state: S) => T,
-  isEqual: (a: T, b: T) => boolean = Object.is
+  selector: (state: DeepReadonly<S>) => T,
+  isEqual: (a: T, b: T) => boolean = Object.is,
 ): T {
-  const store = useStore<ActionMapBase, R, S>();
+  const store = useStore<EventMapBase, R, S>();
 
   const versionRef = useRef(0);
   const lastSelRef = useRef<T | undefined>(undefined);
@@ -438,31 +431,33 @@ function _useSlicePropsImpl<R extends string, S extends Record<R, any>, T>(
         ? (sp.property as readonly string[]).map((p) => normalizePath(p as string))
         : normalizePath(sp.property as string),
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(specs)]);
 
   const subscribe = useMemo(
     () => (notify: () => void) => {
-      const tick = () => { versionRef.current++; notify(); };
+      const tick = () => {
+        versionRef.current++;
+        notify();
+      };
 
-      // connect once per property (handles array or single string)
       const unsubs = normalizedSpecs.flatMap((sp) => {
         const props = Array.isArray(sp.property) ? sp.property : [sp.property];
-
         return props.map((p) =>
-          store.connect({ reducer: sp.reducer, property: p } as unknown as ConnectDeep<R, S>, tick)
+          store.connect({ reducer: sp.reducer, property: p }, tick),
         );
       });
 
-      return () => { for (const u of unsubs) u(); };
+      return () => {
+        for (const u of unsubs) u();
+      };
     },
-    [store, normalizedSpecs]
+    [store, normalizedSpecs],
   );
 
   const getSnapshot = useMemo(() => {
     return () => {
       if (lastVerRef.current !== versionRef.current) {
-        const next = selector(store.getState() as S);
+        const next = selector(store.getState() as DeepReadonly<S>);
         const prev = lastSelRef.current as T | undefined;
 
         if (prev === undefined || !isEqual(prev, next)) {
@@ -479,18 +474,21 @@ function _useSlicePropsImpl<R extends string, S extends Record<R, any>, T>(
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
+// ============================================================================
+// DEPRECATED HOOKS - Will be removed in v1.0.0
+// ============================================================================
+
 /**
- * @deprecated Use {@link useAtomicProps} instead. Will be removed in `0.5.0`.
- * Multi-path fine-grained selector.
+ * @deprecated Use {@link useEmit} instead. Will be removed in v1.0.0.
+ *
+ * Legacy alias for `useEmit`. Quo.js now uses event-bus terminology.
+ *
+ * @public
  */
-export function useSliceProps<R extends string, S extends Record<R, any>, T>(
-  specs: Array<{ reducer: R; property: OneOrMany<WithGlob<Dotted<S[R]>>> }>,
-  selector: (state: S) => T,
-  isEqual: (a: T, b: T) => boolean = Object.is
-): T {
+export function useDispatch<EM extends EventMapBase>(): Emit<EM> {
   warnOnce(
-    "quo:useSliceProps",
-    "[@quojs/react] `useSliceProps()` is deprecated and will be removed in 0.5.0. Use `useAtomicProps()`."
+    "quo:useDispatch",
+    "[@quojs/react] `useDispatch()` is deprecated and will be removed in v1.0.0. Use `useEmit()` instead.",
   );
-  return _useSlicePropsImpl<R, S, T>(specs as any, selector as any, isEqual as any);
+  return useEmit<EM>();
 }

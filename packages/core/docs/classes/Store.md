@@ -4,33 +4,35 @@
 
 [@quojs/core](../README.md) / Store
 
-# Class: Store\<AM, R, S\>
+# Class: Store\<EM, R, S\>
 
-Defined in: [store/Store.ts:93](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L93)
+Defined in: [store/Store.ts:98](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L98)
 
 Strongly-typed, channel/event-driven **store** with:
 - **Slice reducers** (namespaced under `R`)
 - **Middleware** (pre-reducer, can cancel propagation)
-- **Effects** (post-reducer, async-safe)
+- **Effects** (post-reducer, async-safe, keyed by EventKey)
 - **Granular subscriptions** via dotted **property paths** (e.g., `"todos.3.title"`)
+- **Event deduplication** via unique event IDs (prevents React Strict Mode double-firing)
 - Optional **Redux DevTools** integration (dev)
 
 ## Remarks
 
-- `dispatch()` is **serialized** internally: actions are queued and processed one-by-one.
-- Reducers are wired through an internal [EventBus](EventBus.md) by `(channel, event)`.
+- `emit()` is **serialized** internally: events are queued and processed one-by-one.
+- Each event receives a unique `id` (symbol) for deduplication.
+- Reducers are wired through an internal [EventBus](EventBus.md) by `(channel, type)`.
+- Effects are keyed by `(channel, type)` for O(1) lookup (no scanning).
 - Fine-grained change events are emitted through a [LooseEventBus](LooseEventBus.md) by **dotted paths**.
-- State is **frozen** (shallowly, per-slice snapshot) before committing to discourage mutation.
+- State is **immutable**: each slice change creates a new state reference (shallow clone).
+- State slices are **frozen** (deeply) before committing to discourage mutation.
 
 ## Example
 
 ```ts
-// Define slices
 type Counter = { value: number };
 type Todos = { items: Array<{ id: string; title: string }> };
-
 type S = { counter: Counter; todos: Todos };
-type AM = {
+type EM = {
   ui: { increment: number; setTitle: { id: string; title: string } };
 };
 
@@ -39,20 +41,20 @@ const store = createStore({
   reducer: {
     counter: {
       state: { value: 0 },
-      actions: [['ui', 'increment']],
-      reducer(s, a) {
-        if (a.event === 'increment') return { value: s.value + a.payload };
+      events: [['ui', 'increment']],
+      reducer(s, evt) {
+        if (evt.type === 'increment') return { value: s.value + evt.payload };
         return s;
       }
     },
     todos: {
       state: { items: [] },
-      actions: [['ui', 'setTitle']],
-      reducer(s, a) {
-        if (a.event === 'setTitle') {
+      events: [['ui', 'setTitle']],
+      reducer(s, evt) {
+        if (evt.type === 'setTitle') {
           const next = structuredClone(s);
-          const t = next.items.find(x => x.id === a.payload.id);
-          if (t) t.title = a.payload.title;
+          const t = next.items.find(x => x.id === evt.payload.id);
+          if (t) t.title = evt.payload.title;
           return next;
         }
         return s;
@@ -66,17 +68,17 @@ const unsub = store.connect({ reducer: 'todos', property: 'items.0.title' }, (ch
   console.log('title changed from', chg.oldValue, 'to', chg.newValue);
 });
 
-// Dispatch
-store.dispatch('ui', 'increment', 1);
+// Emit event
+await store.emit('ui', 'increment', 1);
 ```
 
 ## Type Parameters
 
-### AM
+### EM
 
-`AM` *extends* [`ActionMapBase`](../type-aliases/ActionMapBase.md)
+`EM` *extends* [`EventMapBase`](../type-aliases/EventMapBase.md)
 
-Action map describing `(channel → event → payload)` types.
+Event map describing `(channel → type → payload)` types.
 
 ### R
 
@@ -92,15 +94,15 @@ Object map of slice states keyed by `R`.
 
 ## Implements
 
-- [`StoreInstance`](../interfaces/StoreInstance.md)\<`R`, `S`, `AM`\>
+- [`StoreInstance`](../interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>
 
 ## Constructors
 
 ### Constructor
 
-> **new Store**\<`AM`, `R`, `S`\>(`spec`): `Store`\<`AM`, `R`, `S`\>
+> **new Store**\<`EM`, `R`, `S`\>(`spec`): `Store`\<`EM`, `R`, `S`\>
 
-Defined in: [store/Store.ts:174](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L174)
+Defined in: [store/Store.ts:210](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L210)
 
 Creates a store from a [StoreSpec](../type-aliases/StoreSpec.md).
 
@@ -108,13 +110,13 @@ Creates a store from a [StoreSpec](../type-aliases/StoreSpec.md).
 
 ##### spec
 
-[`StoreSpec`](../type-aliases/StoreSpec.md)\<`R`, `S`, `AM`\> & `object`
+[`StoreSpec`](../type-aliases/StoreSpec.md)\<`R`, `S`, `EM`\>
 
 Store configuration (name, reducers, middleware, optional effects).
 
 #### Returns
 
-`Store`\<`AM`, `R`, `S`\>
+`Store`\<`EM`, `R`, `S`\>
 
 ## Properties
 
@@ -122,7 +124,7 @@ Store configuration (name, reducers, middleware, optional effects).
 
 > **name**: `string`
 
-Defined in: [store/Store.ts:99](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L99)
+Defined in: [store/Store.ts:106](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L106)
 
 Store name (used by DevTools & diagnostics).
 
@@ -136,7 +138,7 @@ Store name (used by DevTools & diagnostics).
 
 > **connect**(`spec`, `h`): () => `void`
 
-Defined in: [store/Store.ts:530](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L530)
+Defined in: [store/Store.ts:650](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L650)
 
 Connects a **fine-grained** listener to a dotted path under a slice.
 
@@ -145,6 +147,7 @@ Connects a **fine-grained** listener to a dotted path under a slice.
 ##### spec
 
 `{ reducer, property }` where `property` is a dotted path (e.g., `"items.0.title"`).
+       Supports wildcards: `*` (one segment) and `**` (zero or more segments).
 
 ###### property
 
@@ -170,13 +173,22 @@ Unsubscribe function.
 
 `void`
 
-#### Example
+#### Examples
 
 ```ts
-const off = store.connect({ reducer: 'todos', property: 'items.0.title' }, (chg) => {
-  console.log('title change:', chg);
-});
+const off = store.connect(
+  { reducer: 'todos', property: 'items.0.title' },
+  (chg) => console.log('title changed:', chg.newValue)
+);
 off();
+```
+
+```ts
+// Listen to any item title change
+const off = store.connect(
+  { reducer: 'todos', property: 'items.*.title' },
+  (chg) => console.log('some title changed')
+);
 ```
 
 #### Implementation of
@@ -185,20 +197,11 @@ off();
 
 ***
 
-### dispatch()
+### ~~dispatch()~~
 
-> **dispatch**\<`C`, `E`\>(`channel`, `event`, `payload`): `Promise`\<`void`\>
+> **dispatch**\<`C`, `T`\>(`channel`, `type`, `payload`): `Promise`\<`void`\>
 
-Defined in: [store/Store.ts:446](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L446)
-
-Dispatches a typed action `(channel, event, payload)`.
-Actions are queued and processed **sequentially**.
-
-Pipeline per action:
-1) **Middleware** (may cancel by returning `false`)
-2) **Reducers** (via internal reducer bus)
-3) **Effects** (async, errors swallowed)
-4) **DevTools** (dev)
+Defined in: [store/Store.ts:1095](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L1095)
 
 #### Type Parameters
 
@@ -206,13 +209,113 @@ Pipeline per action:
 
 `C` *extends* `string` \| `number` \| `symbol`
 
-Channel key in `AM`.
+##### T
 
-##### E
+`T` *extends* `string` \| `number` \| `symbol`
 
-`E` *extends* `string` \| `number` \| `symbol`
+#### Parameters
 
-Event key within channel `C`.
+##### channel
+
+`C`
+
+##### type
+
+`T`
+
+##### payload
+
+`EM`\[`C`\]\[`T`\]
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Deprecated
+
+Use [\`emit\`](#emit) instead. Will be removed in v1.0.0.
+
+Legacy alias for `emit`. Quo.js now uses event-bus terminology:
+- "dispatch" → "emit"
+- "action" → "event"
+
+#### Example
+
+```ts
+// Old
+await store.dispatch('ui', 'toggle', true);
+
+// New
+await store.emit('ui', 'toggle', true);
+```
+
+#### Implementation of
+
+[`StoreInstance`](../interfaces/StoreInstance.md).[`dispatch`](../interfaces/StoreInstance.md#dispatch)
+
+***
+
+### dispose()
+
+> **dispose**(): `void`
+
+Defined in: [store/Store.ts:340](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L340)
+
+Cleanup resources (timers, etc.) when disposing the store.
+Call this if you're dynamically creating/destroying stores.
+
+#### Returns
+
+`void`
+
+#### Example
+
+```ts
+const store = createStore({ ... });
+// later
+store.dispose();
+```
+
+#### Implementation of
+
+[`StoreInstance`](../interfaces/StoreInstance.md).[`dispose`](../interfaces/StoreInstance.md#dispose)
+
+***
+
+### emit()
+
+> **emit**\<`C`, `T`\>(`channel`, `type`, `payload`): `Promise`\<`void`\>
+
+Defined in: [store/Store.ts:523](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L523)
+
+Emits a typed event `(channel, type, payload)`.
+Events are queued and processed **sequentially** (FIFO).
+
+**Pipeline per event:**
+1. **Deduplication check** - Skip if event ID already processed (React Strict Mode safety)
+2. **Middleware** - Pre-reducer hooks; may cancel by returning `false`
+3. **Reducers** - Synchronous state updates via internal event bus
+4. **Effects** - Async side-effects keyed by `(channel, type)` for O(1) lookup
+5. **Coarse subscribers** - External store subscribers (only if state changed)
+6. **DevTools** - Redux DevTools logging (dev only)
+
+**Change Detection**: Uses reference equality (`===`) on `this.state` to determine
+if any slice changed. Works because forwardEvent creates a new state reference
+via shallow spread when any slice changes.
+
+#### Type Parameters
+
+##### C
+
+`C` *extends* `string` \| `number` \| `symbol`
+
+Channel key in `EM`.
+
+##### T
+
+`T` *extends* `string` \| `number` \| `symbol`
+
+Type key within channel `C`.
 
 #### Parameters
 
@@ -222,33 +325,42 @@ Event key within channel `C`.
 
 Channel name.
 
-##### event
+##### type
 
-`E`
+`T`
 
-Event name.
+Event type name.
 
 ##### payload
 
-`AM`\[`C`\]\[`E`\]
+`EM`\[`C`\]\[`T`\]
 
-Payload typed as `AM[C][E]`.
+Payload typed as `EM[C][T]`.
 
 #### Returns
 
 `Promise`\<`void`\>
 
-A promise that resolves when the action has finished processing.
+A promise that resolves when the event has finished processing.
 
-#### Example
+#### Examples
 
 ```ts
-await store.dispatch('ui', 'increment', 1);
+await store.emit('ui', 'increment', 1);
+```
+
+```ts
+store.registerMiddleware((state, event) => {
+  if (event.type === 'dangerous') return false; // cancel
+  return true; // allow
+});
+
+await store.emit('ui', 'dangerous', null); // cancelled, no state change
 ```
 
 #### Implementation of
 
-`StoreInstance.dispatch`
+`StoreInstance.emit`
 
 ***
 
@@ -256,13 +368,22 @@ await store.dispatch('ui', 'increment', 1);
 
 > **getState**(): [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>
 
-Defined in: [store/Store.ts:557](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L557)
+Defined in: [store/Store.ts:689](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L689)
 
 Returns the current immutable state snapshot.
 
 #### Returns
 
 [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>
+
+Deep-readonly state object.
+
+#### Example
+
+```ts
+const state = store.getState();
+console.log(state.counter.value);
+```
 
 #### Implementation of
 
@@ -274,7 +395,7 @@ Returns the current immutable state snapshot.
 
 > **hotReplace**(`partial`): `void`
 
-Defined in: [store/Store.ts:717](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L717)
+Defined in: [store/Store.ts:932](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L932)
 
 Convenience API to replace **any subset** of store parts (HMR patterns).
 
@@ -286,11 +407,11 @@ Partial replacement set.
 
 ###### effects?
 
-[`EffectFunction`](../type-aliases/EffectFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `AM`\>[]
+[`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
 
 ###### middleware?
 
-[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `AM`\>[]
+[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
 
 ###### preserveState?
 
@@ -298,97 +419,46 @@ Partial replacement set.
 
 ###### reducer?
 
-`Record`\<`R`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`S`\[`R`\], `AM`\>\>
+`Record`\<`R`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
 
 #### Returns
-
-`void`
-
-***
-
-### onEffect()
-
-> **onEffect**\<`C`, `E`\>(`channel`, `event`, `handler`): () => `void`
-
-Defined in: [store/Store.ts:293](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L293)
-
-Convenience helper to register an **effect** filtered by `(channel, event)`.
-
-#### Type Parameters
-
-##### C
-
-`C` *extends* `string`
-
-Channel key within `AM`.
-
-##### E
-
-`E` *extends* `string`
-
-Event key within channel `C`.
-
-#### Parameters
-
-##### channel
-
-`C`
-
-Channel to filter.
-
-##### event
-
-`E`
-
-Event to filter.
-
-##### handler
-
-(`payload`, `getState`, `dispatch`, `action`) => `void` \| `Promise`\<`void`\>
-
-Effect handler `(payload, getState, dispatch, action)`.
-
-#### Returns
-
-Unsubscribe/teardown function.
-
-> (): `void`
-
-##### Returns
 
 `void`
 
 #### Example
 
 ```ts
-const off = store.onEffect('ui', 'increment', async (n, get, dispatch) => {
-  if (n > 10) await dispatch('ui', 'increment', -10);
+store.hotReplace({
+  reducer: newReducers,
+  middleware: newMiddleware,
+  effects: newEffects,
+  preserveState: true
 });
-// later
-off();
 ```
 
 #### Implementation of
 
-[`StoreInstance`](../interfaces/StoreInstance.md).[`onEffect`](../interfaces/StoreInstance.md#oneffect)
+[`StoreInstance`](../interfaces/StoreInstance.md).[`hotReplace`](../interfaces/StoreInstance.md#hotreplace)
 
 ***
 
 ### registerEffect()
 
-> **registerEffect**(`handler`): () => `void`
+> **registerEffect**(`spec`): () => `void`
 
-Defined in: [store/Store.ts:640](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L640)
+Defined in: [store/Store.ts:797](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L797)
 
-Registers an **effect** that runs after reducers have updated state.
+Registers an **effect** (stateless async event consumer) that runs after reducers.
+
+Effects are **keyed** by `(channel, type)` for O(1) lookup (no scanning all effects).
 
 #### Parameters
 
-##### handler
+##### spec
 
-[`EffectFunction`](../type-aliases/EffectFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `AM`\>
+[`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>
 
-`(action, getState, dispatch) => void|Promise<void>`.
+Effect specification with `events` (EventKeys) and `effect` (handler).
 
 #### Returns
 
@@ -400,15 +470,26 @@ Unsubscribe function.
 
 `void`
 
-#### Example
+#### Examples
 
 ```ts
-const off = store.registerEffect(async (a, get, dispatch) => {
-  if (a.channel === 'ui' && a.event === 'increment') {
-    await dispatch('ui', 'increment', -1);
+const off = store.registerEffect({
+  events: [['ui', 'increment']],
+  effect: async (evt, getState, emit) => {
+    console.log('increment', evt.payload, getState().counter.value);
   }
 });
 off();
+```
+
+```ts
+store.registerEffect({
+  events: [['ui', 'increment'], ['ui', 'decrement']],
+  effect: async (evt, getState, emit) => {
+    // Runs for both increment and decrement
+    await saveToServer(getState());
+  }
+});
 ```
 
 #### Implementation of
@@ -421,7 +502,7 @@ off();
 
 > **registerMiddleware**(`mw`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [store/Store.ts:578](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L578)
+Defined in: [store/Store.ts:719](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L719)
 
 Registers a middleware (runs **before** reducers).
 
@@ -429,9 +510,10 @@ Registers a middleware (runs **before** reducers).
 
 ##### mw
 
-[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `AM`\>
+[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>
 
-Middleware `(state, action, dispatch) => boolean|Promise<boolean>`.
+Middleware `(state, event, emit) => boolean|Promise<boolean>`.
+       Return `false` to cancel event propagation.
 
 #### Returns
 
@@ -439,14 +521,21 @@ Middleware `(state, action, dispatch) => boolean|Promise<boolean>`.
 
 Unsubscribe function that removes this middleware.
 
-#### Example
+#### Examples
 
 ```ts
-const off = store.registerMiddleware(async (state, action) => {
-  console.log('action', action);
+const off = store.registerMiddleware(async (state, event) => {
+  console.log('Event:', event.channel, event.type, event.payload);
   return true; // allow
 });
 off();
+```
+
+```ts
+store.registerMiddleware((state, event) => {
+  if (event.type === 'forbidden') return false; // cancel
+  return true;
+});
 ```
 
 #### Implementation of
@@ -459,7 +548,7 @@ off();
 
 > **registerReducer**(`name`, `spec`): () => `void`
 
-Defined in: [store/Store.ts:606](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L606)
+Defined in: [store/Store.ts:749](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L749)
 
 Dynamically **adds** a named slice reducer at runtime.
 
@@ -473,9 +562,9 @@ New slice name (must not already exist).
 
 ##### spec
 
-[`ReducerSpec`](../interfaces/ReducerSpec.md)\<`any`, `AM`\>
+[`ReducerSpec`](../interfaces/ReducerSpec.md)\<`any`, `EM`\>
 
-Reducer spec (state, actions, reducer).
+Reducer spec (state, events, reducer).
 
 #### Returns
 
@@ -492,8 +581,10 @@ Disposer function that **removes** the slice (and its state).
 ```ts
 const dispose = store.registerReducer('filters', {
   state: { q: '' },
-  actions: [['ui', 'setQuery']],
-  reducer(s, a) { return a.event === 'setQuery' ? { q: a.payload } : s; }
+  events: [['ui', 'setQuery']],
+  reducer(s, evt) {
+    return evt.type === 'setQuery' ? { q: evt.payload } : s;
+  }
 });
 // Later:
 dispose();
@@ -509,7 +600,7 @@ dispose();
 
 > **replaceEffects**(`next`): `void`
 
-Defined in: [store/Store.ts:660](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L660)
+Defined in: [store/Store.ts:860](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L860)
 
 Replaces all registered **effects** (HMR-friendly).
 
@@ -517,13 +608,27 @@ Replaces all registered **effects** (HMR-friendly).
 
 ##### next
 
-[`EffectFunction`](../type-aliases/EffectFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `AM`\>[]
+[`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-New effects set.
+New effects array (as EffectSpecs).
 
 #### Returns
 
 `void`
+
+#### Example
+
+```ts
+if (import.meta.hot) {
+  import.meta.hot.accept('./effects', (newModule) => {
+    store.replaceEffects(newModule.effects);
+  });
+}
+```
+
+#### Implementation of
+
+[`StoreInstance`](../interfaces/StoreInstance.md).[`replaceEffects`](../interfaces/StoreInstance.md#replaceeffects)
 
 ***
 
@@ -531,7 +636,7 @@ New effects set.
 
 > **replaceMiddleware**(`next`): `void`
 
-Defined in: [store/Store.ts:650](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L650)
+Defined in: [store/Store.ts:839](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L839)
 
 Replaces the **entire** middleware pipeline (HMR-friendly).
 
@@ -539,7 +644,7 @@ Replaces the **entire** middleware pipeline (HMR-friendly).
 
 ##### next
 
-[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `AM`\>[]
+[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
 
 New middleware array.
 
@@ -547,13 +652,27 @@ New middleware array.
 
 `void`
 
+#### Example
+
+```ts
+if (import.meta.hot) {
+  import.meta.hot.accept('./middleware', (newModule) => {
+    store.replaceMiddleware(newModule.middleware);
+  });
+}
+```
+
+#### Implementation of
+
+[`StoreInstance`](../interfaces/StoreInstance.md).[`replaceMiddleware`](../interfaces/StoreInstance.md#replacemiddleware)
+
 ***
 
 ### replaceReducers()
 
 > **replaceReducers**(`next`, `opts`): `void`
 
-Defined in: [store/Store.ts:680](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L680)
+Defined in: [store/Store.ts:884](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L884)
 
 Replaces the entire **reducer set** (HMR-friendly).
 
@@ -561,7 +680,7 @@ Replaces the entire **reducer set** (HMR-friendly).
 
 ##### next
 
-`Record`\<`R`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`S`\[`R`\], `AM`\>\>
+`Record`\<`R`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
 
 Map of slice specs keyed by slice name.
 
@@ -580,10 +699,16 @@ Map of slice specs keyed by slice name.
 #### Example
 
 ```ts
-store.replaceReducers({
-  counter: { state: { value: 0 }, actions: [['ui','increment']], reducer: rfn }
-}, { preserveState: true });
+if (import.meta.hot) {
+  import.meta.hot.accept('./reducers', (newModule) => {
+    store.replaceReducers(newModule.reducers, { preserveState: true });
+  });
+}
 ```
+
+#### Implementation of
+
+[`StoreInstance`](../interfaces/StoreInstance.md).[`replaceReducers`](../interfaces/StoreInstance.md#replacereducers)
 
 ***
 
@@ -591,9 +716,11 @@ store.replaceReducers({
 
 > **subscribe**(`fn`): () => `void`
 
-Defined in: [store/Store.ts:548](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L548)
+Defined in: [store/Store.ts:671](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L671)
 
-Subscribes to **coarse-grained** commits (called once per successful action).
+Subscribes to **coarse-grained** commits (called once per successful event, only if state changed).
+
+**Use Case**: React's `useSyncExternalStore` or similar external store integrations.
 
 #### Parameters
 
@@ -601,7 +728,7 @@ Subscribes to **coarse-grained** commits (called once per successful action).
 
 () => `void`
 
-Listener invoked after reducers/effects have run.
+Listener invoked after reducers/effects have run and state has changed.
 
 #### Returns
 
@@ -617,6 +744,7 @@ Unsubscribe function.
 
 ```ts
 const off = store.subscribe(() => console.log('state committed'));
+// Later:
 off();
 ```
 
@@ -630,7 +758,7 @@ off();
 
 > `static` **buildAncestorPaths**(`path`): `string`[]
 
-Defined in: [store/Store.ts:838](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/store/Store.ts#L838)
+Defined in: [store/Store.ts:1059](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L1059)
 
 Builds ancestor paths for a dotted path.
 

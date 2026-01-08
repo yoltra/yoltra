@@ -3,7 +3,7 @@ export interface iMockResponse {
     status: number;
     statusText: string;
     headers: HeadersInit;
-    body: Record<string, any> | Blob
+    body: Record<string, unknown> | Blob
     | ArrayBuffer
     | FormData
     | ReadableStream
@@ -16,14 +16,14 @@ export interface iMockResponse {
 export interface iMockSpec {
     method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS";
     url: string;
-    body?: Record<string, any>;
+    body?: Record<string, never>;
     headers: HeadersInit;
     response: iMockResponse;
 }
 
 export const fetchTodoes: iMockSpec = {
     method: "GET",
-    url: "https://jsonplaceholder.typicode.com/todos?id=0",
+    url: "https://jsonplaceholder.typicode.com/todos?id=0?offset=0&limit=10",
     headers: {
         Accept: "application/json"
     },

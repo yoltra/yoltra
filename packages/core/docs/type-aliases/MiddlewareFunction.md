@@ -4,14 +4,14 @@
 
 [@quojs/core](../README.md) / MiddlewareFunction
 
-# Type Alias: MiddlewareFunction()\<S, AM\>
+# Type Alias: MiddlewareFunction()\<S, EM\>
 
-> **MiddlewareFunction**\<`S`, `AM`\> = (`state`, `action`, `dispatch`) => `boolean` \| `Promise`\<`boolean`\>
+> **MiddlewareFunction**\<`S`, `EM`\> = (`state`, `event`, `emit`) => `boolean` \| `Promise`\<`boolean`\>
 
-Defined in: [types.ts:160](https://github.com/quojs/quojs/blob/67acf22c99f7bb5bc1300e174ce891cc1abf66aa/packages/core/src/types.ts#L160)
+Defined in: [types.ts:419](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/types.ts#L419)
 
-Middleware may mutate, log, side-effect, or veto an action.
-Return true to continue; false to swallow / cancel propagation
+Middleware function: may mutate, log, side-effect, or veto an event.
+Return true to continue; false to swallow / cancel propagation.
 
 ## Type Parameters
 
@@ -19,9 +19,13 @@ Return true to continue; false to swallow / cancel propagation
 
 `S` = `any`
 
-### AM
+Store state (readonly).
 
-`AM` *extends* [`ActionMapBase`](ActionMapBase.md) = [`ActionMapBase`](ActionMapBase.md)
+### EM
+
+`EM` *extends* [`EventMapBase`](EventMapBase.md) = [`EventMapBase`](EventMapBase.md)
+
+Event map.
 
 ## Parameters
 
@@ -29,13 +33,13 @@ Return true to continue; false to swallow / cancel propagation
 
 `S`
 
-### action
+### event
 
-[`ActionUnion`](ActionUnion.md)\<`AM`\>
+[`EventUnion`](EventUnion.md)\<`EM`\>
 
-### dispatch
+### emit
 
-[`Dispatch`](Dispatch.md)\<`AM`\>
+[`Emit`](Emit.md)\<`EM`\>
 
 ## Returns
 

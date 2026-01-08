@@ -46,5 +46,4 @@ Forks and modified builds must use a **distinct name and branding**. You may say
 ## Contact
 
 For permissions or questions, email [**legal@quojs.dev**](mailto:legal@quojs.dev).
-
-_Notice:_ Trademark rights are territorial. Erael Group. is registering and/or asserting rights in applicable jurisdictions (including Mexico via IMPI). This policy supplements local unfair-competition and passing-off laws.
+This policy supplements local unfair-competition and passing-off laws.
