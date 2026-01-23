@@ -1,6 +1,13 @@
 # Change Log - @quojs/react
 
-This log was last generated on Thu, 08 Jan 2026 08:01:50 GMT and should not be manually modified.
+This log was last generated on Fri, 23 Jan 2026 21:05:12 GMT and should not be manually modified.
+
+## 0.6.0
+Fri, 23 Jan 2026 21:05:12 GMT
+
+### Minor changes
+
+- feat(react): remove deprecated methods and typings, update docs and examples
 
 ## 0.5.0
 Thu, 08 Jan 2026 08:01:50 GMT

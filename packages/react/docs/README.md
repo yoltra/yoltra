@@ -31,7 +31,6 @@
 - [shallowEqual](functions/shallowEqual.md)
 - [useAtomicProp](functions/useAtomicProp.md)
 - [useAtomicProps](functions/useAtomicProps.md)
-- [~~useDispatch~~](functions/useDispatch.md)
 - [useEmit](functions/useEmit.md)
 - [useSelector](functions/useSelector.md)
 - [useStore](functions/useStore.md)

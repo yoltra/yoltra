@@ -6,7 +6,7 @@
 
 # Class: Store\<EM, R, S\>
 
-Defined in: [store/Store.ts:98](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L98)
+Defined in: [store/Store.ts:99](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L99)
 
 Strongly-typed, channel/event-driven **store** with:
 - **Slice reducers** (namespaced under `R`)
@@ -102,7 +102,7 @@ Object map of slice states keyed by `R`.
 
 > **new Store**\<`EM`, `R`, `S`\>(`spec`): `Store`\<`EM`, `R`, `S`\>
 
-Defined in: [store/Store.ts:210](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L210)
+Defined in: [store/Store.ts:210](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L210)
 
 Creates a store from a [StoreSpec](../type-aliases/StoreSpec.md).
 
@@ -124,7 +124,7 @@ Store configuration (name, reducers, middleware, optional effects).
 
 > **name**: `string`
 
-Defined in: [store/Store.ts:106](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L106)
+Defined in: [store/Store.ts:106](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L106)
 
 Store name (used by DevTools & diagnostics).
 
@@ -138,7 +138,7 @@ Store name (used by DevTools & diagnostics).
 
 > **connect**(`spec`, `h`): () => `void`
 
-Defined in: [store/Store.ts:650](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L650)
+Defined in: [store/Store.ts:668](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L668)
 
 Connects a **fine-grained** listener to a dotted path under a slice.
 
@@ -197,69 +197,11 @@ const off = store.connect(
 
 ***
 
-### ~~dispatch()~~
-
-> **dispatch**\<`C`, `T`\>(`channel`, `type`, `payload`): `Promise`\<`void`\>
-
-Defined in: [store/Store.ts:1095](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L1095)
-
-#### Type Parameters
-
-##### C
-
-`C` *extends* `string` \| `number` \| `symbol`
-
-##### T
-
-`T` *extends* `string` \| `number` \| `symbol`
-
-#### Parameters
-
-##### channel
-
-`C`
-
-##### type
-
-`T`
-
-##### payload
-
-`EM`\[`C`\]\[`T`\]
-
-#### Returns
-
-`Promise`\<`void`\>
-
-#### Deprecated
-
-Use [\`emit\`](#emit) instead. Will be removed in v1.0.0.
-
-Legacy alias for `emit`. Quo.js now uses event-bus terminology:
-- "dispatch" → "emit"
-- "action" → "event"
-
-#### Example
-
-```ts
-// Old
-await store.dispatch('ui', 'toggle', true);
-
-// New
-await store.emit('ui', 'toggle', true);
-```
-
-#### Implementation of
-
-[`StoreInstance`](../interfaces/StoreInstance.md).[`dispatch`](../interfaces/StoreInstance.md#dispatch)
-
-***
-
 ### dispose()
 
 > **dispose**(): `void`
 
-Defined in: [store/Store.ts:340](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L340)
+Defined in: [store/Store.ts:358](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L358)
 
 Cleanup resources (timers, etc.) when disposing the store.
 Call this if you're dynamically creating/destroying stores.
@@ -286,7 +228,7 @@ store.dispose();
 
 > **emit**\<`C`, `T`\>(`channel`, `type`, `payload`): `Promise`\<`void`\>
 
-Defined in: [store/Store.ts:523](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L523)
+Defined in: [store/Store.ts:541](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L541)
 
 Emits a typed event `(channel, type, payload)`.
 Events are queued and processed **sequentially** (FIFO).
@@ -368,7 +310,7 @@ await store.emit('ui', 'dangerous', null); // cancelled, no state change
 
 > **getState**(): [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>
 
-Defined in: [store/Store.ts:689](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L689)
+Defined in: [store/Store.ts:707](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L707)
 
 Returns the current immutable state snapshot.
 
@@ -395,7 +337,7 @@ console.log(state.counter.value);
 
 > **hotReplace**(`partial`): `void`
 
-Defined in: [store/Store.ts:932](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L932)
+Defined in: [store/Store.ts:999](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L999)
 
 Convenience API to replace **any subset** of store parts (HMR patterns).
 
@@ -442,11 +384,79 @@ store.hotReplace({
 
 ***
 
+### onEffect()
+
+> **onEffect**\<`C`, `T`\>(`channel`, `type`, `handler`): () => `void`
+
+Defined in: [store/Store.ts:864](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L864)
+
+Convenience helper to register an **effect** filtered by a single `(channel, type)` pair.
+
+#### Type Parameters
+
+##### C
+
+`C` *extends* `string`
+
+Channel key within `EM`.
+
+##### T
+
+`T` *extends* `string` \| `number` \| `symbol`
+
+Event type key within channel `C`.
+
+#### Parameters
+
+##### channel
+
+`C`
+
+Channel to filter.
+
+##### type
+
+`T`
+
+Event type to filter.
+
+##### handler
+
+(`payload`, `getState`, `emit`, `event`) => `void` \| `Promise`\<`void`\>
+
+Effect handler `(payload, getState, emit, event)`.
+
+#### Returns
+
+Unsubscribe/teardown function.
+
+> (): `void`
+
+##### Returns
+
+`void`
+
+#### Example
+
+```ts
+const off = store.onEffect('ui', 'increment', async (n, get, emit) => {
+  if (n > 10) await emit('ui', 'increment', -10);
+});
+// later
+off();
+```
+
+#### Implementation of
+
+[`StoreInstance`](../interfaces/StoreInstance.md).[`onEffect`](../interfaces/StoreInstance.md#oneffect)
+
+***
+
 ### registerEffect()
 
 > **registerEffect**(`spec`): () => `void`
 
-Defined in: [store/Store.ts:797](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L797)
+Defined in: [store/Store.ts:815](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L815)
 
 Registers an **effect** (stateless async event consumer) that runs after reducers.
 
@@ -502,7 +512,7 @@ store.registerEffect({
 
 > **registerMiddleware**(`mw`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [store/Store.ts:719](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L719)
+Defined in: [store/Store.ts:737](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L737)
 
 Registers a middleware (runs **before** reducers).
 
@@ -548,7 +558,7 @@ store.registerMiddleware((state, event) => {
 
 > **registerReducer**(`name`, `spec`): () => `void`
 
-Defined in: [store/Store.ts:749](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L749)
+Defined in: [store/Store.ts:767](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L767)
 
 Dynamically **adds** a named slice reducer at runtime.
 
@@ -600,7 +610,7 @@ dispose();
 
 > **replaceEffects**(`next`): `void`
 
-Defined in: [store/Store.ts:860](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L860)
+Defined in: [store/Store.ts:927](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L927)
 
 Replaces all registered **effects** (HMR-friendly).
 
@@ -636,7 +646,7 @@ if (import.meta.hot) {
 
 > **replaceMiddleware**(`next`): `void`
 
-Defined in: [store/Store.ts:839](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L839)
+Defined in: [store/Store.ts:906](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L906)
 
 Replaces the **entire** middleware pipeline (HMR-friendly).
 
@@ -672,7 +682,7 @@ if (import.meta.hot) {
 
 > **replaceReducers**(`next`, `opts`): `void`
 
-Defined in: [store/Store.ts:884](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L884)
+Defined in: [store/Store.ts:951](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L951)
 
 Replaces the entire **reducer set** (HMR-friendly).
 
@@ -716,7 +726,7 @@ if (import.meta.hot) {
 
 > **subscribe**(`fn`): () => `void`
 
-Defined in: [store/Store.ts:671](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L671)
+Defined in: [store/Store.ts:689](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L689)
 
 Subscribes to **coarse-grained** commits (called once per successful event, only if state changed).
 
@@ -758,7 +768,7 @@ off();
 
 > `static` **buildAncestorPaths**(`path`): `string`[]
 
-Defined in: [store/Store.ts:1059](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/store/Store.ts#L1059)
+Defined in: [store/Store.ts:1126](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/store/Store.ts#L1126)
 
 Builds ancestor paths for a dotted path.
 

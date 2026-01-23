@@ -8,7 +8,7 @@
 
 > **PathValue**\<`T`, `P`\> = `P` *extends* `` `${infer K}.${infer Rest}` `` ? `K` *extends* keyof `T` ? `PathValue`\<`T`\[`K`\], `Rest`\> : `never` : `P` *extends* keyof `T` ? `T`\[`P`\] : `never`
 
-Defined in: [hooks/hooks.ts:33](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/hooks/hooks.ts#L33)
+Defined in: [hooks/hooks.ts:33](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/react/src/hooks/hooks.ts#L33)
 
 Resolves the value type at a **dotted path** `P` inside object/array `T`.
 Supports numeric segments for arrays (e.g., `"items.0.title"`).

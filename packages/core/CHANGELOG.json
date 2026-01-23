@@ -2,6 +2,18 @@
   "name": "@quojs/core",
   "entries": [
     {
+      "version": "0.6.0",
+      "tag": "@quojs/core_v0.6.0",
+      "date": "Fri, 23 Jan 2026 21:05:12 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "feat(core): remove deprecated methods and typings, update docs and examples"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.5.0",
       "tag": "@quojs/core_v0.5.0",
       "date": "Thu, 08 Jan 2026 08:01:50 GMT",

@@ -8,7 +8,7 @@
 
 > **createQuoHooks**\<`R`, `S`, `EM`\>(`StoreContext`): `object`
 
-Defined in: [hooks/createQuoHooks.ts:87](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/react/src/hooks/createQuoHooks.ts#L87)
+Defined in: [hooks/createQuoHooks.ts:86](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/react/src/hooks/createQuoHooks.ts#L86)
 
 Factory that binds typed React hooks to a specific StoreInstance.
 
@@ -33,6 +33,8 @@ Factory that binds typed React hooks to a specific StoreInstance.
 `Context`\<`null` \| `StoreInstance`\<`R`, `S`, `EM`\>\>
 
 ## Returns
+
+`object`
 
 ### shallowEqual()
 
@@ -65,18 +67,6 @@ Factory that binds typed React hooks to a specific StoreInstance.
 ### useAtomicProps
 
 > **useAtomicProps**: [`UseAtomicProps`](../type-aliases/UseAtomicProps.md)\<`R`, `S`\>
-
-### ~~useDispatch()~~
-
-> **useDispatch**: () => `Emit`\<`EM`\>
-
-#### Returns
-
-`Emit`\<`EM`\>
-
-#### Deprecated
-
-Use [useEmit](#createquohooks)
 
 ### useEmit()
 

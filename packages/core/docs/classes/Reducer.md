@@ -6,7 +6,7 @@
 
 # Class: Reducer\<S, EM\>
 
-Defined in: [reducer/Reducer.ts:49](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/reducer/Reducer.ts#L49)
+Defined in: [reducer/Reducer.ts:49](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/reducer/Reducer.ts#L49)
 
 Thin wrapper around a pure reducer function (stateful event consumer):
 given a state `S` and an event (from [\`EventUnion\<EM\>\`](../type-aliases/EventUnion.md)),
@@ -66,7 +66,7 @@ Event map describing the valid event keys and payload types.
 
 > **new Reducer**\<`S`, `EM`\>(`reduce`): `Reducer`\<`S`, `EM`\>
 
-Defined in: [reducer/Reducer.ts:71](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/reducer/Reducer.ts#L71)
+Defined in: [reducer/Reducer.ts:71](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/reducer/Reducer.ts#L71)
 
 Creates a new Reducer from a pure reducer function.
 
@@ -97,7 +97,7 @@ const reducer = new Reducer<MyState, MyEM>((state, event) => {
 
 > **reduce**(`state`, `event`): `S`
 
-Defined in: [reducer/Reducer.ts:89](https://github.com/quojs/quojs/blob/8b1c0adc6b9ff8a764bce1cedbec68a1d02e95ee/packages/core/src/reducer/Reducer.ts#L89)
+Defined in: [reducer/Reducer.ts:89](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/reducer/Reducer.ts#L89)
 
 Applies the reducer to produce the next state.
 

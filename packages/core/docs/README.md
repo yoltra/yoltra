@@ -21,13 +21,8 @@
 
 ## Type Aliases
 
-- [~~Action~~](type-aliases/Action.md)
-- [~~ActionMapBase~~](type-aliases/ActionMapBase.md)
-- [~~ActionPair~~](type-aliases/ActionPair.md)
-- [~~ActionUnion~~](type-aliases/ActionUnion.md)
 - [DeepReadonly](type-aliases/DeepReadonly.md)
 - [DeepRO](type-aliases/DeepRO.md)
-- [~~Dispatch~~](type-aliases/Dispatch.md)
 - [Dotted](type-aliases/Dotted.md)
 - [EffectFunction](type-aliases/EffectFunction.md)
 - [Emit](type-aliases/Emit.md)
@@ -41,10 +36,6 @@
 - [StoreSpec](type-aliases/StoreSpec.md)
 - [Unsubscribe](type-aliases/Unsubscribe.md)
 - [WithGlob](type-aliases/WithGlob.md)
-
-## Variables
-
-- [~~typedActions~~](variables/typedActions.md)
 
 ## Functions
 
