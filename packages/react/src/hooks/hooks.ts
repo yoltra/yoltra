@@ -473,22 +473,3 @@ function _useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
-
-// ============================================================================
-// DEPRECATED HOOKS - Will be removed in v1.0.0
-// ============================================================================
-
-/**
- * @deprecated Use {@link useEmit} instead. Will be removed in v1.0.0.
- *
- * Legacy alias for `useEmit`. Quo.js now uses event-bus terminology.
- *
- * @public
- */
-export function useDispatch<EM extends EventMapBase>(): Emit<EM> {
-  warnOnce(
-    "quo:useDispatch",
-    "[@quojs/react] `useDispatch()` is deprecated and will be removed in v1.0.0. Use `useEmit()` instead.",
-  );
-  return useEmit<EM>();
-}

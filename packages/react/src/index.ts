@@ -12,8 +12,6 @@ export {
   useAtomicProp,
   useAtomicProps,
   shallowEqual,
-  // Deprecated
-  useDispatch, // @deprecated Use useEmit
 } from "./hooks/hooks";
 
 export {

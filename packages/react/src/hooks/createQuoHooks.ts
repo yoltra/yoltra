@@ -14,7 +14,6 @@ import type {
 } from "@quojs/core";
 
 import { PathValue } from "./hooks";
-import { warnOnce } from "../utils/warnOnce";
 
 export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
   <R1 extends R, P extends Dotted<S[R1]>>(spec: { reducer: R1; property: P }): PathValue<
@@ -213,23 +212,12 @@ export function createQuoHooks<
 
   const useAtomicProps = useAtomicPropsImpl as unknown as UseAtomicPropsOverloads;
 
-  // Deprecated alias
-  function useDispatch(): Emit<EM> {
-    warnOnce(
-      "quo:createHooks:useDispatch",
-      "[@quojs/react] `useDispatch()` is deprecated and will be removed in v1.0.0. Use `useEmit()` instead.",
-    );
-    return useEmit();
-  }
-
   return {
     useStore,
     useEmit,
     useSelector,
     useAtomicProp,
     useAtomicProps,
-    /** @deprecated Use {@link useEmit} */
-    useDispatch,
     shallowEqual,
   };
 }

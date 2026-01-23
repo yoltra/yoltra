@@ -460,26 +460,34 @@ import { createStore } from "@quojs/core";
 
 ## Migración desde v0.4.x
 
-### Cambios de Terminología (v0.5.0)
+### Cambios de Terminología (v0.5.0+)
 
-| Antiguo (v0.4.x) | Nuevo (v0.5.0) | Estado                                      |
-| ---------------- | -------------- | ------------------------------------------- |
-| `dispatch()`     | `emit()`       | ⚠️ Deprecado (aún funciona con advertencia) |
-| `Action`         | `Event`        | ⚠️ Deprecado (alias existe)                 |
-| `ActionMap`      | `EventMap`     | ⚠️ Deprecado (alias existe)                 |
-| `action.event`   | `event.type`   | ⚠️ Cambio disruptivo                        |
+| Antiguo (v0.4.x) | Nuevo (v0.5.0+) | Estado                                       |
+| ---------------- | --------------- | -------------------------------------------- |
+| `dispatch()`     | `emit()`        | ❌ Eliminado (usar `emit()` en su lugar)     |
+| `Action`         | `Event`         | ❌ Eliminado (usar tipo `Event`)             |
+| `ActionMap`      | `EventMap`      | ❌ Eliminado (usar tipo `EventMapBase`)      |
+| `ActionPair`     | `EventKey`      | ❌ Eliminado (usar tipo `EventKey`)          |
+| `ActionUnion`    | `EventUnion`    | ❌ Eliminado (usar tipo `EventUnion`)        |
+| `Dispatch`       | `Emit`          | ❌ Eliminado (usar tipo `Emit`)              |
+| `typedActions`   | `typedEvents`   | ❌ Eliminado (usar función `typedEvents`)    |
+| `action.event`   | `event.type`    | ⚠️ Cambio disruptivo                         |
 
 ### Ejemplo de Migración
 
 ```typescript
 // ANTES (v0.4.x)
 store.dispatch("counter", "increment", 1);
+const actions = typedActions([])('counter', ['increment']);
+type MyAction = Action<EM, 'counter', 'increment'>;
 
-// DESPUÉS (v0.5.0)
+// DESPUÉS (v0.5.0+)
 store.emit("counter", "increment", 1);
+const events = typedEvents([])('counter', ['increment']);
+type MyEvent = Event<EM, 'counter', 'increment'>;
 ```
 
-Los alias deprecados se eliminarán en v1.0.0. ¡Actualiza tu código ahora!
+**Nota:** Todos los alias deprecados han sido eliminados. Si estás actualizando desde v0.4.x, debes actualizar tu código para usar la nueva terminología de event-bus.
 
 ---
 

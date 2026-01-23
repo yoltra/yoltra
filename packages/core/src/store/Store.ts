@@ -23,6 +23,7 @@ import type {
   StoreSpec,
   Unsubscribe,
   EMFromReducersStrict,
+  Emit,
 } from "../types";
 import { freezeState } from "../utils/immutability";
 
@@ -96,8 +97,7 @@ import { freezeState } from "../utils/immutability";
  * @public
  */
 export class Store<EM extends EventMapBase, R extends string, S extends Record<R, any>>
-  implements StoreInstance<R, S, EM>
-{
+  implements StoreInstance<R, S, EM> {
   /**
    * Store name (used by DevTools & diagnostics).
    *
@@ -317,11 +317,29 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     /**
      * Method bindings
      */
+    this.dispose = this.dispose.bind(this);
+    this.notifyEffects = this.notifyEffects.bind(this);
+
+    // private API
+    this.forwardEvent = this.forwardEvent.bind(this);
+    this.__applyExternalState = this.__applyExternalState.bind(this);
+    this.mountSlice = this.mountSlice.bind(this);
+    this.unmountSlice = this.unmountSlice.bind(this);
+    this.getAtPath = this.getAtPath.bind(this);
+
+    // public API
     this.emit = this.emit.bind(this);
     this.subscribe = this.subscribe.bind(this);
     this.connect = this.connect.bind(this);
+    this.onEffect = this.onEffect.bind(this);
     this.getState = this.getState.bind(this);
     this.registerEffect = this.registerEffect.bind(this);
+    this.registerMiddleware = this.registerMiddleware.bind(this);
+    this.registerReducer = this.registerReducer.bind(this);
+    this.replaceMiddleware = this.replaceMiddleware.bind(this);
+    this.replaceEffects = this.replaceEffects.bind(this);
+    this.replaceReducers = this.replaceReducers.bind(this);
+    this.hotReplace = this.hotReplace.bind(this);
   }
 
   /**
@@ -820,6 +838,55 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     };
   }
 
+
+
+  /**
+   * Convenience helper to register an **effect** filtered by a single `(channel, type)` pair.
+   *
+   * @typeParam C - Channel key within `EM`.
+   * @typeParam T - Event type key within channel `C`.
+   * @param channel - Channel to filter.
+   * @param type - Event type to filter.
+   * @param handler - Effect handler `(payload, getState, emit, event)`.
+   * @returns Unsubscribe/teardown function.
+   *
+   * @example
+   * ```ts
+   * const off = store.onEffect('ui', 'increment', async (n, get, emit) => {
+   *   if (n > 10) await emit('ui', 'increment', -10);
+   * });
+   * // later
+   * off();
+   * ```
+   *
+   * @public
+   */
+  public onEffect<
+    C extends keyof EM & string,
+    T extends keyof EM[C]
+  >(
+    channel: C,
+    type: T,
+    handler: (
+      payload: EM[C][T],
+      getState: () => DeepReadonly<S>,
+      emit: Emit<EM>,
+      event: Event<EM, C, T>,
+    ) => void | Promise<void>,
+  ): () => void {
+    const effect: EffectFunction<DeepReadonly<S>, EM> = async (evt, getState, emit) => {
+      if (evt.channel !== channel || evt.type !== type) return;
+
+      const typed = evt as Event<EM, C, T>;
+      return handler(typed.payload, getState, emit, typed);
+    };
+
+    return this.registerEffect({
+      events: [[channel, type] as EventKey<EM>],
+      effect,
+    });
+  }
+
   /**
    * Replaces the **entire** middleware pipeline (HMR-friendly).
    *
@@ -1069,41 +1136,6 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     return out;
   }
-
-  // ============================================================================
-  // DEPRECATED METHODS - Will be removed in v1.0.0
-  // ============================================================================
-
-  /**
-   * @deprecated Use {@link Store.emit | `emit`} instead. Will be removed in v1.0.0.
-   *
-   * Legacy alias for `emit`. Quo.js now uses event-bus terminology:
-   * - "dispatch" → "emit"
-   * - "action" → "event"
-   *
-   * @example Migration
-   * ```ts
-   * // Old
-   * await store.dispatch('ui', 'toggle', true);
-   *
-   * // New
-   * await store.emit('ui', 'toggle', true);
-   * ```
-   *
-   * @public
-   */
-  public async dispatch<C extends keyof EM, T extends keyof EM[C]>(
-    channel: C,
-    type: T,
-    payload: EM[C][T],
-  ): Promise<void> {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn(
-        "[@quojs/core] `store.dispatch()` is deprecated and will be removed in v1.0.0. Use `store.emit()` instead.",
-      );
-    }
-    return this.emit(channel, type, payload);
-  }
 }
 
 /**
@@ -1173,12 +1205,3 @@ export const typedEvents = <EM extends EventMapBase>(_: string[][]) =>
     channel: C,
     events: Evt,
   ): ReadonlyArray<EventKey<EM>> => events.map((e) => [channel, e] as const);
-
-/**
- * @deprecated Use {@link typedEvents} instead. Will be removed in v1.0.0.
- *
- * Legacy name for `typedEvents`. Quo.js now uses event-bus terminology.
- *
- * @public
- */
-export const typedActions = typedEvents;

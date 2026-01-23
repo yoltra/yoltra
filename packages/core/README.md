@@ -451,26 +451,34 @@ import { createStore } from "@quojs/core";
 
 ## Migrating from v0.4.x
 
-### Terminology Changes (v0.5.0)
+### Terminology Changes (v0.5.0+)
 
-| Old (v0.4.x)   | New (v0.5.0) | Status                                   |
-| -------------- | ------------ | ---------------------------------------- |
-| `dispatch()`   | `emit()`     | ⚠️ Deprecated (still works with warning) |
-| `Action`       | `Event`      | ⚠️ Deprecated (alias exists)             |
-| `ActionMap`    | `EventMap`   | ⚠️ Deprecated (alias exists)             |
-| `action.event` | `event.type` | ⚠️ Breaking change                       |
+| Old (v0.4.x)   | New (v0.5.0+) | Status                                   |
+| -------------- | ------------- | ---------------------------------------- |
+| `dispatch()`   | `emit()`      | ❌ Removed (use `emit()` instead)        |
+| `Action`       | `Event`       | ❌ Removed (use `Event` type)            |
+| `ActionMap`    | `EventMap`    | ❌ Removed (use `EventMapBase` type)     |
+| `ActionPair`   | `EventKey`    | ❌ Removed (use `EventKey` type)         |
+| `ActionUnion`  | `EventUnion`  | ❌ Removed (use `EventUnion` type)       |
+| `Dispatch`     | `Emit`        | ❌ Removed (use `Emit` type)             |
+| `typedActions` | `typedEvents` | ❌ Removed (use `typedEvents` function)  |
+| `action.event` | `event.type`  | ⚠️ Breaking change                       |
 
 ### Migration Example
 
 ```typescript
 // BEFORE (v0.4.x)
 store.dispatch("counter", "increment", 1);
+const actions = typedActions([])('counter', ['increment']);
+type MyAction = Action<EM, 'counter', 'increment'>;
 
-// AFTER (v0.5.0)
+// AFTER (v0.5.0+)
 store.emit("counter", "increment", 1);
+const events = typedEvents([])('counter', ['increment']);
+type MyEvent = Event<EM, 'counter', 'increment'>;
 ```
 
-Deprecated aliases will be removed in v1.0.0. Update your code now!
+**Note:** All deprecated aliases have been removed. If you're upgrading from v0.4.x, you must update your code to use the new event-bus terminology.
 
 ---
 

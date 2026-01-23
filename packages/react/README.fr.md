@@ -219,7 +219,7 @@ await emit('counter', 'increment', 1);
 await emit('todos', 'add', { id: '1', title: 'Acheter du lait' });
 ```
 
-**Remplace :** `useDispatch()` (déprécié dans la v0.5.0)
+**Remplace :** `useDispatch()` (supprimé dans la v0.5.0+)
 
 ---
 
@@ -501,13 +501,13 @@ function UserProfile() {
 
 ## Migration depuis v0.4.x
 
-### Changements de Noms de Hooks (v0.5.0)
+### Changements de Noms de Hooks (v0.5.0+)
 
-| Ancien (v0.4.x) | Nouveau (v0.5.0) | Statut |
-|-----------------|------------------|--------|
-| `useDispatch()` | `useEmit()` | ⚠️ Déprécié (fonctionne encore avec avertissement) |
-| `useSliceProp()` | ❌ Supprimé | Utilisez `useAtomicProp()` |
-| `useSliceProps()` | ❌ Supprimé | Utilisez `useAtomicProps()` |
+| Ancien (v0.4.x)   | Nouveau (v0.5.0+)  | Statut                                    |
+|-------------------|--------------------|-------------------------------------------|
+| `useDispatch()`   | `useEmit()`        | ❌ Supprimé (utilisez `useEmit()`)        |
+| `useSliceProp()`  | `useAtomicProp()`  | ❌ Supprimé (utilisez `useAtomicProp()`)  |
+| `useSliceProps()` | `useAtomicProps()` | ❌ Supprimé (utilisez `useAtomicProps()`) |
 
 ### Exemple de Migration
 
@@ -518,7 +518,7 @@ import { useDispatch, useSliceProp } from '@quojs/react';
 function Counter() {
   const value = useSliceProp({ reducer: 'counter', property: 'value' });
   const dispatch = useDispatch();
-  
+
   return (
     <button onClick={() => dispatch('counter', 'increment', 1)}>
       {value}
@@ -526,13 +526,13 @@ function Counter() {
   );
 }
 
-// APRÈS (v0.5.0)
+// APRÈS (v0.5.0+)
 import { useEmit, useAtomicProp } from '@quojs/react';
 
 function Counter() {
   const value = useAtomicProp({ reducer: 'counter', property: 'value' });
   const emit = useEmit();
-  
+
   return (
     <button onClick={() => emit('counter', 'increment', 1)}>
       {value}
@@ -540,6 +540,8 @@ function Counter() {
   );
 }
 ```
+
+**Note :** Tous les hooks dépréciés ont été supprimés. Si vous effectuez une mise à niveau depuis la v0.4.x, vous devez mettre à jour votre code pour utiliser les nouveaux noms de hooks.
 
 ---
 
