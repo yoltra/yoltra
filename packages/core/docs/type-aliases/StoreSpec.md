@@ -8,7 +8,7 @@
 
 > **StoreSpec**\<`R`, `S`, `EM`\> = `object`
 
-Defined in: [types.ts:166](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L166)
+Defined in: [types.ts:166](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L166)
 
 Store spec - what you feed into the constructor / factory.
 
@@ -59,7 +59,7 @@ Event map.
 
 > `optional` **effects**: [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:188](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L188)
+Defined in: [types.ts:188](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L188)
 
 Optional side-effect handlers registered at construction time (runs after reducers for every propagated event).
 Equivalent to calling store.registerEffect for each item.
@@ -70,7 +70,7 @@ Equivalent to calling store.registerEffect for each item.
 
 > `optional` **middleware**: [`MiddlewareFunction`](MiddlewareFunction.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:182](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L182)
+Defined in: [types.ts:182](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L182)
 
 Middleware chain executed before reducers/effects.
 If any middleware returns false (or resolves to false), the event will not propagate to reducers/effects.
@@ -81,7 +81,7 @@ If any middleware returns false (or resolves to false), the event will not propa
 
 > **name**: `string`
 
-Defined in: [types.ts:170](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L170)
+Defined in: [types.ts:170](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L170)
 
 Store name (used by DevTools to identify the instance).
 
@@ -91,7 +91,7 @@ Store name (used by DevTools to identify the instance).
 
 > **reducer**: `Record`\<`R`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
 
-Defined in: [types.ts:176](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L176)
+Defined in: [types.ts:176](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L176)
 
 Map of slice name → reducer spec.
 Each entry declares initial state, the reducer function, and the list of EventKeys this slice responds to.

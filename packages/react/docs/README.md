@@ -15,6 +15,7 @@
 - [PathValue](type-aliases/PathValue.md)
 - [UseAtomicProp](type-aliases/UseAtomicProp.md)
 - [UseAtomicProps](type-aliases/UseAtomicProps.md)
+- [UseEvent](type-aliases/UseEvent.md)
 
 ## Variables
 
@@ -32,6 +33,7 @@
 - [useAtomicProp](functions/useAtomicProp.md)
 - [useAtomicProps](functions/useAtomicProps.md)
 - [useEmit](functions/useEmit.md)
+- [useEvent](functions/useEvent.md)
 - [useSelector](functions/useSelector.md)
 - [useStore](functions/useStore.md)
 - [useSuspenseAtomicProp](functions/useSuspenseAtomicProp.md)

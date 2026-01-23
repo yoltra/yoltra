@@ -34,4 +34,6 @@ export type {
   Path,
   WithGlob,
   Dotted,
+  EventPhase,
+  EventSubscriptionHandler,
 } from "./types";

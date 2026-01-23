@@ -10,7 +10,7 @@
 
 > **useSuspenseAtomicProp**\<`R`, `S`, `T`\>(`storeSpec`, `options`): `T`
 
-Defined in: [hooks/suspense.ts:129](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/react/src/hooks/suspense.ts#L129)
+Defined in: [hooks/suspense.ts:129](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/suspense.ts#L129)
 
 Suspense version of a single-path selector.
 
@@ -52,7 +52,7 @@ Suspense version of a single-path selector.
 
 > **useSuspenseAtomicProp**\<`R`, `S`, `P`, `T`\>(`storeSpec`, `options`): `T`
 
-Defined in: [hooks/suspense.ts:133](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/react/src/hooks/suspense.ts#L133)
+Defined in: [hooks/suspense.ts:133](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/suspense.ts#L133)
 
 Suspense version of a single-path selector.
 

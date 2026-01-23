@@ -283,6 +283,54 @@ export interface StoreInstance<
   dispose(): void;
 
   /**
+   * Subscribe to events by channel and type.
+   *
+   * Event subscriptions are intended for the View layer (e.g., React components)
+   * to react to events without affecting the event flow. They are fire-and-forget
+   * and cannot cancel event propagation.
+   *
+   * **Phases:**
+   * - `'committed'` (default): Events that passed middleware and reached reducers
+   * - `'uncommitted'`: Events rejected by middleware
+   * - `'all'`: Both committed and uncommitted events (handler receives phase parameter)
+   *
+   * @typeParam C - Channel key within `EM`.
+   * @typeParam T - Event type key within channel `C`.
+   * @param channel - Channel to subscribe to.
+   * @param type - Event type to subscribe to.
+   * @param handler - Handler function `(event, getState, emit, phase)`.
+   * @param phase - Event phase to subscribe to (default: `'committed'`).
+   * @returns Unsubscribe function.
+   *
+   * @example Committed events (default)
+   * ```ts
+   * const off = store.onEvent('ui', 'save', (event, getState, emit, phase) => {
+   *   console.log('Save committed:', event.payload);
+   * });
+   * ```
+   *
+   * @example Uncommitted (rejected) events
+   * ```ts
+   * store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
+   *   console.log('Delete was rejected by middleware');
+   * }, 'uncommitted');
+   * ```
+   *
+   * @example All events
+   * ```ts
+   * store.onEvent('ui', 'action', (event, getState, emit, phase) => {
+   *   console.log('Action:', phase); // 'committed' or 'uncommitted'
+   * }, 'all');
+   * ```
+   */
+  onEvent<C extends keyof EM & string, T extends keyof EM[C]>(
+    channel: C,
+    type: T,
+    handler: EventSubscriptionHandler<DeepReadonly<S>, EM>,
+    phase?: EventPhase,
+  ): Unsubscribe;
+
+  /**
    * Replaces the entire middleware pipeline (HMR-friendly).
    *
    * @param next - New middleware array.
@@ -548,3 +596,49 @@ export type DeepReadonly<T> = T extends (infer A)[]
   : T extends object
   ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
   : T;
+
+/**
+ * Phase of event subscription notification.
+ *
+ * - `'committed'`: Events that passed middleware and reached reducers (default)
+ * - `'uncommitted'`: Events rejected by middleware
+ * - `'all'`: Both committed and uncommitted events
+ *
+ * @public
+ */
+export type EventPhase = "committed" | "uncommitted" | "all";
+
+/**
+ * Handler function for event subscriptions.
+ *
+ * Event subscriptions are intended for the View layer (e.g., React components)
+ * to react to events without affecting the event flow. They are fire-and-forget
+ * and cannot cancel event propagation.
+ *
+ * @typeParam S  - Store state type (readonly).
+ * @typeParam EM - Event map.
+ *
+ * @param event - The event that was emitted
+ * @param getState - Function to get current state
+ * @param emit - Function to emit new events
+ * @param phase - The phase ('committed' or 'uncommitted') indicating how the event was processed
+ *
+ * @example
+ * ```ts
+ * const handler: EventSubscriptionHandler<AppState, AppEM> = (event, getState, emit, phase) => {
+ *   if (phase === 'committed') {
+ *     console.log('Event committed:', event.type);
+ *   } else {
+ *     console.log('Event rejected:', event.type);
+ *   }
+ * };
+ * ```
+ *
+ * @public
+ */
+export type EventSubscriptionHandler<S = any, EM extends EventMapBase = EventMapBase> = (
+  event: EventUnion<EM>,
+  getState: () => S,
+  emit: Emit<EM>,
+  phase: "committed" | "uncommitted",
+) => void | Promise<void>;

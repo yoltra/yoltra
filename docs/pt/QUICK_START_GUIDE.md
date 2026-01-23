@@ -114,7 +114,7 @@ unsubscribePath();
 ```
 
 
-### 7. Use in React (optional)
+### 7. Use no React (opcional)
 
 Consulte o **[arquivo readme do @quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.pt.md)**.
 
@@ -129,5 +129,60 @@ function App() {
       <YourApp />
     </StoreProvider>
   );
+}
+```
+
+## 8. Assinaturas de Eventos (v0.7.0+)
+
+As assinaturas de eventos permitem que você reaja a eventos sem selecionar estado. Isso é útil para:
+- Mostrar notificações em certos eventos
+- Acionar animações
+- Logging/analíticas
+- Responder a eventos rejeitados (não confirmados)
+
+### Fases de Eventos
+
+- **`'committed'`** (padrão): Eventos que passaram pelo middleware e chegaram aos reducers
+- **`'uncommitted'`**: Eventos rejeitados pelo middleware
+- **`'all'`**: Ambos eventos confirmados e não confirmados
+
+### Uso no Core
+
+```typescript
+// Assinar eventos confirmados (padrão)
+const unsubscribe = store.onEvent('ui', 'save', (event, getState, emit, phase) => {
+  console.log('Salvamento confirmado:', event.payload);
+});
+
+// Assinar eventos rejeitados
+store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
+  console.log('Exclusão foi rejeitada pelo middleware');
+}, 'uncommitted');
+
+// Assinar todos os eventos (confirmados e não confirmados)
+store.onEvent('ui', 'action', (event, getState, emit, phase) => {
+  console.log('Ação:', phase); // 'committed' ou 'uncommitted'
+}, 'all');
+
+// Limpeza
+unsubscribe();
+```
+
+### Hook React
+
+```tsx
+import { useEvent } from '@quojs/react';
+
+function SaveNotification() {
+  useEvent('ui', 'save', (event, getState, emit, phase) => {
+    showToast('Salvo com sucesso!');
+  });
+
+  // Para eventos rejeitados
+  useEvent('ui', 'delete', (event, getState, emit, phase) => {
+    showToast('Exclusão foi bloqueada');
+  }, 'uncommitted');
+
+  return null;
 }
 ```

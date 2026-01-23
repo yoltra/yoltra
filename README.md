@@ -117,6 +117,7 @@ Quo.js occupies a unique space between Redux's structure and Zustand's simplicit
 
 **Key Differentiators:**
 - ✅ Fine-grained subscriptions **by default** (no manual optimization)
+- ✅ Event subscriptions for **reactive UI**
 - ✅ Native async pipeline (middleware + effects)
 - ✅ Event ordering guarantees (FIFO queue)
 

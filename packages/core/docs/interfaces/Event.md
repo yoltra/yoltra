@@ -6,7 +6,7 @@
 
 # Interface: Event\<EM, C, T, P\>
 
-Defined in: [types.ts:72](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L72)
+Defined in: [types.ts:72](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L72)
 
 A single event object: `{ channel, type, payload, id }`.
 
@@ -55,7 +55,7 @@ Payload type (defaults to `EM[C][T]`).
 
 > **channel**: `C`
 
-Defined in: [types.ts:78](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L78)
+Defined in: [types.ts:78](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L78)
 
 ***
 
@@ -63,7 +63,7 @@ Defined in: [types.ts:78](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38
 
 > **id**: `symbol`
 
-Defined in: [types.ts:82](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L82)
+Defined in: [types.ts:82](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L82)
 
 Unique identifier for deduplication (automatically added by store)
 
@@ -73,7 +73,7 @@ Unique identifier for deduplication (automatically added by store)
 
 > **payload**: `P`
 
-Defined in: [types.ts:80](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L80)
+Defined in: [types.ts:80](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L80)
 
 ***
 
@@ -81,4 +81,4 @@ Defined in: [types.ts:80](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38
 
 > **type**: `T`
 
-Defined in: [types.ts:79](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L79)
+Defined in: [types.ts:79](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L79)

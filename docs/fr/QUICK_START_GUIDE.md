@@ -130,3 +130,58 @@ function App() {
   );
 }
 ```
+
+## 8. Abonnements aux Événements (v0.7.0+)
+
+Les abonnements aux événements vous permettent de réagir aux événements sans sélectionner d'état. C'est utile pour :
+- Afficher des notifications sur certains événements
+- Déclencher des animations
+- Logging/analytiques
+- Répondre aux événements rejetés (non confirmés)
+
+### Phases d'Événements
+
+- **`'committed'`** (par défaut) : Événements qui ont passé le middleware et atteint les reducers
+- **`'uncommitted'`** : Événements rejetés par le middleware
+- **`'all'`** : Les deux événements confirmés et non confirmés
+
+### Utilisation Core
+
+```typescript
+// S'abonner aux événements confirmés (par défaut)
+const unsubscribe = store.onEvent('ui', 'save', (event, getState, emit, phase) => {
+  console.log('Sauvegarde confirmée :', event.payload);
+});
+
+// S'abonner aux événements rejetés
+store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
+  console.log('Suppression rejetée par le middleware');
+}, 'uncommitted');
+
+// S'abonner à tous les événements (confirmés et non confirmés)
+store.onEvent('ui', 'action', (event, getState, emit, phase) => {
+  console.log('Action :', phase); // 'committed' ou 'uncommitted'
+}, 'all');
+
+// Nettoyage
+unsubscribe();
+```
+
+### Hook React
+
+```tsx
+import { useEvent } from '@quojs/react';
+
+function SaveNotification() {
+  useEvent('ui', 'save', (event, getState, emit, phase) => {
+    showToast('Sauvegardé avec succès !');
+  });
+
+  // Pour les événements rejetés
+  useEvent('ui', 'delete', (event, getState, emit, phase) => {
+    showToast('Suppression bloquée');
+  }, 'uncommitted');
+
+  return null;
+}
+```

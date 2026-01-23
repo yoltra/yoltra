@@ -3,14 +3,16 @@
  */
 
 import * as React from "react";
-import { useContext, useMemo, useRef, useSyncExternalStore } from "react";
+import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import type {
   EventMapBase,
+  Event,
   StoreInstance,
   Emit,
   DeepReadonly,
   WithGlob,
   Dotted,
+  EventPhase,
 } from "@quojs/core";
 
 import { PathValue } from "./hooks";
@@ -53,6 +55,21 @@ export type UseAtomicProps<R extends string, S extends Record<R, any>> = {
     isEqual?: (a: T, b: T) => boolean,
   ): T;
 };
+
+export type UseEvent<EM extends EventMapBase, S> = <
+  C extends keyof EM & string,
+  T extends keyof EM[C] & string,
+>(
+  channel: C,
+  type: T,
+  handler: (
+    event: Event<EM, C, T>,
+    getState: () => DeepReadonly<S>,
+    emit: Emit<EM>,
+    phase: "committed" | "uncommitted",
+  ) => void | Promise<void>,
+  phase?: EventPhase,
+) => void;
 
 const hasWildcard = (p: string) => p.includes("*");
 const normalizePath = (p: string) => p.replace(/^\./, "");
@@ -212,12 +229,45 @@ export function createQuoHooks<
 
   const useAtomicProps = useAtomicPropsImpl as unknown as UseAtomicPropsOverloads;
 
+  type UseEventOverloads = UseEvent<EM, S>;
+
+  const useEvent: UseEventOverloads = <
+    C extends keyof EM & string,
+    T extends keyof EM[C] & string,
+  >(
+    channel: C,
+    type: T,
+    handler: (
+      event: Event<EM, C, T>,
+      getState: () => DeepReadonly<S>,
+      emit: Emit<EM>,
+      phase: "committed" | "uncommitted",
+    ) => void | Promise<void>,
+    phase: EventPhase = "committed",
+  ): void => {
+    const store = useStore();
+    const handlerRef = useRef(handler);
+    handlerRef.current = handler; // Always keep latest handler (solves stale closures)
+
+    useEffect(() => {
+      return store.onEvent(
+        channel,
+        type,
+        (event, getState, emit, eventPhase) => {
+          handlerRef.current(event as Event<EM, C, T>, getState as () => DeepReadonly<S>, emit, eventPhase);
+        },
+        phase,
+      );
+    }, [store, channel, type, phase]);
+  };
+
   return {
     useStore,
     useEmit,
     useSelector,
     useAtomicProp,
     useAtomicProps,
+    useEvent,
     shallowEqual,
   };
 }

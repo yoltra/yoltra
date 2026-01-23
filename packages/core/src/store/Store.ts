@@ -24,6 +24,8 @@ import type {
   Unsubscribe,
   EMFromReducersStrict,
   Emit,
+  EventPhase,
+  EventSubscriptionHandler,
 } from "../types";
 import { freezeState } from "../utils/immutability";
 
@@ -33,6 +35,7 @@ import { freezeState } from "../utils/immutability";
  * - **Middleware** (pre-reducer, can cancel propagation)
  * - **Effects** (post-reducer, async-safe, keyed by EventKey)
  * - **Granular subscriptions** via dotted **property paths** (e.g., `"todos.3.title"`)
+ * - **Event subscriptions** for even more reactive UI
  * - **Event deduplication** via unique event IDs (prevents React Strict Mode double-firing)
  * - Optional **Redux DevTools** integration (dev)
  *
@@ -155,6 +158,39 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private readonly effects = new Map<string, Set<EffectFunction<DeepReadonly<S>, EM>>>();
+
+  /**
+   * Committed event subscribers keyed by `"channel::type"` for O(1) lookup.
+   * Notified after reducers, before effects, for events that passed middleware.
+   *
+   * @internal
+   */
+  private readonly committedEventSubscribers = new Map<
+    string,
+    Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
+  >();
+
+  /**
+   * Uncommitted event subscribers keyed by `"channel::type"` for O(1) lookup.
+   * Notified when middleware rejects an event.
+   *
+   * @internal
+   */
+  private readonly uncommittedEventSubscribers = new Map<
+    string,
+    Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
+  >();
+
+  /**
+   * All-events subscribers keyed by `"channel::type"` for O(1) lookup.
+   * Notified for both committed and uncommitted events with phase parameter.
+   *
+   * @internal
+   */
+  private readonly allEventSubscribers = new Map<
+    string,
+    Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
+  >();
 
   /**
    * Track reducerBus unsubs per slice for HMR/register/unregister.
@@ -332,6 +368,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.subscribe = this.subscribe.bind(this);
     this.connect = this.connect.bind(this);
     this.onEffect = this.onEffect.bind(this);
+    this.onEvent = this.onEvent.bind(this);
     this.getState = this.getState.bind(this);
     this.registerEffect = this.registerEffect.bind(this);
     this.registerMiddleware = this.registerMiddleware.bind(this);
@@ -382,6 +419,52 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         await h(event, this.getState, this.emit);
       } catch (e) {
         console.error("Effect error:", e);
+      }
+    }
+  }
+
+  /**
+   * Notifies event subscribers for a specific phase.
+   *
+   * Calls both phase-specific subscribers and 'all' subscribers.
+   * Errors are caught and logged, allowing other subscribers to continue.
+   *
+   * @param event - The event to notify about.
+   * @param phase - The phase ('committed' or 'uncommitted').
+   * @internal
+   */
+  private async notifyEventSubscribers(
+    event: EventUnion<EM>,
+    phase: "committed" | "uncommitted",
+  ): Promise<void> {
+    const key = `${String(event.channel)}::${String(event.type)}`;
+
+    // Notify phase-specific subscribers
+    const phaseMap =
+      phase === "committed"
+        ? this.committedEventSubscribers
+        : this.uncommittedEventSubscribers;
+    const phaseSet = phaseMap.get(key);
+
+    if (phaseSet?.size) {
+      for (const handler of [...phaseSet]) {
+        try {
+          await handler(event, this.getState, this.emit, phase);
+        } catch (e) {
+          console.error("Event subscription error:", e);
+        }
+      }
+    }
+
+    // Notify 'all' subscribers
+    const allSet = this.allEventSubscribers.get(key);
+    if (allSet?.size) {
+      for (const handler of [...allSet]) {
+        try {
+          await handler(event, this.getState, this.emit, phase);
+        } catch (e) {
+          console.error("Event subscription error:", e);
+        }
       }
     }
   }
@@ -593,6 +676,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         }
 
         if (!propagate) {
+          // Notify uncommitted event subscribers (event rejected by middleware)
+          await this.notifyEventSubscribers(event as any, "uncommitted");
+
           // event cancelled, but still log to DevTools
           this.devtools?.send(
             { type: `Channel: ${channel} - Type: ${type} [CANCELLED]`, payload },
@@ -609,6 +695,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         this.reducerBus.emit(channel as C, type as T, payload);
         const stateAfter = this.state;
         const anySliceChanged = stateBefore !== stateAfter;
+
+        /**
+         * Committed event subscribers (after reducers, before effects)
+         */
+        await this.notifyEventSubscribers(event as any, "committed");
 
         /**
          * Effects (keyed lookup, async)
@@ -667,6 +758,81 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   public connect(spec: { reducer: R; property: string }, h: (chg: Change) => void): () => void {
     return this.connectorBus.on(spec.reducer, spec.property, h);
+  }
+
+  /**
+   * Subscribe to events by channel and type.
+   *
+   * Event subscriptions are intended for the View layer (e.g., React components)
+   * to react to events without affecting the event flow. They are fire-and-forget
+   * and cannot cancel event propagation.
+   *
+   * **Phases:**
+   * - `'committed'` (default): Events that passed middleware and reached reducers.
+   *   Notified after reducers, before effects.
+   * - `'uncommitted'`: Events rejected by middleware. Notified immediately after rejection.
+   * - `'all'`: Both committed and uncommitted events. Handler receives the phase parameter
+   *   to distinguish between the two.
+   *
+   * @typeParam C - Channel key within `EM`.
+   * @typeParam T - Event type key within channel `C`.
+   * @param channel - Channel to subscribe to.
+   * @param type - Event type to subscribe to.
+   * @param handler - Handler function `(event, getState, emit, phase)`.
+   * @param phase - Event phase to subscribe to (default: `'committed'`).
+   * @returns Unsubscribe function.
+   *
+   * @example Committed events (default)
+   * ```ts
+   * const off = store.onEvent('ui', 'save', (event, getState, emit, phase) => {
+   *   console.log('Save committed:', event.payload);
+   * });
+   * off();
+   * ```
+   *
+   * @example Uncommitted (rejected) events
+   * ```ts
+   * store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
+   *   console.log('Delete was rejected by middleware');
+   * }, 'uncommitted');
+   * ```
+   *
+   * @example All events
+   * ```ts
+   * store.onEvent('ui', 'action', (event, getState, emit, phase) => {
+   *   console.log('Action:', phase); // 'committed' or 'uncommitted'
+   * }, 'all');
+   * ```
+   *
+   * @public
+   */
+  public onEvent<C extends keyof EM & string, T extends keyof EM[C]>(
+    channel: C,
+    type: T,
+    handler: EventSubscriptionHandler<DeepReadonly<S>, EM>,
+    phase: EventPhase = "committed",
+  ): Unsubscribe {
+    const key = `${channel}::${String(type)}`;
+
+    const targetMap =
+      phase === "committed"
+        ? this.committedEventSubscribers
+        : phase === "uncommitted"
+          ? this.uncommittedEventSubscribers
+          : this.allEventSubscribers;
+
+    if (!targetMap.has(key)) {
+      targetMap.set(key, new Set());
+    }
+    targetMap.get(key)!.add(handler);
+
+    return () => {
+      const set = targetMap.get(key);
+      if (set) {
+        set.delete(handler);
+        if (set.size === 0) targetMap.delete(key);
+      }
+    };
   }
 
   /**

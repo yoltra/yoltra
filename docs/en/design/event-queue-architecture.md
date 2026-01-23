@@ -5,8 +5,8 @@
 > &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)&nbsp; |
 > &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/design/event-queue-architecture.md)
 
-**Version:** 0.5.0 
-**Last Updated:** January 2026 
+**Version:** 0.7.0
+**Last Updated:** January 2026
 **Status:** Stable
 
 ## Overview
@@ -93,23 +93,34 @@ public async emit<C, T>(
                             │
                             ▼
                     ┌───────────────────┐
-                    │ Middleware        │
-                    │ (may cancel)      │
-                    └───────┬───────────┘
+                    │ Middleware        │──────────────────┐
+                    │ (may cancel)      │                  │
+                    └───────┬───────────┘                  │
+                            │                              │
+                            │ (allowed)                    │ (rejected)
+                            │                              │
+                            ▼                              ▼
+                    ┌───────────────────┐      ┌─────────────────────────┐
+                    │ Reducers (sync)   │      │ Uncommitted Event Subs  │
+                    └───────┬───────────┘      │ + 'all' Subs (phase=    │
+                            │                  │    'uncommitted')       │
+                            ▼                  └─────────────┬───────────┘
+                    ┌───────────────────┐                    │
+                    │ Committed Event   │                    ▼
+                    │ Subscribers +     │            ┌───────────────┐
+                    │ 'all' Subs (phase │            │ DevTools      │
+                    │   ='committed')   │            │ [CANCELLED]   │
+                    └───────┬───────────┘            └───────┬───────┘
+                            │                                │
+                            ▼                                ▼
+                    ┌───────────────────┐            ┌───────────────┐
+                    │ Effects (async)   │            │ Continue Loop │
+                    └───────┬───────────┘            └───────────────┘
                             │
                             ▼
                     ┌───────────────────┐
-                    │ Reducers (sync)   │
-                    └───────┬───────────┘
-                            │
-                            ▼
-                    ┌───────────────────┐
-                    │ Effects (async)   │
-                    └───────┬───────────┘
-                            │
-                            ▼
-                    ┌───────────────────┐
-                    │ Subscribers       │
+                    │ Coarse Subscribers│
+                    │ (if state changed)│
                     └───────┬───────────┘
                             │
                             ▼
@@ -447,6 +458,78 @@ effect: async (evt, getState, emit) => {
 }
 ```
 
+## Event Subscriptions (v0.7.0+)
+
+### Overview
+
+Event subscriptions provide a way to observe events without affecting the event flow. Unlike middleware (which can cancel events) and effects (which run after the event pipeline), event subscriptions are purely observational.
+
+### Subscription Phases
+
+| Phase | When Notified | Use Case |
+|-------|---------------|----------|
+| `'committed'` | After reducers, before effects | React to successful state changes |
+| `'uncommitted'` | After middleware rejects | React to blocked events |
+| `'all'` | Both phases (with phase parameter) | Logging, analytics, debugging |
+
+### Processing Order
+
+**For committed events:**
+```
+Middleware (allows) → Reducers → Committed Event Subs → Effects → Coarse Subs
+```
+
+**For uncommitted events:**
+```
+Middleware (rejects) → Uncommitted Event Subs → DevTools [CANCELLED]
+```
+
+### Handler Signature
+
+```typescript
+type EventSubscriptionHandler = (
+  event: EventUnion<EM>,
+  getState: () => S,
+  emit: Emit<EM>,
+  phase: 'committed' | 'uncommitted'
+) => void | Promise<void>;
+```
+
+**Parameters:**
+- `event` - The full event object `{ channel, type, payload, id }`
+- `getState` - Returns current state (after reducers for committed, unchanged for uncommitted)
+- `emit` - Allows emitting new events from the handler
+- `phase` - The phase that triggered this notification
+
+### Error Handling
+
+Event subscription errors are caught and logged, allowing other subscriptions to continue:
+
+```typescript
+// If one subscription throws, others still execute
+store.onEvent('ui', 'click', () => { throw new Error('boom'); });
+store.onEvent('ui', 'click', () => { console.log('still runs'); }); // ✅
+```
+
+### Usage Example
+
+```typescript
+// Committed events (default)
+store.onEvent('ui', 'save', (event, getState, emit, phase) => {
+  console.log('Save committed, new state:', getState());
+});
+
+// Uncommitted events
+store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
+  console.log('Delete was blocked by middleware');
+}, 'uncommitted');
+
+// All events
+store.onEvent('ui', 'action', (event, getState, emit, phase) => {
+  analytics.track(`event_${phase}`, { type: event.type });
+}, 'all');
+```
+
 ## Comparison to Other Libraries
 
 ### Redux (Synchronous)
@@ -687,6 +770,7 @@ public dispose(): void {
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 0.7.0 | 2026-01 | Added Event Subscriptions feature (committed/uncommitted/all phases) |
 | 0.5.0 | 2026-01 | Initial documentation of async queue architecture |
 
 ---

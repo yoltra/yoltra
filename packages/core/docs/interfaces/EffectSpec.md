@@ -6,7 +6,7 @@
 
 # Interface: EffectSpec\<S, EM\>
 
-Defined in: [types.ts:399](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L399)
+Defined in: [types.ts:447](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L447)
 
 Effect specification (stateless async event consumer).
 
@@ -48,7 +48,7 @@ Event map.
 
 > **effect**: [`EffectFunction`](../type-aliases/EffectFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:408](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L408)
+Defined in: [types.ts:456](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L456)
 
 Async effect handler: `(event, getState, emit) => void | Promise<void>`.
 
@@ -58,6 +58,6 @@ Async effect handler: `(event, getState, emit) => void | Promise<void>`.
 
 > **events**: readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
 
-Defined in: [types.ts:403](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L403)
+Defined in: [types.ts:451](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L451)
 
 List of EventKeys `[channel, type]` that this effect responds to.
