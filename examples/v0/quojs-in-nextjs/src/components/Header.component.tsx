@@ -1,22 +1,23 @@
 import Image from "next/image";
 
 import { ThemeName } from "@/state/types";
-import { useAtomicProp, useDispatch } from "@/state/hooks";
+import { useAtomicProp, useEmit } from "@/state/hooks";
 
 import quojsLogo from "../assets/logo.svg";
+import quojsLogoDark from "../assets/logo-dark.svg";
 
 export const Header = () => {
-  const dispatch = useDispatch();
+  const emit = useEmit();
   const selectedTheme = useAtomicProp({ reducer: "theme", property: "resolved" });
 
 
   const setTheme = (t: ThemeName) => {
-    dispatch("theme", "set", { theme: t })
+    emit("theme", "set", { theme: t })
   };
 
   return (
     <header>
-      <Image src={quojsLogo} alt={"quojs logo"} width={120} />
+      <Image src={selectedTheme === "dark" ? quojsLogoDark : quojsLogo} width={120} alt={"Quo.js logo"} />
       <nav>
         {
           selectedTheme === "light" ?

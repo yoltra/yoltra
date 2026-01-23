@@ -1,27 +1,23 @@
-import type { ActionPair, ReducerSpec } from "@quojs/core";
+import type { EventKey, ReducerSpec } from "@quojs/core";
 
-import type { AppAM, ThemeState } from "@/state/types";
+import type { AppEM, ThemeState } from "@/state/types";
 
 const initial: ThemeState = {
   theme: "system",
   resolved: "light",
 };
 
-const THEME_ACTIONS = [
-  ["theme", "set"],
-  ["theme", "resolve"],
-] as const satisfies readonly ActionPair<AppAM>[];
-
-export const themeReducer: ReducerSpec<ThemeState, AppAM> = {
-  actions: [
-    ...THEME_ACTIONS,
+export const themeReducer: ReducerSpec<ThemeState, AppEM> = {
+  events: [
+    ["theme", "set"],
+    ["theme", "resolve"],
   ],
   state: initial,
-  reducer: (state, action) => {
-    const { channel, event, payload } = action as any;
+  reducer: (state, event) => {
+    const { channel, type, payload } = event as any;
     if (channel !== "theme") return state;
 
-    switch (event) {
+    switch (type) {
       case "set": {
         const theme = payload.theme;
         const systemPref =

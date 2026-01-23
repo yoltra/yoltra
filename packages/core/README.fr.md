@@ -459,26 +459,34 @@ import { createStore } from "@quojs/core";
 
 ## Migration depuis v0.4.x
 
-### Changements de Terminologie (v0.5.0)
+### Changements de Terminologie (v0.5.0+)
 
-| Ancien (v0.4.x) | Nouveau (v0.5.0) | Statut                                             |
-| --------------- | ---------------- | -------------------------------------------------- |
-| `dispatch()`    | `emit()`         | ⚠️ Déprécié (fonctionne encore avec avertissement) |
-| `Action`        | `Event`          | ⚠️ Déprécié (alias existe)                         |
-| `ActionMap`     | `EventMap`       | ⚠️ Déprécié (alias existe)                         |
-| `action.event`  | `event.type`     | ⚠️ Changement disruptif                            |
+| Ancien (v0.4.x) | Nouveau (v0.5.0+) | Statut                                         |
+| --------------- | ----------------- | ---------------------------------------------- |
+| `dispatch()`    | `emit()`          | ❌ Supprimé (utilisez `emit()` à la place)     |
+| `Action`        | `Event`           | ❌ Supprimé (utilisez le type `Event`)         |
+| `ActionMap`     | `EventMap`        | ❌ Supprimé (utilisez le type `EventMapBase`)  |
+| `ActionPair`    | `EventKey`        | ❌ Supprimé (utilisez le type `EventKey`)      |
+| `ActionUnion`   | `EventUnion`      | ❌ Supprimé (utilisez le type `EventUnion`)    |
+| `Dispatch`      | `Emit`            | ❌ Supprimé (utilisez le type `Emit`)          |
+| `typedActions`  | `typedEvents`     | ❌ Supprimé (utilisez la fonction `typedEvents`) |
+| `action.event`  | `event.type`      | ⚠️ Changement disruptif                        |
 
 ### Exemple de Migration
 
 ```typescript
 // AVANT (v0.4.x)
 store.dispatch("counter", "increment", 1);
+const actions = typedActions([])('counter', ['increment']);
+type MyAction = Action<EM, 'counter', 'increment'>;
 
-// APRÈS (v0.5.0)
+// APRÈS (v0.5.0+)
 store.emit("counter", "increment", 1);
+const events = typedEvents([])('counter', ['increment']);
+type MyEvent = Event<EM, 'counter', 'increment'>;
 ```
 
-Les alias dépréciés seront supprimés dans la v1.0.0. Mettez à jour votre code maintenant !
+**Note :** Tous les alias dépréciés ont été supprimés. Si vous effectuez une mise à niveau depuis la v0.4.x, vous devez mettre à jour votre code pour utiliser la nouvelle terminologie event-bus.
 
 ---
 

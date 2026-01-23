@@ -218,7 +218,7 @@ await emit('counter', 'increment', 1);
 await emit('todos', 'add', { id: '1', title: 'Comprar leche' });
 ```
 
-**Reemplaza:** `useDispatch()` (deprecado en v0.5.0)
+**Reemplaza:** `useDispatch()` (eliminado en v0.5.0+)
 
 ---
 
@@ -500,13 +500,13 @@ function UserProfile() {
 
 ## Migración desde v0.4.x
 
-### Cambios de Nombres de Hooks (v0.5.0)
+### Cambios de Nombres de Hooks (v0.5.0+)
 
-| Antiguo (v0.4.x) | Nuevo (v0.5.0) | Estado |
-|------------------|----------------|--------|
-| `useDispatch()` | `useEmit()` | ⚠️ Deprecado (aún funciona con advertencia) |
-| `useSliceProp()` | ❌ Eliminado | Usa `useAtomicProp()` |
-| `useSliceProps()` | ❌ Eliminado | Usa `useAtomicProps()` |
+| Antiguo (v0.4.x)  | Nuevo (v0.5.0+)    | Estado                                  |
+|-------------------|--------------------|-----------------------------------------|
+| `useDispatch()`   | `useEmit()`        | ❌ Eliminado (usar `useEmit()`)         |
+| `useSliceProp()`  | `useAtomicProp()`  | ❌ Eliminado (usar `useAtomicProp()`)   |
+| `useSliceProps()` | `useAtomicProps()` | ❌ Eliminado (usar `useAtomicProps()`)  |
 
 ### Ejemplo de Migración
 
@@ -517,7 +517,7 @@ import { useDispatch, useSliceProp } from '@quojs/react';
 function Counter() {
   const value = useSliceProp({ reducer: 'counter', property: 'value' });
   const dispatch = useDispatch();
-  
+
   return (
     <button onClick={() => dispatch('counter', 'increment', 1)}>
       {value}
@@ -525,13 +525,13 @@ function Counter() {
   );
 }
 
-// DESPUÉS (v0.5.0)
+// DESPUÉS (v0.5.0+)
 import { useEmit, useAtomicProp } from '@quojs/react';
 
 function Counter() {
   const value = useAtomicProp({ reducer: 'counter', property: 'value' });
   const emit = useEmit();
-  
+
   return (
     <button onClick={() => emit('counter', 'increment', 1)}>
       {value}
@@ -539,6 +539,8 @@ function Counter() {
   );
 }
 ```
+
+**Nota:** Todos los hooks deprecados han sido eliminados. Si estás actualizando desde v0.4.x, debes actualizar tu código para usar los nuevos nombres de hooks.
 
 ---
 

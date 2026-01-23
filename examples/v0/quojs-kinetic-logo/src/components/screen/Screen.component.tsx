@@ -2,7 +2,7 @@ import { useRef } from "react";
 
 import { Circle } from "./items/circle/Circle.component";
 
-import { useDispatch, useAtomicProp } from "../../state/hooks";
+import { useEmit, useAtomicProp } from "../../state/hooks";
 import { eventToSvgUserCoords } from "../../utils";
 
 import "./Screen.style.scss";
@@ -11,7 +11,7 @@ interface ScreenComponentProps { }
 
 export const Screen = ({ }: ScreenComponentProps) => {
     const svgRef = useRef<SVGSVGElement>(null);
-    const dispatch = useDispatch();
+    const emit = useEmit();
 
     // atomic subscriptions to specific props
     const { height, width } = useAtomicProp({
@@ -66,7 +66,7 @@ export const Screen = ({ }: ScreenComponentProps) => {
         const svg = svgRef.current!;
         const eventCoords = eventToSvgUserCoords(event, svg);
 
-        dispatch("on", "mousemove", eventCoords);
+        emit("on", "mousemove", eventCoords);
     };
 
     return (

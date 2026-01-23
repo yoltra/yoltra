@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@quojs/core",
+      "comment": "feat(core): remove deprecated methods and typings, update docs and examples",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@quojs/core"
+}

@@ -237,6 +237,31 @@ export interface StoreInstance<
   connect(spec: { reducer: R; property: string }, handler: (change: Change) => void): Unsubscribe;
 
   /**
+   * Convenience helper to register an **effect** filtered by a single `(channel, type)` pair.
+   *
+   * @typeParam C - Channel key within `EM`.
+   * @typeParam T - Event type key within channel `C`.
+   * @param channel - Channel to filter.
+   * @param type - Event type to filter.
+   * @param handler - Effect handler `(payload, getState, emit, event)`.
+   * 
+   * @returns Unsubscribe/teardown function.
+   */
+  onEffect<
+    C extends keyof EM & string,
+    T extends keyof EM[C]
+  >(
+    channel: C,
+    type: T,
+    handler: (
+      payload: EM[C][T],
+      getState: () => DeepReadonly<S>,
+      emit: Emit<EM>,
+      event: Event<EM, C, T>,
+    ) => void | Promise<void>,
+  ): Unsubscribe;
+
+  /**
    * Register a post-reducer effect (sees final state). Returns an unsubscribe.
    */
   registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): Unsubscribe;
@@ -293,19 +318,6 @@ export interface StoreInstance<
     effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
     preserveState?: boolean;
   }): void;
-
-  /**
-   * @deprecated Use {@link StoreInstance.emit | `emit`} instead. Will be removed in v1.0.0.
-   *
-   * Legacy alias for `emit`. Quo.js now uses event-bus terminology:
-   * - "dispatch" → "emit"
-   * - "action" → "event"
-   */
-  dispatch<C extends keyof EM, T extends keyof EM[C]>(
-    channel: C,
-    type: T,
-    payload: EM[C][T],
-  ): Promise<void>;
 }
 
 
@@ -462,8 +474,8 @@ export type EMFromReducersStrict<RM extends ReducersMapAny> = RM[keyof RM] exten
   infer EM
 >
   ? RM[keyof RM] extends ReducerSpec<any, EM>
-    ? EM
-    : never
+  ? EM
+  : never
   : never;
 
 /**
@@ -499,12 +511,12 @@ export type Primitive =
 export type Path<T> = T extends Primitive
   ? never
   : T extends readonly (infer U)[]
-    ? `${number}` | (Path<U> extends never ? never : `${number}.${Path<U>}`)
-    : {
-        [K in keyof T & string]: T[K] extends Primitive
-          ? K
-          : K | (Path<T[K]> extends never ? never : `${K}.${Path<T[K]>}`);
-      }[keyof T & string];
+  ? `${number}` | (Path<U> extends never ? never : `${number}.${Path<U>}`)
+  : {
+    [K in keyof T & string]: T[K] extends Primitive
+    ? K
+    : K | (Path<T[K]> extends never ? never : `${K}.${Path<T[K]>}`);
+  }[keyof T & string];
 
 /**
  * Allow wildcard patterns like "*" and "**" anywhere in the string.
@@ -534,60 +546,5 @@ export type Dotted<Slice> = (keyof Slice & string) | Path<Slice>;
 export type DeepReadonly<T> = T extends (infer A)[]
   ? ReadonlyArray<DeepReadonly<A>>
   : T extends object
-    ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
-    : T;
-
-// ============================================================================
-// DEPRECATED TYPES - Will be removed in v1.0.0
-// ============================================================================
-
-/**
- * @deprecated Use {@link EventMapBase} instead. Will be removed in v1.0.0.
- *
- * Legacy type alias. Quo.js now uses event-bus terminology.
- *
- * @public
- */
-export type ActionMapBase = EventMapBase;
-
-/**
- * @deprecated Use {@link EventKey} instead. Will be removed in v1.0.0.
- *
- * Legacy type alias. Quo.js now uses event-bus terminology.
- *
- * @public
- */
-export type ActionPair<EM extends EventMapBase> = EventKey<EM>;
-
-/**
- * @deprecated Use {@link Event} instead. Will be removed in v1.0.0.
- *
- * Legacy type alias. Quo.js now uses event-bus terminology.
- * Note: The new Event type includes an `id` field for deduplication.
- *
- * @public
- */
-export type Action<
-  EM extends EventMapBase = EventMapBase,
-  C extends keyof EM = keyof EM,
-  T extends keyof EM[C] = keyof EM[C],
-  P = EM[C][T],
-> = Event<EM, C, T, P>;
-
-/**
- * @deprecated Use {@link EventUnion} instead. Will be removed in v1.0.0.
- *
- * Legacy type alias. Quo.js now uses event-bus terminology.
- *
- * @public
- */
-export type ActionUnion<EM extends EventMapBase> = EventUnion<EM>;
-
-/**
- * @deprecated Use {@link Emit} instead. Will be removed in v1.0.0.
- *
- * Legacy type alias. Quo.js now uses event-bus terminology.
- *
- * @public
- */
-export type Dispatch<EM extends EventMapBase> = Emit<EM>;
+  ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+  : T;

@@ -34,15 +34,4 @@ export type {
   Path,
   WithGlob,
   Dotted,
-
-  
-  // Deprecated (will be removed in v1.0.0)
-  ActionMapBase, // @deprecated Use EventMapBase
-  ActionPair, // @deprecated Use EventKey
-  Action, // @deprecated Use Event
-  ActionUnion, // @deprecated Use EventUnion
-  Dispatch, // @deprecated Use Emit
 } from "./types";
-
-// Deprecated exports (will be removed in v1.0.0)
-export { typedActions } from "./store/Store"; // @deprecated Use typedEvents

@@ -218,7 +218,7 @@ await emit('counter', 'increment', 1);
 await emit('todos', 'add', { id: '1', title: 'Buy milk' });
 ```
 
-**Replaces:** `useDispatch()` (deprecated in v0.5.0)
+**Replaces:** `useDispatch()` (removed in v0.5.0+)
 
 ---
 
@@ -500,13 +500,13 @@ function UserProfile() {
 
 ## Migrating from v0.4.x
 
-### Hook Name Changes (v0.5.0)
+### Hook Name Changes (v0.5.0+)
 
-| Old (v0.4.x) | New (v0.5.0) | Status |
-|--------------|--------------|--------|
-| `useDispatch()` | `useEmit()` | ⚠️ Deprecated (still works with warning) |
-| `useSliceProp()` | ❌ Removed | Use `useAtomicProp()` |
-| `useSliceProps()` | ❌ Removed | Use `useAtomicProps()` |
+| Old (v0.4.x)     | New (v0.5.0+)      | Status                            |
+|------------------|--------------------| ----------------------------------|
+| `useDispatch()`  | `useEmit()`        | ❌ Removed (use `useEmit()`)      |
+| `useSliceProp()` | `useAtomicProp()`  | ❌ Removed (use `useAtomicProp()`) |
+| `useSliceProps()`| `useAtomicProps()` | ❌ Removed (use `useAtomicProps()`) |
 
 ### Migration Example
 
@@ -517,7 +517,7 @@ import { useDispatch, useSliceProp } from '@quojs/react';
 function Counter() {
   const value = useSliceProp({ reducer: 'counter', property: 'value' });
   const dispatch = useDispatch();
-  
+
   return (
     <button onClick={() => dispatch('counter', 'increment', 1)}>
       {value}
@@ -525,13 +525,13 @@ function Counter() {
   );
 }
 
-// AFTER (v0.5.0)
+// AFTER (v0.5.0+)
 import { useEmit, useAtomicProp } from '@quojs/react';
 
 function Counter() {
   const value = useAtomicProp({ reducer: 'counter', property: 'value' });
   const emit = useEmit();
-  
+
   return (
     <button onClick={() => emit('counter', 'increment', 1)}>
       {value}
@@ -539,6 +539,8 @@ function Counter() {
   );
 }
 ```
+
+**Note:** All deprecated hooks have been removed. If you're upgrading from v0.4.x, you must update your code to use the new hook names.
 
 ---
 

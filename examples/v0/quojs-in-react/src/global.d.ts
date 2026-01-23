@@ -21,6 +21,6 @@ declare module '*.module.sass' {
 
 declare global {
   interface Window {
-    kernel: Kernel<tAppAM, typeof rootReducer>;
+    kernel: Kernel<tAppEM, typeof rootReducer>;
   }
 }

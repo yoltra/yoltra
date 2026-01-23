@@ -212,7 +212,7 @@ await emit('counter', 'increment', 1);
 await emit('todos', 'add', { id: '1', title: 'Comprar leite' });
 ```
 
-**Substitui:** `useDispatch()` (depreciado na v0.5.0)
+**Substitui:** `useDispatch()` (removido na v0.5.0+)
 
 ---
 
@@ -494,13 +494,13 @@ function UserProfile() {
 
 ## Migrando da v0.4.x
 
-### Mudanças de Nomes de Hooks (v0.5.0)
+### Mudanças de Nomes de Hooks (v0.5.0+)
 
-| Antigo (v0.4.x) | Novo (v0.5.0) | Status |
-|-----------------|---------------|--------|
-| `useDispatch()` | `useEmit()` | ⚠️ Depreciado (ainda funciona com aviso) |
-| `useSliceProp()` | ❌ Removido | Use `useAtomicProp()` |
-| `useSliceProps()` | ❌ Removido | Use `useAtomicProps()` |
+| Antigo (v0.4.x)   | Novo (v0.5.0+)     | Status                                   |
+|-------------------|--------------------|------------------------------------------|
+| `useDispatch()`   | `useEmit()`        | ❌ Removido (use `useEmit()`)            |
+| `useSliceProp()`  | `useAtomicProp()`  | ❌ Removido (use `useAtomicProp()`)      |
+| `useSliceProps()` | `useAtomicProps()` | ❌ Removido (use `useAtomicProps()`)     |
 
 ### Exemplo de Migração
 
@@ -511,7 +511,7 @@ import { useDispatch, useSliceProp } from '@quojs/react';
 function Counter() {
   const value = useSliceProp({ reducer: 'counter', property: 'value' });
   const dispatch = useDispatch();
-  
+
   return (
     <button onClick={() => dispatch('counter', 'increment', 1)}>
       {value}
@@ -519,13 +519,13 @@ function Counter() {
   );
 }
 
-// DEPOIS (v0.5.0)
+// DEPOIS (v0.5.0+)
 import { useEmit, useAtomicProp } from '@quojs/react';
 
 function Counter() {
   const value = useAtomicProp({ reducer: 'counter', property: 'value' });
   const emit = useEmit();
-  
+
   return (
     <button onClick={() => emit('counter', 'increment', 1)}>
       {value}
@@ -533,6 +533,8 @@ function Counter() {
   );
 }
 ```
+
+**Nota:** Todos os hooks depreciados foram removidos. Se você está atualizando da v0.4.x, deve atualizar seu código para usar os novos nomes de hooks.
 
 ---
 

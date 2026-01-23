@@ -457,26 +457,34 @@ import { createStore } from "@quojs/core";
 
 ## Migrando da v0.4.x
 
-### Mudanças de Terminologia (v0.5.0)
+### Mudanças de Terminologia (v0.5.0+)
 
-| Antigo (v0.4.x) | Novo (v0.5.0) | Status                                   |
-| --------------- | ------------- | ---------------------------------------- |
-| `dispatch()`    | `emit()`      | ⚠️ Depreciado (ainda funciona com aviso) |
-| `Action`        | `Event`       | ⚠️ Depreciado (alias existe)             |
-| `ActionMap`     | `EventMap`    | ⚠️ Depreciado (alias existe)             |
-| `action.event`  | `event.type`  | ⚠️ Mudança disruptiva                    |
+| Antigo (v0.4.x) | Novo (v0.5.0+) | Status                                       |
+| --------------- | -------------- | -------------------------------------------- |
+| `dispatch()`    | `emit()`       | ❌ Removido (use `emit()` no lugar)          |
+| `Action`        | `Event`        | ❌ Removido (use o tipo `Event`)             |
+| `ActionMap`     | `EventMap`     | ❌ Removido (use o tipo `EventMapBase`)      |
+| `ActionPair`    | `EventKey`     | ❌ Removido (use o tipo `EventKey`)          |
+| `ActionUnion`   | `EventUnion`   | ❌ Removido (use o tipo `EventUnion`)        |
+| `Dispatch`      | `Emit`         | ❌ Removido (use o tipo `Emit`)              |
+| `typedActions`  | `typedEvents`  | ❌ Removido (use a função `typedEvents`)     |
+| `action.event`  | `event.type`   | ⚠️ Mudança disruptiva                        |
 
 ### Exemplo de Migração
 
 ```typescript
 // ANTES (v0.4.x)
 store.dispatch("counter", "increment", 1);
+const actions = typedActions([])('counter', ['increment']);
+type MyAction = Action<EM, 'counter', 'increment'>;
 
-// DEPOIS (v0.5.0)
+// DEPOIS (v0.5.0+)
 store.emit("counter", "increment", 1);
+const events = typedEvents([])('counter', ['increment']);
+type MyEvent = Event<EM, 'counter', 'increment'>;
 ```
 
-Aliases depreciados serão removidos na v1.0.0. Atualize seu código agora!
+**Nota:** Todos os aliases depreciados foram removidos. Se você está atualizando da v0.4.x, deve atualizar seu código para usar a nova terminologia de event-bus.
 
 ---
 

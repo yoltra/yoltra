@@ -2,7 +2,7 @@ import type { EngineInstance, SimulationConfig, SimulationInstance, SimulationIt
 import { Circle } from "./Circle";
 import { QuadTree } from "../Quadtree";
 import type { Unsubscribe } from "@quojs/core";
-import type { AppAM, AppStore } from "../../state/types";
+import type { AppEM, AppStore } from "../../state/types";
 
 export class Simulation implements SimulationInstance {
   private _isEnabled = false;
@@ -46,7 +46,7 @@ export class Simulation implements SimulationInstance {
     this.introRemaining = remaining;
     this.introTotal = Object.keys(this.items).length;
 
-    store?.dispatch("logo", "introProgress", {
+    store?.emit("logo", "introProgress", {
       remaining: this.introRemaining,
       total: this.introTotal,
     });
@@ -81,13 +81,13 @@ export class Simulation implements SimulationInstance {
     const store = (this.engine as any).store as AppStore | undefined;
     if (store) {
       this.offMouseMove = store.onEffect("on", "mousemove",
-        (payload: AppAM["on"]["mousemove"]) => this.handleMouseMove(payload));
+        (payload: AppEM["on"]["mousemove"]) => this.handleMouseMove(payload));
     }
 
     // if there are no intro items on (re)start, emit completion immediately
     if (this.introRemaining === 0 && !this.firedIntroComplete) {
       this.firedIntroComplete = true;
-      (this.engine as any).store?.dispatch("logo", "introComplete", {});
+      (this.engine as any).store?.emit("logo", "introComplete", {});
     }
   }
 
@@ -130,7 +130,7 @@ export class Simulation implements SimulationInstance {
     const store = (this.engine as any).store as AppStore | undefined;
 
     if (updates.length > 0) {
-      store?.dispatch("logo", "batchUpdate", { changes: updates });
+      store?.emit("logo", "batchUpdate", { changes: updates });
 
       // keep quadtree fresh
       this.quadtree.clear();
@@ -141,7 +141,7 @@ export class Simulation implements SimulationInstance {
       if (finishedNow > 0) {
         this.introRemaining = Math.max(0, this.introRemaining - finishedNow);
 
-        store?.dispatch("logo", "introProgress", {
+        store?.emit("logo", "introProgress", {
           remaining: this.introRemaining,
           total: this.introTotal,
         });
@@ -152,11 +152,11 @@ export class Simulation implements SimulationInstance {
     if (this.introRemaining === 0 && !this.firedIntroComplete) {
       this.firedIntroComplete = true;
 
-      store?.dispatch("logo", "introComplete", {});
+      store?.emit("logo", "introComplete", {});
     }
   }
 
-  private handleMouseMove = (pos: AppAM["on"]["mousemove"]) => {
+  private handleMouseMove = (pos: AppEM["on"]["mousemove"]) => {
     if (!this._isEnabled) return;
 
     const newPosition = pos as unknown as { x: number; y: number };
@@ -172,7 +172,7 @@ export class Simulation implements SimulationInstance {
 
     if (updates.length > 0) {
       const store = (this.engine as any).store as AppStore | undefined;
-      store?.dispatch("logo", "batchUpdate", { changes: updates });
+      store?.emit("logo", "batchUpdate", { changes: updates });
     }
   };
 

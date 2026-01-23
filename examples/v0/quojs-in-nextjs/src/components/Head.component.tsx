@@ -2,7 +2,7 @@ import { default as NextHead } from "next/head";
 import { useSearchParams } from "next/navigation";
 
 import { useEffect } from "react";
-import { useAtomicProp, useDispatch } from "@/state/hooks";
+import { useAtomicProp } from "@/state/hooks";
 
 export const Head = () => {
   const searchParams = useSearchParams();

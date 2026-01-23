@@ -1,5 +1,5 @@
-import type { ActionPair, ReducerSpec } from "@quojs/core";
-import type { AppAM, LogoAM, LogoState, Circle } from "../types";
+import type { EventKey, ReducerSpec } from "@quojs/core";
+import type { AppEM, LogoEM, LogoState, Circle } from "../types";
 
 export const LOGO_INITIAL_STATE: LogoState = {
   enabled: true,
@@ -15,18 +15,6 @@ export const LOGO_INITIAL_STATE: LogoState = {
     done: false,
   },
 };
-
-const LOGO_ACTIONS = [
-  ["logo", "update"],
-  ["logo", "stop"],
-  ["logo", "fps"],
-  ["logo", "size"],
-  ["logo", "count"],
-  ["logo", "batchUpdate"],
-  ["logo", "introProgress"],
-  ["logo", "introComplete"],
-  ["logo", "start"],
-] as const satisfies readonly ActionPair<AppAM>[];
 
 // type inference
 type GroupKey = keyof Pick<LogoState, "d" | "u" | "x">;
@@ -53,22 +41,30 @@ function upsertItem(state: LogoState, group: GroupKey, next: Circle): LogoState 
   return { ...state, [group]: nextGroup };
 }
 
-export const logoReducer: ReducerSpec<LogoState, AppAM> = {
-  actions: [
-    ...LOGO_ACTIONS
+export const logoReducer: ReducerSpec<LogoState, AppEM> = {
+  events: [
+    ["logo", "update"],
+    ["logo", "stop"],
+    ["logo", "fps"],
+    ["logo", "size"],
+    ["logo", "count"],
+    ["logo", "batchUpdate"],
+    ["logo", "introProgress"],
+    ["logo", "introComplete"],
+    ["logo", "start"],
   ],
   state: LOGO_INITIAL_STATE,
-  reducer: (state, action) => {
-    if (action.channel !== "logo") return state;
-    if (!state.enabled && action.event !== "start") return state;
+  reducer: (state, event) => {
+    if (event.channel !== "logo") return state;
+    if (!state.enabled && event.type !== "start") return state;
 
     /**
      * Here, everything is auto-completed.
-     * 
+     *
      * Try removing the "update" part on line #71 and re-add it */
-    switch (action.event) {
+    switch (event.type) {
       case "update": {
-        const { group, id, x, y } = action.payload;
+        const { group, id, x, y } = event.payload;
         const next: Circle = { id, x, y };
 
         return upsertItem(state, group as GroupKey, next);
@@ -93,7 +89,7 @@ export const logoReducer: ReducerSpec<LogoState, AppAM> = {
       }
 
       case "fps": {
-        const { fps } = action.payload as LogoAM["fps"];
+        const { fps } = event.payload as LogoEM["fps"];
 
         if (state.fps === fps) return state;
 
@@ -104,7 +100,7 @@ export const logoReducer: ReducerSpec<LogoState, AppAM> = {
       }
 
       case "count": {
-        const next = action.payload as LogoAM["count"];
+        const next = event.payload as LogoEM["count"];
         const prev = state.itemCount;
 
         if (prev.d === next.d && prev.u === next.u && prev.x === next.x) return state;
@@ -113,7 +109,7 @@ export const logoReducer: ReducerSpec<LogoState, AppAM> = {
       }
 
       case "size": {
-        const { height, width } = action.payload as LogoAM["size"];
+        const { height, width } = event.payload as LogoEM["size"];
         const prev = state.size;
 
         if (prev.height === height && prev.width === width) return state;
@@ -127,8 +123,8 @@ export const logoReducer: ReducerSpec<LogoState, AppAM> = {
       }
 
       case "batchUpdate": {
-        if (!action.payload.changes.length) return state;
-        const { changes } = action.payload;
+        if (!event.payload.changes.length) return state;
+        const { changes } = event.payload;
 
         let wroteAny = false;
         for (const c of changes) {
@@ -172,7 +168,7 @@ export const logoReducer: ReducerSpec<LogoState, AppAM> = {
       }
 
       case "introProgress": {
-        const { remaining, total } = action.payload;
+        const { remaining, total } = event.payload;
 
         return {
           ...state,

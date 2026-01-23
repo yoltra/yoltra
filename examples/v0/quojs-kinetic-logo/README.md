@@ -19,10 +19,10 @@ It showcases Quo.js as a **predictable, typed, event‑driven** state container 
 
 ## Why Quo.js here?
 
-- **Channels + events (no action-type soup):** we dispatch on channel `"logo"` with events like `"batchUpdate"`, `"fps"`, etc.
+- **Channels + events (no event-type soup):** we emit on channel `"logo"` with events like `"batchUpdate"`, `"fps"`, etc.
 - **Fine‑grained selectors:** each `<Circle/>` subscribes to its **own** `logo[group][id]` node via `useAtomicProp`, avoiding whole-slice re-renders.
 - **Immutable, ergonomic reducer spec:** a single reducer (`Logo.reducer.ts`) handles atomic and batched updates without magic.
-- **Typed hooks:** `createQuoHooks` generates `useStore`, `useDispatch`, `useSelector`, `useAtomicProp`, `useAtomicProps` with full TS inference.
+- **Typed hooks:** `createQuoHooks` generates `useStore`, `useEmit`, `useSelector`, `useAtomicProp`, `useAtomicProps` with full TS inference.
 - **Event effects:** the engine listens to store effects (e.g., `"logo":"start" | "stop"`) to coordinate simulation lifecycle.
 
 The result: **smooth 60fps** updates on capable machines, with React only touching the DOM for circles that actually moved.
@@ -31,23 +31,23 @@ The result: **smooth 60fps** updates on capable machines, with React only touchi
 
 ## How it works (high level)
 
-1. **Engine + Simulation**  
-   - `Engine` runs an `rAF` loop, smooths FPS, and dispatches `logo/fps` every ~250ms.
-   - `Simulation` owns `Circle` items. Each item eases from a random start to its “home” pixel (the logo), then idles—repelled by the mouse and relaxing back.
+1. **Engine + Simulation**
+   - `Engine` runs an `rAF` loop, smooths FPS, and emits `logo/fps` every ~250ms.
+   - `Simulation` owns `Circle` items. Each item eases from a random start to its "home" pixel (the logo), then idles—repelled by the mouse and relaxing back.
 
-2. **Image → specs (once)**  
-   - `extractCircleSpecsFromImage()` samples a transparent PNG (`assets/logo.png`) to produce `CircleSpec[]` with `group: "d" | "u" | "x"`.  
-   - We dispatch `logo/size` and `logo/count` so the UI knows canvas size and per‑group circle totals.
+2. **Image → specs (once)**
+   - `extractCircleSpecsFromImage()` samples a transparent PNG (`assets/logo.png`) to produce `CircleSpec[]` with `group: "d" | "u" | "x"`.
+   - We emit `logo/size` and `logo/count` so the UI knows canvas size and per‑group circle totals.
 
-3. **Per‑frame updates → batched store writes**  
-   - Each frame, `Simulation.loop()` collects item updates and dispatches **one** `logo/batchUpdate` with many changes.  
+3. **Per‑frame updates → batched store writes**
+   - Each frame, `Simulation.loop()` collects item updates and emits **one** `logo/batchUpdate` with many changes.
    - The reducer upserts only the nodes that changed, keeping the store small and React precise.
 
-4. **Granular rendering**  
+4. **Granular rendering**
    - Every `<Circle group id>` subscribes to `logo[group][id]` via `useAtomicProp`. If a circle didn't move, it **doesn't re-render**.
 
-5. **Intro completion + metrics**  
-   - While intro runs, `logo/introProgress` tracks remaining movers. Once all are home, we dispatch `logo/introComplete`.
+5. **Intro completion + metrics**
+   - While intro runs, `logo/introProgress` tracks remaining movers. Once all are home, we emit `logo/introComplete`.
 
 ---
 
@@ -86,7 +86,7 @@ src/
     Circle.component.tsx        # subscribes to its own logo[group][id] node via useAtomicProp
   context/Store.context.tsx     # React context for the typed Quo store
   state/
-    types.ts                    # AppState, LogoState, typed action maps (LogoAM, AppAM)
+    types.ts                    # AppState, LogoState, typed event maps (LogoEM, AppEM)
     logo/Logo.reducer.ts        # immutable reducer; atomic + batched circle updates, fps, intro, size
     hooks.ts                    # createQuoHooks(...): typed React hooks
     store.ts                    # createStore(...) with the logo reducer
@@ -102,7 +102,7 @@ src/
 
 ## Quo.js specifics shown here
 
-- **`batchUpdate`**: one action, many updates → minimal reducer churn and fewer React commits.
+- **`batchUpdate`**: one event, many updates → minimal reducer churn and fewer React commits.
 - **`useAtomicProp`**: subscribe directly to a deep path (`logo["d"]["circle_d_42"]`). No memo foot-guns, no selectors allocating new objects each render.
 - **Effect API** (`store.onEffect("logo", "start" | "stop")`): the engine reacts to state events without Redux‑saga/thunk ceremony.
 - **Pure, immutable reducer**: `upsertItem()` enforces a no‑op when nothing changed → fewer updates propagate.
