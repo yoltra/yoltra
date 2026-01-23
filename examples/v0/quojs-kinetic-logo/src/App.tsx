@@ -29,8 +29,8 @@ export default function App() {
         { spacing: 3, initialR: 0.5, maxCircles }
       );
 
-      store.dispatch("logo", "size", { height, width });
-      store.dispatch("logo", "count", groupCounts);
+      store.emit("logo", "size", { height, width });
+      store.emit("logo", "count", groupCounts);
 
       const sim = new Simulation(engine, {
         items: specs,

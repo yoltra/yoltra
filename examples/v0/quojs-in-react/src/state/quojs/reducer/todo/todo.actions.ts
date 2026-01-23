@@ -1,12 +1,12 @@
 import { useEmit } from "@quojs/react";
-import type { iAsyncEvents, tAppAM } from "../../store";
+import type { iAsyncEvents, tAppEM } from "../../store";
 import type { eTodoStatus, iTodoSpec } from "../../../../types";
 
 /**
  * This is completely NOT required, since emit directly gives you autocompletion.
- * It's just here to show how you would keep using the concept of action creators. */
+ * It's just here to show how you would keep using the concept of event creators. */
 export function useTodoEvents() {
-    const emit = useEmit<tAppAM>();
+    const emit = useEmit<tAppEM>();
 
     return {
         addTodo: (todo: iTodoSpec) => emit("todo", "addTodo", todo),
@@ -17,14 +17,14 @@ export function useTodoEvents() {
 
         /**
          * Perhaps this is the only important example: how to wire-up a simple
-         * fetch action (formerly Thunk)?.
-         * 
-         * In this example, the fetchTodos action is going to be intercepted by `todoMiddleware`,
-         * which then will swallow the action and emit a combination of the ones declared in `actions`,
+         * fetch event (formerly Thunk).
+         *
+         * In this example, the fetchTodos event is going to be intercepted by `todoMiddleware`,
+         * which then will swallow the event and emit a combination of the ones declared in `actions`,
          * depending on the result. It's basically the same as you would do in good-old Redux + Thunk,
-         * except you don't dipatch functions, you emit plain actions. */
+         * except you don't dispatch functions, you emit plain events. */
         fetchTodos: (url: string = "https://jsonplaceholder.typicode.com/todos?id=0", offset: number = 0, limit: number = 10) => {
-            const actions: iAsyncEvents<tAppAM> = {
+            const actions: iAsyncEvents<tAppEM> = {
                 loading: {
                     channel: "todo",
                     type: "fetchTodosLoading",
@@ -47,7 +47,7 @@ export function useTodoEvents() {
 };
 
 export function useTodoFilterActions() {
-    const emit = useEmit<tAppAM>();
+    const emit = useEmit<tAppEM>();
 
     return {
         setCategoryFilter: (by: string) => emit("todo", "setCategoryFilter", { by }),

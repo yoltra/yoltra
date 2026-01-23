@@ -1,13 +1,13 @@
 import { createQuoHooks } from "@quojs/react";
 
 import { AppStoreContext } from "../context/Store.context";
-import type { AppAM, AppState } from "./types";
+import type { AppEM, AppState } from "./types";
 
 export const {
   useStore,
-  useDispatch,
+  useEmit,
   useSelector,
   useAtomicProp,
   useAtomicProps,
   shallowEqual,
-} = createQuoHooks<keyof AppState & string, AppState, AppAM>(AppStoreContext);
+} = createQuoHooks<keyof AppState & string, AppState, AppEM>(AppStoreContext);

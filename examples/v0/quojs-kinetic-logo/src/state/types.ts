@@ -46,11 +46,11 @@ export type LogoState = {
 };
 
 /**
- * Logo reducer action map.
- * 
- * Descrives the set of events and their payloads
+ * Logo reducer event map.
+ *
+ * Describes the set of events and their payloads
  * for the logo channel. */
-export type LogoAM = {
+export type LogoEM = {
   // stops animation
   stop: {};
 
@@ -68,28 +68,28 @@ export type LogoAM = {
 
   /**
  * Atomic update of Circle.
- * 
- * Dispatched mostly because circles are
+ *
+ * Emitted mostly because circles are
  * avoiding the mouse or traveling back
  * to their original position. */
   update: GroupedCircle;
 
   /**
    * Batch update of Circles.
-   * 
-   * Dispatched on every frame by the animation BE
+   *
+   * Emitted on every frame by the animation BE
    * to update multiple circles in batch, circles are grouped. */
   batchUpdate: {
     changes: GroupedCircle[], // An array of change description objects
   };
 
-  // Dispathed every frame during progress animation
+  // Emitted every frame during progress animation
   introProgress: {
     remaining: number;  // number of circles that are yet to arrive home
     total : number;      // total number of traveling circles
   };
 
-  // Dispatched when the intro animation is complete
+  // Emitted when the intro animation is complete
   introComplete: {};
 };
 
@@ -98,12 +98,12 @@ export interface AppState {
   logo: LogoState;
 }
 
-// Application action map
-export type AppAM = {
-  logo: LogoAM;
+// Application event map
+export type AppEM = {
+  logo: LogoEM;
   on: {
     mousemove: { x: number; y: number };
   };
 };
 
-export type AppStore = StoreInstance<keyof AppState & string, AppState, AppAM>;
+export type AppStore = StoreInstance<keyof AppState & string, AppState, AppEM>;

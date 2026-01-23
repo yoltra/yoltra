@@ -17,7 +17,7 @@ export class Engine implements EngineInstance {
   private _fpsRing: number[];
   private _fpsIdx = 0;
   private _fpsCount = 0;
-  private _lastFpsDispatch = 0;
+  private _lastFpsEmit = 0;
   private _lastFps: number = 0;
   private _rafGen = 0;
 
@@ -166,13 +166,13 @@ export class Engine implements EngineInstance {
       const sum = this._fpsRing.slice(0, this._fpsCount).reduce((a, b) => a + b, 0);
       this._fps = sum / this._fpsCount;
 
-      if (now - this._lastFpsDispatch > 250) {
-        this._lastFpsDispatch = now;
+      if (now - this._lastFpsEmit > 250) {
+        this._lastFpsEmit = now;
         const lastFpsRounded = Math.round(this._lastFps);
         const newFpsRounded = Math.round(this._fps);
 
         if ( lastFpsRounded !== newFpsRounded) { // do not flod Quo with same fps
-          this.store.dispatch("logo", "fps", { fps: newFpsRounded });
+          this.store.emit("logo", "fps", { fps: newFpsRounded });
 
           this._lastFps = this._fps;
         }

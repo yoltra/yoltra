@@ -13,11 +13,11 @@ export interface ThemeState {
 }
 
 /**
- * Theme reducer action map.
- * 
- * Descrives the set of events and their payloads
+ * Theme reducer event map.
+ *
+ * Describes the set of events and their payloads
  * for the theme channel. */
-export type ThemeAM = {
+export type ThemeEM = {
   // set the specified theme
   set: { theme: "light" | "dark" | "system" };
 
@@ -30,9 +30,9 @@ export interface AppState {
   theme: ThemeState;
 }
 
-// Application action map
-export type AppAM = {
-  theme: ThemeAM;
+// Application event map
+export type AppEM = {
+  theme: ThemeEM;
 };
 
-export type AppStore = StoreInstance<keyof AppState & string, AppState, AppAM>;
+export type AppStore = StoreInstance<keyof AppState & string, AppState, AppEM>;
