@@ -11,6 +11,7 @@ export {
   useSelector,
   useAtomicProp,
   useAtomicProps,
+  useEvent,
   shallowEqual,
 } from "./hooks/hooks";
 
@@ -27,4 +28,4 @@ export { createQuoHooks } from "./hooks/createQuoHooks";
 
 export type { PathValue, OneOrMany } from "./hooks/hooks";
 export type { SuspenseAtomicPropOptions, SuspenseAtomicPropsOptions } from "./hooks/suspense";
-export type { UseAtomicProp, UseAtomicProps } from "./hooks/createQuoHooks";
+export type { UseAtomicProp, UseAtomicProps, UseEvent } from "./hooks/createQuoHooks";

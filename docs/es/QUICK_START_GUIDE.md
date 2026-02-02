@@ -130,3 +130,58 @@ function App() {
   );
 }
 ```
+
+## 8. Suscripciones a Eventos (v0.7.0+)
+
+Las suscripciones a eventos te permiten reaccionar a eventos sin seleccionar estado. Esto es útil para:
+- Mostrar notificaciones en ciertos eventos
+- Activar animaciones
+- Logging/analíticas
+- Responder a eventos rechazados (no confirmados)
+
+### Fases de Eventos
+
+- **`'committed'`** (por defecto): Eventos que pasaron el middleware y llegaron a los reducers
+- **`'uncommitted'`**: Eventos rechazados por el middleware
+- **`'all'`**: Ambos eventos confirmados y no confirmados
+
+### Uso en Core
+
+```typescript
+// Suscribirse a eventos confirmados (por defecto)
+const unsubscribe = store.onEvent('ui', 'save', (event, getState, emit, phase) => {
+  console.log('Guardado confirmado:', event.payload);
+});
+
+// Suscribirse a eventos rechazados
+store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
+  console.log('Eliminación fue rechazada por el middleware');
+}, 'uncommitted');
+
+// Suscribirse a todos los eventos (confirmados y no confirmados)
+store.onEvent('ui', 'action', (event, getState, emit, phase) => {
+  console.log('Acción:', phase); // 'committed' o 'uncommitted'
+}, 'all');
+
+// Limpieza
+unsubscribe();
+```
+
+### Hook de React
+
+```tsx
+import { useEvent } from '@quojs/react';
+
+function SaveNotification() {
+  useEvent('ui', 'save', (event, getState, emit, phase) => {
+    showToast('¡Guardado exitosamente!');
+  });
+
+  // Para eventos rechazados
+  useEvent('ui', 'delete', (event, getState, emit, phase) => {
+    showToast('La eliminación fue bloqueada');
+  }, 'uncommitted');
+
+  return null;
+}
+```

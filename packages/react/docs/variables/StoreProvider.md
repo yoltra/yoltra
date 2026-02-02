@@ -8,7 +8,7 @@
 
 > `const` **StoreProvider**: `React.FC`\<\{ `children`: `ReactNode`; `store`: `StoreInstance`\<`any`, `any`, `any`\>; \}\>
 
-Defined in: [context/StoreProvider.tsx:46](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/react/src/context/StoreProvider.tsx#L46)
+Defined in: [context/StoreProvider.tsx:46](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/context/StoreProvider.tsx#L46)
 
 React provider that places a StoreInstance into [StoreContext](StoreContext.md).
 

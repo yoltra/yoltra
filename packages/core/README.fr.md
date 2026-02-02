@@ -358,49 +358,6 @@ await store.emit("counter", "increment", "five"); // Erreur : number attendu
 await store.emit("invalid", "event", null); // Erreur : Canal inconnu
 ```
 
----
-
-## Runtime Universel
-
-`@quojs/core` a **zéro dépendance DOM** et fonctionne partout où JavaScript s'exécute :
-
-### Navigateur
-
-```typescript
-import { createStore } from "@quojs/core";
-const store = createStore({
-  /* ... */
-});
-```
-
-### Node.js
-
-```typescript
-const { createStore } = require("@quojs/core");
-
-const store = createStore({
-  name: "ServerState",
-  reducer: {
-    /* ... */
-  },
-});
-
-// Utiliser dans un middleware Express, des tâches en arrière-plan, etc.
-app.use((req, res, next) => {
-  req.store = store;
-  next();
-});
-```
-
-### Deno / Bun
-
-```typescript
-import { createStore } from "@quojs/core";
-// Fonctionne de manière identique aux navigateurs/Node.js
-```
-
----
-
 ## Aperçu de l'API
 
 ### Création de Store

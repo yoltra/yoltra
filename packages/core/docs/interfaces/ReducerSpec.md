@@ -6,7 +6,7 @@
 
 # Interface: ReducerSpec\<S, EM\>
 
-Defined in: [types.ts:345](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L345)
+Defined in: [types.ts:393](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L393)
 
 One reducer's definition blob (stateful event consumer).
 
@@ -44,7 +44,7 @@ Event map.
 
 > **events**: readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
 
-Defined in: [types.ts:349](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L349)
+Defined in: [types.ts:397](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L397)
 
 List of EventKeys `[channel, type]` that this reducer responds to.
 
@@ -54,7 +54,7 @@ List of EventKeys `[channel, type]` that this reducer responds to.
 
 > **reducer**: [`ReducerFunction`](../type-aliases/ReducerFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:354](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L354)
+Defined in: [types.ts:402](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L402)
 
 Pure reducer function: `(state, event) => nextState`.
 
@@ -64,6 +64,6 @@ Pure reducer function: `(state, event) => nextState`.
 
 > **state**: `S`
 
-Defined in: [types.ts:359](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/core/src/types.ts#L359)
+Defined in: [types.ts:407](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L407)
 
 Initial state for this reducer.

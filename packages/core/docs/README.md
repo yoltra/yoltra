@@ -28,6 +28,8 @@
 - [Emit](type-aliases/Emit.md)
 - [EventKey](type-aliases/EventKey.md)
 - [EventMapBase](type-aliases/EventMapBase.md)
+- [EventPhase](type-aliases/EventPhase.md)
+- [EventSubscriptionHandler](type-aliases/EventSubscriptionHandler.md)
 - [EventUnion](type-aliases/EventUnion.md)
 - [MiddlewareFunction](type-aliases/MiddlewareFunction.md)
 - [Path](type-aliases/Path.md)

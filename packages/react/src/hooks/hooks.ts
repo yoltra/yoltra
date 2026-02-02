@@ -2,15 +2,17 @@
  * @module @quojs/react
  */
 
-import { useContext, useMemo, useRef, useSyncExternalStore } from "react";
+import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { StoreContext } from "../context/StoreContext";
 import type {
   EventMapBase,
+  Event,
   Emit,
   StoreInstance,
   Dotted,
   WithGlob,
   DeepReadonly,
+  EventPhase,
 } from "@quojs/core";
 import { warnOnce } from "../utils/warnOnce";
 
@@ -472,4 +474,82 @@ function _useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
   }, [store, selector, isEqual]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+/**
+ * Subscribe to store events from a React component.
+ *
+ * This hook enables reactive UI patterns by allowing components to respond
+ * to specific events without selecting state. Useful for:
+ * - Showing notifications on certain events
+ * - Triggering animations
+ * - Logging/analytics
+ * - Responding to rejected (uncommitted) events
+ *
+ * **Phases:**
+ * - `'committed'` (default): Events that passed middleware and reached reducers
+ * - `'uncommitted'`: Events rejected by middleware
+ * - `'all'`: Both committed and uncommitted events (handler receives phase parameter)
+ *
+ * @typeParam EM - Event map type.
+ * @typeParam C - Channel key within `EM`.
+ * @typeParam T - Event type key within channel `C`.
+ *
+ * @param channel - Event channel to subscribe to.
+ * @param type - Event type to subscribe to.
+ * @param handler - Handler called when the event fires. Receives `(event, getState, emit, phase)`.
+ * @param phase - Event phase to subscribe to (default: `'committed'`).
+ *
+ * @example Committed events (default)
+ * ```tsx
+ * useEvent('ui', 'save', (event, getState, emit, phase) => {
+ *   showToast('Saved successfully!');
+ * });
+ * ```
+ *
+ * @example Rejected events
+ * ```tsx
+ * useEvent('ui', 'delete', (event, getState, emit, phase) => {
+ *   showToast('Delete was blocked by middleware');
+ * }, 'uncommitted');
+ * ```
+ *
+ * @example All events
+ * ```tsx
+ * useEvent('ui', 'action', (event, getState, emit, phase) => {
+ *   console.log('Action:', phase); // 'committed' or 'uncommitted'
+ * }, 'all');
+ * ```
+ *
+ * @public
+ */
+export function useEvent<
+  EM extends EventMapBase,
+  C extends keyof EM & string,
+  T extends keyof EM[C] & string,
+>(
+  channel: C,
+  type: T,
+  handler: (
+    event: Event<EM, C, T>,
+    getState: () => DeepReadonly<any>,
+    emit: Emit<EM>,
+    phase: "committed" | "uncommitted",
+  ) => void | Promise<void>,
+  phase: EventPhase = "committed",
+): void {
+  const store = useStore<EM, any, any>();
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler; // Always keep latest handler (solves stale closures)
+
+  useEffect(() => {
+    return store.onEvent(
+      channel,
+      type,
+      (event, getState, emit, eventPhase) => {
+        handlerRef.current(event as Event<EM, C, T>, getState, emit, eventPhase);
+      },
+      phase,
+    );
+  }, [store, channel, type, phase]);
 }

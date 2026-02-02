@@ -32,7 +32,8 @@ lightweight, universal package.
 - **Event-driven architecture** — Events flow through channels `(channel, type, payload)`
 - **FIFO event queue** — Predictable, serialized event processing with ordering guarantees
 - **Async-first** — Native async middleware and effects (no thunks/sagas)
-- **Fine-grained subscriptions** — Subscribe to exact state paths via dotted notation
+- **Atomic subscriptions** — Subscribe to exact state paths via dotted notation
+- **Event subscriptions** — Subscribe to events from React components
 - **Immutability** — Deep-freeze enforcement with structural change detection
 - **TypeScript-first** — Excellent type inference and autocomplete
 
@@ -350,47 +351,6 @@ await store.emit("counter", "increment", 5);
 // ❌ TypeScript catches errors:
 await store.emit("counter", "increment", "five"); // Error: Expected number
 await store.emit("invalid", "event", null); // Error: Unknown channel
-```
-
----
-
-## Universal Runtime
-
-`@quojs/core` has **zero DOM dependencies** and works anywhere JavaScript runs:
-
-### Browser
-
-```typescript
-import { createStore } from "@quojs/core";
-const store = createStore({
-  /* ... */
-});
-```
-
-### Node.js
-
-```typescript
-const { createStore } = require("@quojs/core");
-
-const store = createStore({
-  name: "ServerState",
-  reducer: {
-    /* ... */
-  },
-});
-
-// Use in Express middleware, background jobs, etc.
-app.use((req, res, next) => {
-  req.store = store;
-  next();
-});
-```
-
-### Deno / Bun
-
-```typescript
-import { createStore } from "@quojs/core";
-// Works identically to browsers/Node.js
 ```
 
 ---

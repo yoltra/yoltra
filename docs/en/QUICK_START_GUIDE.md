@@ -130,3 +130,58 @@ function App() {
   );
 }
 ```
+
+## 8. Event Subscriptions (v0.7.0+)
+
+Event subscriptions allow you to react to events without selecting state. This is useful for:
+- Showing notifications on certain events
+- Triggering animations
+- Logging/analytics
+- Responding to rejected (uncommitted) events
+
+### Event Phases
+
+- **`'committed'`** (default): Events that passed middleware and reached reducers
+- **`'uncommitted'`**: Events rejected by middleware
+- **`'all'`**: Both committed and uncommitted events
+
+### Core Usage
+
+```typescript
+// Subscribe to committed events (default)
+const unsubscribe = store.onEvent('ui', 'save', (event, getState, emit, phase) => {
+  console.log('Save committed:', event.payload);
+});
+
+// Subscribe to rejected events
+store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
+  console.log('Delete was rejected by middleware');
+}, 'uncommitted');
+
+// Subscribe to all events (both committed and uncommitted)
+store.onEvent('ui', 'action', (event, getState, emit, phase) => {
+  console.log('Action:', phase); // 'committed' or 'uncommitted'
+}, 'all');
+
+// Cleanup
+unsubscribe();
+```
+
+### React Hook
+
+```tsx
+import { useEvent } from '@quojs/react';
+
+function SaveNotification() {
+  useEvent('ui', 'save', (event, getState, emit, phase) => {
+    showToast('Saved successfully!');
+  });
+
+  // For rejected events
+  useEvent('ui', 'delete', (event, getState, emit, phase) => {
+    showToast('Delete was blocked');
+  }, 'uncommitted');
+
+  return null;
+}
+```

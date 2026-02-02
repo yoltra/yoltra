@@ -5,8 +5,8 @@
 > &nbsp;[ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)&nbsp; |
 > &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/design/event-queue-architecture.md)
 
-**Versão:** 0.5.0 
-**Última atualização:** Janeiro 2026 
+**Versão:** 0.7.0
+**Última atualização:** Janeiro 2026
 **Status:** Estável
 
 ## Visão Geral
@@ -93,23 +93,35 @@ public async emit<C, T>(
                             │
                             ▼
                     ┌───────────────────┐
-                    │ Middleware        │
-                    │ (pode cancelar)   │
-                    └───────┬───────────┘
+                    │ Middleware        │──────────────────┐
+                    │ (pode cancelar)   │                  │
+                    └───────┬───────────┘                  │
+                            │                              │
+                            │ (permitido)                  │ (rejeitado)
+                            │                              │
+                            ▼                              ▼
+                    ┌───────────────────┐      ┌─────────────────────────┐
+                    │ Reducers (sync)   │      │ Assinantes de Eventos   │
+                    └───────┬───────────┘      │ Não Confirmados + Subs  │
+                            │                  │ 'all' (phase=           │
+                            ▼                  │    'uncommitted')       │
+                    ┌───────────────────┐      └─────────────┬───────────┘
+                    │ Assinantes de     │                    │
+                    │ Eventos Confirma- │                    ▼
+                    │ dos + Subs 'all'  │            ┌───────────────┐
+                    │ (phase='committed')│            │ DevTools      │
+                    └───────┬───────────┘            │ [CANCELADO]   │
+                            │                        └───────┬───────┘
+                            ▼                                │
+                    ┌───────────────────┐            ┌───────────────┐
+                    │ Efeitos (async)   │            │ Continuar Loop│
+                    └───────┬───────────┘            └───────────────┘
                             │
                             ▼
                     ┌───────────────────┐
-                    │ Reducers (sync)   │
-                    └───────┬───────────┘
-                            │
-                            ▼
-                    ┌───────────────────┐
-                    │ Efeitos (async)   │
-                    └───────┬───────────┘
-                            │
-                            ▼
-                    ┌───────────────────┐
-                    │ Assinantes        │
+                    │ Assinantes Gros-  │
+                    │ sos (se estado    │
+                    │ mudou)            │
                     └───────┬───────────┘
                             │
                             ▼
@@ -447,6 +459,78 @@ effect: async (evt, getState, emit) => {
 }
 ```
 
+## Assinaturas de Eventos (v0.7.0+)
+
+### Visão Geral
+
+As assinaturas de eventos fornecem uma forma de observar eventos sem afetar o fluxo de eventos. Diferente do middleware (que pode cancelar eventos) e dos efeitos (que executam após o pipeline de eventos), as assinaturas de eventos são puramente observacionais.
+
+### Fases de Assinatura
+
+| Fase | Quando Notificado | Caso de Uso |
+|------|-------------------|-------------|
+| `'committed'` | Após reducers, antes de efeitos | Reagir a mudanças de estado bem-sucedidas |
+| `'uncommitted'` | Após rejeição do middleware | Reagir a eventos bloqueados |
+| `'all'` | Ambas as fases (com parâmetro phase) | Logging, analíticas, depuração |
+
+### Ordem de Processamento
+
+**Para eventos confirmados:**
+```
+Middleware (permite) → Reducers → Subs de Eventos Confirmados → Efeitos → Assinantes Grossos
+```
+
+**Para eventos não confirmados:**
+```
+Middleware (rejeita) → Subs de Eventos Não Confirmados → DevTools [CANCELADO]
+```
+
+### Assinatura do Handler
+
+```typescript
+type EventSubscriptionHandler = (
+  event: EventUnion<EM>,
+  getState: () => S,
+  emit: Emit<EM>,
+  phase: 'committed' | 'uncommitted'
+) => void | Promise<void>;
+```
+
+**Parâmetros:**
+- `event` - O objeto de evento completo `{ channel, type, payload, id }`
+- `getState` - Retorna o estado atual (após reducers para confirmados, inalterado para não confirmados)
+- `emit` - Permite emitir novos eventos a partir do handler
+- `phase` - A fase que disparou esta notificação
+
+### Tratamento de Erros
+
+Erros em assinaturas de eventos são capturados e registrados, permitindo que outras assinaturas continuem:
+
+```typescript
+// Se uma assinatura lança erro, as outras ainda executam
+store.onEvent('ui', 'click', () => { throw new Error('boom'); });
+store.onEvent('ui', 'click', () => { console.log('ainda executa'); }); // ✅
+```
+
+### Exemplo de Uso
+
+```typescript
+// Eventos confirmados (padrão)
+store.onEvent('ui', 'save', (event, getState, emit, phase) => {
+  console.log('Salvamento confirmado, novo estado:', getState());
+});
+
+// Eventos não confirmados
+store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
+  console.log('Exclusão foi bloqueada pelo middleware');
+}, 'uncommitted');
+
+// Todos os eventos
+store.onEvent('ui', 'action', (event, getState, emit, phase) => {
+  analytics.track(`event_${phase}`, { type: event.type });
+}, 'all');
+```
+
 ## Comparação com Outras Bibliotecas
 
 ### Redux (Síncrono)
@@ -687,6 +771,7 @@ public dispose(): void {
 
 | Versão | Data | Mudanças |
 |---------|------|---------|
+| 0.7.0 | 2026-01 | Adicionada funcionalidade Assinaturas de Eventos (fases committed/uncommitted/all) |
 | 0.5.0 | 2026-01 | Documentação inicial da arquitetura de fila async |
 
 ---

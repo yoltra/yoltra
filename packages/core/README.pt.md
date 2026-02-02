@@ -358,47 +358,6 @@ await store.emit("invalid", "event", null); // Erro: Canal desconhecido
 
 ---
 
-## Runtime Universal
-
-`@quojs/core` tem **zero dependências do DOM** e funciona onde quer que JavaScript execute:
-
-### Navegador
-
-```typescript
-import { createStore } from "@quojs/core";
-const store = createStore({
-  /* ... */
-});
-```
-
-### Node.js
-
-```typescript
-const { createStore } = require("@quojs/core");
-
-const store = createStore({
-  name: "ServerState",
-  reducer: {
-    /* ... */
-  },
-});
-
-// Usar em middleware Express, jobs em background, etc.
-app.use((req, res, next) => {
-  req.store = store;
-  next();
-});
-```
-
-### Deno / Bun
-
-```typescript
-import { createStore } from "@quojs/core";
-// Funciona identicamente a navegadores/Node.js
-```
-
----
-
 ## Visão Geral da API
 
 ### Criação de Store

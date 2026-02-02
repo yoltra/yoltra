@@ -10,7 +10,7 @@
 
 > **useAtomicProps**\<`R`, `S`, `T`\>(`specs`, `selector`, `isEqual?`): `T`
 
-Defined in: [hooks/hooks.ts:391](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/react/src/hooks/hooks.ts#L391)
+Defined in: [hooks/hooks.ts:393](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/hooks.ts#L393)
 
 **Multi-path** fine-grained selector.
 
@@ -77,7 +77,7 @@ const total = useAtomicProps<'todos' | 'filter', AppState, number>(
 
 > **useAtomicProps**\<`R`, `S`, `T`\>(`specs`, `selector`, `isEqual?`): `T`
 
-Defined in: [hooks/hooks.ts:396](https://github.com/quojs/quojs/blob/74de3d2d0ff0336e38f1bb850c2a97571cea3f88/packages/react/src/hooks/hooks.ts#L396)
+Defined in: [hooks/hooks.ts:398](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/hooks.ts#L398)
 
 **Multi-path** fine-grained selector.
 
