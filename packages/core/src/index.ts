@@ -13,6 +13,9 @@ export { Store, createStore, typedEvents } from "./store/Store";
 export { detectChangedProps } from "./utils/detectChangedProps";
 export { freezeState } from "./utils/immutability";
 
+// Export the eventKeys helper function
+export { eventKeys } from "./types";
+
 export type {
   EventMapBase,
   EventKey,
@@ -28,12 +31,22 @@ export type {
   EffectSpec,
   EffectFunction,
   MiddlewareFunction,
+  MiddlewareSpec,
+  MiddlewareInput,
   DeepReadonly,
   DeepRO,
   Primitive,
   Path,
+  PathValue,
   WithGlob,
   Dotted,
   EventPhase,
   EventSubscriptionHandler,
+  NarrowedEventHandler,
+  // Event targeting (When matcher)
+  When,
+  EventFromWhen,
+  // Metadata for debugging
+  EventConsumerType,
+  EventConsumerMeta,
 } from "./types";

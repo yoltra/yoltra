@@ -11,7 +11,7 @@
     "strict": true,
     "noEmit": true
   },
-  "include": ["src", "vitest.setup.ts"],
+  "include": ["src", "vitest.setup.ts", "tests/vite-env.d.ts"],
   "exclude": [
     "dist",
     "build",

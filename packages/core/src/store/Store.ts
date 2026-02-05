@@ -16,6 +16,8 @@ import type {
   EffectFunction,
   EffectSpec,
   MiddlewareFunction,
+  MiddlewareInput,
+  MiddlewareSpec,
   ReducersMapAny,
   ReducerSpec,
   StateFromReducers,
@@ -26,79 +28,10 @@ import type {
   Emit,
   EventPhase,
   EventSubscriptionHandler,
+  NarrowedEventHandler,
+  When,
 } from "../types";
 import { freezeState } from "../utils/immutability";
-
-/**
- * Strongly-typed, channel/event-driven **store** with:
- * - **Slice reducers** (namespaced under `R`)
- * - **Middleware** (pre-reducer, can cancel propagation)
- * - **Effects** (post-reducer, async-safe, keyed by EventKey)
- * - **Granular subscriptions** via dotted **property paths** (e.g., `"todos.3.title"`)
- * - **Event subscriptions** for even more reactive UI
- * - **Event deduplication** via unique event IDs (prevents React Strict Mode double-firing)
- * - Optional **Redux DevTools** integration (dev)
- *
- * @typeParam EM - Event map describing `(channel → type → payload)` types.
- * @typeParam R  - Union of slice names (string literal union).
- * @typeParam S  - Object map of slice states keyed by `R`.
- *
- * @remarks
- * - `emit()` is **serialized** internally: events are queued and processed one-by-one.
- * - Each event receives a unique `id` (symbol) for deduplication.
- * - Reducers are wired through an internal {@link EventBus} by `(channel, type)`.
- * - Effects are keyed by `(channel, type)` for O(1) lookup (no scanning).
- * - Fine-grained change events are emitted through a {@link LooseEventBus} by **dotted paths**.
- * - State is **immutable**: each slice change creates a new state reference (shallow clone).
- * - State slices are **frozen** (deeply) before committing to discourage mutation.
- *
- * @example
- * ```ts
- * type Counter = { value: number };
- * type Todos = { items: Array<{ id: string; title: string }> };
- * type S = { counter: Counter; todos: Todos };
- * type EM = {
- *   ui: { increment: number; setTitle: { id: string; title: string } };
- * };
- *
- * const store = createStore({
- *   name: 'Demo',
- *   reducer: {
- *     counter: {
- *       state: { value: 0 },
- *       events: [['ui', 'increment']],
- *       reducer(s, evt) {
- *         if (evt.type === 'increment') return { value: s.value + evt.payload };
- *         return s;
- *       }
- *     },
- *     todos: {
- *       state: { items: [] },
- *       events: [['ui', 'setTitle']],
- *       reducer(s, evt) {
- *         if (evt.type === 'setTitle') {
- *           const next = structuredClone(s);
- *           const t = next.items.find(x => x.id === evt.payload.id);
- *           if (t) t.title = evt.payload.title;
- *           return next;
- *         }
- *         return s;
- *       }
- *     }
- *   }
- * });
- *
- * // Subscribe to a dotted path
- * const unsub = store.connect({ reducer: 'todos', property: 'items.0.title' }, (chg) => {
- *   console.log('title changed from', chg.oldValue, 'to', chg.newValue);
- * });
- *
- * // Emit event
- * await store.emit('ui', 'increment', 1);
- * ```
- *
- * @public
- */
 export class Store<EM extends EventMapBase, R extends string, S extends Record<R, any>>
   implements StoreInstance<R, S, EM> {
   /**
@@ -110,11 +43,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
   /**
    * Registered middleware pipeline (run **before** reducers).
-   * Return `false` to stop propagation.
+   * Stores either raw functions (legacy) or MiddlewareSpec objects.
+   * Return `false` from the middleware function to stop propagation.
    *
    * @internal
    */
-  private readonly middleware: MiddlewareFunction<DeepReadonly<S>, EM>[];
+  private readonly middleware: MiddlewareInput<DeepReadonly<S>, EM>[];
 
   /**
    * Installed slice reducers keyed by slice name.
@@ -154,10 +88,23 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
   /**
    * Registered effect handlers keyed by `"channel::type"` for O(1) lookup.
+   * Used for effects with explicit `keys` or legacy `events` targeting.
    *
    * @internal
    */
   private readonly effects = new Map<string, Set<EffectFunction<DeepReadonly<S>, EM>>>();
+
+  /**
+   * Pattern-based effects that need runtime matching.
+   * Used for effects with `when: { any }`, `{ channel }`, or `{ channels }`.
+   * Stores tuples of [effect function, when matcher].
+   *
+   * @internal
+   */
+  private readonly patternEffects = new Set<{
+    effect: EffectFunction<DeepReadonly<S>, EM>;
+    when: When<EM>;
+  }>();
 
   /**
    * Committed event subscribers keyed by `"channel::type"` for O(1) lookup.
@@ -200,6 +147,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private readonly sliceUnsubs = new Map<string, Array<() => void>>();
 
   /**
+   * Pattern-based reducers that need runtime matching.
+   * Used for reducers with `when: { any }`, `{ channel }`, or `{ channels }`.
+   * Maps slice name to the `when` matcher.
+   *
+   * @internal
+   */
+  private readonly patternReducers = new Map<R, When<EM>>();
+
+  /**
    * Redux DevTools connection (dev only).
    *
    * @internal
@@ -222,19 +178,40 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private isProcessingQueue = false;
 
   /**
-   * Tracks processed event IDs to prevent duplicate processing (React Strict Mode safety).
-   * Uses a Set with TTL-based cleanup.
+   * Tracks processed events by fingerprint with timestamps for TTL-based deduplication.
+   *
+   * **Deduplication Behavior:**
+   * - Events are fingerprinted using `channel::type::JSON(payload)`
+   * - If an identical fingerprint is seen within the dedup window, it's skipped
+   * - The window is 50ms in development, 100ms in production
+   *
+   * **Limitations:**
+   * - Non-serializable payloads (functions, symbols, circular refs) get unique
+   *   fingerprints and won't be deduplicated
+   * - Legitimate rapid-fire identical events may be incorrectly deduplicated
+   * - The cache is bounded to 1000 entries with lazy pruning
    *
    * @internal
    */
-  private readonly processedEventIds = new Set<symbol>();
+  private readonly processedEvents = new Map<string, number>();
 
   /**
-   * Timer for periodic cleanup of processed event IDs.
+   * Configuration for event deduplication.
+   * @internal
+   */
+  private readonly dedupConfig: {
+    /** Time window in ms for considering events as duplicates */
+    windowMs: number;
+    /** Maximum cache size to prevent unbounded growth */
+    maxCacheSize: number;
+  };
+
+  /**
+   * Timer for periodic cleanup of processed events.
    *
    * @internal
    */
-  private eventIdCleanupTimer: ReturnType<typeof setInterval> | null = null;
+  private eventCleanupTimer: ReturnType<typeof setInterval> | null = null;
 
   /**
    * Creates a store from a {@link StoreSpec}.
@@ -247,9 +224,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.name = spec.name ?? "Quo.js Store";
     this.reducerBus = new EventBus<EM>();
     this.connectorBus = new LooseEventBus();
-    this.middleware = [...(spec.middleware ?? [])] as any;
+    this.middleware = [...(spec.middleware ?? [])];
     this.reducers = {} as Record<R, Reducer<S[R], EM>>;
     this.state = {} as any;
+
+    // Initialize dedup config with optional user override
+    const defaultWindowMs = process.env.NODE_ENV === "production" ? 100 : 50;
+    this.dedupConfig = {
+      windowMs: spec.dedupWindowMs ?? defaultWindowMs,
+      maxCacheSize: 1000,
+    };
 
     /**
      * Reducer wiring
@@ -268,15 +252,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }
 
     /**
-     * Event ID cleanup (run every 30 seconds in dev, 5 minutes in prod)
+     * Event dedup cleanup (run every 5 seconds to prune expired entries)
      */
-    const cleanupInterval =
-      process.env.NODE_ENV === "production" ? 5 * 60 * 1000 : 30 * 1000;
-    this.eventIdCleanupTimer = setInterval(() => {
-      // clear all processed IDs often to prevent memory leaks
-      // in reallity, IDs from >30s ago are OK to forget
-      this.processedEventIds.clear();
-    }, cleanupInterval);
+    this.eventCleanupTimer = setInterval(() => {
+      this.pruneProcessedEvents(Date.now());
+    }, 5000);
 
     type DevtoolsConn = {
       init: (state: any) => void;
@@ -393,32 +373,209 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public dispose(): void {
-    if (this.eventIdCleanupTimer) {
-      clearInterval(this.eventIdCleanupTimer);
-
-      this.eventIdCleanupTimer = null;
+    if (this.eventCleanupTimer) {
+      clearInterval(this.eventCleanupTimer);
+      this.eventCleanupTimer = null;
     }
 
-    this.processedEventIds.clear();
+    this.processedEvents.clear();
+    this.effects.clear();
+    this.patternEffects.clear();
   }
 
   /**
-   * Invokes all registered **effects** for a given event key sequentially.
+   * Generates a fingerprint for an event for deduplication purposes.
+   * Falls back gracefully for non-serializable payloads.
+   *
+   * @param channel - Event channel.
+   * @param type - Event type.
+   * @param payload - Event payload.
+   * @returns A string fingerprint for the event.
+   *
+   * @internal
+   */
+  private fingerprint(channel: string, type: string, payload: unknown): string {
+    const base = `${channel}::${type}`;
+
+    try {
+      // Fast path for primitives
+      if (payload === null || payload === undefined) {
+        return `${base}::null`;
+      }
+      if (typeof payload !== "object") {
+        return `${base}::${String(payload)}`;
+      }
+
+      // Attempt JSON serialization (handles most cases)
+      const json = JSON.stringify(payload);
+      return `${base}::${json}`;
+    } catch {
+      // Non-serializable payload - use timestamp to avoid false positives
+      // This means non-serializable payloads won't be deduplicated
+      return `${base}::${Date.now()}::${Math.random()}`;
+    }
+  }
+
+  /**
+   * Checks if an event should be deduplicated.
+   * Returns true if this is a duplicate that should be skipped.
+   *
+   * @param fp - Event fingerprint.
+   * @returns `true` if duplicate (should skip), `false` otherwise.
+   *
+   * @internal
+   */
+  private shouldDedupe(fp: string): boolean {
+    const now = Date.now();
+    const existing = this.processedEvents.get(fp);
+
+    if (existing !== undefined) {
+      // Check if within dedup window
+      if (now - existing < this.dedupConfig.windowMs) {
+        return true; // Duplicate, skip
+      }
+    }
+
+    // Record this event
+    this.processedEvents.set(fp, now);
+
+    // Lazy cleanup if cache is getting large
+    if (this.processedEvents.size > this.dedupConfig.maxCacheSize) {
+      this.pruneProcessedEvents(now);
+    }
+
+    return false; // Not a duplicate
+  }
+
+  /**
+   * Removes expired entries from the processed events cache.
+   *
+   * @param now - Current timestamp.
+   *
+   * @internal
+   */
+  private pruneProcessedEvents(now: number): void {
+    const cutoff = now - this.dedupConfig.windowMs * 2; // Keep 2x window for safety
+
+    for (const [key, timestamp] of this.processedEvents) {
+      if (timestamp < cutoff) {
+        this.processedEvents.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Checks if an event matches a `When` matcher.
+   *
+   * @param when - The When matcher (or undefined for "all events").
+   * @param event - The event to check.
+   * @returns `true` if the event matches, `false` otherwise.
+   *
+   * @remarks
+   * - `undefined` or missing `when` matches ALL events.
+   * - `{ any: true }` matches ALL events.
+   * - `{ keys: [...] }` matches if event's `[channel, type]` is in the array.
+   * - `{ channel: 'x' }` matches if event's channel equals 'x'.
+   * - `{ channels: ['x', 'y'] }` matches if event's channel is in the array.
+   *
+   * @internal
+   */
+  private matchesWhen(when: When<EM> | undefined, event: EventUnion<EM>): boolean {
+    // No targeting = match all events
+    if (!when) return true;
+
+    // Match all events
+    if ("any" in when && when.any === true) {
+      return true;
+    }
+
+    // Match specific event keys
+    if ("keys" in when) {
+      return when.keys.some(
+        ([channel, type]) => event.channel === channel && event.type === type,
+      );
+    }
+
+    // Match single channel (all types within that channel)
+    if ("channel" in when) {
+      return event.channel === when.channel;
+    }
+
+    // Match multiple channels
+    if ("channels" in when) {
+      return when.channels.includes(event.channel as keyof EM & string);
+    }
+
+    return false;
+  }
+
+  /**
+   * Extracts the middleware function from a MiddlewareInput.
+   * Handles both raw functions (legacy) and MiddlewareSpec objects.
+   *
+   * @param input - MiddlewareInput (function or spec).
+   * @returns The middleware function.
+   *
+   * @internal
+   */
+  private getMiddlewareFunction(
+    input: MiddlewareInput<DeepReadonly<S>, EM>,
+  ): MiddlewareFunction<DeepReadonly<S>, EM> {
+    if (typeof input === "function") {
+      return input;
+    }
+    return input.middleware;
+  }
+
+  /**
+   * Gets the `when` matcher from a MiddlewareInput.
+   *
+   * @param input - MiddlewareInput (function or spec).
+   * @returns The `when` matcher, or `undefined` for raw functions (match all).
+   *
+   * @internal
+   */
+  private getMiddlewareWhen(
+    input: MiddlewareInput<DeepReadonly<S>, EM>,
+  ): When<EM> | undefined {
+    if (typeof input === "function") {
+      // Raw functions match all events
+      return undefined;
+    }
+    return input.when;
+  }
+
+  /**
+   * Invokes all registered **effects** for a given event.
+   * Handles both key-based effects (O(1) lookup) and pattern-based effects (runtime matching).
    * Errors are caught and logged.
    *
    * @param event - The event that was reduced.
    * @internal
    */
   private async notifyEffects(event: EventUnion<EM>) {
+    // 1. Call key-based effects (O(1) lookup)
     const key = `${String(event.channel)}::${String(event.type)}`;
     const effectSet = this.effects.get(key);
-    if (!effectSet || effectSet.size === 0) return;
 
-    for (const h of [...effectSet]) {
-      try {
-        await h(event, this.getState, this.emit);
-      } catch (e) {
-        console.error("Effect error:", e);
+    if (effectSet && effectSet.size > 0) {
+      for (const h of [...effectSet]) {
+        try {
+          await h(event, this.getState, this.emit);
+        } catch (e) {
+          console.error("Effect error:", e);
+        }
+      }
+    }
+
+    // 2. Call pattern-based effects (runtime matching)
+    for (const { effect, when } of this.patternEffects) {
+      if (this.matchesWhen(when, event)) {
+        try {
+          await effect(event, this.getState, this.emit);
+        } catch (e) {
+          console.error("Effect error:", e);
+        }
       }
     }
   }
@@ -485,14 +642,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
-  private forwardEvent<C extends keyof EM, T extends keyof EM[C]>(
+  private forwardEvent<C extends keyof EM & string, T extends keyof EM[C] & string>(
     rName: R,
     event: Event<EM, C, T>,
   ): boolean {
-    // @ts-expect-error sometimes TS is a bitch
+    // @ts-expect-error R indexing on DeepReadonly<S> is valid at runtime
     const prev = this.state[rName] as S[R];
-    // @ts-expect-error sometimes TS is a bitch
-    const next = this.reducers[rName].reduce(prev, event);
+    const next = this.reducers[rName].reduce(prev, event as any);
 
     // if reducer returned same ref, definitely no change
     if (prev === next) return false;
@@ -621,12 +777,20 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public async emit<C extends keyof EM, T extends keyof EM[C]>(
+  public async emit<C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
     type: T,
     payload: EM[C][T],
   ): Promise<void> {
-    // generate unique ID for this event (deduplication)
+    // Generate fingerprint for content-based deduplication
+    const fp = this.fingerprint(channel as string, type as string, payload);
+
+    // Check for duplicate within time window (React Strict Mode safety)
+    if (this.shouldDedupe(fp)) {
+      return; // Skip duplicate
+    }
+
+    // Generate unique ID for this event instance
     const id = Symbol("event");
 
     /**
@@ -646,24 +810,26 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       while (this.eventQueue.length) {
         const { channel, type, payload, id } = this.eventQueue.shift()!;
 
-        // deduplication check: skip if already processed (React Strict Mode safety)
-        if (this.processedEventIds.has(id)) {
-          continue;
-        }
-
-        // mark as processed
-        this.processedEventIds.add(id);
-
         const event = { channel, type, payload, id } as Event<EM, C, T>;
         let propagate = true;
 
         /**
-         * middleware
+         * middleware - supports both raw functions and MiddlewareSpec objects
          */
-        for (const mw of this.middleware) {
+        for (const mwInput of this.middleware) {
+          // Get the `when` matcher for this middleware
+          const when = this.getMiddlewareWhen(mwInput);
+
+          // Skip middleware that doesn't match this event
+          if (!this.matchesWhen(when, event as EventUnion<EM>)) {
+            continue;
+          }
+
+          // Extract the actual middleware function
+          const mw = this.getMiddlewareFunction(mwInput);
+
           try {
-            // @ts-expect-error this is just an inference issue, not important
-            const ok = await mw(this.state, event, this.emit);
+            const ok = await mw(this.state, event as EventUnion<EM>, this.emit);
             if (!ok) {
               propagate = false;
               break;
@@ -679,9 +845,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           // Notify uncommitted event subscribers (event rejected by middleware)
           await this.notifyEventSubscribers(event as any, "uncommitted");
 
-          // event cancelled, but still log to DevTools
+          // event bounced, but still log to DevTools
           this.devtools?.send(
-            { type: `Channel: ${channel} - Type: ${type} [CANCELLED]`, payload },
+            { type: `Channel: ${channel} - Type: ${type} [BOUNCED]`, payload },
             this.state,
           );
           continue;
@@ -691,8 +857,17 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
          * Reducers - track if any slice changed via reference equality
          */
         const stateBefore = this.state;
-        // @ts-expect-error inference issue
-        this.reducerBus.emit(channel as C, type as T, payload);
+
+        // 1. Call key-based reducers via reducerBus
+        this.reducerBus.emit(channel as any, type as any, payload);
+
+        // 2. Call pattern-based reducers (runtime matching)
+        for (const [sliceName, when] of this.patternReducers) {
+          if (this.matchesWhen(when, event as EventUnion<EM>)) {
+            this.forwardEvent(sliceName, event as any);
+          }
+        }
+
         const stateAfter = this.state;
         const anySliceChanged = stateBefore !== stateAfter;
 
@@ -806,10 +981,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public onEvent<C extends keyof EM & string, T extends keyof EM[C]>(
+  public onEvent<C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
     type: T,
-    handler: EventSubscriptionHandler<DeepReadonly<S>, EM>,
+    handler: NarrowedEventHandler<DeepReadonly<S>, EM, C, T>,
     phase: EventPhase = "committed",
   ): Unsubscribe {
     const key = `${channel}::${String(type)}`;
@@ -824,12 +999,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (!targetMap.has(key)) {
       targetMap.set(key, new Set());
     }
-    targetMap.get(key)!.add(handler);
+    // Store handler with type cast since internal storage uses the broad type
+    targetMap.get(key)!.add(handler as EventSubscriptionHandler<DeepReadonly<S>, EM>);
 
     return () => {
       const set = targetMap.get(key);
       if (set) {
-        set.delete(handler);
+        set.delete(handler as EventSubscriptionHandler<DeepReadonly<S>, EM>);
         if (set.size === 0) targetMap.delete(key);
       }
     };
@@ -979,10 +1155,48 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): () => void {
-    const { events, effect } = spec;
+    const { effect, meta, when } = spec;
     const unsubs: Array<() => void> = [];
 
-    for (const [channel, type] of events) {
+    // Attach metadata if provided
+    if (meta) {
+      (effect as any).__quoMeta = meta;
+    }
+
+    // Check if this is a pattern-based effect (any, channel, channels)
+    // or a key-based effect (keys, legacy events, or no targeting = all events)
+    const isPatternBased =
+      when &&
+      (("any" in when && when.any === true) ||
+        "channel" in when ||
+        "channels" in when);
+
+    if (isPatternBased) {
+      // Store as pattern-based effect for runtime matching
+      const entry = { effect, when: when! };
+      this.patternEffects.add(entry);
+
+      return () => {
+        this.patternEffects.delete(entry);
+      };
+    }
+
+    // Key-based effect: normalize to event keys
+    const eventKeys = this.normalizeEventKeys(spec);
+
+    // If no keys (no targeting at all), this effect matches ALL events
+    // We treat it as a pattern-based effect with `any: true`
+    if (eventKeys.length === 0 && !when && !spec.events) {
+      const entry = { effect, when: { any: true } as When<EM> };
+      this.patternEffects.add(entry);
+
+      return () => {
+        this.patternEffects.delete(entry);
+      };
+    }
+
+    // Register for specific event keys
+    for (const [channel, type] of eventKeys) {
       const key = `${String(channel)}::${String(type)}`;
       if (!this.effects.has(key)) {
         this.effects.set(key, new Set());
@@ -1029,7 +1243,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   public onEffect<
     C extends keyof EM & string,
-    T extends keyof EM[C]
+    T extends keyof EM[C] & string
   >(
     channel: C,
     type: T,
@@ -1092,6 +1306,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   public replaceEffects(next: Array<EffectSpec<DeepReadonly<S>, EM>>): void {
     this.effects.clear();
+    this.patternEffects.clear();
     for (const spec of next) {
       this.registerEffect(spec);
     }
@@ -1190,7 +1405,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     opts: { preserveState: boolean },
   ): void {
     const rName = name as unknown as string;
-    const { events = [], reducer, state } = rSpec;
+    const { events, reducer, state, when } = rSpec;
 
     // Install reducer instance (FIXED: only pass reducer function)
     this.reducers[name] = new Reducer(reducer);
@@ -1200,9 +1415,34 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       (this.state as any)[rName] = freezeState(structuredClone(state));
     }
 
+    // Check if this is a pattern-based reducer (any, channel, channels)
+    const isPatternBased =
+      when &&
+      (("any" in when && when.any === true) ||
+        "channel" in when ||
+        "channels" in when);
+
+    if (isPatternBased) {
+      // Store as pattern-based reducer for runtime matching
+      this.patternReducers.set(name, when);
+      // No unsubs needed for pattern reducers - they're called from emit loop
+      this.sliceUnsubs.set(rName, []);
+      return;
+    }
+
+    // Normalize event keys from `when: { keys }` or legacy `events`
+    const eventKeys = this.normalizeEventKeys(rSpec);
+
+    // If no targeting at all, treat as "all events" (pattern-based)
+    if (eventKeys.length === 0 && !when && !events) {
+      this.patternReducers.set(name, { any: true });
+      this.sliceUnsubs.set(rName, []);
+      return;
+    }
+
     // Wire reducerBus listeners and save disposers for HMR
     const unsubs: Array<() => void> = [];
-    events?.forEach(([ch, tp]) => {
+    for (const [ch, tp] of eventKeys) {
       const u = this.reducerBus.on(ch, tp, (payload) => {
         const event = { channel: ch, type: tp, payload, id: Symbol("reducer-event") } as Event<
           EM,
@@ -1213,7 +1453,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       });
 
       unsubs.push(u);
-    });
+    }
 
     this.sliceUnsubs.set(rName, unsubs);
   }
@@ -1229,6 +1469,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private unmountSlice(name: R, opts: { deleteState: boolean }): void {
     const rName = name as unknown as string;
+
+    // Remove from pattern reducers if present
+    this.patternReducers.delete(name);
 
     // Dispose reducerBus listeners
     const unsubs = this.sliceUnsubs.get(rName);
@@ -1248,6 +1491,54 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     // Optionally drop state
     if (opts.deleteState) delete (this.state as any)[rName];
+  }
+
+  /**
+   * Normalizes event targeting from `when` or legacy `events` to an array of EventKeys.
+   *
+   * @param spec - Object with optional `when` and/or `events` properties.
+   * @returns Array of `[channel, type]` pairs.
+   *
+   * @internal
+   */
+  private normalizeEventKeys(spec: {
+    when?: When<EM>;
+    events?: ReadonlyArray<EventKey<EM>>;
+  }): ReadonlyArray<EventKey<EM>> {
+    // Prefer `when` over legacy `events`
+    if (spec.when) {
+      const when = spec.when;
+
+      if ("any" in when && when.any === true) {
+        // Match all events - return all possible keys from EM
+        // This requires runtime knowledge; we'll handle this specially in callers
+        // For now, return empty and let caller handle "any" case
+        return [];
+      }
+
+      if ("keys" in when) {
+        return when.keys;
+      }
+
+      if ("channel" in when) {
+        // Single channel - caller needs to handle dynamically
+        // Return empty; this will be handled by special registration
+        return [];
+      }
+
+      if ("channels" in when) {
+        // Multiple channels - caller needs to handle dynamically
+        return [];
+      }
+    }
+
+    // Fall back to legacy `events` array
+    if (spec.events) {
+      return spec.events;
+    }
+
+    // No targeting specified
+    return [];
   }
 
   /**
@@ -1305,7 +1596,61 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 }
 
 /**
- * Factory helper to create a typed {@link Store} from a reducers map.
+ * Creates a store with explicit State and EventMap types.
+ *
+ * Use this overload for:
+ * - **Event-only stores** (no reducers, just middleware/effects)
+ * - When TypeScript inference from reducers isn't sufficient
+ * - When you want to define the EventMap independently of reducers
+ *
+ * @typeParam S  - State record type (can be empty `{}` for event-only stores).
+ * @typeParam EM - Event map type defining all `channel → type → payload` combinations.
+ * @param cfg - Configuration with `name`, optional `reducer`, optional `middleware`, optional `effects`.
+ * @returns A typed {@link StoreInstance}.
+ *
+ * @example Event-only store
+ * ```ts
+ * type AppEM = {
+ *   notifications: { show: { message: string }; hide: void };
+ * };
+ *
+ * const store = createStore<{}, AppEM>({
+ *   name: 'NotificationBus',
+ *   effects: [{
+ *     when: { channel: 'notifications' },
+ *     effect: (evt) => {
+ *       if (evt.type === 'show') showToast(evt.payload.message);
+ *     },
+ *   }],
+ * });
+ * ```
+ *
+ * @example Explicit generics with reducers
+ * ```ts
+ * const store = createStore<AppState, AppEM>({
+ *   name: 'App',
+ *   reducer: { counter: counterSpec },
+ *   middleware: [loggingMiddleware],
+ * });
+ * ```
+ *
+ * @public
+ */
+export function createStore<
+  S extends Record<string, any>,
+  EM extends EventMapBase,
+>(cfg: {
+  name: string;
+  reducer?: { [K in keyof S]?: ReducerSpec<S[K], EM> };
+  middleware?: MiddlewareFunction<DeepReadonly<S>, EM>[];
+  effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
+}): StoreInstance<keyof S & string, S, EM>;
+
+/**
+ * Creates a store with types inferred from the reducers map.
+ *
+ * This is the primary overload for most use cases where reducers define
+ * both the state shape and the event map.
  *
  * @typeParam RM - Reducers map object with each slice's `ReducerSpec`.
  * @param cfg - Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
@@ -1318,7 +1663,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
  *   reducer: {
  *     counter: {
  *       state: { value: 0 },
- *       events: [['ui','increment']],
+ *       when: { keys: eventKeys<MyEM>()([['ui', 'increment']]) },
  *       reducer: (s, evt) => evt.type === 'increment' ? { value: s.value + evt.payload } : s
  *     }
  *   },
@@ -1344,7 +1689,7 @@ export function createStore(cfg: any) {
 
   return new Store<EM, RN, S>({
     name: cfg.name,
-    reducer: cfg.reducer as unknown as Record<RN, ReducerSpec<S[RN], EM>>,
+    reducer: (cfg.reducer ?? {}) as unknown as Record<RN, ReducerSpec<S[RN], EM>>,
     middleware: (cfg.middleware ?? []) as any,
     effects: (cfg.effects ?? []) as any,
   });

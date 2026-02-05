@@ -61,9 +61,10 @@ describe("Store - dynamic slices", () => {
 
     disposeDynamic();
 
-    await store.emit("ui", "increment", 5);
+    // Use different payload to avoid deduplication
+    await store.emit("ui", "increment", 6);
     state = store.getState();
-    expect(state.base.value).toBe(10);
+    expect(state.base.value).toBe(11);
     expect((state as any).dynamic).toBeUndefined();
   });
 

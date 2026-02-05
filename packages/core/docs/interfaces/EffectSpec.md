@@ -6,25 +6,35 @@
 
 # Interface: EffectSpec\<S, EM\>
 
-Defined in: [types.ts:447](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L447)
+Defined in: [types.ts:511](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L511)
 
 Effect specification (stateless async event consumer).
 
 ## Remarks
 
-- Effects subscribe to EventKeys (like reducers).
-- Effects are async and do not own state.
-- Effects run after reducers.
-- Effects are keyed (no scanning all effects on every event).
+- Effects run after reducers see the event.
+- Effects are async-safe and do not own state.
+- Effects are keyed by event for O(1) lookup (no scanning).
+- Use `when` for event targeting (preferred over `events`).
 
-## Example
+## Examples
 
 ```ts
 const logEffect: EffectSpec<AppState, MyEM> = {
-  events: [['ui', 'increment']],
+  when: { keys: eventKeys<MyEM>()([['ui', 'increment']]) },
   effect: async (evt, getState, emit) => {
     console.log('increment', evt.payload, getState().counter.value);
-  }
+  },
+  meta: { type: 'effect', name: 'logEffect', description: 'Logs increment events' },
+};
+```
+
+```ts
+const notificationEffect: EffectSpec<AppState, MyEM> = {
+  when: { channel: 'notifications' },
+  effect: (evt, getState, emit) => {
+    if (evt.type === 'show') showToast(evt.payload.message);
+  },
 };
 ```
 
@@ -48,16 +58,41 @@ Event map.
 
 > **effect**: [`EffectFunction`](../type-aliases/EffectFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:456](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L456)
+Defined in: [types.ts:527](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L527)
 
 Async effect handler: `(event, getState, emit) => void | Promise<void>`.
 
 ***
 
-### events
+### ~~events?~~
 
-> **events**: readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
+> `optional` **events**: readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
 
-Defined in: [types.ts:451](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L451)
+Defined in: [types.ts:522](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L522)
 
 List of EventKeys `[channel, type]` that this effect responds to.
+
+#### Deprecated
+
+Use `when: { keys: [...] }` instead for better type inference.
+
+***
+
+### meta?
+
+> `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"effect"`\>
+
+Defined in: [types.ts:532](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L532)
+
+Optional metadata for debugging tools and DevTools integration.
+
+***
+
+### when?
+
+> `optional` **when**: [`When`](../type-aliases/When.md)\<`EM`\>
+
+Defined in: [types.ts:516](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L516)
+
+Event targeting using the unified `When` matcher.
+Preferred over `events` for new code.

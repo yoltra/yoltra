@@ -6,72 +6,13 @@
 
 # Class: Store\<EM, R, S\>
 
-Defined in: [store/Store.ts:102](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L102)
+Defined in: [store/Store.ts:35](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L35)
 
-Strongly-typed, channel/event-driven **store** with:
-- **Slice reducers** (namespaced under `R`)
-- **Middleware** (pre-reducer, can cancel propagation)
-- **Effects** (post-reducer, async-safe, keyed by EventKey)
-- **Granular subscriptions** via dotted **property paths** (e.g., `"todos.3.title"`)
-- **Event subscriptions** for even more reactive UI
-- **Event deduplication** via unique event IDs (prevents React Strict Mode double-firing)
-- Optional **Redux DevTools** integration (dev)
+Public Store surface.
 
 ## Remarks
 
-- `emit()` is **serialized** internally: events are queued and processed one-by-one.
-- Each event receives a unique `id` (symbol) for deduplication.
-- Reducers are wired through an internal [EventBus](EventBus.md) by `(channel, type)`.
-- Effects are keyed by `(channel, type)` for O(1) lookup (no scanning).
-- Fine-grained change events are emitted through a [LooseEventBus](LooseEventBus.md) by **dotted paths**.
-- State is **immutable**: each slice change creates a new state reference (shallow clone).
-- State slices are **frozen** (deeply) before committing to discourage mutation.
-
-## Example
-
-```ts
-type Counter = { value: number };
-type Todos = { items: Array<{ id: string; title: string }> };
-type S = { counter: Counter; todos: Todos };
-type EM = {
-  ui: { increment: number; setTitle: { id: string; title: string } };
-};
-
-const store = createStore({
-  name: 'Demo',
-  reducer: {
-    counter: {
-      state: { value: 0 },
-      events: [['ui', 'increment']],
-      reducer(s, evt) {
-        if (evt.type === 'increment') return { value: s.value + evt.payload };
-        return s;
-      }
-    },
-    todos: {
-      state: { items: [] },
-      events: [['ui', 'setTitle']],
-      reducer(s, evt) {
-        if (evt.type === 'setTitle') {
-          const next = structuredClone(s);
-          const t = next.items.find(x => x.id === evt.payload.id);
-          if (t) t.title = evt.payload.title;
-          return next;
-        }
-        return s;
-      }
-    }
-  }
-});
-
-// Subscribe to a dotted path
-const unsub = store.connect({ reducer: 'todos', property: 'items.0.title' }, (chg) => {
-  console.log('title changed from', chg.oldValue, 'to', chg.newValue);
-});
-
-// Emit event
-await store.emit('ui', 'increment', 1);
-```
+The concrete Store implements this as `StoreInstance<R, DeepReadonly<S>, EM>`.
 
 ## Type Parameters
 
@@ -79,19 +20,19 @@ await store.emit('ui', 'increment', 1);
 
 `EM` *extends* [`EventMapBase`](../type-aliases/EventMapBase.md)
 
-Event map describing `(channel → type → payload)` types.
+Reducer name union.
 
 ### R
 
 `R` *extends* `string`
 
-Union of slice names (string literal union).
+State record (already readonly at the call site).
 
 ### S
 
 `S` *extends* `Record`\<`R`, `any`\>
 
-Object map of slice states keyed by `R`.
+Event map.
 
 ## Implements
 
@@ -103,7 +44,7 @@ Object map of slice states keyed by `R`.
 
 > **new Store**\<`EM`, `R`, `S`\>(`spec`): `Store`\<`EM`, `R`, `S`\>
 
-Defined in: [store/Store.ts:246](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L246)
+Defined in: [store/Store.ts:223](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L223)
 
 Creates a store from a [StoreSpec](../type-aliases/StoreSpec.md).
 
@@ -125,7 +66,7 @@ Store configuration (name, reducers, middleware, optional effects).
 
 > **name**: `string`
 
-Defined in: [store/Store.ts:109](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L109)
+Defined in: [store/Store.ts:42](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L42)
 
 Store name (used by DevTools & diagnostics).
 
@@ -139,7 +80,7 @@ Store name (used by DevTools & diagnostics).
 
 > **connect**(`spec`, `h`): () => `void`
 
-Defined in: [store/Store.ts:759](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L759)
+Defined in: [store/Store.ts:934](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L934)
 
 Connects a **fine-grained** listener to a dotted path under a slice.
 
@@ -202,7 +143,7 @@ const off = store.connect(
 
 > **dispose**(): `void`
 
-Defined in: [store/Store.ts:395](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L395)
+Defined in: [store/Store.ts:375](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L375)
 
 Cleanup resources (timers, etc.) when disposing the store.
 Call this if you're dynamically creating/destroying stores.
@@ -229,7 +170,7 @@ store.dispose();
 
 > **emit**\<`C`, `T`\>(`channel`, `type`, `payload`): `Promise`\<`void`\>
 
-Defined in: [store/Store.ts:624](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L624)
+Defined in: [store/Store.ts:780](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L780)
 
 Emits a typed event `(channel, type, payload)`.
 Events are queued and processed **sequentially** (FIFO).
@@ -250,13 +191,13 @@ via shallow spread when any slice changes.
 
 ##### C
 
-`C` *extends* `string` \| `number` \| `symbol`
+`C` *extends* `string`
 
 Channel key in `EM`.
 
 ##### T
 
-`T` *extends* `string` \| `number` \| `symbol`
+`T` *extends* `string`
 
 Type key within channel `C`.
 
@@ -311,7 +252,7 @@ await store.emit('ui', 'dangerous', null); // cancelled, no state change
 
 > **getState**(): [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>
 
-Defined in: [store/Store.ts:873](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L873)
+Defined in: [store/Store.ts:1049](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L1049)
 
 Returns the current immutable state snapshot.
 
@@ -338,7 +279,7 @@ console.log(state.counter.value);
 
 > **hotReplace**(`partial`): `void`
 
-Defined in: [store/Store.ts:1165](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L1165)
+Defined in: [store/Store.ts:1380](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L1380)
 
 Convenience API to replace **any subset** of store parts (HMR patterns).
 
@@ -389,7 +330,7 @@ store.hotReplace({
 
 > **onEffect**\<`C`, `T`\>(`channel`, `type`, `handler`): () => `void`
 
-Defined in: [store/Store.ts:1030](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L1030)
+Defined in: [store/Store.ts:1244](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L1244)
 
 Convenience helper to register an **effect** filtered by a single `(channel, type)` pair.
 
@@ -403,7 +344,7 @@ Channel key within `EM`.
 
 ##### T
 
-`T` *extends* `string` \| `number` \| `symbol`
+`T` *extends* `string`
 
 Event type key within channel `C`.
 
@@ -457,7 +398,7 @@ off();
 
 > **onEvent**\<`C`, `T`\>(`channel`, `type`, `handler`, `phase`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [store/Store.ts:809](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L809)
+Defined in: [store/Store.ts:984](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L984)
 
 Subscribe to events by channel and type.
 
@@ -482,7 +423,7 @@ Channel key within `EM`.
 
 ##### T
 
-`T` *extends* `string` \| `number` \| `symbol`
+`T` *extends* `string`
 
 Event type key within channel `C`.
 
@@ -502,7 +443,7 @@ Event type to subscribe to.
 
 ##### handler
 
-[`EventSubscriptionHandler`](../type-aliases/EventSubscriptionHandler.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>
+[`NarrowedEventHandler`](../type-aliases/NarrowedEventHandler.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`, `C`, `T`\>
 
 Handler function `(event, getState, emit, phase)`.
 
@@ -549,7 +490,7 @@ store.onEvent('ui', 'action', (event, getState, emit, phase) => {
 
 > **registerEffect**(`spec`): () => `void`
 
-Defined in: [store/Store.ts:981](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L981)
+Defined in: [store/Store.ts:1157](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L1157)
 
 Registers an **effect** (stateless async event consumer) that runs after reducers.
 
@@ -605,7 +546,7 @@ store.registerEffect({
 
 > **registerMiddleware**(`mw`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [store/Store.ts:903](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L903)
+Defined in: [store/Store.ts:1079](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L1079)
 
 Registers a middleware (runs **before** reducers).
 
@@ -651,7 +592,7 @@ store.registerMiddleware((state, event) => {
 
 > **registerReducer**(`name`, `spec`): () => `void`
 
-Defined in: [store/Store.ts:933](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L933)
+Defined in: [store/Store.ts:1109](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L1109)
 
 Dynamically **adds** a named slice reducer at runtime.
 
@@ -703,7 +644,7 @@ dispose();
 
 > **replaceEffects**(`next`): `void`
 
-Defined in: [store/Store.ts:1093](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L1093)
+Defined in: [store/Store.ts:1307](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L1307)
 
 Replaces all registered **effects** (HMR-friendly).
 
@@ -739,7 +680,7 @@ if (import.meta.hot) {
 
 > **replaceMiddleware**(`next`): `void`
 
-Defined in: [store/Store.ts:1072](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L1072)
+Defined in: [store/Store.ts:1286](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L1286)
 
 Replaces the **entire** middleware pipeline (HMR-friendly).
 
@@ -775,7 +716,7 @@ if (import.meta.hot) {
 
 > **replaceReducers**(`next`, `opts`): `void`
 
-Defined in: [store/Store.ts:1117](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L1117)
+Defined in: [store/Store.ts:1332](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L1332)
 
 Replaces the entire **reducer set** (HMR-friendly).
 
@@ -819,7 +760,7 @@ if (import.meta.hot) {
 
 > **subscribe**(`fn`): () => `void`
 
-Defined in: [store/Store.ts:855](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L855)
+Defined in: [store/Store.ts:1031](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L1031)
 
 Subscribes to **coarse-grained** commits (called once per successful event, only if state changed).
 
@@ -861,7 +802,7 @@ off();
 
 > `static` **buildAncestorPaths**(`path`): `string`[]
 
-Defined in: [store/Store.ts:1292](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/store/Store.ts#L1292)
+Defined in: [store/Store.ts:1583](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L1583)
 
 Builds ancestor paths for a dotted path.
 

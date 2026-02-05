@@ -14,7 +14,7 @@ describe("createQuoHooks", () => {
 
   it("binds hooks to a specific StoreContext", () => {
     const CustomContext = createContext<StoreInstance<R, RootState, EM> | null>(null);
-    const { useStore, useEmit, useSelector, useAtomicProp, useAtomicProps, useDispatch } =
+    const { useStore, useEmit, useSelector, useAtomicProp, useAtomicProps } =
       createQuoHooks<R, RootState, EM>(CustomContext);
 
     const { store } = createMockStore<RootState>({ counter: { value: 0 } });
@@ -22,7 +22,6 @@ describe("createQuoHooks", () => {
     function Test() {
       const s = useStore();
       const emit = useEmit();
-      const dispatch = useDispatch();
       const value = useSelector((st) => st.counter.value);
 
       const doubled = useAtomicProp<R, RootState, R, "counter.value">({
@@ -39,9 +38,6 @@ describe("createQuoHooks", () => {
         <>
           <span data-testid="store-ok">{s === store ? "yes" : "no"}</span>
           <span data-testid="emit-eq">{emit === store.emit ? "yes" : "no"}</span>
-          <span data-testid="dispatch-callable">
-            {typeof dispatch === "function" ? "yes" : "no"}
-          </span>
           <span data-testid="value">{value}</span>
           <span data-testid="doubled">{(doubled as any) * 2}</span>
           <span data-testid="total">{total}</span>
@@ -57,7 +53,6 @@ describe("createQuoHooks", () => {
 
     expect(screen.getByTestId("store-ok").textContent).toBe("yes");
     expect(screen.getByTestId("emit-eq").textContent).toBe("yes");
-    expect(screen.getByTestId("dispatch-callable").textContent).toBe("yes");
     expect(screen.getByTestId("value").textContent).toBe("0");
 
     act(() => {

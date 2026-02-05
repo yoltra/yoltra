@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { render, screen } from "@testing-library/react";
 import { act } from "react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 
 import {
   useStore,
@@ -10,7 +10,6 @@ import {
   useAtomicProp,
   useAtomicProps,
   shallowEqual,
-  useDispatch,
 } from "../../../src/hooks/hooks";
 import { StoreProvider } from "../../../src/context/StoreProvider";
 import { createMockStore } from "../../helpers/mockStore";
@@ -58,7 +57,7 @@ describe("useStore", () => {
   });
 });
 
-describe("useEmit / useDispatch", () => {
+describe("useEmit", () => {
   it("useEmit returns the store.emit function and calls it", () => {
     const { store } = createMockStore({});
 
@@ -89,42 +88,6 @@ describe("useEmit / useDispatch", () => {
 
     expect(store.emit).toHaveBeenCalledTimes(1);
     expect(store.emit).toHaveBeenCalledWith("ui", "ping", 1);
-  });
-
-  it("useDispatch is a deprecated alias of useEmit", () => {
-    const { store } = createMockStore({});
-
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-    function Test() {
-      const dispatch = useDispatch<any>();
-      return (
-        <button
-          data-testid="btn"
-          onClick={() => {
-            dispatch("ui" as any, "legacy" as any, 2 as any);
-          }}
-        >
-          click
-        </button>
-      );
-    }
-
-    render(
-      <StoreProvider store={store}>
-        <Test />
-      </StoreProvider>,
-    );
-
-    act(() => {
-      screen.getByTestId("btn").click();
-    });
-
-    expect(store.emit).toHaveBeenCalledWith("ui", "legacy", 2);
-    // We only care a warning happened at least once.
-    expect(warnSpy).toHaveBeenCalled();
-
-    warnSpy.mockRestore();
   });
 });
 

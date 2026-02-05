@@ -6,21 +6,35 @@
 
 # Interface: ReducerSpec\<S, EM\>
 
-Defined in: [types.ts:393](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L393)
+Defined in: [types.ts:434](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L434)
 
 One reducer's definition blob (stateful event consumer).
 
-## Example
+## Remarks
+
+Use `when` for event targeting (preferred). The `events` property is
+kept for backward compatibility but `when` is recommended for new code.
+
+## Examples
+
+```ts
+const counterSpec: ReducerSpec<{ value: number }, MyEM> = {
+  state: { value: 0 },
+  when: { keys: eventKeys<MyEM>()([['ui', 'increment'], ['ui', 'decrement']]) },
+  reducer(s, evt) {
+    if (evt.type === 'increment') return { value: s.value + evt.payload };
+    if (evt.type === 'decrement') return { value: s.value - evt.payload };
+    return s;
+  },
+  meta: { type: 'reducer', name: 'counter' },
+};
+```
 
 ```ts
 const counterSpec: ReducerSpec<{ value: number }, MyEM> = {
   state: { value: 0 },
   events: [['ui', 'increment'], ['ui', 'decrement']],
-  reducer(s, evt) {
-    if (evt.type === 'increment') return { value: s.value + evt.payload };
-    if (evt.type === 'decrement') return { value: s.value - evt.payload };
-    return s;
-  }
+  reducer(s, evt) { ... },
 };
 ```
 
@@ -40,13 +54,27 @@ Event map.
 
 ## Properties
 
-### events
+### ~~events?~~
 
-> **events**: readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
+> `optional` **events**: readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
 
-Defined in: [types.ts:397](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L397)
+Defined in: [types.ts:450](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L450)
 
 List of EventKeys `[channel, type]` that this reducer responds to.
+
+#### Deprecated
+
+Use `when: { keys: [...] }` instead for better type inference.
+
+***
+
+### meta?
+
+> `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"reducer"`\>
+
+Defined in: [types.ts:460](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L460)
+
+Optional metadata for debugging tools and DevTools integration.
 
 ***
 
@@ -54,7 +82,7 @@ List of EventKeys `[channel, type]` that this reducer responds to.
 
 > **reducer**: [`ReducerFunction`](../type-aliases/ReducerFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:402](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L402)
+Defined in: [types.ts:455](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L455)
 
 Pure reducer function: `(state, event) => nextState`.
 
@@ -64,6 +92,17 @@ Pure reducer function: `(state, event) => nextState`.
 
 > **state**: `S`
 
-Defined in: [types.ts:407](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L407)
+Defined in: [types.ts:438](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L438)
 
 Initial state for this reducer.
+
+***
+
+### when?
+
+> `optional` **when**: [`When`](../type-aliases/When.md)\<`EM`\>
+
+Defined in: [types.ts:444](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L444)
+
+Event targeting using the unified `When` matcher.
+Preferred over `events` for new code.

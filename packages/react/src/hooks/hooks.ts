@@ -14,7 +14,6 @@ import type {
   DeepReadonly,
   EventPhase,
 } from "@quojs/core";
-import { warnOnce } from "../utils/warnOnce";
 
 /**
  * Resolves the value type at a **dotted path** `P` inside object/array `T`.

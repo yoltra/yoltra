@@ -20,9 +20,6 @@
 `@quojs/core` is the foundation of Quo.js—a modern state management library that combines
 **channel-based events**, **atomic subscriptions**, and **native async support** in a
 lightweight, universal package.
-
-**Works everywhere:** Browsers, Node.js 18+, Deno, Bun. Zero DOM dependencies.
-
 ---
 
 ## What is @quojs/core?
@@ -363,6 +360,7 @@ await store.emit("invalid", "event", null); // Error: Unknown channel
 - `store.emit(channel, type, payload)` — Emit an event (async)
 - `store.getState()` — Get current state (readonly)
 - `store.subscribe(listener)` — Subscribe to any state change
+- `store.onEvent(channel, type, handler, phase?)` — Subscribe to Events, same as Middleware and Effects!
 - `store.connect(spec, handler)` — Subscribe to specific state path
 
 ### Dynamic Registration
@@ -377,6 +375,7 @@ await store.emit("invalid", "event", null); // Error: Unknown channel
 - `store.replaceMiddleware(middleware)` — Replace all middleware (HMR)
 - `store.replaceEffects(effects)` — Replace all effects (HMR)
 
+> See the [Technical Docs](./docs/classes/Store.md)
 ---
 
 ## Performance
@@ -406,39 +405,6 @@ await store.emit("invalid", "event", null); // Error: Unknown channel
 - **[Kinetic Logo](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo)** — Physics simulation with 900
   particles
 - **[Next.js Integration](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-nextjs)** — SSR + theme switcher
-
----
-
-## Migrating from v0.4.x
-
-### Terminology Changes (v0.5.0+)
-
-| Old (v0.4.x)   | New (v0.5.0+) | Status                                   |
-| -------------- | ------------- | ---------------------------------------- |
-| `dispatch()`   | `emit()`      | ❌ Removed (use `emit()` instead)        |
-| `Action`       | `Event`       | ❌ Removed (use `Event` type)            |
-| `ActionMap`    | `EventMap`    | ❌ Removed (use `EventMapBase` type)     |
-| `ActionPair`   | `EventKey`    | ❌ Removed (use `EventKey` type)         |
-| `ActionUnion`  | `EventUnion`  | ❌ Removed (use `EventUnion` type)       |
-| `Dispatch`     | `Emit`        | ❌ Removed (use `Emit` type)             |
-| `typedActions` | `typedEvents` | ❌ Removed (use `typedEvents` function)  |
-| `action.event` | `event.type`  | ⚠️ Breaking change                       |
-
-### Migration Example
-
-```typescript
-// BEFORE (v0.4.x)
-store.dispatch("counter", "increment", 1);
-const actions = typedActions([])('counter', ['increment']);
-type MyAction = Action<EM, 'counter', 'increment'>;
-
-// AFTER (v0.5.0+)
-store.emit("counter", "increment", 1);
-const events = typedEvents([])('counter', ['increment']);
-type MyEvent = Event<EM, 'counter', 'increment'>;
-```
-
-**Note:** All deprecated aliases have been removed. If you're upgrading from v0.4.x, you must update your code to use the new event-bus terminology.
 
 ---
 

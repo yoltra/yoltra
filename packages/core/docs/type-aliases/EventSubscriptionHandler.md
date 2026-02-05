@@ -8,9 +8,9 @@
 
 > **EventSubscriptionHandler**\<`S`, `EM`\> = (`event`, `getState`, `emit`, `phase`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [types.ts:639](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L639)
+Defined in: [types.ts:961](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L961)
 
-Handler function for event subscriptions.
+Handler function for event subscriptions (receives full event union).
 
 Event subscriptions are intended for the View layer (e.g., React components)
 to react to events without affecting the event flow. They are fire-and-forget
