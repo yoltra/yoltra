@@ -10,7 +10,7 @@
 
 > **useSuspenseAtomicProps**\<`R`, `S`, `T`\>(`specs`, `options`): `T`
 
-Defined in: [hooks/suspense.ts:193](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/suspense.ts#L193)
+Defined in: [hooks/suspense.ts:193](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/react/src/hooks/suspense.ts#L193)
 
 Suspense version of a multi-path selector.
 
@@ -46,7 +46,7 @@ Suspense version of a multi-path selector.
 
 > **useSuspenseAtomicProps**\<`R`, `S`, `T`\>(`specs`, `options`): `T`
 
-Defined in: [hooks/suspense.ts:197](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/suspense.ts#L197)
+Defined in: [hooks/suspense.ts:197](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/react/src/hooks/suspense.ts#L197)
 
 Suspense version of a multi-path selector.
 

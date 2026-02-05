@@ -8,7 +8,7 @@
 
 > **Dotted**\<`Slice`\> = keyof `Slice` & `string` \| [`Path`](Path.md)\<`Slice`\>
 
-Defined in: [types.ts:907](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L907)
+Defined in: [types.ts:907](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L907)
 
 Dotted keys of a slice: top-level keys or any nested path.
 

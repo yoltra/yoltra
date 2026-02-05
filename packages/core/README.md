@@ -108,7 +108,8 @@ const store = createStore({
   middleware: [authMiddleware],
   effects: [
     {
-      events: [["analytics", "track"]],
+      // v0.7.0: Use `when` for event targeting
+      when: { channel: "analytics" },
       effect: analyticsEffect,
     },
   ],
@@ -252,6 +253,92 @@ window.addEventListener("mousemove", (e) => {
 
 ## Advanced Features
 
+### Event Targeting with `when` (v0.7.0+)
+
+Reducers, effects, and middleware support a unified `when` matcher for flexible event targeting:
+
+```typescript
+import { createStore, eventKeys } from '@quojs/core';
+
+type AppEM = {
+  ui: { increment: number; decrement: number; reset: void };
+  admin: { setCounter: number; clearLogs: void };
+  system: { init: void; shutdown: void };
+};
+
+// 1. Match specific event keys (recommended for type safety)
+const counterReducer = {
+  state: { value: 0 },
+  when: { keys: eventKeys<AppEM>()([['ui', 'increment'], ['ui', 'decrement']]) },
+  reducer: (state, event) => { /* ... */ },
+};
+
+// 2. Match all events in a channel
+const loggerEffect = {
+  when: { channel: 'ui' },
+  effect: (event) => console.log('UI event:', event.type),
+};
+
+// 3. Match all events in multiple channels
+const auditEffect = {
+  when: { channels: ['ui', 'admin'] },
+  effect: (event) => logToAuditTrail(event),
+};
+
+// 4. Match ALL events
+const globalMiddleware = {
+  when: { any: true },
+  middleware: (state, event) => {
+    console.log('Event:', event.channel, event.type);
+    return true;
+  },
+};
+```
+
+### Middleware with Targeting (v0.7.0+)
+
+Middleware can now be targeted to specific events using `MiddlewareSpec`:
+
+```typescript
+import type { MiddlewareSpec } from '@quojs/core';
+
+// Only runs for admin channel events
+const adminGuard: MiddlewareSpec<AppState, AppEM> = {
+  when: { channel: 'admin' },
+  middleware: (state, event) => {
+    if (!state.auth.isAdmin) {
+      console.warn('Admin access denied');
+      return false; // Cancel event
+    }
+    return true;
+  },
+  meta: { type: 'middleware', name: 'adminGuard' },
+};
+
+const store = createStore({
+  name: 'App',
+  reducer: { /* ... */ },
+  middleware: [adminGuard],
+});
+```
+
+### Metadata Support (v0.7.0+)
+
+Add metadata to reducers, effects, and middleware for debugging and DevTools:
+
+```typescript
+const counterReducer = {
+  state: { value: 0 },
+  when: { keys: eventKeys<AppEM>()([['ui', 'increment']]) },
+  reducer: (state, event) => ({ value: state.value + event.payload }),
+  meta: {
+    type: 'reducer',
+    name: 'counterReducer',
+    description: 'Handles counter increment/decrement',
+  },
+};
+```
+
 ### Dynamic Reducers
 
 Add or remove reducers at runtime:
@@ -280,6 +367,17 @@ useEffect(() => {
   emit("analytics", "pageView", { page });
   // ↑ Fired 2x by React, but Quo.js processes it only once
 }, [page]);
+```
+
+**Configurable Dedup Window (v0.7.0+):**
+
+```typescript
+const store = createStore({
+  name: 'App',
+  reducer: { /* ... */ },
+  // Customize the deduplication window (default: 50ms dev, 100ms prod)
+  dedupWindowMs: 100,
+});
 ```
 
 ### Middleware
@@ -311,12 +409,20 @@ const saveToLocalStorageEffect = async (event, getState) => {
   localStorage.setItem("app-state", JSON.stringify(state));
 };
 
+// v0.7.0+: Use `when` for event targeting (recommended)
 store.registerEffect({
-  events: [
+  when: { keys: eventKeys<AppEM>()([
     ["todos", "add"],
     ["todos", "toggle"],
     ["todos", "delete"],
-  ],
+  ])},
+  effect: saveToLocalStorageEffect,
+  meta: { type: 'effect', name: 'localStorage' },
+});
+
+// Or match entire channel
+store.registerEffect({
+  when: { channel: 'todos' },
   effect: saveToLocalStorageEffect,
 });
 ```
@@ -357,11 +463,18 @@ await store.emit("invalid", "event", null); // Error: Unknown channel
 ### Store Creation
 
 - `createStore(spec)` — Create a new store instance
+- `createStore<S, EM>(spec)` — Create event-only store with explicit types (v0.7.0+)
 - `store.emit(channel, type, payload)` — Emit an event (async)
 - `store.getState()` — Get current state (readonly)
 - `store.subscribe(listener)` — Subscribe to any state change
-- `store.onEvent(channel, type, handler, phase?)` — Subscribe to Events, same as Middleware and Effects!
+- `store.onEvent(channel, type, handler, phase?)` — Subscribe to events (committed/uncommitted/all)
 - `store.connect(spec, handler)` — Subscribe to specific state path
+- `store.dispose()` — Cleanup resources when destroying store
+
+### Helpers (v0.7.0+)
+
+- `eventKeys<EM>()([...])` — Type-safe event key arrays without `as const`
+- `typedEvents<EM>([])` — Legacy helper for reducer event definitions
 
 ### Dynamic Registration
 
@@ -420,7 +533,14 @@ We welcome contributions! See:
 
 ## Status
 
-**Release Candidate** — APIs are stable, used in production, minor changes possible before v1.0.
+**Release Candidate (v0.7.0)** — APIs are stable, used in production, minor changes possible before v1.0.
+
+**v0.7.0 Highlights:**
+- Unified `when` matcher for reducers, effects, and middleware
+- `eventKeys<EM>()` helper for type-safe event targeting
+- Configurable event deduplication window (`dedupWindowMs`)
+- Metadata support for debugging and DevTools
+- `createStore<S, EM>()` for event-only stores
 
 ---
 

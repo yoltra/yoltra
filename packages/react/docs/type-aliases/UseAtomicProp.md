@@ -8,7 +8,7 @@
 
 > **UseAtomicProp**\<`R`, `S`\> = \{\<`R1`, `P`\>(`spec`): [`PathValue`](PathValue.md)\<`S`\[`R1`\], `P`\>; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`\>(`spec`): `unknown`; \<`R1`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \}
 
-Defined in: [hooks/createQuoHooks.ts:20](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/createQuoHooks.ts#L20)
+Defined in: [hooks/createQuoHooks.ts:20](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/react/src/hooks/createQuoHooks.ts#L20)
 
 ## Type Parameters
 

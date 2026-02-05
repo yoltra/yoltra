@@ -8,7 +8,7 @@
 
 > **NarrowedEventHandler**\<`S`, `EM`, `C`, `T`\> = (`event`, `getState`, `emit`, `phase`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [types.ts:992](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L992)
+Defined in: [types.ts:992](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L992)
 
 Narrowed event subscription handler for specific `(channel, type)` pairs.
 Provides better type inference when subscribing to a single event type.

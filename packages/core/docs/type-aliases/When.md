@@ -8,7 +8,7 @@
 
 > **When**\<`EM`\> = \{ `any`: `true`; \} \| \{ `keys`: `ReadonlyArray`\<[`EventKey`](EventKey.md)\<`EM`\>\>; \} \| \{ `channel`: keyof `EM` & `string`; \} \| \{ `channels`: `ReadonlyArray`\<keyof `EM` & `string`\>; \}
 
-Defined in: [types.ts:704](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L704)
+Defined in: [types.ts:704](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L704)
 
 Matcher for event targeting across reducers, effects, middleware, and subscriptions.
 

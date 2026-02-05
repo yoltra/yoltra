@@ -8,7 +8,7 @@
 
 > **StoreSpec**\<`R`, `S`, `EM`\> = `object`
 
-Defined in: [types.ts:181](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L181)
+Defined in: [types.ts:181](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L181)
 
 ## Type Parameters
 
@@ -30,7 +30,7 @@ Defined in: [types.ts:181](https://github.com/quojs/quojs/blob/40c7b880e4398df15
 
 > `optional` **dedupWindowMs**: `number`
 
-Defined in: [types.ts:215](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L215)
+Defined in: [types.ts:215](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L215)
 
 Time window in milliseconds for event deduplication.
 Events with identical fingerprints (channel + type + serialized payload)
@@ -50,7 +50,7 @@ This helps prevent double-firing in React Strict Mode.
 
 > `optional` **effects**: [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:204](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L204)
+Defined in: [types.ts:204](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L204)
 
 Optional side-effect handlers registered at construction time.
 Runs after reducers for every propagated event.
@@ -61,7 +61,7 @@ Runs after reducers for every propagated event.
 
 > `optional` **middleware**: [`MiddlewareInput`](MiddlewareInput.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:198](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L198)
+Defined in: [types.ts:198](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L198)
 
 Middleware chain executed before reducers/effects.
 Accepts either functions (legacy) or MiddlewareSpec objects (recommended).
@@ -73,7 +73,7 @@ If any middleware returns false (or resolves to false), the event will not propa
 
 > **name**: `string`
 
-Defined in: [types.ts:185](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L185)
+Defined in: [types.ts:185](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L185)
 
 Store name (used by DevTools to identify the instance).
 
@@ -83,7 +83,7 @@ Store name (used by DevTools to identify the instance).
 
 > **reducer**: `Record`\<`R`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
 
-Defined in: [types.ts:191](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L191)
+Defined in: [types.ts:191](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L191)
 
 Map of slice name → reducer spec.
 Each entry declares initial state, the reducer function, and the event targeting.

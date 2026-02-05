@@ -42,14 +42,16 @@ type AppEM = {
 
 ```typescript
 import type { ReducerSpec } from '@quojs/core';
+import { eventKeys } from '@quojs/core';
 
 const counterReducer: ReducerSpec<{ value: number }, AppEM> = {
   state: { value: 0 },
-  events: [
+  // v0.7.0+: Use `when` for event targeting (recommended)
+  when: { keys: eventKeys<AppEM>()([
     ['counter', 'increment'],
     ['counter', 'decrement'],
     ['counter', 'reset']
-  ],
+  ])},
   reducer: (state, event) => {
     switch (event.type) {
       case 'increment':

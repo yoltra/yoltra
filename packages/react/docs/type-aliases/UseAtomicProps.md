@@ -8,7 +8,7 @@
 
 > **UseAtomicProps**\<`R`, `S`\> = \{\<`R1`, `T`\>(`specs`, `selector`, `isEqual?`): `T`; \<`R1`, `T`\>(`specs`, `selector`, `isEqual?`): `T`; \}
 
-Defined in: [hooks/createQuoHooks.ts:43](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/createQuoHooks.ts#L43)
+Defined in: [hooks/createQuoHooks.ts:43](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/react/src/hooks/createQuoHooks.ts#L43)
 
 ## Type Parameters
 

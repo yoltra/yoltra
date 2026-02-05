@@ -35,6 +35,7 @@ Official React companion for **[@quojs/core](https://github.com/quojs/quojs/blob
 
 - 🎯 **Atomic Props** — `useAtomicProp` subscribes to exact paths (`'todos.items.0.title'`)
 - ⚡ **Zero Wasted Renders** — Only re-renders when subscribed paths actually change
+- 📡 **Event Subscriptions** — `useEvent` hook for reactive UI patterns (v0.7.0+)
 - 🔮 **Suspense Ready** — `useSuspenseAtomicProp` for data-fetching patterns
 - 🧩 **Concurrent Mode** — Fully compatible with React 18+ concurrent features
 - 🛡️ **TypeScript-First** — Excellent type inference and autocomplete
@@ -62,7 +63,7 @@ pnpm add @quojs/core @quojs/react
 
 ```typescript
 // store.ts
-import { createStore } from '@quojs/core';
+import { createStore, eventKeys } from '@quojs/core';
 
 export type AppEM = {
   counter: {
@@ -77,11 +78,12 @@ export const store = createStore({
   reducer: {
     counter: {
       state: { value: 0 },
-      events: [
+      // v0.7.0+: Use `when` for event targeting
+      when: { keys: eventKeys<AppEM>()([
         ['counter', 'increment'],
         ['counter', 'decrement'],
         ['counter', 'reset']
-      ],
+      ])},
       reducer: (state, event) => {
         switch (event.type) {
           case 'increment':
@@ -125,6 +127,7 @@ export const {
   useSelector,
   useAtomicProp,
   useAtomicProps,
+  useEvent,      // v0.7.0+
   shallowEqual,
 } = createQuoHooks<'counter', AppState, AppEM>(StoreContext);
 ```
@@ -343,6 +346,59 @@ const data = useSuspenseAtomicProps(
   }
 );
 ```
+
+---
+
+#### `useEvent(channel, type, handler, phase?)` (v0.7.0+)
+
+Subscribe to store events from components. Perfect for **reactive UI patterns** like showing notifications, triggering animations, or responding to rejected events.
+
+```tsx
+import { useEvent } from '@quojs/react';
+
+function SaveNotification() {
+  const [showToast, setShowToast] = useState(false);
+
+  // React to committed events (default)
+  useEvent('ui', 'save', (event, getState, emit, phase) => {
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  });
+
+  return showToast ? <Toast message="Saved!" /> : null;
+}
+
+// React to rejected events (middleware cancelled)
+function DeleteWarning() {
+  const [warning, setWarning] = useState('');
+
+  useEvent('ui', 'delete', (event, getState, emit, phase) => {
+    setWarning('Delete was blocked by permissions');
+  }, 'uncommitted');
+
+  return warning ? <Alert>{warning}</Alert> : null;
+}
+
+// React to ALL events (both committed and uncommitted)
+function EventLogger() {
+  useEvent('ui', 'action', (event, getState, emit, phase) => {
+    console.log(`Action ${phase}:`, event.type);
+  }, 'all');
+
+  return null;
+}
+```
+
+**Phases:**
+- `'committed'` (default) — Events that passed middleware and reached reducers
+- `'uncommitted'` — Events rejected by middleware
+- `'all'` — Both committed and uncommitted events
+
+**Use cases:**
+- 🔔 Notifications/toasts on save/delete
+- 🎨 Trigger animations on state changes
+- 📊 Analytics tracking
+- ⚠️ Show warnings when actions are blocked
 
 ---
 
@@ -571,7 +627,11 @@ See:
 
 ## Status
 
-**Release Candidate** — APIs are stable, used in production, minor changes possible before v1.0.
+**Release Candidate (v0.7.0)** — APIs are stable, used in production, minor changes possible before v1.0.
+
+**v0.7.0 Highlights:**
+- `useEvent` hook for reactive event subscriptions
+- Works with `createQuoHooks` factory for typed hooks
 
 ---
 

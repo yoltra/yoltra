@@ -8,7 +8,7 @@
 
 > **typedEvents**\<`EM`\>(`_`): \<`C`, `Evt`\>(`channel`, `events`) => readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
 
-Defined in: [store/Store.ts:1714](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/store/Store.ts#L1714)
+Defined in: [store/Store.ts:1714](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/store/Store.ts#L1714)
 
 Utility to define **typed** `(channel, events[])` definitions for reducer specs.
 

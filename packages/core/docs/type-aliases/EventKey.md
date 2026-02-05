@@ -8,7 +8,7 @@
 
 > **EventKey**\<`EM`\> = `{ [C in keyof EM & string]: [C, keyof EM[C] & string] }`\[keyof `EM` & `string`\]
 
-Defined in: [types.ts:47](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L47)
+Defined in: [types.ts:47](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L47)
 
 Canonical routing concept: a readonly tuple `[channel, type]` that uniquely identifies an event.
 

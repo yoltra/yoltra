@@ -8,7 +8,7 @@
 
 > **OneOrMany**\<`T`\> = `T` \| readonly `T`[]
 
-Defined in: [hooks/hooks.ts:56](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/hooks.ts#L56)
+Defined in: [hooks/hooks.ts:55](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/react/src/hooks/hooks.ts#L55)
 
 Accepts either a single value or a readonly array of that value.
 Useful for APIs that take one-or-many keys.

@@ -6,7 +6,7 @@
 
 # Interface: EventConsumerMeta\<T\>
 
-Defined in: [types.ts:840](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L840)
+Defined in: [types.ts:840](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L840)
 
 Metadata for event consumers (reducers, effects, middleware).
 Useful for debugging tools, DevTools integration, and introspection.
@@ -40,7 +40,7 @@ Consumer type discriminator.
 
 > `optional` **description**: `string`
 
-Defined in: [types.ts:848](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L848)
+Defined in: [types.ts:848](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L848)
 
 Brief one-liner description of what this consumer does
 
@@ -50,7 +50,7 @@ Brief one-liner description of what this consumer does
 
 > **name**: `string`
 
-Defined in: [types.ts:845](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L845)
+Defined in: [types.ts:845](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L845)
 
 Unique identifier for this consumer
 
@@ -60,6 +60,6 @@ Unique identifier for this consumer
 
 > **type**: `T`
 
-Defined in: [types.ts:842](https://github.com/quojs/quojs/blob/40c7b880e4398df15cb630b37a555ddd7d1624c7/packages/core/src/types.ts#L842)
+Defined in: [types.ts:842](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L842)
 
 Consumer type discriminator

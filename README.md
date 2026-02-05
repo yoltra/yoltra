@@ -7,21 +7,20 @@
 > | &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/README.md)&nbsp; |
 > &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/README.md)
 
-![Bundle size](https://badgen.net/bundlephobia/min/@quojs/core)
-![Bundle size](https://badgen.net/bundlephobia/minzip/@quojs/core)
-![Bundle size](https://badgen.net/bundlephobia/tree-shaking/@quojs/core)
-![Bundle size](https://badgen.net/bundlephobia/dependency-count/@quojs/core)
+![Bundle size](https://img.shields.io/bundlephobia/min/@quojs/core)
+![Bundle size](https://img.shields.io/bundlephobia/minzip/@quojs/core)
+![npm unpacked size](https://img.shields.io/npm/unpacked-size/@quojs/core)
 ![npm downloads](https://badgen.net/npm/dm/@quojs/core)
 ![License](https://img.shields.io/npm/l/@quojs/core)
 
-**Event-driven state management with atomic subscriptions.**  
+**Event-driven, strongly-typed state management with atomic subscriptions.**  
 Quo.js is a modern, async-first state container that combines **channel-based events**, **fine-grained reactivity**, and **native async support**—without the complexity of Redux Toolkit or the implicit magic of MobX.
 
 ---
 
 ## What is Quo.js?
 
-Quo.js is an **event-driven, async-first state container** designed to solve three core problems:
+Quo.js is an **event-driven, strongly-typed state container** designed to solve three core problems:
 
 ### 1. **Performance: Zero Unnecessary Re-renders**
 
@@ -42,7 +41,7 @@ const title = useAtomicProp({
 
 ### 2. **Async Complexity: Built-in, Not Bolted-on**
 
-Quo.js treats async as a first-class concern. Middleware and effects are `async` by default—no thunks, no sagas, no ceremony.
+Quo.js treats async as a first-class concern. Middleware and effects are `async` by **default**—no thunks, no sagas, no ceremony.
 
 ```typescript
 // Built-in async middleware
@@ -72,6 +71,7 @@ emit('ui', 'toast', message);           // UI events
 - 🎯 **Atomic Subscriptions** — Subscribe to exact state paths; only re-render when they change
 - ⚡ **Async-First** — Native async middleware + effects; no thunks/sagas required
 - 🗪 **Event-Driven** — Channel-based events with FIFO ordering guarantees
+- 📡 **Event Subscriptions** — React to events in components with `useEvent` hook (v0.7.0+)
 - 🛡️ **TypeScript-First** — Excellent type inference and autocomplete
 - 🧩 **Dynamic Reducers** — Add/remove state slices at runtime
 - 🌍 **Framework-agnostic** — We support React now, and we will support others in the future
@@ -175,7 +175,7 @@ export type AppEM = {
 
 ```typescript
 // store.ts
-import { createStore } from '@quojs/core';
+import { createStore, eventKeys } from '@quojs/core';
 import type { AppEM } from './types';
 
 export const store = createStore({
@@ -183,11 +183,12 @@ export const store = createStore({
   reducer: {
     todos: {
       state: { items: [] },
-      events: [
+      // Use `when` for event targeting (v0.7.0+)
+      when: { keys: eventKeys<AppEM>()([
         ['todos', 'add'],
         ['todos', 'toggle'],
         ['todos', 'delete']
-      ],
+      ])},
       reducer: (state, event) => {
         // Your reducer logic
       }
@@ -265,7 +266,7 @@ See the **[Developer Guide](https://github.com/quojs/quojs/blob/main/docs/en/DEV
 ## Status
 
 Quo.js is in **Release Candidate** stage:
-- ✅ APIs are stable (v0.5.0 terminology finalized)
+- ✅ APIs are stable (v0.7.0 — unified `when` matchers, event subscriptions)
 - ✅ TypeScript types are strict and comprehensive
 - ✅ Used in production applications
 - ⚠️ Minor APIs may still evolve before v1.0

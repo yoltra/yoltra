@@ -8,7 +8,7 @@
 
 > **shallowEqual**\<`T`\>(`a`, `b`): `boolean`
 
-Defined in: [hooks/hooks.ts:141](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/hooks.ts#L141)
+Defined in: [hooks/hooks.ts:140](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/react/src/hooks/hooks.ts#L140)
 
 Shallow object equality using `Object.is` per-key.
 
