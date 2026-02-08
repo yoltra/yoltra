@@ -6,7 +6,7 @@
 
 # Interface: EffectSpec\<S, EM\>
 
-Defined in: [types.ts:511](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L511)
+Defined in: [types.ts:511](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/types.ts#L511)
 
 Effect specification (stateless async event consumer).
 
@@ -58,7 +58,7 @@ Event map.
 
 > **effect**: [`EffectFunction`](../type-aliases/EffectFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:527](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L527)
+Defined in: [types.ts:527](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/types.ts#L527)
 
 Async effect handler: `(event, getState, emit) => void | Promise<void>`.
 
@@ -68,7 +68,7 @@ Async effect handler: `(event, getState, emit) => void | Promise<void>`.
 
 > `optional` **events**: readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
 
-Defined in: [types.ts:522](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L522)
+Defined in: [types.ts:522](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/types.ts#L522)
 
 List of EventKeys `[channel, type]` that this effect responds to.
 
@@ -82,7 +82,7 @@ Use `when: { keys: [...] }` instead for better type inference.
 
 > `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"effect"`\>
 
-Defined in: [types.ts:532](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L532)
+Defined in: [types.ts:532](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/types.ts#L532)
 
 Optional metadata for debugging tools and DevTools integration.
 
@@ -92,7 +92,7 @@ Optional metadata for debugging tools and DevTools integration.
 
 > `optional` **when**: [`When`](../type-aliases/When.md)\<`EM`\>
 
-Defined in: [types.ts:516](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L516)
+Defined in: [types.ts:516](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/types.ts#L516)
 
 Event targeting using the unified `When` matcher.
 Preferred over `events` for new code.

@@ -8,7 +8,7 @@
 
 > **EffectFunction**\<`S`, `EM`\> = (`event`, `getState`, `emit`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [types.ts:625](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/types.ts#L625)
+Defined in: [types.ts:625](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/types.ts#L625)
 
 Effect handler: runs AFTER reducers, sees the final state.
 

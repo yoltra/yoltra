@@ -24,12 +24,12 @@ describe("createQuoHooks", () => {
       const emit = useEmit();
       const value = useSelector((st) => st.counter.value);
 
-      const doubled = useAtomicProp<R, RootState, R, "counter.value">({
+      const doubled = useAtomicProp({
         reducer: "counter",
-        property: "counter.value" as any, // using dotted path relative to state slice in this variant
+        property: "value",
       });
 
-      const total = useAtomicProps<R, RootState, number>(
+      const total = useAtomicProps(
         [{ reducer: "counter", property: "value" }],
         (st) => st.counter.value,
       );
@@ -39,7 +39,7 @@ describe("createQuoHooks", () => {
           <span data-testid="store-ok">{s === store ? "yes" : "no"}</span>
           <span data-testid="emit-eq">{emit === store.emit ? "yes" : "no"}</span>
           <span data-testid="value">{value}</span>
-          <span data-testid="doubled">{(doubled as any) * 2}</span>
+          <span data-testid="doubled">{doubled * 2}</span>
           <span data-testid="total">{total}</span>
         </>
       );

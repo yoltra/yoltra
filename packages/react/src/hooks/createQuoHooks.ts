@@ -13,9 +13,8 @@ import type {
   WithGlob,
   Dotted,
   EventPhase,
+  PathValue,
 } from "@quojs/core";
-
-import { PathValue } from "./hooks";
 
 export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
   <R1 extends R, P extends Dotted<S[R1]>>(spec: { reducer: R1; property: P }): PathValue<

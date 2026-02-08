@@ -8,6 +8,7 @@ packages:
   '@quojs/*':
     access: $all
     publish: $authenticated
+    proxy: []  
   '**':
     access: $all
     publish: $authenticated

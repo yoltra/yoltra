@@ -6,7 +6,7 @@
 
 # Class: EventBus\<EM\>
 
-Defined in: [eventBus/EventBus.ts:48](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/eventBus/EventBus.ts#L48)
+Defined in: [eventBus/EventBus.ts:48](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/eventBus/EventBus.ts#L48)
 
 Minimal, synchronous pub/sub event bus keyed by **channel** and **type**.
 
@@ -70,7 +70,7 @@ type EM = {
 
 > **clear**(): `void`
 
-Defined in: [eventBus/EventBus.ts:188](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/eventBus/EventBus.ts#L188)
+Defined in: [eventBus/EventBus.ts:188](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/eventBus/EventBus.ts#L188)
 
 Clears **all** listeners across all channels/types.
 
@@ -93,7 +93,7 @@ afterEach(() => bus.clear());
 
 > **emit**\<`C`, `T`\>(`channel`, `type`, `payload`): `void`
 
-Defined in: [eventBus/EventBus.ts:155](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/eventBus/EventBus.ts#L155)
+Defined in: [eventBus/EventBus.ts:155](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/eventBus/EventBus.ts#L155)
 
 Emits an event to all subscribers of the exact `(channel, type)`.
 
@@ -150,7 +150,7 @@ bus.emit('ui', 'toggle', false);
 
 > **off**\<`C`, `T`\>(`channel`, `type`, `handler`): `void`
 
-Defined in: [eventBus/EventBus.ts:119](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/eventBus/EventBus.ts#L119)
+Defined in: [eventBus/EventBus.ts:119](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/eventBus/EventBus.ts#L119)
 
 Removes a specific handler previously added with [\`on\`](#on).
 
@@ -208,7 +208,7 @@ bus.off('math', 'inc', h);
 
 > **on**\<`C`, `T`\>(`channel`, `type`, `handler`): () => `void`
 
-Defined in: [eventBus/EventBus.ts:77](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/eventBus/EventBus.ts#L77)
+Defined in: [eventBus/EventBus.ts:77](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/eventBus/EventBus.ts#L77)
 
 Subscribes a handler to an exact `(channel, type)`.
 

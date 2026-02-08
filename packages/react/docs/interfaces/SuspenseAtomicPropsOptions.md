@@ -6,7 +6,7 @@
 
 # Interface: SuspenseAtomicPropsOptions\<T, S\>
 
-Defined in: [hooks/suspense.ts:183](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/react/src/hooks/suspense.ts#L183)
+Defined in: [react/src/hooks/suspense.ts:183](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/suspense.ts#L183)
 
 Options for [useSuspenseAtomicProps](../functions/useSuspenseAtomicProps.md).
 
@@ -26,7 +26,7 @@ Options for [useSuspenseAtomicProps](../functions/useSuspenseAtomicProps.md).
 
 > `optional` **key**: `string`
 
-Defined in: [hooks/suspense.ts:186](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/react/src/hooks/suspense.ts#L186)
+Defined in: [react/src/hooks/suspense.ts:186](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/suspense.ts#L186)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [hooks/suspense.ts:186](https://github.com/quojs/quojs/blob/3a7e48ef
 
 > **load**: (`state`) => `T` \| `Promise`\<`T`\>
 
-Defined in: [hooks/suspense.ts:184](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/react/src/hooks/suspense.ts#L184)
+Defined in: [react/src/hooks/suspense.ts:184](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/suspense.ts#L184)
 
 #### Parameters
 
@@ -52,4 +52,4 @@ Defined in: [hooks/suspense.ts:184](https://github.com/quojs/quojs/blob/3a7e48ef
 
 > `optional` **staleTime**: `number`
 
-Defined in: [hooks/suspense.ts:185](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/react/src/hooks/suspense.ts#L185)
+Defined in: [react/src/hooks/suspense.ts:185](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/suspense.ts#L185)

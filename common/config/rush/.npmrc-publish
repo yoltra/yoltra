@@ -1,6 +1,5 @@
-registry=https://registry.npmjs.org/
+registry=http://localhost:4873/
 @quojs/:registry=http://localhost:4873/
-always-auth=true
 # token is provided at runtime via env var (NEVER check literal tokens into git)
 # see: rush .npmrc-publish docs
 //registry.npmjs.org/:_authToken=${NPM_TOKEN}

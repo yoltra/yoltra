@@ -8,7 +8,7 @@
 
 > **freezeState**\<`T`\>(`obj`, `seen`): [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`T`\>
 
-Defined in: [utils/immutability.ts:52](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/core/src/utils/immutability.ts#L52)
+Defined in: [utils/immutability.ts:52](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/utils/immutability.ts#L52)
 
 Deep-freezes a value **in place** and returns it as [\`DeepReadonly\<T\>\`](../type-aliases/DeepReadonly.md).
 

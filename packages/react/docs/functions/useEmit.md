@@ -8,7 +8,7 @@
 
 > **useEmit**\<`EM`\>(): `Emit`\<`EM`\>
 
-Defined in: [hooks/hooks.ts:125](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/react/src/hooks/hooks.ts#L125)
+Defined in: [react/src/hooks/hooks.ts:104](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/hooks.ts#L104)
 
 Returns the store's `emit` function (stable reference).
 

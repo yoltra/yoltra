@@ -13,31 +13,10 @@ import type {
   WithGlob,
   DeepReadonly,
   EventPhase,
+  PathValue,
 } from "@quojs/core";
 
-/**
- * Resolves the value type at a **dotted path** `P` inside object/array `T`.
- * Supports numeric segments for arrays (e.g., `"items.0.title"`).
- *
- * @typeParam T - Root type to index into.
- * @typeParam P - Dotted path string.
- *
- * @example
- * ```ts
- * type S = { todos: Array<{ title: string; done: boolean }> };
- * type T1 = PathValue<S['todos'], '0.title'>; // string
- * type T2 = PathValue<S, 'todos.0'>;          // { title: string; done: boolean }
- * ```
- *
- * @public
- */
-export type PathValue<T, P extends string> = P extends `${infer K}.${infer Rest}`
-  ? K extends keyof T
-    ? PathValue<T[K], Rest>
-    : never
-  : P extends keyof T
-    ? T[P]
-    : never;
+export type { PathValue };
 
 /**
  * Accepts either a single value or a readonly array of that value.

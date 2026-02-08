@@ -8,7 +8,7 @@
 
 > **useEvent**\<`EM`, `C`, `T`\>(`channel`, `type`, `handler`, `phase`): `void`
 
-Defined in: [hooks/hooks.ts:525](https://github.com/quojs/quojs/blob/3a7e48ef6dc2bf6db713ff04100a2a0e1ee72ff5/packages/react/src/hooks/hooks.ts#L525)
+Defined in: [react/src/hooks/hooks.ts:504](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/hooks.ts#L504)
 
 Subscribe to store events from a React component.
 
