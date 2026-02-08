@@ -15,6 +15,7 @@ import type {
   EventPhase,
   PathValue,
 } from "@quojs/core";
+import { hasWildcard, normalizePath, getAtPath } from "../utils/path";
 
 export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
   <R1 extends R, P extends Dotted<S[R1]>>(spec: { reducer: R1; property: P }): PathValue<
@@ -41,15 +42,15 @@ export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
 
 export type UseAtomicProps<R extends string, S extends Record<R, any>> = {
   <R1 extends R, T>(
-    specs: Array<{ reducer: R1; property: string | readonly string[] }>,
-    selector: (state: DeepReadonly<S>) => T,
-    isEqual?: (a: T, b: T) => boolean,
-  ): T;
-  <R1 extends R, T>(
     specs: Array<{
       reducer: R1;
       property: WithGlob<Dotted<S[R1]>> | readonly WithGlob<Dotted<S[R1]>>[];
     }>,
+    selector: (state: DeepReadonly<S>) => T,
+    isEqual?: (a: T, b: T) => boolean,
+  ): T;
+  <R1 extends R, T>(
+    specs: Array<{ reducer: R1; property: string | readonly string[] }>,
     selector: (state: DeepReadonly<S>) => T,
     isEqual?: (a: T, b: T) => boolean,
   ): T;
@@ -70,18 +71,6 @@ export type UseEvent<EM extends EventMapBase, S> = <
   phase?: EventPhase,
 ) => void;
 
-const hasWildcard = (p: string) => p.includes("*");
-const normalizePath = (p: string) => p.replace(/^\./, "");
-const splitPath = (p: string) => normalizePath(p).split(".").filter(Boolean);
-const getAtPath = (obj: unknown, path: string): unknown => {
-  if (!path) return obj;
-  let cur: any = obj;
-  for (const seg of splitPath(path)) {
-    if (cur == null) return undefined;
-    cur = cur[seg as any];
-  }
-  return cur;
-};
 
 export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T) {
   if (Object.is(a, b)) return true;

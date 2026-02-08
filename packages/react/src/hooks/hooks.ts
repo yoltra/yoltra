@@ -15,6 +15,7 @@ import type {
   EventPhase,
   PathValue,
 } from "@quojs/core";
+import { hasWildcard, normalizePath, getAtPath } from "../utils/path";
 
 export type { PathValue };
 
@@ -32,34 +33,6 @@ export type { PathValue };
  * @public
  */
 export type OneOrMany<T> = T | readonly T[];
-
-/** @internal */
-function hasWildcard(p: string): boolean {
-  return p.includes("*");
-}
-/** @internal */
-function normalizePath(p: string): string {
-  return p.replace(/^\./, "");
-}
-/** @internal */
-function splitPath(p: string): string[] {
-  return normalizePath(p).split(".").filter(Boolean);
-}
-/**
- * Reads a dotted path from an object; returns `undefined` when a segment is missing.
- * @internal
- */
-function getAtPath(obj: any, path: string): any {
-  if (!path) return obj;
-
-  let cur = obj;
-  for (const seg of splitPath(path)) {
-    if (cur == null) return undefined;
-    cur = cur[seg as any];
-  }
-
-  return cur;
-}
 
 /**
  * Returns the current {@link StoreInstance} from {@link StoreContext}.
@@ -369,12 +342,12 @@ export function useAtomicProp<R extends string, S extends Record<R, any>, T = an
  * @public
  */
 export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
-  specs: Array<{ reducer: R; property: OneOrMany<string> }>,
+  specs: Array<{ reducer: R; property: OneOrMany<WithGlob<Dotted<S[R]>>> }>,
   selector: (state: DeepReadonly<S>) => T,
   isEqual?: (a: T, b: T) => boolean,
 ): T;
 export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
-  specs: Array<{ reducer: R; property: OneOrMany<WithGlob<Dotted<S[R]>>> }>,
+  specs: Array<{ reducer: R; property: OneOrMany<string> }>,
   selector: (state: DeepReadonly<S>) => T,
   isEqual?: (a: T, b: T) => boolean,
 ): T;

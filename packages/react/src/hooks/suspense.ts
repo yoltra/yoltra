@@ -6,30 +6,7 @@ import { useMemo, useSyncExternalStore } from "react";
 import type { EventMapBase, StoreInstance, Dotted, WithGlob } from "@quojs/core";
 
 import { useStore } from "./hooks";
-import { warnOnce } from "../utils/warnOnce";
-
-/** @internal */
-function hasWildcard(p: string): boolean {
-  return p.includes("*");
-}
-/** @internal */
-function normalizePath(p: string): string {
-  return p.replace(/^\./, "");
-}
-/** @internal */
-function splitPath(p: string): string[] {
-  return normalizePath(p).split(".").filter(Boolean);
-}
-/** @internal */
-function getAtPath(obj: any, path: string): any {
-  if (!path) return obj;
-  let cur = obj;
-  for (const seg of splitPath(path)) {
-    if (cur == null) return undefined;
-    cur = cur[seg as any];
-  }
-  return cur;
-}
+import { hasWildcard, normalizePath, getAtPath } from "../utils/path";
 
 /** @internal */
 type CacheKey = string;
@@ -126,16 +103,16 @@ export interface SuspenseAtomicPropOptions<T, S> {
  * Suspense version of a single-path selector.
  * @public
  */
-export function useSuspenseAtomicProp<R extends string, S extends Record<R, any>, T>(
-  storeSpec: { reducer: R; property: string },
-  options: SuspenseAtomicPropOptions<T, S>,
-): T;
 export function useSuspenseAtomicProp<
   R extends string,
   S extends Record<R, any>,
   P extends Dotted<S[R]>,
   T,
 >(storeSpec: { reducer: R; property: P }, options: SuspenseAtomicPropOptions<T, S>): T;
+export function useSuspenseAtomicProp<R extends string, S extends Record<R, any>, T>(
+  storeSpec: { reducer: R; property: string },
+  options: SuspenseAtomicPropOptions<T, S>,
+): T;
 export function useSuspenseAtomicProp<R extends string, S extends Record<R, any>, T>(
   storeSpec: { reducer: R; property: string },
   options: SuspenseAtomicPropOptions<T, S>,
@@ -191,14 +168,14 @@ export interface SuspenseAtomicPropsOptions<T, S> {
  * @public
  */
 export function useSuspenseAtomicProps<R extends string, S extends Record<R, any>, T>(
-  specs: Array<{ reducer: R; property: string | readonly string[] }>,
-  options: SuspenseAtomicPropsOptions<T, S>,
-): T;
-export function useSuspenseAtomicProps<R extends string, S extends Record<R, any>, T>(
   specs: Array<{
     reducer: R;
     property: Dotted<S[R]> | WithGlob<Dotted<S[R]>> | ReadonlyArray<WithGlob<Dotted<S[R]>>>;
   }>,
+  options: SuspenseAtomicPropsOptions<T, S>,
+): T;
+export function useSuspenseAtomicProps<R extends string, S extends Record<R, any>, T>(
+  specs: Array<{ reducer: R; property: string | readonly string[] }>,
   options: SuspenseAtomicPropsOptions<T, S>,
 ): T;
 export function useSuspenseAtomicProps<R extends string, S extends Record<R, any>, T>(
