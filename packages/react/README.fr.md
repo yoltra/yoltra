@@ -1,4 +1,4 @@
-# Liaisons React pour Quo.js
+# @quojs/react
 
 > [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; |
 > &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; |
@@ -10,36 +10,14 @@
 ![Taille du bundle](https://badgen.net/bundlephobia/tree-shaking/@quojs/react)
 ![Taille du bundle](https://badgen.net/bundlephobia/dependency-count/@quojs/react)
 ![Version npm](https://badgen.net/npm/v/@quojs/react)
-![Téléchargements npm](https://badgen.net/npm/dm/@quojs/react)
+![Telechargements npm](https://badgen.net/npm/dm/@quojs/react)
 ![Licence](https://badgen.net/npm/license/@quojs/react)
 
-**Bindings React pour Quo.js avec abonnements atomiques.**
+**Hooks React pour [Quo.js](https://github.com/quojs/quojs/blob/main/README.md) avec abonnements fins aux chemins.**
 
-`@quojs/react` fournit des hooks et composants React pour Quo.js, avec **contrôle de re-rendu à granularité fine**, **support de Suspense** et **compatibilité avec Concurrent Mode**.
+Abonnez-vous a `"items.0.title"` ou `"items.*.done"` -- le composant ne se re-rend que lorsque ce chemin exact change. Pas de selecteurs, pas de memoisation, pas d'optimisation manuelle.
 
-**Zéro re-rendus inutiles par défaut.**
-
----
-
-## Qu'est-ce que @quojs/react ?
-
-Compagnon officiel de React pour **[@quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.fr.md)**—un conteneur d'état basé sur les événements avec :
-
-- **Abonnements atomiques** — Abonnez-vous à des chemins d'état exacts, ne re-rend que lorsqu'ils changent
-- **Support natif pour async** — Middleware et effects intégrés, sans thunks/sagas
-- **Événements basés sur des canaux** — Organisez les événements par canal pour éviter les collisions de noms
-- **Garanties d'immuabilité** — Application de deep-freeze avec détection précise des changements
-
----
-
-## Fonctionnalités Principales
-
-- 🎯 **Props Atomiques** — `useAtomicProp` s'abonne à des chemins exacts (`'todos.items.0.title'`)
-- ⚡ **Zéro Rendus Gaspillés** — Re-rend uniquement lorsque les chemins abonnés changent réellement
-- 🔮 **Prêt pour Suspense** — `useSuspenseAtomicProp` pour les modèles de récupération de données
-- 🧩 **Concurrent Mode** — Entièrement compatible avec les fonctionnalités concurrentes de React 18+
-- 🛡️ **TypeScript-First** — Excellente inférence de types et autocomplétion
-- 📌 **Léger** — ~7KB (minifié + gzippé)
+[Voir la comparaison des flamegraphs (Redux vs Quo.js).](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md)
 
 ---
 
@@ -47,78 +25,63 @@ Compagnon officiel de React pour **[@quojs/core](https://github.com/quojs/quojs/
 
 ```bash
 npm install @quojs/core @quojs/react
-# ou
-yarn add @quojs/core @quojs/react
-# ou
-pnpm add @quojs/core @quojs/react
 ```
 
-**Dépendances peer :** React 18+ (testé avec React 18 et 19)
+**Dependances peer :** React 18+
 
 ---
 
-## Démarrage Rapide
+## Configuration avec `createQuoHooks` (recommande)
 
-### 1. Créez Votre Store
+`createQuoHooks` lie des hooks entierement types au contexte de votre store. Tous les parametres de type sont inferes -- pas besoin de generiques explicites dans les composants.
+
+### 1. Definissez les types et le store
 
 ```typescript
 // store.ts
-import { createStore } from '@quojs/core';
+import { createStore, eventKeys } from '@quojs/core';
 
 export type AppEM = {
-  counter: {
-    increment: number;
-    decrement: number;
-    reset: null;
-  };
+  counter: { increment: number; decrement: number; reset: null };
 };
 
-export const store = createStore({
+export type AppState = { counter: { value: number } };
+
+export const store = createStore<AppState, AppEM>({
   name: 'App',
   reducer: {
     counter: {
       state: { value: 0 },
-      events: [
+      when: { keys: eventKeys<AppEM>()([
         ['counter', 'increment'],
         ['counter', 'decrement'],
-        ['counter', 'reset']
-      ],
+        ['counter', 'reset'],
+      ])},
       reducer: (state, event) => {
         switch (event.type) {
-          case 'increment':
-            return { value: state.value + event.payload };
-          case 'decrement':
-            return { value: state.value - event.payload };
-          case 'reset':
-            return { value: 0 };
-          default:
-            return state;
+          case 'increment': return { value: state.value + event.payload };
+          case 'decrement': return { value: state.value - event.payload };
+          case 'reset':     return { value: 0 };
+          default:          return state;
         }
-      }
-    }
-  }
+      },
+    },
+  },
 });
-
-export type AppStore = typeof store;
 ```
 
-### 2. Créez le Contexte du Store
-
-```typescript
-// StoreContext.ts
-import { createContext } from 'react';
-import type { AppStore } from './store';
-
-export const StoreContext = createContext<AppStore | null>(null);
-```
-
-### 3. Créez des Hooks Typés
+### 2. Creez des hooks types
 
 ```typescript
 // hooks.ts
+import { createContext } from 'react';
 import { createQuoHooks } from '@quojs/react';
-import { StoreContext } from './StoreContext';
-import type { AppEM } from './store';
+import type { StoreInstance } from '@quojs/core';
+import type { AppState, AppEM } from './store';
+
+export const AppStoreContext = createContext<
+  StoreInstance<'counter', AppState, AppEM> | null
+>(null);
 
 export const {
   useStore,
@@ -126,79 +89,148 @@ export const {
   useSelector,
   useAtomicProp,
   useAtomicProps,
+  useEvent,
   shallowEqual,
-} = createQuoHooks<'counter', AppState, AppEM>(StoreContext);
+} = createQuoHooks(AppStoreContext);
 ```
 
-### 4. Fournissez le Store
+### 3. Fournissez et utilisez
 
 ```tsx
 // App.tsx
-import { StoreProvider } from '@quojs/react';
 import { store } from './store';
-import { Counter } from './Counter';
+import { AppStoreContext, useAtomicProp, useEmit } from './hooks';
 
-export function App() {
-  return (
-    <StoreProvider store={store}>
-      <Counter />
-    </StoreProvider>
-  );
-}
-```
-
-### 5. Utilisez les Hooks dans les Composants
-
-```tsx
-// Counter.tsx
-import { useAtomicProp, useEmit } from './hooks';
-
-export function Counter() {
-  // Re-rend uniquement lorsque counter.value change
+function Counter() {
   const value = useAtomicProp({ reducer: 'counter', property: 'value' });
   const emit = useEmit();
 
   return (
     <div>
-      <h1>Compteur : {value}</h1>
+      <h1>Count: {value}</h1>
       <button onClick={() => emit('counter', 'increment', 1)}>+</button>
       <button onClick={() => emit('counter', 'decrement', 1)}>-</button>
-      <button onClick={() => emit('counter', 'reset', null)}>Réinitialiser</button>
+      <button onClick={() => emit('counter', 'reset', null)}>Reset</button>
     </div>
   );
 }
-```
 
----
-
-## Référence de l'API
-
-### Composants
-
-#### `<StoreProvider>`
-
-Fournit le store Quo.js aux composants React via le contexte.
-
-```tsx
-import { StoreProvider } from '@quojs/react';
-import { store } from './store';
-
-function App() {
+export function App() {
   return (
-    <StoreProvider store={store}>
-      <YourApp />
-    </StoreProvider>
+    <AppStoreContext.Provider value={store}>
+      <Counter />
+    </AppStoreContext.Provider>
   );
 }
 ```
 
 ---
 
-### Hooks
+## API des hooks
 
-#### `useStore()`
+### `useAtomicProp({ reducer, property }, map?, isEqual?)`
 
-Retourne l'instance du store.
+Selecteur fin sur un seul chemin. Ne se re-rend que lorsque le chemin specifie change.
+
+```tsx
+// Chemin exact -- se re-rend lorsque items[0].title change
+const title = useAtomicProp({
+  reducer: 'todos',
+  property: 'items.0.title',
+});
+
+// Avec mapper -- deriver une valeur depuis le chemin
+const count = useAtomicProp(
+  { reducer: 'todos', property: 'items' },
+  (items) => items.length,
+);
+
+// Pattern wildcard -- se re-rend lorsque n'importe quel element change
+const allTitles = useAtomicProp(
+  { reducer: 'todos', property: 'items.**' },
+  (state) => state.items.map(t => t.title),
+  shallowEqual,
+);
+```
+
+**Patterns supportes :**
+- `"items.0.title"` -- chemin exact (y compris les indices de tableau numeriques)
+- `"items.*.title"` -- `*` correspond a un segment
+- `"items.**"` -- `**` correspond a zero ou plusieurs segments
+
+---
+
+### `useAtomicProps(specs, selector, isEqual?)`
+
+Selecteur multi-chemins. S'abonne a plusieurs chemins et recalcule lorsqu'un chemin change.
+
+```tsx
+const filtered = useAtomicProps(
+  [
+    { reducer: 'todos', property: 'items.**' },
+    { reducer: 'filter', property: 'q' },
+  ],
+  (state) => state.todos.items.filter(
+    item => item.title.includes(state.filter.q)
+  ),
+  shallowEqual,
+);
+```
+
+---
+
+### `useEvent(channel, type, handler, phase?)`
+
+S'abonne aux evenements du store depuis un composant. N'affecte pas le flux d'evenements -- fire-and-forget.
+
+```tsx
+// Evenements confirmes (par defaut) -- evenements ayant passe le middleware
+useEvent('ui', 'save', (event) => {
+  showToast('Saved!');
+});
+
+// Evenements non confirmes -- evenements rejetes par le middleware
+useEvent('ui', 'delete', (event) => {
+  showToast('Delete was blocked by permissions');
+}, 'uncommitted');
+
+// Tous les evenements -- distinguer par phase
+useEvent('ui', 'action', (event, getState, emit, phase) => {
+  console.log(`Action ${phase}:`, event.type);
+}, 'all');
+```
+
+**Phases :**
+- `'committed'` (par defaut) -- evenements ayant passe le middleware et atteint les reducers
+- `'uncommitted'` -- evenements rejetes par le middleware
+- `'all'` -- les deux, avec le parametre `phase` pour distinguer
+
+---
+
+### `useEmit()`
+
+Retourne la fonction `emit` typee du store (reference stable).
+
+```tsx
+const emit = useEmit();
+await emit('counter', 'increment', 1);
+```
+
+---
+
+### `useSelector(selector, isEqual?)`
+
+Selecteur a granularite grossiere via `useSyncExternalStore`. Se re-rend lorsque la valeur selectionnee change.
+
+```tsx
+const count = useSelector((state) => state.counter.value);
+```
+
+---
+
+### `useStore()`
+
+Retourne l'instance du store. Leve une erreur si appele en dehors d'un provider.
 
 ```tsx
 const store = useStore();
@@ -207,379 +239,150 @@ const state = store.getState();
 
 ---
 
-#### `useEmit()`
+## Hooks Suspense
 
-Retourne la fonction `emit` typée.
+### `useSuspenseAtomicProp(spec, options)`
 
-```tsx
-const emit = useEmit();
-
-// Émettez des événements (entièrement typé)
-await emit('counter', 'increment', 1);
-await emit('todos', 'add', { id: '1', title: 'Acheter du lait' });
-```
-
-**Remplace :** `useDispatch()` (supprimé dans la v0.5.0+)
-
----
-
-#### `useSelector(selector, isEqual?)`
-
-Sélectionne l'état dérivé via une fonction de sélection.
+Version compatible Suspense de `useAtomicProp`. Lance une promesse pendant le chargement, capturee par la limite `<Suspense>` la plus proche.
 
 ```tsx
-const count = useSelector((state) => state.counter.value);
-
-// Avec égalité personnalisée
-import { shallowEqual } from './hooks';
-
-const todos = useSelector(
-  (state) => state.todos.items,
-  shallowEqual
-);
-```
-
-**Re-rend :** Lorsque la valeur sélectionnée change (selon `isEqual`)
-
----
-
-#### `useAtomicProp({ reducer, property })`
-
-**La fonctionnalité phare.** S'abonne à un chemin d'état spécifique—re-rend uniquement lorsque ce chemin exact change.
-
-```tsx
-// Re-rend uniquement lorsque items[0].title change
-const title = useAtomicProp({ 
-  reducer: 'todos', 
-  property: 'items.0.title' 
-});
-
-// Avec fonction mapper
-const count = useAtomicProp(
-  { reducer: 'todos', property: 'items' },
-  (items) => items.length
-);
-
-// Modèles wildcard
-const allTitles = useAtomicProp(
-  { reducer: 'todos', property: 'items.*.title' },
-  (state) => state.items.map(t => t.title)
-);
-```
-
-**Avantages :**
-- ✅ Zéro re-rendus inutiles
-- ✅ Aucune optimisation manuelle requise
-- ✅ Fonctionne avec des chemins profonds et des wildcards
-
----
-
-#### `useAtomicProps(specs, selector, isEqual?)`
-
-S'abonne à plusieurs chemins, recalcule le sélecteur lorsque l'un change.
-
-```tsx
-const filtered = useAtomicProps(
-  [
-    { reducer: 'todos', property: 'items.**' },
-    { reducer: 'todos', property: 'filter' }
-  ],
-  (state) => {
-    return state.todos.items.filter(
-      item => item.status === state.todos.filter
-    );
-  },
-  shallowEqual
-);
-```
-
-**Cas d'usage :** État dérivé qui dépend de plusieurs slices
-
----
-
-#### `useSuspenseAtomicProp({ reducer, property }, options)`
-
-Version activée pour Suspense de `useAtomicProp`.
-
-```tsx
-const user = useSuspenseAtomicProp(
-  { reducer: 'user', property: 'profile' },
-  {
-    load: async (profile) => {
-      if (!profile) {
-        const res = await fetch('/api/user');
-        return res.json();
-      }
-      return profile;
+function UserName({ userId }: { userId: string }) {
+  const name = useSuspenseAtomicProp(
+    { reducer: 'users', property: `byId.${userId}.name` },
+    {
+      load: async (name, slice) => name ?? (await fetchUser(userId)).name,
+      staleTime: 30_000,
     },
-    staleTime: 60000, // 1 minute
-  }
-);
+  );
+  return <span>{name}</span>;
+}
 
-// Le composant se suspend pendant le chargement
+// Utilisation
+<Suspense fallback={<Spinner />}>
+  <UserName userId="123" />
+</Suspense>
 ```
 
-**Fonctionnalités :**
-- Gestion automatique du cache
-- Temps d'obsolescence configurable
-- Fonctionne avec les limites `<Suspense>`
+### `useSuspenseAtomicProps(specs, options)`
 
----
-
-#### `useSuspenseAtomicProps(specs, options)`
-
-Version activée pour Suspense de `useAtomicProps`.
+Selecteur Suspense multi-chemins.
 
 ```tsx
-const data = useSuspenseAtomicProps(
+const stats = useSuspenseAtomicProps(
   [
-    { reducer: 'user', property: 'id' },
-    { reducer: 'posts', property: 'list' }
+    { reducer: 'orders', property: 'items.**' },
+    { reducer: 'users', property: 'active' },
   ],
-  {
-    load: async (state) => {
-      const res = await fetch(`/api/posts?user=${state.user.id}`);
-      return res.json();
-    }
-  }
+  { load: async (state) => computeDashboardStats(state) },
 );
 ```
 
----
+### Utilitaires de cache
 
-### Utilitaires de Suspense
+```typescript
+import {
+  invalidateAtomicProp,
+  invalidateAtomicPropsByReducer,
+  clearSuspenseCache,
+} from '@quojs/react';
 
-#### `invalidateAtomicProp(reducer, property, key?)`
+// Invalider le cache d'un chemin specifique
+invalidateAtomicProp('users', 'byId.123.name');
 
-Invalide le cache pour une propriété spécifique.
+// Invalider toutes les entrees de cache pour un reducer
+invalidateAtomicPropsByReducer('users');
 
-```tsx
-import { invalidateAtomicProp } from '@quojs/react';
-
-// Après une mutation
-await emit('user', 'update', newData);
-invalidateAtomicProp('user', 'profile');
-```
-
----
-
-#### `invalidateAtomicPropsByReducer(reducer)`
-
-Invalide toutes les entrées de cache pour un reducer.
-
-```tsx
-import { invalidateAtomicPropsByReducer } from '@quojs/react';
-
-invalidateAtomicPropsByReducer('todos');
-```
-
----
-
-#### `clearSuspenseCache()`
-
-Efface tout le cache de Suspense.
-
-```tsx
-import { clearSuspenseCache } from '@quojs/react';
-
+// Tout effacer
 clearSuspenseCache();
 ```
 
 ---
 
-## Comparaison des Performances
+## `shallowEqual`
 
-### Redux / Zustand (Granularité grossière)
+Comparateur d'egalite superficielle d'objets. Utilisez-le comme argument `isEqual` lorsque votre valeur derivee est un objet simple :
 
 ```tsx
-// ❌ Re-rend lorsque N'IMPORTE QUELLE tâche change
-const todos = useSelector(state => state.todos.items);
-
-return <div>{todos.map(todo => ...)}</div>;
+const todos = useAtomicProp(
+  { reducer: 'todos', property: 'items.**' },
+  (state) => state.items.map(t => ({ id: t.id, title: t.title })),
+  shallowEqual,
+);
 ```
 
-**Problème :** Tout l'arbre de composants re-rend à chaque changement de tâche.
+---
 
-### Quo.js (Granularité fine)
+## Performance : avant et apres
+
+### Avant (granularite grossiere)
 
 ```tsx
-// ✅ Re-rend uniquement lorsque CETTE tâche spécifique change
-function TodoItem({ id }) {
-  const title = useAtomicProp({ 
-    reducer: 'todos', 
-    property: `items.${id}.title` 
+// Chaque TodoItem se re-rend lorsque N'IMPORTE QUEL todo change
+function TodoList() {
+  const todos = useSelector(state => state.todos.items);
+  return todos.map(todo => <TodoItem key={todo.id} todo={todo} />);
+}
+```
+
+### Apres (granularite fine avec Quo.js)
+
+```tsx
+// Chaque TodoItem se re-rend UNIQUEMENT lorsque ses propres donnees changent
+function TodoItem({ index }: { index: number }) {
+  const title = useAtomicProp({
+    reducer: 'todos',
+    property: `items.${index}.title`,
   });
-  
-  return <div>{title}</div>;
+  const done = useAtomicProp({
+    reducer: 'todos',
+    property: `items.${index}.done`,
+  });
+  return <div className={done ? 'done' : ''}>{title}</div>;
 }
 ```
 
-**Résultat :** Zéro rendus gaspillés.
-
-[Voir la comparaison des flamegraphs →](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.fr.md)
+[Voir la comparaison complete des flamegraphs.](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md)
 
 ---
 
-## Support TypeScript
+## Compatibilite React 18+
 
-Les hooks React de Quo.js sont entièrement typés :
-
-```typescript
-type AppEM = {
-  todos: {
-    add: { id: string; title: string };
-    toggle: { id: string };
-  };
-};
-
-const emit = useEmit<AppEM>();
-
-// ✅ L'autocomplétion fonctionne
-await emit('todos', 'add', { 
-  id: '1',
-  title: 'Acheter du lait'
-});
-
-// ❌ TypeScript détecte les erreurs
-await emit('todos', 'add', { id: 1 }); // Erreur : id doit être string
-await emit('invalid', 'event', null);  // Erreur : Canal inconnu
-```
-
----
-
-## Fonctionnalités de React 18+
-
-### Concurrent Mode
-
-Quo.js est entièrement compatible avec le rendu concurrent de React 18 :
-
-```tsx
-import { startTransition } from 'react';
-
-function Search() {
-  const emit = useEmit();
-  
-  const handleSearch = (query) => {
-    startTransition(() => {
-      emit('search', 'query', query);
-    });
-  };
-  
-  return <input onChange={(e) => handleSearch(e.target.value)} />;
-}
-```
-
-### Suspense
-
-```tsx
-import { Suspense } from 'react';
-
-function App() {
-  return (
-    <Suspense fallback={<Loading />}>
-      <UserProfile />
-    </Suspense>
-  );
-}
-
-function UserProfile() {
-  const user = useSuspenseAtomicProp(
-    { reducer: 'user', property: 'profile' },
-    {
-      load: async () => {
-        const res = await fetch('/api/user');
-        return res.json();
-      }
-    }
-  );
-  
-  return <div>Bienvenue, {user.name} !</div>;
-}
-```
-
----
-
-## Migration depuis v0.4.x
-
-### Changements de Noms de Hooks (v0.5.0+)
-
-| Ancien (v0.4.x)   | Nouveau (v0.5.0+)  | Statut                                    |
-|-------------------|--------------------|-------------------------------------------|
-| `useDispatch()`   | `useEmit()`        | ❌ Supprimé (utilisez `useEmit()`)        |
-| `useSliceProp()`  | `useAtomicProp()`  | ❌ Supprimé (utilisez `useAtomicProp()`)  |
-| `useSliceProps()` | `useAtomicProps()` | ❌ Supprimé (utilisez `useAtomicProps()`) |
-
-### Exemple de Migration
-
-```tsx
-// AVANT (v0.4.x)
-import { useDispatch, useSliceProp } from '@quojs/react';
-
-function Counter() {
-  const value = useSliceProp({ reducer: 'counter', property: 'value' });
-  const dispatch = useDispatch();
-
-  return (
-    <button onClick={() => dispatch('counter', 'increment', 1)}>
-      {value}
-    </button>
-  );
-}
-
-// APRÈS (v0.5.0+)
-import { useEmit, useAtomicProp } from '@quojs/react';
-
-function Counter() {
-  const value = useAtomicProp({ reducer: 'counter', property: 'value' });
-  const emit = useEmit();
-
-  return (
-    <button onClick={() => emit('counter', 'increment', 1)}>
-      {value}
-    </button>
-  );
-}
-```
-
-**Note :** Tous les hooks dépréciés ont été supprimés. Si vous effectuez une mise à niveau depuis la v0.4.x, vous devez mettre à jour votre code pour utiliser les nouveaux noms de hooks.
+- **Concurrent Mode :** Entierement compatible. Tous les hooks utilisent `useSyncExternalStore`.
+- **Strict Mode :** La deduplication d'evenements empeche le double traitement.
+- **Suspense :** `useSuspenseAtomicProp` et `useSuspenseAtomicProps` lancent des promesses pour les limites `<Suspense>`.
 
 ---
 
 ## Exemples
 
-- **[Application de Tâches](../../examples/v0/quojs-in-react/README.fr.md)** — CRUD complet avec profilage des performances
-- **[Logo Cinétique](../../examples/v0/quojs-kinetic-logo/README.fr.md)** — 900 cercles SVG + simulation physique
-- **[Next.js 15](../../examples/v0/quojs-in-nextjs/README.fr.md)** — SSR + sélecteur de thème
+- **[Application de taches avec Profiler](../../examples/v0/quojs-in-react)** -- CRUD complet avec comparaison de flamegraphs
+- **[Logo Cinetique (1000+ particules)](../../examples/v0/quojs-kinetic-logo)** -- Abonnements independants par cercle SVG
+- **[Next.js 15 App Router](../../examples/v0/quojs-in-nextjs)** -- SSR + commutation de theme
 
 ---
 
 ## Documentation
 
-- **[Guide de Démarrage Rapide](https://quojs.dev)** — Commencez en 5 minutes
-- **[Référence API TypeDoc](./docs/README.md)** — Documentation complète de l'API
-- **[Comparaison des Bibliothèques](../../docs/library-comparison.md)** — vs Redux, Zustand, Jotai, etc.
+- **[README racine de Quo.js](https://github.com/quojs/quojs/blob/main/README.md)** -- Presentation et demarrage rapide
+- **[API @quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** -- Store, middleware, effets, matchers `When`
+- **[Guide de demarrage rapide](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)** -- Cinq etapes pour une application fonctionnelle
+- **[Comparaison des bibliotheques](https://github.com/quojs/quojs/blob/main/docs/en/design/state-management-library-comparison.md)** -- Comparaison architecturale
 
 ---
 
 ## Contribuer
 
-Voir :
-- [Racine du Monorepo](../../docs/fr/README.md)
-- [Guide de Contribution](../../docs/fr/CONTRIBUTING.md)
-- [Code de Conduite](../../docs/fr/CODE_OF_CONDUCT.md)
+- [Racine du monorepo](../../)
+- [Guide de contribution](../../CONTRIBUTING.md)
 
 ---
 
 ## Statut
 
-**Release Candidate** — Les APIs sont stables, utilisées en production, changements mineurs possibles avant la v1.0.
+**Release Candidate (v0.7.0+)** -- Les APIs sont stables, utilisees en production, des changements mineurs sont possibles avant la v1.0.
 
 ---
 
 ## Licence
 
-**MIT** — Libre d'utilisation dans les projets commerciaux et open source.
-
----
-
-Fait au 🇲🇽 pour le monde.
+**MIT** -- Libre d'utilisation dans les projets commerciaux et open source.

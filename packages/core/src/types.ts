@@ -172,12 +172,58 @@ export type Unsubscribe = () => void;
  * @typeParam S  - Store state (readonly).
  * @typeParam EM - Event map.
  *
+ * @example Function form (legacy)
+ * ```ts
+ * const mw: MiddlewareInput<AppState, AppEM> = (state, event, emit) => {
+ *   console.log(event.type);
+ *   return true;
+ * };
+ * ```
+ *
+ * @example Spec form (recommended)
+ * ```ts
+ * const mw: MiddlewareInput<AppState, AppEM> = {
+ *   when: { channel: 'admin' },
+ *   middleware: (state, event, emit) => state.auth.isAdmin,
+ *   meta: { type: 'middleware', name: 'authGuard' },
+ * };
+ * ```
+ *
  * @public
  */
 export type MiddlewareInput<S = any, EM extends EventMapBase = EventMapBase> =
   | MiddlewareFunction<S, EM>
   | MiddlewareSpec<S, EM>;
 
+/**
+ * Store configuration object passed to the {@link Store} constructor or {@link createStore}.
+ *
+ * @typeParam R  - Reducer name union (string literal union).
+ * @typeParam S  - State record keyed by `R`.
+ * @typeParam EM - Event map.
+ *
+ * @example
+ * ```ts
+ * type S = { counter: { value: number } };
+ * type EM = { ui: { increment: number } };
+ *
+ * const spec: StoreSpec<'counter', S, EM> = {
+ *   name: 'App',
+ *   reducer: {
+ *     counter: {
+ *       state: { value: 0 },
+ *       when: { keys: eventKeys<EM>()([['ui', 'increment']]) },
+ *       reducer(s, evt) {
+ *         if (evt.type === 'increment') return { value: s.value + evt.payload };
+ *         return s;
+ *       }
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @public
+ */
 export type StoreSpec<R extends string, S extends Record<R, any>, EM extends EventMapBase> = {
   /**
    * Store name (used by DevTools to identify the instance).

@@ -22,7 +22,7 @@ Il met en avant Quo.js comme un conteneur d’état **prévisible, typé et pilo
 - **Canaux + événements (pas de soupe d’action types)** : on envoie sur le canal `"logo"` avec des événements comme `"batchUpdate"`, `"fps"`, etc.
 - **Sélecteurs ultra‑granulaires** : chaque `<Circle/>` s’abonne à **son propre** nœud `logo[group][id]` via `useAtomicProp`, évitant les re‑renders du slice entier.
 - **Reducer immuable et ergonomique** : un seul reducer (`Logo.reducer.ts`) gère les mises à jour atomiques et par lot sans magie.
-- **Hooks typés** : `createQuoHooks` génère `useStore`, `useDispatch`, `useSelector`, `useAtomicProp`, `useAtomicProps` avec inférence TypeScript complète.
+- **Hooks typés** : `createQuoHooks` génère `useStore`, `useEmit`, `useSelector`, `useAtomicProp`, `useAtomicProps` avec inférence TypeScript complète.
 - **Effets d’événements** : le moteur écoute les effets du store (p. ex., `"logo":"start" | "stop"`) pour coordonner le cycle de vie de la simulation.
 
 Résultat : **60fps fluides** sur les machines capables, avec React qui ne touche le DOM que pour les cercles réellement déplacés.
@@ -104,7 +104,7 @@ src/
 
 - **`batchUpdate`** : une action, de nombreuses mises à jour → moins de travail pour le reducer et moins de commits React.
 - **`useAtomicProp`** : abonnement direct à un chemin profond (`logo["d"]["circle_d_42"]`). Pas de pièges de mémo, pas de sélecteurs qui allouent de nouveaux objets à chaque rendu.
-- **API d’effets** (`store.onEffect("logo", "start" | "stop")`) : le moteur réagit aux événements d’état sans la cérémonie Redux‑saga/thunk.
+- **API d’effets** (`store.onEffect("logo", "start" | "stop")`) : le moteur réagit aux événements d’état via le pipeline async integre de Quo.js.
 - **Reducer pur et immuable** : `upsertItem()` applique un no‑op quand rien n’a changé → moins de mises à jour se propagent.
 
 Si ce pattern vous plaît dans une démo, il s’adapte proprement à des UIs réelles avec des milliers de nœuds, des charges de streaming/animation et des budgets de rendu stricts.

@@ -8,7 +8,7 @@
 
 > **MiddlewareFunction**\<`S`, `EM`\> = (`state`, `event`, `emit`) => `boolean` \| `Promise`\<`boolean`\>
 
-Defined in: [types.ts:557](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/types.ts#L557)
+Defined in: [types.ts:603](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L603)
 
 Middleware function: may mutate, log, side-effect, or veto an event.
 Return true to continue; false to swallow / cancel propagation.

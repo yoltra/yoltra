@@ -19,24 +19,34 @@ import { StoreContext } from "./StoreContext";
  * - You may nest multiple `StoreProvider`s to scope different stores to different subtrees.
  * - In Next.js App Router, this component must be used in a **client** boundary.
  *
- * @example App wrapper
+ * @example App wrapper with createQuoHooks (recommended)
  * ```tsx
- * 'use client';
- * import { StoreProvider } from '@quojs/react';
- * import { createStore } from '@quojs/core';
+ * // store.ts
+ * import { createStore, eventKeys } from '@quojs/core';
+ * import { createContext } from 'react';
+ * import { createQuoHooks, StoreProvider } from '@quojs/react';
  *
- * const store = createStore({
+ * type AppEM = { ui: { increment: number } };
+ * type AppState = { counter: { value: number } };
+ *
+ * export const store = createStore<AppState, AppEM>({
  *   name: 'App',
  *   reducer: {
  *     counter: {
  *       state: { value: 0 },
- *       events: [['ui','increment']],
- *       reducer(s, evt) { return evt.type === 'increment' ? { value: s.value + evt.payload } : s; }
- *     }
- *   }
+ *       when: { keys: eventKeys<AppEM>()([['ui', 'increment']]) },
+ *       reducer: (s, evt) => evt.type === 'increment'
+ *         ? { value: s.value + evt.payload }
+ *         : s,
+ *     },
+ *   },
  * });
  *
- * export function AppProviders({ children }: { children: React.ReactNode }) {
+ * const AppStoreContext = createContext<typeof store | null>(null);
+ * export const { useAtomicProp, useEmit } = createQuoHooks(AppStoreContext);
+ *
+ * // App.tsx
+ * export function App({ children }: { children: React.ReactNode }) {
  *   return <StoreProvider store={store}>{children}</StoreProvider>;
  * }
  * ```

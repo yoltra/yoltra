@@ -778,4 +778,4 @@ public dispose(): void {
 
 **Autor**: Equipe Quo.js 
 **Licença**: MIT 
-**Repositório**: https://github.com/quojs/quo
+**Repositório**: https://github.com/quojs/quojs

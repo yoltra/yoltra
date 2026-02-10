@@ -17,6 +17,14 @@ import type {
 } from "@quojs/core";
 import { hasWildcard, normalizePath, getAtPath } from "../utils/path";
 
+/**
+ * Re-export of {@link PathValue} from `@quojs/core`.
+ *
+ * Resolves the TypeScript type at a dotted path `P` within object type `T`.
+ * See the core definition for full documentation.
+ *
+ * @public
+ */
 export type { PathValue };
 
 /**
@@ -81,10 +89,14 @@ export function useEmit<EM extends EventMapBase>(): Emit<EM> {
 /**
  * Shallow object equality using `Object.is` per-key.
  *
+ * Useful as the `isEqual` argument for `useAtomicProp` and `useAtomicProps`
+ * when the derived value is a plain object. Also available from the object
+ * returned by {@link createQuoHooks}.
+ *
  * @example
  * ```ts
- * shallowEqual({ a: 1 }, { a: 1 }) // true
- * shallowEqual({ a: 1 }, { a: 2 }) // false
+ * shallowEqual({ a: 1 }, { a: 1 }); // true
+ * shallowEqual({ a: 1 }, { a: 2 }); // false
  * ```
  *
  * @public
@@ -229,6 +241,8 @@ function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>
  * Fine-grained **single-path** selector for a reducer's state.
  *
  * Re-renders only when the specified `reducer.property` (dotted path) actually changes.
+ * For most applications, prefer using the typed version from {@link createQuoHooks}
+ * which infers all type parameters automatically.
  *
  * **Supports**
  * - Exact root prop: `{ reducer: "todo", property: "data" }`
@@ -240,9 +254,23 @@ function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>
  * - Exact path + `map`: returns `T` from `map(value)`
  * - Glob path (with `*`/`**`): requires `map` and returns `T` from `map(state)`
  *
- * @example Exact path
+ * @example Via createQuoHooks (recommended)
  * ```tsx
- * const title = useAtomicProp<'todos', AppState, 'items.0.title'>(
+ * const { useAtomicProp } = createQuoHooks(AppStoreContext);
+ *
+ * function TodoTitle({ index }: { index: number }) {
+ *   // Types are inferred — no explicit generics needed
+ *   const title = useAtomicProp({
+ *     reducer: 'todos',
+ *     property: `items.${index}.title`,
+ *   });
+ *   return <span>{title}</span>;
+ * }
+ * ```
+ *
+ * @example Standalone with explicit generics
+ * ```tsx
+ * const title = useAtomicProp<'todos', AppState, 'todos', 'items.0.title'>(
  *   { reducer: 'todos', property: 'items.0.title' }
  * );
  * ```

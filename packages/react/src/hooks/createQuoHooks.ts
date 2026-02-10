@@ -17,6 +17,31 @@ import type {
 } from "@quojs/core";
 import { hasWildcard, normalizePath, getAtPath } from "../utils/path";
 
+/**
+ * Call signature for the typed `useAtomicProp` hook returned by {@link createQuoHooks}.
+ *
+ * Subscribes to a specific dotted path in a reducer's state and re-renders
+ * only when that path changes. All type parameters are inferred automatically
+ * from the store context — no explicit generics needed.
+ *
+ * @typeParam R - Reducer name union.
+ * @typeParam S - State record keyed by `R`.
+ *
+ * @example
+ * ```tsx
+ * const { useAtomicProp } = createQuoHooks(AppStoreContext);
+ *
+ * function TodoTitle({ index }: { index: number }) {
+ *   const title = useAtomicProp({
+ *     reducer: 'todos',
+ *     property: `items.${index}.title`,
+ *   });
+ *   return <span>{title}</span>;
+ * }
+ * ```
+ *
+ * @public
+ */
 export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
   <R1 extends R, P extends Dotted<S[R1]>>(spec: { reducer: R1; property: P }): PathValue<
     S[R1],
@@ -40,6 +65,33 @@ export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
   ): T;
 };
 
+/**
+ * Call signature for the typed `useAtomicProps` hook returned by {@link createQuoHooks}.
+ *
+ * Subscribes to multiple dotted paths across one or more reducers and recomputes
+ * a derived value when any of them change.
+ *
+ * @typeParam R - Reducer name union.
+ * @typeParam S - State record keyed by `R`.
+ *
+ * @example
+ * ```tsx
+ * const { useAtomicProps } = createQuoHooks(AppStoreContext);
+ *
+ * function FilteredCount() {
+ *   const count = useAtomicProps(
+ *     [
+ *       { reducer: 'todos', property: 'items.**' },
+ *       { reducer: 'filter', property: 'q' },
+ *     ],
+ *     (s) => s.todos.items.filter(x => x.title.includes(s.filter.q)).length,
+ *   );
+ *   return <span>{count}</span>;
+ * }
+ * ```
+ *
+ * @public
+ */
 export type UseAtomicProps<R extends string, S extends Record<R, any>> = {
   <R1 extends R, T>(
     specs: Array<{
@@ -56,6 +108,29 @@ export type UseAtomicProps<R extends string, S extends Record<R, any>> = {
   ): T;
 };
 
+/**
+ * Call signature for the typed `useEvent` hook returned by {@link createQuoHooks}.
+ *
+ * Subscribes to store events from a React component. Useful for notifications,
+ * animations, analytics, and responding to rejected (uncommitted) events.
+ *
+ * @typeParam EM - Event map type.
+ * @typeParam S  - Store state type.
+ *
+ * @example
+ * ```tsx
+ * const { useEvent } = createQuoHooks(AppStoreContext);
+ *
+ * function SaveNotifier() {
+ *   useEvent('ui', 'save', (event) => {
+ *     showToast('Saved!');
+ *   });
+ *   return null;
+ * }
+ * ```
+ *
+ * @public
+ */
 export type UseEvent<EM extends EventMapBase, S> = <
   C extends keyof EM & string,
   T extends keyof EM[C] & string,
@@ -71,7 +146,21 @@ export type UseEvent<EM extends EventMapBase, S> = <
   phase?: EventPhase,
 ) => void;
 
-
+/**
+ * Shallow object equality using `Object.is` per-key.
+ *
+ * Useful as the `isEqual` argument for `useAtomicProp` and `useAtomicProps`
+ * when the derived value is a plain object. Also available as a standalone
+ * export from `@quojs/react` via {@link shallowEqual | hooks.shallowEqual}.
+ *
+ * @example
+ * ```ts
+ * shallowEqual({ a: 1 }, { a: 1 }); // true
+ * shallowEqual({ a: 1 }, { a: 2 }); // false
+ * ```
+ *
+ * @public
+ */
 export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T) {
   if (Object.is(a, b)) return true;
   if (!a || !b) return false;
@@ -85,7 +174,50 @@ export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T) {
 }
 
 /**
- * Factory that binds typed React hooks to a specific {@link StoreInstance}.
+ * Factory that creates fully-typed React hooks bound to a specific store context.
+ *
+ * This is the **recommended** setup pattern for Quo.js + React. It eliminates
+ * the need for explicit type parameters on every hook call — all types are
+ * inferred from the store context once, at creation time.
+ *
+ * @typeParam R  - Reducer name union.
+ * @typeParam S  - State record keyed by `R`.
+ * @typeParam EM - Event map.
+ *
+ * @param StoreContext - A React context carrying a `StoreInstance<R, S, EM>`.
+ * @returns An object with typed hooks: `useStore`, `useEmit`, `useSelector`,
+ *   `useAtomicProp`, `useAtomicProps`, `useEvent`, and `shallowEqual`.
+ *
+ * @throws If any returned hook is called outside a `<StoreProvider>`.
+ *
+ * @example Complete setup
+ * ```tsx
+ * // 1. Define your event map and state
+ * type AppEM = { ui: { increment: number; decrement: number } };
+ * type AppState = { counter: { value: number } };
+ *
+ * // 2. Create a typed context
+ * import { createContext } from 'react';
+ * import { StoreInstance } from '@quojs/core';
+ * const AppStoreContext = createContext<
+ *   StoreInstance<'counter', AppState, AppEM> | null
+ * >(null);
+ *
+ * // 3. Create typed hooks (do this once, export from a shared module)
+ * const { useAtomicProp, useEmit, useEvent } = createQuoHooks(AppStoreContext);
+ *
+ * // 4. Use in components — no explicit generics needed
+ * function Counter() {
+ *   const value = useAtomicProp({ reducer: 'counter', property: 'value' });
+ *   const emit = useEmit();
+ *   return (
+ *     <button onClick={() => emit('ui', 'increment', 1)}>
+ *       Count: {value}
+ *     </button>
+ *   );
+ * }
+ * ```
+ *
  * @public
  */
 export function createQuoHooks<

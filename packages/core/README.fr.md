@@ -1,46 +1,23 @@
-![Quo.js logo](https://quojs.dev/assets/logo.svg)
+![Quo.js logo](../../assets/logo.svg)
 
-# Quo.js L'état des choses, réécrit.
+# @quojs/core
 
-> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/packages/core/README.es.md) &nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/packages/core/README.pt.md)&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/packages/core/README.md)&nbsp; |
-> &nbsp; 👉 [ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/packages/core/README.fr.md)
+> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/packages/core/README.es.md)&nbsp;
+> | &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/packages/core/README.pt.md)&nbsp;
+> | &nbsp;[ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/packages/core/README.md)&nbsp;
+> | &nbsp; 👉 [ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/packages/core/README.fr.md)
 
 ![Taille du bundle](https://badgen.net/bundlephobia/min/@quojs/core)
 ![Taille du bundle](https://badgen.net/bundlephobia/minzip/@quojs/core)
 ![Taille du bundle](https://badgen.net/bundlephobia/tree-shaking/@quojs/core)
 ![Taille du bundle](https://badgen.net/bundlephobia/dependency-count/@quojs/core)
 ![Version npm](https://badgen.net/npm/v/@quojs/core)
-![Téléchargements npm](https://badgen.net/npm/dm/@quojs/core)
+![Telechargements npm](https://badgen.net/npm/dm/@quojs/core)
 ![Licence](https://badgen.net/npm/license/@quojs/core)
 
-**Conteneur d'état basé sur les événements, agnostique du framework.**
+**Conteneur d'etat pilote par evenements, agnostique du framework, avec abonnements fins aux chemins.**
 
-`@quojs/core` est la fondation de Quo.js—une bibliothèque moderne de gestion d'état qui combine
-**des événements basés sur des canaux**, **des abonnements atomiques** et **un support natif
-pour async** dans un package léger et universel.
-
-**Fonctionne partout :** Navigateurs, Node.js 18+, Deno, Bun. Zéro dépendance DOM.
-
----
-
-## Qu'est-ce que @quojs/core ?
-
-`@quojs/core` fournit :
-
-- **Architecture basée sur les événements** — Les événements circulent via des canaux
-  `(channel, type, payload)`
-- **File d'événements FIFO** — Traitement d'événements prévisible et sérialisé avec garanties
-  d'ordre
-- **Async-first** — Middleware et effects async natifs (sans thunks/sagas)
-- **Abonnements à granularité fine** — Abonnez-vous à des chemins d'état exacts via notation
-  pointée
-- **Immuabilité** — Application de deep-freeze avec détection de changements structurels
-- **TypeScript-first** — Excellente inférence de types et autocomplétion
-
-> Consultez le rapport de
-> [Comparaison des Bibliothèques de Gestion d'État](https://github.com/quojs/quojs/blob/main/docs/fr/design/state-management-library-comparison.md).
+`@quojs/core` est la fondation de [Quo.js](https://github.com/quojs/quojs/blob/main/README.md). Il fournit le store, le pipeline d'evenements, le middleware, les effets et le systeme d'abonnement `connect()`. Zero dependance framework.
 
 ---
 
@@ -48,426 +25,410 @@ pour async** dans un package léger et universel.
 
 ```bash
 npm install @quojs/core
-# ou
-yarn add @quojs/core
-# ou
-pnpm add @quojs/core
 ```
 
 ---
 
-## Guide de démarrage rapide
+## Le pipeline d'evenements
 
-- [@quojs/core - Guide de démarrage rapide](https://github.com/quojs/quojs/blob/main/docs/fr/QUICK_START_GUIDE.md)
+Chaque appel a `emit()` transite par un pipeline deterministe :
+
+```
+emit(channel, type, payload)
+  |
+  +- 1. Dedup --- Ignore si empreinte identique dans la fenetre de temps
+  |
+  +- 2. Middleware --- Hooks pre-reducer (peut rejeter -> evenement "non confirme")
+  |
+  +- 3. Reducers --- Mises a jour synchrones de l'etat, detection fine des changements de chemin
+  |
+  +- 4. Abonnes d'evenements --- Notifications d'evenements confirmes/non confirmes
+  |
+  +- 5. Effets --- Effets secondaires async (post-reducer, indexes pour recherche O(1))
+  |
+  +- 6. Abonnes grossiers --- Listeners de store externes (useSyncExternalStore, etc.)
+```
+
+Chaque etape est interceptable. Le middleware peut annuler des evenements, creant des evenements "non confirmes" auxquels l'UI peut malgre tout reagir. Les effets s'executent apres les reducers et voient l'etat final.
 
 ---
 
-## Concepts Fondamentaux
+## Concepts fondamentaux
 
-### Architecture Basée sur les Événements
+### Evenements par canaux
 
-Les événements sont des citoyens de première classe dans Quo.js. Chaque changement d'état est
-déclenché par un événement explicite.
-
-```typescript
-// Les événements ont un canal, un type et un payload
-await store.emit("auth", "login", { username, password });
-await store.emit("analytics", "track", { event: "page_view" });
-await store.emit("ui", "toast", { message: "Bienvenue !" });
-```
-
-**Avantages :**
-
-- Intention claire (chaque action est traçable)
-- Modularité naturelle (organisez par canal)
-- Piste d'audit (les événements sont sérialisables)
-
-Consultez le document de présentation de
-l'**[Architecture de File d'Événements](https://github.com/quojs/quojs/blob/main/docs/fr/design/event-queue-architecture.md)**.
-
-### Async-First
-
-Les middlewares et effects sont `async` par défaut. Aucune bibliothèque externe nécessaire.
+Les evenements sont des tuples `(channel, type, payload)`. Les canaux fournissent un namespacing naturel qui evolue dans les grandes bases de code :
 
 ```typescript
-// Middleware asynchrone
-const authMiddleware = async (state, event, emit) => {
-  if (event.type === "login") {
-    const token = await authenticateUser(event.payload);
-    await emit("auth", "loginSuccess", { token });
-    return false; // Annule l'événement original
-  }
-  return true;
-};
-
-// Effects asynchrones (s'exécutent après les reducers)
-const analyticsEffect = async (event, getState, emit) => {
-  if (event.channel === "analytics") {
-    await sendToAnalytics(event.payload);
-  }
-};
-
-const store = createStore({
-  name: "App",
-  reducer: {
-    /* ... */
-  },
-  middleware: [authMiddleware],
-  effects: [
-    {
-      events: [["analytics", "track"]],
-      effect: analyticsEffect,
-    },
-  ],
-});
+await store.emit('auth', 'login', credentials);
+await store.emit('analytics', 'track', { event: 'page_view' });
+await store.emit('ui', 'toast', { message: 'Saved!' });
 ```
 
-### Abonnements à Granularité Fine
+### Abonnements fins via `connect()`
 
-Abonnez-vous à des chemins d'état exacts en utilisant la notation pointée :
+Abonnez-vous a des chemins d'etat exacts en utilisant la notation pointee. Supporte `*` (un segment) et `**` (zero ou plusieurs segments) comme wildcards :
 
 ```typescript
-// S'abonner à un chemin imbriqué
-store.connect({ reducer: "todos", property: "items.0.title" }, (change) => {
-  console.log("Le titre de la première tâche a changé :", change.newValue);
-});
+// Chemin exact -- se declenche lorsque items[0].title change
+store.connect(
+  { reducer: 'todos', property: 'items.0.title' },
+  (change) => console.log('title:', change.oldValue, '->', change.newValue),
+);
 
-// Modèles wildcard
-store.connect({ reducer: "todos", property: "items.*.completed" }, (change) => {
-  console.log("Le statut de complétion d'une tâche a changé");
-});
+// Wildcard simple -- se declenche lorsque le titre de N'IMPORTE QUEL element change
+store.connect(
+  { reducer: 'todos', property: 'items.*.title' },
+  (change) => console.log('some title changed at', change.path),
+);
+
+// Wildcard profond -- se declenche lorsque quoi que ce soit sous items change
+store.connect(
+  { reducer: 'todos', property: 'items.**' },
+  (change) => console.log('items tree changed at', change.path),
+);
 ```
 
-### Garanties d'Immuabilité
+### Immutabilite
 
-L'état est **deep-frozen** avant d'être confirmé pour empêcher les mutations accidentelles :
+L'etat est deep-frozen avant le commit. Les mutations levent une erreur en mode strict :
 
 ```typescript
 const state = store.getState();
-state.counter.value = 999; // ❌ TypeError : Impossible d'assigner à une propriété en lecture seule
-
-// À la place, émettez des événements :
-await store.emit("counter", "set", 999); // ✅ Manière correcte
+state.counter.value = 999; // TypeError: Cannot assign to read-only property
 ```
 
 ---
 
-## Meilleures Pratiques
+## Ciblage d'evenements avec les matchers `When`
 
-### Code d'Application
-
-#### 1. Toujours Attendre `emit()`
+Les reducers, effets et middleware utilisent un matcher `When` unifie pour declarer les evenements auxquels ils reagissent :
 
 ```typescript
-// ❌ MAUVAIS : Déclencher et oublier
-emit("todo", "add", todo);
-const state = store.getState(); // Peut ne pas avoir la nouvelle tâche encore !
+import { createStore, eventKeys } from '@quojs/core';
 
-// ✅ BON : Attendre la complétion
-await emit("todo", "add", todo);
-const state = store.getState(); // Garanti d'avoir la nouvelle tâche
+type AppEM = {
+  ui: { increment: number; decrement: number; reset: void };
+  admin: { setCounter: number };
+  system: { init: void; shutdown: void };
+};
+
+// Cles d'evenements specifiques (recommande -- preserve la correlation des types)
+const counterReducer = {
+  state: { value: 0 },
+  when: { keys: eventKeys<AppEM>()([['ui', 'increment'], ['ui', 'decrement']]) },
+  reducer: (state, event) => {
+    if (event.type === 'increment') return { value: state.value + event.payload };
+    if (event.type === 'decrement') return { value: state.value - event.payload };
+    return state;
+  },
+};
+
+// Tous les evenements d'un canal
+const uiLogger = {
+  when: { channel: 'ui' },
+  effect: (event) => console.log('UI event:', event.type),
+};
+
+// Evenements de plusieurs canaux
+const auditTrail = {
+  when: { channels: ['ui', 'admin'] },
+  effect: (event) => logToAuditTrail(event),
+};
+
+// TOUS les evenements
+const globalLogger = {
+  when: { any: true },
+  middleware: (state, event) => {
+    console.log(`[${event.channel}] ${event.type}`);
+    return true;
+  },
+};
 ```
 
-#### 2. Éviter les Boucles Infinies
+---
+
+## Middleware
+
+Le middleware s'execute **avant** les reducers et peut annuler la propagation des evenements. Supporte les fonctions brutes (ancien mode) et les objets `MiddlewareSpec` avec ciblage :
 
 ```typescript
-// ❌ MAUVAIS : Récursion infinie
-registerEffect({
-  events: [["counter", "increment"]],
-  effect: (evt, getState, emit) => {
-    emit("counter", "increment", evt.payload + 1); // Infini !
+import type { MiddlewareSpec } from '@quojs/core';
+
+// Middleware cible -- s'execute uniquement pour les evenements du canal admin
+const adminGuard: MiddlewareSpec<AppState, AppEM> = {
+  when: { channel: 'admin' },
+  middleware: (state, event) => {
+    if (!state.auth.isAdmin) return false; // Rejeter -> cree un evenement "non confirme"
+    return true;
   },
+  meta: { type: 'middleware', name: 'adminGuard' },
+};
+
+// Middleware global -- s'execute pour tous les evenements
+const logger = async (state, event, emit) => {
+  console.log('Event:', event.channel, event.type);
+  return true;
+};
+
+const store = createStore({
+  name: 'App',
+  reducer: { /* ... */ },
+  middleware: [adminGuard, logger],
+});
+```
+
+### Middleware dynamique
+
+```typescript
+const off = store.registerMiddleware(async (state, event) => {
+  return event.type !== 'forbidden';
+});
+off(); // Retirer plus tard
+```
+
+---
+
+## Effets
+
+Les effets s'executent **apres** les reducers et voient l'etat final. Ils sont indexes par evenement pour une recherche O(1) :
+
+```typescript
+// Via la specification du store
+const store = createStore({
+  name: 'App',
+  reducer: { /* ... */ },
+  effects: [{
+    when: { keys: eventKeys<AppEM>()([['todos', 'add'], ['todos', 'delete']]) },
+    effect: async (event, getState, emit) => {
+      await saveToServer(getState());
+    },
+    meta: { type: 'effect', name: 'syncToServer' },
+  }],
 });
 
-// ✅ BON : Condition de garde
-registerEffect({
-  events: [["counter", "increment"]],
-  effect: (evt, getState, emit) => {
-    if (evt.payload < 100) {
-      // Arrêter à 100
-      emit("counter", "increment", evt.payload + 1);
+// Enregistrement dynamique
+const off = store.registerEffect({
+  when: { channel: 'analytics' },
+  effect: async (event) => sendToAnalytics(event),
+});
+
+// Raccourci pour un seul evenement
+const off2 = store.onEffect('ui', 'save', async (payload, getState, emit) => {
+  await saveToCloud(payload);
+});
+```
+
+---
+
+## Abonnements aux evenements
+
+Abonnez-vous aux evenements (pas a l'etat) depuis la couche vue. Utile pour les notifications, animations et la reaction aux evenements rejetes :
+
+```typescript
+// Evenements confirmes (par defaut) -- evenements ayant passe le middleware
+const off = store.onEvent('ui', 'save', (event, getState, emit, phase) => {
+  console.log('Save committed:', event.payload);
+});
+
+// Evenements non confirmes -- evenements rejetes par le middleware
+store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
+  console.log('Delete was rejected');
+}, 'uncommitted');
+
+// Tous les evenements -- confirmes et non confirmes
+store.onEvent('ui', 'action', (event, getState, emit, phase) => {
+  console.log(`Action ${phase}:`, event.type);
+}, 'all');
+```
+
+---
+
+## Deduplication d'evenements
+
+Quo.js deduplique automatiquement les evenements identiques dans une fenetre de temps configurable. Cela empeche le double traitement en React Strict Mode :
+
+```typescript
+const store = createStore({
+  name: 'App',
+  reducer: { /* ... */ },
+  dedupWindowMs: 100, // defaut : 50ms en dev, 100ms en prod
+});
+```
+
+---
+
+## Reducers dynamiques
+
+Ajoutez ou supprimez des slices de reducer a l'execution :
+
+```typescript
+const dispose = store.registerReducer('filters', {
+  state: { q: '' },
+  when: { keys: eventKeys<AppEM>()([['ui', 'setQuery']]) },
+  reducer: (state, event) =>
+    event.type === 'setQuery' ? { q: event.payload } : state,
+});
+
+// Plus tard : supprimez le slice et son etat
+dispose();
+```
+
+---
+
+## Hot Module Replacement
+
+```typescript
+if (import.meta.hot) {
+  import.meta.hot.accept('./reducers', (mod) => {
+    store.replaceReducers(mod.reducers, { preserveState: true });
+  });
+
+  import.meta.hot.accept('./middleware', (mod) => {
+    store.replaceMiddleware(mod.middleware);
+  });
+
+  import.meta.hot.accept('./effects', (mod) => {
+    store.replaceEffects(mod.effects);
+  });
+
+  // Ou remplacez tout d'un coup
+  store.hotReplace({
+    reducer: newReducers,
+    middleware: newMiddleware,
+    effects: newEffects,
+    preserveState: true,
+  });
+}
+```
+
+---
+
+## Bonnes pratiques
+
+### Toujours attendre `emit()`
+
+```typescript
+await emit('todo', 'add', todo);
+const state = store.getState(); // Garanti de refleter la nouvelle tache
+```
+
+### Garder les reducers rapides
+
+Les reducers sont synchrones et bloquent la file d'evenements. Deplacez le travail couteux vers les effets :
+
+```typescript
+// Reducer : juste positionner un flag de chargement
+reducer: (state, event) => ({ ...state, loading: true }),
+
+// Effet : faire le gros du travail
+store.onEffect('data', 'compute', async (payload, getState, emit) => {
+  const result = await computeAsync();
+  await emit('data', 'computeComplete', result);
+});
+```
+
+### Gerer les erreurs d'effets
+
+```typescript
+store.registerEffect({
+  when: { channel: 'data' },
+  effect: async (event, getState, emit) => {
+    try {
+      const data = await fetch(url);
+      await emit('data', 'loadSuccess', data);
+    } catch (error) {
+      await emit('data', 'loadFailure', { error: error.message });
     }
   },
 });
 ```
 
-#### 3. Garder les Reducers Rapides
-
-```typescript
-// ❌ MAUVAIS : Reducer lent bloque la file
-reducer: (state, event) => {
-  const result = expensiveComputation(); // Bloque pendant des secondes
-  return { ...state, result };
-};
-
-// ✅ BON : Déplacer vers un effect asynchrone
-reducer: (state, event) => {
-  return { ...state, loading: true };
-};
-
-registerEffect({
-  events: [["data", "compute"]],
-  effect: async (evt, getState, emit) => {
-    const result = await computeAsync(); // Ne bloque pas
-    emit("data", "computeComplete", result);
-  },
-});
-```
-
-#### 4. Gérer les Erreurs d'Effects
-
-```typescript
-// ❌ MAUVAIS : Erreurs d'effect non gérées
-effect: async (evt, getState, emit) => {
-  const data = await fetch(url); // Peut lancer une erreur
-  emit("data", "loaded", data);
-};
-
-// ✅ BON : Gestion des erreurs avec événements d'échec
-effect: async (evt, getState, emit) => {
-  try {
-    const data = await fetch(url);
-    emit("data", "loadSuccess", data);
-  } catch (error) {
-    emit("data", "loadFailure", { error: error.message });
-  }
-};
-```
-
-#### 5. Limiter les Événements à Haute Fréquence
-
-```typescript
-// ❌ MAUVAIS : Inonde la file
-window.addEventListener("mousemove", (e) => {
-  emit("ui", "mouseMove", { x: e.clientX, y: e.clientY });
-});
-
-// ✅ BON : Limiter les émissions
-import { throttle } from "lodash-es";
-
-const throttledEmit = throttle(
-  (x, y) => emit("ui", "mouseMove", { x, y }),
-  16, // ~60fps
-);
-
-window.addEventListener("mousemove", (e) => {
-  throttledEmit(e.clientX, e.clientY);
-});
-```
-
 ---
 
-## Fonctionnalités Avancées
+## Apercu de l'API
 
-### Reducers Dynamiques
+### Creation de store
 
-Ajoutez ou supprimez des reducers à l'exécution :
+| API | Description |
+|-----|-------------|
+| `createStore(spec)` | Creer un store (types inferes depuis les reducers) |
+| `createStore<S, EM>(spec)` | Creer un store avec types etat/evenements explicites |
+| `store.emit(channel, type, payload)` | Emettre un evenement (retourne une promesse) |
+| `store.getState()` | Obtenir un instantane en lecture seule de l'etat actuel |
+| `store.subscribe(listener)` | Abonnement grossier (tout changement d'etat) |
+| `store.connect(spec, handler)` | Abonnement fin aux chemins avec wildcards |
+| `store.onEvent(channel, type, handler, phase?)` | Abonnement aux evenements (confirme/non confirme/tous) |
+| `store.onEffect(channel, type, handler)` | Raccourci d'effet pour un seul evenement |
+| `store.dispose()` | Nettoyer les timers et ressources |
 
-```typescript
-// Ajouter un nouveau reducer dynamiquement
-const disposeReducer = store.registerReducer("newFeature", {
-  state: { enabled: false },
-  events: [["features", "toggle"]],
-  reducer: (state, event) => {
-    return { enabled: !state.enabled };
-  },
-});
+### Enregistrement dynamique
 
-// Plus tard : supprimer le reducer
-disposeReducer();
-```
+| API | Description |
+|-----|-------------|
+| `store.registerReducer(name, spec)` | Ajouter un slice a l'execution |
+| `store.registerMiddleware(fn)` | Ajouter un middleware a l'execution |
+| `store.registerEffect(spec)` | Ajouter un effet a l'execution |
 
-### Déduplication d'Événements
+### HMR
 
-Quo.js empêche automatiquement le traitement en double des événements (compatible avec React
-Strict Mode) :
+| API | Description |
+|-----|-------------|
+| `store.replaceReducers(reducers, opts)` | Remplacer tous les reducers |
+| `store.replaceMiddleware(middleware)` | Remplacer tous les middlewares |
+| `store.replaceEffects(effects)` | Remplacer tous les effets |
+| `store.hotReplace(partial)` | Remplacer n'importe quel sous-ensemble d'un coup |
 
-```typescript
-// En React Strict Mode, les effects se déclenchent deux fois en développement
-useEffect(() => {
-  emit("analytics", "pageView", { page });
-  // ↑ Déclenché 2x par React, mais Quo.js le traite une seule fois
-}, [page]);
-```
+### Utilitaires
 
-### Middleware
-
-Le middleware s'exécute **avant** les reducers et peut annuler les événements :
-
-```typescript
-const loggingMiddleware = async (state, event, emit) => {
-  console.log("Événement :", event.channel, event.type, event.payload);
-  return true; // Permettre à l'événement de continuer
-};
-
-const validationMiddleware = async (state, event) => {
-  if (event.type === "addTodo" && !event.payload.title) {
-    console.error("Tâche invalide : titre manquant");
-    return false; // Annuler l'événement
-  }
-  return true;
-};
-```
-
-### Effects
-
-Les effects s'exécutent **après** les reducers et sont parfaits pour les effets secondaires :
-
-```typescript
-const saveToLocalStorageEffect = async (event, getState) => {
-  const state = getState();
-  localStorage.setItem("app-state", JSON.stringify(state));
-};
-
-store.registerEffect({
-  events: [
-    ["todos", "add"],
-    ["todos", "toggle"],
-    ["todos", "delete"],
-  ],
-  effect: saveToLocalStorageEffect,
-});
-```
-
----
-
-## Support TypeScript
-
-Quo.js est TypeScript-first avec une excellente inférence de types :
-
-```typescript
-// La carte d'événements est entièrement typée
-type AppEM = {
-  counter: {
-    increment: number; // Type de payload
-    decrement: number;
-  };
-};
-
-const store = createStore<AppEM>({
-  /* ... */
-});
-
-// ✅ L'autocomplétion fonctionne :
-await store.emit("counter", "increment", 5);
-// ↑ Suggère : 'increment' | 'decrement'
-// ↑ Attend : number
-
-// ❌ TypeScript détecte les erreurs :
-await store.emit("counter", "increment", "five"); // Erreur : number attendu
-await store.emit("invalid", "event", null); // Erreur : Canal inconnu
-```
-
-## Aperçu de l'API
-
-### Création de Store
-
-- `createStore(spec)` — Créer une nouvelle instance de store
-- `store.emit(channel, type, payload)` — Émettre un événement (async)
-- `store.getState()` — Obtenir l'état actuel (lecture seule)
-- `store.subscribe(listener)` — S'abonner à tout changement d'état
-- `store.connect(spec, handler)` — S'abonner à un chemin d'état spécifique
-
-### Enregistrement Dynamique
-
-- `store.registerReducer(name, spec)` — Ajouter un reducer à l'exécution
-- `store.registerMiddleware(middleware)` — Ajouter un middleware à l'exécution
-- `store.registerEffect(spec)` — Ajouter un effect à l'exécution
-
-### Hot Module Replacement
-
-- `store.replaceReducers(reducers, opts)` — Remplacer tous les reducers (HMR)
-- `store.replaceMiddleware(middleware)` — Remplacer tous les middlewares (HMR)
-- `store.replaceEffects(effects)` — Remplacer tous les effects (HMR)
+| API | Description |
+|-----|-------------|
+| `eventKeys<EM>()([...])` | Tableaux de cles d'evenements type-safe sans `as const` |
 
 ---
 
 ## Performance
 
-| Métrique             | Valeur                                  |
-| -------------------- | --------------------------------------- |
-| **Taille du Bundle** | ~8KB (minifié + gzippé)                 |
-| **Tree-shakeable**   | ✅ Oui (modules ES)                     |
-| **Dépendances**      | Zéro dépendance à l'exécution           |
-| **TypeScript**       | Définitions de types complètes incluses |
+| Metrique | Valeur |
+|----------|--------|
+| **Taille du bundle** | ~8KB (minifie + gzippe) |
+| **Tree-shakeable** | Oui (modules ES) |
+| **Dependances** | Zero |
+| **TypeScript** | Definitions de types completes incluses |
 
 ---
 
 ## Documentation
 
-- **[Guide de Démarrage Rapide](https://quojs.dev)** — Commencez en 5 minutes
-- **[Référence API TypeDoc](https://github.com/quojs/quojs/blob/main/packages/core/docs/README.md)** — Documentation complète de l'API
-- **[Architecture de File d'Événements](https://github.com/quojs/quojs/blob/main/docs/fr/design/event-queue-architecture.md)** — Analyse
-  technique approfondie
-- **[Comparaison des Bibliothèques](https://github.com/quojs/quojs/blob/main/docs/fr/design/state-management-library-comparison.md)** — vs Redux, Zustand,
-  Jotai, etc.
+- **[README racine de Quo.js](https://github.com/quojs/quojs/blob/main/README.md)** -- Presentation et demarrage rapide
+- **[@quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** -- Hooks React et Suspense
+- **[Guide de demarrage rapide](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)** -- Cinq etapes pour une application fonctionnelle
+- **[Architecture de la file d'evenements](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)** -- Analyse technique approfondie
+- **[Comparaison des bibliotheques](https://github.com/quojs/quojs/blob/main/docs/en/design/state-management-library-comparison.md)** -- Comparaison architecturale
 
 ---
 
 ## Exemples
 
-- **[Application de Tâches](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/README.fr.md)** — Exemple CRUD complet avec
-  profilage des performances
-- **[Logo Cinétique](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo/README.fr.md)** — Simulation physique avec 900
-  particules
-- **[Intégration Next.js](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-nextjs/README.fr.md)** — SSR + sélecteur de thème
-
----
-
-## Migration depuis v0.4.x
-
-### Changements de Terminologie (v0.5.0+)
-
-| Ancien (v0.4.x) | Nouveau (v0.5.0+) | Statut                                         |
-| --------------- | ----------------- | ---------------------------------------------- |
-| `dispatch()`    | `emit()`          | ❌ Supprimé (utilisez `emit()` à la place)     |
-| `Action`        | `Event`           | ❌ Supprimé (utilisez le type `Event`)         |
-| `ActionMap`     | `EventMap`        | ❌ Supprimé (utilisez le type `EventMapBase`)  |
-| `ActionPair`    | `EventKey`        | ❌ Supprimé (utilisez le type `EventKey`)      |
-| `ActionUnion`   | `EventUnion`      | ❌ Supprimé (utilisez le type `EventUnion`)    |
-| `Dispatch`      | `Emit`            | ❌ Supprimé (utilisez le type `Emit`)          |
-| `typedActions`  | `typedEvents`     | ❌ Supprimé (utilisez la fonction `typedEvents`) |
-| `action.event`  | `event.type`      | ⚠️ Changement disruptif                        |
-
-### Exemple de Migration
-
-```typescript
-// AVANT (v0.4.x)
-store.dispatch("counter", "increment", 1);
-const actions = typedActions([])('counter', ['increment']);
-type MyAction = Action<EM, 'counter', 'increment'>;
-
-// APRÈS (v0.5.0+)
-store.emit("counter", "increment", 1);
-const events = typedEvents([])('counter', ['increment']);
-type MyEvent = Event<EM, 'counter', 'increment'>;
-```
-
-**Note :** Tous les alias dépréciés ont été supprimés. Si vous effectuez une mise à niveau depuis la v0.4.x, vous devez mettre à jour votre code pour utiliser la nouvelle terminologie event-bus.
+- **[Application de taches](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react)** -- CRUD complet avec profilage de performance
+- **[Logo Cinetique](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo)** -- Plus de 1000 cercles SVG avec simulation physique
+- **[Integration Next.js](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-nextjs)** -- SSR + App Router + commutation de theme
 
 ---
 
 ## Contribuer
 
-Nous accueillons les contributions ! Voir :
-
-- [Racine du Monorepo](.https://github.com/quojs/quojs/blob/main/docs/fr/README.md)
-- [Guide de Contribution](.https://github.com/quojs/quojs/blob/main/docs/fr/CONTRIBUTING.md)
-- [Code de Conduite](.https://github.com/quojs/quojs/blob/main/docs/fr/CODE_OF_CONDUCT.md)
+- [Racine du monorepo](https://github.com/quojs/quojs/blob/main/README.md)
+- [Guide de contribution](https://github.com/quojs/quojs/blob/main/CONTRIBUTING.md)
 
 ---
 
 ## Statut
 
-**Release Candidate** — Les APIs sont stables, utilisées en production, changements mineurs
-possibles avant la v1.0.
+**Release Candidate (v0.7.0+)** -- Les APIs sont stables, utilisees en production, des changements mineurs sont possibles avant la v1.0.
 
 ---
 
 ## Licence
 
-**MIT** — Libre d'utilisation dans les projets commerciaux et open source.
-
----
-
-Fait au 🇲🇽 pour le monde.
+**MIT** -- Libre d'utilisation dans les projets commerciaux et open source.

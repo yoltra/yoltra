@@ -8,7 +8,7 @@
 
 > **EventPhase** = `"committed"` \| `"uncommitted"` \| `"all"`
 
-Defined in: [types.ts:931](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/types.ts#L931)
+Defined in: [types.ts:977](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L977)
 
 Phase of event subscription notification.
 

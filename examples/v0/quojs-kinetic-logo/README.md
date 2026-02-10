@@ -104,7 +104,7 @@ src/
 
 - **`batchUpdate`**: one event, many updates → minimal reducer churn and fewer React commits.
 - **`useAtomicProp`**: subscribe directly to a deep path (`logo["d"]["circle_d_42"]`). No memo foot-guns, no selectors allocating new objects each render.
-- **Effect API** (`store.onEffect("logo", "start" | "stop")`): the engine reacts to state events without Redux‑saga/thunk ceremony.
+- **Effect API** (`store.onEffect("logo", "start" | "stop")`): the engine reacts to state events through the built-in async pipeline.
 - **Pure, immutable reducer**: `upsertItem()` enforces a no‑op when nothing changed → fewer updates propagate.
 
 If you like this pattern in a toy demo, it scales cleanly to real UIs with thousands of nodes, streaming or animation workloads, and strict rendering budgets.

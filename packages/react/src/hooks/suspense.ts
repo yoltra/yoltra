@@ -78,7 +78,11 @@ class SuspenseCache {
 }
 
 /**
- * Default Suspense cache instance.
+ * Default Suspense cache instance shared by all `useSuspense*` hooks.
+ *
+ * Use {@link invalidateAtomicProp}, {@link invalidateAtomicPropsByReducer},
+ * or {@link clearSuspenseCache} to manage the cache from outside hooks.
+ *
  * @public
  */
 export const suspenseCache = new SuspenseCache();
@@ -91,16 +95,65 @@ function buildKey(reducer: string, props: string[] | string, extraKey?: string):
 
 /**
  * Options for {@link useSuspenseAtomicProp}.
+ *
+ * @typeParam T - The resolved value type after loading.
+ * @typeParam S - Store state record.
+ *
+ * @example
+ * ```ts
+ * const options: SuspenseAtomicPropOptions<User, AppState> = {
+ *   load: async (userId) => fetchUser(userId),
+ *   staleTime: 30_000, // cache for 30 seconds
+ *   key: 'user-detail',
+ * };
+ * ```
+ *
  * @public
  */
 export interface SuspenseAtomicPropOptions<T, S> {
+  /** Async loader that receives the value at the path and the full slice. */
   load: (valueAtPath: any, slice: S[keyof S]) => Promise<T> | T;
+  /** Time in ms before the cached value is considered stale (default: 0). */
   staleTime?: number;
+  /** Optional extra key to differentiate cache entries for the same path. */
   key?: string;
 }
 
 /**
- * Suspense version of a single-path selector.
+ * Suspense-compatible version of `useAtomicProp` that throws a promise while loading.
+ *
+ * Subscribes to a single dotted path and calls `options.load` to produce the
+ * resolved value. While the promise is pending, React Suspense catches it and
+ * renders the nearest `<Suspense>` fallback.
+ *
+ * @typeParam R - Reducer name union.
+ * @typeParam S - State record keyed by `R`.
+ * @typeParam P - Dotted path within `S[R]`.
+ * @typeParam T - Resolved value type.
+ *
+ * @param storeSpec - `{ reducer, property }` identifying the path to subscribe to.
+ * @param options - Loading options (see {@link SuspenseAtomicPropOptions}).
+ * @returns The resolved value of type `T`.
+ *
+ * @throws A `Promise` while loading (caught by React Suspense).
+ * @throws If called outside a `<StoreProvider>`.
+ *
+ * @example
+ * ```tsx
+ * function UserName({ userId }: { userId: string }) {
+ *   const name = useSuspenseAtomicProp(
+ *     { reducer: 'users', property: `byId.${userId}.name` },
+ *     { load: async (name) => name ?? (await fetchUser(userId)).name },
+ *   );
+ *   return <span>{name}</span>;
+ * }
+ *
+ * // Wrap with Suspense
+ * <Suspense fallback={<Spinner />}>
+ *   <UserName userId="123" />
+ * </Suspense>
+ * ```
+ *
  * @public
  */
 export function useSuspenseAtomicProp<
@@ -155,16 +208,53 @@ function _useSuspenseAtomicPropImpl<
 
 /**
  * Options for {@link useSuspenseAtomicProps}.
+ *
+ * @typeParam T - The resolved value type after loading.
+ * @typeParam S - Store state record.
+ *
  * @public
  */
 export interface SuspenseAtomicPropsOptions<T, S> {
+  /** Async loader that receives the full store state. */
   load: (state: S) => Promise<T> | T;
+  /** Time in ms before the cached value is considered stale (default: 0). */
   staleTime?: number;
+  /** Optional extra key to differentiate cache entries. */
   key?: string;
 }
 
 /**
- * Suspense version of a multi-path selector.
+ * Suspense-compatible version of `useAtomicProps` that throws a promise while loading.
+ *
+ * Subscribes to multiple dotted paths and calls `options.load` with the full state
+ * to produce the resolved value. While the promise is pending, React Suspense
+ * renders the nearest `<Suspense>` fallback.
+ *
+ * @typeParam R - Reducer name union.
+ * @typeParam S - State record keyed by `R`.
+ * @typeParam T - Resolved value type.
+ *
+ * @param specs - Array of `{ reducer, property }` paths to subscribe to.
+ * @param options - Loading options (see {@link SuspenseAtomicPropsOptions}).
+ * @returns The resolved value of type `T`.
+ *
+ * @throws A `Promise` while loading (caught by React Suspense).
+ * @throws If called outside a `<StoreProvider>`.
+ *
+ * @example
+ * ```tsx
+ * function Dashboard() {
+ *   const stats = useSuspenseAtomicProps(
+ *     [
+ *       { reducer: 'orders', property: 'items.**' },
+ *       { reducer: 'users', property: 'active' },
+ *     ],
+ *     { load: async (state) => computeDashboardStats(state) },
+ *   );
+ *   return <StatsGrid data={stats} />;
+ * }
+ * ```
+ *
  * @public
  */
 export function useSuspenseAtomicProps<R extends string, S extends Record<R, any>, T>(
@@ -251,7 +341,17 @@ function _useSuspenseAtomicPropsImpl<R extends string, S extends Record<R, any>,
 }
 
 /**
- * Invalidates cache for a specific property.
+ * Invalidates the Suspense cache entry for a specific `reducer.property` path.
+ *
+ * @param reducer - Reducer (slice) name.
+ * @param property - Dotted property path.
+ * @param extraKey - Optional extra key if the hook was created with `options.key`.
+ *
+ * @example
+ * ```ts
+ * invalidateAtomicProp('users', 'byId.123.name');
+ * ```
+ *
  * @public
  */
 export function invalidateAtomicProp(reducer: string, property: string, extraKey?: string) {
@@ -259,7 +359,15 @@ export function invalidateAtomicProp(reducer: string, property: string, extraKey
 }
 
 /**
- * Invalidates all cache entries for a reducer.
+ * Invalidates all Suspense cache entries for a given reducer (slice).
+ *
+ * @param reducer - Reducer (slice) name whose cache entries should be cleared.
+ *
+ * @example
+ * ```ts
+ * invalidateAtomicPropsByReducer('users');
+ * ```
+ *
  * @public
  */
 export function invalidateAtomicPropsByReducer(reducer: string) {
@@ -267,7 +375,14 @@ export function invalidateAtomicPropsByReducer(reducer: string) {
 }
 
 /**
- * Clears the entire Suspense cache.
+ * Clears the entire Suspense cache, forcing all `useSuspense*` hooks to re-load.
+ *
+ * @example
+ * ```ts
+ * // After a logout, clear all cached data
+ * clearSuspenseCache();
+ * ```
+ *
  * @public
  */
 export function clearSuspenseCache() {

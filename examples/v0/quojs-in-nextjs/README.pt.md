@@ -6,7 +6,7 @@
 > &nbsp; 👉 [ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; |
 > &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md)
 
-Um exemplo mínimo que mostra como **[Quo.js](https://quojs.dev)** — o contêiner de estado declarativo e baseado em TypeScript — pode ser executado **dentro de uma aplicação Next.js (App Router)**, incluindo componentes cliente compatíveis com SSR.
+Um exemplo mínimo que mostra como **[Quo.js](https://quojs.dev)** — reatividade de granularidade fina para aplicações orientadas a eventos — pode ser executado **dentro de uma aplicação Next.js (App Router)**, incluindo componentes cliente compatíveis com SSR.
 
 Esta demonstração implementa um simples **alternador de tema** (claro ↔ escuro) alimentado por `@quojs/core` e `@quojs/react`, provando que o Quo.js pode gerenciar o estado do aplicativo perfeitamente em **React 19 + Next.js 16**.
 

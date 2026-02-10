@@ -1,187 +1,136 @@
 ![Quo.js logo](../../assets/logo.svg)
 
-# Guide de Démarrage Rapide
+# Guide de demarrage rapide
 
->[ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/QUICK_START_GUIDE.md)&nbsp;
->|&nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/QUICK_START_GUIDE.md)&nbsp;
->|&nbsp;[ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)&nbsp;
->|&nbsp; 👉 [ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/QUICK_START_GUIDE.md)
+> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/QUICK_START_GUIDE.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/QUICK_START_GUIDE.md)&nbsp; |
+> &nbsp;[ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)&nbsp; |
+> &nbsp; 👉 [ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/QUICK_START_GUIDE.md)
 
+Cinq etapes de l'installation a une application fonctionnelle.
 
-## 1. Installer Quo.js
+---
 
-`quojs/react` n'est requis que lors de l'utilisation de React.
+## 1. Installation
 
 ```bash
 npm install @quojs/core @quojs/react
-# ou
-yarn add @quojs/core @quojs/react
-# ou
-pnpm add @quojs/core @quojs/react
 ```
 
-## 2. Définissez Votre Carte d'Événements
+(`@quojs/react` n'est requis que lors de l'utilisation de React.)
+
+---
+
+## 2. Definissez votre carte d'evenements et votre store
 
 ```typescript
-// Carte d'événements : canaux → types d'événements → payloads
-type AppEM = {
+// store.ts
+import { createStore, eventKeys } from '@quojs/core';
+
+export type AppEM = {
   counter: {
     increment: number;
     decrement: number;
     reset: null;
   };
-  todos: {
-    add: { id: string; title: string };
-    toggle: { id: string };
-    delete: { id: string };
-  };
 };
-```
 
-## 3. Créez des Reducers
+export type AppState = { counter: { value: number } };
 
-```typescript
-import type { ReducerSpec } from '@quojs/core';
-
-const counterReducer: ReducerSpec<{ value: number }, AppEM> = {
-  state: { value: 0 },
-  events: [
-    ['counter', 'increment'],
-    ['counter', 'decrement'],
-    ['counter', 'reset']
-  ],
-  reducer: (state, event) => {
-    switch (event.type) {
-      case 'increment':
-        return { value: state.value + event.payload };
-      case 'decrement':
-        return { value: state.value - event.payload };
-      case 'reset':
-        return { value: 0 };
-      default:
-        return state;
-    }
-  }
-};
-```
-
-## 4. Créez le Store
-
-```typescript
-import { createStore } from '@quojs/core';
-
-const store = createStore({
-  name: 'MyApp',
+export const store = createStore<AppState, AppEM>({
+  name: 'App',
   reducer: {
-    counter: counterReducer,
-    // ... autres reducers
-  }
+    counter: {
+      state: { value: 0 },
+      when: { keys: eventKeys<AppEM>()([
+        ['counter', 'increment'],
+        ['counter', 'decrement'],
+        ['counter', 'reset'],
+      ])},
+      reducer: (state, event) => {
+        switch (event.type) {
+          case 'increment': return { value: state.value + event.payload };
+          case 'decrement': return { value: state.value - event.payload };
+          case 'reset':     return { value: 0 };
+          default:          return state;
+        }
+      },
+    },
+  },
 });
 ```
 
-## 5. Émettez des Événements
+---
+
+## 3. Creez des hooks types avec `createQuoHooks`
 
 ```typescript
-// Émettez des événements (async)
-await store.emit('counter', 'increment', 5);
-await store.emit('counter', 'decrement', 2);
-await store.emit('counter', 'reset', null);
+// hooks.ts
+import { createContext } from 'react';
+import { createQuoHooks } from '@quojs/react';
+import type { StoreInstance } from '@quojs/core';
+import type { AppState, AppEM } from './store';
 
-// Obtenez l'état actuel
-const state = store.getState();
-console.log(state.counter.value); // 0
+export const AppStoreContext = createContext<
+  StoreInstance<'counter', AppState, AppEM> | null
+>(null);
+
+export const {
+  useAtomicProp,
+  useEmit,
+  useEvent,
+  useSelector,
+  shallowEqual,
+} = createQuoHooks(AppStoreContext);
 ```
 
-## 6. Abonnez-vous aux Changements
+---
 
-```typescript
-// Granularité grossière : Abonnez-vous à tout changement d'état
-const unsubscribe = store.subscribe(() => {
-  console.log('État changé :', store.getState());
-});
-
-// Granularité fine : Abonnez-vous à un chemin spécifique
-const unsubscribePath = store.connect(
-  { reducer: 'counter', property: 'value' },
-  (change) => {
-    console.log('Valeur du compteur changée :', change.oldValue, '→', change.newValue);
-  }
-);
-
-// Nettoyage
-unsubscribe();
-unsubscribePath();
-```
-
-## 7. Utilisation dans React (facultatif)
-
-Consultez le **[fichier readme de @quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.fr.md)**.
+## 4. Fournissez le store
 
 ```tsx
 // App.tsx
-import { StoreProvider } from '@quojs/react';
 import { store } from './store';
+import { AppStoreContext } from './hooks';
 
-function App() {
+export function App() {
   return (
-    <StoreProvider store={store}>
-      <YourApp />
-    </StoreProvider>
+    <AppStoreContext.Provider value={store}>
+      <Counter />
+    </AppStoreContext.Provider>
   );
 }
 ```
 
-## 8. Abonnements aux Événements (v0.7.0+)
+---
 
-Les abonnements aux événements vous permettent de réagir aux événements sans sélectionner d'état. C'est utile pour :
-- Afficher des notifications sur certains événements
-- Déclencher des animations
-- Logging/analytiques
-- Répondre aux événements rejetés (non confirmés)
-
-### Phases d'Événements
-
-- **`'committed'`** (par défaut) : Événements qui ont passé le middleware et atteint les reducers
-- **`'uncommitted'`** : Événements rejetés par le middleware
-- **`'all'`** : Les deux événements confirmés et non confirmés
-
-### Utilisation Core
-
-```typescript
-// S'abonner aux événements confirmés (par défaut)
-const unsubscribe = store.onEvent('ui', 'save', (event, getState, emit, phase) => {
-  console.log('Sauvegarde confirmée :', event.payload);
-});
-
-// S'abonner aux événements rejetés
-store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
-  console.log('Suppression rejetée par le middleware');
-}, 'uncommitted');
-
-// S'abonner à tous les événements (confirmés et non confirmés)
-store.onEvent('ui', 'action', (event, getState, emit, phase) => {
-  console.log('Action :', phase); // 'committed' ou 'uncommitted'
-}, 'all');
-
-// Nettoyage
-unsubscribe();
-```
-
-### Hook React
+## 5. Utilisez les hooks dans les composants
 
 ```tsx
-import { useEvent } from '@quojs/react';
+// Counter.tsx
+import { useAtomicProp, useEmit } from './hooks';
 
-function SaveNotification() {
-  useEvent('ui', 'save', (event, getState, emit, phase) => {
-    showToast('Sauvegardé avec succès !');
-  });
+export function Counter() {
+  // Ne se re-rend que lorsque counter.value change
+  const value = useAtomicProp({ reducer: 'counter', property: 'value' });
+  const emit = useEmit();
 
-  // Pour les événements rejetés
-  useEvent('ui', 'delete', (event, getState, emit, phase) => {
-    showToast('Suppression bloquée');
-  }, 'uncommitted');
-
-  return null;
+  return (
+    <div>
+      <h1>Count: {value}</h1>
+      <button onClick={() => emit('counter', 'increment', 1)}>+</button>
+      <button onClick={() => emit('counter', 'decrement', 1)}>-</button>
+      <button onClick={() => emit('counter', 'reset', null)}>Reset</button>
+    </div>
+  );
 }
 ```
+
+---
+
+## Et ensuite ?
+
+- **[API @quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** -- Middleware, effets, matchers `When`, abonnements aux evenements
+- **[API @quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** -- `useAtomicProps`, hooks Suspense, wildcards
+- **[Architecture de la file d'evenements](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)** -- Comment le pipeline fonctionne en coulisses
+- **[Exemples](https://github.com/quojs/quojs/blob/main/README.md#live-examples)** -- Application de taches, logo cinetique, integration Next.js

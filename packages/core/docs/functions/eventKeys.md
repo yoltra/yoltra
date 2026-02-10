@@ -8,7 +8,7 @@
 
 > **eventKeys**\<`EM`\>(): \<`K`\>(`keys`) => `K`
 
-Defined in: [types.ts:737](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/types.ts#L737)
+Defined in: [types.ts:783](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L783)
 
 Helper to create type-safe EventKey arrays without requiring `as const`.
 Preserves literal tuple types for proper type correlation in handlers.

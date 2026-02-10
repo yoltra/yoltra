@@ -8,9 +8,13 @@
 
 > **createQuoHooks**\<`R`, `S`, `EM`\>(`StoreContext`): `object`
 
-Defined in: [react/src/hooks/createQuoHooks.ts:102](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/createQuoHooks.ts#L102)
+Defined in: [react/src/hooks/createQuoHooks.ts:223](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/createQuoHooks.ts#L223)
 
-Factory that binds typed React hooks to a specific StoreInstance.
+Factory that creates fully-typed React hooks bound to a specific store context.
+
+This is the **recommended** setup pattern for Quo.js + React. It eliminates
+the need for explicit type parameters on every hook call — all types are
+inferred from the store context once, at creation time.
 
 ## Type Parameters
 
@@ -18,13 +22,19 @@ Factory that binds typed React hooks to a specific StoreInstance.
 
 `R` *extends* `string`
 
+Reducer name union.
+
 ### S
 
 `S` *extends* `Record`\<`R`, `any`\>
 
+State record keyed by `R`.
+
 ### EM
 
 `EM` *extends* `EventMapBase`
+
+Event map.
 
 ## Parameters
 
@@ -32,13 +42,22 @@ Factory that binds typed React hooks to a specific StoreInstance.
 
 `Context`\<`null` \| `StoreInstance`\<`R`, `S`, `EM`\>\>
 
+A React context carrying a `StoreInstance<R, S, EM>`.
+
 ## Returns
 
-`object`
+An object with typed hooks: `useStore`, `useEmit`, `useSelector`,
+  `useAtomicProp`, `useAtomicProps`, `useEvent`, and `shallowEqual`.
 
 ### shallowEqual()
 
 > **shallowEqual**: \<`T`\>(`a`, `b`) => `boolean`
+
+Shallow object equality using `Object.is` per-key.
+
+Useful as the `isEqual` argument for `useAtomicProp` and `useAtomicProps`
+when the derived value is a plain object. Also available as a standalone
+export from `@quojs/react` via [hooks.shallowEqual](#createquohooks).
 
 #### Type Parameters
 
@@ -59,6 +78,13 @@ Factory that binds typed React hooks to a specific StoreInstance.
 #### Returns
 
 `boolean`
+
+#### Example
+
+```ts
+shallowEqual({ a: 1 }, { a: 1 }); // true
+shallowEqual({ a: 1 }, { a: 2 }); // false
+```
 
 ### useAtomicProp
 
@@ -111,3 +137,36 @@ Factory that binds typed React hooks to a specific StoreInstance.
 #### Returns
 
 `StoreInstance`\<`R`, `S`, `EM`\>
+
+## Throws
+
+If any returned hook is called outside a `<StoreProvider>`.
+
+## Example
+
+```tsx
+// 1. Define your event map and state
+type AppEM = { ui: { increment: number; decrement: number } };
+type AppState = { counter: { value: number } };
+
+// 2. Create a typed context
+import { createContext } from 'react';
+import { StoreInstance } from '@quojs/core';
+const AppStoreContext = createContext<
+  StoreInstance<'counter', AppState, AppEM> | null
+>(null);
+
+// 3. Create typed hooks (do this once, export from a shared module)
+const { useAtomicProp, useEmit, useEvent } = createQuoHooks(AppStoreContext);
+
+// 4. Use in components — no explicit generics needed
+function Counter() {
+  const value = useAtomicProp({ reducer: 'counter', property: 'value' });
+  const emit = useEmit();
+  return (
+    <button onClick={() => emit('ui', 'increment', 1)}>
+      Count: {value}
+    </button>
+  );
+}
+```

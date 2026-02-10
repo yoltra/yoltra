@@ -10,11 +10,13 @@
 
 > **useAtomicProp**\<`R`, `S`, `R1`, `P`\>(`spec`): [`PathValue`](../type-aliases/PathValue.md)\<`S`\[`R1`\], `P`\>
 
-Defined in: [react/src/hooks/hooks.ts:296](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/hooks.ts#L296)
+Defined in: [react/src/hooks/hooks.ts:297](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L297)
 
 Fine-grained **single-path** selector for a reducer's state.
 
 Re-renders only when the specified `reducer.property` (dotted path) actually changes.
+For most applications, prefer using the typed version from [createQuoHooks](createQuoHooks.md)
+which infers all type parameters automatically.
 
 **Supports**
 - Exact root prop: `{ reducer: "todo", property: "data" }`
@@ -63,7 +65,20 @@ Re-renders only when the specified `reducer.property` (dotted path) actually cha
 ### Examples
 
 ```tsx
-const title = useAtomicProp<'todos', AppState, 'items.0.title'>(
+const { useAtomicProp } = createQuoHooks(AppStoreContext);
+
+function TodoTitle({ index }: { index: number }) {
+  // Types are inferred — no explicit generics needed
+  const title = useAtomicProp({
+    reducer: 'todos',
+    property: `items.${index}.title`,
+  });
+  return <span>{title}</span>;
+}
+```
+
+```tsx
+const title = useAtomicProp<'todos', AppState, 'todos', 'items.0.title'>(
   { reducer: 'todos', property: 'items.0.title' }
 );
 ```
@@ -87,11 +102,13 @@ const titles = useAtomicProp(
 
 > **useAtomicProp**\<`R`, `S`, `R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`
 
-Defined in: [react/src/hooks/hooks.ts:302](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/hooks.ts#L302)
+Defined in: [react/src/hooks/hooks.ts:303](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L303)
 
 Fine-grained **single-path** selector for a reducer's state.
 
 Re-renders only when the specified `reducer.property` (dotted path) actually changes.
+For most applications, prefer using the typed version from [createQuoHooks](createQuoHooks.md)
+which infers all type parameters automatically.
 
 **Supports**
 - Exact root prop: `{ reducer: "todo", property: "data" }`
@@ -152,7 +169,20 @@ Re-renders only when the specified `reducer.property` (dotted path) actually cha
 ### Examples
 
 ```tsx
-const title = useAtomicProp<'todos', AppState, 'items.0.title'>(
+const { useAtomicProp } = createQuoHooks(AppStoreContext);
+
+function TodoTitle({ index }: { index: number }) {
+  // Types are inferred — no explicit generics needed
+  const title = useAtomicProp({
+    reducer: 'todos',
+    property: `items.${index}.title`,
+  });
+  return <span>{title}</span>;
+}
+```
+
+```tsx
+const title = useAtomicProp<'todos', AppState, 'todos', 'items.0.title'>(
   { reducer: 'todos', property: 'items.0.title' }
 );
 ```
@@ -176,11 +206,13 @@ const titles = useAtomicProp(
 
 > **useAtomicProp**\<`R`, `S`, `R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`
 
-Defined in: [react/src/hooks/hooks.ts:313](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/hooks.ts#L313)
+Defined in: [react/src/hooks/hooks.ts:314](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L314)
 
 Fine-grained **single-path** selector for a reducer's state.
 
 Re-renders only when the specified `reducer.property` (dotted path) actually changes.
+For most applications, prefer using the typed version from [createQuoHooks](createQuoHooks.md)
+which infers all type parameters automatically.
 
 **Supports**
 - Exact root prop: `{ reducer: "todo", property: "data" }`
@@ -241,7 +273,20 @@ Re-renders only when the specified `reducer.property` (dotted path) actually cha
 ### Examples
 
 ```tsx
-const title = useAtomicProp<'todos', AppState, 'items.0.title'>(
+const { useAtomicProp } = createQuoHooks(AppStoreContext);
+
+function TodoTitle({ index }: { index: number }) {
+  // Types are inferred — no explicit generics needed
+  const title = useAtomicProp({
+    reducer: 'todos',
+    property: `items.${index}.title`,
+  });
+  return <span>{title}</span>;
+}
+```
+
+```tsx
+const title = useAtomicProp<'todos', AppState, 'todos', 'items.0.title'>(
   { reducer: 'todos', property: 'items.0.title' }
 );
 ```
@@ -265,11 +310,13 @@ const titles = useAtomicProp(
 
 > **useAtomicProp**\<`R`, `S`\>(`spec`): `unknown`
 
-Defined in: [react/src/hooks/hooks.ts:324](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/hooks.ts#L324)
+Defined in: [react/src/hooks/hooks.ts:325](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L325)
 
 Fine-grained **single-path** selector for a reducer's state.
 
 Re-renders only when the specified `reducer.property` (dotted path) actually changes.
+For most applications, prefer using the typed version from [createQuoHooks](createQuoHooks.md)
+which infers all type parameters automatically.
 
 **Supports**
 - Exact root prop: `{ reducer: "todo", property: "data" }`
@@ -310,7 +357,20 @@ Re-renders only when the specified `reducer.property` (dotted path) actually cha
 ### Examples
 
 ```tsx
-const title = useAtomicProp<'todos', AppState, 'items.0.title'>(
+const { useAtomicProp } = createQuoHooks(AppStoreContext);
+
+function TodoTitle({ index }: { index: number }) {
+  // Types are inferred — no explicit generics needed
+  const title = useAtomicProp({
+    reducer: 'todos',
+    property: `items.${index}.title`,
+  });
+  return <span>{title}</span>;
+}
+```
+
+```tsx
+const title = useAtomicProp<'todos', AppState, 'todos', 'items.0.title'>(
   { reducer: 'todos', property: 'items.0.title' }
 );
 ```
@@ -334,11 +394,13 @@ const titles = useAtomicProp(
 
 > **useAtomicProp**\<`R`, `S`, `T`\>(`spec`, `map`, `isEqual?`): `T`
 
-Defined in: [react/src/hooks/hooks.ts:328](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/hooks.ts#L328)
+Defined in: [react/src/hooks/hooks.ts:329](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L329)
 
 Fine-grained **single-path** selector for a reducer's state.
 
 Re-renders only when the specified `reducer.property` (dotted path) actually changes.
+For most applications, prefer using the typed version from [createQuoHooks](createQuoHooks.md)
+which infers all type parameters automatically.
 
 **Supports**
 - Exact root prop: `{ reducer: "todo", property: "data" }`
@@ -391,7 +453,20 @@ Re-renders only when the specified `reducer.property` (dotted path) actually cha
 ### Examples
 
 ```tsx
-const title = useAtomicProp<'todos', AppState, 'items.0.title'>(
+const { useAtomicProp } = createQuoHooks(AppStoreContext);
+
+function TodoTitle({ index }: { index: number }) {
+  // Types are inferred — no explicit generics needed
+  const title = useAtomicProp({
+    reducer: 'todos',
+    property: `items.${index}.title`,
+  });
+  return <span>{title}</span>;
+}
+```
+
+```tsx
+const title = useAtomicProp<'todos', AppState, 'todos', 'items.0.title'>(
   { reducer: 'todos', property: 'items.0.title' }
 );
 ```

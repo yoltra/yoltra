@@ -6,7 +6,7 @@
 
 # Interface: SuspenseAtomicPropsOptions\<T, S\>
 
-Defined in: [react/src/hooks/suspense.ts:183](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/suspense.ts#L183)
+Defined in: [react/src/hooks/suspense.ts:217](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L217)
 
 Options for [useSuspenseAtomicProps](../functions/useSuspenseAtomicProps.md).
 
@@ -16,9 +16,13 @@ Options for [useSuspenseAtomicProps](../functions/useSuspenseAtomicProps.md).
 
 `T`
 
+The resolved value type after loading.
+
 ### S
 
 `S`
+
+Store state record.
 
 ## Properties
 
@@ -26,7 +30,9 @@ Options for [useSuspenseAtomicProps](../functions/useSuspenseAtomicProps.md).
 
 > `optional` **key**: `string`
 
-Defined in: [react/src/hooks/suspense.ts:186](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/suspense.ts#L186)
+Defined in: [react/src/hooks/suspense.ts:223](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L223)
+
+Optional extra key to differentiate cache entries.
 
 ***
 
@@ -34,7 +40,9 @@ Defined in: [react/src/hooks/suspense.ts:186](https://github.com/quojs/quojs/blo
 
 > **load**: (`state`) => `T` \| `Promise`\<`T`\>
 
-Defined in: [react/src/hooks/suspense.ts:184](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/suspense.ts#L184)
+Defined in: [react/src/hooks/suspense.ts:219](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L219)
+
+Async loader that receives the full store state.
 
 #### Parameters
 
@@ -52,4 +60,6 @@ Defined in: [react/src/hooks/suspense.ts:184](https://github.com/quojs/quojs/blo
 
 > `optional` **staleTime**: `number`
 
-Defined in: [react/src/hooks/suspense.ts:185](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/suspense.ts#L185)
+Defined in: [react/src/hooks/suspense.ts:221](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L221)
+
+Time in ms before the cached value is considered stale (default: 0).

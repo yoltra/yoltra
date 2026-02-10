@@ -8,7 +8,7 @@
 
 > **MiddlewareInput**\<`S`, `EM`\> = [`MiddlewareFunction`](MiddlewareFunction.md)\<`S`, `EM`\> \| [`MiddlewareSpec`](../interfaces/MiddlewareSpec.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:177](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/types.ts#L177)
+Defined in: [types.ts:194](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L194)
 
 Middleware input: accepts either a function (legacy) or a spec object (recommended).
 
@@ -25,3 +25,20 @@ Store state (readonly).
 `EM` *extends* [`EventMapBase`](EventMapBase.md) = [`EventMapBase`](EventMapBase.md)
 
 Event map.
+
+## Examples
+
+```ts
+const mw: MiddlewareInput<AppState, AppEM> = (state, event, emit) => {
+  console.log(event.type);
+  return true;
+};
+```
+
+```ts
+const mw: MiddlewareInput<AppState, AppEM> = {
+  when: { channel: 'admin' },
+  middleware: (state, event, emit) => state.auth.isAdmin,
+  meta: { type: 'middleware', name: 'authGuard' },
+};
+```

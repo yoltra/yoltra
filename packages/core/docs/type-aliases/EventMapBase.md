@@ -8,7 +8,7 @@
 
 > **EventMapBase** = `{ [C in string]: { [T in string]: unknown } }`
 
-Defined in: [types.ts:18](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/types.ts#L18)
+Defined in: [types.ts:18](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L18)
 
 A minimal "record of record" constraint for EventMaps.
 

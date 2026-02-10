@@ -7,183 +7,130 @@
 > &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)&nbsp; |
 > &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/QUICK_START_GUIDE.md)
 
+Five steps from install to working app.
 
-### 1. Install Quo.js
+---
 
-`quojs/react` is only required when using React.
+## 1. Install
 
 ```bash
 npm install @quojs/core @quojs/react
-# or
-yarn add @quojs/core @quojs/react
-# or
-pnpm add @quojs/core @quojs/react
 ```
 
-## 2. Define Your Event Map
+(`@quojs/react` is only required when using React.)
+
+---
+
+## 2. Define your event map and store
 
 ```typescript
-// Event map: channels → event types → payloads
-type AppEM = {
+// store.ts
+import { createStore, eventKeys } from '@quojs/core';
+
+export type AppEM = {
   counter: {
     increment: number;
     decrement: number;
     reset: null;
   };
-  todos: {
-    add: { id: string; title: string };
-    toggle: { id: string };
-    delete: { id: string };
-  };
 };
-```
 
-## 3. Create Reducers
+export type AppState = { counter: { value: number } };
 
-```typescript
-import type { ReducerSpec } from '@quojs/core';
-import { eventKeys } from '@quojs/core';
-
-const counterReducer: ReducerSpec<{ value: number }, AppEM> = {
-  state: { value: 0 },
-  // v0.7.0+: Use `when` for event targeting (recommended)
-  when: { keys: eventKeys<AppEM>()([
-    ['counter', 'increment'],
-    ['counter', 'decrement'],
-    ['counter', 'reset']
-  ])},
-  reducer: (state, event) => {
-    switch (event.type) {
-      case 'increment':
-        return { value: state.value + event.payload };
-      case 'decrement':
-        return { value: state.value - event.payload };
-      case 'reset':
-        return { value: 0 };
-      default:
-        return state;
-    }
-  }
-};
-```
-
-## 4. Create the Store
-
-```typescript
-import { createStore } from '@quojs/core';
-
-const store = createStore({
-  name: 'Quo.js Store',
+export const store = createStore<AppState, AppEM>({
+  name: 'App',
   reducer: {
-    counter: counterReducer,
-    // ... other reducers
-  }
+    counter: {
+      state: { value: 0 },
+      when: { keys: eventKeys<AppEM>()([
+        ['counter', 'increment'],
+        ['counter', 'decrement'],
+        ['counter', 'reset'],
+      ])},
+      reducer: (state, event) => {
+        switch (event.type) {
+          case 'increment': return { value: state.value + event.payload };
+          case 'decrement': return { value: state.value - event.payload };
+          case 'reset':     return { value: 0 };
+          default:          return state;
+        }
+      },
+    },
+  },
 });
 ```
 
-## 5. Emit Events
+---
+
+## 3. Create typed hooks with `createQuoHooks`
 
 ```typescript
-// Emit events (async)
-await store.emit('counter', 'increment', 5);
-await store.emit('counter', 'decrement', 2);
-await store.emit('counter', 'reset', null);
+// hooks.ts
+import { createContext } from 'react';
+import { createQuoHooks } from '@quojs/react';
+import type { StoreInstance } from '@quojs/core';
+import type { AppState, AppEM } from './store';
 
-// Get current state
-const state = store.getState();
-console.log(state.counter.value); // 0
+export const AppStoreContext = createContext<
+  StoreInstance<'counter', AppState, AppEM> | null
+>(null);
+
+export const {
+  useAtomicProp,
+  useEmit,
+  useEvent,
+  useSelector,
+  shallowEqual,
+} = createQuoHooks(AppStoreContext);
 ```
 
-## 6. Subscribe to Changes
+---
 
-```typescript
-// Coarse-grained: Subscribe to any state change
-const unsubscribe = store.subscribe(() => {
-  console.log('State changed:', store.getState());
-});
-
-// Fine-grained: Subscribe to specific path
-const unsubscribePath = store.connect(
-  { reducer: 'counter', property: 'value' },
-  (change) => {
-    console.log('Counter value changed:', change.oldValue, '→', change.newValue);
-  }
-);
-
-// Cleanup
-unsubscribe();
-unsubscribePath();
-```
-
-### 7. Use in React (optional)
-
-Check the **[@quojs/react readme file](https://github.com/quojs/quojs/blob/main/packages/react/README.md)**.
+## 4. Provide the store
 
 ```tsx
 // App.tsx
-import { StoreProvider } from '@quojs/react';
 import { store } from './store';
+import { AppStoreContext } from './hooks';
 
-function App() {
+export function App() {
   return (
-    <StoreProvider store={store}>
-      <YourApp />
-    </StoreProvider>
+    <AppStoreContext.Provider value={store}>
+      <Counter />
+    </AppStoreContext.Provider>
   );
 }
 ```
 
-## 8. Event Subscriptions (v0.7.0+)
+---
 
-Event subscriptions allow you to react to events without selecting state. This is useful for:
-- Showing notifications on certain events
-- Triggering animations
-- Logging/analytics
-- Responding to rejected (uncommitted) events
-
-### Event Phases
-
-- **`'committed'`** (default): Events that passed middleware and reached reducers
-- **`'uncommitted'`**: Events rejected by middleware
-- **`'all'`**: Both committed and uncommitted events
-
-### Core Usage
-
-```typescript
-// Subscribe to committed events (default)
-const unsubscribe = store.onEvent('ui', 'save', (event, getState, emit, phase) => {
-  console.log('Save committed:', event.payload);
-});
-
-// Subscribe to rejected events
-store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
-  console.log('Delete was rejected by middleware');
-}, 'uncommitted');
-
-// Subscribe to all events (both committed and uncommitted)
-store.onEvent('ui', 'action', (event, getState, emit, phase) => {
-  console.log('Action:', phase); // 'committed' or 'uncommitted'
-}, 'all');
-
-// Cleanup
-unsubscribe();
-```
-
-### React Hook
+## 5. Use hooks in components
 
 ```tsx
-import { useEvent } from '@quojs/react';
+// Counter.tsx
+import { useAtomicProp, useEmit } from './hooks';
 
-function SaveNotification() {
-  useEvent('ui', 'save', (event, getState, emit, phase) => {
-    showToast('Saved successfully!');
-  });
+export function Counter() {
+  // Only re-renders when counter.value changes
+  const value = useAtomicProp({ reducer: 'counter', property: 'value' });
+  const emit = useEmit();
 
-  // For rejected events
-  useEvent('ui', 'delete', (event, getState, emit, phase) => {
-    showToast('Delete was blocked');
-  }, 'uncommitted');
-
-  return null;
+  return (
+    <div>
+      <h1>Count: {value}</h1>
+      <button onClick={() => emit('counter', 'increment', 1)}>+</button>
+      <button onClick={() => emit('counter', 'decrement', 1)}>-</button>
+      <button onClick={() => emit('counter', 'reset', null)}>Reset</button>
+    </div>
+  );
 }
 ```
+
+---
+
+## What's next?
+
+- **[@quojs/core API](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** — Middleware, effects, `When` matchers, event subscriptions
+- **[@quojs/react API](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** — `useAtomicProps`, Suspense hooks, wildcards
+- **[Event Queue Architecture](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)** — How the pipeline works under the hood
+- **[Examples](https://github.com/quojs/quojs/blob/main/README.md#live-examples)** — Todo app, kinetic logo, Next.js integration

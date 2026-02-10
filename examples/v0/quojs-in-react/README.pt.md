@@ -3,10 +3,11 @@
 > [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md) 
 
 Uma pequena demonstração focada em React que hospeda **ambas as implementações de estado** lado
-a lado:
+a lado, com uma **[comparação de flamegraph](./redux-quojs-profiler.pt.md)** que comprova a
+diferença de desempenho:
 
-- **Quo.js** (store personalizado tipo Redux com canais/eventos e assinaturas de granularidade
-  fina)
+- **Quo.js** (store orientado a eventos com eventos baseados em canais e assinaturas de
+  granularidade fina)
 - **Redux Toolkit (RTK)** (stack padrão Redux com `createSlice` + `createAsyncThunk`)
 
 Use este projeto para executar a UI localmente e reproduzir a

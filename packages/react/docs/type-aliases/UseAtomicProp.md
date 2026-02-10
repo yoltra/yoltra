@@ -8,7 +8,13 @@
 
 > **UseAtomicProp**\<`R`, `S`\> = \{\<`R1`, `P`\>(`spec`): [`PathValue`](PathValue.md)\<`S`\[`R1`\], `P`\>; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`\>(`spec`): `unknown`; \<`R1`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \}
 
-Defined in: [react/src/hooks/createQuoHooks.ts:19](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/react/src/hooks/createQuoHooks.ts#L19)
+Defined in: [react/src/hooks/createQuoHooks.ts:45](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/createQuoHooks.ts#L45)
+
+Call signature for the typed `useAtomicProp` hook returned by [createQuoHooks](../functions/createQuoHooks.md).
+
+Subscribes to a specific dotted path in a reducer's state and re-renders
+only when that path changes. All type parameters are inferred automatically
+from the store context — no explicit generics needed.
 
 ## Type Parameters
 
@@ -16,9 +22,13 @@ Defined in: [react/src/hooks/createQuoHooks.ts:19](https://github.com/quojs/quoj
 
 `R` *extends* `string`
 
+Reducer name union.
+
 ### S
 
 `S` *extends* `Record`\<`R`, `any`\>
+
+State record keyed by `R`.
 
 ## Call Signature
 
@@ -197,3 +207,17 @@ Defined in: [react/src/hooks/createQuoHooks.ts:19](https://github.com/quojs/quoj
 ### Returns
 
 `T`
+
+## Example
+
+```tsx
+const { useAtomicProp } = createQuoHooks(AppStoreContext);
+
+function TodoTitle({ index }: { index: number }) {
+  const title = useAtomicProp({
+    reducer: 'todos',
+    property: `items.${index}.title`,
+  });
+  return <span>{title}</span>;
+}
+```

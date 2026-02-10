@@ -22,7 +22,7 @@ Mostra o Quo.js como um contêiner de estado **previsível, tipado e orientado a
 - **Canais + eventos (sem sopa de action types):** despachamos no canal `"logo"` com eventos como `"batchUpdate"`, `"fps"`, etc.
 - **Seletores granulares:** cada `<Circle/>` assina seu **próprio** nó `logo[group][id]` via `useAtomicProp`, evitando re‑renders do slice inteiro.
 - **Reducer imutável e ergonômico:** um único reducer (`Logo.reducer.ts`) lida com updates atômicos e em lote sem mágica.
-- **Hooks tipados:** `createQuoHooks` gera `useStore`, `useDispatch`, `useSelector`, `useAtomicProp`, `useAtomicProps` com inferência total de TS.
+- **Hooks tipados:** `createQuoHooks` gera `useStore`, `useEmit`, `useSelector`, `useAtomicProp`, `useAtomicProps` com inferência total de TS.
 - **Efeitos de eventos:** o motor escuta efeitos do store (ex.: `"logo":"start" | "stop"`) para coordenar o ciclo de vida da simulação.
 
 Resultado: **60fps suaves** em máquinas capazes, com o React tocando o DOM apenas para os círculos que realmente se moveram.
@@ -104,7 +104,7 @@ src/
 
 - **`batchUpdate`**: uma ação, muitos updates → menos trabalho do reducer e menos commits do React.
 - **`useAtomicProp`**: assinatura direta em um caminho profundo (`logo["d"]["circle_d_42"]`). Sem pegadinhas de memo, sem seletores que alocam objetos novos a cada render.
-- **API de efeitos** (`store.onEffect("logo", "start" | "stop")`): o motor reage a eventos de estado sem a cerimônia de Redux‑saga/thunk.
+- **API de efeitos** (`store.onEffect("logo", "start" | "stop")`): o motor reage a eventos de estado através do pipeline async integrado do Quo.js.
 - **Reducer puro e imutável**: `upsertItem()` garante no‑op quando nada mudou → menos atualizações se propagam.
 
 Se você curte esse padrão em um demo, ele escala bem para UIs reais com milhares de nós, workloads de streaming/animação e orçamentos de render rigorosos.

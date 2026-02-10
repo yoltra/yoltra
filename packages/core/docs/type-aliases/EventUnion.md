@@ -8,7 +8,7 @@
 
 > **EventUnion**\<`EM`\> = `{ [C in keyof EM & string]: { [T in keyof EM[C] & string]: Event<EM, C, T> }[keyof EM[C] & string] }`\[keyof `EM` & `string`\]
 
-Defined in: [types.ts:542](https://github.com/quojs/quojs/blob/90b047cd5df060b28c5f76a1ad4792631061e571/packages/core/src/types.ts#L542)
+Defined in: [types.ts:588](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L588)
 
 Every legal `{ channel, type, payload, id }` as a *distinct* object type.
 
