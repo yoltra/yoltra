@@ -8,6 +8,6 @@
 
 > **Primitive** = `string` \| `number` \| `boolean` \| `bigint` \| `symbol` \| `null` \| `undefined` \| `Date` \| `RegExp`
 
-Defined in: [types.ts:541](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L541)
+Defined in: [types.ts:909](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L909)
 
 Primitive types (terminal leaves in deep traversal).

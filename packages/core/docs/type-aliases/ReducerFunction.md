@@ -8,7 +8,7 @@
 
 > **ReducerFunction**\<`S`, `EM`\> = (`state`, `event`) => `S`
 
-Defined in: [types.ts:418](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L418)
+Defined in: [types.ts:517](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L517)
 
 Pure reducer function (stateful event consumer).
 

@@ -66,7 +66,7 @@ describe("Store - event queue and deduplication", () => {
     expect(nestedLogs).toEqual(["mw-before", "mw-after"]);
   });
 
-  it("tracks processed event ids and clears them on interval", async () => {
+  it("tracks processed event fingerprints and clears them on interval", async () => {
     const store = createStore({
       name: "QueueStore2",
       reducer: {
@@ -74,18 +74,19 @@ describe("Store - event queue and deduplication", () => {
       },
     }) as any;
 
-    // after first emit, there should be some processed IDs
+    // after first emit, there should be some processed fingerprints
     await store.emit("ui", "ping", 1);
-    const set: Set<symbol> = store.processedEventIds;
-    expect(set.size).toBeGreaterThan(0);
+    const map: Map<string, number> = store.processedEvents;
+    expect(map.size).toBeGreaterThan(0);
 
-    // advance timers to trigger cleanup interval
-    vi.advanceTimersByTime(60_000);
+    // advance timers to trigger cleanup interval (5s intervals, prunes entries older than 2x window)
+    vi.advanceTimersByTime(10_000);
 
-    expect(set.size).toBe(0);
+    // After cleanup, old entries should be pruned
+    expect(map.size).toBe(0);
   });
 
-  it("dispose clears the cleanup timer and processed IDs", () => {
+  it("dispose clears the cleanup timer and processed fingerprints", () => {
     const store = createStore({
       name: "QueueStore3",
       reducer: {
@@ -93,12 +94,12 @@ describe("Store - event queue and deduplication", () => {
       },
     }) as any;
 
-    const timerBefore = store.eventIdCleanupTimer;
+    const timerBefore = store.eventCleanupTimer;
     expect(timerBefore).not.toBeNull();
 
     store.dispose();
 
-    expect(store.eventIdCleanupTimer).toBeNull();
-    expect(store.processedEventIds.size).toBe(0);
+    expect(store.eventCleanupTimer).toBeNull();
+    expect(store.processedEvents.size).toBe(0);
   });
 });

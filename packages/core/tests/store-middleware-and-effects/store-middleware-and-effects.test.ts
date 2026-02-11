@@ -132,7 +132,8 @@ describe("Store - middleware and effects", () => {
 
     store.replaceMiddleware([mwNew]);
 
-    await store.emit("ui", "increment", 1);
+    // Use different payload to avoid deduplication
+    await store.emit("ui", "increment", 2);
     expect(logs).toEqual(["old", "new"]);
   });
 
@@ -161,7 +162,8 @@ describe("Store - middleware and effects", () => {
     expect(calls).toEqual(["old"]);
 
     store.replaceEffects([newEffect]);
-    await store.emit("ui", "increment", 1);
+    // Use different payload to avoid deduplication
+    await store.emit("ui", "increment", 2);
     expect(calls).toEqual(["old", "new"]);
   });
 });

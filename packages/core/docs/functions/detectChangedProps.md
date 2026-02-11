@@ -8,7 +8,7 @@
 
 > **detectChangedProps**(`oldState`, `newState`, `path`, `seenPairs`): `string`[]
 
-Defined in: [utils/detectChangedProps.ts:68](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/utils/detectChangedProps.ts#L68)
+Defined in: [utils/detectChangedProps.ts:68](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/utils/detectChangedProps.ts#L68)
 
 Computes the list of **dotted leaf paths** that changed between two values.
 

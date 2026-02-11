@@ -8,9 +8,9 @@
 
 > **StoreSpec**\<`R`, `S`, `EM`\> = `object`
 
-Defined in: [types.ts:166](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L166)
+Defined in: [types.ts:227](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L227)
 
-Store spec - what you feed into the constructor / factory.
+Store configuration object passed to the [Store](../classes/Store.md) constructor or [createStore](../functions/createStore.md).
 
 ## Example
 
@@ -23,7 +23,7 @@ const spec: StoreSpec<'counter', S, EM> = {
   reducer: {
     counter: {
       state: { value: 0 },
-      events: [['ui', 'increment']],
+      when: { keys: eventKeys<EM>()([['ui', 'increment']]) },
       reducer(s, evt) {
         if (evt.type === 'increment') return { value: s.value + evt.payload };
         return s;
@@ -55,25 +55,46 @@ Event map.
 
 ## Properties
 
+### dedupWindowMs?
+
+> `optional` **dedupWindowMs**: `number`
+
+Defined in: [types.ts:261](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L261)
+
+Time window in milliseconds for event deduplication.
+Events with identical fingerprints (channel + type + serialized payload)
+within this window are considered duplicates and skipped.
+
+This helps prevent double-firing in React Strict Mode.
+
+#### Default
+
+```ts
+50 in development, 100 in production
+```
+
+***
+
 ### effects?
 
 > `optional` **effects**: [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:188](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L188)
+Defined in: [types.ts:250](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L250)
 
-Optional side-effect handlers registered at construction time (runs after reducers for every propagated event).
-Equivalent to calling store.registerEffect for each item.
+Optional side-effect handlers registered at construction time.
+Runs after reducers for every propagated event.
 
 ***
 
 ### middleware?
 
-> `optional` **middleware**: [`MiddlewareFunction`](MiddlewareFunction.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
+> `optional` **middleware**: [`MiddlewareInput`](MiddlewareInput.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:182](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L182)
+Defined in: [types.ts:244](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L244)
 
 Middleware chain executed before reducers/effects.
-If any middleware returns false (or resolves to false), the event will not propagate to reducers/effects.
+Accepts either functions (legacy) or MiddlewareSpec objects (recommended).
+If any middleware returns false (or resolves to false), the event will not propagate.
 
 ***
 
@@ -81,7 +102,7 @@ If any middleware returns false (or resolves to false), the event will not propa
 
 > **name**: `string`
 
-Defined in: [types.ts:170](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L170)
+Defined in: [types.ts:231](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L231)
 
 Store name (used by DevTools to identify the instance).
 
@@ -91,7 +112,7 @@ Store name (used by DevTools to identify the instance).
 
 > **reducer**: `Record`\<`R`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
 
-Defined in: [types.ts:176](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L176)
+Defined in: [types.ts:237](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L237)
 
 Map of slice name → reducer spec.
-Each entry declares initial state, the reducer function, and the list of EventKeys this slice responds to.
+Each entry declares initial state, the reducer function, and the event targeting.

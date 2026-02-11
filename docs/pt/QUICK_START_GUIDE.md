@@ -2,187 +2,135 @@
 
 # Guia de Início Rápido
 
->[ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/QUICK_START_GUIDE.md)&nbsp;
->|&nbsp; 👉 [ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/QUICK_START_GUIDE.md)&nbsp;
->|&nbsp;[ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)&nbsp;
->|&nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/QUICK_START_GUIDE.md)
+> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/QUICK_START_GUIDE.md)&nbsp; |
+> &nbsp; 👉 [ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/QUICK_START_GUIDE.md)&nbsp; |
+> &nbsp;[ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/QUICK_START_GUIDE.md)
 
-### 1. Instale o Quo.js
+Cinco passos da instalação a um app funcional.
 
-`quojs/react` só é necessário ao usar o React.
+---
 
+## 1. Instalar
 
 ```bash
 npm install @quojs/core @quojs/react
-# ou
-yarn add @quojs/core @quojs/react
-# ou
-pnpm add @quojs/core @quojs/react
 ```
 
-## 2. Defina Seu Mapa de Eventos
+(`@quojs/react` só é necessário ao usar React.)
+
+---
+
+## 2. Defina seu mapa de eventos e store
 
 ```typescript
-// Mapa de eventos: canais → tipos de eventos → payloads
-type AppEM = {
+// store.ts
+import { createStore, eventKeys } from '@quojs/core';
+
+export type AppEM = {
   counter: {
     increment: number;
     decrement: number;
     reset: null;
   };
-  todos: {
-    add: { id: string; title: string };
-    toggle: { id: string };
-    delete: { id: string };
-  };
 };
-```
 
-## 3. Crie Reducers
+export type AppState = { counter: { value: number } };
 
-```typescript
-import type { ReducerSpec } from '@quojs/core';
-
-const counterReducer: ReducerSpec<{ value: number }, AppEM> = {
-  state: { value: 0 },
-  events: [
-    ['counter', 'increment'],
-    ['counter', 'decrement'],
-    ['counter', 'reset']
-  ],
-  reducer: (state, event) => {
-    switch (event.type) {
-      case 'increment':
-        return { value: state.value + event.payload };
-      case 'decrement':
-        return { value: state.value - event.payload };
-      case 'reset':
-        return { value: 0 };
-      default:
-        return state;
-    }
-  }
-};
-```
-
-## 4. Crie o Store
-
-```typescript
-import { createStore } from '@quojs/core';
-
-const store = createStore({
-  name: 'MyApp',
+export const store = createStore<AppState, AppEM>({
+  name: 'App',
   reducer: {
-    counter: counterReducer,
-    // ... outros reducers
-  }
+    counter: {
+      state: { value: 0 },
+      when: { keys: eventKeys<AppEM>()([
+        ['counter', 'increment'],
+        ['counter', 'decrement'],
+        ['counter', 'reset'],
+      ])},
+      reducer: (state, event) => {
+        switch (event.type) {
+          case 'increment': return { value: state.value + event.payload };
+          case 'decrement': return { value: state.value - event.payload };
+          case 'reset':     return { value: 0 };
+          default:          return state;
+        }
+      },
+    },
+  },
 });
 ```
 
-## 5. Emita Eventos
+---
+
+## 3. Crie hooks tipados com `createQuoHooks`
 
 ```typescript
-// Emita eventos (async)
-await store.emit('counter', 'increment', 5);
-await store.emit('counter', 'decrement', 2);
-await store.emit('counter', 'reset', null);
+// hooks.ts
+import { createContext } from 'react';
+import { createQuoHooks } from '@quojs/react';
+import type { StoreInstance } from '@quojs/core';
+import type { AppState, AppEM } from './store';
 
-// Obtenha o estado atual
-const state = store.getState();
-console.log(state.counter.value); // 0
+export const AppStoreContext = createContext<
+  StoreInstance<'counter', AppState, AppEM> | null
+>(null);
+
+export const {
+  useAtomicProp,
+  useEmit,
+  useEvent,
+  useSelector,
+  shallowEqual,
+} = createQuoHooks(AppStoreContext);
 ```
 
-## 6. Inscreva-se em Mudanças
+---
 
-```typescript
-// Granularidade grossa: Inscreva-se em qualquer mudança de estado
-const unsubscribe = store.subscribe(() => {
-  console.log('Estado mudou:', store.getState());
-});
-
-// Granularidade fina: Inscreva-se em um caminho específico
-const unsubscribePath = store.connect(
-  { reducer: 'counter', property: 'value' },
-  (change) => {
-    console.log('Valor do contador mudou:', change.oldValue, '→', change.newValue);
-  }
-);
-
-// Limpeza
-unsubscribe();
-unsubscribePath();
-```
-
-
-### 7. Use no React (opcional)
-
-Consulte o **[arquivo readme do @quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.pt.md)**.
+## 4. Forneça o store
 
 ```tsx
 // App.tsx
-import { StoreProvider } from '@quojs/react';
 import { store } from './store';
+import { AppStoreContext } from './hooks';
 
-function App() {
+export function App() {
   return (
-    <StoreProvider store={store}>
-      <YourApp />
-    </StoreProvider>
+    <AppStoreContext.Provider value={store}>
+      <Counter />
+    </AppStoreContext.Provider>
   );
 }
 ```
 
-## 8. Assinaturas de Eventos (v0.7.0+)
+---
 
-As assinaturas de eventos permitem que você reaja a eventos sem selecionar estado. Isso é útil para:
-- Mostrar notificações em certos eventos
-- Acionar animações
-- Logging/analíticas
-- Responder a eventos rejeitados (não confirmados)
-
-### Fases de Eventos
-
-- **`'committed'`** (padrão): Eventos que passaram pelo middleware e chegaram aos reducers
-- **`'uncommitted'`**: Eventos rejeitados pelo middleware
-- **`'all'`**: Ambos eventos confirmados e não confirmados
-
-### Uso no Core
-
-```typescript
-// Assinar eventos confirmados (padrão)
-const unsubscribe = store.onEvent('ui', 'save', (event, getState, emit, phase) => {
-  console.log('Salvamento confirmado:', event.payload);
-});
-
-// Assinar eventos rejeitados
-store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
-  console.log('Exclusão foi rejeitada pelo middleware');
-}, 'uncommitted');
-
-// Assinar todos os eventos (confirmados e não confirmados)
-store.onEvent('ui', 'action', (event, getState, emit, phase) => {
-  console.log('Ação:', phase); // 'committed' ou 'uncommitted'
-}, 'all');
-
-// Limpeza
-unsubscribe();
-```
-
-### Hook React
+## 5. Use hooks nos componentes
 
 ```tsx
-import { useEvent } from '@quojs/react';
+// Counter.tsx
+import { useAtomicProp, useEmit } from './hooks';
 
-function SaveNotification() {
-  useEvent('ui', 'save', (event, getState, emit, phase) => {
-    showToast('Salvo com sucesso!');
-  });
+export function Counter() {
+  // Only re-renders when counter.value changes
+  const value = useAtomicProp({ reducer: 'counter', property: 'value' });
+  const emit = useEmit();
 
-  // Para eventos rejeitados
-  useEvent('ui', 'delete', (event, getState, emit, phase) => {
-    showToast('Exclusão foi bloqueada');
-  }, 'uncommitted');
-
-  return null;
+  return (
+    <div>
+      <h1>Count: {value}</h1>
+      <button onClick={() => emit('counter', 'increment', 1)}>+</button>
+      <button onClick={() => emit('counter', 'decrement', 1)}>-</button>
+      <button onClick={() => emit('counter', 'reset', null)}>Reset</button>
+    </div>
+  );
 }
 ```
+
+---
+
+## E agora?
+
+- **[API do @quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** — Middleware, effects, matchers `When`, assinaturas de eventos
+- **[API do @quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** — `useAtomicProps`, hooks Suspense, wildcards
+- **[Arquitetura de Fila de Eventos](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)** — Como o pipeline funciona internamente
+- **[Exemplos](https://github.com/quojs/quojs/blob/main/README.md#live-examples)** — App de tarefas, logo cinético, integração com Next.js

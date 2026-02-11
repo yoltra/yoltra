@@ -6,9 +6,19 @@
 
 # Interface: SuspenseAtomicPropOptions\<T, S\>
 
-Defined in: [hooks/suspense.ts:119](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/suspense.ts#L119)
+Defined in: [react/src/hooks/suspense.ts:113](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L113)
 
 Options for [useSuspenseAtomicProp](../functions/useSuspenseAtomicProp.md).
+
+## Example
+
+```ts
+const options: SuspenseAtomicPropOptions<User, AppState> = {
+  load: async (userId) => fetchUser(userId),
+  staleTime: 30_000, // cache for 30 seconds
+  key: 'user-detail',
+};
+```
 
 ## Type Parameters
 
@@ -16,9 +26,13 @@ Options for [useSuspenseAtomicProp](../functions/useSuspenseAtomicProp.md).
 
 `T`
 
+The resolved value type after loading.
+
 ### S
 
 `S`
+
+Store state record.
 
 ## Properties
 
@@ -26,7 +40,9 @@ Options for [useSuspenseAtomicProp](../functions/useSuspenseAtomicProp.md).
 
 > `optional` **key**: `string`
 
-Defined in: [hooks/suspense.ts:122](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/suspense.ts#L122)
+Defined in: [react/src/hooks/suspense.ts:119](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L119)
+
+Optional extra key to differentiate cache entries for the same path.
 
 ***
 
@@ -34,7 +50,9 @@ Defined in: [hooks/suspense.ts:122](https://github.com/quojs/quojs/blob/d7e73682
 
 > **load**: (`valueAtPath`, `slice`) => `T` \| `Promise`\<`T`\>
 
-Defined in: [hooks/suspense.ts:120](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/suspense.ts#L120)
+Defined in: [react/src/hooks/suspense.ts:115](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L115)
+
+Async loader that receives the value at the path and the full slice.
 
 #### Parameters
 
@@ -56,4 +74,6 @@ Defined in: [hooks/suspense.ts:120](https://github.com/quojs/quojs/blob/d7e73682
 
 > `optional` **staleTime**: `number`
 
-Defined in: [hooks/suspense.ts:121](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/suspense.ts#L121)
+Defined in: [react/src/hooks/suspense.ts:117](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L117)
+
+Time in ms before the cached value is considered stale (default: 0).

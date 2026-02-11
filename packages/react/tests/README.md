@@ -28,7 +28,7 @@ Validates names that have runtime presence:
 - `useAtomicProp`
 - `useAtomicProps`
 - `shallowEqual`
-- `useDispatch`
+- `useEvent`
 - `useSuspenseAtomicProp`
 - `useSuspenseAtomicProps`
 - `invalidateAtomicProp`

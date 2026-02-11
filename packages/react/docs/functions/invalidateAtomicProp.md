@@ -8,9 +8,9 @@
 
 > **invalidateAtomicProp**(`reducer`, `property`, `extraKey?`): `void`
 
-Defined in: [hooks/suspense.ts:280](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/suspense.ts#L280)
+Defined in: [react/src/hooks/suspense.ts:357](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L357)
 
-Invalidates cache for a specific property.
+Invalidates the Suspense cache entry for a specific `reducer.property` path.
 
 ## Parameters
 
@@ -18,14 +18,26 @@ Invalidates cache for a specific property.
 
 `string`
 
+Reducer (slice) name.
+
 ### property
 
 `string`
+
+Dotted property path.
 
 ### extraKey?
 
 `string`
 
+Optional extra key if the hook was created with `options.key`.
+
 ## Returns
 
 `void`
+
+## Example
+
+```ts
+invalidateAtomicProp('users', 'byId.123.name');
+```

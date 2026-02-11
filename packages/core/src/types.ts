@@ -71,8 +71,8 @@ export type EventKey<EM extends EventMapBase> = {
  */
 export interface Event<
   EM extends EventMapBase = EventMapBase,
-  C extends keyof EM = keyof EM,
-  T extends keyof EM[C] = keyof EM[C],
+  C extends keyof EM & string = keyof EM & string,
+  T extends keyof EM[C] & string = keyof EM[C] & string,
   P = EM[C][T],
 > {
   channel: C;
@@ -121,7 +121,10 @@ export interface Change<V = any> {
  *
  * @public
  */
-export type Emit<EM extends EventMapBase> = <C extends keyof EM, T extends keyof EM[C]>(
+export type Emit<EM extends EventMapBase> = <
+  C extends keyof EM & string,
+  T extends keyof EM[C] & string,
+>(
   channel: C,
   type: T,
   payload: EM[C][T],
@@ -163,6 +166,64 @@ export type Unsubscribe = () => void;
  *
  * @public
  */
+/**
+ * Middleware input: accepts either a function (legacy) or a spec object (recommended).
+ *
+ * @typeParam S  - Store state (readonly).
+ * @typeParam EM - Event map.
+ *
+ * @example Function form (legacy)
+ * ```ts
+ * const mw: MiddlewareInput<AppState, AppEM> = (state, event, emit) => {
+ *   console.log(event.type);
+ *   return true;
+ * };
+ * ```
+ *
+ * @example Spec form (recommended)
+ * ```ts
+ * const mw: MiddlewareInput<AppState, AppEM> = {
+ *   when: { channel: 'admin' },
+ *   middleware: (state, event, emit) => state.auth.isAdmin,
+ *   meta: { type: 'middleware', name: 'authGuard' },
+ * };
+ * ```
+ *
+ * @public
+ */
+export type MiddlewareInput<S = any, EM extends EventMapBase = EventMapBase> =
+  | MiddlewareFunction<S, EM>
+  | MiddlewareSpec<S, EM>;
+
+/**
+ * Store configuration object passed to the {@link Store} constructor or {@link createStore}.
+ *
+ * @typeParam R  - Reducer name union (string literal union).
+ * @typeParam S  - State record keyed by `R`.
+ * @typeParam EM - Event map.
+ *
+ * @example
+ * ```ts
+ * type S = { counter: { value: number } };
+ * type EM = { ui: { increment: number } };
+ *
+ * const spec: StoreSpec<'counter', S, EM> = {
+ *   name: 'App',
+ *   reducer: {
+ *     counter: {
+ *       state: { value: 0 },
+ *       when: { keys: eventKeys<EM>()([['ui', 'increment']]) },
+ *       reducer(s, evt) {
+ *         if (evt.type === 'increment') return { value: s.value + evt.payload };
+ *         return s;
+ *       }
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @public
+ */
 export type StoreSpec<R extends string, S extends Record<R, any>, EM extends EventMapBase> = {
   /**
    * Store name (used by DevTools to identify the instance).
@@ -171,21 +232,33 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
 
   /**
    * Map of slice name → reducer spec.
-   * Each entry declares initial state, the reducer function, and the list of EventKeys this slice responds to.
+   * Each entry declares initial state, the reducer function, and the event targeting.
    */
   reducer: Record<R, ReducerSpec<S[R], EM>>;
 
   /**
    * Middleware chain executed before reducers/effects.
-   * If any middleware returns false (or resolves to false), the event will not propagate to reducers/effects.
+   * Accepts either functions (legacy) or MiddlewareSpec objects (recommended).
+   * If any middleware returns false (or resolves to false), the event will not propagate.
    */
-  middleware?: MiddlewareFunction<DeepReadonly<S>, EM>[];
+  middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
 
   /**
-   * Optional side-effect handlers registered at construction time (runs after reducers for every propagated event).
-   * Equivalent to calling store.registerEffect for each item.
+   * Optional side-effect handlers registered at construction time.
+   * Runs after reducers for every propagated event.
    */
   effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
+
+  /**
+   * Time window in milliseconds for event deduplication.
+   * Events with identical fingerprints (channel + type + serialized payload)
+   * within this window are considered duplicates and skipped.
+   *
+   * This helps prevent double-firing in React Strict Mode.
+   *
+   * @default 50 in development, 100 in production
+   */
+  dedupWindowMs?: number;
 };
 
 /**
@@ -249,7 +322,7 @@ export interface StoreInstance<
    */
   onEffect<
     C extends keyof EM & string,
-    T extends keyof EM[C]
+    T extends keyof EM[C] & string
   >(
     channel: C,
     type: T,
@@ -323,10 +396,10 @@ export interface StoreInstance<
    * }, 'all');
    * ```
    */
-  onEvent<C extends keyof EM & string, T extends keyof EM[C]>(
+  onEvent<C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
     type: T,
-    handler: EventSubscriptionHandler<DeepReadonly<S>, EM>,
+    handler: NarrowedEventHandler<DeepReadonly<S>, EM, C, T>,
     phase?: EventPhase,
   ): Unsubscribe;
 
@@ -375,16 +448,30 @@ export interface StoreInstance<
  * @typeParam S  - State managed by this reducer.
  * @typeParam EM - Event map.
  *
- * @example
+ * @remarks
+ * Use `when` for event targeting (preferred). The `events` property is
+ * kept for backward compatibility but `when` is recommended for new code.
+ *
+ * @example Using `when` (recommended)
  * ```ts
  * const counterSpec: ReducerSpec<{ value: number }, MyEM> = {
  *   state: { value: 0 },
- *   events: [['ui', 'increment'], ['ui', 'decrement']],
+ *   when: { keys: eventKeys<MyEM>()([['ui', 'increment'], ['ui', 'decrement']]) },
  *   reducer(s, evt) {
  *     if (evt.type === 'increment') return { value: s.value + evt.payload };
  *     if (evt.type === 'decrement') return { value: s.value - evt.payload };
  *     return s;
- *   }
+ *   },
+ *   meta: { type: 'reducer', name: 'counter' },
+ * };
+ * ```
+ *
+ * @example Using `events` (legacy)
+ * ```ts
+ * const counterSpec: ReducerSpec<{ value: number }, MyEM> = {
+ *   state: { value: 0 },
+ *   events: [['ui', 'increment'], ['ui', 'decrement']],
+ *   reducer(s, evt) { ... },
  * };
  * ```
  *
@@ -392,9 +479,21 @@ export interface StoreInstance<
  */
 export interface ReducerSpec<S = any, EM extends EventMapBase = EventMapBase> {
   /**
-   * List of EventKeys `[channel, type]` that this reducer responds to.
+   * Initial state for this reducer.
    */
-  events: ReadonlyArray<EventKey<EM>>;
+  state: S;
+
+  /**
+   * Event targeting using the unified `When` matcher.
+   * Preferred over `events` for new code.
+   */
+  when?: When<EM>;
+
+  /**
+   * List of EventKeys `[channel, type]` that this reducer responds to.
+   * @deprecated Use `when: { keys: [...] }` instead for better type inference.
+   */
+  events?: ReadonlyArray<EventKey<EM>>;
 
   /**
    * Pure reducer function: `(state, event) => nextState`.
@@ -402,9 +501,9 @@ export interface ReducerSpec<S = any, EM extends EventMapBase = EventMapBase> {
   reducer: ReducerFunction<S, EM>;
 
   /**
-   * Initial state for this reducer.
+   * Optional metadata for debugging tools and DevTools integration.
    */
-  state: S;
+  meta?: EventConsumerMeta<"reducer">;
 }
 
 /**
@@ -427,18 +526,29 @@ export type ReducerFunction<S = any, EM extends EventMapBase = EventMapBase> = (
  * @typeParam EM - Event map.
  *
  * @remarks
- * - Effects subscribe to EventKeys (like reducers).
- * - Effects are async and do not own state.
- * - Effects run after reducers.
- * - Effects are keyed (no scanning all effects on every event).
+ * - Effects run after reducers see the event.
+ * - Effects are async-safe and do not own state.
+ * - Effects are keyed by event for O(1) lookup (no scanning).
+ * - Use `when` for event targeting (preferred over `events`).
  *
- * @example
+ * @example Using `when` (recommended)
  * ```ts
  * const logEffect: EffectSpec<AppState, MyEM> = {
- *   events: [['ui', 'increment']],
+ *   when: { keys: eventKeys<MyEM>()([['ui', 'increment']]) },
  *   effect: async (evt, getState, emit) => {
  *     console.log('increment', evt.payload, getState().counter.value);
- *   }
+ *   },
+ *   meta: { type: 'effect', name: 'logEffect', description: 'Logs increment events' },
+ * };
+ * ```
+ *
+ * @example Match all events in a channel
+ * ```ts
+ * const notificationEffect: EffectSpec<AppState, MyEM> = {
+ *   when: { channel: 'notifications' },
+ *   effect: (evt, getState, emit) => {
+ *     if (evt.type === 'show') showToast(evt.payload.message);
+ *   },
  * };
  * ```
  *
@@ -446,14 +556,26 @@ export type ReducerFunction<S = any, EM extends EventMapBase = EventMapBase> = (
  */
 export interface EffectSpec<S = any, EM extends EventMapBase = EventMapBase> {
   /**
-   * List of EventKeys `[channel, type]` that this effect responds to.
+   * Event targeting using the unified `When` matcher.
+   * Preferred over `events` for new code.
    */
-  events: ReadonlyArray<EventKey<EM>>;
+  when?: When<EM>;
+
+  /**
+   * List of EventKeys `[channel, type]` that this effect responds to.
+   * @deprecated Use `when: { keys: [...] }` instead for better type inference.
+   */
+  events?: ReadonlyArray<EventKey<EM>>;
 
   /**
    * Async effect handler: `(event, getState, emit) => void | Promise<void>`.
    */
   effect: EffectFunction<S, EM>;
+
+  /**
+   * Optional metadata for debugging tools and DevTools integration.
+   */
+  meta?: EventConsumerMeta<"effect">;
 }
 
 /**
@@ -464,8 +586,10 @@ export interface EffectSpec<S = any, EM extends EventMapBase = EventMapBase> {
  * @public
  */
 export type EventUnion<EM extends EventMapBase> = {
-  [C in keyof EM]: { [T in keyof EM[C]]: Event<EM, C, T> }[keyof EM[C]];
-}[keyof EM];
+  [C in keyof EM & string]: {
+    [T in keyof EM[C] & string]: Event<EM, C, T>;
+  }[keyof EM[C] & string];
+}[keyof EM & string];
 
 /**
  * Middleware function: may mutate, log, side-effect, or veto an event.
@@ -481,6 +605,60 @@ export type MiddlewareFunction<S = any, EM extends EventMapBase = EventMapBase> 
   event: EventUnion<EM>,
   emit: Emit<EM>,
 ) => boolean | Promise<boolean>;
+
+/**
+ * Middleware specification with optional event targeting and metadata.
+ *
+ * @typeParam S  - Store state (readonly).
+ * @typeParam EM - Event map.
+ *
+ * @remarks
+ * - If `when` is omitted, middleware receives ALL events.
+ * - Use `when` to filter which events the middleware processes.
+ * - Middleware runs BEFORE reducers and can cancel event propagation.
+ *
+ * @example Global logging middleware (all events)
+ * ```ts
+ * const loggingMiddleware: MiddlewareSpec<AppState, AppEM> = {
+ *   middleware: (state, event, emit) => {
+ *     console.log('Event:', event.channel, event.type);
+ *     return true; // allow propagation
+ *   },
+ *   meta: { type: 'middleware', name: 'logger' },
+ * };
+ * ```
+ *
+ * @example Filtered middleware (specific events)
+ * ```ts
+ * const authMiddleware: MiddlewareSpec<AppState, AppEM> = {
+ *   when: { channel: 'admin' },
+ *   middleware: (state, event, emit) => {
+ *     if (!state.auth.isAdmin) return false; // cancel
+ *     return true;
+ *   },
+ *   meta: { type: 'middleware', name: 'authGuard', description: 'Guards admin events' },
+ * };
+ * ```
+ *
+ * @public
+ */
+export interface MiddlewareSpec<S = any, EM extends EventMapBase = EventMapBase> {
+  /**
+   * Event targeting (optional). If omitted, middleware receives ALL events.
+   */
+  when?: When<EM>;
+
+  /**
+   * Middleware function: `(state, event, emit) => boolean | Promise<boolean>`.
+   * Return `false` to cancel event propagation.
+   */
+  middleware: MiddlewareFunction<S, EM>;
+
+  /**
+   * Optional metadata for debugging tools and DevTools integration.
+   */
+  meta?: EventConsumerMeta<"middleware">;
+}
 
 /**
  * Effect handler: runs AFTER reducers, sees the final state.
@@ -514,6 +692,7 @@ export type StateFromReducers<R> = {
 
 /**
  * Helper: derive event map from a reducers map (strict).
+ * Used by createStore inference overload.
  *
  * @internal
  */
@@ -522,9 +701,198 @@ export type EMFromReducersStrict<RM extends ReducersMapAny> = RM[keyof RM] exten
   infer EM
 >
   ? RM[keyof RM] extends ReducerSpec<any, EM>
-  ? EM
-  : never
+    ? EM
+    : never
   : never;
+
+// ============================================
+// Event Targeting (When Matcher)
+// ============================================
+
+/**
+ * Matcher for event targeting across reducers, effects, middleware, and subscriptions.
+ *
+ * Supports four targeting modes:
+ * - `{ any: true }` — match all events
+ * - `{ keys: [...] }` — match specific `[channel, type]` pairs (correlated)
+ * - `{ channel: 'x' }` — match all events in a channel
+ * - `{ channels: ['x', 'y'] }` — match all events in multiple channels
+ *
+ * @typeParam EM - Event map.
+ *
+ * @example Match all events
+ * ```ts
+ * const mw: MiddlewareSpec<S, EM> = {
+ *   when: { any: true },
+ *   middleware: (state, event, emit) => true,
+ * };
+ * ```
+ *
+ * @example Match specific event keys
+ * ```ts
+ * const reducer: ReducerSpec<S, EM> = {
+ *   state: { value: 0 },
+ *   when: { keys: eventKeys<EM>()([['ui', 'increment'], ['ui', 'decrement']]) },
+ *   reducer: (s, e) => { ... },
+ * };
+ * ```
+ *
+ * @example Match entire channel
+ * ```ts
+ * const effect: EffectSpec<S, EM> = {
+ *   when: { channel: 'notifications' },
+ *   effect: (e, getState, emit) => { ... },
+ * };
+ * ```
+ *
+ * @public
+ */
+export type When<EM extends EventMapBase> =
+  | { any: true }
+  | { keys: ReadonlyArray<EventKey<EM>> }
+  | { channel: keyof EM & string }
+  | { channels: ReadonlyArray<keyof EM & string> };
+
+/**
+ * Helper to create type-safe EventKey arrays without requiring `as const`.
+ * Preserves literal tuple types for proper type correlation in handlers.
+ *
+ * @typeParam EM - Event map.
+ *
+ * @example
+ * ```ts
+ * type AppEM = {
+ *   ui: { increment: number; decrement: number };
+ *   data: { loaded: string[] };
+ * };
+ *
+ * // Without helper (requires `as const`):
+ * const keys = [['ui', 'increment'], ['ui', 'decrement']] as const;
+ *
+ * // With helper (no `as const` needed):
+ * const keys = eventKeys<AppEM>()([
+ *   ['ui', 'increment'],
+ *   ['ui', 'decrement'],
+ * ]);
+ * // Type: readonly [['ui', 'increment'], ['ui', 'decrement']]
+ * ```
+ *
+ * @public
+ */
+export const eventKeys =
+  <EM extends EventMapBase>() =>
+  <const K extends ReadonlyArray<EventKey<EM>>>(keys: K): K =>
+    keys;
+
+/**
+ * Extracts the event union from a `When` matcher.
+ * Used internally to narrow handler `event` parameter types based on the matcher.
+ *
+ * @typeParam EM - Event map.
+ * @typeParam W  - When matcher type.
+ *
+ * @internal
+ */
+export type EventFromWhen<EM extends EventMapBase, W extends When<EM>> = W extends { any: true }
+  ? EventUnion<EM>
+  : W extends { keys: ReadonlyArray<infer K> }
+    ? K extends readonly [infer C, infer T]
+      ? C extends keyof EM & string
+        ? T extends keyof EM[C] & string
+          ? Event<EM, C, T>
+          : never
+        : never
+      : never
+    : W extends { channel: infer C }
+      ? C extends keyof EM & string
+        ? { [T in keyof EM[C] & string]: Event<EM, C, T> }[keyof EM[C] & string]
+        : never
+      : W extends { channels: ReadonlyArray<infer C> }
+        ? C extends keyof EM & string
+          ? { [T in keyof EM[C] & string]: Event<EM, C, T> }[keyof EM[C] & string]
+          : never
+        : never;
+
+// ============================================
+// Path Value Resolution
+// ============================================
+
+/**
+ * Resolves the value type at a dotted path `P` inside object/array `T`.
+ * Supports numeric segments for array indexing (e.g., `"items.0.title"`).
+ *
+ * @typeParam T - Root type to index into.
+ * @typeParam P - Dotted path string.
+ *
+ * @example
+ * ```ts
+ * type S = { todos: Array<{ title: string; done: boolean }> };
+ * type T1 = PathValue<S['todos'], '0.title'>; // string
+ * type T2 = PathValue<S, 'todos.0'>;          // { title: string; done: boolean }
+ * type T3 = PathValue<S, 'todos'>;            // Array<{ title: string; done: boolean }>
+ * ```
+ *
+ * @public
+ */
+export type PathValue<T, P extends string> = P extends `${infer K}.${infer Rest}`
+  ? K extends keyof T
+    ? PathValue<T[K], Rest>
+    : K extends `${number}`
+      ? T extends readonly (infer E)[]
+        ? PathValue<E, Rest>
+        : never
+      : never
+  : P extends keyof T
+    ? T[P]
+    : P extends `${number}`
+      ? T extends readonly (infer E)[]
+        ? E
+        : never
+      : never;
+
+// ============================================
+// Metadata for Debugging Tools
+// ============================================
+
+/**
+ * Type discriminator for event consumers.
+ *
+ * @public
+ */
+export type EventConsumerType = "reducer" | "middleware" | "effect";
+
+/**
+ * Metadata for event consumers (reducers, effects, middleware).
+ * Useful for debugging tools, DevTools integration, and introspection.
+ *
+ * @typeParam T - Consumer type discriminator.
+ *
+ * @example
+ * ```ts
+ * const counterReducer: ReducerSpec<CounterState, AppEM> = {
+ *   state: { value: 0 },
+ *   when: { keys: eventKeys<AppEM>()([['ui', 'increment']]) },
+ *   reducer: (s, e) => ({ value: s.value + e.payload }),
+ *   meta: {
+ *     type: 'reducer',
+ *     name: 'counterReducer',
+ *     description: 'Handles counter increment/decrement events',
+ *   },
+ * };
+ * ```
+ *
+ * @public
+ */
+export interface EventConsumerMeta<T extends EventConsumerType = EventConsumerType> {
+  /** Consumer type discriminator */
+  type: T;
+
+  /** Unique identifier for this consumer */
+  name: string;
+
+  /** Brief one-liner description of what this consumer does */
+  description?: string;
+}
 
 /**
  * Alias for DeepReadonly.
@@ -609,7 +977,7 @@ export type DeepReadonly<T> = T extends (infer A)[]
 export type EventPhase = "committed" | "uncommitted" | "all";
 
 /**
- * Handler function for event subscriptions.
+ * Handler function for event subscriptions (receives full event union).
  *
  * Event subscriptions are intended for the View layer (e.g., React components)
  * to react to events without affecting the event flow. They are fire-and-forget
@@ -638,6 +1006,42 @@ export type EventPhase = "committed" | "uncommitted" | "all";
  */
 export type EventSubscriptionHandler<S = any, EM extends EventMapBase = EventMapBase> = (
   event: EventUnion<EM>,
+  getState: () => S,
+  emit: Emit<EM>,
+  phase: "committed" | "uncommitted",
+) => void | Promise<void>;
+
+/**
+ * Narrowed event subscription handler for specific `(channel, type)` pairs.
+ * Provides better type inference when subscribing to a single event type.
+ *
+ * @typeParam S  - Store state type (readonly).
+ * @typeParam EM - Event map.
+ * @typeParam C  - Channel key within `EM`.
+ * @typeParam T  - Event type key within channel `C`.
+ *
+ * @example
+ * ```ts
+ * const handler: NarrowedEventHandler<AppState, AppEM, 'ui', 'increment'> = (
+ *   event, // Event<AppEM, 'ui', 'increment'> - narrowed!
+ *   getState,
+ *   emit,
+ *   phase,
+ * ) => {
+ *   // event.payload is typed as number (from EM['ui']['increment'])
+ *   console.log('Increment by:', event.payload);
+ * };
+ * ```
+ *
+ * @public
+ */
+export type NarrowedEventHandler<
+  S,
+  EM extends EventMapBase,
+  C extends keyof EM & string,
+  T extends keyof EM[C] & string,
+> = (
+  event: Event<EM, C, T>,
   getState: () => S,
   emit: Emit<EM>,
   phase: "committed" | "uncommitted",

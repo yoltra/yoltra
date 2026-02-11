@@ -8,10 +8,17 @@
 
 > **clearSuspenseCache**(): `void`
 
-Defined in: [hooks/suspense.ts:296](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/suspense.ts#L296)
+Defined in: [react/src/hooks/suspense.ts:388](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L388)
 
-Clears the entire Suspense cache.
+Clears the entire Suspense cache, forcing all `useSuspense*` hooks to re-load.
 
 ## Returns
 
 `void`
+
+## Example
+
+```ts
+// After a logout, clear all cached data
+clearSuspenseCache();
+```

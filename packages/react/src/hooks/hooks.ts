@@ -13,32 +13,19 @@ import type {
   WithGlob,
   DeepReadonly,
   EventPhase,
+  PathValue,
 } from "@quojs/core";
-import { warnOnce } from "../utils/warnOnce";
+import { hasWildcard, normalizePath, getAtPath } from "../utils/path";
 
 /**
- * Resolves the value type at a **dotted path** `P` inside object/array `T`.
- * Supports numeric segments for arrays (e.g., `"items.0.title"`).
+ * Re-export of {@link PathValue} from `@quojs/core`.
  *
- * @typeParam T - Root type to index into.
- * @typeParam P - Dotted path string.
- *
- * @example
- * ```ts
- * type S = { todos: Array<{ title: string; done: boolean }> };
- * type T1 = PathValue<S['todos'], '0.title'>; // string
- * type T2 = PathValue<S, 'todos.0'>;          // { title: string; done: boolean }
- * ```
+ * Resolves the TypeScript type at a dotted path `P` within object type `T`.
+ * See the core definition for full documentation.
  *
  * @public
  */
-export type PathValue<T, P extends string> = P extends `${infer K}.${infer Rest}`
-  ? K extends keyof T
-    ? PathValue<T[K], Rest>
-    : never
-  : P extends keyof T
-    ? T[P]
-    : never;
+export type { PathValue };
 
 /**
  * Accepts either a single value or a readonly array of that value.
@@ -54,34 +41,6 @@ export type PathValue<T, P extends string> = P extends `${infer K}.${infer Rest}
  * @public
  */
 export type OneOrMany<T> = T | readonly T[];
-
-/** @internal */
-function hasWildcard(p: string): boolean {
-  return p.includes("*");
-}
-/** @internal */
-function normalizePath(p: string): string {
-  return p.replace(/^\./, "");
-}
-/** @internal */
-function splitPath(p: string): string[] {
-  return normalizePath(p).split(".").filter(Boolean);
-}
-/**
- * Reads a dotted path from an object; returns `undefined` when a segment is missing.
- * @internal
- */
-function getAtPath(obj: any, path: string): any {
-  if (!path) return obj;
-
-  let cur = obj;
-  for (const seg of splitPath(path)) {
-    if (cur == null) return undefined;
-    cur = cur[seg as any];
-  }
-
-  return cur;
-}
 
 /**
  * Returns the current {@link StoreInstance} from {@link StoreContext}.
@@ -130,10 +89,14 @@ export function useEmit<EM extends EventMapBase>(): Emit<EM> {
 /**
  * Shallow object equality using `Object.is` per-key.
  *
+ * Useful as the `isEqual` argument for `useAtomicProp` and `useAtomicProps`
+ * when the derived value is a plain object. Also available from the object
+ * returned by {@link createQuoHooks}.
+ *
  * @example
  * ```ts
- * shallowEqual({ a: 1 }, { a: 1 }) // true
- * shallowEqual({ a: 1 }, { a: 2 }) // false
+ * shallowEqual({ a: 1 }, { a: 1 }); // true
+ * shallowEqual({ a: 1 }, { a: 2 }); // false
  * ```
  *
  * @public
@@ -278,6 +241,8 @@ function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>
  * Fine-grained **single-path** selector for a reducer's state.
  *
  * Re-renders only when the specified `reducer.property` (dotted path) actually changes.
+ * For most applications, prefer using the typed version from {@link createQuoHooks}
+ * which infers all type parameters automatically.
  *
  * **Supports**
  * - Exact root prop: `{ reducer: "todo", property: "data" }`
@@ -289,9 +254,23 @@ function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>
  * - Exact path + `map`: returns `T` from `map(value)`
  * - Glob path (with `*`/`**`): requires `map` and returns `T` from `map(state)`
  *
- * @example Exact path
+ * @example Via createQuoHooks (recommended)
  * ```tsx
- * const title = useAtomicProp<'todos', AppState, 'items.0.title'>(
+ * const { useAtomicProp } = createQuoHooks(AppStoreContext);
+ *
+ * function TodoTitle({ index }: { index: number }) {
+ *   // Types are inferred — no explicit generics needed
+ *   const title = useAtomicProp({
+ *     reducer: 'todos',
+ *     property: `items.${index}.title`,
+ *   });
+ *   return <span>{title}</span>;
+ * }
+ * ```
+ *
+ * @example Standalone with explicit generics
+ * ```tsx
+ * const title = useAtomicProp<'todos', AppState, 'todos', 'items.0.title'>(
  *   { reducer: 'todos', property: 'items.0.title' }
  * );
  * ```
@@ -391,12 +370,12 @@ export function useAtomicProp<R extends string, S extends Record<R, any>, T = an
  * @public
  */
 export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
-  specs: Array<{ reducer: R; property: OneOrMany<string> }>,
+  specs: Array<{ reducer: R; property: OneOrMany<WithGlob<Dotted<S[R]>>> }>,
   selector: (state: DeepReadonly<S>) => T,
   isEqual?: (a: T, b: T) => boolean,
 ): T;
 export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
-  specs: Array<{ reducer: R; property: OneOrMany<WithGlob<Dotted<S[R]>>> }>,
+  specs: Array<{ reducer: R; property: OneOrMany<string> }>,
   selector: (state: DeepReadonly<S>) => T,
   isEqual?: (a: T, b: T) => boolean,
 ): T;

@@ -6,7 +6,7 @@
 
 # Interface: Event\<EM, C, T, P\>
 
-Defined in: [types.ts:72](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L72)
+Defined in: [types.ts:72](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L72)
 
 A single event object: `{ channel, type, payload, id }`.
 
@@ -33,13 +33,13 @@ Event map.
 
 ### C
 
-`C` *extends* keyof `EM` = keyof `EM`
+`C` *extends* keyof `EM` & `string` = keyof `EM` & `string`
 
 Channel key.
 
 ### T
 
-`T` *extends* keyof `EM`\[`C`\] = keyof `EM`\[`C`\]
+`T` *extends* keyof `EM`\[`C`\] & `string` = keyof `EM`\[`C`\] & `string`
 
 Type key within channel `C`.
 
@@ -55,7 +55,7 @@ Payload type (defaults to `EM[C][T]`).
 
 > **channel**: `C`
 
-Defined in: [types.ts:78](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L78)
+Defined in: [types.ts:78](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L78)
 
 ***
 
@@ -63,7 +63,7 @@ Defined in: [types.ts:78](https://github.com/quojs/quojs/blob/d7e7368223439ffec3
 
 > **id**: `symbol`
 
-Defined in: [types.ts:82](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L82)
+Defined in: [types.ts:82](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L82)
 
 Unique identifier for deduplication (automatically added by store)
 
@@ -73,7 +73,7 @@ Unique identifier for deduplication (automatically added by store)
 
 > **payload**: `P`
 
-Defined in: [types.ts:80](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L80)
+Defined in: [types.ts:80](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L80)
 
 ***
 
@@ -81,4 +81,4 @@ Defined in: [types.ts:80](https://github.com/quojs/quojs/blob/d7e7368223439ffec3
 
 > **type**: `T`
 
-Defined in: [types.ts:79](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/core/src/types.ts#L79)
+Defined in: [types.ts:79](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L79)

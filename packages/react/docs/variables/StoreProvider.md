@@ -8,7 +8,7 @@
 
 > `const` **StoreProvider**: `React.FC`\<\{ `children`: `ReactNode`; `store`: `StoreInstance`\<`any`, `any`, `any`\>; \}\>
 
-Defined in: [context/StoreProvider.tsx:46](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/context/StoreProvider.tsx#L46)
+Defined in: [react/src/context/StoreProvider.tsx:56](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/context/StoreProvider.tsx#L56)
 
 React provider that places a StoreInstance into [StoreContext](StoreContext.md).
 
@@ -30,22 +30,32 @@ React subtree that will consume the store.
 ## Example
 
 ```tsx
-'use client';
-import { StoreProvider } from '@quojs/react';
-import { createStore } from '@quojs/core';
+// store.ts
+import { createStore, eventKeys } from '@quojs/core';
+import { createContext } from 'react';
+import { createQuoHooks, StoreProvider } from '@quojs/react';
 
-const store = createStore({
+type AppEM = { ui: { increment: number } };
+type AppState = { counter: { value: number } };
+
+export const store = createStore<AppState, AppEM>({
   name: 'App',
   reducer: {
     counter: {
       state: { value: 0 },
-      events: [['ui','increment']],
-      reducer(s, evt) { return evt.type === 'increment' ? { value: s.value + evt.payload } : s; }
-    }
-  }
+      when: { keys: eventKeys<AppEM>()([['ui', 'increment']]) },
+      reducer: (s, evt) => evt.type === 'increment'
+        ? { value: s.value + evt.payload }
+        : s,
+    },
+  },
 });
 
-export function AppProviders({ children }: { children: React.ReactNode }) {
+const AppStoreContext = createContext<typeof store | null>(null);
+export const { useAtomicProp, useEmit } = createQuoHooks(AppStoreContext);
+
+// App.tsx
+export function App({ children }: { children: React.ReactNode }) {
   return <StoreProvider store={store}>{children}</StoreProvider>;
 }
 ```

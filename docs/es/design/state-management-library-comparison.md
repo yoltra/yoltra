@@ -1,845 +1,342 @@
-# Comparación de Bibliotecas de Gestión de Estado
+# Gestion de Estado: Comparacion Arquitectonica
 
->  👉 [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/design/state-management-library-comparison.md)&nbsp; |
+> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/design/state-management-library-comparison.md)&nbsp; |
 > &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/design/state-management-library-comparison.md)&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/design/state-management-library-comparison.md)&nbsp; |
+> &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/design/state-management-library-comparison.md)&nbsp; |
 > &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/design/state-management-library-comparison.md)
 
-**Versión:** 0.5.0
-**Última actualización:** Enero 2026
+**Version:** 0.7.0
+**Ultima actualizacion:** Febrero 2026
 
-## Descripción General
+## Introduccion
 
-Este documento proporciona una comparación técnica honesta de Quo.js contra bibliotecas populares de gestión de estado. Cada comparación explora diferencias arquitectónicas, ajuste de casos de uso, características de rendimiento y experiencia del desarrollador.
+Las bibliotecas de gestion de estado hacen diferentes **apuestas arquitectonicas**. Esas apuestas determinan que problemas cada biblioteca resuelve de forma mas natural y donde genera friccion. Este documento examina esas diferencias arquitectonicas honestamente -- no para declarar un ganador, sino para ayudarte a elegir la herramienta correcta para tu problema especifico.
+
+Cada seccion describe el modelo central de una biblioteca, explica la clase de aplicaciones donde ese modelo sobresale, y resalta como difiere del enfoque de Quo.js.
 
 ---
 
-## ¿Qué es Quo.js?
+## Quo.js en Breve
 
-**Quo.js es un contenedor de estado impulsado por eventos, async-first con suscripciones atómicas.**
+Quo.js esta construido sobre tres apuestas arquitectonicas:
 
-### Arquitectura Central
+1. **Suscripciones a nivel de ruta** -- Los componentes se suscriben a rutas con notacion de puntos (`"items.0.title"`, `"items.*.done"`) y se re-renderizan solo cuando esa ruta exacta cambia.
+2. **Pipeline de eventos estructurado** -- Los eventos fluyen a traves de un pipeline formal e interceptable: dedup -> middleware (puede rechazar) -> reducers -> suscriptores de eventos -> efectos -> suscriptores gruesos.
+3. **Eventos tipados por canal** -- Los eventos son tuplas `(channel, type, payload)` en lugar de strings planos de accion.
 
 ```typescript
-// Impulsado por eventos: Los eventos fluyen a través de canales
-emit('todo', 'addItem', { title: 'Comprar leche' });
+// Suscripcion por ruta: solo se re-renderiza cuando items[0].title cambia
+const title = useAtomicProp({
+  reducer: 'todos',
+  property: 'items.0.title',
+});
 
-// Async-first: Middleware y efectos asíncronos incorporados
-const middleware = async (state, event, emit) => {
- await trackAnalytics(event);
- return true;
-};
-
-// Suscripciones atómicas: Suscribirse a rutas de estado exactas
-useAtomicProp({ reducer: 'todos', property: 'items.0.title' });
-// ↑ Solo re-renderiza cuando items[0].title cambia
+// Evento tipado por canal
+await emit('todos', 'toggle', { id: '123' });
 ```
 
-### Características Clave
+**Donde esta arquitectura brilla:** Aplicaciones con muchos elementos de UI que se actualizan independientemente (dashboards, editores colaborativos, grids de datos, sistemas de particulas), aplicaciones que necesitan autorizacion/validacion de eventos en la capa de middleware, y aplicaciones universales que comparten logica de estado entre cliente y servidor.
 
-| Aspecto | Descripción |
-|--------|-------------|
-| **Patrón Arquitectónico** | Arquitectura impulsada por eventos con enrutamiento basado en canales |
-| **Modelo de Estado** | Store centralizado con slices con espacios de nombres |
-| **Modelo de Eventos** | Cola FIFO con eventos `(channel, type, payload)` |
-| **Modelo de Suscripción** | Suscripciones atómicas de grano fino mediante rutas con puntos |
-| **Modelo Asíncrono** | Emit basado en Promise + middleware asíncrono + efectos |
-| **Modelo de Ejecución** | Procesamiento de eventos serializado (uno a la vez, en orden) |
-| **Runtime** | Universal (navegador + Node.js + Deno + Bun) |
-
-### ¿Qué Problemas Resuelve Quo.js?
-
-1. **Rendimiento**: Elimina re-renderizados innecesarios mediante suscripciones atómicas de ruta
-2. **Complejidad**: Soporte asíncrono nativo sin thunks/sagas/observables
-3. **Organización**: Eventos basados en canales previenen colisiones de nombres de tipo de acción
-4. **Previsibilidad**: Garantías estrictas de ordenamiento de eventos aseguran transiciones de estado determinísticas
-5. **Flexibilidad**: Funciona en aplicaciones web, servidores Node, herramientas CLI, microservicios
+**Donde genera friccion:** Apps simples donde la granularidad a nivel de ruta es overhead innecesario. Aplicaciones donde el tamano del bundle debe estar por debajo de 5KB. Proyectos donde el equipo prefiere actualizaciones con estilo mutable o estado distribuido basado en atomos.
 
 ---
 
 ## Redux Toolkit
 
-### Modelo Conceptual
+### Arquitectura
 
-**Redux Toolkit (RTK)** es el conjunto de herramientas oficial y con opinión de Redux que reduce el código repetitivo mientras mantiene los principios fundamentales de Redux: flujo de datos unidireccional, actualizaciones inmutables y reducers puros.
+Redux Toolkit (RTK) esta construido sobre **flujo de datos unidireccional con reducers sincronos y puros**. El estado vive en un unico store. Las actualizaciones ocurren a traves de acciones despachadas que son procesadas por reducers de slice. Immer proporciona actualizaciones inmutables ergonomicas. La logica asincrona se maneja con thunks o RTK Query.
 
 ```typescript
-// Enfoque Redux Toolkit
 const todosSlice = createSlice({
- name: 'todos',
- initialState: { items: [] },
- reducers: {
-  addTodo: (state, action) => {
-   state.items.push(action.payload); // Mutación con Immer
-  }
- }
-});
-
-// Async mediante thunks
-const fetchTodos = createAsyncThunk('todos/fetch', async (url) => {
- const res = await fetch(url);
- return res.json();
-});
-
-// Uso
-dispatch(addTodo({ id: 1, title: 'Comprar leche' }));
-dispatch(fetchTodos('/api/todos'));
-```
-
-**Arquitectura:**
-- Store único con reducers de slice
-- Tipos de acción planos (`'todos/addTodo'`)
-- Reducers síncronos (Immer para inmutabilidad)
-- Async mediante thunks o RTK Query
-- Suscripciones gruesas (re-renderizado en cualquier cambio de slice a menos que se optimice manualmente)
-
-### Cuándo Redux Toolkit Sobresale
-
-✅ **Equipos grandes con patrones Redux establecidos** 
-Redux está probado en batalla a escala. Si tu equipo ya conoce Redux, RTK es el camino de actualización obvio.
-
-✅ **Obtención de datos mediante RTK Query** 
-RTK Query proporciona caché automático, re-obtención y actualizaciones optimistas: una solución completa de obtención de datos.
-
-✅ **Ecosistema DevTools** 
-Redux DevTools es maduro, ampliamente adoptado y tiene extensas integraciones de terceros.
-
-✅ **Madurez del ecosistema** 
-Miles de middlewares, mejoradores y herramientas disponibles. Existen soluciones para cada caso extremo.
-
-### Cuándo Quo.js Sobresale
-
-✅ **Optimización de rendimiento de grano fino** 
-Las suscripciones atómicas de Quo.js eliminan re-renderizados por defecto. RTK requiere optimización manual de `useSelector`.
-
-**Ejemplo:**
-```typescript
-// RTK: El componente completo se re-renderiza cuando CUALQUIER todo cambia
-const todos = useSelector(state => state.todos.items);
-
-// Quo.js: Solo se re-renderiza cuando el título de ESTE todo específico cambia
-const title = useAtomicProp({ 
- reducer: 'todos', 
- property: 'items.0.title' 
-});
-```
-
-✅ **Patrones asíncronos incorporados** 
-El middleware y efectos de Quo.js son asíncronos por defecto. Sin thunks, sin configuración de RTK Query.
-
-**Ejemplo:**
-```typescript
-// Quo.js: Middleware asíncrono incorporado
-const middleware = async (state, event, emit) => {
- if (event.type === 'fetchTodos') {
-  const data = await fetch('/api/todos').then(r => r.json());
-  await emit('todos', 'loadSuccess', data);
-  return false; // Cancelar evento original
- }
- return true;
-};
-
-// RTK: Requiere thunk/RTK Query
-const fetchTodos = createAsyncThunk('todos/fetch', async () => {
- return fetch('/api/todos').then(r => r.json());
-});
-```
-
-✅ **Organización basada en canales** 
-Los eventos de Quo.js están espaciados por canal, previniendo colisiones de nombres en aplicaciones grandes.
-
-**Ejemplo:**
-```typescript
-// Quo.js: Espacios de nombres claros
-emit('user', 'update', data);
-emit('analytics', 'track', event);
-emit('api', 'request', config);
-
-// RTK: Los tipos de acción planos requieren nombres cuidadosos
-dispatch({ type: 'user/update' });
-dispatch({ type: 'analytics/track' });
-dispatch({ type: 'api/request' });
-```
-
-✅ **Runtime universal** 
-Quo.js no tiene dependencias del DOM. Úsalo en servidores Node.js, herramientas CLI o microservicios.
-
-### Comparación de Rendimiento
-
-| Métrica | Redux Toolkit | Quo.js |
-|--------|---------------|--------|
-| **Granularidad de Suscripción** | Nivel de slice (optimización manual) | Nivel de ruta (automático) |
-| **Frecuencia de Re-renderizado** | Alta (sin optimización) | Mínima (atómico por defecto) |
-| **Overhead Asíncrono** | Capa de thunk + creadores de acción | Pipeline asíncrono incorporado |
-| **Tamaño de Bundle** | ~45KB (RTK + React-Redux) | ~15KB (@quojs/core + @quojs/react) |
-| **Huella de Memoria** | Mayor (suscripciones al árbol de estado completo) | Menor (suscripciones específicas de ruta) |
-
-### Ruta de Migración: RTK → Quo.js
-
-```typescript
-// ANTES (Redux Toolkit)
-const todosSlice = createSlice({
- name: 'todos',
- initialState: { items: [], filter: 'all' },
- reducers: {
-  addTodo: (state, action) => {
-   state.items.push(action.payload);
+  name: 'todos',
+  initialState: { items: [] },
+  reducers: {
+    addTodo: (state, action) => {
+      state.items.push(action.payload); // Sintaxis de mutacion con Immer
+    },
   },
-  toggleTodo: (state, action) => {
-   const todo = state.items.find(t => t.id === action.payload);
-   if (todo) todo.completed = !todo.completed;
-  }
- }
 });
 
-// DESPUÉS (Quo.js v0.5.0)
-import { withImmer } from './withImmer';
-
-const todosReducer = withImmer<TodoState, AppEM>((draft, event) => {
- switch (event.type) {
-  case 'addTodo':
-   draft.items.push(event.payload);
-   return;
-  case 'toggleTodo':
-   const todo = draft.items.find(t => t.id === event.payload);
-   if (todo) todo.completed = !todo.completed;
-   return;
- }
-});
-
-const todosSpec: ReducerSpec<TodoState, AppEM> = {
- state: { items: [], filter: 'all' },
- events: [
-  ['todos', 'addTodo'],
-  ['todos', 'toggleTodo']
- ],
- reducer: todosReducer
-};
+dispatch(addTodo({ id: '1', title: 'Buy milk' }));
 ```
 
-### Veredicto
+### Donde Redux Toolkit sobresale
 
-**Elige Redux Toolkit si:**
-- Tu equipo ya es competente en Redux
-- Necesitas las capacidades de obtención de datos de RTK Query
-- Dependes fuertemente del ecosistema Redux
-- Prefieres soluciones con opinión e incluidas
+**Equipos grandes con patrones establecidos.** Redux es la solucion de gestion de estado mas probada en batalla en React. Sus convenciones estrictas (acciones, reducers, selectores) crean consistencia en bases de codigo grandes. RTK Query proporciona una solucion completa de obtencion de datos con cache y re-obtencion automatica. El ecosistema de DevTools es inigualable.
 
-**Elige Quo.js si:**
-- El rendimiento (optimización de re-renderizado) es crítico
-- Quieres soporte asíncrono nativo sin capas
-- Estás construyendo aplicaciones universales (web + Node.js)
-- Prefieres APIs explícitas y mínimas
+**Apps que necesitan middleware extenso.** El modelo de middleware de Redux es maduro y tiene miles de soluciones comunitarias para logging, analiticas, persistencia y seguimiento de errores.
+
+### Diferencias arquitectonicas con Quo.js
+
+**Granularidad de suscripciones.** Las suscripciones de Redux operan a nivel de store -- `useSelector` se ejecuta en cada dispatch y depende de igualdad por referencia para evitar re-renders. Las suscripciones de Quo.js operan a nivel de ruta y solo se disparan cuando la ruta suscrita realmente cambia.
+
+```typescript
+// Redux: el selector se ejecuta en CADA dispatch, evita re-render via equality check
+const title = useSelector(state => state.todos.items[0]?.title);
+
+// Quo.js: la suscripcion solo se dispara cuando items.0.title cambia
+const title = useAtomicProp({
+  reducer: 'todos',
+  property: 'items.0.title',
+});
+```
+
+Esta diferencia importa mas en UIs con muchos elementos que se actualizan independientemente. En una lista de 100 items, un `useSelector` de Redux en cada fila se ejecuta 100 veces en cada dispatch. Un `useAtomicProp` de Quo.js en cada fila se dispara solo para la fila especifica que cambio.
+
+**Modelo de eventos.** Las acciones de Redux son strings planos (`"todos/addTodo"`). Los eventos de Quo.js son tuplas tipadas por canal (`('todos', 'add', payload)`). Ambos enfoques funcionan; los canales proporcionan namespacing natural a escala, mientras que los strings planos se integran mejor con Redux DevTools y el ecosistema de middleware.
+
+**Modelo asincrono.** Redux separa los reducers sincronos de los thunks asincronos. El middleware y los efectos de Quo.js son asincronos por defecto -- las operaciones asincronas son parte del pipeline central en lugar de una capa separada.
 
 ---
 
 ## Zustand
 
-### Modelo Conceptual
+### Arquitectura
 
-**Zustand** es una biblioteca de gestión de estado minimalista construida sobre hooks de React. Evita el código repetitivo de Redux por una simple API `create` + `set`.
+Zustand esta construido sobre **mutacion directa de estado via una funcion `set()`**. El estado y las acciones coexisten en una sola llamada a `create()`. No hay acciones, no hay reducers, no hay middleware -- solo funciones que llaman a `set()`. Las suscripciones usan funciones selectoras.
 
 ```typescript
-// Enfoque Zustand
 const useStore = create((set) => ({
- todos: [],
- addTodo: (todo) => set((state) => ({ 
-  todos: [...state.todos, todo] 
- })),
- toggleTodo: (id) => set((state) => ({
-  todos: state.todos.map(t => 
-   t.id === id ? { ...t, completed: !t.completed } : t
-  )
- }))
+  todos: [],
+  addTodo: (todo) => set((state) => ({
+    todos: [...state.todos, todo],
+  })),
 }));
 
-// Uso
 const todos = useStore(state => state.todos);
-const addTodo = useStore(state => state.addTodo);
 ```
 
-**Arquitectura:**
-- Store único con actualizaciones directas de estado
-- Sin acciones o eventos (solo funciones)
-- Síncrono por defecto
-- Suscripciones mediante funciones selectoras
-- Superficie de API mínima (~1KB)
+### Donde Zustand sobresale
 
-### Cuándo Zustand Sobresale
+**Apps pequenas a medianas que valoran la simplicidad.** Zustand tiene la menor ceremonia de cualquier biblioteca de estado. Pesa aproximadamente 1KB. Casi no hay curva de aprendizaje -- si entiendes `useState`, entiendes Zustand. Es ideal para agregar estado compartido a una app sin compromiso arquitectonico.
 
-✅ **Código repetitivo mínimo** 
-Zustand tiene la menor ceremonia de cualquier biblioteca de estado. Define estado + acciones en un solo lugar.
+**Adopcion gradual.** Zustand no requiere providers, contexto ni reestructuracion. Puedes agregarlo a cualquier arbol de componentes incrementalmente.
 
-✅ **Tamaño de bundle pequeño** 
-~1KB hace a Zustand ideal para aplicaciones con restricciones de tamaño.
+### Diferencias arquitectonicas con Quo.js
 
-✅ **Modelo mental simple** 
-Sin eventos, sin reducers, sin middleware: solo funciones que llaman a `set()`.
+**Explicitud vs. minimalismo.** Zustand optimiza para la menor cantidad de codigo para que el estado funcione. Quo.js optimiza para transiciones de estado explicitas y rastreables via eventos. Son valores fundamentalmente diferentes -- Zustand confia en que los desarrolladores mantengan las cosas simples; Quo.js proporciona estructura que escala.
 
-✅ **Adopción gradual** 
-Fácil de agregar a proyectos existentes sin refactorización mayor.
-
-### Cuándo Quo.js Sobresale
-
-✅ **Complejidad asíncrona** 
-Quo.js maneja flujos de trabajo asíncronos de forma nativa. Zustand requiere orquestación manual.
-
-**Ejemplo:**
 ```typescript
-// Zustand: Manejo asíncrono manual
-const useStore = create((set) => ({
- todos: [],
- loading: false,
- fetchTodos: async () => {
-  set({ loading: true });
-  try {
-   const res = await fetch('/api/todos');
-   const todos = await res.json();
-   set({ todos, loading: false });
-  } catch (error) {
-   set({ loading: false, error });
-  }
- }
-}));
+// Zustand: actualizacion directa — minima pero implicita
+set((state) => ({ count: state.count + 1 }));
 
-// Quo.js: Pipeline asíncrono incorporado
-const middleware = async (state, event, emit) => {
- if (event.type === 'fetchTodos') {
-  await emit('todos', 'loading', true);
-  try {
-   const res = await fetch('/api/todos');
-   const todos = await res.json();
-   await emit('todos', 'loadSuccess', todos);
-  } catch (error) {
-   await emit('todos', 'loadFailure', error);
-  }
-  return false;
- }
- return true;
-};
+// Quo.js: evento con nombre — mas ceremonia pero rastreable
+await emit('counter', 'increment', 1);
 ```
 
-✅ **Garantías de ordenamiento de eventos** 
-La cola FIFO de Quo.js asegura transiciones de estado determinísticas. Las llamadas `set()` de Zustand pueden intercalarse de forma impredecible.
+**Modelo de suscripciones.** Los selectores de Zustand son funciones que se ejecutan en cada llamada a `set()`. Optimizar para actualizaciones de grano fino requiere funciones de igualdad manuales. Las suscripciones por ruta de Quo.js son de grano fino por defecto.
 
-✅ **Suscripciones de grano fino** 
-Zustand requiere optimización manual de selectores. Las suscripciones atómicas de Quo.js están incorporadas.
-
-**Ejemplo:**
 ```typescript
-// Zustand: Re-renderiza cuando CUALQUIER todo cambia (sin optimización)
-const todos = useStore(state => state.todos);
-
-// Zustand optimizado: Selector manual
-const firstTodo = useStore(
- state => state.todos[0],
- (a, b) => a?.id === b?.id // Igualdad personalizada
+// Zustand: necesita igualdad personalizada para evitar re-renders innecesarios
+const title = useStore(
+  state => state.todos[0]?.title,
+  (a, b) => a === b,
 );
 
-// Quo.js: Suscripción de grano fino automática
-const firstTodo = useAtomicProp({ 
- reducer: 'todos', 
- property: 'items.0' 
+// Quo.js: grano fino por defecto
+const title = useAtomicProp({
+  reducer: 'todos',
+  property: 'items.0.title',
 });
 ```
 
-✅ **Historial de eventos estructurado** 
-Los eventos de Quo.js son de primera clase, haciendo la depuración de viaje en el tiempo y análisis más fáciles.
+**Ordenamiento de eventos.** Las llamadas `set()` de Zustand son inmediatas y sincronas. Multiples llamadas `set()` de diferentes operaciones asincronas pueden intercalarse de forma impredecible. La cola de eventos FIFO de Quo.js garantiza ordenamiento estricto -- los eventos siempre se procesan en el orden en que fueron emitidos.
 
-### Comparación de Rendimiento
-
-| Métrica | Zustand | Quo.js |
-|--------|---------|--------|
-| **Granularidad de Suscripción** | Nivel de selector (manual) | Nivel de ruta (automático) |
-| **Frecuencia de Re-renderizado** | Media (con optimización) | Mínima (atómico por defecto) |
-| **Tamaño de Bundle** | ~1KB | ~15KB |
-| **Complejidad de Configuración** | Mínima | Moderada |
-| **Patrones Asíncronos** | Manual | Incorporados |
-
-### Ruta de Migración: Zustand → Quo.js
-
-```typescript
-// ANTES (Zustand)
-const useStore = create((set) => ({
- count: 0,
- increment: () => set((state) => ({ count: state.count + 1 })),
- decrement: () => set((state) => ({ count: state.count - 1 }))
-}));
-
-// DESPUÉS (Quo.js v0.5.0)
-const counterReducer = (state: CounterState, event: EventUnion<AppEM>) => {
- switch (event.type) {
-  case 'increment':
-   return { count: state.count + 1 };
-  case 'decrement':
-   return { count: state.count - 1 };
-  default:
-   return state;
- }
-};
-
-const store = createStore({
- name: 'App',
- reducer: {
-  counter: {
-   state: { count: 0 },
-   events: [['counter', 'increment'], ['counter', 'decrement']],
-   reducer: counterReducer
-  }
- }
-});
-
-// Uso
-const emit = useEmit();
-emit('counter', 'increment', null);
-```
-
-### Veredicto
-
-**Elige Zustand si:**
-- El tamaño de bundle es crítico (<5KB total)
-- Quieres la API más simple posible
-- Tu app tiene complejidad asíncrona mínima
-- Estás construyendo una app pequeña a mediana
-
-**Elige Quo.js si:**
-- Necesitas patrones asíncronos robustos
-- La optimización de rendimiento es crítica
-- Quieres garantías de ordenamiento de eventos
-- Estás construyendo una app grande y compleja
+**Tamano del bundle.** Zustand pesa aproximadamente 1KB. Quo.js (`@quojs/core` + `@quojs/react`) pesa aproximadamente 15KB. Si el tamano del bundle es la restriccion principal, Zustand gana claramente.
 
 ---
 
 ## Jotai
 
-### Modelo Conceptual
+### Arquitectura
 
-**Jotai** toma un enfoque basado en átomos inspirado en Recoil. El estado está distribuido entre átomos en lugar de centralizado.
+Jotai usa **estado distribuido basado en atomos**. En lugar de un store central, el estado se distribuye entre atomos independientes. Los atomos pueden derivar de otros atomos, formando un grafo de dependencias. Los componentes se suscriben a atomos especificos y se re-renderizan solo cuando esos atomos cambian.
 
 ```typescript
-// Enfoque Jotai
 const countAtom = atom(0);
 const todosAtom = atom([]);
-
-// Átomos derivados
 const completedCountAtom = atom(
- (get) => get(todosAtom).filter(t => t.completed).length
+  (get) => get(todosAtom).filter(t => t.completed).length,
 );
 
-// Uso
 const [count, setCount] = useAtom(countAtom);
-const todos = useAtomValue(todosAtom);
 ```
 
-**Arquitectura:**
-- Estado distribuido (átomos)
-- Composición de abajo hacia arriba
-- Actualizaciones atómicas (grano fino por diseño)
-- Suspense-first
-- Sin store central
+### Donde Jotai sobresale
 
-### Cuándo Jotai Sobresale
+**Estado de grano fino con alcance de componente.** El modelo de atomos de Jotai es inherentemente granular. Cada atomo es una unidad independiente de estado, y los componentes solo se re-renderizan cuando sus atomos especificos cambian. Esto hace que Jotai sea excelente para UIs donde el estado se distribuye naturalmente (campos de formulario, toggles, widgets independientes).
 
-✅ **Reactividad de grano fino** 
-Los átomos son inherentemente granulares. Los re-renderizados son mínimos por diseño.
+**Arquitectura Suspense-first.** Jotai fue disenado para React Suspense desde el principio. Los atomos asincronos se integran naturalmente con boundaries `<Suspense>`.
 
-✅ **Integración con Suspense** 
-Jotai fue construido para Suspense desde el primer día.
+**Estado derivado composable.** Los atomos que derivan de otros atomos crean un grafo reactivo. Esto es poderoso para aplicaciones donde los valores computados dependen de multiples fuentes de estado independientes.
 
-✅ **Estado componible** 
-Los átomos pueden depender de otros átomos, creando grafos de estado derivado.
+### Diferencias arquitectonicas con Quo.js
 
-✅ **Sin store global** 
-Genial para estado a nivel de componente o con alcance de funcionalidad.
+**Centralizado vs. distribuido.** Quo.js mantiene un unico arbol de estado al que te suscribes en rutas especificas. Jotai distribuye el estado entre atomos independientes. Ambos logran reactividad de grano fino, pero a traves de arquitecturas opuestas.
 
-### Cuándo Quo.js Sobresale
+El enfoque centralizado (Quo.js) facilita razonar sobre el estado global, coordinar actualizaciones transversales y serializar/restaurar el estado completo de la app. El enfoque distribuido (Jotai) facilita crear unidades de estado autocontenidas y reutilizables, y evita la necesidad de un provider en casos simples.
 
-✅ **Modelo de estado centralizado** 
-Quo.js mantiene una única fuente de verdad. Más fácil de razonar para apps grandes.
-
-✅ **Arquitectura impulsada por eventos** 
-Los eventos de Quo.js crean un rastro de auditoría. Las actualizaciones de átomos de Jotai son implícitas.
-
-**Ejemplo:**
 ```typescript
-// Jotai: Actualizaciones implícitas
-setCount(count + 1); // ¿De dónde vino esto? ¿Quién lo activó?
+// Jotai: el estado esta distribuido entre atomos
+const titleAtom = atom('');
+const doneAtom = atom(false);
 
-// Quo.js: Eventos explícitos
-emit('counter', 'increment', 1); // Intención clara, rastreable
+// Quo.js: el estado vive en un arbol, suscrito por ruta
+const title = useAtomicProp({ reducer: 'todos', property: 'items.0.title' });
+const done = useAtomicProp({ reducer: 'todos', property: 'items.0.done' });
 ```
 
-✅ **Middleware y efectos** 
-Quo.js tiene un pipeline asíncrono central. Jotai requiere gestión de efectos por átomo.
+**Rastreabilidad de eventos.** Las actualizaciones de atomos en Jotai son implicitas -- llamas a `setCount(count + 1)` y el estado cambia. No hay log de eventos, no hay punto de intercepcion de middleware, no hay pista de auditoria. Los eventos de Quo.js son explicitos y rastreables a traves de todo el pipeline. Esto importa cuando necesitas verificaciones de autorizacion, undo/redo o analiticas sobre transiciones de estado.
 
-✅ **Coordinación de estado global** 
-Quo.js sobresale cuando las actualizaciones de estado deben coordinarse entre múltiples slices (ej., autenticación afectando estado de UI).
-
-### Comparación de Rendimiento
-
-| Métrica | Jotai | Quo.js |
-|--------|-------|--------|
-| **Granularidad de Suscripción** | Nivel de átomo (fino por diseño) | Nivel de ruta (fino por diseño) |
-| **Frecuencia de Re-renderizado** | Mínima | Mínima |
-| **Tamaño de Bundle** | ~3KB | ~15KB |
-| **Complejidad de Configuración** | Baja | Moderada |
-| **Modelo Mental** | De abajo hacia arriba (átomos) | De arriba hacia abajo (eventos) |
-
-### Veredicto
-
-**Elige Jotai si:**
-- Prefieres estado distribuido, basado en átomos
-- Estás construyendo una app Suspense-first
-- Quieres código repetitivo mínimo
-- El estado es mayormente con alcance de componente
-
-**Elige Quo.js si:**
-- Prefieres estado centralizado
-- Necesitas arquitectura impulsada por eventos
-- Quieres middleware/efectos para preocupaciones transversales
-- La coordinación de estado entre funcionalidades es crítica
+**Middleware y preocupaciones transversales.** Jotai maneja preocupaciones transversales (logging, persistencia, validacion) via middleware de atomos o atomos wrapper -- configuracion por atomo. Quo.js las maneja centralmente via el pipeline de eventos -- una sola funcion de middleware puede interceptar todos los eventos.
 
 ---
 
 ## MobX
 
-### Modelo Conceptual
+### Arquitectura
 
-**MobX** usa programación reactiva con observables. Los cambios de estado activan automáticamente actualizaciones mediante proxies.
+MobX usa **estado observable con seguimiento automatico de dependencias**. El estado se envuelve en proxies que rastrean que propiedades lee cada componente. Cuando una propiedad observable cambia, solo los componentes que la leyeron se re-renderizan. Las actualizaciones tienen estilo mutable -- modificas el estado directamente, y MobX rastrea la mutacion.
 
 ```typescript
-// Enfoque MobX
 class TodoStore {
- @observable todos = [];
- 
- @action
- addTodo(todo) {
-  this.todos.push(todo); // MobX rastrea esta mutación
- }
- 
- @computed
- get completedCount() {
-  return this.todos.filter(t => t.completed).length;
- }
+  @observable todos = [];
+
+  @action
+  addTodo(todo) {
+    this.todos.push(todo); // MobX rastrea esta mutacion
+  }
+
+  @computed
+  get completedCount() {
+    return this.todos.filter(t => t.completed).length;
+  }
 }
 
-// Uso
-const store = new TodoStore();
 const App = observer(() => {
- return <div>{store.completedCount}</div>; // Auto-actualiza
+  return <div>{store.completedCount}</div>; // Se auto-actualiza
 });
 ```
 
-**Arquitectura:**
-- Estado observable (proxies)
-- Rastreo automático de dependencias
-- Actualizaciones mutables (rastreadas mediante proxies)
-- Basado en clases o funcional
-- Grano fino por defecto
+### Donde MobX sobresale
 
-### Cuándo MobX Sobresale
+**Reactividad implicita con boilerplate minimo.** MobX rastrea automaticamente que propiedades lee un componente y se re-renderiza solo cuando esas propiedades cambian. No escribes selectores, suscripciones ni comparaciones de igualdad -- simplemente funciona. Esto es poderoso para desarrolladores que quieren reactividad de grano fino sin pensar en ello.
 
-✅ **Reactividad implícita** 
-MobX rastrea automáticamente dependencias. Sin suscripciones manuales.
+**Aplicaciones amigables con OOP.** Los stores de MobX basados en clases con decoradores encajan naturalmente en arquitecturas orientadas a objetos. Si tu equipo piensa en clases, propiedades computadas y estado encapsulado, MobX se siente nativo.
 
-✅ **Actualizaciones de estilo mutable** 
-Se siente como JavaScript plano. No necesita patrones inmutables.
+**Actualizaciones con estilo mutable.** MobX te permite escribir `this.todos.push(todo)` en lugar de `{ ...state, todos: [...state.todos, todo] }`. Para actualizaciones anidadas complejas, esto es significativamente mas legible.
 
-✅ **Grano fino por defecto** 
-Los componentes solo se re-renderizan cuando sus observables específicos cambian.
+### Diferencias arquitectonicas con Quo.js
 
-✅ **Amigable con OOP** 
-Ajuste natural para arquitecturas basadas en clases.
+**Implicito vs. explicito.** MobX rastrea dependencias automaticamente via proxies -- los componentes se re-renderizan "magicamente" cuando los observables que leyeron cambian. Quo.js requiere suscripciones explicitas por ruta -- declaras lo que observas. MobX es mas facil de usar; Quo.js es mas facil de depurar cuando algo sale mal.
 
-### Cuándo Quo.js Sobresale
+**Mutabilidad.** MobX permite (y fomenta) la mutacion directa de objetos de estado. Quo.js aplica inmutabilidad -- el estado se congela profundamente en desarrollo. Ambos enfoques tienen tradeoffs: la mutacion es ergonomica pero puede causar bugs sutiles cuando las referencias se comparten; la inmutabilidad es mas segura pero requiere mas ceremonia para actualizaciones anidadas.
 
-✅ **Flujo de eventos explícito** 
-Los eventos de Quo.js son rastreables. La reactividad de MobX es "mágica" (más difícil de depurar).
-
-✅ **Garantías de inmutabilidad** 
-Quo.js fuerza actualizaciones inmutables. MobX permite mutación (propenso a errores).
-
-✅ **Depuración de viaje en el tiempo** 
-Los eventos de Quo.js crean un historial reproducible. Las mutaciones de MobX son más difíciles de rastrear.
-
-✅ **Pipeline asíncrono** 
-Quo.js tiene un flujo asíncrono estructurado. MobX requiere gestión manual de `runInAction`.
-
-**Ejemplo:**
-```typescript
-// MobX: Manejo asíncrono manual
-class Store {
- @observable loading = false;
- @observable data = null;
- 
- @action
- async fetchData() {
-  this.loading = true; // Debe envolver en action
-  const res = await fetch('/api/data');
-  runInAction(() => { // Debe envolver continuación asíncrona
-   this.data = await res.json();
-   this.loading = false;
-  });
- }
-}
-
-// Quo.js: Pipeline asíncrono incorporado
-const middleware = async (state, event, emit) => {
- if (event.type === 'fetchData') {
-  await emit('data', 'loading', true);
-  const res = await fetch('/api/data');
-  const data = await res.json();
-  await emit('data', 'loaded', data);
-  return false;
- }
- return true;
-};
-```
-
-### Comparación de Rendimiento
-
-| Métrica | MobX | Quo.js |
-|--------|------|--------|
-| **Granularidad de Suscripción** | Nivel de observable (fino) | Nivel de ruta (fino) |
-| **Frecuencia de Re-renderizado** | Mínima | Mínima |
-| **Tamaño de Bundle** | ~16KB | ~15KB |
-| **Curva de Aprendizaje** | Moderada (modelo de reactividad) | Moderada (modelo de eventos) |
-| **Depuración** | Más difícil (implícito) | Más fácil (eventos explícitos) |
-
-### Veredicto
-
-**Elige MobX si:**
-- Prefieres programación reactiva
-- Te gustan actualizaciones de estilo mutable
-- Estás construyendo una app con mucho OOP
-- Quieres código repetitivo mínimo
-
-**Elige Quo.js si:**
-- Prefieres flujo de eventos explícito
-- Quieres garantías de inmutabilidad
-- Necesitas depuración de viaje en el tiempo
-- Quieres patrones asíncronos estructurados
+**Flujo de eventos.** MobX no tiene concepto de eventos o acciones como entidades de primera clase (decorar con `@action` es para batching, no para crear una pista de eventos). Los eventos de Quo.js fluyen a traves de un pipeline formal con middleware, efectos y fases committed/uncommitted. Si necesitas interceptar, validar o auditar cambios de estado, Quo.js proporciona la infraestructura; MobX requiere construirla tu mismo.
 
 ---
 
 ## XState
 
-### Modelo Conceptual
+### Arquitectura
 
-**XState** modela el estado como máquinas de estados finitos (FSM). Las transiciones de estado son explícitas y gobernadas por definiciones de máquina.
+XState modela el estado como **maquinas de estados finitos y statecharts**. Las transiciones de estado son explicitas y gobernadas por definiciones de maquina. Cada estado posible y transicion se declara por adelantado. El modelo de actor habilita maquinas de estado concurrentes y aisladas que se comunican via mensajes.
 
 ```typescript
-// Enfoque XState
 const todoMachine = createMachine({
- id: 'todo',
- initial: 'idle',
- states: {
-  idle: {
-   on: {
-    FETCH: 'loading'
-   }
-  },
-  loading: {
-   invoke: {
-    src: 'fetchTodos',
-    onDone: {
-     target: 'success',
-     actions: 'assignTodos'
+  id: 'todo',
+  initial: 'idle',
+  states: {
+    idle: { on: { FETCH: 'loading' } },
+    loading: {
+      invoke: {
+        src: 'fetchTodos',
+        onDone: { target: 'success', actions: 'assignTodos' },
+        onError: 'failure',
+      },
     },
-    onError: 'failure'
-   }
+    success: { /* ... */ },
+    failure: { /* ... */ },
   },
-  success: { /* ... */ },
-  failure: { /* ... */ }
- }
 });
-
-const [state, send] = useMachine(todoMachine);
 ```
 
-**Arquitectura:**
-- Máquinas de estados
-- Transiciones de estado explícitas
-- Modelo de actor (buzones para mensajes)
-- Diagramas visuales
-- Orquestación asíncrona compleja
+### Donde XState sobresale
 
-### Cuándo XState Sobresale
+**Flujos de trabajo complejos y con estado.** XState esta disenado especificamente para procesos con muchos estados y transiciones condicionales -- flujos de checkout, formularios multi-paso, logica de juegos, implementaciones de protocolos. La definicion de maquina garantiza que las transiciones de estado invalidas sean imposibles.
 
-✅ **Máquinas de estados complejas** 
-XState sobresale cuando las transiciones de estado son numerosas y condicionales (ej., flujos de checkout, formularios de múltiples pasos).
+**Modelado visual y documentacion.** Las maquinas de XState pueden visualizarse como diagramas, lo que las convierte en excelente documentacion viva. El editor visual Stately permite a ingenieros y no ingenieros entender y validar la logica de estado.
 
-✅ **Modelado visual** 
-Las máquinas XState pueden visualizarse como diagramas, siendo excelente documentación.
+**Concurrencia basada en actores.** El modelo de actores de XState es computacion concurrente genuina -- multiples maquinas ejecutandose independientemente, comunicandose via mensajes. Esto es poderoso para aplicaciones con procesos paralelos e independientes.
 
-✅ **Prevención de estados imposibles** 
-XState hace imposibles las transiciones de estado inválidas por diseño.
+### Diferencias arquitectonicas con Quo.js
 
-✅ **Modelo de actor** 
-Genial para coordinar múltiples procesos concurrentes.
+**Alcance.** XState esta disenado para **orquestacion de flujos de trabajo** -- modelar procesos que se mueven a traves de fases distintas. Quo.js esta disenado para **gestion de estado basada en datos** -- gestionar estado de aplicacion al que muchos elementos de UI se suscriben. Resuelven problemas diferentes y pueden coexistir en la misma aplicacion (XState para logica de flujos de trabajo, Quo.js para estado de aplicacion).
 
-### Cuándo Quo.js Sobresale
+**Boilerplate.** Las definiciones de maquina de XState son verbosas por diseno -- cada estado y transicion es explicito. Esto es una caracteristica, no un defecto, para flujos de trabajo donde la explicitud previene errores. Pero para gestion de estado CRUD general, esta ceremonia es overhead.
 
-✅ **Modelo mental más simple** 
-El enfoque impulsado por eventos de Quo.js es más fácil de entender para apps típicas. Las FSM de XState tienen una curva de aprendizaje empinada.
-
-✅ **Estado de propósito general** 
-Quo.js es mejor para apps CRUD donde el estado no es estrictamente una "máquina". XState es excesivo para gestión de datos simple.
-
-✅ **Menos código repetitivo** 
-Las máquinas XState son verbosas. Los eventos y reducers de Quo.js son más concisos.
-
-**Ejemplo:**
 ```typescript
-// XState: Definición de máquina verbosa
+// XState: maquina explicita para un contador
 const machine = createMachine({
- id: 'counter',
- initial: 'active',
- context: { count: 0 },
- states: {
-  active: {
-   on: {
-    INCREMENT: {
-     actions: assign({ count: (ctx) => ctx.count + 1 })
+  id: 'counter',
+  initial: 'active',
+  context: { count: 0 },
+  states: {
+    active: {
+      on: {
+        INCREMENT: { actions: assign({ count: (ctx) => ctx.count + 1 }) },
+        DECREMENT: { actions: assign({ count: (ctx) => ctx.count - 1 }) },
+      },
     },
-    DECREMENT: {
-     actions: assign({ count: (ctx) => ctx.count - 1 })
-    }
-   }
-  }
- }
+  },
 });
 
-// Quo.js: Reducer conciso
+// Quo.js: reducer para un contador
 const counterReducer = (state, event) => {
- switch (event.type) {
-  case 'increment':
-   return { count: state.count + 1 };
-  case 'decrement':
-   return { count: state.count - 1 };
-  default:
-   return state;
- }
+  switch (event.type) {
+    case 'increment': return { count: state.count + 1 };
+    case 'decrement': return { count: state.count - 1 };
+    default: return state;
+  }
 };
 ```
 
-### Comparación de Rendimiento
-
-| Métrica | XState | Quo.js |
-|--------|--------|--------|
-| **Ajuste de Caso de Uso** | Flujos de trabajo complejos | Gestión de estado general |
-| **Tamaño de Bundle** | ~30KB | ~15KB |
-| **Curva de Aprendizaje** | Empinada (conceptos FSM) | Moderada (modelo de eventos) |
-| **Código Repetitivo** | Alto (definiciones de máquina) | Bajo (reducers) |
-| **Visualización** | Excelente (diagramas) | Ninguna (solo eventos) |
-
-### Veredicto
-
-**Elige XState si:**
-- Estás modelando flujos de trabajo complejos (checkout, wizards, juegos)
-- Necesitas diagramas de estado visuales
-- Quieres eliminar estados imposibles
-- Te sientes cómodo con conceptos de máquina de estados
-
-**Elige Quo.js si:**
-- Estás construyendo apps CRUD típicas
-- Quieres un modelo mental más simple
-- Necesitas gestión de estado de propósito general
-- Quieres menos código repetitivo
+**Modelo de suscripciones.** XState no tiene suscripciones a nivel de ruta -- te suscribes al estado de la maquina y seleccionas de el. Las suscripciones por ruta de Quo.js son mas granulares para gestion de estado de UI.
 
 ---
 
-## Tabla Resumen
+## Resumen Arquitectonico
 
-| Característica | Redux Toolkit | Zustand | Jotai | MobX | XState | Quo.js |
-|---------|---------------|---------|-------|------|--------|--------|
-| **Arquitectura** | Centralizada | Centralizada | Distribuida | Observable | FSM | Centralizada + Eventos |
-| **Soporte Asíncrono** | Thunks/RTK Query | Manual | Manual | `runInAction` | Incorporado | Incorporado |
-| **Suscripciones** | Nivel de slice | Nivel de selector | Nivel de átomo | Nivel de observable | Nivel de estado | Nivel de ruta |
-| **Tamaño de Bundle** | ~45KB | ~1KB | ~3KB | ~16KB | ~30KB | ~15KB |
-| **Curva de Aprendizaje** | Moderada | Baja | Baja-Moderada | Moderada | Empinada | Moderada |
-| **Código Repetitivo** | Medio | Mínimo | Mínimo | Mínimo | Alto | Bajo-Medio |
-| **DevTools** | Excelente | Bueno | Bueno | Bueno | Excelente | Bueno |
-| **TypeScript** | Excelente | Bueno | Excelente | Bueno | Excelente | Excelente |
-| **Inmutabilidad** | Forzada (Immer) | Manual | Forzada | Opcional (proxies) | Forzada | Forzada |
-| **Ordenamiento de Eventos** | Sync | Ninguno | Ninguno | Ninguno | Explícito | Cola FIFO |
-| **Soporte Node.js** | Sí | No | No | Sí | Sí | Sí |
+Cada biblioteca optimiza para una dimension diferente:
 
----
+| Biblioteca | Optimiza para | Tradeoff central |
+|------------|---------------|-------------------|
+| **Redux Toolkit** | Madurez del ecosistema, convenciones de equipo | Mas boilerplate y configuracion, suscripciones mas gruesas |
+| **Zustand** | Superficie de API minima, baja ceremonia | Menos estructura para flujos asincronos complejos |
+| **Jotai** | Atomos distribuidos y composables | Mas dificil coordinar estado global |
+| **MobX** | Reactividad implicita, ergonomia mutable | Mas dificil rastrear y depurar cambios de estado |
+| **XState** | Correccion de flujos de trabajo, estados imposibles | Verboso para gestion de datos general |
+| **Quo.js** | Suscripciones de grano fino, pipeline de eventos | Mas configuracion que Zustand/Jotai, bundle mas grande |
 
-## Matriz de Decisión
+No hay una biblioteca universalmente "mejor". La eleccion correcta depende de lo que tu aplicacion necesita mas:
 
-### Elige Quo.js si necesitas:
-
-✅ **Rendimiento de grano fino** sin optimización manual 
-✅ **Soporte asíncrono nativo** sin bibliotecas externas 
-✅ **Arquitectura impulsada por eventos** con garantías de ordenamiento 
-✅ **Runtime universal** (web + Node.js + Deno + Bun) 
-✅ **Eventos explícitos y rastreables** para depuración 
-✅ **Organización basada en canales** para apps grandes 
-
-### Elige Redux Toolkit si necesitas:
-
-✅ Ecosistema maduro con extensas herramientas 
-✅ RTK Query para obtención de datos 
-✅ Familiaridad del equipo con patrones Redux 
-✅ Depuración de viaje en el tiempo con Redux DevTools 
-
-### Elige Zustand si necesitas:
-
-✅ Tamaño de bundle mínimo (<5KB total) 
-✅ API simple con cero código repetitivo 
-✅ Adopción gradual en apps existentes 
-
-### Elige Jotai si necesitas:
-
-✅ Estado distribuido basado en átomos 
-✅ Arquitectura Suspense-first 
-✅ Composición de estado de abajo hacia arriba 
-
-### Elige MobX si necesitas:
-
-✅ Modelo de programación reactiva 
-✅ Actualizaciones de estilo mutable 
-✅ Arquitectura basada en clases 
-
-### Elige XState si necesitas:
-
-✅ Máquinas de estados finitos 
-✅ Modelado de flujos de trabajo complejos 
-✅ Diagramas de estado visuales 
+- **Friccion minima y bundle pequeno?** Zustand o Jotai.
+- **El equipo ya conoce Redux?** Redux Toolkit.
+- **OOP reactivo con actualizaciones mutables?** MobX.
+- **Modelado de flujos de trabajo complejos?** XState.
+- **Suscripciones de grano fino por ruta, autorizacion de eventos o estado universal (cliente + servidor)?** Quo.js.
 
 ---
 
-## Conclusión
+## Lectura Adicional
 
-Quo.js ocupa una posición única en el panorama de gestión de estado:
-
-- **Más estructurado que Zustand** (eventos + canales vs. actualizaciones directas)
-- **Más performante que Redux** (suscripciones atómicas por defecto)
-- **Más explícito que Jotai** (store centralizado vs. átomos distribuidos)
-- **Más depurable que MobX** (eventos explícitos vs. reactividad implícita)
-- **Más accesible que XState** (propósito general vs. máquinas de estado)
-
-Si valoras **flujo de eventos explícito**, **rendimiento de grano fino**, **soporte asíncrono nativo** y **compatibilidad de runtime universal**, Quo.js vale la pena evaluar.
+- **[Arquitectura de Cola de Eventos](./event-queue-architecture.md)** -- Como funciona el pipeline de eventos asincronos de Quo.js internamente
+- **[Guia de Inicio Rapido](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)** -- Cinco pasos hacia una app funcional
+- **[API de @quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** -- Store, middleware, efectos, matchers `When`
+- **[API de @quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** -- Hooks con suscripciones de grano fino
 
 ---
 
-**Lectura Adicional:**
-- [Arquitectura de Cola de Eventos](./event-queue-architecture.md) - Inmersión técnica profunda en la cola asíncrona de Quo.js
-- [Guía de Inicio Rápido](https://quojs.dev) - Comienza en 5 minutos
-- [Referencia de API](https://github.com/quojs/quojs/blob/main/packages/core/docs/README.md) - Documentación TypeDoc completa
-
----
-
-**Historial de Revisiones**
-
-| Versión | Fecha | Cambios |
-|---------|------|---------|
-| 0.5.0 | 2026-01 | Comparación integral inicial |
-
----
-
-**Licencia:** MIT 
-**Repositorio:** https://github.com/quojs/quo 
-**Sitio Web:** https://quojs.dev
+**Licencia:** MIT
+**Repositorio:** https://github.com/quojs/quojs

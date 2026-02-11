@@ -8,7 +8,7 @@
 
 > **useStore**\<`EM`, `R`, `S`\>(): `StoreInstance`\<`R`, `S`, `EM`\>
 
-Defined in: [hooks/hooks.ts:102](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/hooks.ts#L102)
+Defined in: [react/src/hooks/hooks.ts:61](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L61)
 
 Returns the current StoreInstance from [StoreContext](../variables/StoreContext.md).
 Throws if used outside of a `<StoreProvider>`.

@@ -777,4 +777,4 @@ public dispose(): void {
 
 **Author**: Quo.js Team 
 **License**: MIT 
-**Repository**: https://github.com/quojs/quo
+**Repository**: https://github.com/quojs/quojs

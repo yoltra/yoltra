@@ -39,7 +39,7 @@ rush build --to @quojs/core
 rush build --from @quojs/react
 
 # trabaja dentro de un solo paquete
-cd packages/quojs
+cd packages/core
 rushx build
 rushx test
 rushx lint

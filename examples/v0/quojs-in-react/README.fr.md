@@ -2,13 +2,12 @@
 
 > [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp;
 
-Une petite démo React ciblée qui héberge **les deux implémentations d'état** côte à côte :
+Une petite demo React ciblee qui heberge **les deux implementations d'etat** cote a cote :
 
-- **Quo.js** (store personnalisé type Redux avec canaux/événements et abonnements à grain fin)
+- **Quo.js** (store pilote par evenements avec evenements par canaux et abonnements fins aux chemins)
 - **Redux Toolkit (RTK)** (stack Redux standard avec `createSlice` + `createAsyncThunk`)
 
-Utilisez ce projet pour exécuter l'interface utilisateur localement et reproduire
-l'**[Analyse du Profiler React](./redux-quojs-profiler.fr.md)**.
+La comparaison des flamegraphs est la preuve : Quo.js ne re-rend que les composants dont les chemins souscrits ont change, tandis que Redux re-rend chaque selecteur a chaque dispatch. Utilisez ce projet pour executer l'interface utilisateur localement et reproduire l'**[Analyse du Profiler React](./redux-quojs-profiler.fr.md)**.
 
 ## Structure du projet
 

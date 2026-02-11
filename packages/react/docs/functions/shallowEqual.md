@@ -8,9 +8,13 @@
 
 > **shallowEqual**\<`T`\>(`a`, `b`): `boolean`
 
-Defined in: [hooks/hooks.ts:141](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/hooks.ts#L141)
+Defined in: [react/src/hooks/hooks.ts:104](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L104)
 
 Shallow object equality using `Object.is` per-key.
+
+Useful as the `isEqual` argument for `useAtomicProp` and `useAtomicProps`
+when the derived value is a plain object. Also available from the object
+returned by [createQuoHooks](createQuoHooks.md).
 
 ## Type Parameters
 
@@ -35,6 +39,6 @@ Shallow object equality using `Object.is` per-key.
 ## Example
 
 ```ts
-shallowEqual({ a: 1 }, { a: 1 }) // true
-shallowEqual({ a: 1 }, { a: 2 }) // false
+shallowEqual({ a: 1 }, { a: 1 }); // true
+shallowEqual({ a: 1 }, { a: 2 }); // false
 ```

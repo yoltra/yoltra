@@ -2,11 +2,11 @@
 
 > &nbsp;&nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md) 
 
-Una pequeña demostración enfocada en React que aloja **ambas implementaciones de estado** lado a
-lado:
+Una pequena demostracion enfocada en React que aloja **ambas implementaciones de estado** lado a
+lado -- la prueba definitiva esta en la comparacion de flamegraph:
 
-- **Quo.js** (store personalizado tipo Redux con canales/eventos y suscripciones de grano fino)
-- **Redux Toolkit (RTK)** (stack estándar de Redux con `createSlice` + `createAsyncThunk`)
+- **Quo.js** (store orientado a eventos con eventos basados en canales y suscripciones de grano fino)
+- **Redux Toolkit (RTK)** (stack estandar de Redux con `createSlice` + `createAsyncThunk`)
 
 Usa este proyecto para ejecutar la UI localmente y reproducir el
 **[Análisis del Profiler de React](./redux-quojs-profiler.es.md)**.

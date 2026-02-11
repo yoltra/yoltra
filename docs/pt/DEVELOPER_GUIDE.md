@@ -64,7 +64,7 @@ rush build --from @quojs/react
 Trabalho a nível de pacote:
 
 ```bash
-cd pacotes/quojs
+cd packages/core
 
 rushx construir
 teste rushx
@@ -127,7 +127,7 @@ Exemplos:
 
 ```bash
 linho apressado
-cd packages/quojs-react && rushx lint
+cd packages/react && rushx lint
 formato rushx
 ```
 

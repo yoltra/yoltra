@@ -1,13 +1,15 @@
-# Quo.js vs Redux Toolkit — React Vite Demo
+# Quo.js vs Redux Toolkit — React Profiler Comparison
 
-> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md) 
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md)
 
-A small, focused React demo that hosts **both state implementations** side by side:
+A side-by-side React demo comparing fine-grained path subscriptions (Quo.js) against selector-based subscriptions (Redux Toolkit). Both implementations expose the same UI and user flows, making the **[React Profiler flamegraph comparison](./redux-quojs-profiler.md)** a fair, apples-to-apples measurement.
 
-- **Quo.js** (custom Redux-like store with channels/events and fine‑grained subscriptions)
-- **Redux Toolkit (RTK)** (standard Redux stack with `createSlice` + `createAsyncThunk`)
+The key result: when updating a single item in a list, Quo.js re-renders only the affected component. Redux Toolkit re-renders every component whose selector touches the changed slice. See the **[full profiler analysis](./redux-quojs-profiler.md)** for flamegraphs and timing data.
 
-Use this project to run the UI locally and reproduce the **[React Profiler Analysis](./redux-quojs-profiler.md)**.
+Both implementations use:
+
+- **Quo.js** — event-driven store with channel-based events and fine-grained subscriptions via `useAtomicProp`
+- **Redux Toolkit (RTK)** — standard Redux stack with `createSlice` + `createAsyncThunk`
 
 ## Project layout
 

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@quojs/react",
+      "comment": "feat(react): normalize event subscriptions API",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@quojs/react"
+}

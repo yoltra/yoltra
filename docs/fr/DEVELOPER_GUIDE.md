@@ -61,7 +61,7 @@ rush build --from @quojs/react
 
 Travail au niveau du package:
 
-cd packages/quojs
+cd packages/core
 
 rushx build rushx test rushx lint
 
@@ -119,7 +119,7 @@ Exemples:
 
 ```bash
 rush lint
-cd packages/quojs-react && rushx lint
+cd packages/react && rushx lint
 rushx format
 ````
 

@@ -8,9 +8,9 @@
 
 > **invalidateAtomicPropsByReducer**(`reducer`): `void`
 
-Defined in: [hooks/suspense.ts:288](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/suspense.ts#L288)
+Defined in: [react/src/hooks/suspense.ts:373](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L373)
 
-Invalidates all cache entries for a reducer.
+Invalidates all Suspense cache entries for a given reducer (slice).
 
 ## Parameters
 
@@ -18,6 +18,14 @@ Invalidates all cache entries for a reducer.
 
 `string`
 
+Reducer (slice) name whose cache entries should be cleared.
+
 ## Returns
 
 `void`
+
+## Example
+
+```ts
+invalidateAtomicPropsByReducer('users');
+```

@@ -8,6 +8,9 @@
 
 > `const` **suspenseCache**: `SuspenseCache`
 
-Defined in: [hooks/suspense.ts:107](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/suspense.ts#L107)
+Defined in: [react/src/hooks/suspense.ts:88](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L88)
 
-Default Suspense cache instance.
+Default Suspense cache instance shared by all `useSuspense*` hooks.
+
+Use [invalidateAtomicProp](../functions/invalidateAtomicProp.md), [invalidateAtomicPropsByReducer](../functions/invalidateAtomicPropsByReducer.md),
+or [clearSuspenseCache](../functions/clearSuspenseCache.md) to manage the cache from outside hooks.

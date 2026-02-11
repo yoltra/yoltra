@@ -8,7 +8,12 @@
 
 > **UseEvent**\<`EM`, `S`\> = \<`C`, `T`\>(`channel`, `type`, `handler`, `phase?`) => `void`
 
-Defined in: [hooks/createQuoHooks.ts:59](https://github.com/quojs/quojs/blob/d7e7368223439ffec372ae1e5232d6f03b0a0e1f/packages/react/src/hooks/createQuoHooks.ts#L59)
+Defined in: [react/src/hooks/createQuoHooks.ts:134](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/createQuoHooks.ts#L134)
+
+Call signature for the typed `useEvent` hook returned by [createQuoHooks](../functions/createQuoHooks.md).
+
+Subscribes to store events from a React component. Useful for notifications,
+animations, analytics, and responding to rejected (uncommitted) events.
 
 ## Type Parameters
 
@@ -16,9 +21,13 @@ Defined in: [hooks/createQuoHooks.ts:59](https://github.com/quojs/quojs/blob/d7e
 
 `EM` *extends* `EventMapBase`
 
+Event map type.
+
 ### S
 
 `S`
+
+Store state type.
 
 ## Type Parameters
 
@@ -51,3 +60,16 @@ Defined in: [hooks/createQuoHooks.ts:59](https://github.com/quojs/quojs/blob/d7e
 ## Returns
 
 `void`
+
+## Example
+
+```tsx
+const { useEvent } = createQuoHooks(AppStoreContext);
+
+function SaveNotifier() {
+  useEvent('ui', 'save', (event) => {
+    showToast('Saved!');
+  });
+  return null;
+}
+```

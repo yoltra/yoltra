@@ -3,8 +3,7 @@ import {
   createStore,
   Store,
   typedEvents,
-  typedActions,
-  type EventMapBase,
+  type EventUnion,
   type ReducerSpec,
   type EffectSpec,
   type MiddlewareFunction,
@@ -58,7 +57,7 @@ describe("Store advanced coverage", () => {
     vi.restoreAllMocks();
   });
 
-  it("dispose clears cleanup timer and processed IDs and is idempotent", () => {
+  it("dispose clears cleanup timer and processed fingerprints and is idempotent", () => {
     const store = createStore({
       name: "CoverageStore-dispose",
       reducer: makeBaseReducers(),
@@ -66,19 +65,19 @@ describe("Store advanced coverage", () => {
 
     const anyStore = store as any;
 
-    // sanity: timer exists and we can simulate some processed IDs
-    expect(anyStore.eventIdCleanupTimer).toBeTruthy();
-    anyStore.processedEventIds.add(Symbol("x"));
-    expect(anyStore.processedEventIds.size).toBe(1);
+    // sanity: timer exists and we can simulate some processed fingerprints
+    expect(anyStore.eventCleanupTimer).toBeTruthy();
+    anyStore.processedEvents.set("test::event", Date.now());
+    expect(anyStore.processedEvents.size).toBe(1);
 
     store.dispose();
 
-    expect(anyStore.eventIdCleanupTimer).toBeNull();
-    expect(anyStore.processedEventIds.size).toBe(0);
+    expect(anyStore.eventCleanupTimer).toBeNull();
+    expect(anyStore.processedEvents.size).toBe(0);
 
     // second call should be a no-op, but still covered
     store.dispose();
-    expect(anyStore.eventIdCleanupTimer).toBeNull();
+    expect(anyStore.eventCleanupTimer).toBeNull();
   });
 
   it("__applyExternalState short-circuits when slices are reference equal", () => {
@@ -249,13 +248,14 @@ describe("Store advanced coverage", () => {
     });
 
     // this should go through the *new* middleware / effects / reducers
-    await store.emit("ui", "inc", 1);
+    // Use different payload (2) to avoid deduplication with the first emit (1)
+    await store.emit("ui", "inc", 2);
 
     // confirm that new middleware & effects ran
     expect(logs.some((l) => l.startsWith("mw1:"))).toBe(true);
     expect(logs.some((l) => l.startsWith("eff1:"))).toBe(true);
 
-    // and make sure the old ones didn’t re-run after replacement
+    // and make sure the old ones didn't re-run after replacement
     expect(logs.some((l) => l.startsWith("mw0:"))).toBe(false);
     expect(logs.some((l) => l.startsWith("eff0:"))).toBe(false);
   });
@@ -376,46 +376,16 @@ describe("Store advanced coverage", () => {
     ).toBe(true);
   });
 
-
-  it("dispatch emits events and logs a deprecation warning in non-production", async () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "test";
-
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
-
-    const store = createStore({
-      name: "CoverageStore-dispatch",
-      reducer: makeBaseReducers(),
-    });
-
-    const before = store.getState().counter.value;
-
-    // use dispatch, not emit
-    await store.dispatch("ui", "inc", 2);
-
-    const after = store.getState().counter.value;
-
-    expect(after).toBe(before + 2);
-    expect(warnSpy).toHaveBeenCalledWith(
-      "[@quojs/core] `store.dispatch()` is deprecated and will be removed in v1.0.0. Use `store.emit()` instead.",
-    );
-
-    warnSpy.mockRestore();
-    process.env.NODE_ENV = originalEnv;
-  });
-
-
-  it("typedEvents and typedActions helper functions return typed EventKeys", () => {
+  it("typedEvents helper returns typed EventKeys", () => {
     type LocalEM = {
       ui: { inc: number; dec: number };
       data: { loaded: string[] };
     };
 
     const makeEvents = typedEvents<LocalEM>([]);
-    const makeActions = typedActions<LocalEM>([]); // deprecated alias
 
     const uiKeys = makeEvents("ui", ["inc", "dec"] as const);
-    const dataKeys = makeActions("data", ["loaded"] as const);
+    const dataKeys = makeEvents("data", ["loaded"] as const);
 
     expect(uiKeys).toEqual([
       ["ui", "inc"],

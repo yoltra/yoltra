@@ -1,4 +1,5 @@
-import type { EventKey, ReducerSpec } from "@quojs/core";
+import type { ReducerSpec } from "@quojs/core";
+import { eventKeys } from "@quojs/core";
 
 import type { AppEM, ThemeState } from "@/state/types";
 
@@ -8,10 +9,11 @@ const initial: ThemeState = {
 };
 
 export const themeReducer: ReducerSpec<ThemeState, AppEM> = {
-  events: [
+  // v0.7.0+: Use `when` for event targeting (recommended)
+  when: { keys: eventKeys<AppEM>()([
     ["theme", "set"],
     ["theme", "resolve"],
-  ],
+  ])},
   state: initial,
   reducer: (state, event) => {
     const { channel, type, payload } = event as any;

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { Store, typedEvents, typedActions } from "../../src/store/Store";
-import type { EventKey, EventMapBase } from "../../src/types";
+import { Store, typedEvents } from "../../src/store/Store";
+import type { EventKey } from "../../src/types";
 
 describe("Store.buildAncestorPaths", () => {
   it("builds ancestor paths for a dotted path", () => {
@@ -10,7 +10,7 @@ describe("Store.buildAncestorPaths", () => {
   });
 });
 
-describe("typedEvents / typedActions", () => {
+describe("typedEvents", () => {
   type EM = {
     ui: { increment: number; decrement: number };
     data: { loaded: { items: string[] } };
@@ -28,13 +28,13 @@ describe("typedEvents / typedActions", () => {
     expect(keys).toEqual(expected);
   });
 
-  it("typedActions is an alias of typedEvents", () => {
+  it("works with different channels", () => {
     const makeEvents = typedEvents<EM>([]);
-    const makeActions = typedActions<EM>([]);
 
-    const eventsKeys = makeEvents("data", ["loaded"] as const);
-    const actionKeys = makeActions("data", ["loaded"] as const);
+    const uiKeys = makeEvents("ui", ["increment"] as const);
+    const dataKeys = makeEvents("data", ["loaded"] as const);
 
-    expect(actionKeys).toEqual(eventsKeys);
+    expect(uiKeys).toEqual([["ui", "increment"]]);
+    expect(dataKeys).toEqual([["data", "loaded"]]);
   });
 });

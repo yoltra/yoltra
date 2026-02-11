@@ -1,4 +1,4 @@
-# Base Hooks Test Suite (`useStore`, `useEmit`, `useSelector`, `useAtomicProp`, `useAtomicProps`, `useDispatch`, `shallowEqual`)
+# Base Hooks Test Suite (`useStore`, `useEmit`, `useSelector`, `useAtomicProp`, `useAtomicProps`, `shallowEqual`)
 
 ## Purpose
 
@@ -30,13 +30,6 @@ A deterministic in-memory `MockStore` is used instead of a real Quo.js store, be
 ✓ Provides `store.emit` with stable reference  
 ✓ Emits correct channel/event/payload tuples  
 ✓ Does not subscribe or resubscribe the component
-
----
-
-### `useDispatch()` (Deprecated)
-✓ Alias of `useEmit`  
-✓ Emits a deprecation warning exactly once per mount  
-→ Confirms future removal won’t break backward-compatible code paths
 
 ---
 

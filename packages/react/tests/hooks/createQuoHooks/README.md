@@ -27,7 +27,8 @@ const {
   useSelector,
   useAtomicProp,
   useAtomicProps,
-  useDispatch
+  useEvent,
+  shallowEqual,
 } = createQuoHooks(MyCustomContext);
 ```
 
@@ -55,7 +56,7 @@ Factory must produce a hook set identical in semantics to the default runtime su
 - `useSelector`
 - `useAtomicProp`
 - `useAtomicProps`
-- `useDispatch` (deprecated)
+- `useEvent`
 - `shallowEqual`
 
 The test ensures consistency and avoids API divergence over time.
