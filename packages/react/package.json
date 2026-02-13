@@ -1,6 +1,6 @@
 {
   "name": "@quojs/react",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "React bindings for Quo.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && vite build",
@@ -37,6 +37,7 @@
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/types/index.d.ts",
+  "private": false,
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
@@ -50,7 +51,7 @@
     "node": ">=18.18"
   },
   "peerDependencies": {
-    "@quojs/core": "^0.7.0",
+    "@quojs/core": "^0.8.0",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19"
   },
@@ -63,7 +64,7 @@
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@quojs/core": "workspace:^0.7.0",
+    "@quojs/core": "workspace:^0.8.0",
     "@quojs/repo-tools": "workspace:*",
     "@eslint/js": "^9.30.1",
     "@rollup/plugin-commonjs": "^25.0.7",

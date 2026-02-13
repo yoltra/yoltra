@@ -2,6 +2,26 @@
   "name": "@quojs/react",
   "entries": [
     {
+      "version": "0.8.0",
+      "tag": "@quojs/react_v0.8.0",
+      "date": "Fri, 13 Feb 2026 07:55:07 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "feat(react): normalize event subscriptions API"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@quojs/core\" from `^0.7.0` to `0.8.0`"
+          },
+          {
+            "comment": "Updating dependency \"@quojs/core\" from `^0.7.0` to `0.8.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.7.0",
       "tag": "@quojs/react_v0.7.0",
       "date": "Mon, 02 Feb 2026 02:49:55 GMT",

@@ -1,6 +1,13 @@
 # Change Log - @quojs/react
 
-This log was last generated on Mon, 02 Feb 2026 02:49:55 GMT and should not be manually modified.
+This log was last generated on Fri, 13 Feb 2026 07:55:07 GMT and should not be manually modified.
+
+## 0.8.0
+Fri, 13 Feb 2026 07:55:07 GMT
+
+### Minor changes
+
+- feat(react): normalize event subscriptions API
 
 ## 0.7.0
 Mon, 02 Feb 2026 02:49:55 GMT

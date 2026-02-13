@@ -17,8 +17,8 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@quojs/core": "workspace:^0.7.0",
-    "@quojs/react": "workspace:^0.7.0",
+    "@quojs/core": "workspace:^0.8.0",
+    "@quojs/react": "workspace:^0.8.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "next": "16.0.1",
