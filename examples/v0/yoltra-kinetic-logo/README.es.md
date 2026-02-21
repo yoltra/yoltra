@@ -109,7 +109,7 @@ Luego abre `http://localhost:5173`.
     ├── state/
     │   ├── types.ts                   AppState / AppEM / Dot / DotUpdate
     │   ├── store.ts                   createStore()
-    │   ├── hooks.ts                   createQuoHooks() — useAtomicProp tipado, etc.
+    │   ├── hooks.ts                   createHooks() — useAtomicProp tipado, etc.
     │   └── pixel/
     │       └── Pixel.reducer.ts       Reducer optimizado para el canal `pixel`
     ├── context/

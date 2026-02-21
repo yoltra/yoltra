@@ -174,12 +174,12 @@ export const store = createStore<AppState, AppEM>({
 });
 ```
 
-### 4. Create typed hooks with `createQuoHooks`
+### 4. Create typed hooks with `createHooks`
 
 ```typescript
 // hooks.ts
 import { createContext } from "react";
-import { createQuoHooks } from "@yoltra/react";
+import { createHooks } from "@yoltra/react";
 import type { StoreInstance } from "@yoltra/core";
 import type { AppState, AppEM } from "./types";
 
@@ -188,7 +188,7 @@ export const AppStoreContext = createContext<StoreInstance<"todos", AppState, Ap
 );
 
 export const { useAtomicProp, useAtomicProps, useEmit, useEvent, useSelector, shallowEqual } =
-  createQuoHooks(AppStoreContext);
+  createHooks(AppStoreContext);
 ```
 
 ### 5. Provide and use
@@ -227,7 +227,7 @@ export function App() {
 - **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** —
   Store, middleware, effects, `When` matchers
 - **[@yoltra/react API](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** —
-  Hooks, Suspense, `createQuoHooks`
+  Hooks, Suspense, `createHooks`
 - **[Event Queue Architecture](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)**
   — Technical deep-dive into the pipeline
 - **[Library Comparison](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**

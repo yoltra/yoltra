@@ -96,7 +96,7 @@ src/
 ├── state/
 │   ├── types.ts                   AppState / AppEM / Dot / DotUpdate
 │   ├── store.ts                   createStore()
-│   ├── hooks.ts                   createQuoHooks() — typed useAtomicProp etc.
+│   ├── hooks.ts                   createHooks() — typed useAtomicProp etc.
 │   └── pixel/
 │       └── Pixel.reducer.ts       Optimised reducer for the `pixel` channel
 ├── context/
