@@ -1,0 +1,60 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/command-line.schema.json",
+
+  /**
+   * Custom commands and parameters for this Rush monorepo.
+   *
+   * Run `rush <command> --help` for usage of any command below.
+   */
+  "commands": [
+    // ------------------------------------------------------------------
+    // rush test
+    // Runs the "test" npm script in every project that defines it.
+    // Projects without a "test" script are silently skipped.
+    // ------------------------------------------------------------------
+    {
+      "commandKind": "bulk",
+      "name": "test",
+      "summary": "Run unit tests across all packages",
+      "description": "Invokes the \"test\" script in every project. Projects without a \"test\" script are skipped. Respects the dependency order so upstream packages are tested first.",
+      "enableParallelism": true,
+      "ignoreDependencyOrder": false,
+      "ignoreMissingScript": true,
+      "allowWarningsInSuccessfulBuild": false
+    },
+
+    // ------------------------------------------------------------------
+    // rush lint
+    // Runs ESLint in every project that defines a "lint" script.
+    // Order is irrelevant for linting, so we enable maximum parallelism.
+    // ------------------------------------------------------------------
+    {
+      "commandKind": "bulk",
+      "name": "lint",
+      "summary": "Run ESLint across all packages",
+      "description": "Invokes the \"lint\" script in every project. Projects without a \"lint\" script are skipped. Runs in parallel because linting does not depend on build order.",
+      "enableParallelism": true,
+      "ignoreDependencyOrder": true,
+      "ignoreMissingScript": true,
+      "allowWarningsInSuccessfulBuild": false
+    },
+
+    // ------------------------------------------------------------------
+    // rush typecheck
+    // Runs tsc --noEmit in every project that defines a "typecheck" script.
+    // Upstream packages must be type-checked first (ignoreDependencyOrder: false).
+    // ------------------------------------------------------------------
+    {
+      "commandKind": "bulk",
+      "name": "typecheck",
+      "summary": "Run TypeScript type checking across all packages",
+      "description": "Invokes the \"typecheck\" script in every project. Respects build order so type definitions from upstream packages are available when downstream packages are checked.",
+      "enableParallelism": true,
+      "ignoreDependencyOrder": false,
+      "ignoreMissingScript": true,
+      "allowWarningsInSuccessfulBuild": false
+    }
+  ],
+
+  "parameters": []
+}

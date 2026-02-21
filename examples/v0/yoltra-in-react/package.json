@@ -1,0 +1,55 @@
+{
+  "name": "yoltra-in-react",
+  "version": "0.1.0",
+  "description": "A comparison between Yoltra and RTK",
+  "private": true,
+  "license": "MIT",
+  "author": {
+    "name": "Manu Ramirez",
+    "email": "manu@yoltra.dev"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "exit 0",
+    "test": "exit 0",
+    "docs": "exit 0",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "@yoltra/core": "workspace:^0.8.0",
+    "@yoltra/react": "workspace:^0.8.0",
+    "react-redux": "9.2.0",
+    "react-router": "7.8.2",
+    "@reduxjs/toolkit": "2.9.0",
+    "uuid": "11.1.0",
+    "classnames": "2.5.1",
+    "antd": "5.27.1",
+    "@ant-design/icons": "^5.0.0",
+    "immer": "^10.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.1",
+    "@types/node": "^24.0.12",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react-swc": "^3.10.2",
+    "sass-embedded":"^1.93.2",
+    "msw": "^2.0.0",
+    "eslint": "^9.30.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.35.1",
+    "vite": "^7.1.11"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
+}

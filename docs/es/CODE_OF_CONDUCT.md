@@ -1,4 +1,4 @@
-![Quo.js logo](../../assets/logo.svg)
+![Yoltra logo](../../assets/yoltra-logo.png)
 
 # Código de Conducta
 
@@ -38,7 +38,7 @@ Este Código se aplica dentro de los espacios del proyecto y también en espacio
 
 ## Aplicación
 
-Los casos de comportamiento abusivo, de acoso o de cualquier otra conducta inaceptable pueden reportarse a **[conducta@quojs.dev](mailto:conducta@quojs.dev)**. Todas las denuncias serán revisadas e investigadas de manera pronta y justa.
+Los casos de comportamiento abusivo, de acoso o de cualquier otra conducta inaceptable pueden reportarse a **[conducta@yoltra.dev](mailto:conducta@yoltra.dev)**. Todas las denuncias serán revisadas e investigadas de manera pronta y justa.
 
 ## Atribución
 

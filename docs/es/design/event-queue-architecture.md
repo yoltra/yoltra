@@ -1,9 +1,11 @@
+![Yoltra logo](../../../assets/yoltra-logo.png)
+
 # Arquitectura de Cola de Eventos
 
->  👉 [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/design/event-queue-architecture.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/design/event-queue-architecture.md)&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/design/event-queue-architecture.md)
+>  👉 [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/docs/es/design/event-queue-architecture.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/yoltra/yoltra/blob/main/docs/pt/design/event-queue-architecture.md)&nbsp; |
+> &nbsp;[ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](https://github.com/yoltra/yoltra/blob/main/docs/fr/design/event-queue-architecture.md)
 
 **Versión:** 0.7.0
 **Última actualización:** Enero 2026
@@ -11,7 +13,7 @@
 
 ## Descripción General
 
-Quo.js emplea una **cola de eventos asíncrona y serializada** con un guardia de reentrada para control de contrapresión. Esta arquitectura garantiza un ordenamiento predecible de eventos y previene condiciones de carrera mientras soporta middleware y efectos asíncronos.
+Yoltra emplea una **cola de eventos asíncrona y serializada** con un guardia de reentrada para control de contrapresión. Esta arquitectura garantiza un ordenamiento predecible de eventos y previene condiciones de carrera mientras soporta middleware y efectos asíncronos.
 
 ## Mecanismo Central
 
@@ -152,7 +154,7 @@ if (this.isProcessingQueue) return;  // Contrapresión aplicada aquí
 
 ### Modelo de Ejecución
 
-Quo.js usa un modelo de **"paso de testigo"** donde la primera llamada desbloqueada a `emit()` consume toda la cola:
+Yoltra usa un modelo de **"paso de testigo"** donde la primera llamada desbloqueada a `emit()` consume toda la cola:
 
 ```
 Línea de tiempo:
@@ -583,10 +585,10 @@ actor.send({ type: 'UPDATE' });
 - ❌ Modelo mental complejo
 - ❌ Mayor sobrecarga de memoria (un buzón por actor)
 
-### Quo.js (Cola Asíncrona)
+### Yoltra (Cola Asíncrona)
 
 ```typescript
-// Quo.js: Cola asíncrona serializada
+// Yoltra: Cola asíncrona serializada
 await emit('todo', 'add', todo);
 // ↑ Retorna promesa cuando el procesamiento se completa
 // ↑ Encolado si otro evento está procesándose
@@ -775,6 +777,6 @@ public dispose(): void {
 
 ---
 
-**Autor**: Equipo Quo.js 
+**Autor**: Equipo Yoltra 
 **Licencia**: MIT 
-**Repositorio**: https://github.com/quojs/quojs
+**Repositorio**: https://github.com/yoltra/yoltra

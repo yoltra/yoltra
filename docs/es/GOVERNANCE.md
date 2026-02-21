@@ -1,6 +1,6 @@
-![Quo.js logo](../../assets/logo.svg)
+![Yoltra logo](../../assets/yoltra-logo.png)
 
-# Gobernanza de Quo.js!
+# Gobernanza de Yoltra!
 
 >  👉 [ 🇲🇽 Versión en Español](../es/DEVELOPER_GUIDE.md)&nbsp; |
 > &nbsp;[ 🇵🇹 Versão Portuguesa](../pt/DEVELOPER_GUIDE.md)&nbsp; |
@@ -66,7 +66,7 @@ Plantilla de RFC:
 
 ## Marcas y Branding
 
-Los nombres “Quo.js” y “quojs-react” son marcas de Erael Group. Consulta [TRADEMARKS.md](./TRADEMARKS.md). La gobernanza no implica una licencia de marca.
+Los nombres “Yoltra” y “yoltra-react” son marcas de Erael Group. Consulta [TRADEMARKS.md](./TRADEMARKS.md). La gobernanza no implica una licencia de marca.
 
 ## Cambios a la Gobernanza
 

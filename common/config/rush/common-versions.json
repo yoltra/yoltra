@@ -1,0 +1,44 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/common-versions.schema.json",
+
+  /**
+   * Canonical version strings for shared tooling dependencies.
+   *
+   * Every package in the monorepo that uses one of these deps MUST declare
+   * the exact same version string here. This is enforced by
+   * "ensureConsistentVersions": true in rush.json.
+   *
+   * When you intentionally upgrade a shared dep:
+   *   1. Update the version string here.
+   *   2. Update every package.json that references this dep to match.
+   *   3. Run `rush update` to regenerate the lockfile.
+   */
+  "preferredVersions": {
+    // --- Build tooling ---
+    "typescript": "5.9.3",
+    "vite": "^7.1.11",
+    "vitest": "3.2.4",
+    "@vitest/coverage-v8": "3.2.4",
+    "@vitejs/plugin-react-swc": "^3.10.2",
+
+    // --- ESLint core ---
+    "eslint": "^9.30.1",
+    "@eslint/js": "^9.30.1",
+    "globals": "^16.3.0",
+    "typescript-eslint": "^8.35.1",
+
+    // --- ESLint plugins ---
+    "eslint-plugin-react-refresh": "^0.4.20",
+
+    // --- Type definitions ---
+    "@types/node": "^24.0.12",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6"
+  },
+
+  /**
+   * Use this sparingly — only for unavoidable major-version conflicts between
+   * projects that cannot be reconciled with a single range string.
+   */
+  "allowedAlternativeVersions": {}
+}

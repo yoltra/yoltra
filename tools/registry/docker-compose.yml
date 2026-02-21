@@ -1,3 +1,14 @@
+# =============================================================================
+# Verdaccio — local npm registry
+# =============================================================================
+# Commands:
+#   Start (detached):   docker compose up -d
+#   Stop (keep data):   docker compose down
+#   Wipe all data:      docker compose down -v
+#   View logs:          docker compose logs -f
+#   Health check:       curl http://localhost:4873/-/ping
+# =============================================================================
+
 services:
   verdaccio:
     image: verdaccio/verdaccio:latest
@@ -5,8 +16,37 @@ services:
     ports:
       - "4873:4873"
     volumes:
-      - ./storage:/verdaccio/storage
+      # Named volume: package storage — survives container restarts/upgrades
+      - verdaccio-storage:/verdaccio/storage
+      # Named volume: config dir (htpasswd lives alongside config.yaml)
+      - verdaccio-conf:/verdaccio/conf
+      # Bind-mount our config on top of the conf volume (read-only)
       - ./config.yaml:/verdaccio/conf/config.yaml:ro
     environment:
       - VERDACCIO_PORT=4873
+      - VERDACCIO_PROTOCOL=http
+    networks:
+      - registry
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--output-document", "-", "http://localhost:4873/-/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+# -----------------------------------------------------------------------------
+# Named volumes — data persists across `docker compose down` (NOT `down -v`)
+# -----------------------------------------------------------------------------
+volumes:
+  verdaccio-storage:
+    driver: local
+  verdaccio-conf:
+    driver: local
+
+# -----------------------------------------------------------------------------
+# Isolated bridge network
+# -----------------------------------------------------------------------------
+networks:
+  registry:
+    driver: bridge

@@ -1,296 +1,267 @@
-![Quo.js logo](../../assets/logo.svg)
+![Yoltra logo](../../assets/yoltra-logo.png)
 
-# Developer Guide (Quo.js Monorepo)
+# Developer Guide
 
-> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/DEVELOPER_GUIDE.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/DEVELOPER_GUIDE.md)&nbsp; |
-> &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/DEVELOPER_GUIDE.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/DEVELOPER_GUIDE.md)
+> 👉 English &nbsp;|&nbsp; [🇲🇽 Español](../es/DEVELOPER_GUIDE.md)
 
-Single source of truth for SDLC, local setup, branching, testing/coverage, and releases using
-**Rush + PNPM**.
+Single source of truth for setting up the monorepo, understanding its structure, and doing
+day-to-day development work.
 
-## SDLC (how we ship)
+For the branching strategy and PR process see [WORKFLOW.md](./WORKFLOW.md).
+For performing releases (local + NPM) see [RELEASE_GUIDE.md](./RELEASE_GUIDE.md).
 
-1. Plan → open/triage an Issue (bug/feat).
-2. Branch → `feature/<issue>-<slug>` or `fix/<issue>-<slug>`.
-3. Code → tests + docs; **Conventional Commits** with **DCO** sign-off.
-4. Local gates → `rush build` and `rush test` pass; coverage ≥ thresholds.
-5. PR → fill PR template; link issues; CI must be green (**change files** verified).
-6. Review → approvals; squash or rebase per maintainer call.
-7. Release → maintainers run `rush version` then `rush publish` (see “Releases” below).
+---
 
-## Local setup
+## Prerequisites
 
-Install Rush (one-time):
+| Tool | Version | Notes |
+|------|---------|-------|
+| Node.js | ≥ 18.18 | [nodejs.org](https://nodejs.org) |
+| Rush | latest | `npm install -g @microsoft/rush` |
+| Docker | any recent | Required only for local registry testing |
 
-```bash
-npm i -g @microsoft/rush
-```
+> **Do not install pnpm globally.** Rush downloads and manages pnpm internally at the
+> exact version pinned in `rush.json`. Running `pnpm install` directly will produce
+> incorrect results and break the lockfile.
 
-Install deps (deterministic via PNPM + Rush):
+---
+
+## First-time setup
 
 ```bash
+# 1. Clone
+git clone https://github.com/yoltra/yoltra.git
+cd yoltra
+
+# 2. Install all workspace dependencies (Rush manages pnpm)
 rush install
-```
 
-Build everything (graph-aware, incremental; uses Rush build cache):
-
-```bash
+# 3. Build the entire monorepo (graph-aware, incremental)
 rush build
 ```
 
-Run tests for all packages (defined via command-line.json):
+Rush reads the project graph from `rush.json`, installs all packages into the shared
+`common/temp/` store, and links them using pnpm workspaces.
 
-```bash
-rush test
+---
+
+## Repository structure
+
+```
+yoltra/
+├── packages/
+│   ├── core/                 @yoltra/core      — state container library
+│   └── react/                @yoltra/react     — React bindings
+│
+├── tools/
+│   ├── eslint-config-base/   @yoltra/eslint-config-base  — shared ESLint (Node + browser TS)
+│   ├── eslint-config-react/  @yoltra/eslint-config-react — shared ESLint (React + TS)
+│   └── registry/             Verdaccio local registry (Docker)
+│
+├── examples/
+│   └── v0/
+│       ├── yoltra-in-react/        Yoltra vs Redux Toolkit comparison app
+│       ├── yoltra-in-nextjs/       Next.js integration example
+│       └── yoltra-kinetic-logo/    SVG animation — fine-grained subscription demo
+│
+├── common/
+│   ├── config/rush/          Rush config files (committed — never edit lockfile by hand)
+│   └── scripts/              Shared helpers (copy-license.js, etc.)
+│
+└── docs/
+    ├── en/                   English documentation (this folder)
+    └── es/                   Spanish translations
 ```
 
-Lint all packages that define a "lint" script:
+---
+
+## Everyday commands
+
+### Monorepo-wide
 
 ```bash
-rush lint
+rush install            # Install / sync all dependencies (after cloning or pulling)
+rush update             # Regenerate lockfile (run after editing any package.json)
+rush build              # Incremental build — uses cache, skips unchanged packages
+rush rebuild            # Force full rebuild — bypasses cache, rebuilds everything
+rush test               # Run Vitest across all packages
+rush lint               # Run ESLint across all packages
+rush typecheck          # Run tsc --noEmit across all packages
 ```
 
-Focus builds:
+### Focused builds
+
+Use `--to` and `--from` to narrow the build to a subset of the dependency graph:
 
 ```bash
-rush build --to @quojs/core
-rush build --from @quojs/react
+rush build --to @yoltra/core           # Build core and its transitive deps
+rush build --to @yoltra/react          # Build react (and core first)
+rush build --from @yoltra/core         # Build core and every downstream dependent
+rush build --to @yoltra/react --verbose  # Same, with detailed output
 ```
 
-Package-level work:
+### Per-package commands (rushx)
+
+`rushx` runs an npm script in the **current** package. Change to the package directory first:
 
 ```bash
 cd packages/core
+rushx build         # Build just this package
+rushx test          # Run tests with coverage
+rushx lint          # Check for lint errors
+rushx lint:fix      # Auto-fix lint issues
+rushx typecheck     # TypeScript type checking
 
+cd packages/react
 rushx build
 rushx test
-rushx lint
+rushx docs          # Generate TypeDoc API docs
 ```
 
-## Branching strategy
+---
 
-- Default branch: `main`.
-- Work happens on `feature/*` or `fix/*` branches.
-- Open PRs against `main`.
-- Every PR that changes a publishable package must include a **change file** (see “Changes &
-  Versioning”).
+## Build cache
 
-## Conventional commits + DCO (enforced)
+Rush's local build cache is enabled via `common/config/rush/build-cache.json`.
+
+Each library package declares its cacheable output in `rush-project.json`:
+
+```json
+{
+  "operationSettings": [
+    { "operationName": "build", "outputFolderNames": ["dist"] }
+  ]
+}
+```
+
+**Key rules:**
+
+- `rush build` — reads and writes the cache; unchanged packages finish instantly.
+- `rush rebuild` — **always skips the cache**; use this when you suspect a stale output.
+- Cache lives in `common/temp/build-cache/` (gitignored, local only).
+
+---
+
+## ESLint architecture
+
+Lint configuration is extracted into two shareable packages under `tools/`:
+
+| Package | Target packages | Includes |
+|---------|----------------|---------|
+| `@yoltra/eslint-config-base` | `@yoltra/core` | ESLint recommended, typescript-eslint recommended, browser + Node globals |
+| `@yoltra/eslint-config-react` | `@yoltra/react` | Extends base + react-hooks + react-refresh |
+
+Each library package has a thin `eslint.config.mjs` that just re-exports the shared config:
+
+```js
+// packages/core/eslint.config.mjs
+import baseConfig from "@yoltra/eslint-config-base";
+export default baseConfig;
+```
+
+```js
+// packages/react/eslint.config.mjs
+import reactConfig from "@yoltra/eslint-config-react";
+export default reactConfig;
+```
+
+**To add a rule globally** — edit the config package in `tools/`. No need to touch each
+library's `eslint.config.mjs`.
+**To override a rule for one package** — extend the array in that package's
+`eslint.config.mjs`.
+
+---
+
+## Conventional commits + DCO
 
 Every commit must:
 
-- follow **Conventional Commits** (linted locally via Husky and in CI), and
-- include a **DCO sign-off** line, for example:
+1. Follow **Conventional Commits**:
 
-```
-Signed-off-by: Your Name <you@example.com>
-```
+   ```
+   <type>(<scope>): <short description>
 
-> Tip: use `git commit -s` to append the DCO line automatically.
+   [optional body]
 
-Allowed types:
+   Signed-off-by: Your Name <you@example.com>
+   ```
 
-- `feat`
-- `fix`
-- `perf`
-- `refactor`
-- `docs`
-- `test`
-- `build`
-- `chore`
-- `revert`
+2. Carry a **DCO sign-off** (`git commit -s` appends it automatically).
+
+Allowed `<type>` values: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`,
+`chore`, `revert`.
+
+---
 
 ## Testing & coverage
 
-- Test runner: **Vitest**.
-- UI tests: **@testing-library/react** (for `quojs-react`).
-- Coverage thresholds are enforced in Vitest config:
-  - Lines / Branches / Functions / Statements: **≥ 95%** (on touched code).
-- Snapshots only for stable, deterministic outputs.
-
-Run:
+- Runner: **Vitest**
+- UI helpers: `@testing-library/react` (for `@yoltra/react`)
+- Minimum coverage thresholds (lines / branches / functions / statements): **95%**
 
 ```bash
+# All packages
 rush test
+
+# Single package
+cd packages/core && rushx test
 ```
 
-## Linting & formatting
+Snapshot tests are only allowed for stable, deterministic output.
 
-- ESLint (TypeScript), Prettier.
-- Per-package scripts run via `rushx`.
+---
 
-Examples:
+## Change files (required for every publishable PR)
 
-```bash
-rush lint
-cd packages/react && rushx lint
-rushx format
-```
-
-## Build cache (Rush)
-
-The repo enables the Rush **local** build cache. Cache config lives at:
-
-- Repo-level: `common/config/rush/build-cache.json`
-- Per package outputs: `packages/<name>/config/rush-project.json`
-
-Outputs are cached from `dist/` for both core packages. For `@quojs/core`, the cache key also
-includes `BUILD_TARGET`.
-
-Notes:
-
-- `rush build` will read/write cache.
-- `rush rebuild` **bypasses** cache and recompiles from scratch (by design).
-
-## Changes & versioning (Rush)
-
-### Change files
-
-Create change entries in `common/changes/`:
+Any PR that modifies `@yoltra/core`, `@yoltra/react`, or a published `tools/` package **must**
+include a Rush change file. CI will reject PRs that are missing one.
 
 ```bash
+# Interactive prompt — select the packages you changed and the bump type
 rush change
-```
 
-CI verifies change files on PRs:
-
-```bash
+# Verify a change file exists (CI runs this on every PR)
 rush change -v
 ```
 
-### Version policies
+Change files are committed to `common/changes/` alongside the code change. When a release is
+prepared they are consumed by `rush version --bump` to update `package.json` versions and
+generate `CHANGELOG.md` entries.
 
-- `quojs-lockstep` (lockStepVersion): keeps **@quojs/core** and **@quojs/react** in sync.
-- `lib-individual` (individualVersion): reserved for future adapters not tied to core cadence.
+> While the project is `< 1.0.0`: use `minor` for breaking changes and `patch` for fixes.
 
-Projects are assigned in `rush.json` via `versionPolicyName`.
+---
 
-## Releases
+## Adding a new publishable package
 
-### Official release (maintainers)
+1. Create the folder under `packages/` or `tools/`.
+2. Add a `package.json` with `"publishConfig": { "access": "public" }`.
+3. Add a minimal `rush-project.json` (declare `outputFolderNames` if the package builds).
+4. Register the package in `rush.json` under `"projects"`.
+5. Run `rush update` to regenerate the lockfile.
+6. Assign it to the `"lockstep"` version policy (if it ships in sync with core/react) or
+   leave `versionPolicyName` unset for independent versioning.
 
-1. Bump versions/changelogs from accumulated change files:
+---
 
-```bash
-rush version
-```
+## Updating dependencies
 
-2. Publish to the real registry (example flags; add OTP/access as required):
+1. Edit the relevant `package.json`.
+2. Run `rush update` to recalculate and rewrite the lockfile.
+3. Commit both the `package.json` change and the updated `common/config/rush/pnpm-lock.yaml`.
 
-```bash
-rush publish --apply --publish --target-branch main
-```
+Never touch `common/config/rush/pnpm-lock.yaml` by hand.
 
-> Tip: run `rush publish` with no flags to dry-run the plan.
+---
 
-### Local release rehearsal (Verdaccio)
+## Troubleshooting
 
-We support two safe rehearsal styles:
-
-#### A) Tarball-only dry run (no registry)
-
-Produces `.tgz` files for every public package under `./dist-tarballs/`.
-
-```bash
-rush change
-rush publish --include-all --pack --release-folder ./dist-tarballs
-```
-
-Consume in apps:
-
-```bash
-pnpm add ./dist-tarballs/quojs-core-<ver>.tgz
-pnpm add ./dist-tarballs/quojs-quojs-react-<ver>.tgz
-```
-
-#### B) Full local registry publish (Verdaccio)
-
-We use **Verdaccio** to mimic a registry and test the install flow exactly as real consumers
-would.
-
-1. Start Verdaccio:
-
-```bash
-docker compose -f ops/verdaccio/docker-compose.yml up -d
-```
-
-2. Authenticate once:
-
-```bash
-pnpm set registry http://localhost:4873/
-pnpm adduser --registry http://localhost:4873/
-pnpm profile set password --registry http://localhost:4873/
-```
-
-3. Run the publish script:
-
-```bash
-common/scripts/publish-verdaccio.sh
-```
-
-What it does:
-
-- Publishes all `@quojs/*` packages (except internal ones like `@quojs/repo-tools`)
-- Uses the **exact versions** from `package.json` (no `-local` suffix, no dist-tags)
-- Disables scripts and provenance to avoid husky/prepack failures
-- Leaves Git untouched — this is a **local rehearsal only**
-
-4. Consume the packages in your apps:
-
-```bash
-echo '@quojs/:registry=http://localhost:4873/' >> .npmrc
-pnpm add @quojs/core@<version> @quojs/react@<version>
-```
-
-> Use the real version numbers (e.g. `0.1.0`) as they are in `package.json`.
-
-5. Reset registry:
-
-```bash
-docker compose -f ops/verdaccio/docker-compose.yml down -v
-unset npm_config_registry
-```
-
-### Notes
-
-- Registries don’t allow republishing the same version; bump patch for repeat rehearsals or wipe
-  Verdaccio storage.
-- Install-time registry defaults to npmjs via `common/config/rush/.npmrc`.
-- Publish-time registry is Verdaccio via `common/config/rush/.npmrc-publish` using
-  `${NPM_AUTH_TOKEN}`.
-
-## Filing bugs and PRs (GitHub)
-
-- Use the **Bug Report** and **Feature Request** issue templates.
-- PRs must follow the **Pull Request template**.
-
-Minimum PR checklist:
-
-- Conventional commit + DCO sign-off
-- `rush build` and `rush test` pass locally
-- Change file added (if publishable package changed)
-- Coverage meets thresholds (CI will fail otherwise)
-
-## Security
-
-See [SECURITY](../SECURITY.md). Do **not** open public issues for vulnerabilities.
-
-## Troubleshooting (fast answers)
-
-- Missing change file → run `rush change`; CI also checks `rush change -v`.
-- Commit rejected locally → fix commit message to meet Conventional Commits and add DCO line; or
-  use `git commit -s`.
-- Cache seems stale → remember `rush rebuild` ignores cache; use `rush build` to benefit from
-  cache.
-- Verdaccio “version already exists” → bump version (via `rush change` + `rush version`) or wipe
-  Verdaccio storage.
-- Installs unexpectedly hitting Verdaccio → ensure you didn’t export `npm_config_registry`;
-  remove any per-project `.npmrc` overrides.
-
-## Editor & DX tips
-
-- Recommended VS Code extensions are in `.vscode/extensions.json`.
-- Formatting is standardized via `.prettierrc.json` and `.editorconfig`.
-- TypeScript project references are configured to improve IDE nav and builds.
+| Symptom | Fix |
+|---------|-----|
+| CI rejects PR: "missing change file" | `rush change`, commit the file in `common/changes/`. |
+| `rush install` peer dep errors | `strictPeerDependencies: false` is already set; try `rush install --purge`. |
+| Commit rejected | Ensure Conventional Commits format + DCO sign-off (`git commit -s`). |
+| Stale build output | `rush rebuild` bypasses cache and forces a full recompile. |
+| Verdaccio: "version already exists" | Bump version (`rush change` + `rush version --bump`) or wipe with `docker compose down -v`. |
+| `rushx` not found | `npm install -g @microsoft/rush` |
+| Wrong pnpm version in lockfile | Never run `pnpm install` directly; always use `rush install` / `rush update`. |

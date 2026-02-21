@@ -1,4 +1,4 @@
-![Quo.js logo](../../assets/logo.svg)
+![Yoltra logo](../../assets/yoltra-logo.png)
 
 # Mantenedores
 
@@ -7,11 +7,11 @@
 > &nbsp;[ 🇺🇸 English Version](../../MAINTAINERS.md)&nbsp; |
 > &nbsp;[ 🇫🇷 Version française](../fr/MAINTAINERS.md)
 
-Este archivo lista a los mantenedores activos y las áreas de responsabilidad del monorepo de Quo.js.
+Este archivo lista a los mantenedores activos y las áreas de responsabilidad del monorepo de Yoltra.
 
 - **Mantenedor/a Líder:** Manu Ramirez (@pixerael), Erael Group.
-- **Correo del proyecto:** [opensource@quojs.dev](mailto:opensource@quojs.dev)
-- **Contacto de seguridad:** seguridad@quojs.dev (ver [SECURITY.md](./SECURITY.md))
+- **Correo del proyecto:** [opensource@yoltra.dev](mailto:opensource@yoltra.dev)
+- **Contacto de seguridad:** seguridad@yoltra.dev (ver [SECURITY.md](./SECURITY.md))
 - **Código de Conducta:** [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
 
 > Se espera que los mantenedores sigan los flujos de trabajo definidos en [GOVERNANCE.md](./GOVERNANCE.md) y [CONTRIBUTING.md](./CONTRIBUTING.md).
@@ -28,14 +28,14 @@ Estamos invitando a mantenedores de la comunidad para los roles siguientes. Ver 
 
 | ID del rol       | Área(s)                                       | Tiempo estimado   | Estado   |
 |------------------|-----------------------------------------------|-------------------|----------|
-| @co-maintainer   | quojs core (store/reducer/bus/utils)          | ~2–4 h/semana     | **ABIERTO** |
-| @react-maint     | quojs-react (hooks, suspense, docs/ejemplos)  | ~2–4 h/semana     | **ABIERTO** |
+| @co-maintainer   | yoltra core (store/reducer/bus/utils)          | ~2–4 h/semana     | **ABIERTO** |
+| @react-maint     | yoltra-react (hooks, suspense, docs/ejemplos)  | ~2–4 h/semana     | **ABIERTO** |
 
 ## Propiedad de Paquetes
 
 | Paquete / Ruta           | Propietarios                                           |
 |--------------------------|--------------------------------------------------------|
-| `packages/quojs`         | @pixerael (en funciones), **@co-maintainer (ABIERTO)** |
+| `packages/yoltra`         | @pixerael (en funciones), **@co-maintainer (ABIERTO)** |
 | `packages/react`         | @pixerael (en funciones), **@react-maint (ABIERTO)**   |
 | `examples/*`             | @pixerael (en funciones), **@react-maint (ABIERTO)**   |
 | `docs/*`                 | @pixerael (en funciones), **@react-maint (ABIERTO)**   |

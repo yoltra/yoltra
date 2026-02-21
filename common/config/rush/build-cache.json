@@ -1,0 +1,19 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/build-cache.schema.json",
+
+  /**
+   * Enable the local on-disk build cache.
+   * Cached outputs are stored in common/temp/build-cache/ and are never
+   * committed to Git. This dramatically speeds up incremental `rush build` runs.
+   *
+   * Each project declares its cacheable output folders in rush-project.json.
+   * `rush rebuild` always bypasses the cache and rebuilds from scratch.
+   */
+  "buildCacheEnabled": true,
+
+  /**
+   * "local-only" stores cache entries on disk only (no cloud cache).
+   * Switch to "azure-blob-storage" or "amazon-s3" for CI-shared caching.
+   */
+  "cacheProvider": "local-only"
+}

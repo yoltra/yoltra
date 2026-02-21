@@ -1,4 +1,4 @@
-![Quo.js logo](../../assets/logo.svg)
+![Yoltra logo](../../assets/yoltra-logo.png)
 
 # Política de Seguridad
 
@@ -16,7 +16,7 @@ Generalmente damos soporte a las **versiones menores** más recientes de cada pa
 ## Reportar una vulnerabilidad
 
 - **NO** abras un *issue* público.
-- Envía un correo a **[seguridad@quojs.dev](mailto:seguridad@quojs.dev)** con:
+- Envía un correo a **[seguridad@yoltra.dev](mailto:seguridad@yoltra.dev)** con:
   - Una descripción del problema y su impacto
   - Una reproducción mínima si es posible
   - Versiones afectadas y nombres de paquetes
@@ -33,6 +33,6 @@ Recibirás un acuse de recibo en **72 horas**.
 
 ## PGP (Opcional)
 
-Si prefieres correo cifrado, solicita nuestra clave PGP actual vía [seguridad@quojs.dev](mailto:seguridad@quojs.dev).
+Si prefieres correo cifrado, solicita nuestra clave PGP actual vía [seguridad@yoltra.dev](mailto:seguridad@yoltra.dev).
 
-Gracias por ayudar a mantener Quo.js y a sus usuarios a salvo. ❤️
+Gracias por ayudar a mantener Yoltra y a sus usuarios a salvo. ❤️

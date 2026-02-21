@@ -1,0 +1,14 @@
+# Rush publish-time registry
+# Used when running: rush publish --publish
+#
+# The NPM_AUTH_TOKEN variable must be set in your environment (or CI secrets)
+# before running `rush publish --publish`.
+#
+# To override the registry at call time (e.g. for local Verdaccio):
+#   rush publish --publish --registry http://localhost:4873
+registry=https://registry.npmjs.org/
+
+# safeguard to prevent unintended NPM releases
+@yoltra:registry=http://localhost:4873/
+//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}
+//localhost:4873/:_authToken=${NPM_AUTH_TOKEN}

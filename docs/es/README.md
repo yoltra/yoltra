@@ -1,25 +1,27 @@
-![Quo.js logo](https://quojs.dev/assets/logo.svg)
+![Yoltra logo](../../assets/yoltra-logo.png)
 
-# Quo.js
+# Yoltra
 
-> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/README.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/README.md)&nbsp;
-> | &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/README.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/README.md)
+> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/docs/es/README.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/yoltra/yoltra/blob/main/docs/pt/README.md)&nbsp;
+> | &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/README.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](https://github.com/yoltra/yoltra/blob/main/docs/fr/README.md)
 
-![Bundle size](https://img.shields.io/bundlephobia/min/@quojs/core)
-![Bundle size](https://img.shields.io/bundlephobia/minzip/@quojs/core)
-![npm unpacked size](https://img.shields.io/npm/unpacked-size/@quojs/core)
-![npm downloads](https://badgen.net/npm/dm/@quojs/core)
-![License](https://img.shields.io/npm/l/@quojs/core)
+![Bundle size](https://img.shields.io/bundlephobia/min/@yoltra/core)
+![Bundle size](https://img.shields.io/bundlephobia/minzip/@yoltra/core)
+![npm unpacked size](https://img.shields.io/npm/unpacked-size/@yoltra/core)
+![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
+![License](https://img.shields.io/npm/l/@yoltra/core)
 
 **Reactividad de grano fino para aplicaciones orientadas a eventos.**
 
-![Kinetic Logo Demo](https://quojs.dev/assets/examples/quojs-dots.gif)
+![Kinetic Logo Demo](https://yoltra.dev/assets/examples/yoltra-dots.gif)
 
-> Mas de 1000 circulos SVG, cada uno suscrito a su propia posicion via `useAtomicProp`. Cada circulo se re-renderiza de forma independiente -- el resto del arbol no se toca. [Ver el codigo fuente de la demo.](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo/README.md)
+> Mas de 1000 circulos SVG, cada uno suscrito a su propia posicion via `useAtomicProp`. Cada circulo se re-renderiza de forma independiente -- el resto del arbol no se toca. [Ver el codigo fuente de la demo.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)
 
 ---
+
+> Yoltra es un fork de Yoltra, decidimos dejar de usar Yoltra para no luchar con librerias zombies, aquellas que estan muertas, pero siguen merodeando...
 
 ## La propuesta en 30 segundos
 
@@ -46,7 +48,7 @@ Sin selectores. Sin memoizacion. Sin optimizacion manual. La suscripcion *es* la
 
 ---
 
-## Por que Quo.js?
+## Por que Yoltra?
 
 ### 1. Suscripciones de grano fino con wildcards
 
@@ -63,7 +65,7 @@ const allDone = useAtomicProp(
 );
 ```
 
-[Ver la comparacion de flamegraph (Redux vs Quo.js).](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md)
+[Ver la comparacion de flamegraph (Redux vs Yoltra).](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
 
 ### 2. Pipeline de eventos estructurado
 
@@ -97,8 +99,8 @@ await emit('ui', 'toast', { message: 'Saved!' });
 
 | Paquete | Descripcion |
 |---------|-------------|
-| **[@quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** | Store agnostico de framework, reducers, middleware, efectos |
-| **[@quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** | Hooks de React con suscripciones de grano fino y soporte para Suspense |
+| **[@yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** | Store agnostico de framework, reducers, middleware, efectos |
+| **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** | Hooks de React con suscripciones de grano fino y soporte para Suspense |
 
 ---
 
@@ -107,7 +109,7 @@ await emit('ui', 'toast', { message: 'Saved!' });
 ### 1. Instalar
 
 ```bash
-npm install @quojs/core @quojs/react
+npm install @yoltra/core @yoltra/react
 ```
 
 ### 2. Definir tu mapa de eventos
@@ -127,7 +129,7 @@ export type AppEM = {
 
 ```typescript
 // store.ts
-import { createStore, eventKeys } from '@quojs/core';
+import { createStore, eventKeys } from '@yoltra/core';
 import type { AppEM } from './types';
 
 export type AppState = {
@@ -170,8 +172,8 @@ export const store = createStore<AppState, AppEM>({
 ```typescript
 // hooks.ts
 import { createContext } from 'react';
-import { createQuoHooks } from '@quojs/react';
-import type { StoreInstance } from '@quojs/core';
+import { createQuoHooks } from '@yoltra/react';
+import type { StoreInstance } from '@yoltra/core';
 import type { AppState, AppEM } from './types';
 
 export const AppStoreContext = createContext<
@@ -192,7 +194,7 @@ export const {
 
 ```tsx
 // App.tsx
-import { StoreProvider } from '@quojs/react';
+import { StoreProvider } from '@yoltra/react';
 import { store } from './store';
 import { AppStoreContext } from './hooks';
 
@@ -211,19 +213,19 @@ export function App() {
 
 | Ejemplo | Descripcion |
 |---------|-------------|
-| **[Logo Cinetico (1000+ particulas)](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo/README.md)** | Simulacion de fisica con suscripciones de ruta independientes por circulo |
-| **[App de Tareas con Profiler](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/README.md)** | Comparacion de flamegraph lado a lado con Redux ([resultados del profiler](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md)) |
-| **[Next.js 15 App Router](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-nextjs/README.md)** | Compatibilidad SSR + App Router con cambio de tema |
+| **[Logo Cinetico (1000+ particulas)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)** | Simulacion de fisica con suscripciones de ruta independientes por circulo |
+| **[App de Tareas con Profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md)** | Comparacion de flamegraph lado a lado con Redux ([resultados del profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)) |
+| **[Next.js 15 App Router](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs/README.md)** | Compatibilidad SSR + App Router con cambio de tema |
 
 ---
 
 ## Documentacion
 
-- **[Guia de Inicio Rapido](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)** -- Cinco pasos hacia una app funcional
-- **[API de @quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** -- Store, middleware, efectos, matchers `When`
-- **[API de @quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** -- Hooks, Suspense, `createQuoHooks`
-- **[Arquitectura de Cola de Eventos](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)** -- Inmersion tecnica profunda en el pipeline
-- **[Comparacion de Bibliotecas](https://github.com/quojs/quojs/blob/main/docs/en/design/state-management-library-comparison.md)** -- Comparacion arquitectonica con Redux, Zustand, Jotai y otras
+- **[Guia de Inicio Rapido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)** -- Cinco pasos hacia una app funcional
+- **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** -- Store, middleware, efectos, matchers `When`
+- **[API de @yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** -- Hooks, Suspense, `createQuoHooks`
+- **[Arquitectura de Cola de Eventos](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)** -- Inmersion tecnica profunda en el pipeline
+- **[Comparacion de Bibliotecas](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)** -- Comparacion arquitectonica con Redux, Zustand, Jotai y otras
 
 ---
 
@@ -231,11 +233,11 @@ export function App() {
 
 Damos la bienvenida a las contribuciones! Por favor lee:
 
-- [Guia de Contribucion](https://github.com/quojs/quojs/blob/main/CONTRIBUTING.md)
-- [Codigo de Conducta](https://github.com/quojs/quojs/blob/main/CODE_OF_CONDUCT.md)
-- [Gobernanza](https://github.com/quojs/quojs/blob/main/GOVERNANCE.md)
-- [Mantenedores](https://github.com/quojs/quojs/blob/main/MAINTAINERS.md)
-- [Politica de Seguridad](https://github.com/quojs/quojs/blob/main/SECURITY.md)
+- [Guia de Contribucion](https://github.com/yoltra/yoltra/blob/main/CONTRIBUTING.md)
+- [Codigo de Conducta](https://github.com/yoltra/yoltra/blob/main/CODE_OF_CONDUCT.md)
+- [Gobernanza](https://github.com/yoltra/yoltra/blob/main/GOVERNANCE.md)
+- [Mantenedores](https://github.com/yoltra/yoltra/blob/main/MAINTAINERS.md)
+- [Politica de Seguridad](https://github.com/yoltra/yoltra/blob/main/SECURITY.md)
 
 ---
 
@@ -248,13 +250,13 @@ rush build
 rush test
 ```
 
-Consulta la **[Guia del Desarrollador](https://github.com/quojs/quojs/blob/main/docs/en/DEVELOPER_GUIDE.md)** para mas detalles.
+Consulta la **[Guia del Desarrollador](https://github.com/yoltra/yoltra/blob/main/docs/en/DEVELOPER_GUIDE.md)** para mas detalles.
 
 ---
 
 ## Estado
 
-Quo.js esta en etapa de **Release Candidate** (v0.7.0+):
+Yoltra esta en etapa de **Release Candidate** (v0.7.0+):
 - Las APIs son estables y se usan en aplicaciones en produccion
 - Los tipos de TypeScript son estrictos y completos
 - Las APIs menores aun pueden evolucionar antes de v1.0
@@ -267,12 +269,12 @@ Los comentarios y PRs son bienvenidos.
 
 **MIT** -- Libre para usar en proyectos comerciales y de codigo abierto.
 
-Consulta [LICENSE](https://github.com/quojs/quojs/blob/main/LICENSE) para mas detalles.
+Consulta [LICENSE](https://github.com/yoltra/yoltra/blob/main/LICENSE) para mas detalles.
 
 ---
 
 ## Comunidad
-- **Sitio web:** [quojs.dev](https://quojs.dev)
-- **Twitter/X:** [@quojs_dev](https://twitter.com/quojs_dev)
-- **GitHub Discussions:** [Unete a la conversacion](https://github.com/quojs/quojs/discussions)
-- **Issues:** [Reporta errores o solicita funcionalidades](https://github.com/quojs/quojs/issues)
+- **Sitio web:** [yoltra.dev](https://yoltra.dev)
+- **Twitter/X:** [@yoltra_dev](https://twitter.com/yoltra_dev)
+- **GitHub Discussions:** [Unete a la conversacion](https://github.com/yoltra/yoltra/discussions)
+- **Issues:** [Reporta errores o solicita funcionalidades](https://github.com/yoltra/yoltra/issues)

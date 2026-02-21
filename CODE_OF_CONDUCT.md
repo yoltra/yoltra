@@ -1,4 +1,4 @@
-![Quo.js logo](./assets/logo.svg)
+![Yoltra logo](./assets/yoltra-logo.png)
 
 # Code of Conduct
 
@@ -36,7 +36,7 @@ This Code applies within project spaces and in public spaces when an individual 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to **[conduct@quojs.dev](mailto:conduct@quojs.dev)**. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to **[conduct@yoltra.dev](mailto:conduct@yoltra.dev)**. All complaints will be reviewed and investigated promptly and fairly.
 
 ## Attribution
 

@@ -1,21 +1,110 @@
+# =============================================================================
+# Verdaccio — local npm registry for pre-release testing
+# =============================================================================
+# Quick start:
+#   cd tools/registry && docker compose up -d
+#   npm adduser --registry http://localhost:4873
+#   rush publish --publish --registry http://localhost:4873
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Storage
+# The container mounts a named Docker volume at this path (see docker-compose).
+# Data persists across `docker compose down` restarts; use `down -v` to wipe.
+# ---------------------------------------------------------------------------
 storage: /verdaccio/storage
 
+# ---------------------------------------------------------------------------
+# Auth
+# htpasswd file lives on a named volume so it survives restarts.
+# Create the first user: npm adduser --registry http://localhost:4873
+# Lock registrations after setup by setting max_users: 0.
+# ---------------------------------------------------------------------------
+auth:
+  htpasswd:
+    file: /verdaccio/conf/htpasswd
+    max_users: -1
+    algorithm: bcrypt
+    rounds: 10
+
+# ---------------------------------------------------------------------------
+# Web UI  (http://localhost:4873)
+# ---------------------------------------------------------------------------
+web:
+  title: "yoltra Local Registry"
+  gravatar: false
+  sort_packages: asc
+  darkMode: false
+  scope: "@yoltra"
+
+# ---------------------------------------------------------------------------
+# Uplinks — upstream registries used when a package is not stored locally
+# ---------------------------------------------------------------------------
 uplinks:
   npmjs:
     url: https://registry.npmjs.org/
+    timeout: 30s
+    maxage: 10m
+    max_fails: 3
+    fail_timeout: 5m
+    cache: true
 
+# ---------------------------------------------------------------------------
+# Package access rules
+# ---------------------------------------------------------------------------
 packages:
-  '@quojs/*':
+  # Our scoped packages:
+  #   - never proxied to npm (local-only, published from this repo)
+  #   - publish requires authentication
+  "@yoltra/*":
+    access: $authenticated
+    publish: $authenticated
+    unpublish: $authenticated
+    proxy: []
+
+  # Everything else (React, lodash, etc.):
+  #   - read allowed by anyone (so example apps can install deps)
+  #   - proxy to npmjs for cache-through
+  "**":
     access: $all
     publish: $authenticated
-    proxy: []  
-  '**':
-    access: $all
-    publish: $authenticated
+    unpublish: $authenticated
     proxy: npmjs
 
+# ---------------------------------------------------------------------------
+# Server
+# ---------------------------------------------------------------------------
 server:
   keepAliveTimeout: 60
+  rateLimit:
+    windowMs: 1000
+    max: 10000
 
+# ---------------------------------------------------------------------------
+# Security — JWT tokens for web + API
+# ---------------------------------------------------------------------------
+security:
+  api:
+    jwt:
+      sign:
+        expiresIn: 60d
+      verify:
+        someProp: []
+  web:
+    sign:
+      expiresIn: 7d
+
+# ---------------------------------------------------------------------------
+# Middlewares
+# ---------------------------------------------------------------------------
+middlewares:
+  audit:
+    enabled: true
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
 logs:
-  - { type: stdout, format: pretty, level: http }
+  type: stdout
+  format: pretty
+  level: http

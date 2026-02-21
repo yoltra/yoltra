@@ -1,6 +1,6 @@
-![Quo.js logo](../../assets/logo.svg)
+![Yoltra logo](../../assets/yoltra-logo.png)
 
-# Contribuir a Quo.js!
+# Contribuir a Yoltra!
 
 >  👉 [ 🇲🇽 Versión en Español](../es/CONTRIBUTING.md)&nbsp; |
 > &nbsp;[ 🇵🇹 Versão Portuguesa](../pt/CONTRIBUTING.md)&nbsp; |
@@ -35,8 +35,8 @@ rush test
 rush lint
 
 # builds focalizados
-rush build --to @quojs/core
-rush build --from @quojs/react
+rush build --to @yoltra/core
+rush build --from @yoltra/react
 
 # trabaja dentro de un solo paquete
 cd packages/core
@@ -72,8 +72,8 @@ body (optional)
 **Tipos permitidos:** `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `chore`, `revert`
 
 **Ejemplos**
-- `feat(quojs): add deep-path wildcard subscriptions`
-- `fix(quojs-react): normalize leading dot in useAtomicProp`
+- `feat(yoltra): add deep-path wildcard subscriptions`
+- `fix(yoltra-react): normalize leading dot in useAtomicProp`
 - `test(store): cover devtools DISPATCH apply state`
 
 **DCO sign-off** — cada *commit* debe incluir una línea de firma:
@@ -87,7 +87,7 @@ Sugerencia: usa `git commit -s` para añadirla automáticamente. Los mensajes de
 ## Pruebas y Cobertura
 
 - *Test runner*: **Vitest**
-- Pruebas de UI: **@testing-library/react** (para `quojs-react`)
+- Pruebas de UI: **@testing-library/react** (para `yoltra-react`)
 - Umbrales de cobertura aplicados en la configuración de Vitest:
   - Líneas / Ramas / Funciones / Sentencias: **≥ 95%** (en código tocado)
 - Prefiere pruebas enfocadas y robustas; usa *snapshots* solo para salidas estables y deterministas.

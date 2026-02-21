@@ -1,23 +1,20 @@
-![Quo.js logo](../../assets/logo.svg)
+![Yoltra logo](../../assets/yoltra-logo.png)
 
 # Quick Start Guide
 
-> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/QUICK_START_GUIDE.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/QUICK_START_GUIDE.md)&nbsp; |
-> &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/QUICK_START_GUIDE.md)
+> 👉 English &nbsp;|&nbsp; [🇲🇽 Español](../es/QUICK_START_GUIDE.md)
 
-Five steps from install to working app.
+Five steps from install to a working app.
 
 ---
 
 ## 1. Install
 
 ```bash
-npm install @quojs/core @quojs/react
+npm install @yoltra/core @yoltra/react
 ```
 
-(`@quojs/react` is only required when using React.)
+(`@yoltra/react` is only required when using React.)
 
 ---
 
@@ -25,7 +22,7 @@ npm install @quojs/core @quojs/react
 
 ```typescript
 // store.ts
-import { createStore, eventKeys } from '@quojs/core';
+import { createStore, eventKeys } from '@yoltra/core';
 
 export type AppEM = {
   counter: {
@@ -67,8 +64,8 @@ export const store = createStore<AppState, AppEM>({
 ```typescript
 // hooks.ts
 import { createContext } from 'react';
-import { createQuoHooks } from '@quojs/react';
-import type { StoreInstance } from '@quojs/core';
+import { createQuoHooks } from '@yoltra/react';
+import type { StoreInstance } from '@yoltra/core';
 import type { AppState, AppEM } from './store';
 
 export const AppStoreContext = createContext<
@@ -130,7 +127,13 @@ export function Counter() {
 
 ## What's next?
 
-- **[@quojs/core API](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** — Middleware, effects, `When` matchers, event subscriptions
-- **[@quojs/react API](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** — `useAtomicProps`, Suspense hooks, wildcards
-- **[Event Queue Architecture](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)** — How the pipeline works under the hood
-- **[Examples](https://github.com/quojs/quojs/blob/main/README.md#live-examples)** — Todo app, kinetic logo, Next.js integration
+- **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** —
+  Middleware, effects, `When` matchers, event subscriptions
+- **[@yoltra/react API](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** —
+  `useAtomicProps`, Suspense hooks, wildcards
+- **[Event Queue Architecture](./design/event-queue-architecture.md)** —
+  How the pipeline works under the hood
+- **[Examples](https://github.com/yoltra/yoltra/blob/main/README.md#live-examples)** —
+  Todo app, kinetic logo, Next.js integration
+- **[Developer Guide](./DEVELOPER_GUIDE.md)** —
+  Setting up the monorepo and contributing

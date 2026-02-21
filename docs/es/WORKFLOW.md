@@ -1,98 +1,171 @@
-![Quo.js logo](../../assets/logo.svg)
+![Yoltra logo](../../assets/yoltra-logo.png)
 
-# Flujo de trabajo continuo
+# Flujo de Trabajo de Desarrollo
 
->  👉 [ 🇲🇽 Versión en Español](../es/WORKFLOW.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](../pt/WORKFLOW.md)&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](../../WORKFLOW.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](../fr/WORKFLOW.md)
+> [🇺🇸 English](../en/WORKFLOW.md) &nbsp;|&nbsp; 👉 Español
 
-Este documento describe el flujo de desarrollo y publicación de paquetes de Quo.js usando **versionado independiente** en un monorepo con Rush.
+Este documento cubre la estrategia de ramas, el proceso de PRs y la disciplina de archivos
+de cambio que mantienen el monorepo en buen estado. Para realizar un lanzamiento consulta
+[RELEASE_GUIDE.md](./RELEASE_GUIDE.md).
 
-## Desarrollo diario
+---
 
-- **Ramas de feature/fix** creadas desde `main`:
-  - Ejemplos de nombres de rama: 
-    - `feat(core): ...` 
-    - `fix(react): ...`
-  - Generar archivos de cambio:
-    ```bash
-    rush change -v
-    ```
-    - Usa **patch** para correcciones. 
-    - Usa **minor** para nuevas funcionalidades. 
-    - Usa **minor** para cambios incompatibles (mientras `<1.0.0`, todos los cambios breaking cuentan como minor).
-  - Abre un PR → merge después de la revisión.
+## Modelo de ramas
 
-## Ciclo de Trabajo de TypeDoc
-
-Mantener la documentación sincronizada con el código es esencial para la claridad, la integración y la referencia de API.
-Sigue estos pasos cada vez que modifiques o agregues código:
-
-1. Documenta tu código
-
-Después de completar tu implementación, asegúrate de que todo el código nuevo o actualizado incluya anotaciones de TypeDoc como @param, @returns y @example.
-Estas anotaciones son fundamentales, ya que permiten al generador de documentación extraer comentarios, tipos y ejemplos hacia los archivos Markdown.
-
-2. Genera la documentación
-
-Ejecuta el comando de Rush para reconstruir la documentación.
-
-```bash
-  rushx:docs
+```
+main          ←── estable, publicado en npm, siempre listo para release
+  ↑
+develop       ←── rama de integración, siempre verde
+  ↑
+release/vX.Y  ←── de vida corta; solo bump de versiones + preparación del release
+  ↑
+feature/*     ←── una funcionalidad / corrección por rama
+fix/*
+chore/*
 ```
 
-Esto invocará a TypeDoc y regenerará todos los archivos Markdown a partir de tus anotaciones.
+**Reglas:**
 
-3. Revisa el resultado
+- `main` está protegida. Solo se fusionan PRs desde `develop` (tras un ciclo de release).
+- `develop` está protegida. Solo se fusionan PRs — nunca force-push.
+- Las ramas `release/*` se crean desde `develop`, se suben de versión, se prueban y luego
+  se hacen PR de vuelta a `develop` primero y después a `main`.
+- Las ramas `feature/*` / `fix/*` / `chore/*` se crean desde `develop`.
 
-Abre los archivos Markdown generados y confirma que tus cambios se reflejan correctamente.
-Verifica que se muestren las nuevas funciones, clases y propiedades, que las descripciones y ejemplos estén actualizados y que no queden secciones obsoletas.
+---
 
-4. Haz commit de la documentación
+## Día a día: funcionalidad o corrección
 
-Cuando todo se vea correcto, haz commit de la documentación generada utilizando un mensaje de commit convencional con el tipo "docs".
-Esto mantiene el historial limpio y ayuda a que los flujos de CI/CD se ejecuten correctamente.
-
-## Ciclo de versionado y publicación
-
-Puede ser manual o automatizado en CI:
-
-```bash
-rush version --ensure-version-policy
-rush publish --publish --apply --target-branch main
+```
+develop
+  └─ feature/123-mi-funcionalidad
+         │  commits con Conventional Commits + DCO
+         │  rush change (al menos una vez)
+         └─► PR → develop
 ```
 
-- Solo los paquetes con archivos de cambio se versionan. 
-- Los paquetes sin cambios mantienen su versión. 
+**Paso a paso:**
 
-## Cambios incompatibles en `@quojs/core`
+```bash
+# 1. Crear rama desde develop
+git checkout develop
+git pull
+git checkout -b feature/123-mi-funcionalidad
 
-- Aumenta el **minor** en core (ej: `0.2.x → 0.3.0`). 
-- Actualiza los adaptadores validados a:
+# 2. Crear el archivo de cambio antes de abrir el PR
+rush change
+#  → selecciona los paquetes que modificaste
+#  → elige el tipo de bump (patch / minor)
+#  → escribe una descripción corta (aparecerá en CHANGELOG.md)
 
-  ```json
-  "peerDependencies": {
-    "@quojs/core": "^0.3.0"
-  }
-  ```
 
-- Genera archivos de cambio para esos adaptadores (patch o minor según el caso). 
-- Publica solo los adaptadores validados. 
-- **No incrementes adaptadores que no has verificado aún**; la verificación de dependencias por parte de los consumidores los protegerá.
+# 3. Realiza tu trabajo — los commits deben seguir Conventional Commits + firma DCO
+git commit -S -s -m "feat(core): añadir coincidencia de eventos con wildcard"
+
+# 4. Publicar rama y abrir PR contra develop
+git push -u origin feature/123-mi-funcionalidad
+```
+
+**Lista de verificación del PR:**
+
+- [ ] Mensajes de commit en formato Conventional Commits con firma DCO en cada commit
+- [ ] `rush build` pasa localmente
+- [ ] `rush test` pasa (cobertura ≥ 95%)
+- [ ] `rush lint` y `rush typecheck` pasan
+- [ ] Archivo de cambio en `common/changes/` (`rush change -v` está en verde)
+- [ ] La descripción del PR enlaza los issues correspondientes
+
+---
+
+## Preparar un release (mantenedores)
+
+```
+develop
+  └─ release/v0.9.0
+         │  rush version --bump
+         │  revisión manual de changelogs
+         └─► PR → develop  (sincronizar bumps de versión de vuelta)
+               └─► PR → main (desencadenar publicación en NPM)
+```
+
+Consulta **[RELEASE_GUIDE.md](./RELEASE_GUIDE.md)** para el paso a paso completo.
+
+---
+
+## Cambios breaking mientras `< 1.0.0`
+
+Hasta que la librería alcance `1.0.0`, usa `minor` (no `major`) para cambios breaking.
+
+Cuando `@yoltra/core` tiene un cambio breaking:
+
+1. Elige **minor** en el prompt de `rush change` para core.
+2. Actualiza el rango de `peerDependencies` de `@yoltra/react` para que coincida:
+   ```json
+   "@yoltra/core": "^0.9.0"
+   ```
+3. Añade también un archivo de cambio para `@yoltra/react` (minor o patch, según el impacto).
+
+---
+
+## Hotfixes
+
+Un hotfix es una corrección crítica que debe publicarse sin esperar al siguiente release
+planificado.
+
+```
+main
+  └─ hotfix/v0.8.1-bug-critico
+         │  corrección mínima + rush change (patch)
+         └─► PR → main  (revisado y fusionado directamente)
+               └─► PR de back-merge → develop
+```
+
+Después de que el PR del hotfix llegue a `main`:
+
+1. Publicar desde `main` (consulta RELEASE_GUIDE.md).
+2. Abrir inmediatamente un PR de back-merge desde `main` → `develop` para mantenerlas en
+   sincronía.
+
+---
 
 ## Pre-releases
 
-- Para trabajo experimental o arriesgado, publica pre-releases:
-  ```bash
-  0.2.0-alpha.0
-  ```
-  usando `--tag next` (en npm) o publicando en Verdaccio. 
-- Los adaptadores pueden adoptar el nuevo rango de dependencias de manera progresiva.
+Para funcionalidades experimentales que no están listas para un release estable:
 
-# Por qué este flujo funciona
+```bash
+# Etiqueta la versión como pre-release en el archivo de cambio (elige bump "prerelease")
+rush change
 
-- **Versionado independiente** → solo los paquetes modificados cambian de versión. 
-- **Comenzar en `0.1.0`** → los rangos con caret funcionan como se espera (`^0.1.0` permite flotación de patch, no de minor). 
-- **Archivos de cambio desde el primer día** → Rush se mantiene consistente y genera notas de versión claras. 
-- **Etiquetas por paquete** → hacen más fácil el bisect y la generación de changelogs.
+# Publicar con un dist-tag para que los usuarios deban optar explícitamente
+rush publish --publish --tag next
+```
+
+Los usuarios instalan pre-releases de forma explícita:
+```bash
+npm add @yoltra/core@next @yoltra/react@next
+```
+
+Los pre-releases también se pueden publicar en el registro Verdaccio local para pruebas sin
+tocar npm (consulta RELEASE_GUIDE.md).
+
+---
+
+## Documentación TypeDoc
+
+Actualiza la documentación de la API siempre que añadas o modifiques una API pública:
+
+```bash
+# En el paquete correspondiente
+cd packages/core
+rushx docs          # Genera los formatos Markdown y JSON
+
+cd packages/react
+rushx docs
+```
+
+Haz commit de los archivos generados bajo `.typedoc/` junto con el cambio de código usando
+un commit de tipo `docs`:
+
+```
+docs(core): actualizar API docs para el matcher de wildcard
+```
