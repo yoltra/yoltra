@@ -1,12 +1,12 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / EventConsumerMeta
+[@yoltra/core](../README.md) / EventConsumerMeta
 
 # Interface: EventConsumerMeta\<T\>
 
-Defined in: [types.ts:886](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L886)
+Defined in: [types.ts:935](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L935)
 
 Metadata for event consumers (reducers, effects, middleware).
 Useful for debugging tools, DevTools integration, and introspection.
@@ -40,7 +40,7 @@ Consumer type discriminator.
 
 > `optional` **description**: `string`
 
-Defined in: [types.ts:894](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L894)
+Defined in: [types.ts:943](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L943)
 
 Brief one-liner description of what this consumer does
 
@@ -50,7 +50,7 @@ Brief one-liner description of what this consumer does
 
 > **name**: `string`
 
-Defined in: [types.ts:891](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L891)
+Defined in: [types.ts:940](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L940)
 
 Unique identifier for this consumer
 
@@ -60,6 +60,6 @@ Unique identifier for this consumer
 
 > **type**: `T`
 
-Defined in: [types.ts:888](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L888)
+Defined in: [types.ts:937](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L937)
 
 Consumer type discriminator

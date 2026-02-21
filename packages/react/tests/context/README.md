@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This suite validates the fundamental React context integration for `@quojs/react`. The goal is not to test business logic, but to ensure that Quo.js store instances can be passed to descendant components and consumed via hooks.
+This suite validates the fundamental React context integration for `@yoltra/react`. The goal is not to test business logic, but to ensure that yoltra store instances can be passed to descendant components and consumed via hooks.
 
 ## Rationale
 

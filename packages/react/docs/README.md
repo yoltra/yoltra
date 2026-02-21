@@ -1,8 +1,10 @@
-**@quojs/react**
+![Yoltra logo](../../../assets/yoltra-logo.png)
 
-***
+**@yoltra/react**
 
-# @quojs/react
+---
+
+# @yoltra/react
 
 ## Interfaces
 
@@ -26,7 +28,7 @@
 ## Functions
 
 - [clearSuspenseCache](functions/clearSuspenseCache.md)
-- [createQuoHooks](functions/createQuoHooks.md)
+- [createHooks](functions/createHooks.md)
 - [invalidateAtomicProp](functions/invalidateAtomicProp.md)
 - [invalidateAtomicPropsByReducer](functions/invalidateAtomicPropsByReducer.md)
 - [shallowEqual](functions/shallowEqual.md)

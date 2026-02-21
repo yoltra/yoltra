@@ -1,8 +1,8 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / createStore
+[@yoltra/core](../README.md) / createStore
 
 # Function: createStore()
 
@@ -10,7 +10,7 @@
 
 > **createStore**\<`S`, `EM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `S` & `string`, `S`, `EM`\>
 
-Defined in: [store/Store.ts:1639](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/store/Store.ts#L1639)
+Defined in: [store/Store.ts:1703](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/store/Store.ts#L1703)
 
 Creates a store with explicit State and EventMap types.
 
@@ -38,6 +38,18 @@ Event map type defining all `channel → type → payload` combinations.
 #### cfg
 
 Configuration with `name`, optional `reducer`, optional `middleware`, optional `effects`.
+
+##### dedupWindowMs?
+
+`number`
+
+##### devtools?
+
+\{ `allowReplay?`: `boolean`; \}
+
+##### devtools.allowReplay?
+
+`boolean`
 
 ##### effects?
 
@@ -91,7 +103,7 @@ const store = createStore<AppState, AppEM>({
 
 > **createStore**\<`RM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, `StateFromReducers`\<`RM`\>, `EMFromReducersStrict`\<`RM`\>\>
 
-Defined in: [store/Store.ts:1677](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/store/Store.ts#L1677)
+Defined in: [store/Store.ts:1743](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/store/Store.ts#L1743)
 
 Creates a store with types inferred from the reducers map.
 
@@ -111,6 +123,18 @@ Reducers map object with each slice's `ReducerSpec`.
 #### cfg
 
 Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
+
+##### dedupWindowMs?
+
+`number`
+
+##### devtools?
+
+\{ `allowReplay?`: `boolean`; \}
+
+##### devtools.allowReplay?
+
+`boolean`
 
 ##### effects?
 

@@ -1,9 +1,11 @@
+![Yoltra logo](../../../assets/yoltra-logo.png)
+
 # State Management: Architectural Comparison
 
-> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/design/state-management-library-comparison.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/design/state-management-library-comparison.md)&nbsp; |
-> &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/design/state-management-library-comparison.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/design/state-management-library-comparison.md)
+> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/docs/es/design/state-management-library-comparison.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/yoltra/yoltra/blob/main/docs/pt/design/state-management-library-comparison.md)&nbsp; |
+> &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](https://github.com/yoltra/yoltra/blob/main/docs/fr/design/state-management-library-comparison.md)
 
 **Version:** 0.7.0
 **Last Updated:** February 2026
@@ -12,13 +14,13 @@
 
 State management libraries make different **architectural bets**. Those bets determine which problems each library solves most naturally and where it creates friction. This document examines those architectural differences honestly — not to declare a winner, but to help you choose the right tool for your specific problem.
 
-Each section describes a library's core model, explains the class of applications where that model excels, and highlights how it differs from Quo.js's approach.
+Each section describes a library's core model, explains the class of applications where that model excels, and highlights how it differs from Yoltra's approach.
 
 ---
 
-## Quo.js in Brief
+## Yoltra in Brief
 
-Quo.js is built on three architectural bets:
+Yoltra is built on three architectural bets:
 
 1. **Path-level subscriptions** — Components subscribe to dotted paths (`"items.0.title"`, `"items.*.done"`) and re-render only when that exact path changes.
 2. **Structured event pipeline** — Events flow through a formal, hookable pipeline: dedup → middleware (can reject) → reducers → event subscribers → effects → coarse subscribers.
@@ -67,26 +69,26 @@ dispatch(addTodo({ id: '1', title: 'Buy milk' }));
 
 **Apps that need extensive middleware.** Redux's middleware model is mature and has thousands of community solutions for logging, analytics, persistence, and error tracking.
 
-### Architectural differences from Quo.js
+### Architectural differences from Yoltra
 
-**Subscription granularity.** Redux subscriptions operate at the store level — `useSelector` runs on every dispatch and relies on reference equality to bail out. Quo.js subscriptions operate at the path level and only fire when the subscribed path actually changes.
+**Subscription granularity.** Redux subscriptions operate at the store level — `useSelector` runs on every dispatch and relies on reference equality to bail out. Yoltra subscriptions operate at the path level and only fire when the subscribed path actually changes.
 
 ```typescript
 // Redux: selector runs on EVERY dispatch, bails out via equality check
 const title = useSelector(state => state.todos.items[0]?.title);
 
-// Quo.js: subscription only fires when items.0.title changes
+// Yoltra: subscription only fires when items.0.title changes
 const title = useAtomicProp({
   reducer: 'todos',
   property: 'items.0.title',
 });
 ```
 
-This difference matters most in UIs with many independently-updating elements. In a list of 100 items, a Redux `useSelector` in each row runs 100 times on every dispatch. A Quo.js `useAtomicProp` in each row fires only for the specific row that changed.
+This difference matters most in UIs with many independently-updating elements. In a list of 100 items, a Redux `useSelector` in each row runs 100 times on every dispatch. A Yoltra `useAtomicProp` in each row fires only for the specific row that changed.
 
-**Event model.** Redux actions are flat strings (`"todos/addTodo"`). Quo.js events are channel-typed tuples (`('todos', 'add', payload)`). Both approaches work; channels provide natural namespacing at scale, while flat strings integrate better with Redux DevTools and middleware ecosystem.
+**Event model.** Redux actions are flat strings (`"todos/addTodo"`). Yoltra events are channel-typed tuples (`('todos', 'add', payload)`). Both approaches work; channels provide natural namespacing at scale, while flat strings integrate better with Redux DevTools and middleware ecosystem.
 
-**Async model.** Redux separates sync reducers from async thunks. Quo.js middleware and effects are async by default — async operations are part of the core pipeline rather than a separate layer.
+**Async model.** Redux separates sync reducers from async thunks. Yoltra middleware and effects are async by default — async operations are part of the core pipeline rather than a separate layer.
 
 ---
 
@@ -113,19 +115,19 @@ const todos = useStore(state => state.todos);
 
 **Gradual adoption.** Zustand doesn't require providers, context, or restructuring. You can add it to any component tree incrementally.
 
-### Architectural differences from Quo.js
+### Architectural differences from Yoltra
 
-**Explicitness vs. minimalism.** Zustand optimizes for the least code to get state working. Quo.js optimizes for explicit, traceable state transitions via events. These are fundamentally different values — Zustand trusts developers to keep things simple; Quo.js provides structure that scales.
+**Explicitness vs. minimalism.** Zustand optimizes for the least code to get state working. Yoltra optimizes for explicit, traceable state transitions via events. These are fundamentally different values — Zustand trusts developers to keep things simple; Yoltra provides structure that scales.
 
 ```typescript
 // Zustand: direct update — minimal but implicit
 set((state) => ({ count: state.count + 1 }));
 
-// Quo.js: named event — more ceremony but traceable
+// Yoltra: named event — more ceremony but traceable
 await emit('counter', 'increment', 1);
 ```
 
-**Subscription model.** Zustand selectors are functions that run on every `set()` call. Optimizing for fine-grained updates requires manual equality functions. Quo.js path subscriptions are fine-grained by default.
+**Subscription model.** Zustand selectors are functions that run on every `set()` call. Optimizing for fine-grained updates requires manual equality functions. Yoltra path subscriptions are fine-grained by default.
 
 ```typescript
 // Zustand: needs custom equality to avoid unnecessary re-renders
@@ -134,16 +136,16 @@ const title = useStore(
   (a, b) => a === b,
 );
 
-// Quo.js: fine-grained by default
+// Yoltra: fine-grained by default
 const title = useAtomicProp({
   reducer: 'todos',
   property: 'items.0.title',
 });
 ```
 
-**Event ordering.** Zustand's `set()` calls are immediate and synchronous. Multiple `set()` calls from different async operations can interleave unpredictably. Quo.js's FIFO event queue guarantees strict ordering — events always process in the order they were emitted.
+**Event ordering.** Zustand's `set()` calls are immediate and synchronous. Multiple `set()` calls from different async operations can interleave unpredictably. Yoltra's FIFO event queue guarantees strict ordering — events always process in the order they were emitted.
 
-**Bundle size.** Zustand is approximately 1KB. Quo.js (`@quojs/core` + `@quojs/react`) is approximately 15KB. If bundle size is the primary constraint, Zustand wins clearly.
+**Bundle size.** Zustand is approximately 1KB. Yoltra (`@yoltra/core` + `@yoltra/react`) is approximately 15KB. If bundle size is the primary constraint, Zustand wins clearly.
 
 ---
 
@@ -171,25 +173,25 @@ const [count, setCount] = useAtom(countAtom);
 
 **Composable derived state.** Atoms that derive from other atoms create a reactive graph. This is powerful for applications where computed values depend on multiple independent state sources.
 
-### Architectural differences from Quo.js
+### Architectural differences from Yoltra
 
-**Centralized vs. distributed.** Quo.js maintains a single state tree that you subscribe to at specific paths. Jotai distributes state across independent atoms. Both achieve fine-grained reactivity, but through opposite architectures.
+**Centralized vs. distributed.** Yoltra maintains a single state tree that you subscribe to at specific paths. Jotai distributes state across independent atoms. Both achieve fine-grained reactivity, but through opposite architectures.
 
-The centralized approach (Quo.js) makes it easier to reason about global state, coordinate cross-cutting updates, and serialize/restore entire app state. The distributed approach (Jotai) makes it easier to create self-contained, reusable state units and avoids the need for a provider in simple cases.
+The centralized approach (Yoltra) makes it easier to reason about global state, coordinate cross-cutting updates, and serialize/restore entire app state. The distributed approach (Jotai) makes it easier to create self-contained, reusable state units and avoids the need for a provider in simple cases.
 
 ```typescript
 // Jotai: state is distributed across atoms
 const titleAtom = atom('');
 const doneAtom = atom(false);
 
-// Quo.js: state lives in a tree, subscribed by path
+// Yoltra: state lives in a tree, subscribed by path
 const title = useAtomicProp({ reducer: 'todos', property: 'items.0.title' });
 const done = useAtomicProp({ reducer: 'todos', property: 'items.0.done' });
 ```
 
-**Event traceability.** Jotai atom updates are implicit — you call `setCount(count + 1)` and state changes. There's no event log, no middleware interception point, no audit trail. Quo.js events are explicit and traceable through the entire pipeline. This matters when you need authorization checks, undo/redo, or analytics on state transitions.
+**Event traceability.** Jotai atom updates are implicit — you call `setCount(count + 1)` and state changes. There's no event log, no middleware interception point, no audit trail. Yoltra events are explicit and traceable through the entire pipeline. This matters when you need authorization checks, undo/redo, or analytics on state transitions.
 
-**Middleware and cross-cutting concerns.** Jotai handles cross-cutting concerns (logging, persistence, validation) via atom middleware or wrapper atoms — per-atom configuration. Quo.js handles them centrally via the event pipeline — one middleware function can intercept all events.
+**Middleware and cross-cutting concerns.** Jotai handles cross-cutting concerns (logging, persistence, validation) via atom middleware or wrapper atoms — per-atom configuration. Yoltra handles them centrally via the event pipeline — one middleware function can intercept all events.
 
 ---
 
@@ -227,13 +229,13 @@ const App = observer(() => {
 
 **Mutable-style updates.** MobX lets you write `this.todos.push(todo)` instead of `{ ...state, todos: [...state.todos, todo] }`. For complex nested updates, this is significantly more readable.
 
-### Architectural differences from Quo.js
+### Architectural differences from Yoltra
 
-**Implicit vs. explicit.** MobX tracks dependencies automatically via proxies — components re-render "magically" when observables they read change. Quo.js requires explicit path subscriptions — you declare what you're watching. MobX is easier to use; Quo.js is easier to debug when things go wrong.
+**Implicit vs. explicit.** MobX tracks dependencies automatically via proxies — components re-render "magically" when observables they read change. Yoltra requires explicit path subscriptions — you declare what you're watching. MobX is easier to use; Yoltra is easier to debug when things go wrong.
 
-**Mutability.** MobX allows (and encourages) direct mutation of state objects. Quo.js enforces immutability — state is deep-frozen in development. Both approaches have tradeoffs: mutation is ergonomic but can cause subtle bugs when references are shared; immutability is safer but requires more ceremony for nested updates.
+**Mutability.** MobX allows (and encourages) direct mutation of state objects. Yoltra enforces immutability — state is deep-frozen in development. Both approaches have tradeoffs: mutation is ergonomic but can cause subtle bugs when references are shared; immutability is safer but requires more ceremony for nested updates.
 
-**Event flow.** MobX has no concept of events or actions as first-class entities (decorating with `@action` is for batching, not for creating an event trail). Quo.js events flow through a formal pipeline with middleware, effects, and committed/uncommitted phases. If you need to intercept, validate, or audit state changes, Quo.js provides the infrastructure; MobX requires building it yourself.
+**Event flow.** MobX has no concept of events or actions as first-class entities (decorating with `@action` is for batching, not for creating an event trail). Yoltra events flow through a formal pipeline with middleware, effects, and committed/uncommitted phases. If you need to intercept, validate, or audit state changes, Yoltra provides the infrastructure; MobX requires building it yourself.
 
 ---
 
@@ -270,9 +272,9 @@ const todoMachine = createMachine({
 
 **Actor-based concurrency.** XState's actor model is genuine concurrent computation — multiple machines running independently, communicating via messages. This is powerful for applications with independent, parallel processes.
 
-### Architectural differences from Quo.js
+### Architectural differences from Yoltra
 
-**Scope.** XState is designed for **workflow orchestration** — modeling processes that move through distinct phases. Quo.js is designed for **data-driven state management** — managing application state that many UI elements subscribe to. They solve different problems and can coexist in the same application (XState for workflow logic, Quo.js for application state).
+**Scope.** XState is designed for **workflow orchestration** — modeling processes that move through distinct phases. Yoltra is designed for **data-driven state management** — managing application state that many UI elements subscribe to. They solve different problems and can coexist in the same application (XState for workflow logic, Yoltra for application state).
 
 **Boilerplate.** XState machine definitions are verbose by design — every state and transition is explicit. This is a feature, not a bug, for workflows where explicitness prevents errors. But for general CRUD state management, this ceremony is overhead.
 
@@ -292,7 +294,7 @@ const machine = createMachine({
   },
 });
 
-// Quo.js: reducer for a counter
+// Yoltra: reducer for a counter
 const counterReducer = (state, event) => {
   switch (event.type) {
     case 'increment': return { count: state.count + 1 };
@@ -302,7 +304,7 @@ const counterReducer = (state, event) => {
 };
 ```
 
-**Subscription model.** XState doesn't have path-level subscriptions — you subscribe to the machine's state and select from it. Quo.js's path subscriptions are more granular for UI state management.
+**Subscription model.** XState doesn't have path-level subscriptions — you subscribe to the machine's state and select from it. Yoltra's path subscriptions are more granular for UI state management.
 
 ---
 
@@ -317,7 +319,7 @@ Each library optimizes for a different dimension:
 | **Jotai** | Distributed, composable atoms | Harder to coordinate global state |
 | **MobX** | Implicit reactivity, mutable ergonomics | Harder to trace and debug state changes |
 | **XState** | Workflow correctness, impossible states | Verbose for general data management |
-| **Quo.js** | Fine-grained subscriptions, event pipeline | More setup than Zustand/Jotai, larger bundle |
+| **Yoltra** | Fine-grained subscriptions, event pipeline | More setup than Zustand/Jotai, larger bundle |
 
 There is no universally "best" library. The right choice depends on what your application needs most:
 
@@ -325,18 +327,18 @@ There is no universally "best" library. The right choice depends on what your ap
 - **Team already knows Redux?** Redux Toolkit.
 - **Reactive OOP with mutable updates?** MobX.
 - **Complex workflow modeling?** XState.
-- **Fine-grained path subscriptions, event authorization, or universal (client + server) state?** Quo.js.
+- **Fine-grained path subscriptions, event authorization, or universal (client + server) state?** Yoltra.
 
 ---
 
 ## Further Reading
 
-- **[Event Queue Architecture](./event-queue-architecture.md)** — How Quo.js's async event pipeline works under the hood
-- **[Quick Start Guide](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)** — Five steps to a working app
-- **[@quojs/core API](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** — Store, middleware, effects, `When` matchers
-- **[@quojs/react API](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** — Hooks with fine-grained subscriptions
+- **[Event Queue Architecture](./event-queue-architecture.md)** — How Yoltra's async event pipeline works under the hood
+- **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)** — Five steps to a working app
+- **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** — Store, middleware, effects, `When` matchers
+- **[@yoltra/react API](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** — Hooks with fine-grained subscriptions
 
 ---
 
 **License:** MIT
-**Repository:** https://github.com/quojs/quojs
+**Repository:** https://github.com/yoltra/yoltra

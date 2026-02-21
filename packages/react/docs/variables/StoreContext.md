@@ -1,16 +1,16 @@
-[**@quojs/react**](../README.md)
+[**@yoltra/react**](../README.md)
 
 ***
 
-[@quojs/react](../README.md) / StoreContext
+[@yoltra/react](../README.md) / StoreContext
 
 # Variable: StoreContext
 
-> `const` **StoreContext**: `Context`\<`null` \| `StoreInstance`\<`any`, `any`, `any`\>\>
+> `const` **StoreContext**: `Context`\<`StoreInstance`\<`any`, `any`, `any`\>\>
 
-Defined in: [react/src/context/StoreContext.ts:32](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/context/StoreContext.ts#L32)
+Defined in: [react/src/context/StoreContext.ts:32](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/context/StoreContext.ts#L32)
 
-React Context carrying a StoreInstance for Quo.js React bindings.
+React Context carrying a StoreInstance for yoltra React bindings.
 
 ## Remarks
 
@@ -23,7 +23,7 @@ React Context carrying a StoreInstance for Quo.js React bindings.
 
 ```tsx
 import { useContext } from "react";
-import { StoreContext } from "@quojs/react";
+import { StoreContext } from "@yoltra/react";
 
 export function Counter() {
   const store = useContext(StoreContext);

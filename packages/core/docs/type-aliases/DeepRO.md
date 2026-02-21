@@ -1,14 +1,14 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / DeepRO
+[@yoltra/core](../README.md) / DeepRO
 
 # Type Alias: DeepRO\<T\>
 
 > **DeepRO**\<`T`\> = [`DeepReadonly`](DeepReadonly.md)\<`T`\>
 
-Defined in: [types.ts:902](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L902)
+Defined in: [types.ts:951](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L951)
 
 Alias for DeepReadonly.
 

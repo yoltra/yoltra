@@ -1,48 +1,131 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/rush.schema.json",
-  "rushVersion": "5.155.1",
-  "pnpmVersion": "8.15.4",
+
+  /**
+   * Increment this after upgrading Rush to a newer version.
+   * Verify the latest: `npm view @microsoft/rush version`
+   */
+  "rushVersion": "5.168.0",
+
+  /**
+   * The version of PNPM that Rush will install and use internally.
+   * Verify the latest: `npm view pnpm version`
+   */
+  "pnpmVersion": "9.15.0",
+
+  /**
+   * Reject Node.js versions outside this range (enforced on `rush install`).
+   */
+  "nodeSupportedVersionRange": ">=18.18.0 <25.0.0",
+
+  /**
+   * Allow projects to reside up to 3 folders deep (e.g. examples/v0/yoltra-in-react).
+   * Rush default is 2. We need 3 for the examples/v0/* structure.
+   */
+  "projectFolderMinDepth": 1,
   "projectFolderMaxDepth": 3,
-  "repository": {
-    "url": "https://github.com/quojs/quojs.git"
+
+  // ---------------------------------------------------------------------------
+  // PNPM options
+  // ---------------------------------------------------------------------------
+  "pnpmOptions": {
+    /**
+     * Use the global PNPM store, shared across all your repos on this machine.
+     * Change to "local" if you need an isolated store per repo.
+     */
+    "pnpmStore": "global",
+
+    /**
+     * Do NOT fail the install when a peer dependency is not satisfied.
+     * Some packages (ESLint plugins, React types) declare loose peer ranges.
+     */
+    "strictPeerDependencies": false,
+
+    /**
+     * Prevent manual edits to the Rush-managed pnpm-lock.yaml.
+     * Always run `rush update` to touch the lockfile.
+     */
+    "preventManualShrinkwrapChanges": true,
+
+    /**
+     * Opt into pnpm workspaces so the `workspace:` protocol resolves correctly
+     * and Rush produces a single lockfile for the whole monorepo.
+     */
+    "useWorkspaces": true
   },
+
+  // ---------------------------------------------------------------------------
+  // Versioning behaviour
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Require every publishable package to pin the exact same version for any
+   * dependency that appears in multiple projects. Helps avoid version skew.
+   */
+  "ensureConsistentVersions": true,
+
+  /**
+   * Enable hotfix change files only if you have a hotfix branch workflow.
+   * Disabled here to keep the flow simple.
+   */
+  "hotfixChangeEnabled": false,
+
+  // ---------------------------------------------------------------------------
+  // Projects
+  // (Order does not matter — Rush resolves the dependency graph automatically.)
+  // ---------------------------------------------------------------------------
   "projects": [
+    // ------------------------------------------------------------------
+    // Tooling — ESLint shared configs (published, no lockstep policy)
+    // ------------------------------------------------------------------
     {
-      "packageName": "@quojs/repo-tools",
-      "projectFolder": "tools/repo-tools",
+      "packageName": "@yoltra/eslint-config-base",
+      "projectFolder": "tools/eslint-config-base",
       "reviewCategory": "tools",
-      "shouldPublish": false
+      "shouldPublish": true
     },
     {
-      "packageName": "@quojs/core",
+      "packageName": "@yoltra/eslint-config-react",
+      "projectFolder": "tools/eslint-config-react",
+      "reviewCategory": "tools",
+      "shouldPublish": true
+    },
+
+    // ------------------------------------------------------------------
+    // Core libraries - El mero mero sabor ranchero...
+    // ------------------------------------------------------------------
+    {
+      "packageName": "@yoltra/core",
       "projectFolder": "packages/core",
-      "reviewCategory": "packages",
-      "versionPolicyName": "quojs-core",
+      "reviewCategory": "production",
       "shouldPublish": true
     },
     {
-      "packageName": "@quojs/react",
+      "packageName": "@yoltra/react",
       "projectFolder": "packages/react",
-      "reviewCategory": "packages",
-      "versionPolicyName": "quojs-react",
+      "reviewCategory": "production",
       "shouldPublish": true
     },
+
+    // ------------------------------------------------------------------
+    // Examples — never published
+    // ------------------------------------------------------------------
     {
-      "packageName": "quojs-in-react",
-      "projectFolder": "examples/v0/quojs-in-react",
-      "reviewCategory": "examples",
+      "packageName": "yoltra-in-react",
+      "projectFolder": "examples/v0/yoltra-in-react",
+      "reviewCategory": "samples",
       "shouldPublish": false
     },
     {
-      "packageName": "quojs-in-nextjs",
-      "projectFolder": "examples/v0/quojs-in-nextjs",
-      "reviewCategory": "examples",
+      "packageName": "yoltra-in-nextjs",
+      "projectFolder": "examples/v0/yoltra-in-nextjs",
+      "reviewCategory": "samples",
       "shouldPublish": false
     },
     {
-      "packageName": "quojs-kinetic-logo",
-      "projectFolder": "examples/v0/quojs-kinetic-logo",
-      "reviewCategory": "examples",
+      "packageName": "yoltra-kinetic-logo",
+      "projectFolder": "examples/v0/yoltra-kinetic-logo",
+      "reviewCategory": "samples",
       "shouldPublish": false
     }
   ]

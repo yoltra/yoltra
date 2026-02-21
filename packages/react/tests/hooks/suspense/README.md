@@ -2,7 +2,7 @@
 
 ## Overview
 
-This suite validates Quo.js's Suspense-enabled selectors and related cache utilities:
+This suite validates yoltra's Suspense-enabled selectors and related cache utilities:
 
 - `useSuspenseAtomicProp`
 - `useSuspenseAtomicProps`
@@ -11,7 +11,7 @@ This suite validates Quo.js's Suspense-enabled selectors and related cache utili
 - `clearSuspenseCache`
 - `suspenseCache`
 
-Suspense selectors are a differentiating feature of Quo.js and enable async derived state with granular invalidation semantics tied to reducer paths.
+Suspense selectors are a differentiating feature of yoltra and enable async derived state with granular invalidation semantics tied to reducer paths.
 
 ---
 
@@ -120,7 +120,7 @@ These belong to higher-level integration or E2E test suites.
 
 ## Why This Suite Matters
 
-Suspense selectors are a big part of why Quo.js can feel “reactive” and modern without users hand-rolling async glue code.
+Suspense selectors are a big part of why yoltra can feel “reactive” and modern without users hand-rolling async glue code.
 
 This suite ensures:
 

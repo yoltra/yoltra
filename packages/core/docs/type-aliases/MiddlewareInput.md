@@ -1,14 +1,14 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / MiddlewareInput
+[@yoltra/core](../README.md) / MiddlewareInput
 
 # Type Alias: MiddlewareInput\<S, EM\>
 
 > **MiddlewareInput**\<`S`, `EM`\> = [`MiddlewareFunction`](MiddlewareFunction.md)\<`S`, `EM`\> \| [`MiddlewareSpec`](../interfaces/MiddlewareSpec.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:194](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L194)
+Defined in: [types.ts:194](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L194)
 
 Middleware input: accepts either a function (legacy) or a spec object (recommended).
 

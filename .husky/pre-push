@@ -1,1 +1,0 @@
-node tools/repo-tools/hooks/pre-push.mjs

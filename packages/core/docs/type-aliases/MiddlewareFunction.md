@@ -1,14 +1,14 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / MiddlewareFunction
+[@yoltra/core](../README.md) / MiddlewareFunction
 
 # Type Alias: MiddlewareFunction()\<S, EM\>
 
 > **MiddlewareFunction**\<`S`, `EM`\> = (`state`, `event`, `emit`) => `boolean` \| `Promise`\<`boolean`\>
 
-Defined in: [types.ts:603](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L603)
+Defined in: [types.ts:652](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L652)
 
 Middleware function: may mutate, log, side-effect, or veto an event.
 Return true to continue; false to swallow / cancel propagation.

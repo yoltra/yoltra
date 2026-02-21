@@ -1,14 +1,14 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / EventKey
+[@yoltra/core](../README.md) / EventKey
 
 # Type Alias: EventKey\<EM\>
 
 > **EventKey**\<`EM`\> = `{ [C in keyof EM & string]: [C, keyof EM[C] & string] }`\[keyof `EM` & `string`\]
 
-Defined in: [types.ts:47](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L47)
+Defined in: [types.ts:47](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L47)
 
 Canonical routing concept: a readonly tuple `[channel, type]` that uniquely identifies an event.
 

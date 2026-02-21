@@ -1,12 +1,12 @@
 {
-  "name": "@quojs/quojs",
-  "version": "0.0.1",
+  "name": "@yoltra/yoltra",
+  "version": "0.1.0",
   "private": true,
   "license": "MIT",
   "type": "module",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
-    "email": "manu@quojs.dev"
+    "email": "manu@yoltra.dev"
   },
   "contributors": [],
   "files": [
@@ -15,13 +15,6 @@
   "packageManager": "pnpm@8.15.4",
   "engines": {
     "node": ">=18.18"
-  },
-  "scripts": {
-    "test": "rush test",
-    "prepare": "husky"
-  },
-  "devDependencies": {
-    "@changesets/cli": "^2.29.8"
   },
   "pnpm": {
     "overrides": {

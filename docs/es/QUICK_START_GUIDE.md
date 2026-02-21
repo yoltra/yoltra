@@ -1,31 +1,28 @@
-![Quo.js logo](../../assets/logo.svg)
+![Yoltra logo](../../assets/yoltra-logo.png)
 
-# Guia de Inicio Rapido
+# Guía de Inicio Rápido
 
-> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/QUICK_START_GUIDE.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/QUICK_START_GUIDE.md)&nbsp; |
-> &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/QUICK_START_GUIDE.md)
+> [🇺🇸 English](../en/QUICK_START_GUIDE.md) &nbsp;|&nbsp; 👉 Español
 
-Cinco pasos desde la instalacion hasta una app funcional.
+Cinco pasos desde la instalación hasta una app funcionando.
 
 ---
 
 ## 1. Instalar
 
 ```bash
-npm install @quojs/core @quojs/react
+npm install @yoltra/core @yoltra/react
 ```
 
-(`@quojs/react` solo es necesario cuando se usa React.)
+(`@yoltra/react` solo es necesario al usar React.)
 
 ---
 
-## 2. Definir tu mapa de eventos y store
+## 2. Define tu mapa de eventos y tu store
 
 ```typescript
 // store.ts
-import { createStore, eventKeys } from '@quojs/core';
+import { createStore, eventKeys } from "@yoltra/core";
 
 export type AppEM = {
   counter: {
@@ -38,21 +35,27 @@ export type AppEM = {
 export type AppState = { counter: { value: number } };
 
 export const store = createStore<AppState, AppEM>({
-  name: 'App',
+  name: "App",
   reducer: {
     counter: {
       state: { value: 0 },
-      when: { keys: eventKeys<AppEM>()([
-        ['counter', 'increment'],
-        ['counter', 'decrement'],
-        ['counter', 'reset'],
-      ])},
+      when: {
+        keys: eventKeys<AppEM>()([
+          ["counter", "increment"],
+          ["counter", "decrement"],
+          ["counter", "reset"],
+        ]),
+      },
       reducer: (state, event) => {
         switch (event.type) {
-          case 'increment': return { value: state.value + event.payload };
-          case 'decrement': return { value: state.value - event.payload };
-          case 'reset':     return { value: 0 };
-          default:          return state;
+          case "increment":
+            return { value: state.value + event.payload };
+          case "decrement":
+            return { value: state.value - event.payload };
+          case "reset":
+            return { value: 0 };
+          default:
+            return state;
         }
       },
     },
@@ -62,36 +65,31 @@ export const store = createStore<AppState, AppEM>({
 
 ---
 
-## 3. Crear hooks tipados con `createQuoHooks`
+## 3. Crea hooks tipados con `createHooks`
 
 ```typescript
 // hooks.ts
-import { createContext } from 'react';
-import { createQuoHooks } from '@quojs/react';
-import type { StoreInstance } from '@quojs/core';
-import type { AppState, AppEM } from './store';
+import { createContext } from "react";
+import { createHooks } from "@yoltra/react";
+import type { StoreInstance } from "@yoltra/core";
+import type { AppState, AppEM } from "./store";
 
-export const AppStoreContext = createContext<
-  StoreInstance<'counter', AppState, AppEM> | null
->(null);
+export const AppStoreContext = createContext<StoreInstance<"counter", AppState, AppEM> | null>(
+  null,
+);
 
-export const {
-  useAtomicProp,
-  useEmit,
-  useEvent,
-  useSelector,
-  shallowEqual,
-} = createQuoHooks(AppStoreContext);
+export const { useAtomicProp, useEmit, useEvent, useSelector, shallowEqual } =
+  createHooks(AppStoreContext);
 ```
 
 ---
 
-## 4. Proveer el store
+## 4. Provee el store
 
 ```tsx
 // App.tsx
-import { store } from './store';
-import { AppStoreContext } from './hooks';
+import { store } from "./store";
+import { AppStoreContext } from "./hooks";
 
 export function App() {
   return (
@@ -104,23 +102,23 @@ export function App() {
 
 ---
 
-## 5. Usar hooks en componentes
+## 5. Usa los hooks en los componentes
 
 ```tsx
 // Counter.tsx
-import { useAtomicProp, useEmit } from './hooks';
+import { useAtomicProp, useEmit } from "./hooks";
 
 export function Counter() {
   // Solo se re-renderiza cuando counter.value cambia
-  const value = useAtomicProp({ reducer: 'counter', property: 'value' });
+  const value = useAtomicProp({ reducer: "counter", property: "value" });
   const emit = useEmit();
 
   return (
     <div>
-      <h1>Count: {value}</h1>
-      <button onClick={() => emit('counter', 'increment', 1)}>+</button>
-      <button onClick={() => emit('counter', 'decrement', 1)}>-</button>
-      <button onClick={() => emit('counter', 'reset', null)}>Reset</button>
+      <h1>Contador: {value}</h1>
+      <button onClick={() => emit("counter", "increment", 1)}>+</button>
+      <button onClick={() => emit("counter", "decrement", 1)}>-</button>
+      <button onClick={() => emit("counter", "reset", null)}>Reiniciar</button>
     </div>
   );
 }
@@ -128,9 +126,14 @@ export function Counter() {
 
 ---
 
-## Que sigue?
+## ¿Qué sigue?
 
-- **[API de @quojs/core](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** -- Middleware, efectos, matchers `When`, suscripciones a eventos
-- **[API de @quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** -- `useAtomicProps`, hooks de Suspense, wildcards
-- **[Arquitectura de Cola de Eventos](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)** -- Como funciona el pipeline internamente
-- **[Ejemplos](https://github.com/quojs/quojs/blob/main/README.md#live-examples)** -- App de tareas, logo cinetico, integracion con Next.js
+- **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)**
+  — Middleware, efectos, matchers `When`, suscripciones a eventos
+- **[API de @yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)**
+  — `useAtomicProps`, hooks con Suspense, wildcards
+- **[Arquitectura de la cola de eventos](./design/event-queue-architecture.md)** — Cómo funciona
+  el pipeline internamente
+- **[Ejemplos](https://github.com/yoltra/yoltra/blob/main/README.md#live-examples)** — App de
+  tareas, logo cinético, integración con Next.js
+- **[Guía del Desarrollador](./DEVELOPER_GUIDE.md)** — Configurar el monorepo y contribuir

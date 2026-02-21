@@ -1,14 +1,14 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / typedEvents
+[@yoltra/core](../README.md) / typedEvents
 
 # Function: typedEvents()
 
 > **typedEvents**\<`EM`\>(`_`): \<`C`, `Evt`\>(`channel`, `events`) => readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
 
-Defined in: [store/Store.ts:1714](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/store/Store.ts#L1714)
+Defined in: [store/Store.ts:1784](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/store/Store.ts#L1784)
 
 Utility to define **typed** `(channel, events[])` definitions for reducer specs.
 

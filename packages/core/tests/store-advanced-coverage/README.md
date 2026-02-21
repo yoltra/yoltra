@@ -1,8 +1,8 @@
-# Quo.js Core — Advanced Coverage Test Suite Documentation
+# yoltra Core — Advanced Coverage Test Suite Documentation
 
 ## Purpose
 
-This suite exercises edge‑case branches and HMR‑style APIs that are not covered by the basic unit/integration suites. These scenarios matter because for Quo.js, correctness is critical and the `Store` is the central orchestrator.
+This suite exercises edge‑case branches and HMR‑style APIs that are not covered by the basic unit/integration suites. These scenarios matter because for yoltra, correctness is critical and the `Store` is the central orchestrator.
 
 The goal of this suite is not to provide “example usage” for end users, but to:
 - drive coverage of branches that would otherwise be unreachable,
@@ -133,4 +133,4 @@ If the Store changes:
 
 ## Conclusion
 
-The advanced coverage suite ensures Quo.js’s most complex branches remain safe against refactors. These branches are expensive to test manually and extremely easy to break, so automated tests are justified and critical.
+The advanced coverage suite ensures yoltra’s most complex branches remain safe against refactors. These branches are expensive to test manually and extremely easy to break, so automated tests are justified and critical.

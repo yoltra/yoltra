@@ -1,4 +1,4 @@
-# @quojs/core Test Suites
+# @yoltra/core Test Suites
 
 This directory contains Vitest suites for the core package.
 
@@ -13,7 +13,6 @@ Each suite lives in its own folder and is self-contained:
 - `store-basic-flow/` – integration tests for `createStore` and basic state flow.
 - `store-middleware-and-effects/` – integration tests for middleware and effects.
 - `store-dynamic-slices/` – integration tests for dynamic slice management.
-- `store-devtools-and-state-restore/` – integration tests around Redux DevTools and external state restore.
 - `store-event-queue-and-dedup/` – integration tests covering the event queue and deduplication.
 - `store-event-subscriptions/` – integration tests for committed/uncommitted/all event subscription phases.
 - `store-when-matcher/` – integration tests for `When` matcher variants (`any`, `keys`, `channel`, `channels`).

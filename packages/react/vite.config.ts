@@ -33,7 +33,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: "src/index.ts",
-      name: "quojs-react",
+      name: "yoltra-react",
       formats: ["es", "cjs"],
       fileName: (format) => (format === "cjs" ? "index.cjs" : "index.mjs")
     },
@@ -43,7 +43,7 @@ export default defineConfig({
     minify: true,
     emptyOutDir: true,
     rollupOptions: {
-      external: ["react", "react-dom", "@quojs/core", "tslib"],
+      external: ["react", "react-dom", "@yoltra/core", "tslib"],
       output: {
         compact: true,
         globals: {
@@ -60,6 +60,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: [],
-    exclude: ["tslib", "@quojs/core"]
+    exclude: ["tslib", "@yoltra/core"]
   }
 });

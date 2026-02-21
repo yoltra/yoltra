@@ -30,7 +30,7 @@ describe("Reducer wrapper", () => {
       channel: "math",
       type: "add",
       payload: 2,
-      id: Symbol("evt"),
+      id: "test-evt-id",
     } as any;
 
     const s1 = reducer.reduce(s0, addEvent);
@@ -49,7 +49,7 @@ describe("Reducer wrapper", () => {
       channel: "math",
       type: "add",
       payload: 5,
-      id: Symbol("evt"),
+      id: "test-evt-id",
     } as any;
 
     const s1 = reducer.reduce(s0, evt);

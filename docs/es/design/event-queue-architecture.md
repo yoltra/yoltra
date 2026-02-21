@@ -1,17 +1,19 @@
+![Yoltra logo](../../../assets/yoltra-logo.png)
+
 # Arquitectura de Cola de Eventos
 
->  👉 [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/design/event-queue-architecture.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/design/event-queue-architecture.md)&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/design/event-queue-architecture.md)
+> 👉
+> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/docs/es/design/event-queue-architecture.md)&nbsp;
+> |
+> &nbsp;[ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)&nbsp;
 
-**Versión:** 0.7.0
-**Última actualización:** Enero 2026
-**Estado:** Estable
+**Versión:** 0.7.0 **Última actualización:** Enero 2026 **Estado:** Estable
 
 ## Descripción General
 
-Quo.js emplea una **cola de eventos asíncrona y serializada** con un guardia de reentrada para control de contrapresión. Esta arquitectura garantiza un ordenamiento predecible de eventos y previene condiciones de carrera mientras soporta middleware y efectos asíncronos.
+Yoltra emplea una **cola de eventos asíncrona y serializada** con un guardia de reentrada para
+control de contrapresión. Esta arquitectura garantiza un ordenamiento predecible de eventos y
+previene condiciones de carrera mientras soporta middleware y efectos asíncronos.
 
 ## Mecanismo Central
 
@@ -29,9 +31,11 @@ private isProcessingQueue = false;
 ```
 
 **Propiedades:**
+
 - **Cola FIFO sin límites** - Eventos encolados en el orden recibido
 - **Bandera de procesamiento única** - Previene operaciones de drenaje concurrentes
-- **Deduplicación de eventos** - IDs de símbolos únicos previenen el doble procesamiento (seguridad en Modo Estricto de React)
+- **Deduplicación de eventos** - IDs de símbolos únicos previenen el doble procesamiento
+  (seguridad en Modo Estricto de React)
 
 ### Pipeline de Emisión
 
@@ -141,18 +145,20 @@ public async emit<C, T>(
 El store usa una **bandera booleana** (`isProcessingQueue`) para implementar contrapresión:
 
 ```typescript
-if (this.isProcessingQueue) return;  // Contrapresión aplicada aquí
+if (this.isProcessingQueue) return; // Contrapresión aplicada aquí
 ```
 
 **Mecanismo:**
 
 - **Primera llamada a `emit()`** adquiere el bloqueo y comienza el drenaje
 - **Llamadas subsecuentes a `emit()`** (durante el drenaje) encolan y retornan inmediatamente
-- **Llamadas anidadas a `emit()`** (desde middleware/efectos) se encolan para procesamiento posterior
+- **Llamadas anidadas a `emit()`** (desde middleware/efectos) se encolan para procesamiento
+  posterior
 
 ### Modelo de Ejecución
 
-Quo.js usa un modelo de **"paso de testigo"** donde la primera llamada desbloqueada a `emit()` consume toda la cola:
+Yoltra usa un modelo de **"paso de testigo"** donde la primera llamada desbloqueada a `emit()`
+consume toda la cola:
 
 ```
 Línea de tiempo:
@@ -161,17 +167,17 @@ T0: emit('evento1') [Componente A]
     → isProcessingQueue = false
     → Adquirir bloqueo
     → Comenzar bucle de drenaje
-   
+
 T1: emit('evento2') [Middleware durante evento1]
     → isProcessingQueue = true (BLOQUEADO)
     → Solo encolar
     → Retornar inmediatamente
-   
+
 T2: emit('evento3') [Efecto durante evento1]
     → isProcessingQueue = true (BLOQUEADO)
     → Solo encolar
     → Retornar inmediatamente
-   
+
 T3: Continúa bucle de drenaje [emit('evento1') original]
     → Procesar evento1
     → Procesar evento2 (tomado de la cola)
@@ -180,7 +186,8 @@ T3: Continúa bucle de drenaje [emit('evento1') original]
     → Retornar
 ```
 
-**Propiedad Clave:** No hay **hilo consumidor separado o worker**. El consumo de la cola es impulsado enteramente por llamadas a `emit()`.
+**Propiedad Clave:** No hay **hilo consumidor separado o worker**. El consumo de la cola es
+impulsado enteramente por llamadas a `emit()`.
 
 ## Garantías de Ordenamiento
 
@@ -189,9 +196,9 @@ T3: Continúa bucle de drenaje [emit('evento1') original]
 Los eventos se procesan en estricto orden de encolamiento:
 
 ```typescript
-await emit('ui', 'evento1', p1);  // Encolado en índice 0
-await emit('ui', 'evento2', p2);  // Encolado en índice 1
-await emit('ui', 'evento3', p3);  // Encolado en índice 2
+await emit("ui", "evento1", p1); // Encolado en índice 0
+await emit("ui", "evento2", p2); // Encolado en índice 1
+await emit("ui", "evento3", p3); // Encolado en índice 2
 
 // Orden de procesamiento: evento1 → evento2 → evento3 (garantizado)
 ```
@@ -203,32 +210,33 @@ Los eventos **nunca** se procesan concurrentemente:
 ```typescript
 while (this.eventQueue.length) {
   const event = this.eventQueue.shift()!;
- 
+
   // Deduplicación
   if (this.processedEventIds.has(event.id)) continue;
   this.processedEventIds.add(event.id);
- 
+
   // Middleware (async)
   for (const mw of this.middleware) {
-    const ok = await mw(state, event, emit);  // ← Espera cada uno
+    const ok = await mw(state, event, emit); // ← Espera cada uno
     if (!ok) break;
   }
- 
+
   // Reducers (sync)
   this.reducerBus.emit(event.channel, event.type, event.payload);
- 
+
   // Efectos (async)
-  await this.notifyEffects(event);  // ← Espera completación
- 
+  await this.notifyEffects(event); // ← Espera completación
+
   // Suscriptores (sync)
-  if (stateChanged) this.listeners.forEach(l => l());
- 
+  if (stateChanged) this.listeners.forEach((l) => l());
+
   // DevTools (sync)
   this.devtools?.send(action, state);
 }
 ```
 
-**Propiedad:** El siguiente evento en la cola no comienza a procesarse hasta que el evento actual completa todo su pipeline (incluyendo efectos asíncronos).
+**Propiedad:** El siguiente evento en la cola no comienza a procesarse hasta que el evento
+actual completa todo su pipeline (incluyendo efectos asíncronos).
 
 ### Seguridad de Reentrada
 
@@ -237,16 +245,16 @@ Las llamadas anidadas a `emit()` durante el procesamiento de eventos son seguras
 ```typescript
 // Middleware que emite
 const middleware: MiddlewareFunction = async (state, event, emit) => {
-  if (event.type === 'fetchData') {
-    await emit('ui', 'loading', true);     // ← Emit anidado
-    const data = await fetch('/api');
-    await emit('data', 'loaded', data);    // ← Emit anidado
+  if (event.type === "fetchData") {
+    await emit("ui", "loading", true); // ← Emit anidado
+    const data = await fetch("/api");
+    await emit("data", "loaded", data); // ← Emit anidado
   }
   return true;
 };
 
 // Código de usuario
-await emit('api', 'fetchData', { url: '/todos' });
+await emit("api", "fetchData", { url: "/todos" });
 // Resultado: 'fetchData' → 'loading' → 'loaded' (en orden)
 ```
 
@@ -258,10 +266,10 @@ El bucle de eventos de JavaScript asegura que solo una llamada a `emit()` se eje
 
 ```typescript
 // Componente A (microtarea 1)
-emit('evento1');
+emit("evento1");
 
 // Componente B (microtarea 2)
-emit('evento2');
+emit("evento2");
 
 // Ejecución real:
 // 1. emit('evento1') se ejecuta hasta completarse (o cede a await)
@@ -274,13 +282,14 @@ Async/await coloca continuaciones en la cola de microtareas:
 
 ```typescript
 async function ejemplo() {
-  await emit('evento1');  // Cede aquí
+  await emit("evento1"); // Cede aquí
   // Continuación programada como microtarea
-  console.log('después de evento1');
+  console.log("después de evento1");
 }
 ```
 
-**Implicación:** Múltiples llamadas a `emit()` desde diferentes componentes pueden intercalarse en límites de await, pero el ordenamiento de la cola se preserva.
+**Implicación:** Múltiples llamadas a `emit()` desde diferentes componentes pueden intercalarse
+en límites de await, pero el ordenamiento de la cola se preserva.
 
 ## Deduplicación de Eventos
 
@@ -290,7 +299,7 @@ React 18+ Modo Estricto ejecuta efectos dos veces en desarrollo:
 
 ```typescript
 useEffect(() => {
-  emit('analytics', 'pageView', { page });  // ¡Se dispara 2 veces en dev!
+  emit("analytics", "pageView", { page }); // ¡Se dispara 2 veces en dev!
 }, [page]);
 ```
 
@@ -324,37 +333,39 @@ public dispose(): void {
 }
 ```
 
-**Suposición:** Los eventos más antiguos que el intervalo de limpieza nunca serán re-emitidos (seguro para la mayoría de las aplicaciones).
+**Suposición:** Los eventos más antiguos que el intervalo de limpieza nunca serán re-emitidos
+(seguro para la mayoría de las aplicaciones).
 
 ## Características de Rendimiento
 
 ### Complejidad Temporal
 
-| Operación | Complejidad | Notas |
-|-----------|------------|-------|
-| `emit()` encolar | O(1) | Push de array |
-| `emit()` drenar (cola vacía) | O(n×m) | n = eventos, m = middleware+efectos |
-| `emit()` drenar (cola tiene eventos) | O(1) | Retorna inmediatamente |
-| Deduplicación de eventos | O(1) | Búsqueda en Set |
-| Pipeline de middleware | O(k) | k = número de middleware |
-| Despacho de reducer | O(1) | Emisión directa de EventBus |
-| Despacho de efecto | O(1) | Búsqueda en Map por clave |
+| Operación                            | Complejidad | Notas                               |
+| ------------------------------------ | ----------- | ----------------------------------- |
+| `emit()` encolar                     | O(1)        | Push de array                       |
+| `emit()` drenar (cola vacía)         | O(n×m)      | n = eventos, m = middleware+efectos |
+| `emit()` drenar (cola tiene eventos) | O(1)        | Retorna inmediatamente              |
+| Deduplicación de eventos             | O(1)        | Búsqueda en Set                     |
+| Pipeline de middleware               | O(k)        | k = número de middleware            |
+| Despacho de reducer                  | O(1)        | Emisión directa de EventBus         |
+| Despacho de efecto                   | O(1)        | Búsqueda en Map por clave           |
 
 ### Complejidad Espacial
 
-| Estructura | Complejidad | Notas |
-|-----------|------------|-------|
-| `eventQueue` | O(n) | n = eventos encolados (sin límite) |
-| `processedEventIds` | O(m) | m = eventos desde última limpieza |
-| `middleware` | O(k) | k = middleware registrado |
-| `effects` | O(e) | e = efectos registrados |
+| Estructura          | Complejidad | Notas                              |
+| ------------------- | ----------- | ---------------------------------- |
+| `eventQueue`        | O(n)        | n = eventos encolados (sin límite) |
+| `processedEventIds` | O(m)        | m = eventos desde última limpieza  |
+| `middleware`        | O(k)        | k = middleware registrado          |
+| `effects`           | O(e)        | e = efectos registrados            |
 
 ### Cuellos de Botella
 
 1. **Reducers Lentos** - Bloquean toda la cola (síncrono)
 2. **Middleware Lento** - Bloquea el procesamiento de eventos (asíncrono pero secuencial)
 3. **Efectos Lentos** - Bloquea el siguiente evento en la cola (asíncrono pero secuencial)
-4. **Crecimiento de Cola** - Uso de memoria sin límite si los eventos se encolan más rápido que el procesamiento
+4. **Crecimiento de Cola** - Uso de memoria sin límite si los eventos se encolan más rápido que
+   el procesamiento
 
 ## Modos de Falla
 
@@ -365,21 +376,23 @@ public dispose(): void {
 ```typescript
 // Caso patológico: Emisión recursiva
 registerEffect({
-  events: [['ui', 'tick']],
+  events: [["ui", "tick"]],
   effect: async (evt, getState, emit) => {
-    await emit('ui', 'tick', evt.payload + 1);  // ¡Recursión infinita!
-  }
+    await emit("ui", "tick", evt.payload + 1); // ¡Recursión infinita!
+  },
 });
 
-emit('ui', 'tick', 0);  // La cola crece sin límite
+emit("ui", "tick", 0); // La cola crece sin límite
 ```
 
 **Síntomas:**
+
 - Uso creciente de memoria
 - Rendimiento degradado
 - Eventual fallo por OOM
 
-**Mitigación:** La aplicación debe evitar bucles infinitos. El store no tiene protección incorporada.
+**Mitigación:** La aplicación debe evitar bucles infinitos. El store no tiene protección
+incorporada.
 
 ### Inanición del Bucle de Eventos
 
@@ -392,15 +405,17 @@ reducer: (state, event) => {
     // Trabajo intensivo de CPU
   }
   return { ...state, result: i };
-}
+};
 ```
 
 **Síntomas:**
+
 - UI se congela
 - Otros eventos atascados en la cola
 - Mala experiencia de usuario
 
-**Mitigación:** Mantener reducers rápidos y puros. Mover computación pesada a efectos o Web Workers.
+**Mitigación:** Mantener reducers rápidos y puros. Mover computación pesada a efectos o Web
+Workers.
 
 ### Cancelación de Middleware
 
@@ -409,14 +424,15 @@ reducer: (state, event) => {
 ```typescript
 const authMiddleware: MiddlewareFunction = (state, event) => {
   if (!state.auth.isAuthenticated) {
-    console.warn('Evento no autorizado:', event);
-    return false;  // Cancelar propagación
+    console.warn("Evento no autorizado:", event);
+    return false; // Cancelar propagación
   }
   return true;
 };
 ```
 
 **Comportamiento:**
+
 - El evento se desencola pero no se procesa
 - Los reducers y efectos nunca ven el evento
 - Los suscriptores no son notificados
@@ -430,16 +446,17 @@ const authMiddleware: MiddlewareFunction = (state, event) => {
 
 ```typescript
 registerEffect({
-  events: [['api', 'fetch']],
+  events: [["api", "fetch"]],
   effect: async (evt) => {
     const res = await fetch(evt.payload.url);
-    const data = await res.json();  // Puede lanzar si no es JSON
+    const data = await res.json(); // Puede lanzar si no es JSON
     // ...
-  }
+  },
 });
 ```
 
 **Comportamiento:**
+
 - El error se captura y registra: `console.error("Error de efecto:", err);`
 - Otros efectos aún se ejecutan
 - El drenaje de cola continúa
@@ -451,35 +468,39 @@ registerEffect({
 effect: async (evt, getState, emit) => {
   try {
     const data = await fetchData(evt.payload.url);
-    await emit('api', 'fetchSuccess', data);
+    await emit("api", "fetchSuccess", data);
   } catch (error) {
-    await emit('api', 'fetchFailure', { error: error.message });
+    await emit("api", "fetchFailure", { error: error.message });
   }
-}
+};
 ```
 
 ## Suscripciones a Eventos (v0.7.0+)
 
 ### Descripción General
 
-Las suscripciones a eventos proporcionan una forma de observar eventos sin afectar el flujo de eventos. A diferencia del middleware (que puede cancelar eventos) y los efectos (que se ejecutan después del pipeline de eventos), las suscripciones a eventos son puramente observacionales.
+Las suscripciones a eventos proporcionan una forma de observar eventos sin afectar el flujo de
+eventos. A diferencia del middleware (que puede cancelar eventos) y los efectos (que se ejecutan
+después del pipeline de eventos), las suscripciones a eventos son puramente observacionales.
 
 ### Fases de Suscripción
 
-| Fase | Cuándo se Notifica | Caso de Uso |
-|------|-------------------|-------------|
-| `'committed'` | Después de reducers, antes de efectos | Reaccionar a cambios de estado exitosos |
-| `'uncommitted'` | Después de rechazo del middleware | Reaccionar a eventos bloqueados |
-| `'all'` | Ambas fases (con parámetro phase) | Logging, analíticas, depuración |
+| Fase            | Cuándo se Notifica                    | Caso de Uso                             |
+| --------------- | ------------------------------------- | --------------------------------------- |
+| `'committed'`   | Después de reducers, antes de efectos | Reaccionar a cambios de estado exitosos |
+| `'uncommitted'` | Después de rechazo del middleware     | Reaccionar a eventos bloqueados         |
+| `'all'`         | Ambas fases (con parámetro phase)     | Logging, analíticas, depuración         |
 
 ### Orden de Procesamiento
 
 **Para eventos confirmados:**
+
 ```
 Middleware (permite) → Reducers → Subs de Eventos Confirmados → Efectos → Suscriptores Gruesos
 ```
 
 **Para eventos no confirmados:**
+
 ```
 Middleware (rechaza) → Subs de Eventos No Confirmados → DevTools [CANCELADO]
 ```
@@ -491,43 +512,60 @@ type EventSubscriptionHandler = (
   event: EventUnion<EM>,
   getState: () => S,
   emit: Emit<EM>,
-  phase: 'committed' | 'uncommitted'
+  phase: "committed" | "uncommitted",
 ) => void | Promise<void>;
 ```
 
 **Parámetros:**
+
 - `event` - El objeto de evento completo `{ channel, type, payload, id }`
-- `getState` - Retorna el estado actual (después de reducers para confirmados, sin cambios para no confirmados)
+- `getState` - Retorna el estado actual (después de reducers para confirmados, sin cambios para
+  no confirmados)
 - `emit` - Permite emitir nuevos eventos desde el handler
 - `phase` - La fase que activó esta notificación
 
 ### Manejo de Errores
 
-Los errores en suscripciones de eventos se capturan y registran, permitiendo que otras suscripciones continúen:
+Los errores en suscripciones de eventos se capturan y registran, permitiendo que otras
+suscripciones continúen:
 
 ```typescript
 // Si una suscripción lanza error, las demás aún se ejecutan
-store.onEvent('ui', 'click', () => { throw new Error('boom'); });
-store.onEvent('ui', 'click', () => { console.log('aún se ejecuta'); }); // ✅
+store.onEvent("ui", "click", () => {
+  throw new Error("boom");
+});
+store.onEvent("ui", "click", () => {
+  console.log("aún se ejecuta");
+}); // ✅
 ```
 
 ### Ejemplo de Uso
 
 ```typescript
 // Eventos confirmados (por defecto)
-store.onEvent('ui', 'save', (event, getState, emit, phase) => {
-  console.log('Guardado confirmado, nuevo estado:', getState());
+store.onEvent("ui", "save", (event, getState, emit, phase) => {
+  console.log("Guardado confirmado, nuevo estado:", getState());
 });
 
 // Eventos no confirmados
-store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
-  console.log('Eliminación fue bloqueada por el middleware');
-}, 'uncommitted');
+store.onEvent(
+  "ui",
+  "delete",
+  (event, getState, emit, phase) => {
+    console.log("Eliminación fue bloqueada por el middleware");
+  },
+  "uncommitted",
+);
 
 // Todos los eventos
-store.onEvent('ui', 'action', (event, getState, emit, phase) => {
-  analytics.track(`event_${phase}`, { type: event.type });
-}, 'all');
+store.onEvent(
+  "ui",
+  "action",
+  (event, getState, emit, phase) => {
+    analytics.track(`event_${phase}`, { type: event.type });
+  },
+  "all",
+);
 ```
 
 ## Comparación con Otras Bibliotecas
@@ -536,14 +574,15 @@ store.onEvent('ui', 'action', (event, getState, emit, phase) => {
 
 ```typescript
 // Redux: Procesamiento inmediato y síncrono
-dispatch({ type: 'ADD_TODO', payload: todo });
+dispatch({ type: "ADD_TODO", payload: todo });
 // ↑ Bloquea hasta que todos los reducers completan
 // ↑ Sin cola, sin soporte asíncrono
 
-const state = store.getState();  // Refleja el cambio inmediatamente
+const state = store.getState(); // Refleja el cambio inmediatamente
 ```
 
 **Propiedades:**
+
 - ✅ Temporización predecible
 - ✅ Modelo mental simple
 - ❌ Sin soporte de middleware asíncrono (requiere redux-thunk/saga)
@@ -556,10 +595,11 @@ const state = store.getState();  // Refleja el cambio inmediatamente
 set({ todos: [...todos, newTodo] });
 // ↑ Mutación síncrona + notificación
 
-get().todos;  // Tiene inmediatamente el nuevo todo
+get().todos; // Tiene inmediatamente el nuevo todo
 ```
 
 **Propiedades:**
+
 - ✅ Sobrecarga mínima
 - ✅ API simple
 - ❌ Sin patrones asíncronos incorporados
@@ -569,8 +609,8 @@ get().todos;  // Tiene inmediatamente el nuevo todo
 
 ```typescript
 // XState: Buzón de actor asíncrono
-actor.send({ type: 'FETCH' });
-actor.send({ type: 'UPDATE' });
+actor.send({ type: "FETCH" });
+actor.send({ type: "UPDATE" });
 // ↑ Eventos encolados en el buzón del actor
 // ↑ Procesados asincrónicamente por la máquina de estado
 
@@ -578,24 +618,26 @@ actor.send({ type: 'UPDATE' });
 ```
 
 **Propiedades:**
+
 - ✅ Verdadero procesamiento concurrente (múltiples actores)
 - ✅ Semántica de máquina de estado asíncrona incorporada
 - ❌ Modelo mental complejo
 - ❌ Mayor sobrecarga de memoria (un buzón por actor)
 
-### Quo.js (Cola Asíncrona)
+### Yoltra (Cola Asíncrona)
 
 ```typescript
-// Quo.js: Cola asíncrona serializada
-await emit('todo', 'add', todo);
+// Yoltra: Cola asíncrona serializada
+await emit("todo", "add", todo);
 // ↑ Retorna promesa cuando el procesamiento se completa
 // ↑ Encolado si otro evento está procesándose
 
-await emit('todo', 'delete', id);
+await emit("todo", "delete", id);
 // ↑ Garantizado procesar después de 'add'
 ```
 
 **Propiedades:**
+
 - ✅ Soporte de middleware/efectos asíncronos
 - ✅ Garantías estrictas de ordenamiento
 - ✅ Seguro para reentrada
@@ -609,6 +651,7 @@ await emit('todo', 'delete', id);
 **Requisito:** Soportar middleware y efectos asíncronos sin bloquear la aplicación.
 
 **Alternativa Considerada:** Modelo síncrono (como Redux)
+
 - **Rechazada:** Requiere capa de orquestación asíncrona separada (thunks, sagas)
 - **Elegida:** Soporte asíncrono incorporado mediante tipo de retorno `Promise<void>`
 
@@ -617,6 +660,7 @@ await emit('todo', 'delete', id);
 **Requisito:** Garantizar ordenamiento de eventos para transiciones de estado predecibles.
 
 **Alternativa Considerada:** Múltiples colas (por canal o por reducer)
+
 - **Rechazada:** Semántica de ordenamiento compleja, potenciales condiciones de carrera
 - **Elegida:** Cola única asegura ordenamiento global
 
@@ -625,6 +669,7 @@ await emit('todo', 'delete', id);
 **Requisito:** Prevenir corrupción de cola por llamadas anidadas a `emit()`.
 
 **Alternativa Considerada:** Prohibir emits anidados (lanzar error)
+
 - **Rechazada:** Rompe patrones comunes (middleware emitiendo eventos)
 - **Elegida:** Encolar y diferir eventos anidados
 
@@ -633,13 +678,12 @@ await emit('todo', 'delete', id);
 **Requisito:** Nunca descartar eventos en producción (riesgo de pérdida de datos).
 
 **Alternativa Considerada:** Buffer circular de tamaño fijo con política de desbordamiento
+
 - **Considerada:** Podría descartar eventos o lanzar errores en desbordamiento
 - **Elegida:** Cola sin límites prioriza corrección sobre seguridad de memoria
 - **Futuro:** Puede agregar límites opcionales con políticas configurables
 
-
--------
-
+---
 
 ## Apéndice: Referencia de Implementación
 
@@ -652,7 +696,7 @@ public async emit<C extends keyof EM, T extends keyof EM[C]>(
   payload: EM[C][T],
 ): Promise<void> {
   const id = Symbol("event");
- 
+
   this.eventQueue.push({
     channel: channel as string,
     type: type as string,
@@ -730,10 +774,10 @@ private eventIdCleanupTimer: ReturnType<typeof setInterval> | null = null;
 
 constructor(spec: StoreSpec<R, S, EM>) {
   // ...
- 
+
   const cleanupInterval =
     process.env.NODE_ENV === "production" ? 5 * 60 * 1000 : 30 * 1000;
-   
+
   this.eventIdCleanupTimer = setInterval(() => {
     this.processedEventIds.clear();
   }, cleanupInterval);
@@ -752,9 +796,11 @@ public dispose(): void {
 
 ## Glosario
 
-**Contrapresión**: Mecanismo para prevenir desbordamiento de cola ralentizando o bloqueando la producción de eventos.
+**Contrapresión**: Mecanismo para prevenir desbordamiento de cola ralentizando o bloqueando la
+producción de eventos.
 
-**Paso de Testigo**: Modelo de ejecución donde el control se transfiere de una operación asíncrona a otra.
+**Paso de Testigo**: Modelo de ejecución donde el control se transfiere de una operación
+asíncrona a otra.
 
 **Bucle de Drenaje**: El bucle `while` que procesa todos los eventos encolados secuencialmente.
 
@@ -768,13 +814,11 @@ public dispose(): void {
 
 ## Historial de Revisiones
 
-| Versión | Fecha | Cambios |
-|---------|------|---------|
-| 0.7.0 | 2026-01 | Añadida característica de Suscripciones a Eventos (fases committed/uncommitted/all) |
-| 0.5.0 | 2026-01 | Documentación inicial de arquitectura de cola asíncrona |
+| Versión | Fecha   | Cambios                                                                             |
+| ------- | ------- | ----------------------------------------------------------------------------------- |
+| 0.7.0   | 2026-01 | Añadida característica de Suscripciones a Eventos (fases committed/uncommitted/all) |
+| 0.5.0   | 2026-01 | Documentación inicial de arquitectura de cola asíncrona                             |
 
 ---
 
-**Autor**: Equipo Quo.js 
-**Licencia**: MIT 
-**Repositorio**: https://github.com/quojs/quojs
+**Autor**: Equipo Yoltra **Licencia**: MIT **Repositorio**: https://github.com/yoltra/yoltra

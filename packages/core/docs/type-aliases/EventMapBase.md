@@ -1,14 +1,14 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / EventMapBase
+[@yoltra/core](../README.md) / EventMapBase
 
 # Type Alias: EventMapBase
 
 > **EventMapBase** = `{ [C in string]: { [T in string]: unknown } }`
 
-Defined in: [types.ts:18](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L18)
+Defined in: [types.ts:18](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L18)
 
 A minimal "record of record" constraint for EventMaps.
 

@@ -1,14 +1,14 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / ReducerFunction
+[@yoltra/core](../README.md) / ReducerFunction
 
 # Type Alias: ReducerFunction()\<S, EM\>
 
 > **ReducerFunction**\<`S`, `EM`\> = (`state`, `event`) => `S`
 
-Defined in: [types.ts:517](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L517)
+Defined in: [types.ts:566](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L566)
 
 Pure reducer function (stateful event consumer).
 

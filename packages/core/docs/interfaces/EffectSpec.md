@@ -1,12 +1,12 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / EffectSpec
+[@yoltra/core](../README.md) / EffectSpec
 
 # Interface: EffectSpec\<S, EM\>
 
-Defined in: [types.ts:557](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L557)
+Defined in: [types.ts:606](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L606)
 
 Effect specification (stateless async event consumer).
 
@@ -58,7 +58,7 @@ Event map.
 
 > **effect**: [`EffectFunction`](../type-aliases/EffectFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:573](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L573)
+Defined in: [types.ts:622](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L622)
 
 Async effect handler: `(event, getState, emit) => void | Promise<void>`.
 
@@ -68,7 +68,7 @@ Async effect handler: `(event, getState, emit) => void | Promise<void>`.
 
 > `optional` **events**: readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
 
-Defined in: [types.ts:568](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L568)
+Defined in: [types.ts:617](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L617)
 
 List of EventKeys `[channel, type]` that this effect responds to.
 
@@ -82,7 +82,7 @@ Use `when: { keys: [...] }` instead for better type inference.
 
 > `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"effect"`\>
 
-Defined in: [types.ts:578](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L578)
+Defined in: [types.ts:627](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L627)
 
 Optional metadata for debugging tools and DevTools integration.
 
@@ -92,7 +92,7 @@ Optional metadata for debugging tools and DevTools integration.
 
 > `optional` **when**: [`When`](../type-aliases/When.md)\<`EM`\>
 
-Defined in: [types.ts:562](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L562)
+Defined in: [types.ts:611](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L611)
 
 Event targeting using the unified `When` matcher.
 Preferred over `events` for new code.

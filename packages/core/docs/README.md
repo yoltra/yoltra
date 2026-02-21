@@ -1,8 +1,10 @@
-**@quojs/core**
+![Yoltra logo](../../../assets/yoltra-logo.png)
 
-***
+**@yoltra/core**
 
-# @quojs/core
+---
+
+# @yoltra/core
 
 ## Classes
 

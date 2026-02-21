@@ -1,17 +1,15 @@
-![Quo.js logo](../../assets/logo.svg)
+![Yoltra logo](./assets/yoltra-logo.png)
 
 # MAINTAINERS
 
 > [ 🇲🇽 Versión en Español](../es/MAINTAINERS.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](../pt/MAINTAINERS.md)&nbsp; |
 > &nbsp; 👉 [ 🇺🇸 English Version](../../MAINTAINERS.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](../fr/MAINTAINERS.md)
 
-This file lists active maintainers and areas of responsibility for the Quo.js monorepo.
+This file lists active maintainers and areas of responsibility for the Yoltra monorepo.
 
 - **Lead Maintainer:** Manu Ramirez (@pixerael), Erael Group.
-- **Project Email:** [opensource@quojs.dev](mailto:opensource@quojs.dev)
-- **Security Contact:** security@quojs.dev (see [SECURITY.md](./SECURITY.md))
+- **Project Email:** [opensource@yoltra.dev](mailto:opensource@yoltra.dev)
+- **Security Contact:** security@yoltra.dev (see [SECURITY.md](./SECURITY.md))
 - **Code of Conduct:** [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
 
 > Maintainers are expected to follow the workflows in `GOVERNANCE.md` and `CONTRIBUTING.md`.
@@ -28,8 +26,8 @@ We’re inviting community maintainers for the roles below. See **Becoming a Mai
 
 | Role ID        | Area(s)                                     | Time Expectation     | Status  |
 |----------------|---------------------------------------------|----------------------|---------|
-| @co-maintainer | quojs core (store/reducer/bus/utils)          | ~2–4 hrs/week        | **OPEN**|
-| @react-maint   | quojs-react (hooks, suspense, docs/examples)  | ~2–4 hrs/week        | **OPEN**|
+| @co-maintainer | yoltra core (store/reducer/bus/utils)          | ~2–4 hrs/week        | **OPEN**|
+| @react-maint   | yoltra-react (hooks, suspense, docs/examples)  | ~2–4 hrs/week        | **OPEN**|
 
 ## Package Ownership
 

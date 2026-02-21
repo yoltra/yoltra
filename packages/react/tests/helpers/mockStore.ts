@@ -1,5 +1,5 @@
-// file: quojs/packages/react/tests/helpers/mockStore.ts
-import type { StoreInstance, EventMapBase, EventPhase } from "@quojs/core";
+// file: yoltra/packages/react/tests/helpers/mockStore.ts
+import type { StoreInstance, EventMapBase, EventPhase } from "@yoltra/core";
 import { vi } from "vitest";
 
 export type AnyState = Record<string, any>;

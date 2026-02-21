@@ -1,14 +1,14 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / Dotted
+[@yoltra/core](../README.md) / Dotted
 
 # Type Alias: Dotted\<Slice\>
 
 > **Dotted**\<`Slice`\> = keyof `Slice` & `string` \| [`Path`](Path.md)\<`Slice`\>
 
-Defined in: [types.ts:953](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L953)
+Defined in: [types.ts:1002](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L1002)
 
 Dotted keys of a slice: top-level keys or any nested path.
 

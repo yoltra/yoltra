@@ -1,28 +1,34 @@
-#!/usr/bin/env node
+// Rush prepublishOnly helper
+// ─────────────────────────────────────────────────────────────────────────────
+// Copies the root LICENSE file into the current package directory so every
+// published package includes a proper license file.
+//
+// Usage in package.json:
+//   "prepublishOnly": "node ../../common/scripts/copy-license.js"
+//
+// Safe to run: exits cleanly when already at the root or when there is nothing
+// to copy.
+// ─────────────────────────────────────────────────────────────────────────────
+"use strict";
 
-import fs from "fs";
-import path from "path";
-import url from "url";
+const path = require("path");
+const fs = require("fs");
 
-/**
- * copy-license.js
- *
- * Copies LICENSE from the monorepo root into the current package folder.
- * Intended for use as a prepublishOnly hook in package.json */
-const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+const packageDir = process.cwd();
+const rootDir = path.resolve(__dirname, "../../");
 
-// repo root = two levels up from common/scripts
-const repoRoot = path.resolve(__dirname, "../../");
-const licenseSrc = path.join(repoRoot, "LICENSE");
+if (packageDir === rootDir) {
+  // Running at the repo root — nothing to do.
+  process.exit(0);
+}
 
-// current package (script is executed with cwd=package folder by npm/pnpm)
-const pkgDir = process.cwd();
-const licenseDest = path.join(pkgDir, "LICENSE");
+const src = path.join(rootDir, "LICENSE");
+const dst = path.join(packageDir, "LICENSE");
 
-if (!fs.existsSync(licenseSrc)) {
-  console.error(`[copy-license] LICENSE not found at ${licenseSrc}`);
+if (!fs.existsSync(src)) {
+  console.error(`[copy-license] ERROR: LICENSE not found at ${src}`);
   process.exit(1);
 }
 
-fs.copyFileSync(licenseSrc, licenseDest);
-console.log(`[copy-license] LICENSE copied into ${pkgDir}`);
+fs.copyFileSync(src, dst);
+console.log(`[copy-license] Copied LICENSE → ${path.relative(rootDir, dst)}`);

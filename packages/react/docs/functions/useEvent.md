@@ -1,14 +1,14 @@
-[**@quojs/react**](../README.md)
+[**@yoltra/react**](../README.md)
 
 ***
 
-[@quojs/react](../README.md) / useEvent
+[@yoltra/react](../README.md) / useEvent
 
 # Function: useEvent()
 
 > **useEvent**\<`EM`, `C`, `T`\>(`channel`, `type`, `handler`, `phase`): `void`
 
-Defined in: [react/src/hooks/hooks.ts:505](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L505)
+Defined in: [react/src/hooks/hooks.ts:500](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/hooks.ts#L500)
 
 Subscribe to store events from a React component.
 

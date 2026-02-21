@@ -1,16 +1,16 @@
-[**@quojs/react**](../README.md)
+[**@yoltra/react**](../README.md)
 
 ***
 
-[@quojs/react](../README.md) / UseAtomicProp
+[@yoltra/react](../README.md) / UseAtomicProp
 
 # Type Alias: UseAtomicProp()\<R, S\>
 
 > **UseAtomicProp**\<`R`, `S`\> = \{\<`R1`, `P`\>(`spec`): [`PathValue`](PathValue.md)\<`S`\[`R1`\], `P`\>; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`\>(`spec`): `unknown`; \<`R1`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \}
 
-Defined in: [react/src/hooks/createQuoHooks.ts:45](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/createQuoHooks.ts#L45)
+Defined in: react/src/hooks/createHooks.ts:45
 
-Call signature for the typed `useAtomicProp` hook returned by [createQuoHooks](../functions/createQuoHooks.md).
+Call signature for the typed `useAtomicProp` hook returned by [createHooks](../functions/createHooks.md).
 
 Subscribes to a specific dotted path in a reducer's state and re-renders
 only when that path changes. All type parameters are inferred automatically
@@ -211,7 +211,7 @@ State record keyed by `R`.
 ## Example
 
 ```tsx
-const { useAtomicProp } = createQuoHooks(AppStoreContext);
+const { useAtomicProp } = createHooks(AppStoreContext);
 
 function TodoTitle({ index }: { index: number }) {
   const title = useAtomicProp({

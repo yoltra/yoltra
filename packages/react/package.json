@@ -1,7 +1,7 @@
 {
-  "name": "@quojs/react",
-  "version": "0.8.0",
-  "description": "React bindings for Quo.js",
+  "name": "@yoltra/react",
+  "version": "0.1.0",
+  "description": "React bindings for Yoltra",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && vite build",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
@@ -16,23 +16,23 @@
   "license": "MIT",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
-    "email": "manu@quojs.dev"
+    "email": "manu@yoltra.dev"
   },
   "maintainers": [],
-  "homepage": "https://quojs.dev",
+  "homepage": "https://yoltra.dev",
   "keywords": [
     "state",
     "store",
     "react",
     "redux-alternative",
-    "quojs"
+    "yoltra"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/quojs/quojs.git"
+    "url": "https://github.com/yoltra/yoltra.git"
   },
   "bugs": {
-    "url": "https://github.com/quojs/quojs/issues"
+    "url": "https://github.com/yoltra/yoltra/issues"
   },
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -51,12 +51,12 @@
     "node": ">=18.18"
   },
   "peerDependencies": {
-    "@quojs/core": "^0.8.0",
+    "@yoltra/core": "^0.8.0",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19"
   },
   "peerDependenciesMeta": {
-    "@quojs/core": {
+    "@yoltra/core": {
       "optional": false
     }
   },
@@ -64,8 +64,7 @@
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@quojs/core": "workspace:^0.8.0",
-    "@quojs/repo-tools": "workspace:*",
+    "@yoltra/core": "workspace:^0.1.0",
     "@eslint/js": "^9.30.1",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
@@ -75,18 +74,18 @@
     "@testing-library/react": "16.3.0",
     "@types/react-dom": "^19.1.6",
     "@types/react": "^19.1.8",
-    "@types/node": "24.10.0",
+    "@types/node": "^24.0.12",
     "@vitejs/plugin-react-swc": "^3.10.2",
     "@vitejs/plugin-react": "^5.0.0",
-    "@vitest/coverage-v8": "^3.0.0",
+    "@vitest/coverage-v8": "3.2.4",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "vite-plugin-banner": "0.8.1",
     "eslint": "^9.30.1",
     "globals": "^16.3.0",
     "jsdom": "^24.0.0",
-    "react-dom": "^19.1.0",
-    "react": "^19.1.0",
+    "react-dom": "19.1.1",
+    "react": "19.1.1",
     "rollup": "^4.16.0",
     "typescript-eslint": "^8.35.1",
     "typescript": "5.9.3",

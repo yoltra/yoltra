@@ -1,5 +1,8 @@
 internal/**
 
+# experimental stuff
+experimental/**
+
 # OS & Editors
 .DS_Store
 Thumbs.db
@@ -76,9 +79,10 @@ yarn.lock
 # Misc
 *.local
 
-# Verdaccio
-ops/verdaccio/storage/.verdaccio-db.json
-ops/verdaccio/storage/**
+# Verdaccio (tools/registry)
+# Storage lives in named Docker volumes — no local dir to ignore normally.
+# Guard against leftover files if someone ran verdaccio directly.
+tools/registry/storage/
 
 # TypeDocs artifacts
 .typedoc/

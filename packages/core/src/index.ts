@@ -1,7 +1,7 @@
 /**
- * @module @quojs/core
+ * @module @yoltra/core
  *
- * Quo.js Core - Channel/Event-driven state management
+ * yoltra Core - Channel/Event-driven state management
  *
  * @packageDocumentation
  */

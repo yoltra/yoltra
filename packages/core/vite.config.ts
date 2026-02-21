@@ -29,14 +29,14 @@ export default defineConfig({
   build: {
     lib: {
       entry: "src/index.ts",
-      name: "quojs",
+      name: "yoltra",
       formats: ["cjs", "es", "umd"],
       fileName: (format) =>
         format === "cjs"
-          ? "quojs.cjs.js"
+          ? "yoltra.cjs.js"
           : format === "es"
-          ? "quojs.esm.js"
-          : "quojs.umd.js"
+          ? "yoltra.esm.js"
+          : "yoltra.umd.js"
     },
     rollupOptions: {},
     outDir: "dist",

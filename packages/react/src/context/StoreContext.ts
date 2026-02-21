@@ -1,12 +1,12 @@
 /**
- * @module @quojs/react
+ * @module @yoltra/react
  */
 
 import { createContext } from "react";
-import type { StoreInstance } from "@quojs/core";
+import type { StoreInstance } from "@yoltra/core";
 
 /**
- * React Context carrying a {@link StoreInstance} for Quo.js React bindings.
+ * React Context carrying a {@link StoreInstance} for yoltra React bindings.
  *
  * @remarks
  * - The default value is `null`. Consumers should either:
@@ -17,7 +17,7 @@ import type { StoreInstance } from "@quojs/core";
  * @example Basic usage
  * ```tsx
  * import { useContext } from "react";
- * import { StoreContext } from "@quojs/react";
+ * import { StoreContext } from "@yoltra/react";
  *
  * export function Counter() {
  *   const store = useContext(StoreContext);

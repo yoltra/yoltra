@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/eslint-config-base",
+      "comment": "feat(ESLint): initial release",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/eslint-config-base"
+}

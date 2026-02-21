@@ -214,7 +214,7 @@ describe("Store - event subscriptions", () => {
         type: "increment",
         payload: 42,
       });
-      expect(typeof capturedEvent.id).toBe("symbol");
+      expect(typeof capturedEvent.id).toBe("string");
     });
 
     it("receives working getState function", async () => {

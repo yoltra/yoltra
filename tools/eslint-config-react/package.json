@@ -1,0 +1,35 @@
+{
+  "name": "@yoltra/eslint-config-react",
+  "version": "0.1.0",
+  "description": "Shared ESLint flat config for React + TypeScript libraries",
+  "license": "MIT",
+  "author": {
+    "name": "Manu Ramirez <@pixerael>",
+    "email": "manu@yoltra.dev"
+  },
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "exit 0",
+    "lint": "exit 0"
+  },
+  "peerDependencies": {
+    "eslint": ">=9.0.0"
+  },
+  "dependencies": {
+    "@yoltra/eslint-config-base": "workspace:*",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

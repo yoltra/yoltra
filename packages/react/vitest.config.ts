@@ -40,7 +40,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@quojs/core": path.resolve(__dirname, "../core/src/index.ts")
+      "@yoltra/core": path.resolve(__dirname, "../core/src/index.ts")
     }
   }
 });

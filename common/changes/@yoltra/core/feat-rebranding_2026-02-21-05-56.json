@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "feat(core): rebrand library name to yoltra",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

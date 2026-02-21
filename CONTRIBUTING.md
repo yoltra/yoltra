@@ -1,11 +1,9 @@
-![Quo.js logo](./assets/logo.svg)
+![Yoltra logo](./assets/yoltra-logo.png)
 
-# Contributing to Quo.js
+# Contributing to Yoltra
 
 > [ 🇲🇽 Versión en Español](./docs/es/CONTRIBUTING.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](./docs/pt/CONTRIBUTING.md)&nbsp; |
 > &nbsp; 👉 [ 🇺🇸 English Version](./CONTRIBUTING.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](./docs/fr/CONTRIBUTING.md)
 
 Thanks for your interest in contributing! 🎉 This project is open-source under **MIT** with a welcoming, lightweight governance model.
 
@@ -35,8 +33,8 @@ rush test
 rush lint
 
 # focus builds
-rush build --to @quojs/core
-rush build --from @quojs/react
+rush build --to @yoltra/core
+rush build --from @yoltra/react
 
 # work inside a single package
 cd packages/core
@@ -72,8 +70,8 @@ body (optional)
 **Allowed types:** `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `chore`, `revert`
 
 **Examples**
-- `feat(quojs): add deep-path wildcard subscriptions`
-- `fix(quojs-react): normalize leading dot in useSliceProp`
+- `feat(yoltra): add deep-path wildcard subscriptions`
+- `fix(yoltra-react): normalize leading dot in useSliceProp`
 - `test(store): cover devtools DISPATCH apply state`
 
 **DCO sign-off** — every commit must include a sign-off line:
@@ -87,7 +85,7 @@ Tip: use `git commit -s` to append it automatically. Commit messages are linted 
 ## Testing & Coverage
 
 - Test runner: **Vitest**
-- UI tests: **@testing-library/react** (for `quojs-react`)
+- UI tests: **@testing-library/react** (for `yoltra-react`)
 - Coverage thresholds enforced in Vitest config:
   - Lines / Branches / Functions / Statements: **≥ 95%** (on touched code)
 - Prefer focused, robust tests; use snapshots only for stable, deterministic outputs.

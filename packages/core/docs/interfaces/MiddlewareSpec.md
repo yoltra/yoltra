@@ -1,12 +1,12 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / MiddlewareSpec
+[@yoltra/core](../README.md) / MiddlewareSpec
 
 # Interface: MiddlewareSpec\<S, EM\>
 
-Defined in: [types.ts:645](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L645)
+Defined in: [types.ts:694](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L694)
 
 Middleware specification with optional event targeting and metadata.
 
@@ -59,7 +59,7 @@ Event map.
 
 > `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"middleware"`\>
 
-Defined in: [types.ts:660](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L660)
+Defined in: [types.ts:709](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L709)
 
 Optional metadata for debugging tools and DevTools integration.
 
@@ -69,7 +69,7 @@ Optional metadata for debugging tools and DevTools integration.
 
 > **middleware**: [`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:655](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L655)
+Defined in: [types.ts:704](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L704)
 
 Middleware function: `(state, event, emit) => boolean | Promise<boolean>`.
 Return `false` to cancel event propagation.
@@ -80,6 +80,6 @@ Return `false` to cancel event propagation.
 
 > `optional` **when**: [`When`](../type-aliases/When.md)\<`EM`\>
 
-Defined in: [types.ts:649](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L649)
+Defined in: [types.ts:698](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L698)
 
 Event targeting (optional). If omitted, middleware receives ALL events.

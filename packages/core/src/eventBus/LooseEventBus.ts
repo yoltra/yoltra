@@ -1,5 +1,5 @@
 /**
- * @module @quojs/core
+ * @module @yoltra/core
  */
 
 /**
@@ -364,5 +364,32 @@ export class LooseEventBus<C extends string = string, T extends string = string,
   clear(): void {
     this.handlers.clear();
     this.patternHandlers.clear();
+  }
+
+  /**
+   * Returns a snapshot of all registered subscriptions for DevTools introspection.
+   *
+   * @returns An array of `{ channel, type, count }` entries for each distinct
+   *          (channel, type/pattern) pair with at least one handler.
+   *
+   * @internal
+   */
+  __introspect(): Array<{ channel: string; type: string; count: number }> {
+    const result: Array<{ channel: string; type: string; count: number }> = [];
+    for (const [channel, map] of this.handlers) {
+      for (const [type, list] of map) {
+        if (list.length > 0) {
+          result.push({ channel: channel as string, type: type as string, count: list.length });
+        }
+      }
+    }
+    for (const [channel, map] of this.patternHandlers) {
+      for (const [pattern, list] of map) {
+        if (list.length > 0) {
+          result.push({ channel: channel as string, type: pattern, count: list.length });
+        }
+      }
+    }
+    return result;
   }
 }

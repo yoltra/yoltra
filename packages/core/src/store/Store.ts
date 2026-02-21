@@ -1,5 +1,5 @@
 /**
- * @module @quojs/core
+ * @module @yoltra/core
  */
 
 import { Reducer } from "../reducer/Reducer";
@@ -156,18 +156,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private readonly patternReducers = new Map<R, When<EM>>();
 
   /**
-   * Redux DevTools connection (dev only).
+   * Whether `__replayEvents()` is allowed.
+   * Set from `spec.devtools.allowReplay`.
    *
    * @internal
    */
-  private devtools;
+  private readonly replayEnabled: boolean;
 
   /**
    * FIFO event queue for serialized emission.
    *
    * @internal
    */
-  private readonly eventQueue: Array<{ channel: string; type: string; payload: any; id: symbol }> =
+  private readonly eventQueue: Array<{ channel: string; type: string; payload: any; id: string }> =
     [];
 
   /**
@@ -221,12 +222,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   constructor(spec: StoreSpec<R, S, EM>) {
-    this.name = spec.name ?? "Quo.js Store";
+    this.name = spec.name ?? "yoltra Store";
     this.reducerBus = new EventBus<EM>();
     this.connectorBus = new LooseEventBus();
     this.middleware = [...(spec.middleware ?? [])];
     this.reducers = {} as Record<R, Reducer<S[R], EM>>;
     this.state = {} as any;
+    this.replayEnabled = spec.devtools?.allowReplay ?? false;
 
     // Initialize dedup config with optional user override
     const defaultWindowMs = process.env.NODE_ENV === "production" ? 100 : 50;
@@ -258,78 +260,6 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       this.pruneProcessedEvents(Date.now());
     }, 5000);
 
-    type DevtoolsConn = {
-      init: (state: any) => void;
-      send: (action: any, state: any) => void;
-      subscribe?: (listener: (message: any) => void) => void;
-    };
-
-    const ext = (
-      typeof window !== "undefined" && (window as any).__REDUX_DEVTOOLS_EXTENSION__
-    ) as
-      | { connect: (opts: any) => DevtoolsConn }
-      | undefined;
-
-    if (process.env.NODE_ENV !== "production" && ext) {
-      const instanceId = spec.name ?? "Quo.js Store";
-
-      this.devtools = ext.connect({
-        name: instanceId,
-        instanceId,
-        serialize: true,
-        features: { pause: true, export: true, test: true, jump: true, skip: true, lock: true },
-        trace: true,
-      });
-
-      this.devtools.init(this.getState());
-    }
-
-    /**
-     * DevTools wiring
-     */
-    this.devtools?.init(this.state);
-    this.devtools?.subscribe?.((msg: any) => {
-      if (msg.type !== "DISPATCH") return;
-      const kind = msg.payload?.type as string | undefined;
-
-      // standard jump / rollback / reset carry state as a JSON string
-      if (
-        kind === "JUMP_TO_STATE" ||
-        kind === "JUMP_TO_ACTION" ||
-        kind === "ROLLBACK" ||
-        kind === "RESET"
-      ) {
-        if (msg.state) {
-          const parsed = JSON.parse(msg.state);
-          this.__applyExternalState(parsed);
-        }
-        return;
-      }
-
-      // import a lifted history: take the latest computed state
-      if (kind === "IMPORT_STATE" && msg.nextLiftedState?.computedStates?.length) {
-        const latest = msg.nextLiftedState.computedStates.at(-1)!.state;
-
-        this.__applyExternalState(latest);
-
-        return;
-      }
-
-      // commit re-baselines the history; re-init with current state
-      if (kind === "COMMIT") {
-        this.devtools?.init(this.state);
-
-        return;
-      }
-
-      // if DevTools provided a state string anyway, apply it
-      if (msg.state) {
-        const parsed = JSON.parse(msg.state);
-
-        this.__applyExternalState(parsed);
-      }
-    });
-
     /**
      * Method bindings
      */
@@ -339,6 +269,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // private API
     this.forwardEvent = this.forwardEvent.bind(this);
     this.__applyExternalState = this.__applyExternalState.bind(this);
+    this.__replayEvents = this.__replayEvents.bind(this);
+    this.__devtoolsIntrospect = this.__devtoolsIntrospect.bind(this);
     this.mountSlice = this.mountSlice.bind(this);
     this.unmountSlice = this.unmountSlice.bind(this);
     this.getAtPath = this.getAtPath.bind(this);
@@ -680,6 +612,96 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
+   * Returns a structured introspection snapshot for DevTools UIs.
+   *
+   * @remarks
+   * Reads the internal middleware, effects, reducers, and subscriber
+   * registries and returns a plain-object summary matching the
+   * `STORE_SUBSCRIPTIONS` protocol message shape.
+   *
+   * @public
+   */
+  public __devtoolsIntrospect() {
+    // Reducers
+    const reducers = (Object.keys(this.reducers) as Array<R>).map((name) => {
+      const when = this.patternReducers.get(name);
+      return { name: name as string, when };
+    });
+
+    // Effects (keyed) — metadata stored on fn.__quoMeta by registerEffect
+    const effects: Array<{ channel: string; type: string; name?: string; description?: string }> = [];
+    for (const [key, set] of this.effects) {
+      if (set.size === 0) continue;
+      const [channel, type] = key.split("::");
+      for (const fn of set) {
+        const meta = (fn as any).__quoMeta;
+        effects.push({ channel, type, name: meta?.name, description: meta?.description });
+      }
+    }
+    // Effects (pattern-based) — entry is { effect, when }, metadata on effect.__quoMeta
+    for (const entry of this.patternEffects) {
+      const meta = (entry.effect as any).__quoMeta;
+      effects.push({
+        channel: "*",
+        type: "*",
+        name: meta?.name,
+        description: meta?.description,
+      });
+    }
+
+    // Middleware
+    const middleware: Array<{ name?: string; description?: string; when?: unknown }> = [];
+    for (const mwInput of this.middleware) {
+      if (typeof mwInput === "function") {
+        middleware.push({ name: mwInput.name || undefined });
+      } else {
+        middleware.push({
+          name: (mwInput as any).meta?.name,
+          description: (mwInput as any).meta?.description,
+          when: (mwInput as any).when,
+        });
+      }
+    }
+
+    // Atomic (connect) subscriptions — enumerate from the connectorBus
+    const atomic: Array<{ reducer: string; property: string }> = [];
+    for (const entry of this.connectorBus.__introspect()) {
+      for (let i = 0; i < entry.count; i++) {
+        atomic.push({ reducer: entry.channel, property: entry.type });
+      }
+    }
+
+    // Event subscriptions
+    const event: Array<{ channel: string; type: string; phase: string }> = [];
+    for (const [key, set] of this.committedEventSubscribers) {
+      if (set.size === 0) continue;
+      const [channel, type] = key.split("::");
+      for (let i = 0; i < set.size; i++) {
+        event.push({ channel, type, phase: "committed" });
+      }
+    }
+    for (const [key, set] of this.uncommittedEventSubscribers) {
+      if (set.size === 0) continue;
+      const [channel, type] = key.split("::");
+      for (let i = 0; i < set.size; i++) {
+        event.push({ channel, type, phase: "uncommitted" });
+      }
+    }
+    for (const [key, set] of this.allEventSubscribers) {
+      if (set.size === 0) continue;
+      const [channel, type] = key.split("::");
+      for (let i = 0; i < set.size; i++) {
+        event.push({ channel, type, phase: "all" });
+      }
+    }
+
+    // Coarse subscribers count
+    const coarse = this.listeners.size;
+
+    return { reducers, effects, middleware, atomic, event, coarse };
+  }
+
+  /**
    * Applies an externally provided **whole-state** (e.g., DevTools time travel) and emits
    * fine-grained path changes for each slice.
    *
@@ -738,6 +760,63 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
+   * Replays a sequence of events from a snapshot through reducers and event
+   * subscribers ONLY. Skips dedup, middleware, and effects.
+   *
+   * This method is gated by the `devtools.allowReplay` runtime config.
+   * If replay is not enabled, this method throws.
+   *
+   * @param snapshot - The state snapshot to restore before replaying.
+   * @param events - Array of events to replay (in order).
+   *
+   * @internal
+   */
+  public __replayEvents(
+    snapshot: any,
+    events: Array<{ channel: string; type: string; payload: any; id: string }>,
+  ): void {
+    if (!this.replayEnabled) {
+      throw new Error(
+        "[yoltra] Event replay is disabled. Enable it with createStore({ devtools: { allowReplay: true } })",
+      );
+    }
+
+    // 1. Apply snapshot (restores base state)
+    this.__applyExternalState(snapshot);
+
+    // 2. Replay each event through reducers + event subscribers only
+    for (const evt of events) {
+      const event = evt as EventUnion<EM>;
+
+      // Track state before reducers
+      const stateBefore = this.state;
+
+      // Run key-based reducers via reducerBus
+      this.reducerBus.emit(event.channel as any, event.type as any, event.payload);
+
+      // Run pattern-based reducers
+      for (const [sliceName, when] of this.patternReducers) {
+        if (this.matchesWhen(when, event)) {
+          this.forwardEvent(sliceName, event as any);
+        }
+      }
+
+      const stateAfter = this.state;
+      const anySliceChanged = stateBefore !== stateAfter;
+
+      // Notify committed event subscribers (sync, fire-and-forget)
+      this.notifyEventSubscribers(event, "committed");
+
+      // Notify coarse subscribers if state changed
+      if (anySliceChanged) {
+        this.listeners.forEach((l) => l());
+      }
+
+      // NOTE: No middleware, no effects, no dedup, no DevTools logging
+    }
+  }
+
+  /**
    * Emits a typed event `(channel, type, payload)`.
    * Events are queued and processed **sequentially** (FIFO).
    *
@@ -747,7 +826,6 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * 3. **Reducers** - Synchronous state updates via internal event bus
    * 4. **Effects** - Async side-effects keyed by `(channel, type)` for O(1) lookup
    * 5. **Coarse subscribers** - External store subscribers (only if state changed)
-   * 6. **DevTools** - Redux DevTools logging (dev only)
    *
    * **Change Detection**: Uses reference equality (`===`) on `this.state` to determine
    * if any slice changed. Works because {@link forwardEvent} creates a new state reference
@@ -791,7 +869,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }
 
     // Generate unique ID for this event instance
-    const id = Symbol("event");
+    const id = crypto.randomUUID();
 
     /**
      * enqueue always
@@ -845,11 +923,6 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           // Notify uncommitted event subscribers (event rejected by middleware)
           await this.notifyEventSubscribers(event as any, "uncommitted");
 
-          // event bounced, but still log to DevTools
-          this.devtools?.send(
-            { type: `Channel: ${channel} - Type: ${type} [BOUNCED]`, payload },
-            this.state,
-          );
           continue;
         }
 
@@ -888,13 +961,6 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           this.listeners.forEach((l) => l());
         }
 
-        /**
-         * DevTools
-         */
-        this.devtools?.send(
-          { type: `Channel: ${channel} - Type: ${type}`, payload },
-          this.state,
-        );
       }
     } catch (err) {
       console.error("Emit queue error:", err);
@@ -1356,8 +1422,6 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       }
     }
 
-    // Re-init devtools baseline
-    this.devtools?.init(this.state);
   }
 
   /**
@@ -1444,7 +1508,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const unsubs: Array<() => void> = [];
     for (const [ch, tp] of eventKeys) {
       const u = this.reducerBus.on(ch, tp, (payload) => {
-        const event = { channel: ch, type: tp, payload, id: Symbol("reducer-event") } as Event<
+        const event = { channel: ch, type: tp, payload, id: crypto.randomUUID() } as Event<
           EM,
           typeof ch,
           typeof tp
@@ -1644,6 +1708,8 @@ export function createStore<
   reducer?: { [K in keyof S]?: ReducerSpec<S[K], EM> };
   middleware?: MiddlewareFunction<DeepReadonly<S>, EM>[];
   effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
+  dedupWindowMs?: number;
+  devtools?: { allowReplay?: boolean };
 }): StoreInstance<keyof S & string, S, EM>;
 
 /**
@@ -1679,6 +1745,8 @@ export function createStore<RM extends ReducersMapAny>(cfg: {
   reducer: RM;
   middleware?: MiddlewareFunction<DeepReadonly<StateFromReducers<RM>>, EMFromReducersStrict<RM>>[];
   effects?: Array<EffectSpec<DeepReadonly<StateFromReducers<RM>>, EMFromReducersStrict<RM>>>;
+  dedupWindowMs?: number;
+  devtools?: { allowReplay?: boolean };
 }): StoreInstance<keyof RM & string, StateFromReducers<RM>, EMFromReducersStrict<RM>>;
 
 export function createStore(cfg: any) {
@@ -1692,6 +1760,8 @@ export function createStore(cfg: any) {
     reducer: (cfg.reducer ?? {}) as unknown as Record<RN, ReducerSpec<S[RN], EM>>,
     middleware: (cfg.middleware ?? []) as any,
     effects: (cfg.effects ?? []) as any,
+    dedupWindowMs: cfg.dedupWindowMs,
+    devtools: cfg.devtools,
   });
 }
 

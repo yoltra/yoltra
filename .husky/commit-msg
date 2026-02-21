@@ -1,1 +1,0 @@
-npx --no -- node tools/repo-tools/hooks/commit-msg.mjs "$1"

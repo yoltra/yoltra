@@ -1,281 +1,270 @@
-![Quo.js logo](../../assets/logo.svg)
+![Yoltra logo](../../assets/yoltra-logo.png)
 
-# Guía de Desarrollo (Monorepo Quo.js)
+# Guía del Desarrollador
 
->  👉 [ 🇲🇽 Versión en Español](../es/DEVELOPER_GUIDE.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](../pt/DEVELOPER_GUIDE.md)&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](../../DEVELOPER_GUIDE.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](../fr/DEVELOPER_GUIDE.md)
+> [🇺🇸 English](../en/DEVELOPER_GUIDE.md) &nbsp;|&nbsp; 👉 Español
 
-Fuente única de verdad para el SDLC, configuración local, _branching_, pruebas/cobertura y
-lanzamientos usando **Rush + PNPM**.
+Fuente única de verdad para configurar el monorepo, entender su estructura y realizar el
+trabajo de desarrollo diario.
 
-## SDLC (cómo entregamos)
+Para la estrategia de ramas y el proceso de PRs consulta [WORKFLOW.md](./WORKFLOW.md).
+Para publicar versiones (local + NPM) consulta [RELEASE_GUIDE.md](./RELEASE_GUIDE.md).
 
-1. Planificar → abrir/triage de un Issue (bug/feat).
-2. Ramificar → `feature/<issue>-<slug>` o `fix/<issue>-<slug>`.
-3. Codificar → pruebas + documentación; **Conventional Commits** con firma **DCO**.
-4. Puertas locales → pasan `rush build` y `rush test`; cobertura ≥ umbrales.
-5. PR → completar la plantilla de PR; enlazar issues; CI debe estar en verde (**change files**
-   verificados).
-6. Revisión → aprobaciones; _squash_ o _rebase_ según criterio del mantenedor.
-7. Lanzamiento → los mantenedores ejecutan `rush version` y luego `rush publish` (ver
-   “Lanzamientos” abajo).
+---
 
-## Configuración local
+## Requisitos previos
 
-Instala Rush (una sola vez):
+| Herramienta | Versión | Notas |
+|-------------|---------|-------|
+| Node.js | ≥ 18.18 | [nodejs.org](https://nodejs.org) |
+| Rush | última | `npm install -g @microsoft/rush` |
+| Docker | cualquier versión reciente | Solo necesario para pruebas con el registro local |
 
-```bash
-npm i -g @microsoft/rush
-```
+> **No instales pnpm globalmente.** Rush descarga y gestiona pnpm internamente con la
+> versión exacta especificada en `rush.json`. Ejecutar `pnpm install` directamente producirá
+> resultados incorrectos y corromperá el lockfile.
 
-Instala dependencias (determinístico vía PNPM + Rush):
+---
+
+## Configuración inicial
 
 ```bash
+# 1. Clonar el repositorio
+git clone https://github.com/yoltra/yoltra.git
+cd yoltra
+
+# 2. Instalar todas las dependencias del workspace (Rush gestiona pnpm)
 rush install
-```
 
-Compila todo (construye del grafo, incremental; usa caché de compilación de Rush):
-
-```bash
+# 3. Compilar todo el monorepo (ordenado por grafo, incremental)
 rush build
 ```
 
-Ejecuta pruebas para todos los paquetes (definido vía command-line.json):
+Rush lee el grafo de proyectos desde `rush.json`, instala todos los paquetes en el almacén
+compartido `common/temp/` y los enlaza mediante pnpm workspaces.
 
-```bash
-rush test
+---
+
+## Estructura del repositorio
+
+```
+yoltra/
+├── packages/
+│   ├── core/                 @yoltra/core      — librería de contenedor de estado
+│   └── react/                @yoltra/react     — bindings para React
+│
+├── tools/
+│   ├── eslint-config-base/   @yoltra/eslint-config-base  — ESLint compartido (Node + browser TS)
+│   ├── eslint-config-react/  @yoltra/eslint-config-react — ESLint compartido (React + TS)
+│   └── registry/             Registro local Verdaccio (Docker)
+│
+├── examples/
+│   └── v0/
+│       ├── yoltra-in-react/        App de comparación Yoltra vs Redux Toolkit
+│       ├── yoltra-in-nextjs/       Ejemplo de integración con Next.js
+│       └── yoltra-kinetic-logo/    Animación SVG — demo de suscripciones granulares
+│
+├── common/
+│   ├── config/rush/          Archivos de configuración de Rush (versionados — nunca editar el lockfile manualmente)
+│   └── scripts/              Helpers compartidos (copy-license.js, etc.)
+│
+└── docs/
+    ├── en/                   Documentación en inglés
+    └── es/                   Documentación en español (esta carpeta)
 ```
 
-Lint para todos los paquetes que definan un script "lint":
+---
+
+## Comandos del día a día
+
+### A nivel de monorepo
 
 ```bash
-rush lint
+rush install            # Instalar / sincronizar todas las dependencias (tras clonar o hacer pull)
+rush update             # Regenerar el lockfile (ejecutar tras editar cualquier package.json)
+rush build              # Compilación incremental — usa caché, omite paquetes sin cambios
+rush rebuild            # Recompilación completa — ignora la caché, recompila todo
+rush test               # Ejecutar Vitest en todos los paquetes
+rush lint               # Ejecutar ESLint en todos los paquetes
+rush typecheck          # Ejecutar tsc --noEmit en todos los paquetes
 ```
 
-Compilaciones focalizadas:
+### Compilaciones enfocadas
+
+Usa `--to` y `--from` para reducir la compilación a un subconjunto del grafo de dependencias:
 
 ```bash
-rush build --to @quojs/core
-rush build --from @quojs/react
+rush build --to @yoltra/core           # Compilar core y sus dependencias transitivas
+rush build --to @yoltra/react          # Compilar react (y core primero)
+rush build --from @yoltra/core         # Compilar core y todos sus dependientes aguas abajo
+rush build --to @yoltra/react --verbose  # Lo mismo, con salida detallada
 ```
 
-Trabajo a nivel de paquete:
+### Comandos por paquete (rushx)
+
+`rushx` ejecuta un script npm en el paquete **actual**. Primero cambia al directorio del paquete:
 
 ```bash
 cd packages/core
+rushx build         # Compilar solo este paquete
+rushx test          # Ejecutar pruebas con cobertura
+rushx lint          # Revisar errores de lint
+rushx lint:fix      # Corregir errores de lint automáticamente
+rushx typecheck     # Verificación de tipos TypeScript
 
+cd packages/react
 rushx build
 rushx test
-rushx lint
+rushx docs          # Generar documentación de la API con TypeDoc
 ```
 
-## Estrategia de ramas
+---
 
-- Rama por defecto: `main`.
-- El trabajo ocurre en ramas `feature/*` o `fix/*`.
-- Abre PRs contra `main`.
-- Cada PR que cambie un paquete publicable debe incluir un **change file** (ver “Cambios y
-  versionado”).
+## Caché de compilación
 
-## Conventional commits + DCO (aplicado)
+La caché de compilación local de Rush está habilitada en `common/config/rush/build-cache.json`.
+
+Cada paquete de librería declara sus salidas cacheables en `rush-project.json`:
+
+```json
+{
+  "operationSettings": [
+    { "operationName": "build", "outputFolderNames": ["dist"] }
+  ]
+}
+```
+
+**Reglas clave:**
+
+- `rush build` — lee y escribe en la caché; los paquetes sin cambios terminan al instante.
+- `rush rebuild` — **siempre ignora la caché**; úsalo cuando sospeches de una salida desactualizada.
+- La caché vive en `common/temp/build-cache/` (incluido en .gitignore, solo local).
+
+---
+
+## Arquitectura de ESLint
+
+La configuración de lint está centralizada en dos paquetes compartidos bajo `tools/`:
+
+| Paquete | Paquetes destino | Contenido |
+|---------|-----------------|---------|
+| `@yoltra/eslint-config-base` | `@yoltra/core` | ESLint recommended, typescript-eslint recommended, globals browser + Node |
+| `@yoltra/eslint-config-react` | `@yoltra/react` | Extiende base + react-hooks + react-refresh |
+
+Cada paquete de librería tiene un `eslint.config.mjs` mínimo que simplemente re-exporta la
+configuración compartida:
+
+```js
+// packages/core/eslint.config.mjs
+import baseConfig from "@yoltra/eslint-config-base";
+export default baseConfig;
+```
+
+```js
+// packages/react/eslint.config.mjs
+import reactConfig from "@yoltra/eslint-config-react";
+export default reactConfig;
+```
+
+**Para añadir una regla globalmente** — edita el paquete de configuración en `tools/`. No
+es necesario tocar el `eslint.config.mjs` de cada librería.
+**Para sobreescribir una regla en un paquete** — extiende el array en el
+`eslint.config.mjs` de ese paquete.
+
+---
+
+## Conventional Commits + DCO
 
 Cada commit debe:
 
-- seguir **Conventional Commits** (linteado localmente vía Husky y en CI), y
-- incluir una línea de firma **DCO**, por ejemplo:
+1. Seguir el formato de **Conventional Commits**:
 
-```
-  Signed-off-by: Tu Nombre <tu@tu-proveedor-de-email.com>
-```
+   ```
+   <type>(<scope>): <descripción corta>
 
-> Consejo: usa `git commit -s` para añadir la línea DCO automáticamente.
+   [cuerpo opcional]
 
-Tipos permitidos:
+   Signed-off-by: Tu Nombre <tu@ejemplo.com>
+   ```
 
-- `feat`
-- `fix`
-- `perf`
-- `refactor`
-- `docs`
-- `test`
-- `build`
-- `chore`
-- `revert`
+2. Incluir una línea de **firma DCO** (`git commit -s` la añade automáticamente).
+
+Valores permitidos para `<type>`: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`,
+`build`, `chore`, `revert`.
+
+---
 
 ## Pruebas y cobertura
 
-- _Test runner_: **Vitest**.
-- Pruebas de UI: **@testing-library/react** (para `quojs-react`).
-- Los umbrales de cobertura se aplican en la configuración de Vitest:
-  - Líneas / Ramas / Funciones / Sentencias: **≥ 95%** (sobre código tocado).
-- _Snapshots_ solo para salidas estables y deterministas.
-
-Ejecutar:
+- Ejecutor: **Vitest**
+- Helpers de UI: `@testing-library/react` (para `@yoltra/react`)
+- Umbrales mínimos de cobertura (líneas / ramas / funciones / sentencias): **95%**
 
 ```bash
+# Todos los paquetes
 rush test
+
+# Un paquete específico
+cd packages/core && rushx test
 ```
 
-## Linting y formato
+Los snapshots solo están permitidos para salidas estables y deterministas.
 
-- ESLint (TypeScript), Prettier.
-- Scripts por paquete se ejecutan vía `rushx`.
+---
 
-Ejemplos:
+## Archivos de cambio (requeridos en cada PR publicable)
 
-```bash
-rush lint
-cd packages/react && rushx lint
-rushx format
-```
-
-## Caché de compilación (Rush)
-
-El repositorio habilita la **caché local** de compilación de Rush. La configuración vive en:
-
-- A nivel repo: `common/config/rush/build-cache.json`
-- _Outputs_ por paquete: `packages/<name>/config/rush-project.json`
-
-Los _outputs_ se cachean desde `dist/` para ambos paquetes núcleo. Para `@quojs/core`, la clave
-de caché también incluye `BUILD_TARGET`.
-
-Notas:
-
-- `rush build` leerá/escribirá caché.
-- `rush rebuild` **omite** la caché y recompila desde cero (por diseño).
-
-## Cambios y versionado (Rush)
-
-### Archivos de cambio
-
-Crea entradas de cambio en `common/changes/`:
+Cualquier PR que modifique `@yoltra/core`, `@yoltra/react` o un paquete publicado de `tools/`
+**debe** incluir un archivo de cambio de Rush. El CI rechazará los PRs que no lo tengan.
 
 ```bash
+# Prompt interactivo — selecciona los paquetes que cambiaste y el tipo de bump
 rush change
-```
 
-CI verifica los archivos de cambio en los PRs:
-
-```bash
+# Verificar que existe un archivo de cambio (el CI también ejecuta esto en cada PR)
 rush change -v
 ```
 
-### Políticas de versión
+Los archivos de cambio se versionan en `common/changes/` junto con el código. Cuando se
+prepara una versión, `rush version --bump` los consume para actualizar las versiones en
+`package.json` y generar las entradas de `CHANGELOG.md`.
 
-- `quojs-lockstep` (lockStepVersion): mantiene **@quojs/core** y **@quojs/react** en
-  sincronía.
-- `lib-individual` (individualVersion): reservado para futuros _adapters_ no atados al ritmo del
-  núcleo.
+> Mientras el proyecto esté en `< 1.0.0`: usa `minor` para cambios breaking y `patch` para
+> correcciones.
 
-Los proyectos se asignan en `rush.json` vía `versionPolicyName`.
+---
 
-## Lanzamientos
+## Agregar un nuevo paquete publicable
 
-### Lanzamiento oficial (mantenedores)
+1. Crea la carpeta bajo `packages/` o `tools/`.
+2. Añade un `package.json` con `"publishConfig": { "access": "public" }`.
+3. Añade un `rush-project.json` mínimo (declara `outputFolderNames` si el paquete compila).
+4. Registra el paquete en `rush.json` bajo `"projects"`.
+5. Ejecuta `rush update` para regenerar el lockfile.
+6. Asígnalo a la política de versiones `"lockstep"` (si se publica junto con core/react) o
+   deja `versionPolicyName` sin definir para versionado independiente.
 
-1. Incrementar versiones/_changelogs_ a partir de los archivos de cambio acumulados:
+---
 
-```bash
-rush version
-```
+## Actualizar dependencias
 
-2. Publicar al registro real (banderas de ejemplo; añade OTP/acceso según sea necesario):
+1. Edita el `package.json` correspondiente.
+2. Ejecuta `rush update` para recalcular y reescribir el lockfile.
+3. Haz commit tanto del cambio en `package.json` como del `common/config/rush/pnpm-lock.yaml`
+   actualizado.
 
-```bash
-rush publish --apply --publish --target-branch main
-```
+Nunca toques `common/config/rush/pnpm-lock.yaml` manualmente.
 
-> Consejo: ejecuta `rush publish` sin banderas para un _dry-run_ del plan.
+---
 
-### Ensayo de lanzamiento local (Verdaccio)
+## Solución de problemas
 
-Existen dos formas seguras:
-
-#### A) _Dry run_ solo tarballs (sin registro)
-
-Genera archivos `.tgz` para cada paquete público bajo `./dist-tarballs/`.
-
-```bash
-rush change
-rush publish --include-all --pack --release-folder ./dist-tarballs
-```
-
-Consumir en apps:
-
-```bash
-pnpm add ./dist-tarballs/quojs-quojs-<ver>.tgz
-pnpm add ./dist-tarballs/quojs-quojs-react-<ver>.tgz
-```
-
-#### B) Publicación en registro local (script Verdaccio)
-
-Inicia Verdaccio e inicia sesión una vez:
-
-```bash
-docker compose -f ops/verdaccio/docker-compose.yml up -d
-pnpm adduser --registry http://localhost:4873/
-```
-
-Luego ejecuta el script:
-
-```bash
-common/scripts/publish-verdaccio.sh
-```
-
-Opciones:
-
-- `--skip-bump` para saltar `rush version`
-- `--skip-tests` para no correr ejemplos contra Verdaccio
-- `--registry URL` si no usas localhost
-
-Restablecer registro:
-
-```bash
-docker compose -f ops/verdaccio/docker-compose.yml down -v
-unset npm_config_registry
-```
-
-Notas:
-
-- Los registros no permiten republicar la misma versión; sube _patch_ para ensayos repetidos o
-  limpia el almacenamiento de Verdaccio.
-- El registro de instalación por defecto es npmjs vía `common/config/rush/.npmrc`.
-- El registro de publicación es Verdaccio vía `common/config/rush/.npmrc-publish` usando
-  `${NPM_AUTH_TOKEN}`.
-
-## Reporte de bugs y PRs (GitHub)
-
-- Usa las plantillas de **Bug Report** y **Feature Request**.
-- Los PRs deben seguir la **plantilla de Pull Request**.
-
-Checklist mínimo para PR:
-
-- _Conventional commit_ + firma DCO
-- `rush build` y `rush test` pasan localmente
-- Archivo de cambio agregado (si cambió un paquete publicable)
-- La cobertura cumple umbrales (CI fallará de lo contrario)
-
-## Seguridad
-
-Consulta [SECURITY](./SECURITY.md). **No** abras issues públicos por vulnerabilidades.
-
-## Solución de problemas (respuestas rápidas)
-
-- Falta archivo de cambio → ejecuta `rush change`; CI también verifica con `rush change -v`.
-- Commit rechazado localmente → corrige el mensaje para cumplir Conventional Commits y añade la
-  línea DCO; o usa `git commit -s`.
-- La caché parece obsoleta → recuerda que `rush rebuild` ignora la caché; usa `rush build` para
-  beneficiarte de la caché.
-- Verdaccio “version already exists” → incrementa versión (vía `rush change` + `rush version`) o
-  limpia el almacenamiento de Verdaccio.
-- Las instalaciones apuntan inesperadamente a Verdaccio → asegúrate de no haber exportado
-  `npm_config_registry`; elimina cualquier .npmrc por proyecto.
-
-## Consejos de DX
-
-- Las extensiones recomendadas de VS Code están en `.vscode/extensions.tson`.
-- El formateo está estandarizado vía `.prettierrc.json` y `.editorconfig`.
-- Las _project references_ de TypeScript están configuradas para mejorar navegación del IDE y
-  _builds_.
+| Síntoma | Solución |
+|---------|----------|
+| CI rechaza el PR: "missing change file" | Ejecuta `rush change` y haz commit del archivo en `common/changes/`. |
+| `rush install` falla con errores de peer dep | `strictPeerDependencies: false` ya está configurado; prueba `rush install --purge`. |
+| Commit rechazado | Asegúrate del formato Conventional Commits + firma DCO (`git commit -s`). |
+| Salida de compilación desactualizada | `rush rebuild` ignora la caché y fuerza una recompilación completa. |
+| Verdaccio: "version already exists" | Sube la versión (`rush change` + `rush version --bump`) o borra con `docker compose down -v`. |
+| `rushx` no encontrado | `npm install -g @microsoft/rush` |
+| Versión de pnpm incorrecta en el lockfile | Nunca ejecutes `pnpm install` directamente; usa siempre `rush install` / `rush update`. |

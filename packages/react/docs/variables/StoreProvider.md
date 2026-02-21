@@ -1,20 +1,20 @@
-[**@quojs/react**](../README.md)
+[**@yoltra/react**](../README.md)
 
 ***
 
-[@quojs/react](../README.md) / StoreProvider
+[@yoltra/react](../README.md) / StoreProvider
 
 # Variable: StoreProvider
 
 > `const` **StoreProvider**: `React.FC`\<\{ `children`: `ReactNode`; `store`: `StoreInstance`\<`any`, `any`, `any`\>; \}\>
 
-Defined in: [react/src/context/StoreProvider.tsx:56](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/context/StoreProvider.tsx#L56)
+Defined in: [react/src/context/StoreProvider.tsx:56](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/context/StoreProvider.tsx#L56)
 
 React provider that places a StoreInstance into [StoreContext](StoreContext.md).
 
 ## Param
 
-The Quo.js store instance to expose to descendant components.
+The yoltra store instance to expose to descendant components.
 
 ## Param
 
@@ -31,9 +31,9 @@ React subtree that will consume the store.
 
 ```tsx
 // store.ts
-import { createStore, eventKeys } from '@quojs/core';
+import { createStore, eventKeys } from '@yoltra/core';
 import { createContext } from 'react';
-import { createQuoHooks, StoreProvider } from '@quojs/react';
+import { createHooks, StoreProvider } from '@yoltra/react';
 
 type AppEM = { ui: { increment: number } };
 type AppState = { counter: { value: number } };
@@ -52,7 +52,7 @@ export const store = createStore<AppState, AppEM>({
 });
 
 const AppStoreContext = createContext<typeof store | null>(null);
-export const { useAtomicProp, useEmit } = createQuoHooks(AppStoreContext);
+export const { useAtomicProp, useEmit } = createHooks(AppStoreContext);
 
 // App.tsx
 export function App({ children }: { children: React.ReactNode }) {

@@ -1,12 +1,12 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / Event
+[@yoltra/core](../README.md) / Event
 
 # Interface: Event\<EM, C, T, P\>
 
-Defined in: [types.ts:72](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L72)
+Defined in: [types.ts:72](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L72)
 
 A single event object: `{ channel, type, payload, id }`.
 
@@ -20,7 +20,7 @@ A single event object: `{ channel, type, payload, id }`.
 ```ts
 type EM = { ui: { toggle: boolean } };
 type Evt = Event<EM, 'ui', 'toggle'>;
-// { channel: 'ui'; type: 'toggle'; payload: boolean; id: symbol }
+// { channel: 'ui'; type: 'toggle'; payload: boolean; id: string }
 ```
 
 ## Type Parameters
@@ -55,17 +55,17 @@ Payload type (defaults to `EM[C][T]`).
 
 > **channel**: `C`
 
-Defined in: [types.ts:78](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L78)
+Defined in: [types.ts:78](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L78)
 
 ***
 
 ### id
 
-> **id**: `symbol`
+> **id**: `string`
 
-Defined in: [types.ts:82](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L82)
+Defined in: [types.ts:82](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L82)
 
-Unique identifier for deduplication (automatically added by store)
+Unique identifier for deduplication and devtools tracking (automatically added by store)
 
 ***
 
@@ -73,7 +73,7 @@ Unique identifier for deduplication (automatically added by store)
 
 > **payload**: `P`
 
-Defined in: [types.ts:80](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L80)
+Defined in: [types.ts:80](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L80)
 
 ***
 
@@ -81,4 +81,4 @@ Defined in: [types.ts:80](https://github.com/quojs/quojs/blob/7a847d68175722f00e
 
 > **type**: `T`
 
-Defined in: [types.ts:79](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L79)
+Defined in: [types.ts:79](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L79)

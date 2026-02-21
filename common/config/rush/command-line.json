@@ -1,117 +1,60 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/command-line.schema.json",
+
+  /**
+   * Custom commands and parameters for this Rush monorepo.
+   *
+   * Run `rush <command> --help` for usage of any command below.
+   */
   "commands": [
+    // ------------------------------------------------------------------
+    // rush test
+    // Runs the "test" npm script in every project that defines it.
+    // Projects without a "test" script are silently skipped.
+    // ------------------------------------------------------------------
     {
       "commandKind": "bulk",
       "name": "test",
-      "summary": "Run tests for all projects",
+      "summary": "Run unit tests across all packages",
+      "description": "Invokes the \"test\" script in every project. Projects without a \"test\" script are skipped. Respects the dependency order so upstream packages are tested first.",
       "enableParallelism": true,
-      "safeForSimultaneousRushProcesses": true
+      "ignoreDependencyOrder": false,
+      "ignoreMissingScript": true,
+      "allowWarningsInSuccessfulBuild": false
     },
+
+    // ------------------------------------------------------------------
+    // rush lint
+    // Runs ESLint in every project that defines a "lint" script.
+    // Order is irrelevant for linting, so we enable maximum parallelism.
+    // ------------------------------------------------------------------
     {
       "commandKind": "bulk",
       "name": "lint",
-      "summary": "Run ESLint across all packages that define a lint script.",
+      "summary": "Run ESLint across all packages",
+      "description": "Invokes the \"lint\" script in every project. Projects without a \"lint\" script are skipped. Runs in parallel because linting does not depend on build order.",
       "enableParallelism": true,
       "ignoreDependencyOrder": true,
+      "ignoreMissingScript": true,
       "allowWarningsInSuccessfulBuild": false
     },
+
+    // ------------------------------------------------------------------
+    // rush typecheck
+    // Runs tsc --noEmit in every project that defines a "typecheck" script.
+    // Upstream packages must be type-checked first (ignoreDependencyOrder: false).
+    // ------------------------------------------------------------------
     {
       "commandKind": "bulk",
-      "name": "docs",
-      "summary": "Compile TypeDoc annotations into docs for all packages that define a docs script.",
+      "name": "typecheck",
+      "summary": "Run TypeScript type checking across all packages",
+      "description": "Invokes the \"typecheck\" script in every project. Respects build order so type definitions from upstream packages are available when downstream packages are checked.",
       "enableParallelism": true,
-      "ignoreDependencyOrder": true,
+      "ignoreDependencyOrder": false,
+      "ignoreMissingScript": true,
       "allowWarningsInSuccessfulBuild": false
-    },
-    {
-      "commandKind": "global",
-      "name": "publish-local",
-      "summary": "Publish all @quojs/* packages to local Verdaccio (no Rush / Git)",
-      "shellCommand": "bash common/scripts/publish-verdaccio.sh"
-    },
-    {
-      "commandKind": "global",
-      "name": "verdaccio-up",
-      "summary": "Start local Verdaccio (Docker Compose)",
-      "shellCommand": "docker compose -f ops/verdaccio/docker-compose.yml up -d"
-    },
-    {
-      "commandKind": "global",
-      "name": "verdaccio-down",
-      "summary": "Stop local Verdaccio and remove volumes",
-      "shellCommand": "docker compose -f ops/verdaccio/docker-compose.yml down -v"
-    },
-    {
-      "commandKind": "global",
-      "name": "verify-npm-access",
-      "summary": "Preflight check for npm auth, org membership, scope mapping, and write access before publishing",
-      "shellCommand": "bash common/scripts/verify-npm-access.sh"
     }
   ],
-  "parameters": [
-    {
-      "parameterKind": "string",
-      "longName": "--registry",
-      "shortName": "-r",
-      "argumentName": "REGISTRY",
-      "description": "Verdaccio registry URL (default: http://localhost:4873)",
-      "associatedCommands": [
-        "publish-local"
-      ]
-    },
-    {
-      "parameterKind": "string",
-      "longName": "--tag",
-      "shortName": "-t",
-      "argumentName": "TAG",
-      "description": "Dist-tag to use for local publish (default: local)",
-      "associatedCommands": [
-        "publish-local"
-      ]
-    },
-    {
-      "parameterKind": "flag",
-      "longName": "--skip-bump",
-      "description": "Skip 'rush version' (publish current versions as-is)",
-      "associatedCommands": [
-        "publish-local"
-      ]
-    },
-    {
-      "parameterKind": "flag",
-      "longName": "--skip-tests",
-      "description": "Skip example matrix (install/build/test)",
-      "associatedCommands": [
-        "publish-local"
-      ]
-    },
-    {
-      "parameterKind": "string",
-      "longName": "--scope",
-      "argumentName": "SCOPE",
-      "description": "npm scope (default: quojs) — omit the leading @",
-      "associatedCommands": [
-        "verify-npm-access"
-      ]
-    },
-    {
-      "parameterKind": "string",
-      "longName": "--registry",
-      "argumentName": "REGISTRY",
-      "description": "Target registry to check (default: https://registry.npmjs.org/)",
-      "associatedCommands": [
-        "verify-npm-access"
-      ]
-    },
-    {
-      "parameterKind": "string",
-      "longName": "--access",
-      "argumentName": "ACCESS",
-      "description": "Expected access level for first publish (default: public)",
-      "associatedCommands": [
-        "verify-npm-access"
-      ]
-    }
-  ]
+
+  "parameters": []
 }

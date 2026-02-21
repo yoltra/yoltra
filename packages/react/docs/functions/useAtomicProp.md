@@ -1,8 +1,8 @@
-[**@quojs/react**](../README.md)
+[**@yoltra/react**](../README.md)
 
 ***
 
-[@quojs/react](../README.md) / useAtomicProp
+[@yoltra/react](../README.md) / useAtomicProp
 
 # Function: useAtomicProp()
 
@@ -10,12 +10,12 @@
 
 > **useAtomicProp**\<`R`, `S`, `R1`, `P`\>(`spec`): [`PathValue`](../type-aliases/PathValue.md)\<`S`\[`R1`\], `P`\>
 
-Defined in: [react/src/hooks/hooks.ts:297](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L297)
+Defined in: [react/src/hooks/hooks.ts:294](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/hooks.ts#L294)
 
 Fine-grained **single-path** selector for a reducer's state.
 
 Re-renders only when the specified `reducer.property` (dotted path) actually changes.
-For most applications, prefer using the typed version from [createQuoHooks](createQuoHooks.md)
+For most applications, prefer using the typed version from [createHooks](createHooks.md)
 which infers all type parameters automatically.
 
 **Supports**
@@ -65,7 +65,7 @@ which infers all type parameters automatically.
 ### Examples
 
 ```tsx
-const { useAtomicProp } = createQuoHooks(AppStoreContext);
+const { useAtomicProp } = createHooks(AppStoreContext);
 
 function TodoTitle({ index }: { index: number }) {
   // Types are inferred — no explicit generics needed
@@ -102,12 +102,12 @@ const titles = useAtomicProp(
 
 > **useAtomicProp**\<`R`, `S`, `R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`
 
-Defined in: [react/src/hooks/hooks.ts:303](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L303)
+Defined in: [react/src/hooks/hooks.ts:300](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/hooks.ts#L300)
 
 Fine-grained **single-path** selector for a reducer's state.
 
 Re-renders only when the specified `reducer.property` (dotted path) actually changes.
-For most applications, prefer using the typed version from [createQuoHooks](createQuoHooks.md)
+For most applications, prefer using the typed version from [createHooks](createHooks.md)
 which infers all type parameters automatically.
 
 **Supports**
@@ -169,7 +169,7 @@ which infers all type parameters automatically.
 ### Examples
 
 ```tsx
-const { useAtomicProp } = createQuoHooks(AppStoreContext);
+const { useAtomicProp } = createHooks(AppStoreContext);
 
 function TodoTitle({ index }: { index: number }) {
   // Types are inferred — no explicit generics needed
@@ -206,12 +206,12 @@ const titles = useAtomicProp(
 
 > **useAtomicProp**\<`R`, `S`, `R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`
 
-Defined in: [react/src/hooks/hooks.ts:314](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L314)
+Defined in: [react/src/hooks/hooks.ts:311](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/hooks.ts#L311)
 
 Fine-grained **single-path** selector for a reducer's state.
 
 Re-renders only when the specified `reducer.property` (dotted path) actually changes.
-For most applications, prefer using the typed version from [createQuoHooks](createQuoHooks.md)
+For most applications, prefer using the typed version from [createHooks](createHooks.md)
 which infers all type parameters automatically.
 
 **Supports**
@@ -273,7 +273,7 @@ which infers all type parameters automatically.
 ### Examples
 
 ```tsx
-const { useAtomicProp } = createQuoHooks(AppStoreContext);
+const { useAtomicProp } = createHooks(AppStoreContext);
 
 function TodoTitle({ index }: { index: number }) {
   // Types are inferred — no explicit generics needed
@@ -310,12 +310,12 @@ const titles = useAtomicProp(
 
 > **useAtomicProp**\<`R`, `S`\>(`spec`): `unknown`
 
-Defined in: [react/src/hooks/hooks.ts:325](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L325)
+Defined in: [react/src/hooks/hooks.ts:322](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/hooks.ts#L322)
 
 Fine-grained **single-path** selector for a reducer's state.
 
 Re-renders only when the specified `reducer.property` (dotted path) actually changes.
-For most applications, prefer using the typed version from [createQuoHooks](createQuoHooks.md)
+For most applications, prefer using the typed version from [createHooks](createHooks.md)
 which infers all type parameters automatically.
 
 **Supports**
@@ -357,7 +357,7 @@ which infers all type parameters automatically.
 ### Examples
 
 ```tsx
-const { useAtomicProp } = createQuoHooks(AppStoreContext);
+const { useAtomicProp } = createHooks(AppStoreContext);
 
 function TodoTitle({ index }: { index: number }) {
   // Types are inferred — no explicit generics needed
@@ -394,12 +394,12 @@ const titles = useAtomicProp(
 
 > **useAtomicProp**\<`R`, `S`, `T`\>(`spec`, `map`, `isEqual?`): `T`
 
-Defined in: [react/src/hooks/hooks.ts:329](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/hooks.ts#L329)
+Defined in: [react/src/hooks/hooks.ts:326](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/hooks.ts#L326)
 
 Fine-grained **single-path** selector for a reducer's state.
 
 Re-renders only when the specified `reducer.property` (dotted path) actually changes.
-For most applications, prefer using the typed version from [createQuoHooks](createQuoHooks.md)
+For most applications, prefer using the typed version from [createHooks](createHooks.md)
 which infers all type parameters automatically.
 
 **Supports**
@@ -453,7 +453,7 @@ which infers all type parameters automatically.
 ### Examples
 
 ```tsx
-const { useAtomicProp } = createQuoHooks(AppStoreContext);
+const { useAtomicProp } = createHooks(AppStoreContext);
 
 function TodoTitle({ index }: { index: number }) {
   // Types are inferred — no explicit generics needed

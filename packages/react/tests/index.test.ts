@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import * as ReactPkg from "../src";
 
-describe("@quojs/react public API", () => {
+describe("@yoltra/react public API", () => {
   it("exposes expected runtime exports", () => {
     const expectedValueKeys = [
       "StoreProvider",
@@ -19,7 +19,7 @@ describe("@quojs/react public API", () => {
       "invalidateAtomicPropsByReducer",
       "clearSuspenseCache",
       "suspenseCache",
-      "createQuoHooks",
+      "createHooks",
     ];
 
     for (const key of expectedValueKeys) {

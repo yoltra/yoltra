@@ -1,14 +1,14 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / detectChangedProps
+[@yoltra/core](../README.md) / detectChangedProps
 
 # Function: detectChangedProps()
 
 > **detectChangedProps**(`oldState`, `newState`, `path`, `seenPairs`): `string`[]
 
-Defined in: [utils/detectChangedProps.ts:68](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/utils/detectChangedProps.ts#L68)
+Defined in: [utils/detectChangedProps.ts:68](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/utils/detectChangedProps.ts#L68)
 
 Computes the list of **dotted leaf paths** that changed between two values.
 

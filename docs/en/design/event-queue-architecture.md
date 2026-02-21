@@ -1,9 +1,11 @@
+![Yoltra logo](../../../assets/yoltra-logo.png)
+
 # Event Queue Architecture
 
-> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/design/event-queue-architecture.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/design/event-queue-architecture.md)&nbsp; |
-> &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/design/event-queue-architecture.md)
+> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/docs/es/design/event-queue-architecture.md)&nbsp; |
+> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/yoltra/yoltra/blob/main/docs/pt/design/event-queue-architecture.md)&nbsp; |
+> &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)&nbsp; |
+> &nbsp;[ 🇫🇷 Version française](https://github.com/yoltra/yoltra/blob/main/docs/fr/design/event-queue-architecture.md)
 
 **Version:** 0.7.0
 **Last Updated:** January 2026
@@ -11,7 +13,7 @@
 
 ## Overview
 
-Quo.js employs an **asynchronous, serialized event queue** with a re-entrancy guard for backpressure control. This architecture ensures predictable event ordering and prevents race conditions while supporting async middleware and effects.
+Yoltra employs an **asynchronous, serialized event queue** with a re-entrancy guard for backpressure control. This architecture ensures predictable event ordering and prevents race conditions while supporting async middleware and effects.
 
 ## Core Mechanism
 
@@ -152,7 +154,7 @@ if (this.isProcessingQueue) return;  // Back-pressure applied here
 
 ### Execution Model
 
-Quo.js uses a **"baton passing"** model where the first unblocked `emit()` call consumes the entire queue:
+Yoltra uses a **"baton passing"** model where the first unblocked `emit()` call consumes the entire queue:
 
 ```
 Timeline:
@@ -583,10 +585,10 @@ actor.send({ type: 'UPDATE' });
 - ❌ Complex mental model
 - ❌ Higher memory overhead (one mailbox per actor)
 
-### Quo.js (Async Queue)
+### Yoltra (Async Queue)
 
 ```typescript
-// Quo.js: Asynchronous, serialized queue
+// Yoltra: Asynchronous, serialized queue
 await emit('todo', 'add', todo);
 // ↑ Returns promise when processing complete
 // ↑ Queued if another event is processing
@@ -775,6 +777,6 @@ public dispose(): void {
 
 ---
 
-**Author**: Quo.js Team 
+**Author**: Yoltra Team 
 **License**: MIT 
-**Repository**: https://github.com/quojs/quojs
+**Repository**: https://github.com/yoltra/yoltra

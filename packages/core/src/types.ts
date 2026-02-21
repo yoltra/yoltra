@@ -1,5 +1,5 @@
 /**
- * @module @quojs/core
+ * @module @yoltra/core
  */
 
 /**
@@ -64,7 +64,7 @@ export type EventKey<EM extends EventMapBase> = {
  * ```ts
  * type EM = { ui: { toggle: boolean } };
  * type Evt = Event<EM, 'ui', 'toggle'>;
- * // { channel: 'ui'; type: 'toggle'; payload: boolean; id: symbol }
+ * // { channel: 'ui'; type: 'toggle'; payload: boolean; id: string }
  * ```
  *
  * @public
@@ -78,8 +78,8 @@ export interface Event<
   channel: C;
   type: T;
   payload: P;
-  /** Unique identifier for deduplication (automatically added by store) */
-  id: symbol;
+  /** Unique identifier for deduplication and devtools tracking (automatically added by store) */
+  id: string;
 }
 
 /**
@@ -259,6 +259,22 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * @default 50 in development, 100 in production
    */
   dedupWindowMs?: number;
+
+  /**
+   * DevTools configuration options.
+   *
+   * @remarks
+   * These options control runtime DevTools capabilities such as event replay.
+   */
+  devtools?: {
+    /**
+     * Enable event replay via `__replayEvents()`.
+     * When `false` (default), calling `__replayEvents()` throws.
+     *
+     * @default false
+     */
+    allowReplay?: boolean;
+  };
 };
 
 /**
@@ -439,6 +455,39 @@ export interface StoreInstance<
     effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
     preserveState?: boolean;
   }): void;
+
+  /**
+   * Replays a sequence of events from a snapshot through reducers and event
+   * subscribers ONLY. Skips dedup, middleware, and effects.
+   *
+   * Gated by `createStore({ devtools: { allowReplay: true } })`.
+   * Throws if replay is not enabled.
+   *
+   * @param snapshot - The state snapshot to restore before replaying.
+   * @param events - Array of events to replay (in order).
+   *
+   * @internal
+   */
+  __replayEvents(
+    snapshot: any,
+    events: Array<{ channel: string; type: string; payload: any; id: string }>,
+  ): void;
+
+  /**
+   * Returns a structured introspection snapshot for DevTools UIs.
+   *
+   * @returns Reducers, effects, middleware, event subscriptions, and coarse subscriber count.
+   *
+   * @internal
+   */
+  __devtoolsIntrospect(): {
+    reducers: Array<{ name: string; when?: unknown }>;
+    effects: Array<{ channel: string; type: string; name?: string; description?: string }>;
+    middleware: Array<{ name?: string; description?: string; when?: unknown }>;
+    atomic: Array<{ reducer: string; property: string }>;
+    event: Array<{ channel: string; type: string; phase: string }>;
+    coarse: number;
+  };
 }
 
 

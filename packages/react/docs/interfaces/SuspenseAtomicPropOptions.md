@@ -1,12 +1,12 @@
-[**@quojs/react**](../README.md)
+[**@yoltra/react**](../README.md)
 
 ***
 
-[@quojs/react](../README.md) / SuspenseAtomicPropOptions
+[@yoltra/react](../README.md) / SuspenseAtomicPropOptions
 
 # Interface: SuspenseAtomicPropOptions\<T, S\>
 
-Defined in: [react/src/hooks/suspense.ts:113](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L113)
+Defined in: [react/src/hooks/suspense.ts:113](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L113)
 
 Options for [useSuspenseAtomicProp](../functions/useSuspenseAtomicProp.md).
 
@@ -40,7 +40,7 @@ Store state record.
 
 > `optional` **key**: `string`
 
-Defined in: [react/src/hooks/suspense.ts:119](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L119)
+Defined in: [react/src/hooks/suspense.ts:119](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L119)
 
 Optional extra key to differentiate cache entries for the same path.
 
@@ -50,7 +50,7 @@ Optional extra key to differentiate cache entries for the same path.
 
 > **load**: (`valueAtPath`, `slice`) => `T` \| `Promise`\<`T`\>
 
-Defined in: [react/src/hooks/suspense.ts:115](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L115)
+Defined in: [react/src/hooks/suspense.ts:115](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L115)
 
 Async loader that receives the value at the path and the full slice.
 
@@ -74,6 +74,6 @@ Async loader that receives the value at the path and the full slice.
 
 > `optional` **staleTime**: `number`
 
-Defined in: [react/src/hooks/suspense.ts:117](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/react/src/hooks/suspense.ts#L117)
+Defined in: [react/src/hooks/suspense.ts:117](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L117)
 
 Time in ms before the cached value is considered stale (default: 0).

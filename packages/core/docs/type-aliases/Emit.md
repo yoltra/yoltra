@@ -1,14 +1,14 @@
-[**@quojs/core**](../README.md)
+[**@yoltra/core**](../README.md)
 
 ***
 
-[@quojs/core](../README.md) / Emit
+[@yoltra/core](../README.md) / Emit
 
 # Type Alias: Emit()\<EM\>
 
 > **Emit**\<`EM`\> = \<`C`, `T`\>(`channel`, `type`, `payload`) => `Promise`\<`void`\>
 
-Defined in: [types.ts:124](https://github.com/quojs/quojs/blob/7a847d68175722f00e52941458a1511185cf0a4e/packages/core/src/types.ts#L124)
+Defined in: [types.ts:124](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L124)
 
 Emit function narrowed to the developer's EventMap.
 Returns a Promise that resolves when the event has been fully processed.
