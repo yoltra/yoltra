@@ -28,15 +28,17 @@ produces **1 log**, not 2. Prevents console floods when the code path runs repea
 
 ### ✓ Is a no-op in production
 
-Production builds must not emit logs.  
-Avoids both performance and UX regression in user-facing environments.
+Production builds must not emit logs. Avoids both performance and UX regression in user-facing
+environments.
 
-The test explicitly toggles `process.env.NODE_ENV` to `production` and asserts that no warnings are logged, even when `warnOnce` is called.
+The test explicitly toggles `process.env.NODE_ENV` to `production` and asserts that no warnings
+are logged, even when `warnOnce` is called.
 
 ---
 
 ## Why This Matters
 
-This utility is critical during the v0.5 → v0.6 → v1.0 migration phases, where backward compatibility warnings guide users forward.
+This utility is critical during migration phases, where backward compatibility warnings guide
+users forward.
 
 Proper logging discipline here improves DX without penalizing runtime performance.

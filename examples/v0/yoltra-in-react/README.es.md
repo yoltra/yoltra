@@ -1,11 +1,14 @@
+![Yoltra logo](../../../assets/yoltra-logo.png)
+
 # Yoltra vs Redux Toolkit – Demo en React Vite
 
-> &nbsp;&nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md) 
+> 👉 🇲🇽 Versión en Español &nbsp; | &nbsp; [ 🇺🇸 English Version](./README.md)
 
 Una pequena demostracion enfocada en React que aloja **ambas implementaciones de estado** lado a
 lado -- la prueba definitiva esta en la comparacion de flamegraph:
 
-- **Yoltra** (store orientado a eventos con eventos basados en canales y suscripciones de grano fino)
+- **Yoltra** (store orientado a eventos con eventos basados en canales y suscripciones de grano
+  fino)
 - **Redux Toolkit (RTK)** (stack estandar de Redux con `createSlice` + `createAsyncThunk`)
 
 Usa este proyecto para ejecutar la UI localmente y reproducir el
@@ -106,5 +109,6 @@ permitido por tu navegador / proxy de desarrollo si deshabilitas MSW.
 
 ## Licencia
 
-Esta demostración es para propósitos de comparación/documentación. Consulta la raíz del
-repositorio para detalles de la licencia.
+MIT
+
+Este proyecto es para fines de demostración/documentación.

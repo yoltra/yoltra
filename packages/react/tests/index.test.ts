@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import * as ReactPkg from "../src";
 
 describe("@yoltra/react public API", () => {
@@ -19,7 +19,7 @@ describe("@yoltra/react public API", () => {
       "invalidateAtomicPropsByReducer",
       "clearSuspenseCache",
       "suspenseCache",
-      "createQuoHooks",
+      "createHooks",
     ];
 
     for (const key of expectedValueKeys) {

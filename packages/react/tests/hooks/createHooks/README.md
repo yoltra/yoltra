@@ -1,14 +1,16 @@
-# `createQuoHooks` Test Suite
+# `createHooks` Test Suite
 
 ## Overview
 
-This suite validates the behavior of the `createQuoHooks` factory, which generates a scoped set of React hooks tied to a provided `StoreContext`.
+This suite validates the behavior of the `createHooks` factory, which generates a scoped set of
+React hooks tied to a provided `StoreContext`.
 
-The primary purpose is to ensure yoltra can support **multi-context**, **multi-store**, and **library-embedded** use cases without relying on a global store or singleton bindings.
+The primary purpose is to ensure yoltra can support **multi-context**, **multi-store**, and
+**library-embedded** use cases without relying on a global store or singleton bindings.
 
 ---
 
-## Why `createQuoHooks` Exists
+## Why `createHooks` Exists
 
 yoltra intentionally avoids singletons because they introduce:
 
@@ -18,7 +20,7 @@ yoltra intentionally avoids singletons because they introduce:
 - Testing friction
 - Problems with Next.js App Router + RSC boundary scoping
 
-`createQuoHooks` solves this by letting libraries define their own typed hooks:
+`createHooks` solves this by letting libraries define their own typed hooks:
 
 ```ts
 const {
@@ -29,7 +31,7 @@ const {
   useAtomicProps,
   useEvent,
   shallowEqual,
-} = createQuoHooks(MyCustomContext);
+} = createHooks(MyCustomContext);
 ```
 
 This makes yoltra composable and improves DX for large apps.
@@ -77,7 +79,7 @@ This matters for:
 
 ---
 
-## What the Test Does *Not* Cover
+## What the Test Does _Not_ Cover
 
 These concerns are intentionally excluded:
 
@@ -90,7 +92,7 @@ These concerns are intentionally excluded:
 
 ## Why This Suite Matters
 
-`createQuoHooks` is one of the most advanced APIs in yoltra and enables:
+`createHooks` is one of the most advanced APIs in yoltra and enables:
 
 - Multiple isolated providers within the same React tree
 - Plugin systems (e.g., CMS, dashboards, analytics)

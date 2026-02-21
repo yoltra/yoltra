@@ -2,30 +2,30 @@
  * @module @yoltra/react
  */
 
-export { StoreProvider } from "./context/StoreProvider";
 export { StoreContext } from "./context/StoreContext";
+export { StoreProvider } from "./context/StoreProvider";
 
 export {
-  useStore,
-  useEmit,
-  useSelector,
+  shallowEqual,
   useAtomicProp,
   useAtomicProps,
+  useEmit,
   useEvent,
-  shallowEqual,
+  useSelector,
+  useStore,
 } from "./hooks/hooks";
 
 export {
-  useSuspenseAtomicProp,
-  useSuspenseAtomicProps,
+  clearSuspenseCache,
   invalidateAtomicProp,
   invalidateAtomicPropsByReducer,
-  clearSuspenseCache,
   suspenseCache,
+  useSuspenseAtomicProp,
+  useSuspenseAtomicProps,
 } from "./hooks/suspense";
 
-export { createQuoHooks } from "./hooks/createQuoHooks";
+export { createHooks } from "./hooks/createHooks";
+export type { UseAtomicProp, UseAtomicProps, UseEvent } from "./hooks/createHooks";
 
-export type { PathValue, OneOrMany } from "./hooks/hooks";
+export type { OneOrMany, PathValue } from "./hooks/hooks";
 export type { SuspenseAtomicPropOptions, SuspenseAtomicPropsOptions } from "./hooks/suspense";
-export type { UseAtomicProp, UseAtomicProps, UseEvent } from "./hooks/createQuoHooks";

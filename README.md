@@ -13,7 +13,7 @@
 
 ![Kinetic Logo Demo](./assets/yoltra-dots.gif)
 
-> 3000 SVG circles, each subscribing to its own position via `useAtomicProp`. Every circle
+> 3000 circles, each subscribing to its own position via `useAtomicProp`. Every circle
 > re-renders independently — the rest of the tree is untouched.
 > [See the demo source.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)
 

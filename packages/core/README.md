@@ -3,8 +3,7 @@
 # @yoltra/core
 
 > [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/packages/core/README.es.md)&nbsp;
-> | &nbsp; 👉
-> [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)&nbsp;
+> | &nbsp; 👉 🇺🇸 English Version
 
 ![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
 ![License](https://badgen.net/npm/license/@yoltra/core)
@@ -445,7 +444,7 @@ store.registerEffect({
 - **[Todo App](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react)** — Full
   CRUD with performance profiling
 - **[Kinetic Logo](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo)**
-  — 1000+ SVG circles with physics simulation
+  — 3000 circles with physics simulation
 - **[Next.js Integration](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs)**
   — SSR + App Router + theme switcher
 

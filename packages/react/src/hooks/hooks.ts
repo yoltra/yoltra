@@ -2,20 +2,20 @@
  * @module @yoltra/react
  */
 
-import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
-import { StoreContext } from "../context/StoreContext";
 import type {
-  EventMapBase,
-  Event,
-  Emit,
-  StoreInstance,
-  Dotted,
-  WithGlob,
   DeepReadonly,
+  Dotted,
+  Emit,
+  Event,
+  EventMapBase,
   EventPhase,
   PathValue,
+  StoreInstance,
+  WithGlob,
 } from "@yoltra/core";
-import { hasWildcard, normalizePath, getAtPath } from "../utils/path";
+import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { StoreContext } from "../context/StoreContext";
+import { getAtPath, hasWildcard, normalizePath } from "../utils/path";
 
 /**
  * Re-export of {@link PathValue} from `@yoltra/core`.
@@ -91,7 +91,7 @@ export function useEmit<EM extends EventMapBase>(): Emit<EM> {
  *
  * Useful as the `isEqual` argument for `useAtomicProp` and `useAtomicProps`
  * when the derived value is a plain object. Also available from the object
- * returned by {@link createQuoHooks}.
+ * returned by {@link createHooks}.
  *
  * @example
  * ```ts
@@ -138,10 +138,7 @@ export function useSelector<S extends Record<any, any>, T>(
 ): T {
   const store = useStore<any, any, S>();
 
-  const subscribe = useMemo(
-    () => (notify: () => void) => store.subscribe(notify),
-    [store],
-  );
+  const subscribe = useMemo(() => (notify: () => void) => store.subscribe(notify), [store]);
 
   const getSnapshot = useMemo(() => {
     let last = selector(store.getState() as DeepReadonly<S>);
@@ -241,7 +238,7 @@ function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>
  * Fine-grained **single-path** selector for a reducer's state.
  *
  * Re-renders only when the specified `reducer.property` (dotted path) actually changes.
- * For most applications, prefer using the typed version from {@link createQuoHooks}
+ * For most applications, prefer using the typed version from {@link createHooks}
  * which infers all type parameters automatically.
  *
  * **Supports**
@@ -254,9 +251,9 @@ function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>
  * - Exact path + `map`: returns `T` from `map(value)`
  * - Glob path (with `*`/`**`): requires `map` and returns `T` from `map(state)`
  *
- * @example Via createQuoHooks (recommended)
+ * @example Via createHooks (recommended)
  * ```tsx
- * const { useAtomicProp } = createQuoHooks(AppStoreContext);
+ * const { useAtomicProp } = createHooks(AppStoreContext);
  *
  * function TodoTitle({ index }: { index: number }) {
  *   // Types are inferred — no explicit generics needed
@@ -423,9 +420,7 @@ function _useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
 
       const unsubs = normalizedSpecs.flatMap((sp) => {
         const props = Array.isArray(sp.property) ? sp.property : [sp.property];
-        return props.map((p) =>
-          store.connect({ reducer: sp.reducer, property: p }, tick),
-        );
+        return props.map((p) => store.connect({ reducer: sp.reducer, property: p }, tick));
       });
 
       return () => {

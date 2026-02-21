@@ -35,7 +35,7 @@ Validates names that have runtime presence:
 - `invalidateAtomicPropsByReducer`
 - `clearSuspenseCache`
 - `suspenseCache`
-- `createQuoHooks`
+- `createHooks`
 
 Type-only exports are intentionally **not** asserted, as they do not exist at runtime.
 
@@ -64,4 +64,5 @@ Surface tests catch regression classes such as:
 - Packaging tree-shaking errors
 - Dead modules after build system changes
 
-This test reduces ecosystem churn for users over time and makes the public API contract explicit.
+This test reduces ecosystem churn for users over time and makes the public API contract
+explicit.

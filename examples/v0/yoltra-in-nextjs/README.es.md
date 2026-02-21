@@ -1,4 +1,4 @@
-![Yoltra logo](https://yoltra.dev/assets/logo.svg)
+![Yoltra logo](../../../assets/yoltra-logo.png)
 
 # Yoltra en Next.js (React 19)
 
@@ -15,18 +15,18 @@ aplicación sin fricciones en **React 19 + Next.js 16**.
 
 ---
 
-## 🎯 Propósito
+## Propósito
 
 Este ejemplo está diseñado para:
 
-- ✅ Demostrar que **Yoltra funciona bajo SSR de Next.js** (Server-Side Rendering)
-- ⚡ Mostrar **suscripciones atómicas** — la UI solo actualiza los componentes cuyos valores
+- Demostrar que **Yoltra funciona bajo SSR de Next.js** (Server-Side Rendering)
+- Mostrar **suscripciones atómicas** — la UI solo actualiza los componentes cuyos valores
   cambian
-- 🌗 Implementar un **sistema de temas** usando reductores y selectores atómicos de Yoltra
+- Implementar un **sistema de temas** usando reductores y selectores atómicos de Yoltra
 
 ---
 
-## 🧠 Descripción del Concepto
+## Descripción del Concepto
 
 La app define un `themeReducer` con dos eventos:
 
@@ -41,7 +41,7 @@ El tema seleccionado se aplica a `document.documentElement.classList` (`theme-li
 
 ---
 
-## 📂 Estructura
+## Estructura
 
 ```
 yoltra-in-nextjs/
@@ -64,7 +64,7 @@ yoltra-in-nextjs/
 
 ---
 
-## ⚙️ Cómo Ejecutar
+## Cómo Ejecutar
 
 Primero, instala las dependencias:
 
@@ -82,5 +82,5 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver el 
 
 ### 3. Cambiar Tema
 
-Haz clic en el ícono 🌙 / 🌞 en el encabezado para alternar entre modo claro y oscuro.  
-El cambio se maneja mediante **Yoltra** usando una actualización atómica de propiedades.
+Haz clic en el ícono 🌙 / 🌞 en el encabezado para alternar entre modo claro y oscuro. El cambio
+se maneja mediante **Yoltra** usando una actualización atómica de propiedades.

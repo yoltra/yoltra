@@ -1,6 +1,10 @@
+![Yoltra logo](../../../assets/yoltra-logo.png)
+
 # Yoltra: Kinetic logo animation
 
 ![Yoltra dots](../../../assets/yoltra-dots.gif);
+
+> [🇲🇽 Versión en Español](./README.es.md) &nbsp; | 👉 🇺🇸 English Version&nbsp;
 
 > A performant kinetic logo animation that showcases Yoltra's **atomic subscriptions**.
 
@@ -31,7 +35,7 @@ batchUpdate  →  reducer  →  store notifies 3000 subscribers
 ```
 
 A frame that moves 300 dots triggers exactly **300 React renders**, each updating two SVG
-attributes. The other 700 components stay frozen.
+attributes. The other 2700 components stay frozen.
 
 ---
 
@@ -127,3 +131,7 @@ src/
 | Mouse repel radius | `DotItem.ts` → `INTERACT_RADIUS`        | `8 px`              |
 | Approach speed     | `extract.ts` → `factor` option          | random `[3, 7]`     |
 | Intro delay        | `extract.ts` → `delay` option           | random `[0, 0.8 s]` |
+
+# License
+
+GPL-2.0-only - **Yoltra Kinetic Logo** project is for comparison/documentation purposes.

@@ -10,7 +10,7 @@
 
 > **useSuspenseAtomicProps**\<`R`, `S`, `T`\>(`specs`, `options`): `T`
 
-Defined in: [react/src/hooks/suspense.ts:260](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/react/src/hooks/suspense.ts#L260)
+Defined in: [react/src/hooks/suspense.ts:260](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L260)
 
 Suspense-compatible version of `useAtomicProps` that throws a promise while loading.
 
@@ -85,7 +85,7 @@ function Dashboard() {
 
 > **useSuspenseAtomicProps**\<`R`, `S`, `T`\>(`specs`, `options`): `T`
 
-Defined in: [react/src/hooks/suspense.ts:267](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/react/src/hooks/suspense.ts#L267)
+Defined in: [react/src/hooks/suspense.ts:267](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L267)
 
 Suspense-compatible version of `useAtomicProps` that throws a promise while loading.
 

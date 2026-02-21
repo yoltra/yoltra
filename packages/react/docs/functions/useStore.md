@@ -8,7 +8,7 @@
 
 > **useStore**\<`EM`, `R`, `S`\>(): `StoreInstance`\<`R`, `S`, `EM`\>
 
-Defined in: [react/src/hooks/hooks.ts:61](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/react/src/hooks/hooks.ts#L61)
+Defined in: [react/src/hooks/hooks.ts:61](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/hooks.ts#L61)
 
 Returns the current StoreInstance from [StoreContext](../variables/StoreContext.md).
 Throws if used outside of a `<StoreProvider>`.

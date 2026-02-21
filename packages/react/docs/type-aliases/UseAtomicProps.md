@@ -8,9 +8,9 @@
 
 > **UseAtomicProps**\<`R`, `S`\> = \{\<`R1`, `T`\>(`specs`, `selector`, `isEqual?`): `T`; \<`R1`, `T`\>(`specs`, `selector`, `isEqual?`): `T`; \}
 
-Defined in: [react/src/hooks/createQuoHooks.ts:95](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/react/src/hooks/createQuoHooks.ts#L95)
+Defined in: react/src/hooks/createHooks.ts:95
 
-Call signature for the typed `useAtomicProps` hook returned by [createQuoHooks](../functions/createQuoHooks.md).
+Call signature for the typed `useAtomicProps` hook returned by [createHooks](../functions/createHooks.md).
 
 Subscribes to multiple dotted paths across one or more reducers and recomputes
 a derived value when any of them change.
@@ -96,7 +96,7 @@ State record keyed by `R`.
 ## Example
 
 ```tsx
-const { useAtomicProps } = createQuoHooks(AppStoreContext);
+const { useAtomicProps } = createHooks(AppStoreContext);
 
 function FilteredCount() {
   const count = useAtomicProps(

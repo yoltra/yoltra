@@ -8,7 +8,7 @@
 
 > `const` **StoreProvider**: `React.FC`\<\{ `children`: `ReactNode`; `store`: `StoreInstance`\<`any`, `any`, `any`\>; \}\>
 
-Defined in: [react/src/context/StoreProvider.tsx:56](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/react/src/context/StoreProvider.tsx#L56)
+Defined in: [react/src/context/StoreProvider.tsx:56](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/context/StoreProvider.tsx#L56)
 
 React provider that places a StoreInstance into [StoreContext](StoreContext.md).
 
@@ -33,7 +33,7 @@ React subtree that will consume the store.
 // store.ts
 import { createStore, eventKeys } from '@yoltra/core';
 import { createContext } from 'react';
-import { createQuoHooks, StoreProvider } from '@yoltra/react';
+import { createHooks, StoreProvider } from '@yoltra/react';
 
 type AppEM = { ui: { increment: number } };
 type AppState = { counter: { value: number } };
@@ -52,7 +52,7 @@ export const store = createStore<AppState, AppEM>({
 });
 
 const AppStoreContext = createContext<typeof store | null>(null);
-export const { useAtomicProp, useEmit } = createQuoHooks(AppStoreContext);
+export const { useAtomicProp, useEmit } = createHooks(AppStoreContext);
 
 // App.tsx
 export function App({ children }: { children: React.ReactNode }) {

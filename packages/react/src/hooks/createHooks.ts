@@ -2,23 +2,23 @@
  * @module @yoltra/react
  */
 
-import * as React from "react";
-import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import type {
-  EventMapBase,
-  Event,
-  StoreInstance,
-  Emit,
   DeepReadonly,
-  WithGlob,
   Dotted,
+  Emit,
+  Event,
+  EventMapBase,
   EventPhase,
   PathValue,
+  StoreInstance,
+  WithGlob,
 } from "@yoltra/core";
-import { hasWildcard, normalizePath, getAtPath } from "../utils/path";
+import * as React from "react";
+import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { getAtPath, hasWildcard, normalizePath } from "../utils/path";
 
 /**
- * Call signature for the typed `useAtomicProp` hook returned by {@link createQuoHooks}.
+ * Call signature for the typed `useAtomicProp` hook returned by {@link createHooks}.
  *
  * Subscribes to a specific dotted path in a reducer's state and re-renders
  * only when that path changes. All type parameters are inferred automatically
@@ -29,7 +29,7 @@ import { hasWildcard, normalizePath, getAtPath } from "../utils/path";
  *
  * @example
  * ```tsx
- * const { useAtomicProp } = createQuoHooks(AppStoreContext);
+ * const { useAtomicProp } = createHooks(AppStoreContext);
  *
  * function TodoTitle({ index }: { index: number }) {
  *   const title = useAtomicProp({
@@ -43,10 +43,10 @@ import { hasWildcard, normalizePath, getAtPath } from "../utils/path";
  * @public
  */
 export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
-  <R1 extends R, P extends Dotted<S[R1]>>(spec: { reducer: R1; property: P }): PathValue<
-    S[R1],
-    P
-  >;
+  <R1 extends R, P extends Dotted<S[R1]>>(spec: {
+    reducer: R1;
+    property: P;
+  }): PathValue<S[R1], P>;
   <R1 extends R, P extends Dotted<S[R1]>, T>(
     spec: { reducer: R1; property: P },
     map: (value: PathValue<S[R1], P>) => T,
@@ -66,7 +66,7 @@ export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
 };
 
 /**
- * Call signature for the typed `useAtomicProps` hook returned by {@link createQuoHooks}.
+ * Call signature for the typed `useAtomicProps` hook returned by {@link createHooks}.
  *
  * Subscribes to multiple dotted paths across one or more reducers and recomputes
  * a derived value when any of them change.
@@ -76,7 +76,7 @@ export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
  *
  * @example
  * ```tsx
- * const { useAtomicProps } = createQuoHooks(AppStoreContext);
+ * const { useAtomicProps } = createHooks(AppStoreContext);
  *
  * function FilteredCount() {
  *   const count = useAtomicProps(
@@ -109,7 +109,7 @@ export type UseAtomicProps<R extends string, S extends Record<R, any>> = {
 };
 
 /**
- * Call signature for the typed `useEvent` hook returned by {@link createQuoHooks}.
+ * Call signature for the typed `useEvent` hook returned by {@link createHooks}.
  *
  * Subscribes to store events from a React component. Useful for notifications,
  * animations, analytics, and responding to rejected (uncommitted) events.
@@ -119,7 +119,7 @@ export type UseAtomicProps<R extends string, S extends Record<R, any>> = {
  *
  * @example
  * ```tsx
- * const { useEvent } = createQuoHooks(AppStoreContext);
+ * const { useEvent } = createHooks(AppStoreContext);
  *
  * function SaveNotifier() {
  *   useEvent('ui', 'save', (event) => {
@@ -204,7 +204,7 @@ export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T) {
  * >(null);
  *
  * // 3. Create typed hooks (do this once, export from a shared module)
- * const { useAtomicProp, useEmit, useEvent } = createQuoHooks(AppStoreContext);
+ * const { useAtomicProp, useEmit, useEvent } = createHooks(AppStoreContext);
  *
  * // 4. Use in components — no explicit generics needed
  * function Counter() {
@@ -220,7 +220,7 @@ export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T) {
  *
  * @public
  */
-export function createQuoHooks<
+export function createHooks<
   R extends string,
   S extends Record<R, any>,
   EM extends EventMapBase,
@@ -266,8 +266,9 @@ export function createQuoHooks<
 
     const subscribe = useMemo(
       () => (notify: () => void) =>
-        store.connect({ reducer: normalizedSpec.reducer, property: normalizedSpec.property }, () =>
-          notify(),
+        store.connect(
+          { reducer: normalizedSpec.reducer, property: normalizedSpec.property },
+          () => notify(),
         ),
       [store, normalizedSpec],
     );
@@ -296,7 +297,7 @@ export function createQuoHooks<
   type OneOrMany<T> = T | readonly T[];
   type UseAtomicPropsOverloads = UseAtomicProps<R, S>;
 
-  const useAtomicPropsImpl = <T,>(
+  const useAtomicPropsImpl = <T>(
     specs: Array<{ reducer: R; property: OneOrMany<string> }>,
     selector: (state: DeepReadonly<S>) => T,
     isEqual: (a: T, b: T) => boolean = Object.is,
@@ -374,7 +375,12 @@ export function createQuoHooks<
         channel,
         type,
         (event, getState, emit, eventPhase) => {
-          handlerRef.current(event as Event<EM, C, T>, getState as () => DeepReadonly<S>, emit, eventPhase);
+          handlerRef.current(
+            event as Event<EM, C, T>,
+            getState as () => DeepReadonly<S>,
+            emit,
+            eventPhase,
+          );
         },
         phase,
       );

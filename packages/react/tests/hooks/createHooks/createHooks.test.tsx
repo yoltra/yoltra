@@ -1,21 +1,23 @@
-import { createContext } from "react";
 import { render, screen } from "@testing-library/react";
-import { act } from "react";
-import { describe, it, expect } from "vitest";
+import { act, createContext } from "react";
+import { describe, expect, it } from "vitest";
 
-import type { StoreInstance, EventMapBase } from "@yoltra/core";
-import { createQuoHooks } from "../../../src/hooks/createQuoHooks";
+import type { EventMapBase, StoreInstance } from "@yoltra/core";
+import { createHooks } from "../../../src/hooks/createHooks";
 import { createMockStore } from "../../helpers/mockStore";
 
-describe("createQuoHooks", () => {
+describe("createHooks", () => {
   type RootState = { counter: { value: number } };
   type R = "counter";
   type EM = EventMapBase;
 
   it("binds hooks to a specific StoreContext", () => {
     const CustomContext = createContext<StoreInstance<R, RootState, EM> | null>(null);
-    const { useStore, useEmit, useSelector, useAtomicProp, useAtomicProps } =
-      createQuoHooks<R, RootState, EM>(CustomContext);
+    const { useStore, useEmit, useSelector, useAtomicProp, useAtomicProps } = createHooks<
+      R,
+      RootState,
+      EM
+    >(CustomContext);
 
     const { store } = createMockStore<RootState>({ counter: { value: 0 } });
 
@@ -36,11 +38,11 @@ describe("createQuoHooks", () => {
 
       return (
         <>
-          <span data-testid="store-ok">{s === store ? "yes" : "no"}</span>
-          <span data-testid="emit-eq">{emit === store.emit ? "yes" : "no"}</span>
-          <span data-testid="value">{value}</span>
-          <span data-testid="doubled">{doubled * 2}</span>
-          <span data-testid="total">{total}</span>
+          <span data-testid='store-ok'>{s === store ? "yes" : "no"}</span>
+          <span data-testid='emit-eq'>{emit === store.emit ? "yes" : "no"}</span>
+          <span data-testid='value'>{value}</span>
+          <span data-testid='doubled'>{doubled * 2}</span>
+          <span data-testid='total'>{total}</span>
         </>
       );
     }

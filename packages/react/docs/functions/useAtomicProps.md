@@ -10,7 +10,7 @@
 
 > **useAtomicProps**\<`R`, `S`, `T`\>(`specs`, `selector`, `isEqual?`): `T`
 
-Defined in: [react/src/hooks/hooks.ts:372](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/react/src/hooks/hooks.ts#L372)
+Defined in: [react/src/hooks/hooks.ts:369](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/hooks.ts#L369)
 
 **Multi-path** fine-grained selector.
 
@@ -77,7 +77,7 @@ const total = useAtomicProps<'todos' | 'filter', AppState, number>(
 
 > **useAtomicProps**\<`R`, `S`, `T`\>(`specs`, `selector`, `isEqual?`): `T`
 
-Defined in: [react/src/hooks/hooks.ts:377](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/react/src/hooks/hooks.ts#L377)
+Defined in: [react/src/hooks/hooks.ts:374](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/hooks.ts#L374)
 
 **Multi-path** fine-grained selector.
 

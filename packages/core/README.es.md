@@ -2,9 +2,7 @@
 
 # @yoltra/core
 
-> 👉
-> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/packages/core/README.es.md)&nbsp;
-> |
+> 👉 🇲🇽 Versión en Español&nbsp; |
 > &nbsp;[ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)&nbsp;
 
 ![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
@@ -450,7 +448,7 @@ store.registerEffect({
 - **[App de Tareas](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react)** --
   CRUD completo con perfilado de rendimiento
 - **[Logo Cinetico](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo)**
-  -- 1000+ circulos SVG con simulacion de fisica
+  -- 3000 círculos con simulación física.
 - **[Integracion con Next.js](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs)**
   -- SSR + App Router + cambio de tema
 

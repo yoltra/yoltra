@@ -1,7 +1,9 @@
 # Yoltra vs Redux Toolkit: Profiler Comparison
 
-> [ 🇲🇽 Versión en Español](./redux-yoltra-profiler.es.md)&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](./redux-yoltra-profiler.md)&nbsp;
+![Frame #20 - Profiler](./public/assets/profiler/yoltra/profiler-yoltra-frame-10.2025-10-20-22-53-32.png)
+
+> [ 🇲🇽 Versión en Español](./redux-yoltra-profiler.es.md)&nbsp; | &nbsp; 👉 🇺🇸 English Version
+> &nbsp;
 
 ## Test Scenario
 
@@ -16,7 +18,7 @@ subscriptions**.
 
 ## Yoltra Flamegraphs (Frames 01–19)
 
-Quo’s updates are consistently **flat and localized**. Each commit touches only the component
+Yoltra’s updates are consistently **flat and localized**. Each commit touches only the component
 that subscribed to the _todo_ that actually changed. Atomic property subscriptions for the win.
 
 | Frame | Notes                                                                                                                            | Yoltra                                                                                            | Redux (RTK)                                                                                 |

@@ -2,13 +2,13 @@
 
 ***
 
-[@yoltra/react](../README.md) / createQuoHooks
+[@yoltra/react](../README.md) / createHooks
 
-# Function: createQuoHooks()
+# Function: createHooks()
 
-> **createQuoHooks**\<`R`, `S`, `EM`\>(`StoreContext`): `object`
+> **createHooks**\<`R`, `S`, `EM`\>(`StoreContext`): `object`
 
-Defined in: [react/src/hooks/createQuoHooks.ts:223](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/react/src/hooks/createQuoHooks.ts#L223)
+Defined in: react/src/hooks/createHooks.ts:223
 
 Factory that creates fully-typed React hooks bound to a specific store context.
 
@@ -57,7 +57,7 @@ Shallow object equality using `Object.is` per-key.
 
 Useful as the `isEqual` argument for `useAtomicProp` and `useAtomicProps`
 when the derived value is a plain object. Also available as a standalone
-export from `@yoltra/react` via [hooks.shallowEqual](#createquohooks).
+export from `@yoltra/react` via [hooks.shallowEqual](#createhooks).
 
 #### Type Parameters
 
@@ -157,7 +157,7 @@ const AppStoreContext = createContext<
 >(null);
 
 // 3. Create typed hooks (do this once, export from a shared module)
-const { useAtomicProp, useEmit, useEvent } = createQuoHooks(AppStoreContext);
+const { useAtomicProp, useEmit, useEvent } = createHooks(AppStoreContext);
 
 // 4. Use in components — no explicit generics needed
 function Counter() {

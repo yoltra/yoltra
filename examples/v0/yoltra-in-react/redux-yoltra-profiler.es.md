@@ -1,7 +1,8 @@
 # Yoltra vs Redux Toolkit: Análisis con _profiler_
 
-> [ 🇲🇽 Versión en Español](./redux-yoltra-profiler.es.md)&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](./redux-yoltra-profiler.md)&nbsp;
+![Frame #20 - Profiler](./public/assets/profiler/yoltra/profiler-yoltra-frame-10.2025-10-20-22-53-32.png)
+
+> [ 🇲🇽 Versión en Español](./redux-yoltra-profiler.es.md)&nbsp; | &nbsp; 👉 🇺🇸 English Version
 
 ## Escenario de Prueba
 

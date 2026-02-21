@@ -2,8 +2,8 @@
  * @module @yoltra/react
  */
 
-import React, { type ReactNode } from "react";
 import type { StoreInstance } from "@yoltra/core";
+import React, { type ReactNode } from "react";
 
 import { StoreContext } from "./StoreContext";
 
@@ -19,12 +19,12 @@ import { StoreContext } from "./StoreContext";
  * - You may nest multiple `StoreProvider`s to scope different stores to different subtrees.
  * - In Next.js App Router, this component must be used in a **client** boundary.
  *
- * @example App wrapper with createQuoHooks (recommended)
+ * @example App wrapper with createHooks (recommended)
  * ```tsx
  * // store.ts
  * import { createStore, eventKeys } from '@yoltra/core';
  * import { createContext } from 'react';
- * import { createQuoHooks, StoreProvider } from '@yoltra/react';
+ * import { createHooks, StoreProvider } from '@yoltra/react';
  *
  * type AppEM = { ui: { increment: number } };
  * type AppState = { counter: { value: number } };
@@ -43,7 +43,7 @@ import { StoreContext } from "./StoreContext";
  * });
  *
  * const AppStoreContext = createContext<typeof store | null>(null);
- * export const { useAtomicProp, useEmit } = createQuoHooks(AppStoreContext);
+ * export const { useAtomicProp, useEmit } = createHooks(AppStoreContext);
  *
  * // App.tsx
  * export function App({ children }: { children: React.ReactNode }) {

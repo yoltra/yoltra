@@ -1,8 +1,9 @@
+![yoltra logo](../../assets/yoltra-logo.png)
+
 # @yoltra/react
 
-> 👉 [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp;
-> [ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md)
+> 👉 🇲🇽 Versión en Español&nbsp; |
+> &nbsp;[ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)&nbsp;
 
 ![npm downloads](https://badgen.net/npm/dm/@yoltra/react)
 ![License](https://badgen.net/npm/license/@yoltra/react)
@@ -27,10 +28,10 @@ npm install @yoltra/core @yoltra/react
 
 ---
 
-## Configuracion con `createQuoHooks` (recomendado)
+## Configuracion con `createHooks` (recomendado)
 
-`createQuoHooks` vincula hooks completamente tipados al contexto de tu store. Todos los
-parametros de tipo se infieren -- no se necesitan generics explicitos en los componentes.
+`createHooks` vincula hooks completamente tipados al contexto de tu store. Todos los parametros
+de tipo se infieren -- no se necesitan generics explicitos en los componentes.
 
 ### 1. Definir tipos y store
 
@@ -78,7 +79,7 @@ export const store = createStore<AppState, AppEM>({
 ```typescript
 // hooks.ts
 import { createContext } from "react";
-import { createQuoHooks } from "@yoltra/react";
+import { createHooks } from "@yoltra/react";
 import type { StoreInstance } from "@yoltra/core";
 import type { AppState, AppEM } from "./store";
 
@@ -94,7 +95,7 @@ export const {
   useAtomicProps,
   useEvent,
   shallowEqual,
-} = createQuoHooks(AppStoreContext);
+} = createHooks(AppStoreContext);
 ```
 
 ### 3. Proveer y usar

@@ -1,7 +1,9 @@
+![yoltra logo](../../assets/yoltra-logo.png)
+
 # @yoltra/react
 
-> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | &nbsp; 👉
-> [ 🇺🇸 English Version](./README.md)&nbsp;
+> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/packages/react/README.es.md)&nbsp;
+> | &nbsp; 👉 🇺🇸 English Version
 
 ![npm downloads](https://badgen.net/npm/dm/@yoltra/react)
 ![License](https://badgen.net/npm/license/@yoltra/react)
@@ -26,10 +28,10 @@ npm install @yoltra/core @yoltra/react
 
 ---
 
-## Setup with `createQuoHooks` (recommended)
+## Setup with `createHooks` (recommended)
 
-`createQuoHooks` binds fully-typed hooks to your store context. All type parameters are inferred
-— no explicit generics needed in components.
+`createHooks` binds fully-typed hooks to your store context. All type parameters are inferred —
+no explicit generics needed in components.
 
 ### 1. Define types and store
 
@@ -78,7 +80,7 @@ export const store = createStore<AppState, AppEM>({
 // hooks.ts
 import { createContext } from "react";
 
-import { createQuoHooks } from "@yoltra/react";
+import { createHooks } from "@yoltra/react";
 import type { StoreInstance } from "@yoltra/core";
 
 import type { AppState, AppEM } from "./store";
@@ -95,7 +97,7 @@ export const {
   useAtomicProps,
   useEvent,
   shallowEqual,
-} = createQuoHooks(AppStoreContext);
+} = createHooks(AppStoreContext);
 ```
 
 ### 3. Provide and use
@@ -372,7 +374,7 @@ function TodoItem({ index }: { index: number }) {
 - **[Todo App with Profiler](../../examples/v0/yoltra-in-react)** — Full CRUD with flamegraph
   comparison
 - **[Kinetic Logo (3000 particles)](../../examples/v0/yoltra-kinetic-logo)** — Independent
-  subscriptions per SVG circle
+  subscriptions per circle
 - **[Next.js 15 App Router](../../examples/v0/yoltra-in-nextjs)** — SSR + theme switcher
 
 ---
