@@ -1,16 +1,16 @@
 /**
- * @module @quojs/react
+ * @module @yoltra/react
  */
 
 import React, { type ReactNode } from "react";
-import type { StoreInstance } from "@quojs/core";
+import type { StoreInstance } from "@yoltra/core";
 
 import { StoreContext } from "./StoreContext";
 
 /**
  * React provider that places a {@link StoreInstance} into {@link StoreContext}.
  *
- * @param props.store - The Quo.js store instance to expose to descendant components.
+ * @param props.store - The yoltra store instance to expose to descendant components.
  * @param props.children - React subtree that will consume the store.
  *
  * @remarks
@@ -22,9 +22,9 @@ import { StoreContext } from "./StoreContext";
  * @example App wrapper with createQuoHooks (recommended)
  * ```tsx
  * // store.ts
- * import { createStore, eventKeys } from '@quojs/core';
+ * import { createStore, eventKeys } from '@yoltra/core';
  * import { createContext } from 'react';
- * import { createQuoHooks, StoreProvider } from '@quojs/react';
+ * import { createQuoHooks, StoreProvider } from '@yoltra/react';
  *
  * type AppEM = { ui: { increment: number } };
  * type AppState = { counter: { value: number } };
@@ -54,7 +54,7 @@ import { StoreContext } from "./StoreContext";
  * @public
  */
 export const StoreProvider: React.FC<{
-  /** Quo.js store instance placed into context. */
+  /** yoltra store instance placed into context. */
   store: StoreInstance<any, any, any>;
   /** Descendant subtree that can consume the store. */
   children: ReactNode;

@@ -92,7 +92,7 @@
     },
 
     // ------------------------------------------------------------------
-    // Core libraries — versioned together via the "lockstep" policy
+    // Core libraries - El mero mero sabor ranchero...
     // ------------------------------------------------------------------
     {
       "packageName": "@yoltra/core",

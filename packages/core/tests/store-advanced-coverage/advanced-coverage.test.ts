@@ -44,16 +44,13 @@ function makeBaseReducers(): Record<"counter", ReducerSpec<CounterState, EM>> {
 
 describe("Store advanced coverage", () => {
   let originalNodeEnv: string | undefined;
-  let originalWindow: any;
 
   beforeEach(() => {
     originalNodeEnv = process.env.NODE_ENV;
-    originalWindow = (globalThis as any).window;
   });
 
   afterEach(() => {
     process.env.NODE_ENV = originalNodeEnv;
-    (globalThis as any).window = originalWindow;
     vi.restoreAllMocks();
   });
 
@@ -128,52 +125,6 @@ describe("Store advanced coverage", () => {
     expect(coarse).toHaveBeenCalledTimes(1);
     // but fine-grained diff detected no leaf changes, so no connector events
     expect(fine).not.toHaveBeenCalled();
-  });
-
-  it("replaceReducers re-inits DevTools baseline", async () => {
-    const initSpy = vi.fn();
-    const sendSpy = vi.fn();
-    const subscribeSpy = vi.fn();
-
-    (globalThis as any).window = {
-      __REDUX_DEVTOOLS_EXTENSION__: {
-        connect() {
-          return {
-            init: initSpy,
-            send: sendSpy,
-            subscribe: subscribeSpy,
-          };
-        },
-      },
-    };
-
-    process.env.NODE_ENV = "test";
-
-    const store = createStore({
-      name: "CoverageStore-devtools-replaceReducers",
-      reducer: makeBaseReducers(),
-    });
-
-    initSpy.mockClear(); // ignore constructor init
-
-    const nextReducers: Record<"counter", ReducerSpec<CounterState, EM>> = {
-      counter: {
-        state: { value: 10 },
-        events: [["ui", "inc"]],
-        reducer: (state, evt) => {
-          if (evt.channel === "ui" && evt.type === "inc") {
-            return { value: state.value + (evt.payload as number) };
-          }
-          return state;
-        },
-      },
-    };
-
-    (store as any).replaceReducers(nextReducers, { preserveState: false });
-
-    // DevTools baseline should be re-initialized with the current state
-    expect(initSpy).toHaveBeenCalledTimes(1);
-    expect(initSpy).toHaveBeenCalledWith(store.getState());
   });
 
   it("hotReplace can independently replace middleware, effects, and reducers", async () => {

@@ -1,5 +1,5 @@
 /**
- * @module @quojs/react
+ * @module @yoltra/react
  */
 
 export { StoreProvider } from "./context/StoreProvider";

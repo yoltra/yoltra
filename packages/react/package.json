@@ -1,7 +1,7 @@
 {
-  "name": "@quojs/react",
-  "version": "0.8.0",
-  "description": "React bindings for Quo.js",
+  "name": "@yoltra/react",
+  "version": "0.1.0",
+  "description": "React bindings for Yoltra",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && vite build",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
@@ -16,23 +16,23 @@
   "license": "MIT",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
-    "email": "manu@quojs.dev"
+    "email": "manu@yoltra.dev"
   },
   "maintainers": [],
-  "homepage": "https://quojs.dev",
+  "homepage": "https://yoltra.dev",
   "keywords": [
     "state",
     "store",
     "react",
     "redux-alternative",
-    "quojs"
+    "yoltra"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/quojs/quojs.git"
+    "url": "https://github.com/yoltra/yoltra.git"
   },
   "bugs": {
-    "url": "https://github.com/quojs/quojs/issues"
+    "url": "https://github.com/yoltra/yoltra/issues"
   },
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -51,12 +51,12 @@
     "node": ">=18.18"
   },
   "peerDependencies": {
-    "@quojs/core": "^0.8.0",
+    "@yoltra/core": "^0.8.0",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19"
   },
   "peerDependenciesMeta": {
-    "@quojs/core": {
+    "@yoltra/core": {
       "optional": false
     }
   },
@@ -64,8 +64,8 @@
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@quojs/core": "workspace:^0.8.0",
-    "@quojs/repo-tools": "workspace:*",
+    "@yoltra/core": "workspace:^0.8.0",
+    "@yoltra/repo-tools": "workspace:*",
     "@eslint/js": "^9.30.1",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",

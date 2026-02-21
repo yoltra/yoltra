@@ -1,5 +1,5 @@
 /**
- * @module @quojs/core
+ * @module @yoltra/core
  */
 
 import type { DeepReadonly } from "../types";

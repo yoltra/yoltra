@@ -4,13 +4,13 @@
 
 This suite validates the behavior of the `createQuoHooks` factory, which generates a scoped set of React hooks tied to a provided `StoreContext`.
 
-The primary purpose is to ensure Quo.js can support **multi-context**, **multi-store**, and **library-embedded** use cases without relying on a global store or singleton bindings.
+The primary purpose is to ensure yoltra can support **multi-context**, **multi-store**, and **library-embedded** use cases without relying on a global store or singleton bindings.
 
 ---
 
 ## Why `createQuoHooks` Exists
 
-Quo.js intentionally avoids singletons because they introduce:
+yoltra intentionally avoids singletons because they introduce:
 
 - Global mutable state
 - Tight coupling between UI and store lifecycle
@@ -32,7 +32,7 @@ const {
 } = createQuoHooks(MyCustomContext);
 ```
 
-This makes Quo.js composable and improves DX for large apps.
+This makes yoltra composable and improves DX for large apps.
 
 ---
 
@@ -90,7 +90,7 @@ These concerns are intentionally excluded:
 
 ## Why This Suite Matters
 
-`createQuoHooks` is one of the most advanced APIs in Quo.js and enables:
+`createQuoHooks` is one of the most advanced APIs in yoltra and enables:
 
 - Multiple isolated providers within the same React tree
 - Plugin systems (e.g., CMS, dashboards, analytics)

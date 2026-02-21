@@ -1,4 +1,4 @@
-// file: quojs/packages/react/tests/utils/warnOnce.test.ts
+// file: yoltra/packages/react/tests/utils/warnOnce.test.ts
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { warnOnce } from "../../src/utils/warnOnce";
 

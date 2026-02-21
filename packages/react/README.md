@@ -1,29 +1,23 @@
-# @quojs/react
+# @yoltra/react
 
-> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp; | &nbsp; 👉
-> [ 🇺🇸 English Version](./README.md)&nbsp; | &nbsp;[ 🇫🇷 Version française](./README.fr.md)
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
+| &nbsp; 👉 [ 🇺🇸 English Version](./README.md)&nbsp;
 
-![Bundle size](https://badgen.net/bundlephobia/min/@quojs/react)
-![Bundle size](https://badgen.net/bundlephobia/minzip/@quojs/react)
-![Bundle size](https://badgen.net/bundlephobia/tree-shaking/@quojs/react)
-![Bundle size](https://badgen.net/bundlephobia/dependency-count/@quojs/react)
-![npm version](https://badgen.net/npm/v/@quojs/react)
-![npm downloads](https://badgen.net/npm/dm/@quojs/react)
-![License](https://badgen.net/npm/license/@quojs/react)
+![npm downloads](https://badgen.net/npm/dm/@yoltra/react)
+![License](https://badgen.net/npm/license/@yoltra/react)
 
-**React hooks for [Quo.js](https://github.com/quojs/quojs/blob/main/README.md) with fine-grained path subscriptions.**
+**React hooks for [yoltra](https://github.com/yoltra/yoltra/blob/main/README.md) with fine-grained path subscriptions.**
 
 Subscribe to `"items.0.title"` or `"items.*.done"` — the component re-renders only when that exact path changes. No selectors, no memoization, no manual optimization.
 
-[See the flamegraph comparison (Redux vs Quo.js).](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md)
+[See the flamegraph comparison (Redux vs yoltra).](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
 
 ---
 
 ## Installation
 
 ```bash
-npm install @quojs/core @quojs/react
+npm install @yoltra/core @yoltra/react
 ```
 
 **Peer dependencies:** React 18+
@@ -38,7 +32,7 @@ npm install @quojs/core @quojs/react
 
 ```typescript
 // store.ts
-import { createStore, eventKeys } from '@quojs/core';
+import { createStore, eventKeys } from '@yoltra/core';
 
 export type AppEM = {
   counter: { increment: number; decrement: number; reset: null };
@@ -74,8 +68,8 @@ export const store = createStore<AppState, AppEM>({
 ```typescript
 // hooks.ts
 import { createContext } from 'react';
-import { createQuoHooks } from '@quojs/react';
-import type { StoreInstance } from '@quojs/core';
+import { createQuoHooks } from '@yoltra/react';
+import type { StoreInstance } from '@yoltra/core';
 import type { AppState, AppEM } from './store';
 
 export const AppStoreContext = createContext<
@@ -283,7 +277,7 @@ import {
   invalidateAtomicProp,
   invalidateAtomicPropsByReducer,
   clearSuspenseCache,
-} from '@quojs/react';
+} from '@yoltra/react';
 
 // Invalidate a specific path's cache
 invalidateAtomicProp('users', 'byId.123.name');
@@ -323,7 +317,7 @@ function TodoList() {
 }
 ```
 
-### After (fine-grained with Quo.js)
+### After (fine-grained with yoltra)
 
 ```tsx
 // Each TodoItem re-renders ONLY when its own data changes
@@ -340,7 +334,7 @@ function TodoItem({ index }: { index: number }) {
 }
 ```
 
-[See the full flamegraph comparison.](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react/redux-quojs-profiler.md)
+[See the full flamegraph comparison.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
 
 ---
 
@@ -354,18 +348,18 @@ function TodoItem({ index }: { index: number }) {
 
 ## Examples
 
-- **[Todo App with Profiler](../../examples/v0/quojs-in-react)** — Full CRUD with flamegraph comparison
-- **[Kinetic Logo (1000+ particles)](../../examples/v0/quojs-kinetic-logo)** — Independent subscriptions per SVG circle
-- **[Next.js 15 App Router](../../examples/v0/quojs-in-nextjs)** — SSR + theme switcher
+- **[Todo App with Profiler](../../examples/v0/yoltra-in-react)** — Full CRUD with flamegraph comparison
+- **[Kinetic Logo (1000+ particles)](../../examples/v0/yoltra-kinetic-logo)** — Independent subscriptions per SVG circle
+- **[Next.js 15 App Router](../../examples/v0/yoltra-in-nextjs)** — SSR + theme switcher
 
 ---
 
 ## Documentation
 
-- **[Quo.js Root README](https://github.com/quojs/quojs/blob/main/README.md)** — Overview and quick start
-- **[@quojs/core API](https://github.com/quojs/quojs/blob/main/packages/core/README.md)** — Store, middleware, effects, `When` matchers
-- **[Quick Start Guide](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)** — Five steps to a working app
-- **[Library Comparison](https://github.com/quojs/quojs/blob/main/docs/en/design/state-management-library-comparison.md)** — Architectural comparison
+- **[yoltra Root README](https://github.com/yoltra/yoltra/blob/main/README.md)** — Overview and quick start
+- **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** — Store, middleware, effects, `When` matchers
+- **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)** — Five steps to a working app
+- **[Library Comparison](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)** — Architectural comparison
 
 ---
 

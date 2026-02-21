@@ -2,12 +2,12 @@
 
 ## Purpose
 
-This suite ensures `@quojs/react` re-exports its public runtime API from `src/index.ts`.
+This suite ensures `@yoltra/react` re-exports its public runtime API from `src/index.ts`.
 
 This protects users relying on:
 
 ```ts
-import { useAtomicProp } from "@quojs/react";
+import { useAtomicProp } from "@yoltra/react";
 ```
 
 rather than importing from deep paths.

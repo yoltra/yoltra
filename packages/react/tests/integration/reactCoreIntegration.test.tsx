@@ -3,9 +3,9 @@ import { act } from "react";
 import { describe, it, expect } from "vitest";
 
 import { StoreProvider, useAtomicProp, useEmit } from "../../src";
-import { createStore } from "@quojs/core";
+import { createStore } from "@yoltra/core";
 
-describe("React + @quojs/core integration", () => {
+describe("React + @yoltra/core integration", () => {
   it("wires StoreProvider, useAtomicProp and useEmit together with a real store", async () => {
     // Using the same configuration pattern as documented in StoreProvider JSDoc.
     const store = (createStore as any)({

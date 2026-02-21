@@ -1,5 +1,5 @@
 /**
- * @module @quojs/core
+ * @module @yoltra/core
  */
 
 import type { EventMapBase, EventUnion, ReducerFunction } from "../types";
@@ -39,7 +39,7 @@ import type { EventMapBase, EventUnion, ReducerFunction } from "../types";
  *   channel: 'math',
  *   type: 'add',
  *   payload: 2,
- *   id: Symbol()
+ *   id: crypto.randomUUID()
  * } as EventUnion<EM>);
  * // s1.count === 2
  * ```

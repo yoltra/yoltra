@@ -1,30 +1,23 @@
-![Quo.js logo](../../assets/logo.svg)
+![yoltra logo](../../assets/yoltra-logo.png)
 
-# @quojs/core
+# @yoltra/core
 
-> [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/packages/core/README.es.md)&nbsp;
-> | &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/packages/core/README.pt.md)&nbsp;
-> | &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/packages/core/README.md)&nbsp;
-> | &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/packages/core/README.fr.md)
+> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/packages/core/README.es.md)&nbsp;
+> | &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)&nbsp;
 
-![Bundle size](https://badgen.net/bundlephobia/min/@quojs/core)
-![Bundle size](https://badgen.net/bundlephobia/minzip/@quojs/core)
-![Bundle size](https://badgen.net/bundlephobia/tree-shaking/@quojs/core)
-![Bundle size](https://badgen.net/bundlephobia/dependency-count/@quojs/core)
-![npm version](https://badgen.net/npm/v/@quojs/core)
-![npm downloads](https://badgen.net/npm/dm/@quojs/core)
-![License](https://badgen.net/npm/license/@quojs/core)
+![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
+![License](https://badgen.net/npm/license/@yoltra/core)
 
 **Framework-agnostic event-driven state container with fine-grained path subscriptions.**
 
-`@quojs/core` is the foundation of [Quo.js](https://github.com/quojs/quojs/blob/main/README.md). It provides the store, event pipeline, middleware, effects, and the `connect()` subscription system. Zero framework dependencies.
+`@yoltra/core` is the foundation of [yoltra](https://github.com/yoltra/yoltra/blob/main/README.md). It provides the store, event pipeline, middleware, effects, and the `connect()` subscription system. Zero framework dependencies.
 
 ---
 
 ## Installation
 
 ```bash
-npm install @quojs/core
+npm install @yoltra/core
 ```
 
 ---
@@ -49,7 +42,7 @@ emit(channel, type, payload)
   └─ 6. Coarse subscribers ─── External store listeners (useSyncExternalStore, etc.)
 ```
 
-Every stage is hookable. Middleware can cancel events, creating "uncommitted" events that the UI can still react to. Effects run after reducers and see the final state.
+Every stage is hook-able. Middleware can cancel events, creating "uncommitted" events that the UI can still react to. Effects run after reducers and see the final state.
 
 ---
 
@@ -105,7 +98,7 @@ state.counter.value = 999; // TypeError: Cannot assign to read-only property
 Reducers, effects, and middleware use a unified `When` matcher to declare which events they respond to:
 
 ```typescript
-import { createStore, eventKeys } from '@quojs/core';
+import { createStore, eventKeys } from '@yoltra/core';
 
 type AppEM = {
   ui: { increment: number; decrement: number; reset: void };
@@ -153,7 +146,7 @@ const globalLogger = {
 Middleware runs **before** reducers and can cancel event propagation. Supports both raw functions (legacy) and `MiddlewareSpec` objects with targeting:
 
 ```typescript
-import type { MiddlewareSpec } from '@quojs/core';
+import type { MiddlewareSpec } from '@yoltra/core';
 
 // Targeted middleware — only runs for admin channel events
 const adminGuard: MiddlewareSpec<AppState, AppEM> = {
@@ -246,11 +239,11 @@ store.onEvent('ui', 'action', (event, getState, emit, phase) => {
 
 ## Event Deduplication
 
-Quo.js automatically deduplicates identical events within a configurable time window. This prevents double-processing in React Strict Mode:
+Yoltra automatically deduplicates identical events within a configurable time window. This prevents double-processing in React Strict Mode:
 
 ```typescript
 const store = createStore({
-  name: 'App',
+  name: 'Yoltra_Rocks',
   reducer: { /* ... */ },
   dedupWindowMs: 100, // default: 50ms dev, 100ms prod
 });
@@ -400,26 +393,26 @@ store.registerEffect({
 
 ## Documentation
 
-- **[Quo.js Root README](https://github.com/quojs/quojs/blob/main/README.md)** — Overview and quick start
-- **[@quojs/react](https://github.com/quojs/quojs/blob/main/packages/react/README.md)** — React hooks and Suspense
-- **[Quick Start Guide](https://github.com/quojs/quojs/blob/main/docs/en/QUICK_START_GUIDE.md)** — Five steps to a working app
-- **[Event Queue Architecture](https://github.com/quojs/quojs/blob/main/docs/en/design/event-queue-architecture.md)** — Technical deep-dive
-- **[Library Comparison](https://github.com/quojs/quojs/blob/main/docs/en/design/state-management-library-comparison.md)** — Architectural comparison
+- **[yoltra Root README](https://github.com/yoltra/yoltra/blob/main/README.md)** — Overview and quick start
+- **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** — React hooks and Suspense
+- **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)** — Five steps to a working app
+- **[Event Queue Architecture](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)** — Technical deep-dive
+- **[Library Comparison](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)** — Architectural comparison
 
 ---
 
 ## Examples
 
-- **[Todo App](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-react)** — Full CRUD with performance profiling
-- **[Kinetic Logo](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-kinetic-logo)** — 1000+ SVG circles with physics simulation
-- **[Next.js Integration](https://github.com/quojs/quojs/blob/main/examples/v0/quojs-in-nextjs)** — SSR + App Router + theme switcher
+- **[Todo App](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react)** — Full CRUD with performance profiling
+- **[Kinetic Logo](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo)** — 1000+ SVG circles with physics simulation
+- **[Next.js Integration](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs)** — SSR + App Router + theme switcher
 
 ---
 
 ## Contributing
 
-- [Monorepo Root](https://github.com/quojs/quojs/blob/main/README.md)
-- [Contributing Guide](https://github.com/quojs/quojs/blob/main/CONTRIBUTING.md)
+- [Monorepo Root](https://github.com/yoltra/yoltra/blob/main/README.md)
+- [Contributing Guide](https://github.com/yoltra/yoltra/blob/main/CONTRIBUTING.md)
 
 ---
 

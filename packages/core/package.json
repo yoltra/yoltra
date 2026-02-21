@@ -1,6 +1,6 @@
 {
-  "name": "@quojs/core",
-  "version": "0.8.0",
+  "name": "@yoltra/core",
+  "version": "0.1.0",
   "description": "A modern predictable state container built on the idea of channels, events, and payloads, giving you strongly typed, expressive actions",
   "scripts": {
     "dev": "vite",
@@ -19,29 +19,29 @@
   "license": "MIT",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
-    "email": "manu@quojs.dev"
+    "email": "manu@yoltra.dev"
   },
   "maintainers": [],
-  "homepage": "https://quojs.dev",
+  "homepage": "https://yoltra.dev",
   "keywords": [
     "state",
     "store",
     "react",
     "redux-alternative",
-    "quojs"
+    "yoltra"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/quojs/quojs.git"
+    "url": "https://github.com/yoltra/yoltra.git"
   },
   "bugs": {
-    "url": "https://github.com/quojs/quojs/issues"
+    "url": "https://github.com/yoltra/yoltra/issues"
   },
-  "main": "dist/quojs.cjs.js",
-  "module": "dist/quojs.esm.js",
+  "main": "dist/yoltra.cjs.js",
+  "module": "dist/yoltra.esm.js",
   "types": "dist/types/index.d.ts",
-  "unpkg": "dist/quojs.umd.js",
-  "jsdelivr": "dist/quojs.umd.js",
+  "unpkg": "dist/yoltra.umd.js",
+  "jsdelivr": "dist/yoltra.umd.js",
   "files": [
     "dist/",
     "LICENSE",
@@ -59,15 +59,15 @@
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/quojs.esm.js",
-      "require": "./dist/quojs.cjs.js",
-      "default": "./dist/quojs.esm.js"
+      "import": "./dist/yoltra.esm.js",
+      "require": "./dist/yoltra.cjs.js",
+      "default": "./dist/yoltra.esm.js"
     },
     "./package.json": "./package.json"
   },
   "dependencies": {},
   "devDependencies": {
-    "@quojs/repo-tools": "workspace:*",
+    "@yoltra/repo-tools": "workspace:*",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.0.12",
     "@vitest/coverage-v8": "3.2.4",

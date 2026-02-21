@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { act } from "react";
 import { describe, it, expect } from "vitest";
 
-import type { StoreInstance, EventMapBase } from "@quojs/core";
+import type { StoreInstance, EventMapBase } from "@yoltra/core";
 import { createQuoHooks } from "../../../src/hooks/createQuoHooks";
 import { createMockStore } from "../../helpers/mockStore";
 

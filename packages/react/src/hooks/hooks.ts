@@ -1,5 +1,5 @@
 /**
- * @module @quojs/react
+ * @module @yoltra/react
  */
 
 import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
@@ -14,11 +14,11 @@ import type {
   DeepReadonly,
   EventPhase,
   PathValue,
-} from "@quojs/core";
+} from "@yoltra/core";
 import { hasWildcard, normalizePath, getAtPath } from "../utils/path";
 
 /**
- * Re-export of {@link PathValue} from `@quojs/core`.
+ * Re-export of {@link PathValue} from `@yoltra/core`.
  *
  * Resolves the TypeScript type at a dotted path `P` within object type `T`.
  * See the core definition for full documentation.

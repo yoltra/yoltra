@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This suite validates the core non-Suspense React hooks that define Quo.js state consumption and event emission behavior.
+This suite validates the core non-Suspense React hooks that define yoltra state consumption and event emission behavior.
 
 These tests enforce public observable behavior rather than implementation details, ensuring the library remains refactorable during the v0.5 → v0.6 evolution.
 
@@ -10,7 +10,7 @@ These tests enforce public observable behavior rather than implementation detail
 
 ## Mocking Strategy
 
-A deterministic in-memory `MockStore` is used instead of a real Quo.js store, because:
+A deterministic in-memory `MockStore` is used instead of a real yoltra store, because:
 
 - Hooks rely primarily on `subscribe`, `connect`, `emit`, and `getState`.
 - Running full reducer/effect logic would make unrelated failures cascade.
@@ -75,7 +75,7 @@ Notably omitted:
 
 ## Why This Matters
 
-These hooks define the ergonomic surface of Quo.js React bindings. If they regress, all downstream user code breaks:
+These hooks define the ergonomic surface of yoltra React bindings. If they regress, all downstream user code breaks:
 
 - React components
 - Devtools

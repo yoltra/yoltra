@@ -1,8 +1,8 @@
-# React + @quojs/core Integration Test Suite
+# React + @yoltra/core Integration Test Suite
 
 ## Purpose
 
-This suite validates that `@quojs/react` integrates correctly with a real `@quojs/core` store instance.
+This suite validates that `@yoltra/react` integrates correctly with a real `@yoltra/core` store instance.
 
 Mock stores validate hook semantics.  
 Integration tests validate store + hook + Provider semantics end-to-end.
@@ -15,7 +15,7 @@ Integration tests validate store + hook + Provider semantics end-to-end.
 
 The core scenario is:
 
-1. A real store is created via `createStore` from `@quojs/core`.
+1. A real store is created via `createStore` from `@yoltra/core`.
 2. A `StoreProvider` wraps a React component using:
    - `useAtomicProp` to select a value from the store.
    - `useEmit` to dispatch events.
@@ -59,8 +59,8 @@ Potential future integration tests might cover:
 
 ## Why This Matters
 
-This suite ensures Quo.js remains ergonomic and correct for its primary use case:
+This suite ensures yoltra remains ergonomic and correct for its primary use case:
 
-> Stateful React applications backed by a real Quo.js store.
+> Stateful React applications backed by a real yoltra store.
 
 Everything else (devtools, Suspense, analytics integrations) builds on this path.

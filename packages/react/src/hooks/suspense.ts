@@ -1,9 +1,9 @@
 /**
- * @module @quojs/react
+ * @module @yoltra/react
  */
 
 import { useMemo, useSyncExternalStore } from "react";
-import type { EventMapBase, StoreInstance, Dotted, WithGlob } from "@quojs/core";
+import type { EventMapBase, StoreInstance, Dotted, WithGlob } from "@yoltra/core";
 
 import { useStore } from "./hooks";
 import { hasWildcard, normalizePath, getAtPath } from "../utils/path";

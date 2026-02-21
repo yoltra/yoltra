@@ -1,5 +1,5 @@
 /**
- * @module @quojs/react
+ * @module @yoltra/react
  */
 
 import * as React from "react";
@@ -14,7 +14,7 @@ import type {
   Dotted,
   EventPhase,
   PathValue,
-} from "@quojs/core";
+} from "@yoltra/core";
 import { hasWildcard, normalizePath, getAtPath } from "../utils/path";
 
 /**
@@ -151,7 +151,7 @@ export type UseEvent<EM extends EventMapBase, S> = <
  *
  * Useful as the `isEqual` argument for `useAtomicProp` and `useAtomicProps`
  * when the derived value is a plain object. Also available as a standalone
- * export from `@quojs/react` via {@link shallowEqual | hooks.shallowEqual}.
+ * export from `@yoltra/react` via {@link shallowEqual | hooks.shallowEqual}.
  *
  * @example
  * ```ts
@@ -176,7 +176,7 @@ export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T) {
 /**
  * Factory that creates fully-typed React hooks bound to a specific store context.
  *
- * This is the **recommended** setup pattern for Quo.js + React. It eliminates
+ * This is the **recommended** setup pattern for yoltra + React. It eliminates
  * the need for explicit type parameters on every hook call — all types are
  * inferred from the store context once, at creation time.
  *
@@ -198,7 +198,7 @@ export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T) {
  *
  * // 2. Create a typed context
  * import { createContext } from 'react';
- * import { StoreInstance } from '@quojs/core';
+ * import { StoreInstance } from '@yoltra/core';
  * const AppStoreContext = createContext<
  *   StoreInstance<'counter', AppState, AppEM> | null
  * >(null);
