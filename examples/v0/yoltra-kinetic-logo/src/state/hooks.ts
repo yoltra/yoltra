@@ -1,10 +1,8 @@
 import { createQuoHooks } from "@yoltra/react";
-
 import { AppStoreContext } from "../context/Store.context";
 import type { AppEM, AppState } from "./types";
 
-/**
- * Create Typed Hooks for your store */
+/** Typed Yoltra hooks bound to this application's store and event map. */
 export const {
   useStore,
   useEmit,

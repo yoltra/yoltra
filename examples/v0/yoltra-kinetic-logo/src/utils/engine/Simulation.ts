@@ -1,190 +1,174 @@
-import type { EngineInstance, SimulationConfig, SimulationInstance, SimulationItemInstance, XYRUpdate } from "./types";
-import { Circle } from "./Circle";
-import { QuadTree } from "../Quadtree";
 import type { Unsubscribe } from "@yoltra/core";
 import type { AppEM, AppStore } from "../../state/types";
+import type { EngineInstance, SimulationConfig, SimulationInstance, XYUpdate } from "./types";
+import { liveConfig } from "../../config";
+import { DotItem } from "./DotItem";
+import { QuadTree } from "../Quadtree";
 
 export class Simulation implements SimulationInstance {
-  private _isEnabled = false;
-  private introRemaining = 0;
-  private introTotal = 0;
-  private firedIntroComplete = false;
-
-  public readonly name?: string;
-  public readonly items: Record<string, SimulationItemInstance> = Object.create(null);
-  public mouse: { x: number; y: number } = { x: 0, y: 0 };
-
-  readonly cfg: SimulationConfig;
+  readonly name?: string;
   readonly engine: EngineInstance;
+  readonly items: Record<string, DotItem> = Object.create(null);
 
-  quadtree: QuadTree;
+  mouse: { x: number; y: number } = { x: -9999, y: -9999 };
 
-  private offMouseMove?: Unsubscribe;
+  private readonly cfg: SimulationConfig;
+  private _itemList: DotItem[] = [];
+  private _isEnabled = false;
+  private _introRemaining = 0;
+  private _introTotal = 0;
+  private _introCompleteFired = false;
+  private _offMouseMove?: Unsubscribe;
+
+  quadtree: QuadTree<DotItem>;
 
   constructor(engine: EngineInstance, cfg: SimulationConfig) {
     this.engine = engine;
     this.cfg = cfg;
     this.name = cfg.name;
-    this.quadtree = new QuadTree({ x: 0, y: 0, width: 1000, height: 500 });
+    // Quadtree bounds are extended generously to accommodate off-screen
+    // start positions without clipping items during the intro fly-in.
+    this.quadtree = new QuadTree<DotItem>({ x: -3000, y: -3000, width: 9000, height: 9000 });
   }
 
   init(): void {
-    const store = (this.engine as any).store as AppStore | undefined;
+    const store = this._store();
 
-    const { items } = this.cfg;
-    for (const spec of items) {
-      const instance = new Circle(this.engine, spec);
-      this.items[spec.id] = instance;
-      this.quadtree.insert(instance);
+    // Build item pool.
+    for (const spec of this.cfg.items) {
+      const item = new DotItem(this.engine, spec);
+      this.items[spec.id] = item;
+      this._itemList.push(item);
     }
 
-    let remaining = 0;
-    for (const item of Object.values(this.items)){
-      if (item.intro) remaining++;
-    }
+    // Count how many need to fly in.
+    this._introTotal = this._itemList.length;
+    this._introRemaining = this._itemList.filter(i => i.intro).length;
 
-    this.introRemaining = remaining;
-    this.introTotal = Object.keys(this.items).length;
-
-    store?.emit("logo", "introProgress", {
-      remaining: this.introRemaining,
-      total: this.introTotal,
+    store?.emit("pixel", "introProgress", {
+      remaining: this._introRemaining,
+      total: this._introTotal,
     });
 
-    for (const item of Object.values(this.items)) {
+    // Pre-populate state with initial positions (random start positions).
+    // This means React components find data on first render, avoiding
+    // a frame of 0,0 fallback positions.
+    const initialBatch = this._itemList.map(item => ({
+      id: item.id,
+      x: item.x,
+      y: item.y,
+      color: item.color,
+    }));
+    if (initialBatch.length > 0) {
+      store?.emit("pixel", "batchUpdate", { changes: initialBatch });
+    }
+
+    // Build initial quadtree.
+    for (const item of this._itemList) {
+      this.quadtree.insert(item);
       item.init();
     }
   }
 
   start(): void {
     if (this._isEnabled) return;
-
     this._isEnabled = true;
+    this._introCompleteFired = false;
 
-    // reset completion path on each start (lets spiel trigger again)
-    this.firedIntroComplete = false;
+    // Recount in case items were reset externally.
+    this._introRemaining = this._itemList.filter(i => i.intro).length;
 
-    // recompute introRemaining (in case items were reset externally)
-    let remaining = 0;
-    for (const item of Object.values(this.items)) {
-      if (item.intro) remaining++;
-    }
-    this.introRemaining = remaining;
+    for (const item of this._itemList) item.start();
 
-    for (const item of Object.values(this.items)) {
-      item.start();
-    }
+    // Subscribe to mouse events only while running.
+    this._offMouseMove?.();
+    this._offMouseMove = this._store()?.onEffect(
+      "on", "mousemove",
+      (payload: AppEM["on"]["mousemove"]) => this._handleMouseMove(payload)
+    );
 
-    // subscribe to mouse events while running
-    this.offMouseMove?.();  this.offMouseMove  = undefined;
-
-    const store = (this.engine as any).store as AppStore | undefined;
-    if (store) {
-      this.offMouseMove = store.onEffect("on", "mousemove",
-        (payload: AppEM["on"]["mousemove"]) => this.handleMouseMove(payload));
-    }
-
-    // if there are no intro items on (re)start, emit completion immediately
-    if (this.introRemaining === 0 && !this.firedIntroComplete) {
-      this.firedIntroComplete = true;
-      (this.engine as any).store?.emit("logo", "introComplete", {});
+    // If no intro items, complete immediately.
+    if (this._introRemaining === 0 && !this._introCompleteFired) {
+      this._introCompleteFired = true;
+      this._store()?.emit("pixel", "introComplete", {});
     }
   }
 
   stop(): void {
     if (!this._isEnabled) return;
-
     this._isEnabled = false;
-    for (const item of Object.values(this.items)) {
-      item.stop();
-    }
-
-    // unsubscribe when stopped
-    this.offMouseMove?.();  this.offMouseMove  = undefined;
+    this._offMouseMove?.(); this._offMouseMove = undefined;
+    for (const item of this._itemList) item.stop();
   }
 
   pause(): void {
-    for (const item of Object.values(this.items)) { 
-      item.pause();
-    }
+    for (const item of this._itemList) item.pause();
   }
 
-  loop(dt: number, now: number): void {
+  loop(dtMs: number, now: number): void {
     if (!this._isEnabled) return;
 
-    const updates: XYRUpdate[] = [];
+    const updates: XYUpdate[] = [];
     let finishedNow = 0;
 
-    for (const item of Object.values(this.items)) {
-      const u = item.loop(dt, now);
+    for (const item of this._itemList) {
+      const u = item.loop(dtMs, now);
       if (u) {
         updates.push(u);
-
-        // @ts-expect-error this is a runtime prop
-        if (u.__justFinishedIntro__) {
-          finishedNow++;
-        };
+        if (u.__justFinishedIntro__) finishedNow++;
       }
     }
 
-    const store = (this.engine as any).store as AppStore | undefined;
-
     if (updates.length > 0) {
-      store?.emit("logo", "batchUpdate", { changes: updates });
+      const store = this._store();
+      store?.emit("pixel", "batchUpdate", { changes: updates });
 
-      // keep quadtree fresh
+      // Refresh quadtree from the pre-allocated flat list — no Object.values() allocation.
       this.quadtree.clear();
-      for (const item of Object.values(this.items)) {
-        this.quadtree.insert(item as Circle);
-      }
+      for (const item of this._itemList) this.quadtree.insert(item);
 
       if (finishedNow > 0) {
-        this.introRemaining = Math.max(0, this.introRemaining - finishedNow);
-
-        store?.emit("logo", "introProgress", {
-          remaining: this.introRemaining,
-          total: this.introTotal,
+        this._introRemaining = Math.max(0, this._introRemaining - finishedNow);
+        store?.emit("pixel", "introProgress", {
+          remaining: this._introRemaining,
+          total: this._introTotal,
         });
       }
     }
 
-    // fire completion even if no updates were emitted this frame
-    if (this.introRemaining === 0 && !this.firedIntroComplete) {
-      this.firedIntroComplete = true;
-
-      store?.emit("logo", "introComplete", {});
+    // Fire completion even if nothing moved this frame.
+    if (this._introRemaining === 0 && !this._introCompleteFired) {
+      this._introCompleteFired = true;
+      this._store()?.emit("pixel", "introComplete", {});
     }
   }
 
-  private handleMouseMove = (pos: AppEM["on"]["mousemove"]) => {
+  teardown(): void {
+    this._offMouseMove?.(); this._offMouseMove = undefined;
+    for (const item of this._itemList) item.teardown();
+    this._itemList.length = 0;
+    for (const k of Object.keys(this.items)) delete this.items[k];
+  }
+
+  private _handleMouseMove = (pos: { x: number; y: number }): void => {
     if (!this._isEnabled) return;
+    this.mouse = pos;
 
-    const newPosition = pos as unknown as { x: number; y: number };
-    this.mouse = newPosition;
+    const affected = this.quadtree.queryCircle(pos.x, pos.y, liveConfig.interactRadius);
+    if (!affected.length) return;
 
-    const affected = this.quadtree.queryCircle(newPosition.x, newPosition.y, 8);
-    const updates: XYRUpdate[] = [];
-
+    const updates: XYUpdate[] = [];
     for (const item of affected) {
-      const u = item.onMousemove(newPosition);
+      const u = item.onMousemove(pos);
       if (u) updates.push(u);
     }
 
     if (updates.length > 0) {
-      const store = (this.engine as any).store as AppStore | undefined;
-      store?.emit("logo", "batchUpdate", { changes: updates });
+      this._store()?.emit("pixel", "batchUpdate", { changes: updates });
     }
   };
 
-  teardown(): void {
-    this.offMouseMove?.();  this.offMouseMove  = undefined;
-
-    for (const item of Object.values(this.items)) {
-      item.teardown();
-    }
-
-    for (const k of Object.keys(this.items)) {
-      delete this.items[k];
-    }
+  private _store(): AppStore | undefined {
+    return this.engine.store;
   }
 }

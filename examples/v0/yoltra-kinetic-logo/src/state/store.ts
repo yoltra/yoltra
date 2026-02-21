@@ -1,13 +1,11 @@
-import { createStore } from "@yoltra/core"
-
-import { logoReducer } from "./logo/Logo.reducer";
+import { createStore } from "@yoltra/core";
+import { pixelReducer } from "./pixel/Pixel.reducer";
 
 export const store = createStore({
-  name: "Yoltra",
+  name: "YoltraPixelLogo",
   reducer: {
-    logo: logoReducer,
+    pixel: pixelReducer,
   },
   effects: [],
-  middleware: []
+  middleware: [],
 });
-

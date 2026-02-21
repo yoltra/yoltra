@@ -1,29 +1,28 @@
 /**
- * load an image from a URL/path and extract raw pixel data. */
-export async function loadImagePixels(filePath: string): Promise<ImageData> {
-  const res = await fetch(filePath);
+ * Fetch an image from `url` and decode it into raw RGBA pixel data.
+ * Uses `OffscreenCanvas` when available for better performance. */
+export async function loadImagePixels(url: string): Promise<ImageData> {
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch image: ${res.status} ${res.statusText}`);
 
   const blob = await res.blob();
   const bmp = await createImageBitmap(blob);
 
   try {
-    const W = bmp.width, H = bmp.height;
+    const W = bmp.width;
+    const H = bmp.height;
 
-    // offscreenCanvas when available, else in-memory <canvas>
     const canvas: OffscreenCanvas | HTMLCanvasElement =
-      typeof OffscreenCanvas !== "undefined" ? new OffscreenCanvas(W, H)
-                                             : Object.assign(document.createElement("canvas"), { width: W, height: H });
+      typeof OffscreenCanvas !== "undefined"
+        ? new OffscreenCanvas(W, H)
+        : Object.assign(document.createElement("canvas"), { width: W, height: H });
 
-    const ctx = (canvas as any).getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D;
-    if (!ctx) throw new Error("2D context not available");
-    
+    const ctx = (canvas as OffscreenCanvas | HTMLCanvasElement)
+      .getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+    if (!ctx) throw new Error("2D context unavailable");
+
     ctx.drawImage(bmp, 0, 0, W, H);
-
-    const img = ctx.getImageData(0, 0, W, H);
-
-    return img;
-
+    return (ctx as CanvasRenderingContext2D).getImageData(0, 0, W, H);
   } finally {
     bmp.close();
   }

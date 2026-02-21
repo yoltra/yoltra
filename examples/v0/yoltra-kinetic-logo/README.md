@@ -1,116 +1,129 @@
-# Kinetic logo of Yoltra (React + SVG)
+# Yoltra: Kinetic logo animation
 
-![Yoltra logo](./public/assets/yoltra-dots.gif)
+![Yoltra dots](../../../assets/yoltra-dots.gif);
 
-> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | &nbsp;
-> 👉 [ 🇺🇸 English Version](./README.md)&nbsp;
+> A performant kinetic logo animation that showcases Yoltra's **atomic subscriptions**.
 
-**A kinetic logo made of ~1.5k SVG circles, driven by a tiny simulation engine and synchronized with a Yoltra store.**  
-This example lives in the Rush monorepo under:
+Every non-transparent pixel of the Yoltra logo becomes an independent dot. Up to **3000** dots
+fly in from random positions and settle on their home pixel. Move your cursor across the canvas
+to repel the dots; they ease back when you pull away.
+
+---
+
+## What this demo shows
+
+| Yoltra feature        | Where it is used                                                                                                                               |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useAtomicProp`       | Each `<PixelDot>` subscribes to exactly `pixel.dots.<id>` — only that component re-renders when its dot moves                                  |
+| `when: { channel }`   | The reducer targets the entire `pixel` channel with a single matcher                                                                           |
+| `store.onEffect`      | The `Engine` wires `pixel/stop` and `pixel/start` effects to the rAF loop; the `Simulation` wires `on/mousemove` effects to the quadtree query |
+| `batchUpdate` reducer | Single-pass, lazy-allocation strategy: the `dots` record is spread **at most once per frame** regardless of how many dots moved                |
+
+### Atomic subscriptions — the key insight
 
 ```
-examples/v0/yoltra-kinetic-logo
+batchUpdate  →  reducer  →  store notifies 3000 subscribers
+                             │
+                             ├─ dot_0 unchanged  →  no re-render
+                             ├─ dot_1 changed    →  re-render (cx, cy only)
+                             ├─ dot_2 unchanged  →  no re-render
+                             └─ …
 ```
 
-It showcases Yoltra as a **predictable, typed, event‑driven** state container with **fine‑grained subscriptions** that keep React re-renders lean—even when thousands of items update every frame.
+A frame that moves 300 dots triggers exactly **300 React renders**, each updating two SVG
+attributes. The other 700 components stay frozen.
 
 ---
 
-## Why Yoltra here?
+## Reducer performance design
 
-- **Channels + events (no event-type soup):** we emit on channel `"logo"` with events like `"batchUpdate"`, `"fps"`, etc.
-- **Fine‑grained selectors:** each `<Circle/>` subscribes to its **own** `logo[group][id]` node via `useAtomicProp`, avoiding whole-slice re-renders.
-- **Immutable, ergonomic reducer spec:** a single reducer (`Logo.reducer.ts`) handles atomic and batched updates without magic.
-- **Typed hooks:** `createQuoHooks` generates `useStore`, `useEmit`, `useSelector`, `useAtomicProp`, `useAtomicProps` with full TS inference.
-- **Event effects:** the engine listens to store effects (e.g., `"logo":"start" | "stop"`) to coordinate simulation lifecycle.
+The hot path is `batchUpdate`, called every animation frame.
 
-The result: **smooth 60fps** updates on capable machines, with React only touching the DOM for circles that actually moved.
+**Old v0 approach (O(N_dots × N_changes) allocations):**
+
+```ts
+for (const c of changes) {
+  // spreads state AND the group record for every single change
+  state = { ...state, [group]: { ...state[group], [c.id]: next } };
+}
+return { ...state }; // redundant extra spread
+```
+
+With 500 changes all touching the same 3000-key record: ≈ 500 × 3000 = **1,500,000 property
+copies** per frame.
+
+**New v1 approach (O(N_dots + N_changes) — at most 2 allocations):**
+
+```ts
+let nextDots: Record<string, Dot> | null = null;
+
+for (const c of changes) {
+  const prev = (nextDots ?? state.dots)[c.id];
+  if (c.x !== prev?.x || c.y !== prev?.y) {
+    if (!nextDots) nextDots = { ...state.dots }; // ONE spread, lazily
+    nextDots[c.id] = { id: c.id, x: c.x, y: c.y, color: prev?.color ?? c.color };
+  }
+}
+return nextDots ? { ...state, dots: nextDots } : state;
+```
+
+Same frame: 1 × 1 000 (dots spread) + 1 × handful (state spread) = **~1 000 property copies**.
 
 ---
 
-## How it works (high level)
+## Running locally
 
-1. **Engine + Simulation**
-   - `Engine` runs an `rAF` loop, smooths FPS, and emits `logo/fps` every ~250ms.
-   - `Simulation` owns `Circle` items. Each item eases from a random start to its "home" pixel (the logo), then idles—repelled by the mouse and relaxing back.
-
-2. **Image → specs (once)**
-   - `extractCircleSpecsFromImage()` samples a transparent PNG (`assets/logo.png`) to produce `CircleSpec[]` with `group: "d" | "u" | "x"`.
-   - We emit `logo/size` and `logo/count` so the UI knows canvas size and per‑group circle totals.
-
-3. **Per‑frame updates → batched store writes**
-   - Each frame, `Simulation.loop()` collects item updates and emits **one** `logo/batchUpdate` with many changes.
-   - The reducer upserts only the nodes that changed, keeping the store small and React precise.
-
-4. **Granular rendering**
-   - Every `<Circle group id>` subscribes to `logo[group][id]` via `useAtomicProp`. If a circle didn't move, it **doesn't re-render**.
-
-5. **Intro completion + metrics**
-   - While intro runs, `logo/introProgress` tracks remaining movers. Once all are home, we emit `logo/introComplete`.
-
----
-
-## Run it (Rush monorepo)
-
-> Assumes you are at the **root** of the Yoltra monorepo.
-
-1) **Install + build packages** (so the example can resolve `@yoltra/*` workspaces)
 ```bash
+# from the repo root
 rush install
-rush build     # or: rush build -t yoltra-kinetic-logo
+cd examples/v1/yoltra-pixel-logo
+pnpm dev
 ```
 
-2) **Start the example dev server**
-```bash
-cd examples/v0/yoltra-kinetic-logo
-rushx dev      # runs Vite
-```
-
-3) Open the printed local URL (usually `http://localhost:5173`). Move the mouse over the logo—kinetic-logo orbit/avoid, then relax back home.
-
-> Alternative from monorepo root:
-```bash
-rushx -p yoltra-kinetic-logo dev
-```
+Then open `http://localhost:5173`.
 
 ---
 
-## Project structure (key files)
+## Architecture
 
 ```
 src/
-  App.tsx                       # boots Engine, extracts specs from the logo PNG, wires Simulation → Store
-  components/screen/Screen.*    # screen shell (SVG), reads store.size, renders <Circle/> list
-  components/screen/items/circle/
-    Circle.component.tsx        # subscribes to its own logo[group][id] node via useAtomicProp
-  context/Store.context.tsx     # React context for the typed Quo store
-  state/
-    types.ts                    # AppState, LogoState, typed event maps (LogoEM, AppEM)
-    logo/Logo.reducer.ts        # immutable reducer; atomic + batched circle updates, fps, intro, size
-    hooks.ts                    # createQuoHooks(...): typed React hooks
-    store.ts                    # createStore(...) with the logo reducer
-  utils/
-    engine/                     # Engine (rAF loop), Simulation (items + quadtree), Circle item behavior
-    image/                      # PNG → ImageData + extractor → CircleSpec[]
-    Quadtree.ts                 # spatial index to query nearby circles on mouse move
-    index.ts                    # numeric geometry helpers (expApproach, orbit/avoid, etc.)
-  assets/logo.png               # source image for sampling
+├── App.tsx                        Bootstrap: load image → extract specs → start engine
+├── state/
+│   ├── types.ts                   AppState / AppEM / Dot / DotUpdate
+│   ├── store.ts                   createStore()
+│   ├── hooks.ts                   createQuoHooks() — typed useAtomicProp etc.
+│   └── pixel/
+│       └── Pixel.reducer.ts       Optimised reducer for the `pixel` channel
+├── context/
+│   └── Store.context.tsx          React context holding the store
+├── components/
+│   └── screen/
+│       ├── Screen.component.tsx   SVG canvas + pointer events
+│       └── items/dot/
+│           └── Dot.component.tsx  One dot → one atomic subscription
+└── utils/
+    ├── index.ts                   Math helpers (expApproach, orbit, clamp…)
+    ├── Quadtree.ts                Generic QuadTree<T extends PointItem>
+    ├── image/
+    │   ├── imagePixels.ts         PNG → ImageData via OffscreenCanvas
+    │   └── extract.ts             Pixel scan + reservoir sampling → DotItemSpec[]
+    └── engine/
+        ├── Engine.ts              rAF loop, FPS smoothing, effect subscriptions
+        ├── Simulation.ts          Item pool, quadtree, mouse handler
+        ├── DotItem.ts             Per-dot physics (expApproach + orbit)
+        └── SimulationItem.ts      Abstract base class
 ```
 
 ---
 
-## Yoltra specifics shown here
+## Customisation
 
-- **`batchUpdate`**: one event, many updates → minimal reducer churn and fewer React commits.
-- **`useAtomicProp`**: subscribe directly to a deep path (`logo["d"]["circle_d_42"]`). No memo foot-guns, no selectors allocating new objects each render.
-- **Effect API** (`store.onEffect("logo", "start" | "stop")`): the engine reacts to state events through the built-in async pipeline.
-- **Pure, immutable reducer**: `upsertItem()` enforces a no‑op when nothing changed → fewer updates propagate.
-
-If you like this pattern in a toy demo, it scales cleanly to real UIs with thousands of nodes, streaming or animation workloads, and strict rendering budgets.
-
----
-
-## Troubleshooting
-
-- **Blank screen or fetch error**: ensure `assets/logo.png` resolves (Vite dev server) and the browser supports `createImageBitmap`. A fallback path exists, but some CSPs can block it.
-- **Sluggish on low‑end devices**: lower `maxCircles` in `App.tsx` (e.g., 800) or increase extractor `spacing` (e.g., from `3` to `5`).
+| Option             | Location                                | Default             |
+| ------------------ | --------------------------------------- | ------------------- |
+| Max dots           | `App.tsx` → `MAX_DOTS`                  | `3000`              |
+| Logo image         | `src/assets/logo.png`                   | Yoltra logo         |
+| Target FPS         | `App.tsx` → `new Engine({ targetFPS })` | `60`                |
+| Mouse repel radius | `DotItem.ts` → `INTERACT_RADIUS`        | `8 px`              |
+| Approach speed     | `extract.ts` → `factor` option          | random `[3, 7]`     |
+| Intro delay        | `extract.ts` → `delay` option           | random `[0, 0.8 s]` |

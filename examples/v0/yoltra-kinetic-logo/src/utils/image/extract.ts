@@ -1,117 +1,129 @@
-import type { CircleSpec } from "../engine/types";
-import { getRandomInt, randomPointInCircle, rgbaToHex, toImageData, type ImageSource } from "..";
-import { randomHexColor } from "./randomHex";
+import { randomPointInCircle, rgbaToHex, toImageData, type ImageSource } from "..";
+import type { DotItemSpec } from "../engine/types";
 
 export type ExtractOptions = {
   /**
-   * sample every N pixels (grid stride). Typical: 3–6 */
-  spacing: number;
+   * Maximum number of dots to produce.
+   * Reservoir sampling guarantees a uniform spatial distribution
+   * regardless of pixel density. Default 1000. */
+  maxDots?: number;
 
   /**
-   * alpha threshold (0–255). Only pixels with alpha > minAlpha are kept */
+   * Grid stride: only pixels at `(x % stride === 0, y % stride === 0)` are
+   * considered candidates. stride=1 → every pixel; stride=2 → ¼ of pixels, etc.
+   * The reservoir sample then selects `maxDots` from those candidates.
+   * Default 1. */
+  stride?: number;
+
+  /**
+   * Pixels with alpha ≤ this value are treated as transparent. Default 1. */
   minAlpha?: number;
 
   /**
-   * random jitter added to each sample point to kill grid artifacts (px) */
-  jitter?: number;
+   * Approch speed multiplier per dot.
+   * Returns a factor in [minFactor, maxFactor]; half-life ≈ 1/factor s.
+   * Default: uniform random in [3, 7]. */
+  factor?: () => number;
 
   /**
-   * initial radius for each circle (px) */
-  initialR?: number;
+   * Intro animation delay in seconds.
+   * Default: uniform random in [0, 0.8]. */
+  delay?: () => number;
+};
 
-  /**
-   * optional velocity generator; default vx=vy=0 */
-  factor?: (x: number, y: number, rgba: [number, number, number, number]) => number;
-
-  /**
-   * delay generator in seconds; default 0..0.6s */
-  delay?: (x: number, y: number, i: number, rgba: [number, number, number, number]) => number;
-
-  /**
-   * maximum number of circles (after filtering), for safety */
-  maxCircles: number;
+export type ExtractResult = {
+  specs: DotItemSpec[];
+  width: number;
+  height: number;
 };
 
 /**
- * extract CircleSpec[] from a transparent PNG (or any RGBA source).
- * keeps pixel color/x/y, groups by x-thirds (d/u/x), samples on a stride grid */
-export function extractCircleSpecsFromImage(
+ * Extract up to `maxDots` dots from a transparent PNG (or any RGBA source).
+ *
+ * ## Algorithm
+ *
+ * 1. **Scan** every pixel; collect all non-transparent ones.
+ * 2. **Reservoir-sample** down to `maxDots` — guarantees a visually
+ *    uniform, unbiased subset regardless of image density.
+ * 3. **Convert** each sample into a `DotItemSpec` with:
+ *    - `color` from the source pixel (hex, e.g. "#3A7BD5")
+ *    - `x/y` = pixel coordinate (the "home" position)
+ *    - `startX/startY` = random point scattered ~1.5× the image diagonal
+ *      away from home, so dots appear to fly in from all directions. */
+export function extractDotSpecsFromImage(
   source: ImageSource,
-  opts: ExtractOptions
-): { specs: CircleSpec[]; width: number; height: number, groupCounts: { d: number, u: number, x: number } } {
+  opts: ExtractOptions = {},
+): ExtractResult {
   const {
-    spacing,
-    minAlpha = 16,
-    jitter = 0.0,
-    initialR = 1.0,
-    maxCircles,
-    delay = (_x, _y, _i, _rgba) => Math.random() * 1, // 0..0.6s
-    factor = (_x, _y, _rgba) => 6,                    // half-life ~= 1/factor
+    maxDots = 1000,
+    stride = 1,
+    minAlpha = 1,
+    factor = () => 3 + Math.random() * 4,
+    delay = () => Math.random() * 0.8,
   } = opts;
 
   const img = toImageData(source);
   const { width, height, data } = img;
 
-  const third = width / 3.1;
-  const rnd = (n: number) => (Math.random() - 0.5) * n;
+  // ── Phase 1: collect visible pixels on a stride grid ─────────────────────
+  // stride=1 → every pixel; stride=2 → every other pixel in both axes (¼ density)
+  type PixelInfo = { x: number; y: number; r: number; g: number; b: number };
+  const pixels: PixelInfo[] = [];
+  const s = Math.max(1, Math.round(stride));
 
-  const specs: CircleSpec[] = [];
-  const groupCounts = { d: 0, u: 0, x: 0 };
-
-  // early-out if already full
-  const pushIfRoom = (s: CircleSpec, g: "d" | "u" | "x") => {
-    if (groupCounts[g] >= maxCircles) return false;
-
-    specs.push(s);
-    groupCounts[g]++;
-
-    return true;
-  };
-
-  for (let y = 0; y < height; y += spacing) {
-    for (let x = 0; x < width; x += spacing) {
-      const xi = Math.max(0, Math.min(width - 1, Math.round(x + (jitter ? rnd(jitter) : 0))));
-      const yi = Math.max(0, Math.min(height - 1, Math.round(y + (jitter ? rnd(jitter) : 0))));
-      const idx = (yi * width + xi) * 4;
-      const r = data[idx + 0];
-      const g = data[idx + 1];
-      const b = data[idx + 2];
-      const a = data[idx + 3];
-
-      if (a <= minAlpha) continue;
-
-      const group: "d" | "u" | "x" = xi < third ? "d" : xi < 2 * third ? "u" : "x";
-      const color = rgbaToHex(r, g, b);
-      const [startX, startY] = randomPointInCircle(xi, yi, 2000);
-
-      const dly = delay(xi, yi, specs.length, [r, g, b, a]);
-      const fac = factor(xi, yi, [r, g, b, a]);
-
-      const spec: CircleSpec = {
-        id: `circle_${group}_${groupCounts[group]}`,
-        type: "Circle",
-        params: {
-          group,
-          color,
-          x: xi,
-          y: yi,
-          r: initialR,
-
-          // intro state
-          startX: startX,
-          startY: startY,
-          startR: getRandomInt(1, 3),
-          startColor: randomHexColor(),
-
-          // behavior
-          delay: dly,       // seconds
-          factor: fac,      // maps to half-life = 1/factor
-        },
-      };
-
-      if (!pushIfRoom(spec, group)) break;
+  for (let y = 0; y < height; y += s) {
+    for (let x = 0; x < width; x += s) {
+      const i = (y * width + x) * 4;
+      if (data[i + 3] <= minAlpha) continue;
+      pixels.push({ x, y, r: data[i], g: data[i + 1], b: data[i + 2] });
     }
   }
 
-  return { specs, width, height, groupCounts };
+  // ── Phase 2: reservoir sample ─────────────────────────────────────────────
+  // Uses Algorithm R (Vitter 1985): O(N) time, O(k) memory, truly uniform.
+  const sampled = reservoirSample(pixels, maxDots);
+
+  // ── Phase 3: convert to specs ─────────────────────────────────────────────
+  // Scatter start positions around the image in a large circle so the
+  // fly-in animation comes from all directions simultaneously.
+  const scatterRadius = Math.hypot(width, height) * 7;
+
+  const specs: DotItemSpec[] = sampled.map((p, i) => {
+    const [startX, startY] = randomPointInCircle(width / 2, height / 2, scatterRadius);
+
+    return {
+      id: `dot_${i}`,
+      type: "Dot",
+      params: {
+        color: rgbaToHex(p.r, p.g, p.b),
+        x: p.x,
+        y: p.y,
+        r: 1,
+        startX,
+        startY,
+        delay: delay(),
+        factor: factor(),
+      },
+    };
+  });
+
+  return { specs, width, height };
+}
+
+// ---------------------------------------------------------------------------
+// Algorithm R reservoir sample — uniform, unbiased, O(N)
+// ---------------------------------------------------------------------------
+
+function reservoirSample<T>(arr: T[], k: number): T[] {
+  if (arr.length <= k) return arr.slice();
+
+  // Fill the reservoir with the first k items.
+  const reservoir = arr.slice(0, k);
+
+  for (let i = k; i < arr.length; i++) {
+    const j = Math.floor(Math.random() * (i + 1));
+    if (j < k) reservoir[j] = arr[i];
+  }
+
+  return reservoir;
 }

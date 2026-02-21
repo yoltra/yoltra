@@ -1,6 +1,6 @@
 {
   "name": "yoltra-kinetic-logo",
-  "description": "Yoltra-powered SVG dot animation in React",
+  "description": "Yoltra kinetic-dot logo animation — atomic subscriptions showcase",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "lint": "exit 0"
   },
   "private": true,
-  "license": "MIT",
+  "license": "GPL-2.0-only",
   "author": {
     "name": "Manu Ramirez",
     "email": "manu@yoltra.dev"

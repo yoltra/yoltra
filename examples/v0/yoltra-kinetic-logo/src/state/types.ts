@@ -1,109 +1,94 @@
 import type { StoreInstance } from "@yoltra/core";
 
-// declarative, ultra-simple and eXpressive
-export type QuoPlegdes = "d" | "u" | "x";
-
-// Logo reducer
-export type Circle = {
-  id: string;         // the circle id
-  x: number;          // new x position
-  y: number;          // new x position
-  r?: number;
+/**
+ * A single pixel-dot in the logo animation.
+ * Its position is updated every frame by the simulation.
+ * Color is read from the source PNG and never changes after the first insert. */
+export type Dot = {
+  id: string;
+  x: number;
+  y: number;
+  /** Hex color sampled from the logo pixel, e.g. "#3A7BD5" */
+  color: string;
 };
 
-export type GroupedCircle = {
-  group: QuoPlegdes;  // the group  in which updated circle lives
-} & Circle;
-
 /**
- * Logo State
- * 
- * Describes the shape of the logo state. */
-export type LogoState = {
-  // interactivity toggle
+ * Position update emitted by the simulation each frame.
+ * `color` is required on the initial insert; the reducer preserves
+ * it on subsequent position-only updates. */
+export type DotUpdate = {
+  id: string;
+  x: number;
+  y: number;
+  color: string;
+};
+
+/** Shape of the `pixel` reducer slice. */
+export type PixelState = {
+  /** Whether the animation loop is running. */
   enabled: boolean;
 
-  // current FPS (updated at 4hz)
+  /** Smoothed FPS, updated at ~4 Hz. */
   fps: number;
 
-  // how many circles were generated for each letter
-  itemCount: { d: number; u: number; x: number };
+  /** Total number of dots extracted from the logo. */
+  count: number;
 
-  // the size of the svg element
+  /** Logical size of the SVG viewport (matches the source image dimensions). */
   size: { height: number; width: number };
 
-  // dictionary of circles separated by our pledge initial
-  d: Record<string, Circle>; // declarative
-  u: Record<string, Circle>; // ultra-simple
-  x: Record<string, Circle>; // eXpressive
+  /**
+   * The live dictionary of dots keyed by their id.
+   * Atomic subscribers (`useAtomicProp`) watch individual `dots.<id>` paths,
+   * so only the touched dot components re-render each frame. */
+  dots: Record<string, Dot>;
 
-  // hols state related to intro animation
-  intro: {
-    remaining: number;  // how many circles are still animating
-    total?: number;     // total of circles, remaining + done
-    done: boolean;      // specifies if the intro is complete
-  };
+  /** Intro animation tracking. */
+  intro: { remaining: number; total: number; done: boolean };
 };
 
-/**
- * Logo reducer event map.
- *
- * Describes the set of events and their payloads
- * for the logo channel. */
-export type LogoEM = {
-  // stops animation
-  stop: {};
+/** Event map for the `pixel` channel. */
+export type PixelEM = {
+  /** Pause the animation loop. */
+  stop: Record<string, never>;
 
-  // starts animation
-  start: {};
+  /** Resume the animation loop. */
+  start: Record<string, never>;
 
-  // FPS information
+  /** Updated smoothed FPS reading. */
   fps: { fps: number };
 
-  // changes to the size of the animation
+  /** SVG viewport dimensions. */
   size: { height: number; width: number };
 
-  // coun of circles by group
-  count: { d: number; u: number; x: number };
+  /** Total dot count, emitted once after image extraction. */
+  count: { total: number };
 
   /**
- * Atomic update of Circle.
- *
- * Emitted mostly because circles are
- * avoiding the mouse or traveling back
- * to their original position. */
-  update: GroupedCircle;
+   * Per-frame batch of position updates.
+   * Only moved dots are included — the reducer skips no-op entries. */
+  batchUpdate: { changes: DotUpdate[] };
 
-  /**
-   * Batch update of Circles.
-   *
-   * Emitted on every frame by the animation BE
-   * to update multiple circles in batch, circles are grouped. */
-  batchUpdate: {
-    changes: GroupedCircle[], // An array of change description objects
-  };
+  /** Progress of the intro fly-in animation. */
+  introProgress: { remaining: number; total: number };
 
-  // Emitted every frame during progress animation
-  introProgress: {
-    remaining: number;  // number of circles that are yet to arrive home
-    total : number;      // total number of traveling circles
-  };
-
-  // Emitted when the intro animation is complete
-  introComplete: {};
+  /** Fired once when every dot has reached its home pixel. */
+  introComplete: Record<string, never>;
 };
 
-// Application state shape
+/** Application state. */
 export interface AppState {
-  logo: LogoState;
+  pixel: PixelState;
 }
 
-// Application event map
+/** Application-wide event map. */
 export type AppEM = {
-  logo: LogoEM;
+  pixel: PixelEM;
   on: {
+    /** Pointer position in SVG user-space coordinates. */
     mousemove: { x: number; y: number };
   };
 };
 
+/** Fully typed store instance for this app. */
 export type AppStore = StoreInstance<keyof AppState & string, AppState, AppEM>;

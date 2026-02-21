@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "feat(react): rebrand library name to yoltra",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

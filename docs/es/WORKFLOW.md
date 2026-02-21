@@ -4,8 +4,8 @@
 
 > [🇺🇸 English](../en/WORKFLOW.md) &nbsp;|&nbsp; 👉 Español
 
-Este documento cubre la estrategia de ramas, el proceso de PRs y la disciplina de archivos
-de cambio que mantienen el monorepo en buen estado. Para realizar un lanzamiento consulta
+Este documento cubre la estrategia de ramas, el proceso de PRs y la disciplina de archivos de
+cambio que mantienen el monorepo en buen estado. Para realizar un lanzamiento consulta
 [RELEASE_GUIDE.md](./RELEASE_GUIDE.md).
 
 ---
@@ -28,8 +28,8 @@ chore/*
 
 - `main` está protegida. Solo se fusionan PRs desde `develop` (tras un ciclo de release).
 - `develop` está protegida. Solo se fusionan PRs — nunca force-push.
-- Las ramas `release/*` se crean desde `develop`, se suben de versión, se prueban y luego
-  se hacen PR de vuelta a `develop` primero y después a `main`.
+- Las ramas `release/*` se crean desde `develop`, se suben de versión, se prueban y luego se
+  hacen PR de vuelta a `develop` primero y después a `main`.
 - Las ramas `feature/*` / `fix/*` / `chore/*` se crean desde `develop`.
 
 ---
@@ -141,6 +141,7 @@ rush publish --publish --tag next
 ```
 
 Los usuarios instalan pre-releases de forma explícita:
+
 ```bash
 npm add @yoltra/core@next @yoltra/react@next
 ```
@@ -163,8 +164,8 @@ cd packages/react
 rushx docs
 ```
 
-Haz commit de los archivos generados bajo `.typedoc/` junto con el cambio de código usando
-un commit de tipo `docs`:
+Haz commit de los archivos generados bajo `.typedoc/` junto con el cambio de código usando un
+commit de tipo `docs`:
 
 ```
 docs(core): actualizar API docs para el matcher de wildcard

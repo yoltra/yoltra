@@ -1,0 +1,20 @@
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  background: #050505;
+  overflow: hidden;
+}
+
+svg.screen {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Dot radius is controlled via --dot-radius (set by ConfigPanel in CSS px).
+   Using CSS px keeps the visual size predictable at any zoom level. */
+svg.screen circle {
+  r: var(--dot-radius, 1.5px);
+}

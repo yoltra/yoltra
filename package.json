@@ -1,0 +1,30 @@
+{
+  "name": "@yoltra/yoltra",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "author": {
+    "name": "Manu Ramirez <@pixerael>",
+    "email": "manu@yoltra.dev"
+  },
+  "contributors": [],
+  "files": [
+    "LICENSE"
+  ],
+  "packageManager": "pnpm@8.15.4",
+  "engines": {
+    "node": ">=18.18"
+  },
+  "pnpm": {
+    "overrides": {
+      "rollup": "4.52.5",
+      "vite": "7.1.11",
+      "typedoc": "0.28.13",
+      "typescript": "5.9.3",
+      "typedoc>typescript": "5.9.3",
+      "typedoc-plugin-markdown>typedoc": "0.28.13",
+      "typedoc-plugin-markdown>typescript": "5.9.3"
+    }
+  }
+}
