@@ -3,9 +3,7 @@
 # Contributing to Quo.js
 
 > [ 🇲🇽 Versión en Español](./docs/es/CONTRIBUTING.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](./docs/pt/CONTRIBUTING.md)&nbsp; |
 > &nbsp; 👉 [ 🇺🇸 English Version](./CONTRIBUTING.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](./docs/fr/CONTRIBUTING.md)
 
 Thanks for your interest in contributing! 🎉 This project is open-source under **MIT** with a welcoming, lightweight governance model.
 

@@ -3,9 +3,7 @@
 # MAINTAINERS
 
 > [ 🇲🇽 Versión en Español](../es/MAINTAINERS.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](../pt/MAINTAINERS.md)&nbsp; |
 > &nbsp; 👉 [ 🇺🇸 English Version](../../MAINTAINERS.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](../fr/MAINTAINERS.md)
 
 This file lists active maintainers and areas of responsibility for the Quo.js monorepo.
 

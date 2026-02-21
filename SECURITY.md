@@ -3,9 +3,7 @@
 # Security Policy
 
 > [ 🇲🇽 Versión en Español](./docs/es/SECURITY.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](./docs/pt/SECURITY.md)&nbsp; |
 > &nbsp; 👉 [ 🇺🇸 English Version](./SECURITY.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](./docs/fr/SECURITY.md)
 
 We take security seriously. Please follow this policy for reporting vulnerabilities.
 

@@ -3,9 +3,7 @@
 # Quo.js
 
 > [ 🇲🇽 Versión en Español](https://github.com/quojs/quojs/blob/main/docs/es/README.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/quojs/quojs/blob/main/docs/pt/README.md)&nbsp;
 > | &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/quojs/quojs/blob/main/README.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](https://github.com/quojs/quojs/blob/main/docs/fr/README.md)
 
 ![Bundle size](https://img.shields.io/bundlephobia/min/@quojs/core)
 ![Bundle size](https://img.shields.io/bundlephobia/minzip/@quojs/core)

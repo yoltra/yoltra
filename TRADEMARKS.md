@@ -3,9 +3,7 @@
 # Trademarks
 
 > [ 🇲🇽 Versión en Español](./docs/es/TRADEMARKS.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](./docs/pt/TRADEMARKS.md)&nbsp; |
 > &nbsp; 👉 [ 🇺🇸 English Version](./TRADEMARKS.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](./docs/fr/TRADEMARKS.md)
 
 The names **“Quo.js”**, **“quojs-react”**, and associated logos, wordmarks, and trade dress (collectively, the “Marks”) are trademarks of **Manuel Ramirez <@pixerael> and Erael Group.** (the “Owner”).
 
