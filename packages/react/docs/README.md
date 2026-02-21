@@ -1,6 +1,8 @@
+![Yoltra logo](../../../assets/yoltra-logo.png)
+
 **@yoltra/react**
 
-***
+---
 
 # @yoltra/react
 
