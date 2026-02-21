@@ -213,11 +213,11 @@ export function App() {
 
 ## Ejemplos en Vivo
 
-| Ejemplo                                                                                                                      | Descripcion                                                                                                                                                                  |
-| ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[Logo Cinetico (1000+ particulas)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)** | Simulacion de fisica con suscripciones de ruta independientes por circulo                                                                                                    |
-| **[App de Tareas con Profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md)**           | Comparacion de flamegraph lado a lado con Redux ([resultados del profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)) |
-| **[Next.js 15 App Router](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs/README.md)**               | Compatibilidad SSR + App Router con cambio de tema                                                                                                                           |
+| Ejemplo                                                                                                                     | Descripcion                                                                                                                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[Logo Cinetico (3000 particulas)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)** | Simulacion de fisica con suscripciones de ruta independientes por circulo                                                                                                    |
+| **[App de Tareas con Profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md)**          | Comparacion de flamegraph lado a lado con Redux ([resultados del profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)) |
+| **[Next.js 15 App Router](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs/README.md)**              | Compatibilidad SSR + App Router con cambio de tema                                                                                                                           |
 
 ---
 
@@ -265,7 +265,7 @@ para mas detalles.
 
 ## Estado
 
-Yoltra esta en etapa de **Release Candidate** (v0.7.0+):
+Yoltra esta en etapa de **Release Candidate** (v0.1.0):
 
 - Las APIs son estables y se usan en aplicaciones en produccion
 - Los tipos de TypeScript son estrictos y completos
