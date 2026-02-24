@@ -109,110 +109,13 @@ await emit("ui", "toast", { message: "Saved!" });
 
 ## Quick Setup (React)
 
-### 1. Install
-
-```bash
-npm install @yoltra/core @yoltra/react
-```
-
-### 2. Define your event map
-
-```typescript
-// types.ts
-export type AppEM = {
-  todos: {
-    add: { id: string; title: string };
-    toggle: { id: string };
-    delete: { id: string };
-  };
-};
-```
-
-### 3. Create the store
-
-```typescript
-// store.ts
-import { createStore, eventKeys } from "@yoltra/core";
-import type { AppEM } from "./types";
-
-export type AppState = {
-  todos: { items: Array<{ id: string; title: string; done: boolean }> };
-};
-
-export const store = createStore<AppState, AppEM>({
-  name: "App",
-  reducer: {
-    todos: {
-      state: { items: [] },
-      when: {
-        keys: eventKeys<AppEM>()([
-          ["todos", "add"],
-          ["todos", "toggle"],
-          ["todos", "delete"],
-        ]),
-      },
-      reducer: (state, event) => {
-        switch (event.type) {
-          case "add":
-            return { items: [...state.items, { ...event.payload, done: false }] };
-          case "toggle":
-            return {
-              items: state.items.map((i) =>
-                i.id === event.payload.id ? { ...i, done: !i.done } : i,
-              ),
-            };
-          case "delete":
-            return { items: state.items.filter((i) => i.id !== event.payload.id) };
-          default:
-            return state;
-        }
-      },
-    },
-  },
-});
-```
-
-### 4. Create typed hooks with `createHooks`
-
-```typescript
-// hooks.ts
-import { createContext } from "react";
-import { createHooks } from "@yoltra/react";
-import type { StoreInstance } from "@yoltra/core";
-import type { AppState, AppEM } from "./types";
-
-export const AppStoreContext = createContext<StoreInstance<"todos", AppState, AppEM> | null>(
-  null,
-);
-
-export const { useAtomicProp, useAtomicProps, useEmit, useEvent, useSelector, shallowEqual } =
-  createHooks(AppStoreContext);
-```
-
-### 5. Provide and use
-
-```tsx
-// App.tsx
-import { StoreProvider } from "@yoltra/react";
-import { store } from "./store";
-import { AppStoreContext } from "./hooks";
-
-export function App() {
-  return (
-    <AppStoreContext.Provider value={store}>
-      <TodoList />
-    </AppStoreContext.Provider>
-  );
-}
-```
-
----
+[Quick-start](./docs/en/QUICK_START_GUIDE.md) - an example app in less than 3 minutes.
 
 ## Live Examples
 
 | Example                                                                                                                   | Description                                                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[Kinetic Logo (3000 particles)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)** | Physics simulation with independent path subscriptions per circle                                                                                                   |
+| **[Kinetic Logo (3000 particles)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)** | (React) Physics simulation with independent path subscriptions per circle                                                                                           |
 | **[Todo App with Profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md)**            | Side-by-side flamegraph comparison with Redux ([profiler results](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)) |
 | **[Next.js 15 App Router](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs/README.md)**            | SSR + App Router compatibility with theme switching                                                                                                                 |
 

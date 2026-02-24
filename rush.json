@@ -127,6 +127,12 @@
       "projectFolder": "examples/v0/yoltra-kinetic-logo",
       "reviewCategory": "samples",
       "shouldPublish": false
+    },
+    {
+      "packageName": "yoltra-react-counter",
+      "projectFolder": "examples/v0/yoltra-react-counter",
+      "reviewCategory": "samples",
+      "shouldPublish": false
     }
   ]
 }

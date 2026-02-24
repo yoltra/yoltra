@@ -4,7 +4,8 @@
 
 > 👉 English &nbsp;|&nbsp; [🇲🇽 Español](../es/QUICK_START_GUIDE.md)
 
-Five steps from install to a working app.
+Five steps from install to a working app. Or jump straight to
+[the example app](../../examples/v0/yoltra-react-counter/README.md).
 
 ---
 
@@ -70,6 +71,7 @@ export const store = createStore<AppState, AppEM>({
 ```typescript
 // hooks.ts
 import { createContext } from "react";
+
 import { createHooks } from "@yoltra/react";
 import type { StoreInstance } from "@yoltra/core";
 import type { AppState, AppEM } from "./store";

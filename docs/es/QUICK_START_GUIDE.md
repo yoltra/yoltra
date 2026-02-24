@@ -4,7 +4,8 @@
 
 > [🇺🇸 English](../en/QUICK_START_GUIDE.md) &nbsp;|&nbsp; 👉 Español
 
-Cinco pasos desde la instalación hasta una app funcionando.
+Cinco pasos desde la instalación hasta una app funcionando. Si prefieres, visita
+[la app de ejemplo](../../examples/v0/yoltra-react-counter/README.es.md).
 
 ---
 

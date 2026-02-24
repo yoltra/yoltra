@@ -86,7 +86,7 @@ useEvent(
 
 ### 3. Organización de eventos basada en canales
 
-Los eventos son tuplas `(channel, type, payload)` --- un namespacing natural que escala sin
+Los eventos son tuplas `(channel, type, payload)` --- un _namespacing_ natural que escala sin
 colisiones:
 
 ```typescript
@@ -99,12 +99,6 @@ await emit("ui", "toast", { message: "Saved!" });
 
 ## Paquetes
 
----
-
-Paquete Descripción
-
----
-
 **[@yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** Store
 agnóstico de framework, reducers, middleware y efectos
 
@@ -113,115 +107,13 @@ de React con suscripciones de grano fino y soporte para Suspense
 
 ---
 
----
+## Guía de Inicio Rápido
 
-## Configuración rápida (React)
-
-### 1. Instalar
-
-```bash
-npm install @yoltra/core @yoltra/react
-```
-
-### 2. Definir tu mapa de eventos
-
-```typescript
-// types.ts
-export type AppEM = {
-  todos: {
-    add: { id: string; title: string };
-    toggle: { id: string };
-    delete: { id: string };
-  };
-};
-```
-
-### 3. Crear el store
-
-```typescript
-// store.ts
-import { createStore, eventKeys } from "@yoltra/core";
-import type { AppEM } from "./types";
-
-export type AppState = {
-  todos: { items: Array<{ id: string; title: string; done: boolean }> };
-};
-
-export const store = createStore<AppState, AppEM>({
-  name: "App",
-  reducer: {
-    todos: {
-      state: { items: [] },
-      when: {
-        keys: eventKeys<AppEM>()([
-          ["todos", "add"],
-          ["todos", "toggle"],
-          ["todos", "delete"],
-        ]),
-      },
-      reducer: (state, event) => {
-        switch (event.type) {
-          case "add":
-            return { items: [...state.items, { ...event.payload, done: false }] };
-          case "toggle":
-            return {
-              items: state.items.map((i) =>
-                i.id === event.payload.id ? { ...i, done: !i.done } : i,
-              ),
-            };
-          case "delete":
-            return { items: state.items.filter((i) => i.id !== event.payload.id) };
-          default:
-            return state;
-        }
-      },
-    },
-  },
-});
-```
-
-### 4. Crear hooks tipados con `createHooks`
-
-```typescript
-// hooks.ts
-import { createContext } from "react";
-import { createHooks } from "@yoltra/react";
-import type { StoreInstance } from "@yoltra/core";
-import type { AppState, AppEM } from "./types";
-
-export const AppStoreContext = createContext<StoreInstance<"todos", AppState, AppEM> | null>(
-  null,
-);
-
-export const { useAtomicProp, useAtomicProps, useEmit, useEvent, useSelector, shallowEqual } =
-  createHooks(AppStoreContext);
-```
-
-### 5. Proveer y usar
-
-```tsx
-// App.tsx
-import { store } from "./store";
-import { AppStoreContext } from "./hooks";
-
-export function App() {
-  return (
-    <AppStoreContext.Provider value={store}>
-      <TodoList />
-    </AppStoreContext.Provider>
-  );
-}
-```
+- [React](./QUICK_START_GUIDE.md) - Una app de ejemplo en menos de 3 minutos.
 
 ---
 
 ## Ejemplos en vivo
-
----
-
-Ejemplo Descripción
-
----
 
 **[Logo cinético](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)**
 (3000 Simulación de física con suscripciones de partículas)ruta independientes por círculo
@@ -231,8 +123,6 @@ con Comparación de flamegraph lado a lado con Profiler Redux
 
 **[Next.js 15 App](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs/README.md)**
 Compatibilidad SSR + App Router con cambio de tema
-
----
 
 ---
 
