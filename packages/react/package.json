@@ -8,7 +8,7 @@
     "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix",
     "test": "pnpm vitest --coverage --watch=false",
     "test:watch": "vitest --coverage",
-    "prepublishOnly": "node ../../common/scripts/copy-license.js",
+    "prepublishOnly": "node ../../common/scripts/copy-license.cjs",
     "docs": "rushx docs:js && rushx docs:md",
     "docs:md": "pnpm typedoc --options ./typedoc.react.json",
     "docs:js": "pnpm typedoc --options ./typedoc.react.json --json ./.typedoc/react-en.json"
@@ -51,7 +51,7 @@
     "node": ">=18.18"
   },
   "peerDependencies": {
-    "@yoltra/core": "^0.8.0",
+    "@yoltra/core": "^0.1.0",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19"
   },

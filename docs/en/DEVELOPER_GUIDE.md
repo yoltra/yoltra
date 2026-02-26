@@ -7,22 +7,22 @@
 Single source of truth for setting up the monorepo, understanding its structure, and doing
 day-to-day development work.
 
-For the branching strategy and PR process see [WORKFLOW.md](./WORKFLOW.md).
-For performing releases (local + NPM) see [RELEASE_GUIDE.md](./RELEASE_GUIDE.md).
+For the branching strategy and PR process see [WORKFLOW.md](./WORKFLOW.md). For performing
+releases (local + NPM) see [RELEASE_GUIDE.md](./RELEASE_GUIDE.md).
 
 ---
 
 ## Prerequisites
 
-| Tool | Version | Notes |
-|------|---------|-------|
-| Node.js | ≥ 18.18 | [nodejs.org](https://nodejs.org) |
-| Rush | latest | `npm install -g @microsoft/rush` |
-| Docker | any recent | Required only for local registry testing |
+| Tool    | Version    | Notes                                    |
+| ------- | ---------- | ---------------------------------------- |
+| Node.js | ≥ 18.18    | [nodejs.org](https://nodejs.org)         |
+| Rush    | latest     | `npm install -g @microsoft/rush`         |
+| Docker  | any recent | Required only for local registry testing |
 
-> **Do not install pnpm globally.** Rush downloads and manages pnpm internally at the
-> exact version pinned in `rush.json`. Running `pnpm install` directly will produce
-> incorrect results and break the lockfile.
+> **Do not install pnpm globally.** Rush downloads and manages pnpm internally at the exact
+> version pinned in `rush.json`. Running `pnpm install` directly will produce incorrect results
+> and break the lockfile.
 
 ---
 
@@ -66,7 +66,7 @@ yoltra/
 │
 ├── common/
 │   ├── config/rush/          Rush config files (committed — never edit lockfile by hand)
-│   └── scripts/              Shared helpers (copy-license.js, etc.)
+│   └── scripts/              Shared helpers (copy-license.cjs, etc.)
 │
 └── docs/
     ├── en/                   English documentation (this folder)
@@ -128,9 +128,7 @@ Each library package declares its cacheable output in `rush-project.json`:
 
 ```json
 {
-  "operationSettings": [
-    { "operationName": "build", "outputFolderNames": ["dist"] }
-  ]
+  "operationSettings": [{ "operationName": "build", "outputFolderNames": ["dist"] }]
 }
 ```
 
@@ -146,10 +144,10 @@ Each library package declares its cacheable output in `rush-project.json`:
 
 Lint configuration is extracted into two shareable packages under `tools/`:
 
-| Package | Target packages | Includes |
-|---------|----------------|---------|
-| `@yoltra/eslint-config-base` | `@yoltra/core` | ESLint recommended, typescript-eslint recommended, browser + Node globals |
-| `@yoltra/eslint-config-react` | `@yoltra/react` | Extends base + react-hooks + react-refresh |
+| Package                       | Target packages | Includes                                                                  |
+| ----------------------------- | --------------- | ------------------------------------------------------------------------- |
+| `@yoltra/eslint-config-base`  | `@yoltra/core`  | ESLint recommended, typescript-eslint recommended, browser + Node globals |
+| `@yoltra/eslint-config-react` | `@yoltra/react` | Extends base + react-hooks + react-refresh                                |
 
 Each library package has a thin `eslint.config.mjs` that just re-exports the shared config:
 
@@ -166,9 +164,8 @@ export default reactConfig;
 ```
 
 **To add a rule globally** — edit the config package in `tools/`. No need to touch each
-library's `eslint.config.mjs`.
-**To override a rule for one package** — extend the array in that package's
-`eslint.config.mjs`.
+library's `eslint.config.mjs`. **To override a rule for one package** — extend the array in that
+package's `eslint.config.mjs`.
 
 ---
 
@@ -188,8 +185,8 @@ Every commit must:
 
 2. Carry a **DCO sign-off** (`git commit -s` appends it automatically).
 
-Allowed `<type>` values: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`,
-`chore`, `revert`.
+Allowed `<type>` values: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `chore`,
+`revert`.
 
 ---
 
@@ -239,8 +236,8 @@ generate `CHANGELOG.md` entries.
 3. Add a minimal `rush-project.json` (declare `outputFolderNames` if the package builds).
 4. Register the package in `rush.json` under `"projects"`.
 5. Run `rush update` to regenerate the lockfile.
-6. Assign it to the `"lockstep"` version policy (if it ships in sync with core/react) or
-   leave `versionPolicyName` unset for independent versioning.
+6. Assign it to the `"lockstep"` version policy (if it ships in sync with core/react) or leave
+   `versionPolicyName` unset for independent versioning.
 
 ---
 
@@ -256,12 +253,12 @@ Never touch `common/config/rush/pnpm-lock.yaml` by hand.
 
 ## Troubleshooting
 
-| Symptom | Fix |
-|---------|-----|
-| CI rejects PR: "missing change file" | `rush change`, commit the file in `common/changes/`. |
-| `rush install` peer dep errors | `strictPeerDependencies: false` is already set; try `rush install --purge`. |
-| Commit rejected | Ensure Conventional Commits format + DCO sign-off (`git commit -s`). |
-| Stale build output | `rush rebuild` bypasses cache and forces a full recompile. |
-| Verdaccio: "version already exists" | Bump version (`rush change` + `rush version --bump`) or wipe with `docker compose down -v`. |
-| `rushx` not found | `npm install -g @microsoft/rush` |
-| Wrong pnpm version in lockfile | Never run `pnpm install` directly; always use `rush install` / `rush update`. |
+| Symptom                              | Fix                                                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- |
+| CI rejects PR: "missing change file" | `rush change`, commit the file in `common/changes/`.                                        |
+| `rush install` peer dep errors       | `strictPeerDependencies: false` is already set; try `rush install --purge`.                 |
+| Commit rejected                      | Ensure Conventional Commits format + DCO sign-off (`git commit -s`).                        |
+| Stale build output                   | `rush rebuild` bypasses cache and forces a full recompile.                                  |
+| Verdaccio: "version already exists"  | Bump version (`rush change` + `rush version --bump`) or wipe with `docker compose down -v`. |
+| `rushx` not found                    | `npm install -g @microsoft/rush`                                                            |
+| Wrong pnpm version in lockfile       | Never run `pnpm install` directly; always use `rush install` / `rush update`.               |

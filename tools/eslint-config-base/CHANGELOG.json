@@ -1,0 +1,17 @@
+{
+  "name": "@yoltra/eslint-config-base",
+  "entries": [
+    {
+      "version": "0.2.0",
+      "tag": "@yoltra/eslint-config-base_v0.2.0",
+      "date": "Thu, 26 Feb 2026 03:29:58 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "feat(ESLint): initial release"
+          }
+        ]
+      }
+    }
+  ]
+}

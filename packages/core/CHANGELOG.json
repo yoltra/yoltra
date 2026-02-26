@@ -1,0 +1,17 @@
+{
+  "name": "@yoltra/core",
+  "entries": [
+    {
+      "version": "0.1.0",
+      "tag": "@yoltra/core_v0.1.0",
+      "date": "Thu, 26 Feb 2026 03:29:58 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "feat(core): rebrand library name from Quo.js to yoltra"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "name": "@yoltra/eslint-config-base",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shared ESLint flat config for Node.js + browser TypeScript libraries",
   "license": "MIT",
   "author": {

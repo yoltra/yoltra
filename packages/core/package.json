@@ -11,7 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "typecheck:tools": "tsc -p tsconfig.tools.json --noEmit",
     "preview": "vite preview",
-    "prepublishOnly": "node ../../common/scripts/copy-license.js",
+    "prepublishOnly": "node ../../common/scripts/copy-license.cjs",
     "docs": "rushx docs:js && rushx docs:md",
     "docs:md": "pnpm typedoc --options ./typedoc.core.json",
     "docs:js": "pnpm typedoc --options ./typedoc.core.json --json ./.typedoc/core-en.json"

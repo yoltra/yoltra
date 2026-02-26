@@ -4,7 +4,7 @@
 // published package includes a proper license file.
 //
 // Usage in package.json:
-//   "prepublishOnly": "node ../../common/scripts/copy-license.js"
+//   "prepublishOnly": "node ../../common/scripts/copy-license.cjs"
 //
 // Safe to run: exits cleanly when already at the root or when there is nothing
 // to copy.
