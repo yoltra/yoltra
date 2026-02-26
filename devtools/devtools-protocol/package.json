@@ -1,0 +1,51 @@
+{
+  "name": "@yoltra/devtools-protocol",
+  "version": "0.1.0",
+  "description": "Protocol types, message definitions, and utilities for Yoltra DevTools",
+  "author": {
+    "name": "Manu Ramirez <@pixerael>",
+    "email": "manu@yoltra.dev"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/devtools-protocol.cjs.js",
+  "module": "dist/devtools-protocol.esm.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/devtools-protocol.esm.js",
+      "require": "./dist/devtools-protocol.cjs.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build",
+    "test": "exit 0",
+    "lint": "exit 0",
+    "typecheck": "tsc --noEmit",
+    "docs": "rushx docs:js && rushx docs:md",
+    "docs:md": "pnpm typedoc --options ./typedoc.json",
+    "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-protocol-en.json"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typedoc": "^0.28.13",
+    "typedoc-plugin-markdown": "4.9.0",
+    "typedoc-plugin-localization": "3.0.6",
+    "typescript": "~5.9.3",
+    "vite": "~7.1.11",
+    "vite-plugin-dts": "^4.5.4",
+    "vite-plugin-banner": "^0.8.0",
+    "vitest": "~3.2.4"
+  },
+  "engines": {
+    "node": ">=18.18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
