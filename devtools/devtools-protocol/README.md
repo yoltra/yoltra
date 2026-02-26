@@ -1,10 +1,8 @@
-![Yoltra logo](../../assets/logo.svg)
+![Yoltra logo](../../assets/yoltra-logo.png)
 
 # @yoltra/devtools-protocol
 
-> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/README.es.md)&nbsp;
-> 👉
-> [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/README.md)&nbsp;
+> [ 🇲🇽 Versión en Español](./README.es.md) &nbsp; | 👉 🇺🇸 English Version &nbsp;
 
 **Shared protocol types, message definitions, and utilities for the Yoltra DevTools suite.**
 
@@ -141,6 +139,10 @@ Client (Store/Extension)              Hub
 ```
 
 ---
+
+## Technical Docs
+
+[TypeDoc](./docs/README.md) auto-generated documentation.
 
 ## API Reference
 

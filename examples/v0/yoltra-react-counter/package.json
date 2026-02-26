@@ -19,8 +19,8 @@
   "dependencies": {
     "react": "19.1.1",
     "react-dom": "19.1.1",
-    "@yoltra/core": "workspace:^0.1.0",
-    "@yoltra/react": "workspace:^0.1.0"
+    "@yoltra/core": "workspace:*",
+    "@yoltra/react": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

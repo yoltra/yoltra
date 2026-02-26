@@ -10,13 +10,40 @@ importers:
 
   .: {}
 
+  ../../devtools/devtools-protocol:
+    devDependencies:
+      typedoc:
+        specifier: ^0.28.13
+        version: 0.28.17(typescript@5.9.3)
+      typedoc-plugin-localization:
+        specifier: 3.0.6
+        version: 3.0.6
+      typedoc-plugin-markdown:
+        specifier: 4.9.0
+        version: 4.9.0(typedoc@0.28.17(typescript@5.9.3))
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.1.11
+        version: 7.3.1(@types/node@24.10.13)(sass-embedded@1.97.3)(sass@1.97.3)(yaml@2.8.2)
+      vite-plugin-banner:
+        specifier: 0.8.1
+        version: 0.8.1
+      vite-plugin-dts:
+        specifier: ^4.5.4
+        version: 4.5.4(@types/node@24.10.13)(rollup@4.58.0)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.13)(sass-embedded@1.97.3)(sass@1.97.3)(yaml@2.8.2))
+      vitest:
+        specifier: 3.2.4
+        version: 3.2.4(@types/node@24.10.13)(@vitest/ui@3.2.4)(jsdom@24.1.3)(msw@2.12.10(@types/node@24.10.13)(typescript@5.9.3))(sass-embedded@1.97.3)(sass@1.97.3)(yaml@2.8.2)
+
   ../../examples/v0/yoltra-in-nextjs:
     dependencies:
       '@yoltra/core':
-        specifier: workspace:^0.1.0
+        specifier: workspace:*
         version: link:../../../packages/core
       '@yoltra/react':
-        specifier: workspace:^0.1.0
+        specifier: workspace:*
         version: link:../../../packages/react
       next:
         specifier: 16.0.1
@@ -62,10 +89,10 @@ importers:
         specifier: 2.9.0
         version: 2.9.0(react-redux@9.2.0(@types/react@19.2.14)(react@19.1.1)(redux@5.0.1))(react@19.1.1)
       '@yoltra/core':
-        specifier: workspace:^0.1.0
+        specifier: workspace:*
         version: link:../../../packages/core
       '@yoltra/react':
-        specifier: workspace:^0.1.0
+        specifier: workspace:*
         version: link:../../../packages/react
       antd:
         specifier: 5.27.1
@@ -138,10 +165,10 @@ importers:
   ../../examples/v0/yoltra-kinetic-logo:
     dependencies:
       '@yoltra/core':
-        specifier: workspace:^0.1.0
+        specifier: workspace:*
         version: link:../../../packages/core
       '@yoltra/react':
-        specifier: workspace:^0.1.0
+        specifier: workspace:*
         version: link:../../../packages/react
       react:
         specifier: 19.1.1
@@ -190,10 +217,10 @@ importers:
   ../../examples/v0/yoltra-react-counter:
     dependencies:
       '@yoltra/core':
-        specifier: workspace:^0.1.0
+        specifier: workspace:*
         version: link:../../../packages/core
       '@yoltra/react':
-        specifier: workspace:^0.1.0
+        specifier: workspace:*
         version: link:../../../packages/react
       react:
         specifier: 19.1.1
@@ -327,7 +354,7 @@ importers:
         specifier: 3.2.4
         version: 3.2.4(vitest@3.2.4)
       '@yoltra/core':
-        specifier: workspace:^0.1.0
+        specifier: workspace:*
         version: link:../core
       eslint:
         specifier: ^9.30.1

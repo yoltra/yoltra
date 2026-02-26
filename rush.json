@@ -108,6 +108,16 @@
     },
 
     // ------------------------------------------------------------------
+    // Devtools — never published
+    // ------------------------------------------------------------------
+    {
+      "packageName": "@yoltra/devtools-protocol",
+      "projectFolder": "devtools/devtools-protocol",
+      "reviewCategory": "devtools",
+      "shouldPublish": true
+    },
+
+    // ------------------------------------------------------------------
     // Examples — never published
     // ------------------------------------------------------------------
     {
