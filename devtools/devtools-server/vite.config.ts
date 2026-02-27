@@ -18,22 +18,20 @@ export default defineConfig({
       insertTypesEntry: true,
       outDir: "dist/types",
       include: ["src/"],
-      exclude: [
-        "src/**/*.test.ts",
-        "src/**/*.spec.ts",
-        "tests/**/*.test.ts",
-        "tests/**/*.spec.ts",
-      ],
+      exclude: ["src/**/*.test.ts"],
     }),
     banner(licenseText),
   ],
   build: {
     lib: {
       entry: "src/index.ts",
-      name: "yoltraDevtoolsProtocol",
+      name: "yoltraDevtoolsServer",
       formats: ["cjs", "es"],
       fileName: (format) =>
-        format === "cjs" ? "devtools-protocol.cjs.js" : "devtools-protocol.esm.js",
+        format === "cjs" ? "devtools-server.cjs.js" : "devtools-server.esm.js",
+    },
+    rollupOptions: {
+      external: ["ws", "@yoltra/devtools-protocol"],
     },
     outDir: "dist",
     sourcemap: true,

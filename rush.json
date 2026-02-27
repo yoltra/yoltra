@@ -116,6 +116,12 @@
       "reviewCategory": "devtools",
       "shouldPublish": true
     },
+    {
+      "packageName": "@yoltra/devtools-server",
+      "projectFolder": "devtools/devtools-server",
+      "reviewCategory": "devtools",
+      "shouldPublish": true
+    },
 
     // ------------------------------------------------------------------
     // Examples — never published

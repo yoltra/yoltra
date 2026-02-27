@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-server",
+      "comment": "feat(devtools): [server] - create initial devtools server (hub) implementation",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-server"
+}
