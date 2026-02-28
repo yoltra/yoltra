@@ -1,0 +1,21 @@
+/* VSCode theme integration — map DevTools variables to VSCode tokens */
+:root {
+  --devtools-bg: var(--vscode-editor-background, #1e1e1e);
+  --devtools-bg-secondary: var(--vscode-sideBar-background, #252526);
+  --devtools-bg-tertiary: var(--vscode-editorGroupHeader-tabsBackground, #2d2d30);
+  --devtools-bg-hover: var(--vscode-list-hoverBackground, #2a2d2e);
+  --devtools-bg-active: var(--vscode-list-activeSelectionBackground, #37373d);
+  --devtools-fg: var(--vscode-editor-foreground, #cccccc);
+  --devtools-fg-secondary: var(--vscode-descriptionForeground, #969696);
+  --devtools-fg-muted: var(--vscode-disabledForeground, #6e6e6e);
+  --devtools-border: var(--vscode-panel-border, #3c3c3c);
+  --devtools-accent: var(--vscode-focusBorder, #007acc);
+  --devtools-accent-fg: var(--vscode-button-foreground, #ffffff);
+  --devtools-success: var(--vscode-terminal-ansiGreen, #4ec9b0);
+  --devtools-warning: var(--vscode-editorWarning-foreground, #cca700);
+  --devtools-error: var(--vscode-errorForeground, #f44747);
+  --devtools-info: var(--vscode-textLink-foreground, #3794ff);
+  --devtools-font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  --devtools-font-mono: var(--vscode-editor-font-family, "SF Mono", Consolas, monospace);
+  --devtools-font-size: var(--vscode-font-size, 12px);
+}

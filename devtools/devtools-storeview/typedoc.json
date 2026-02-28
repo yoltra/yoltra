@@ -1,0 +1,14 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "@yoltra/devtools-storeview",
+  "entryPoints": ["src/index.ts"],
+  "plugin": ["typedoc-plugin-markdown"],
+  "tsconfig": "./tsconfig.docs.json",
+  "entryPointStrategy": "resolve",
+  "readme": "none",
+  "logLevel": "Verbose",
+  "categorizeByGroup": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "excludeProtected": true
+}

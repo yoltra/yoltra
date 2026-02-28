@@ -108,7 +108,7 @@
     },
 
     // ------------------------------------------------------------------
-    // Devtools — never published
+    // Devtools — published
     // ------------------------------------------------------------------
     {
       "packageName": "@yoltra/devtools-protocol",
@@ -119,6 +119,30 @@
     {
       "packageName": "@yoltra/devtools-server",
       "projectFolder": "devtools/devtools-server",
+      "reviewCategory": "devtools",
+      "shouldPublish": true
+    },
+    {
+      "packageName": "@yoltra/devtools-ui",
+      "projectFolder": "devtools/devtools-ui",
+      "reviewCategory": "devtools",
+      "shouldPublish": true
+    },
+    {
+      "packageName": "@yoltra/devtools-storeview",
+      "projectFolder": "devtools/devtools-storeview",
+      "reviewCategory": "devtools",
+      "shouldPublish": true
+    },
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "projectFolder": "devtools/devtools-browser-agent",
+      "reviewCategory": "devtools",
+      "shouldPublish": true
+    },
+    {
+      "packageName": "@yoltra/devtools-ext",
+      "projectFolder": "devtools/devtools-ext",
       "reviewCategory": "devtools",
       "shouldPublish": true
     },

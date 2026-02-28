@@ -1,0 +1,77 @@
+{
+  "name": "@yoltra/devtools-storeview",
+  "version": "0.1.0",
+  "description": "React DOM store view UI for Yoltra DevTools (browser extension)",
+  "license": "MIT",
+  "author": {
+    "name": "Manu Ramirez <@pixerael>",
+    "email": "manu@yoltra.dev"
+  },
+  "maintainers": [],
+  "homepage": "https://yoltra.dev",
+  "keywords": [
+    "yoltra",
+    "devtools",
+    "store",
+    "view"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yoltra/yoltra.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yoltra/yoltra/issues"
+  },
+  "type": "module",
+  "main": "dist/devtools-storeview.cjs.js",
+  "module": "dist/devtools-storeview.esm.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/devtools-storeview.esm.js",
+      "require": "./dist/devtools-storeview.cjs.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build",
+    "lint": "exit 0",
+    "test": "vitest --watch=false",
+    "typecheck": "tsc --noEmit",
+    "docs": "rushx docs:js && rushx docs:md",
+    "docs:md": "pnpm typedoc --options ./typedoc.json",
+    "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-storeview-en.json"
+  },
+  "dependencies": {
+    "@nivo/bar": "^0.87.0",
+    "@nivo/core": "^0.87.0",
+    "@nivo/heatmap": "^0.87.0",
+    "@nivo/treemap": "^0.87.0",
+    "@yoltra/devtools-protocol": "workspace:*",
+    "@yoltra/devtools-ui": "workspace:*",
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "typedoc": "^0.28.13",
+    "typedoc-plugin-markdown": "4.9.0",
+    "typedoc-plugin-localization": "3.0.6",
+    "typescript": "5.9.3",
+    "vite": "^7.1.11",
+    "vite-plugin-dts": "^4.5.4",
+    "vite-plugin-banner": "0.8.1",
+    "vitest": "3.2.4"
+  },
+  "engines": {
+    "node": ">=18.18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,83 @@
+/* ─── Container ─────────────────────────────────────────────────────────────── */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.loading,
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--devtools-fg-muted);
+  font-size: var(--devtools-font-size-sm);
+}
+
+/* ─── Breadcrumb ────────────────────────────────────────────────────────────── */
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--devtools-spacing-xs);
+  padding: var(--devtools-spacing-sm) var(--devtools-spacing-md);
+  border-bottom: 1px solid var(--devtools-border);
+  background: var(--devtools-bg-secondary);
+  flex-shrink: 0;
+}
+
+.crumbSegment {
+  display: flex;
+  align-items: center;
+  gap: var(--devtools-spacing-xs);
+}
+
+.crumbSep {
+  color: var(--devtools-fg-muted);
+  font-size: var(--devtools-font-size-sm);
+  user-select: none;
+}
+
+.crumbBtn {
+  background: transparent;
+  border: none;
+  font-family: var(--devtools-font-mono);
+  font-size: var(--devtools-font-size-sm);
+  color: var(--devtools-info);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.1s;
+}
+
+.crumbBtn:hover:not(:disabled) {
+  color: var(--devtools-fg);
+  text-decoration: underline;
+}
+
+.crumbBtnActive {
+  color: var(--devtools-fg);
+  cursor: default;
+}
+
+.crumbBtn:disabled {
+  cursor: default;
+}
+
+/* ─── Chart container ───────────────────────────────────────────────────────── */
+
+/*
+ * `min-height` guarantees Nivo's ResizeObserver always gets a concrete pixel
+ * height even when the CSS flex chain fails to propagate a measured height
+ * (e.g. when an ancestor has overflow:auto without an explicit height).
+ * `flex: 1` still expands the container when there is more space available.
+ */
+.chartContainer {
+  flex: 1;
+  min-height: 400px;
+  position: relative;
+}

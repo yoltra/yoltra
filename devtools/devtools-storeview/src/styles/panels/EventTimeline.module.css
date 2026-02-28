@@ -1,0 +1,117 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: var(--devtools-spacing-md);
+  padding: var(--devtools-spacing-sm) var(--devtools-spacing-md);
+  border-bottom: 1px solid var(--devtools-border);
+  background: var(--devtools-bg-secondary);
+}
+
+.filterInput {
+  flex: 1;
+  padding: var(--devtools-spacing-xs) var(--devtools-spacing-sm);
+  background: var(--devtools-bg);
+  border: 1px solid var(--devtools-border);
+  border-radius: var(--devtools-radius);
+  color: var(--devtools-fg);
+  font-family: var(--devtools-font-mono);
+  font-size: var(--devtools-font-size-sm);
+  outline: none;
+}
+
+.filterInput:focus {
+  border-color: var(--devtools-accent);
+}
+
+.filterToggle {
+  padding: var(--devtools-spacing-xs) var(--devtools-spacing-sm);
+  border: 1px solid var(--devtools-border);
+  border-radius: var(--devtools-radius);
+  background: transparent;
+  color: var(--devtools-fg-secondary);
+  font-size: var(--devtools-font-size-sm);
+  cursor: pointer;
+}
+
+.filterToggleActive {
+  background: var(--devtools-accent);
+  color: var(--devtools-accent-fg);
+  border-color: var(--devtools-accent);
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.eventRow {
+  display: flex;
+  align-items: center;
+  gap: var(--devtools-spacing-md);
+  padding: var(--devtools-spacing-xs) var(--devtools-spacing-md);
+  border-bottom: 1px solid var(--devtools-border);
+  cursor: pointer;
+  font-family: var(--devtools-font-mono);
+  font-size: var(--devtools-font-size-sm);
+}
+
+.eventRow:hover {
+  background: var(--devtools-bg-hover);
+}
+
+.eventRowSelected {
+  background: var(--devtools-bg-active);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.statusDotCommitted {
+  background: var(--devtools-committed);
+}
+
+.statusDotBounced {
+  background: var(--devtools-bounced);
+}
+
+.channel {
+  color: var(--devtools-info);
+  min-width: 80px;
+}
+
+.type {
+  color: var(--devtools-fg);
+  min-width: 100px;
+}
+
+.payload {
+  color: var(--devtools-fg-secondary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timestamp {
+  color: var(--devtools-fg-muted);
+  font-size: var(--devtools-font-size-sm);
+  flex-shrink: 0;
+}
+
+.detail {
+  border-top: 1px solid var(--devtools-border);
+  background: var(--devtools-bg-secondary);
+  padding: var(--devtools-spacing-md);
+  max-height: 40%;
+  overflow-y: auto;
+}

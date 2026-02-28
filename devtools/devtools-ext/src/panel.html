@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yoltra DevTools</title>
+    <style>
+      html,
+      body,
+      #root {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: #c7c7c7;
+      }
+
+      .yoltra-logo {
+        grid-area: logo;
+      }
+
+      main {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+
+        background: var(--devtools-bg);
+
+        color: var(--devtools-fg);
+        font-family: var(--devtools-font-family);
+        font-size: var(--devtools-font-size);
+        line-height: var(--devtools-line-height);
+
+        display: grid;
+        grid-template-columns: 4fr 8fr;
+        grid-template-rows: 2fr 8fr 2fr;
+        grid-template-areas:
+          "logo header"
+          "aside content"
+          "status footer";
+      }
+
+      header {
+        grid-area: header;
+      }
+
+      aside {
+        grid-area: aside;
+
+        height: 100%;
+
+        display: flex;
+        align-items: center;
+        gap: 0;
+        background: var(--devtools-bg-tertiary);
+        border-right: 1px solid var(--devtools-border);
+      }
+
+      article {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+
+        grid-area: content;
+      }
+
+      footer {
+        grid-area: footer;
+      }
+
+      .tabButton {
+        display: flex;
+        align-items: center;
+        padding: 0 var(--devtools-spacing-lg);
+        height: 100%;
+        border: none;
+        border-right: 1px solid var(--devtools-border);
+        background: transparent;
+        color: var(--devtools-fg-secondary);
+        font-family: inherit;
+        font-size: var(--devtools-font-size-sm);
+        cursor: pointer;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+        transition:
+          color 0.12s,
+          background 0.12s,
+          border-color 0.12s;
+      }
+
+      .tabButton:hover {
+        color: var(--devtools-fg);
+        background: var(--devtools-bg-hover);
+      }
+
+      .tabButtonActive {
+        color: var(--devtools-fg);
+        background: var(--devtools-bg);
+        border-bottom-color: var(--devtools-accent);
+      }
+
+      .emptyState {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--devtools-fg-muted);
+        font-size: var(--devtools-font-size-lg);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="panel.ts" type="module"></script>
+  </body>
+</html>

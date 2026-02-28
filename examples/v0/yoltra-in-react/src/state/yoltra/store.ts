@@ -2,14 +2,15 @@ import type { StoreInstance } from "@yoltra/core";
 import type { eTodoStatus, iTodoSpec, iTypiTodo } from "../../types";
 
 import { createStore } from "@yoltra/core";
+import { withDevtools } from "@yoltra/devtools-browser-agent";
 
-import { rootReducer } from "./reducer";
-import { todoMiddleware } from "./middleware";
 import type { StateFromReducers } from "../../../../../../packages/core/dist/types/types";
+import { todoMiddleware } from "./middleware";
+import { rootReducer } from "./reducer";
 
 /**
  * Helper type for async event patterns (loading/success/failure).
- * 
+ *
  * @remarks
  * This is a common pattern for async operations where you want to track
  * the lifecycle of an async action with three events. */
@@ -23,7 +24,7 @@ export type iAsyncEvents<EM extends Record<string, Record<string, unknown>>> = {
 
 /**
  * App-specific Event Map
- * 
+ *
  * Defines all events in the application organized by channel.
  * Each channel contains event types and their associated payloads. */
 export type tAppEM = {
@@ -60,7 +61,7 @@ export type RootReducerState = StateFromReducers<typeof rootReducer>;
 
 /**
  * The main application store instance.
- * 
+ *
  * @remarks
  * - Uses v0.5.0 `createStore` with explicit type annotation to avoid TS2742
  * - Middleware is registered at construction
@@ -70,6 +71,9 @@ export const store: StoreInstance<RootReducerKeys, RootReducerState, tAppEM> = c
   reducer: rootReducer,
   middleware: todoMiddleware,
 });
+
+// Instrument the store — connects to hub on ws://localhost:9800
+withDevtools(store, { port: 9800 });
 
 /**
  * Type of the store instance for use in type annotations. */
