@@ -1,335 +1,59 @@
 /**
- * WebSocket transport layer for the browser DevTools agent.
+ * Browser WebSocket transport for the DevTools agent.
  *
  * @remarks
- * Provides a reconnecting WebSocket client that handles the DevTools protocol
- * handshake, message buffering during disconnects, and exponential backoff
- * with jitter. Uses the native browser `WebSocket` API (no `ws` dependency).
+ * Injects the native browser `WebSocket` into the shared, transport-agnostic
+ * {@link ReconnectingWsClient} from `@yoltra/devtools-protocol`. There is **no**
+ * `ws` dependency here — that is what keeps this package installable in the
+ * browser without pulling in a Node-only transport.
  *
  * @module @yoltra/devtools-browser-agent
  */
 
 import {
-  DevtoolsRole,
-  PROTOCOL_VERSION,
-  type HandshakeRequest,
-  type HandshakeResponse,
+  ReconnectingWsClient,
+  type DevtoolsSocketFactory,
+  type ReconnectingWsConfig,
   type StoreCapabilities,
 } from "@yoltra/devtools-protocol";
 
-/**
- * Connection state for the browser devtools WS client.
- *
- * @remarks
- * Represents the finite-state-machine states the client cycles through:
- * `disconnected` -> `connecting` -> `connected`, or
- * `connected` -> `reconnecting` -> `connected`/`disconnected`.
- *
- * @internal
- */
-export type ConnectionState = "disconnected" | "connecting" | "connected" | "reconnecting";
+export type { ConnectionState } from "@yoltra/devtools-protocol";
 
-/**
- * Browser WebSocket client with automatic reconnection for connecting a Yoltra
- * store to the DevTools hub.
- *
- * @remarks
- * - Uses the native browser `WebSocket` API (no `ws` package required).
- * - Performs the DevTools protocol handshake on each connection.
- * - Buffers outgoing messages (up to 100) while disconnected.
- * - Employs exponential backoff with jitter for reconnection attempts.
- * - Tracks connection epochs to safely discard stale callbacks.
- * - Follows the same reconnection/buffering patterns as `@eraelco/yoltra-wsocket`.
- *
- * @internal
- */
-export class DevtoolsWsClient {
-  private ws: WebSocket | null = null;
-  private state: ConnectionState = "disconnected";
-  private url: string;
-  private reconnectAttempts = 0;
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private connectEpoch = 0;
-  private intentionallyClosed = false;
-  private readonly buffer: string[] = [];
-  private handshakeResolved = false;
-  private onMessageHandler: ((data: string) => void) | null = null;
-  private onConnectedHandler: (() => void) | null = null;
-  private onDisconnectedHandler: (() => void) | null = null;
-
-  constructor(
-    private readonly storeId: string,
-    private readonly storeName: string,
-    private readonly capabilities: StoreCapabilities,
-    private readonly config: {
-      autoReconnect: boolean;
-      maxReconnectAttempts: number;
-      baseDelay: number;
-      maxDelay: number;
+/** Opens a native browser WebSocket and adapts it to the shared transport. */
+const browserSocketFactory: DevtoolsSocketFactory = (url, callbacks) => {
+  const ws = new WebSocket(url);
+  ws.onopen = () => callbacks.onOpen();
+  ws.onmessage = (ev: MessageEvent) =>
+    callbacks.onMessage(typeof ev.data === "string" ? ev.data : String(ev.data));
+  ws.onclose = () => callbacks.onClose();
+  ws.onerror = () => callbacks.onError();
+  return {
+    get readyState() {
+      return ws.readyState;
     },
+    send: (data) => ws.send(data),
+    close: (code, reason) => ws.close(code, reason),
+    dispose: () => {
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onclose = null;
+      ws.onerror = null;
+    },
+  };
+};
+
+/**
+ * Browser DevTools WebSocket client (native `WebSocket` transport).
+ *
+ * @internal
+ */
+export class DevtoolsWsClient extends ReconnectingWsClient {
+  constructor(
+    storeId: string,
+    storeName: string,
+    capabilities: StoreCapabilities,
+    config: ReconnectingWsConfig,
   ) {
-    this.url = "";
-  }
-
-  /**
-   * Register a handler for incoming messages (post-handshake).
-   *
-   * @param handler - Callback invoked with the raw message string for every
-   *   message received after the handshake completes.
-   */
-  onMessage(handler: (data: string) => void): void {
-    this.onMessageHandler = handler;
-  }
-
-  /**
-   * Register a handler for successful connection (post-handshake).
-   *
-   * @param handler - Callback invoked once the handshake succeeds and the
-   *   connection is fully established.
-   */
-  onConnected(handler: () => void): void {
-    this.onConnectedHandler = handler;
-  }
-
-  /**
-   * Register a handler for disconnection.
-   *
-   * @param handler - Callback invoked when the WebSocket connection is lost,
-   *   whether intentionally or due to a network error.
-   */
-  onDisconnected(handler: () => void): void {
-    this.onDisconnectedHandler = handler;
-  }
-
-  /**
-   * Connect to the DevTools hub.
-   *
-   * @remarks
-   * Resets reconnection state and initiates a fresh connection. If already
-   * connected, call {@link disconnect} first.
-   *
-   * @param host - Hub hostname or IP address.
-   * @param port - Hub port number.
-   */
-  connect(host: string, port: number): void {
-    this.url = `ws://${host}:${port}`;
-    this.intentionallyClosed = false;
-    this.reconnectAttempts = 0;
-    this.doConnect();
-  }
-
-  /**
-   * Send a message to the hub, buffering if not yet connected.
-   *
-   * @remarks
-   * Messages are buffered in a FIFO queue (max 100 entries) while the
-   * connection is down. When the buffer overflows, the oldest message is
-   * dropped. Buffered messages are flushed once the handshake succeeds.
-   *
-   * @param message - Serialised JSON string to send.
-   */
-  send(message: string): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN && this.handshakeResolved) {
-      this.ws.send(message);
-    } else {
-      this.buffer.push(message);
-      if (this.buffer.length > 100) {
-        this.buffer.shift();
-      }
-    }
-  }
-
-  /**
-   * Disconnect from the hub and stop reconnection attempts.
-   *
-   * @remarks
-   * Closes the underlying socket with code 1000, clears the message buffer,
-   * and cancels any pending reconnection timer.
-   */
-  disconnect(): void {
-    this.intentionallyClosed = true;
-    this.connectEpoch++;
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    if (this.ws) {
-      this.ws.onopen = null;
-      this.ws.onmessage = null;
-      this.ws.onclose = null;
-      this.ws.onerror = null;
-      this.ws.close(1000, "Client disconnect");
-      this.ws = null;
-    }
-    this.state = "disconnected";
-    this.buffer.length = 0;
-  }
-
-  /**
-   * Current connection state.
-   *
-   * @returns The current {@link ConnectionState} of this client.
-   */
-  getState(): ConnectionState {
-    return this.state;
-  }
-
-  private doConnect(): void {
-    if (
-      this.ws &&
-      (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)
-    ) {
-      return;
-    }
-
-    // Clean up stale socket
-    if (this.ws) {
-      this.ws.onopen = null;
-      this.ws.onmessage = null;
-      this.ws.onclose = null;
-      this.ws.onerror = null;
-      this.ws = null;
-    }
-
-    const epoch = ++this.connectEpoch;
-    this.state = this.reconnectAttempts === 0 ? "connecting" : "reconnecting";
-    this.handshakeResolved = false;
-
-    try {
-      this.ws = new WebSocket(this.url);
-    } catch {
-      this.handleConnectFailure(epoch);
-      return;
-    }
-
-    this.ws.onopen = () => {
-      if (epoch !== this.connectEpoch) return;
-      this.performHandshake(epoch);
-    };
-
-    this.ws.onmessage = (ev: MessageEvent) => {
-      if (epoch !== this.connectEpoch) return;
-      const text = typeof ev.data === "string" ? ev.data : String(ev.data);
-
-      if (!this.handshakeResolved) {
-        this.handleHandshakeResponse(text, epoch);
-        return;
-      }
-
-      this.onMessageHandler?.(text);
-    };
-
-    this.ws.onclose = () => {
-      if (epoch !== this.connectEpoch) return;
-      this.handleClose(epoch);
-    };
-
-    this.ws.onerror = () => {
-      // Error is followed by close, handled there
-    };
-  }
-
-  private performHandshake(epoch: number): void {
-    if (epoch !== this.connectEpoch || !this.ws) return;
-
-    const request: HandshakeRequest = {
-      type: "HANDSHAKE_REQUEST",
-      protocolVersion: PROTOCOL_VERSION,
-      role: DevtoolsRole.STORE,
-      store: {
-        id: this.storeId,
-        name: this.storeName,
-        capabilities: this.capabilities,
-      },
-    };
-
-    this.ws.send(JSON.stringify(request));
-  }
-
-  private handleHandshakeResponse(text: string, epoch: number): void {
-    if (epoch !== this.connectEpoch) return;
-
-    let response: HandshakeResponse;
-    try {
-      response = JSON.parse(text);
-    } catch {
-      return;
-    }
-
-    if (response.type !== "HANDSHAKE_RESPONSE") return;
-
-    if (!response.success) {
-      console.error("[Yoltra DevTools] Handshake failed:", response.error);
-      this.ws?.close(1008, "Handshake failed");
-      return;
-    }
-
-    this.handshakeResolved = true;
-    this.state = "connected";
-    this.reconnectAttempts = 0;
-    this.onConnectedHandler?.();
-
-    // Flush buffer
-    while (this.buffer.length > 0 && this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(this.buffer.shift()!);
-    }
-  }
-
-  private handleClose(epoch: number): void {
-    if (epoch !== this.connectEpoch) return;
-
-    this.ws = null;
-    this.handshakeResolved = false;
-    this.onDisconnectedHandler?.();
-
-    if (this.intentionallyClosed) {
-      this.state = "disconnected";
-      return;
-    }
-
-    if (this.config.autoReconnect) {
-      this.attemptReconnect(epoch);
-    } else {
-      this.state = "disconnected";
-    }
-  }
-
-  private handleConnectFailure(epoch: number): void {
-    if (epoch !== this.connectEpoch) return;
-
-    if (this.config.autoReconnect) {
-      this.attemptReconnect(epoch);
-    } else {
-      this.state = "disconnected";
-    }
-  }
-
-  private attemptReconnect(epoch: number): void {
-    if (epoch !== this.connectEpoch || this.intentionallyClosed) return;
-
-    if (this.reconnectAttempts >= this.config.maxReconnectAttempts) {
-      this.state = "disconnected";
-      return;
-    }
-
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-    }
-
-    this.reconnectAttempts++;
-    this.state = "reconnecting";
-
-    const delay = this.calculateBackoff();
-    this.reconnectTimer = setTimeout(() => {
-      if (epoch !== this.connectEpoch) return;
-      this.doConnect();
-    }, delay);
-  }
-
-  private calculateBackoff(): number {
-    const base = this.config.baseDelay * Math.pow(2, this.reconnectAttempts - 1);
-    const jitter = Math.random() * 0.1 * base;
-    const delay = Math.min(base + jitter, this.config.maxDelay);
-    return Math.max(delay, 750);
+    super(storeId, storeName, capabilities, config, browserSocketFactory);
   }
 }

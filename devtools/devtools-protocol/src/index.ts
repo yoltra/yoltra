@@ -48,3 +48,14 @@ export type { BaseMessage } from "./wire";
 
 // Utilities
 export { computePatches, patchesFromChange, getAtPath } from "./patch-utils";
+
+// Transport (reconnecting client with an injected socket — each agent supplies
+// its own WebSocket implementation, so this stays free of `ws` / browser globals)
+export { ReconnectingWsClient, WS_OPEN, WS_CONNECTING } from "./ws-transport";
+export type {
+  ConnectionState,
+  DevtoolsSocketCallbacks,
+  DevtoolsSocketHandle,
+  DevtoolsSocketFactory,
+  ReconnectingWsConfig,
+} from "./ws-transport";
