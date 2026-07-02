@@ -38,7 +38,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "vite build",
-    "test": "exit 0",
+    "test": "vitest run",
     "lint": "exit 0",
     "typecheck": "tsc --noEmit",
     "docs": "rushx docs:js && rushx docs:md",

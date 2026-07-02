@@ -47,4 +47,4 @@ export type {
 export type { BaseMessage } from "./wire";
 
 // Utilities
-export { computePatches, getAtPath } from "./patch-utils";
+export { computePatches, patchesFromChange, getAtPath } from "./patch-utils";

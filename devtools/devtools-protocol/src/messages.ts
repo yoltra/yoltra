@@ -3,6 +3,7 @@
  */
 
 import type { StoreCapabilities } from "./capabilities";
+import type { HandshakeRequest, HandshakeResponse } from "./handshake";
 import type { JsonPatch } from "./json-patch";
 import type { BaseMessage } from "./wire";
 
@@ -331,6 +332,8 @@ export interface StoreRegistry extends BaseMessage {
  * @public
  */
 export type DevtoolsMessage =
+  | HandshakeRequest
+  | HandshakeResponse
   | StoreConnected
   | StoreDisconnected
   | StoreEvent

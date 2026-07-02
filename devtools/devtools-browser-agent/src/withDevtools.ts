@@ -4,10 +4,10 @@
  * @module @yoltra/devtools-browser-agent
  */
 
-import type { EventMapBase, StoreInstance } from "@yoltra/core";
+import type { EventMapBase, InstrumentedEvent, StoreInstance } from "@yoltra/core";
 import {
   DevtoolsRole,
-  computePatches,
+  patchesFromChange,
   type BaseMessage,
   type StateSnapshot,
   type StoreCapabilities,
@@ -22,9 +22,12 @@ import { DevtoolsWsClient } from "./ws-client";
  *
  * @remarks
  * - Connects to the DevTools hub via native `WebSocket`.
- * - Intercepts ALL events via a `when: { any: true }` effect.
- * - Computes JSON Patch diffs and sends `STORE_EVENT` messages to the hub.
- * - Handles incoming commands: REQUEST_STATE, TIME_TRAVEL, EVENT_REPLAY, EMIT_TO_STORE.
+ * - Observes every event via the typed `store.instrument()` seam — no
+ *   `as any` bridging, no re-diffing, no full-state clone per event.
+ * - Builds precise RFC 6902 patches from the exact changed leaf paths the core
+ *   reports, and sends a `STORE_EVENT` per event (committed or vetoed).
+ * - Handles incoming commands: REQUEST_STATE, REQUEST_METRICS,
+ *   REQUEST_SUBSCRIPTIONS, TIME_TRAVEL, EVENT_REPLAY, EMIT_TO_STORE.
  * - Returns the **same** store instance (transparent instrumentation).
  * - Auto-reconnects to the hub on disconnect.
  *
@@ -57,16 +60,13 @@ export function withDevtools<
 
   // ── Metrics tracking ──────────────────────────────────────────────────────
   // Counts committed events (events that pass middleware and run reducers).
-  // Incremented in the interceptor effect below.
   let committedEventCount = 0;
+  // Counts ALL observed events including those vetoed by middleware.
+  let totalAttemptedCount = 0;
   // Timestamps (epoch ms) of recent committed events; pruned to last 60 s.
   const eventTimestamps: number[] = [];
-  // Counts ALL attempted events including those rejected by middleware.
-  // Incremented by the __devtools_metrics_counter middleware registered below.
-  let totalAttemptedCount = 0;
-
-  // Deep clone state for diff tracking
-  let prevState: any = JSON.parse(JSON.stringify(store.getState()));
+  // Rolling sum of the core-reported reduce time (ms) over committed events.
+  let reduceTimeSumMs = 0;
 
   // ── Sampling state ─────────────────────────────────────────────────────────
   // Tracks per-event-key counters and timestamps to enforce the three sampling
@@ -74,8 +74,6 @@ export function withDevtools<
   //   ignore   — never forward matching events.
   //   skip     — forward every Nth matching event (0-based counter).
   //   throttle — forward at most once per intervalMs per key.
-  //
-  // Each map is keyed by the canonical event key string `"channel::type"`.
   const skipCounters = new Map<string, number>(); // current invocation count per key
   const throttleLast = new Map<string, number>(); // last-forwarded epoch ms per key
 
@@ -100,9 +98,9 @@ export function withDevtools<
     for (const rule of sampling.throttle ?? []) {
       if (!matches(rule.keys)) continue;
       const last = throttleLast.get(eventKey) ?? 0;
-      const now = Date.now();
-      if (now - last < rule.intervalMs) return true; // within throttle window
-      throttleLast.set(eventKey, now);
+      const nowMs = Date.now();
+      if (nowMs - last < rule.intervalMs) return true; // within throttle window
+      throttleLast.set(eventKey, nowMs);
       return false; // passed throttle; no further rules apply for this event
     }
 
@@ -125,7 +123,6 @@ export function withDevtools<
   const capabilities: StoreCapabilities = {
     replay: config.allowReplay ?? false,
     stateSnapshot: true,
-    // withDevtools sends STORE_SUBSCRIPTIONS responses for REQUEST_SUBSCRIPTIONS.
     subscriptionMeta: true,
     pipelineMeta: true,
     emit: config.allowEmit ?? false,
@@ -148,30 +145,6 @@ export function withDevtools<
     sourceRole: DevtoolsRole.STORE,
   });
 
-  /*
-   * Register a pass-through counting middleware.
-   *
-   * This always returns `true` (never rejects) and fires before any
-   * user-registered middleware so it counts EVERY attempted dispatch.
-   * The difference between `totalAttemptedCount` and `committedEventCount`
-   * gives the number of middleware rejections.
-   *
-   * Uses optional-chaining in case `registerMiddleware` is not exposed on
-   * the current store build (graceful degradation — metrics will show 0).
-   */
-  (store as any).registerMiddleware?.({
-    when: { any: true },
-    middleware: () => {
-      totalAttemptedCount++;
-      return true;
-    },
-    meta: {
-      type: "middleware",
-      name: "__devtools_metrics_counter",
-      description: "DevTools metrics counter (auto-registered by withDevtools)",
-    },
-  });
-
   // Handle incoming messages from hub
   wsClient.onMessage(async (data: string) => {
     let msg: any;
@@ -190,22 +163,22 @@ export function withDevtools<
           storeId,
           state: JSON.parse(JSON.stringify(state)),
           version: snapshotVersion,
-          reducerNames: Object.keys(state),
+          reducerNames: Object.keys(state as object),
         };
         wsClient.send(JSON.stringify(response));
         break;
       }
 
       case "REQUEST_METRICS": {
-        const introspection = (store as any).__devtoolsIntrospect();
+        const introspection = store.__devtoolsIntrospect();
         // Events committed in the last 1 second (sliding window).
         const cutoffMs = Date.now() - 1_000;
         const eventsPerSecond = eventTimestamps.filter((t) => t >= cutoffMs).length;
         // Middleware rejections = attempted − committed (floor at 0).
-        const middlewareRejections = Math.max(
-          0,
-          totalAttemptedCount - committedEventCount,
-        );
+        const middlewareRejections = Math.max(0, totalAttemptedCount - committedEventCount);
+        // Real reduce-phase timing, averaged over committed events.
+        const avgProcessingTimeMs =
+          committedEventCount > 0 ? reduceTimeSumMs / committedEventCount : 0;
         const response: StoreMetrics = {
           type: "STORE_METRICS",
           ...baseMsg(),
@@ -213,21 +186,12 @@ export function withDevtools<
           metrics: {
             eventCount: committedEventCount,
             eventsPerSecond,
-            // avgProcessingTimeMs requires wrapping the queue drain loop inside
-            // the core — cannot be measured accurately from outside the store.
-            avgProcessingTimeMs: 0,
-            // dedupHits is now tracked by the core; filled in B2.
-            dedupHits: introspection.dedupHits ?? 0,
-            // eventQueue is a private field but accessible via `as any`.
-            queueDepth: (store as any).eventQueue?.length ?? 0,
+            avgProcessingTimeMs,
+            dedupHits: introspection.dedupHits,
+            queueDepth: introspection.queueDepth,
             reducerCount: introspection.reducers.length,
-            effectCount: introspection.effects.filter(
-              (e: any) => e.name !== "__devtools_interceptor",
-            ).length,
-            // Filter the devtools counter out of the user-visible count.
-            middlewareCount: introspection.middleware.filter(
-              (m: any) => m.name !== "__devtools_metrics_counter",
-            ).length,
+            effectCount: introspection.effects.length,
+            middlewareCount: introspection.middleware.length,
             subscriberCount: introspection.event.length + introspection.coarse,
             connectorCount: introspection.atomic.length,
             middlewareRejections,
@@ -242,14 +206,11 @@ export function withDevtools<
         // store and cause "Cannot read property of undefined" in reducers.
         if (msg.state == null) break;
 
-        (store as any).__applyExternalState(msg.state);
-        prevState = JSON.parse(JSON.stringify(store.getState()));
+        store.__applyExternalState(msg.state);
         snapshotVersion = msg.snapshotVersion ?? snapshotVersion;
 
-        // Notify the extension of the new state so all UI panels (State
-        // Explorer, Treemap, etc.) re-render with the time-traveled state.
-        // useStoreState reacts to STATE_SNAPSHOT by resetting its local
-        // state and version, then applying any subsequent patches normally.
+        // Notify the extension of the new state so all UI panels re-render with
+        // the time-traveled state.
         const traveledState = store.getState();
         const travelSnapshot: StateSnapshot = {
           type: "STATE_SNAPSHOT",
@@ -265,8 +226,7 @@ export function withDevtools<
 
       case "EVENT_REPLAY": {
         if (capabilities.replay) {
-          (store as any).__replayEvents(msg.snapshot, msg.events);
-          prevState = JSON.parse(JSON.stringify(store.getState()));
+          store.__replayEvents(msg.snapshot, msg.events);
         }
         break;
       }
@@ -279,14 +239,7 @@ export function withDevtools<
       }
 
       case "REQUEST_SUBSCRIPTIONS": {
-        const introspection = (store as any).__devtoolsIntrospect();
-        // Filter out internal devtools registrations from both lists.
-        const effects = introspection.effects.filter(
-          (e: any) => e.name !== "__devtools_interceptor",
-        );
-        const middleware = introspection.middleware.filter(
-          (m: any) => m.name !== "__devtools_metrics_counter",
-        );
+        const introspection = store.__devtoolsIntrospect();
         const response = {
           type: "STORE_SUBSCRIPTIONS",
           ...baseMsg(),
@@ -294,8 +247,8 @@ export function withDevtools<
           atomic: introspection.atomic,
           event: introspection.event,
           coarse: introspection.coarse,
-          effects,
-          middleware,
+          effects: introspection.effects,
+          middleware: introspection.middleware,
           reducers: introspection.reducers,
         };
         wsClient.send(JSON.stringify(response));
@@ -304,71 +257,44 @@ export function withDevtools<
     }
   });
 
-  // Simple shallow diff fallback (used if detectChangedProps is not available)
-  const shallowDiff = (a: any, b: any): string[] => {
-    if (a === b) return [];
-    const paths: string[] = [];
-    const keys = new Set([...Object.keys(a ?? {}), ...Object.keys(b ?? {})]);
-    for (const k of keys) {
-      if (a?.[k] !== b?.[k]) paths.push(k);
-    }
-    return paths;
-  };
-
-  // Register effect to intercept ALL events
-  store.registerEffect({
-    when: { any: true },
-    effect: (event: { channel: string; type: string; payload: any }, getState: () => any) => {
-      const nextState = getState() as any;
-
-      // Compute changed paths per slice
-      const changedPaths: string[] = [];
-      const stateKeys = Object.keys(nextState);
-      for (const sliceKey of stateKeys) {
-        const slicePaths = shallowDiff(prevState[sliceKey], nextState[sliceKey]);
-        for (const p of slicePaths) {
-          changedPaths.push(p ? `${sliceKey}.${p}` : sliceKey);
-        }
-      }
-
-      const patches = computePatches(prevState, nextState, changedPaths);
-      snapshotVersion++;
-
-      // Track committed event metrics.
+  // Observe every event through the typed instrumentation seam. This single
+  // observer replaces the old interceptor effect + metrics middleware + manual
+  // diff + full-state clone: the core hands us the exact changed leaf paths and
+  // their old/new values, so we build precise patches with no re-diff.
+  store.instrument((info: InstrumentedEvent<EM>) => {
+    totalAttemptedCount++;
+    if (info.committed) {
       committedEventCount++;
+      reduceTimeSumMs += info.reduceTimeMs;
       const nowMs = Date.now();
       eventTimestamps.push(nowMs);
       // Prune timestamps older than 60 s to bound memory usage.
       while (eventTimestamps.length > 0 && nowMs - eventTimestamps[0]! > 60_000) {
         eventTimestamps.shift();
       }
+    }
 
-      const storeEvent: StoreEvent = {
-        type: "STORE_EVENT",
-        ...baseMsg(),
-        storeId,
-        event: {
-          id: (event as any).id,
-          channel: event.channel as string,
-          type: event.type as string,
-          payload: event.payload,
-        },
-        patches,
-        snapshotVersion,
-        committed: true,
-      };
+    if (isSampledOut(info.event.channel, info.event.type)) return;
 
-      if (!isSampledOut(event.channel as string, event.type as string)) {
-        wsClient.send(JSON.stringify(storeEvent));
-      }
-      prevState = JSON.parse(JSON.stringify(nextState));
-    },
-    meta: {
-      type: "effect",
-      name: "__devtools_interceptor",
-      description: "DevTools event interceptor (auto-registered by withDevtools)",
-    },
-  } as any);
+    snapshotVersion++;
+    const storeEvent: StoreEvent = {
+      type: "STORE_EVENT",
+      ...baseMsg(),
+      storeId,
+      event: {
+        id: info.event.id,
+        channel: info.event.channel,
+        type: info.event.type,
+        payload: info.event.payload,
+      },
+      patches: info.committed
+        ? patchesFromChange(info.changedPaths, info.prevValues, info.nextValues)
+        : [],
+      snapshotVersion,
+      committed: info.committed,
+    };
+    wsClient.send(JSON.stringify(storeEvent));
+  });
 
   // Connect to hub
   wsClient.connect(host, config.port);

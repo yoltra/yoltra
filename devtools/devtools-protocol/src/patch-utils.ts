@@ -88,3 +88,42 @@ export function computePatches(
   }
   return patches;
 }
+
+/**
+ * Builds RFC 6902 JSON Patch operations directly from a core
+ * `InstrumentedEvent`: the changed dotted leaf paths plus their old/new values.
+ *
+ * @remarks
+ * This is the preferred bridge now that the core reports exact changed paths and
+ * values per event — no full-state diff or clone is required. Op is chosen per
+ * path the same way as {@link computePatches}. Assumes property names do not
+ * contain `/` or `~` (safe for Yoltra state shapes).
+ *
+ * @param changedPaths - Dotted leaf paths that changed (slice-prefixed).
+ * @param prevValues - Old value at each changed path, keyed by path.
+ * @param nextValues - New value at each changed path, keyed by path.
+ * @returns Array of {@link JsonPatch} operations describing the state transition.
+ *
+ * @public
+ */
+export function patchesFromChange(
+  changedPaths: string[],
+  prevValues: Record<string, unknown>,
+  nextValues: Record<string, unknown>,
+): JsonPatch[] {
+  const patches: JsonPatch[] = [];
+  for (const dottedPath of changedPaths) {
+    const pointer = "/" + dottedPath.replace(/\./g, "/");
+    const oldVal = prevValues[dottedPath];
+    const newVal = nextValues[dottedPath];
+
+    if (oldVal === undefined && newVal !== undefined) {
+      patches.push({ op: "add", path: pointer, value: newVal });
+    } else if (oldVal !== undefined && newVal === undefined) {
+      patches.push({ op: "remove", path: pointer });
+    } else {
+      patches.push({ op: "replace", path: pointer, value: newVal });
+    }
+  }
+  return patches;
+}

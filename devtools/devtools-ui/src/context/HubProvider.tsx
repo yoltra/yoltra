@@ -123,9 +123,8 @@ export function HubProvider({
           const raw = typeof event.data === "string" ? event.data : String(event.data);
           const msg: DevtoolsMessage = JSON.parse(raw);
 
-          if (msg.type === ("HANDSHAKE_RESPONSE" as any)) {
-            const resp = msg as any;
-            if (resp.success) {
+          if (msg.type === "HANDSHAKE_RESPONSE") {
+            if (msg.success) {
               setStatus("connected");
             } else {
               ws.close();
