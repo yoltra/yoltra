@@ -11,10 +11,13 @@ import {
   useStoreRegistry,
   useStoreState,
   useStoreSubscriptions,
-  useTimeTravel,
   type HubConnectionConfig,
 } from "@yoltra/devtools-ui";
-import { useState } from "react";
+import { ThemeProvider } from "./theme";
+import type { StoreCapabilities } from "@yoltra/devtools-protocol";
+import cx from "classnames";
+import { useEffect, useState } from "react";
+
 import { BottomBar } from "./components/layout/BottomBar";
 import { TopBar } from "./components/layout/TopBar";
 import { EventEmitterPanel } from "./components/panels/EventEmitter";
@@ -22,14 +25,13 @@ import { EventTimeline } from "./components/panels/EventTimeline";
 import { MetricsDashboard } from "./components/panels/MetricsDashboard";
 import { StateTreeExplorer } from "./components/panels/StateTreeExplorer";
 import { SubscriptionsPanel } from "./components/panels/SubscriptionsPanel";
-import { TimeTravelPanel } from "./components/panels/TimeTravelPanel";
 import {
   EventFrequencyHeatmap,
   ReducerActivityBars,
   StateTreemap,
 } from "./components/panels/visualizations";
 
-import yoltraLogo from "./assets/logo.svg";
+import yoltraLogo from "./assets/logo-large.png";
 import appStyles from "./styles/App.module.css";
 
 const TABS = [
@@ -61,10 +63,37 @@ export interface DevtoolsAppConfig extends HubConnectionConfig {}
  */
 export function DevtoolsApp({ config }: { config: DevtoolsAppConfig }) {
   return (
-    <HubProvider config={config}>
-      <DevtoolsInner />
-    </HubProvider>
+    <ThemeProvider defaultTheme="dark">
+      <HubProvider config={config}>
+        <DevtoolsInner />
+      </HubProvider>
+    </ThemeProvider>
   );
+}
+
+// Maps each tab to the capability it requires. `null` means always available.
+function tabRequires(tab: TabName, caps: StoreCapabilities | null): boolean {
+  if (!caps) {
+    // No store selected yet — only show always-on tabs.
+    return tab === "Events" || tab === "Metrics" || tab === "Heatmap";
+  }
+  switch (tab) {
+    case "Events":
+    case "Metrics":
+    case "Heatmap":
+      return true;
+    case "State":
+    case "Treemap":
+      return caps.stateSnapshot;
+    case "Subscriptions":
+      return caps.subscriptionMeta || caps.pipelineMeta;
+    case "Reducers":
+      return caps.pipelineMeta;
+    case "Time Travel":
+      return caps.replay;
+    case "Emit":
+      return caps.emit;
+  }
 }
 
 function DevtoolsInner() {
@@ -73,13 +102,25 @@ function DevtoolsInner() {
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabName>("Events");
 
-  // Auto-select first store if none selected
+  // Auto-select first store if none selected.
   const effectiveStoreId =
     selectedStoreId && stores.some((s) => s.id === selectedStoreId)
       ? selectedStoreId
       : (stores[0]?.id ?? null);
 
-  const { entries, clear: clearLog } = useEventLog(effectiveStoreId);
+  // Capabilities of the currently selected store.
+  const caps: StoreCapabilities | null =
+    stores.find((s) => s.id === effectiveStoreId)?.capabilities ?? null;
+
+  // When the store changes, redirect to "Events" if the active tab is no
+  // longer supported by the new store's capabilities.
+  useEffect(() => {
+    if (!tabRequires(activeTab, caps)) {
+      setActiveTab("Events");
+    }
+  }, [effectiveStoreId]); // intentionally only on store change, not caps identity
+
+  const { entries } = useEventLog(effectiveStoreId);
   const {
     state,
     loading: stateLoading,
@@ -87,9 +128,9 @@ function DevtoolsInner() {
   } = useStoreState(effectiveStoreId);
   const { data: subscriptions, loading: subsLoading } = useStoreSubscriptions(effectiveStoreId);
   const { metrics, loading: metricsLoading } = useStoreMetrics(effectiveStoreId);
-  const { currentIndex, isTimeTraveling, jumpTo, stepBack, stepForward, resume } =
-    useTimeTravel(effectiveStoreId, entries);
   const { emit } = useEventEmitter(effectiveStoreId);
+
+  const availableTabs = TABS.filter((tab) => tabRequires(tab, caps));
 
   return (
     <main className={appStyles.main}>
@@ -100,10 +141,10 @@ function DevtoolsInner() {
         onSelectStore={setSelectedStoreId}
       />
       <aside className={appStyles.aside}>
-        {TABS.map((tab) => (
+        {availableTabs.map((tab) => (
           <button
             key={tab}
-            className={`${appStyles.tabButton} ${activeTab === tab ? appStyles.tabButtonActive : ""}`}
+            className={cx({ active: activeTab === tab })}
             onClick={() => setActiveTab(tab)}
           >
             {tab}
@@ -120,43 +161,37 @@ function DevtoolsInner() {
         ) : (
           <>
             {activeTab === "Events" && <EventTimeline entries={entries} />}
-            {activeTab === "State" && (
+            {activeTab === "State" && caps?.stateSnapshot && (
               <StateTreeExplorer
                 state={state}
                 loading={stateLoading}
                 onRefresh={refreshState}
               />
             )}
-            {activeTab === "Subscriptions" && (
-              <SubscriptionsPanel data={subscriptions} loading={subsLoading} />
-            )}
-            {activeTab === "Time Travel" && (
-              <TimeTravelPanel
-                entries={entries}
-                currentIndex={currentIndex}
-                isTimeTraveling={isTimeTraveling}
-                onJumpTo={jumpTo}
-                onStepBack={stepBack}
-                onStepForward={stepForward}
-                onResume={resume}
-              />
-            )}
-            {activeTab === "Emit" && <EventEmitterPanel onEmit={emit} />}
+            {activeTab === "Subscriptions" &&
+              (caps?.subscriptionMeta || caps?.pipelineMeta) && (
+                <SubscriptionsPanel data={subscriptions} loading={subsLoading} />
+              )}
+            {activeTab === "Emit" && caps?.emit && <EventEmitterPanel onEmit={emit} />}
             {activeTab === "Metrics" && (
               <MetricsDashboard metrics={metrics} loading={metricsLoading} />
             )}
             {activeTab === "Heatmap" && <EventFrequencyHeatmap entries={entries} />}
-            {activeTab === "Reducers" && (
+            {activeTab === "Reducers" && caps?.pipelineMeta && (
               <ReducerActivityBars entries={entries} subscriptions={subscriptions} />
             )}
-            {activeTab === "Treemap" && (
+            {activeTab === "Treemap" && caps?.stateSnapshot && (
               <StateTreemap state={state} loading={stateLoading} entries={entries} />
             )}
           </>
         )}
       </article>
-
-      <BottomBar status={status} />
+      <BottomBar
+        status={status}
+        effectiveStoreId={effectiveStoreId}
+        entries={entries}
+        capabilities={caps}
+      />
     </main>
   );
 }

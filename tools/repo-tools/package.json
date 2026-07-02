@@ -1,0 +1,30 @@
+{
+  "name": "@eraelco/repo-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Repo-level tooling (eslint, commitlint, etc.)",
+  "bin": {
+    "repo-eslint": "bin/repo-eslint.cjs",
+    "typedoc-locales": "bin/typedoc-es"
+  },
+  "scripts": {
+    "commitlint": "commitlint",
+    "test": "exit 0",
+    "build": "exit 0",
+    "lint": "exit 0",
+    "docs": "exit 0"
+  },
+  "dependencies": {
+    "eslint": "^9.30.1",
+    "@eslint/js": "^9.30.1",
+    "typescript-eslint": "^8.35.1",
+    "eslint-plugin-react": "^7.34.3",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "eslint-plugin-import": "^2.30.0",
+    "eslint-config-prettier": "^9.1.0",
+    "@types/node": "^24.0.12",
+    "typescript": "5.9.3",
+    "globals": "^16.3.0"
+  }
+}

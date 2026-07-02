@@ -2,22 +2,7 @@
  * @module @yoltra/devtools-storeview
  */
 
-import type { CSSProperties } from "react";
-
-const COLORS: Record<string, string> = {
-  connected: "var(--devtools-success)",
-  connecting: "var(--devtools-warning)",
-  disconnected: "var(--devtools-error)",
-};
-
-const dotStyle = (status: string): CSSProperties => ({
-  display: "inline-block",
-  width: 8,
-  height: 8,
-  borderRadius: "50%",
-  backgroundColor: COLORS[status] ?? COLORS.disconnected,
-  flexShrink: 0,
-});
+import cx from "classnames";
 
 /**
  * Colored dot indicating connection status.
@@ -30,5 +15,9 @@ const dotStyle = (status: string): CSSProperties => ({
  * @public
  */
 export function ConnectionDot({ status }: { status: string }) {
-  return <span style={dotStyle(status)} title={status} />;
+  const className = cx({
+    [status]: true,
+  });
+
+  return <span className={className} />;
 }

@@ -90,12 +90,7 @@ const MAX_DEPTH = 6;
  * @param parentPath - Dot-separated path of the parent (empty for root).
  * @param depth      - Current recursion depth (starts at 0).
  */
-function buildTree(
-  value: unknown,
-  key: string,
-  parentPath: string,
-  depth = 0,
-): TreemapNode {
+function buildTree(value: unknown, key: string, parentPath: string, depth = 0): TreemapNode {
   const path = parentPath ? `${parentPath}.${key}` : key;
 
   if (depth >= MAX_DEPTH || value === null || typeof value !== "object") {
@@ -302,12 +297,12 @@ export function StateTreemap({
       {isLeafView ? (
         <div className={styles.empty}>Leaf node — no children to display</div>
       ) : (
-        <div className={styles.chartContainer}>
+        <div className={styles.chartContainer} style={{ height: "100%" }}>
           <ResponsiveTreeMap
             data={nivoRoot}
-            identity="id"
-            value="value"
-            valueFormat=">-.0f"
+            identity='id'
+            value='value'
+            valueFormat='>-.0f'
             theme={theme}
             margin={{ top: 4, right: 4, bottom: 4, left: 4 }}
             innerPadding={3}
@@ -321,16 +316,16 @@ export function StateTreemap({
               const topKey = node.id.split(".")[0] ?? "";
               return hotKeys.has(topKey) ? "rgba(0, 122, 204, 0.35)" : "#2d2d30";
             }}
-            borderColor="#3c3c3c"
+            borderColor='#3c3c3c'
             borderWidth={1}
             enableLabel={true}
             label={(node) => node.data.name}
             labelSkipSize={20}
-            labelTextColor="#cccccc"
+            labelTextColor='#cccccc'
             enableParentLabel={true}
             parentLabel={(node) => node.data.name}
             parentLabelSize={14}
-            parentLabelTextColor="#cccccc"
+            parentLabelTextColor='#cccccc'
             nodeOpacity={1}
             onClick={(node) => {
               // Drill into parent nodes; leaf clicks are no-ops.

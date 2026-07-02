@@ -2,10 +2,11 @@
  * Hook that accumulates a chronological log of store events for inspection.
  *
  * @remarks
- * Subscribes to `STORE_EVENT` messages for a specific store and builds a
- * bounded, time-ordered array of {@link EventLogEntry} objects. The log can
- * be cleared programmatically and resets automatically when the target
- * `storeId` changes.
+ * Subscribes to `STORE_EVENT` messages for **all** stores and stores them in
+ * a per-store map so that history is retained when the user switches between
+ * store tabs. The `storeId` parameter controls which store's slice is
+ * returned, but collection is never paused or reset when the selected store
+ * changes.
  *
  * @module @yoltra/devtools-ui
  */
@@ -15,7 +16,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { EventLogEntry } from "../types";
 import { useHubConnection } from "./useHubConnection";
 
-/** @internal Default upper bound on retained event log entries. */
+/** @internal Default upper bound on retained event log entries per store. */
 const DEFAULT_MAX_ENTRIES = 2000;
 
 /**
@@ -24,7 +25,7 @@ const DEFAULT_MAX_ENTRIES = 2000;
  * @public
  */
 export interface UseEventLogOptions {
-  /** Maximum number of entries to keep. @defaultValue `2000` */
+  /** Maximum number of entries to keep per store. @defaultValue `2000` */
   maxEntries?: number;
 }
 
@@ -32,9 +33,13 @@ export interface UseEventLogOptions {
  * Maintains a chronological event log for a given store.
  *
  * @remarks
- * Events are appended in arrival order. When the log exceeds `maxEntries`
- * the oldest entries are discarded. Passing `null` as `storeId` pauses
- * collection and clears existing entries.
+ * Events are accumulated for **all** stores simultaneously in a `Map` keyed
+ * by store ID, so switching between store tabs does not discard existing
+ * history. Passing `null` as `storeId` returns an empty array but collection
+ * continues in the background.
+ *
+ * When the log for a given store exceeds `maxEntries` the oldest entries for
+ * that store are discarded.
  *
  * @example
  * ```tsx
@@ -55,7 +60,8 @@ export interface UseEventLogOptions {
  * }
  * ```
  *
- * @param storeId - The store ID to track events for, or `null` to disable.
+ * @param storeId - The store ID whose events to return, or `null` to get an
+ *   empty slice (collection still runs for all stores).
  * @param options - Optional configuration (see {@link UseEventLogOptions}).
  * @returns An object containing the `entries` array and a `clear` function.
  *
@@ -67,44 +73,62 @@ export function useEventLog(
 ): { entries: EventLogEntry[]; clear: () => void } {
   const { subscribe } = useHubConnection();
   const maxEntries = options?.maxEntries ?? DEFAULT_MAX_ENTRIES;
-  const [entries, setEntries] = useState<EventLogEntry[]>([]);
+
+  /**
+   * Per-store event log, keyed by storeId.
+   * Stored in a ref so mutations don't trigger unnecessary re-renders; we
+   * control re-renders manually via the `tick` counter below.
+   */
+  const allEntriesRef = useRef<Map<string, EventLogEntry[]>>(new Map());
   const maxRef = useRef(maxEntries);
   maxRef.current = maxEntries;
 
-  useEffect(() => {
-    if (!storeId) return;
+  /**
+   * Incremented on every mutation to trigger a re-render so consumers see
+   * the latest entries. The value itself is not used in the render output.
+   */
+  const [, setTick] = useState(0);
 
+  useEffect(() => {
+    // Subscribe once for the lifetime of the provider — collect events for
+    // ALL stores so history persists regardless of which store tab is active.
     const unsub = subscribe((msg: DevtoolsMessage) => {
       if (msg.type !== "STORE_EVENT") return;
-      if (msg.storeId !== storeId) return;
 
+      const sid = msg.storeId;
       const entry: EventLogEntry = {
         event: msg.event,
-        storeId: msg.storeId,
+        storeId: sid,
         patches: msg.patches,
         snapshotVersion: msg.snapshotVersion,
         committed: msg.committed,
         timestamp: msg.timestamp,
       };
 
-      setEntries((prev) => {
-        const next = [...prev, entry];
-        if (next.length > maxRef.current) {
-          return next.slice(next.length - maxRef.current);
-        }
-        return next;
-      });
+      const prev = allEntriesRef.current.get(sid) ?? [];
+      const next = [...prev, entry];
+      allEntriesRef.current.set(
+        sid,
+        next.length > maxRef.current ? next.slice(next.length - maxRef.current) : next,
+      );
+
+      setTick((t) => t + 1);
     });
 
     return unsub;
-  }, [storeId, subscribe]);
+    // subscribe is stable for the lifetime of HubProvider — intentionally
+    // omit storeId so the subscription is never restarted on tab switch.
+  }, [subscribe]);
 
-  // Clear when storeId changes
-  useEffect(() => {
-    setEntries([]);
+  /** Clear the event log for the currently selected store only. */
+  const clear = useCallback(() => {
+    if (storeId) {
+      allEntriesRef.current.delete(storeId);
+      setTick((t) => t + 1);
+    }
   }, [storeId]);
 
-  const clear = useCallback(() => setEntries([]), []);
+  const entries = storeId ? (allEntriesRef.current.get(storeId) ?? []) : [];
 
   return { entries, clear };
 }

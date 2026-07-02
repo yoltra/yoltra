@@ -141,8 +141,20 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@yoltra/devtools-node-agent",
+      "projectFolder": "devtools/devtools-node-agent",
+      "reviewCategory": "devtools",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@yoltra/devtools-ext",
       "projectFolder": "devtools/devtools-ext",
+      "reviewCategory": "devtools",
+      "shouldPublish": true
+    },
+    {
+      "packageName": "@yoltra/devtools-cli",
+      "projectFolder": "devtools/devtools-cli",
       "reviewCategory": "devtools",
       "shouldPublish": true
     },
@@ -172,6 +184,13 @@
       "packageName": "yoltra-react-counter",
       "projectFolder": "examples/v0/yoltra-react-counter",
       "reviewCategory": "samples",
+      "shouldPublish": false
+    },
+
+    {
+      "packageName": "@eraelco/repo-tools",
+      "projectFolder": "tools/repo-tools",
+      "reviewCategory": "tools",
       "shouldPublish": false
     }
   ]

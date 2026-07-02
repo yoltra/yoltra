@@ -36,7 +36,9 @@
   "files": [
     "dist"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "build": "vite build",
     "lint": "exit 0",
@@ -53,6 +55,7 @@
     "@nivo/treemap": "^0.87.0",
     "@yoltra/devtools-protocol": "workspace:*",
     "@yoltra/devtools-ui": "workspace:*",
+    "classnames": "2.5.1",
     "react": "19.1.1",
     "react-dom": "19.1.1"
   },

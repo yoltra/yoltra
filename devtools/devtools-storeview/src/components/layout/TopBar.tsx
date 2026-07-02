@@ -5,31 +5,6 @@
 import type { RegisteredStore } from "@yoltra/devtools-ui";
 import { ConnectionDot } from "../shared/ConnectionDot";
 
-const containerStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  height: "var(--devtools-topbar-height)",
-  background: "var(--devtools-bg-secondary)",
-  borderBottom: "1px solid var(--devtools-border)",
-  padding: "0 var(--devtools-spacing-md)",
-  gap: "var(--devtools-spacing-sm)",
-  flexShrink: 0,
-};
-
-const tabStyle = (active: boolean): React.CSSProperties => ({
-  display: "flex",
-  alignItems: "center",
-  gap: "var(--devtools-spacing-sm)",
-  padding: "var(--devtools-spacing-xs) var(--devtools-spacing-md)",
-  background: active ? "var(--devtools-bg-active)" : "transparent",
-  border: "none",
-  borderRadius: "var(--devtools-radius)",
-  color: active ? "var(--devtools-fg)" : "var(--devtools-fg-secondary)",
-  cursor: "pointer",
-  fontSize: "var(--devtools-font-size-sm)",
-  fontFamily: "inherit",
-});
-
 /**
  * Top bar with store tabs and connection indicators.
  *
@@ -52,27 +27,18 @@ export function TopBar({
   onSelectStore: (id: string) => void;
 }) {
   return (
-    <header style={containerStyle}>
+    <header>
       {stores.map((store) => (
         <button
+          className={selectedStoreId === store.id ? "active" : ""}
           key={store.id}
-          style={tabStyle(store.id === selectedStoreId)}
           onClick={() => onSelectStore(store.id)}
         >
           <ConnectionDot status={store.status} />
           {store.name}
         </button>
       ))}
-      {stores.length === 0 && (
-        <span
-          style={{
-            color: "var(--devtools-fg-muted)",
-            fontSize: "var(--devtools-font-size-sm)",
-          }}
-        >
-          No stores connected
-        </span>
-      )}
+      {stores.length === 0 && <span>No stores connected</span>}
     </header>
   );
 }

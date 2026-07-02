@@ -51,7 +51,7 @@ export function withDevtools<
   S extends Record<R, any>,
   EM extends EventMapBase,
 >(store: StoreInstance<R, S, EM>, config: DevtoolsWrapperConfig): StoreInstance<R, S, EM> {
-  const storeId = config.storeId ?? crypto.randomUUID();
+  const storeId = config.storeId ?? store.name;
   const host = config.host ?? "localhost";
   let snapshotVersion = 0;
 
@@ -67,6 +67,59 @@ export function withDevtools<
 
   // Deep clone state for diff tracking
   let prevState: any = JSON.parse(JSON.stringify(store.getState()));
+
+  // ── Sampling state ─────────────────────────────────────────────────────────
+  // Tracks per-event-key counters and timestamps to enforce the three sampling
+  // rule types declared in `capabilities.sampling`:
+  //   ignore   — never forward matching events.
+  //   skip     — forward every Nth matching event (0-based counter).
+  //   throttle — forward at most once per intervalMs per key.
+  //
+  // Each map is keyed by the canonical event key string `"channel::type"`.
+  const skipCounters = new Map<string, number>(); // current invocation count per key
+  const throttleLast = new Map<string, number>(); // last-forwarded epoch ms per key
+
+  /**
+   * Returns `true` when the event should be suppressed by the sampling config.
+   * All three rule types are checked in priority order: ignore → throttle → skip.
+   */
+  const isSampledOut = (channel: string, type: string): boolean => {
+    const sampling = capabilities.sampling;
+    if (!sampling) return false;
+
+    const eventKey = `${channel}::${type}`;
+
+    // Helper: check if any rule's keys array matches this event.
+    const matches = (keys: Array<[string, string]>): boolean =>
+      keys.some(([c, t]) => (c === "*" || c === channel) && (t === "*" || t === type));
+
+    // 1. Ignore — never forward.
+    if (sampling.ignore?.some((r) => matches(r.keys))) return true;
+
+    // 2. Throttle — forward only if intervalMs has elapsed since the last send.
+    for (const rule of sampling.throttle ?? []) {
+      if (!matches(rule.keys)) continue;
+      const last = throttleLast.get(eventKey) ?? 0;
+      const now = Date.now();
+      if (now - last < rule.intervalMs) return true; // within throttle window
+      throttleLast.set(eventKey, now);
+      return false; // passed throttle; no further rules apply for this event
+    }
+
+    // 3. Skip — forward every Nth event (counter resets to 0 after firing).
+    for (const rule of sampling.skip ?? []) {
+      if (!matches(rule.keys)) continue;
+      const count = (skipCounters.get(eventKey) ?? 0) + 1;
+      if (count < rule.every) {
+        skipCounters.set(eventKey, count);
+        return true; // suppress until we reach the Nth event
+      }
+      skipCounters.set(eventKey, 0); // fire — reset counter
+      return false;
+    }
+
+    return false;
+  };
 
   // Build capabilities from config
   const capabilities: StoreCapabilities = {
@@ -160,10 +213,13 @@ export function withDevtools<
           metrics: {
             eventCount: committedEventCount,
             eventsPerSecond,
-            // These three require core instrumentation not available here.
+            // avgProcessingTimeMs requires wrapping the queue drain loop inside
+            // the core — cannot be measured accurately from outside the store.
             avgProcessingTimeMs: 0,
-            dedupHits: 0,
-            queueDepth: 0,
+            // dedupHits is now tracked by the core; filled in B2.
+            dedupHits: introspection.dedupHits ?? 0,
+            // eventQueue is a private field but accessible via `as any`.
+            queueDepth: (store as any).eventQueue?.length ?? 0,
             reducerCount: introspection.reducers.length,
             effectCount: introspection.effects.filter(
               (e: any) => e.name !== "__devtools_interceptor",
@@ -182,9 +238,28 @@ export function withDevtools<
       }
 
       case "TIME_TRAVEL": {
+        // Guard against malformed messages — a null state would corrupt the
+        // store and cause "Cannot read property of undefined" in reducers.
+        if (msg.state == null) break;
+
         (store as any).__applyExternalState(msg.state);
         prevState = JSON.parse(JSON.stringify(store.getState()));
         snapshotVersion = msg.snapshotVersion ?? snapshotVersion;
+
+        // Notify the extension of the new state so all UI panels (State
+        // Explorer, Treemap, etc.) re-render with the time-traveled state.
+        // useStoreState reacts to STATE_SNAPSHOT by resetting its local
+        // state and version, then applying any subsequent patches normally.
+        const traveledState = store.getState();
+        const travelSnapshot: StateSnapshot = {
+          type: "STATE_SNAPSHOT",
+          ...baseMsg(),
+          storeId,
+          state: JSON.parse(JSON.stringify(traveledState)),
+          version: snapshotVersion,
+          reducerNames: Object.keys(traveledState as object),
+        };
+        wsClient.send(JSON.stringify(travelSnapshot));
         break;
       }
 
@@ -283,7 +358,9 @@ export function withDevtools<
         committed: true,
       };
 
-      wsClient.send(JSON.stringify(storeEvent));
+      if (!isSampledOut(event.channel as string, event.type as string)) {
+        wsClient.send(JSON.stringify(storeEvent));
+      }
       prevState = JSON.parse(JSON.stringify(nextState));
     },
     meta: {

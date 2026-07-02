@@ -1,3 +1,13 @@
+/** Image assets */
+declare module '*.png' {
+  const src: string;
+  export default src;
+}
+declare module '*.svg' {
+  const src: string;
+  export default src;
+}
+
 /**
  * Plain CSS/Sass side-effect imports: `import './file.css'` */
 declare module '*.css';

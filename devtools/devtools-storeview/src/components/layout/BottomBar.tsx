@@ -2,42 +2,59 @@
  * @module @yoltra/devtools-storeview
  */
 
-import { PROTOCOL_VERSION } from "@yoltra/devtools-protocol";
-import type { HubConnectionStatus } from "@yoltra/devtools-ui";
+import { PROTOCOL_VERSION, type StoreCapabilities } from "@yoltra/devtools-protocol";
+import {
+  useTimeTravel,
+  type EventLogEntry,
+  type HubConnectionStatus,
+} from "@yoltra/devtools-ui";
+import { TimeTravelPanel } from "../panels/TimeTravelPanel";
 import { ConnectionDot } from "../shared/ConnectionDot";
 
-const containerStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  height: "var(--devtools-bottombar-height)",
-  background: "var(--devtools-bg-secondary)",
-  borderTop: "1px solid var(--devtools-border)",
-  padding: "0 var(--devtools-spacing-md)",
-  fontSize: "var(--devtools-font-size-sm)",
-  color: "var(--devtools-fg-muted)",
-  flexShrink: 0,
-};
-
 /**
- * Bottom bar showing hub connection status and protocol version.
- *
- * Displays a {@link ConnectionDot} with the current hub status label
- * on the left and the devtools protocol version on the right.
+ * Bottom bar showing hub connection status, protocol version, and
+ * (when the selected store supports it) the time-travel controls.
  *
  * @param props.status - The hub connection status string.
+ * @param props.capabilities - Capabilities of the currently selected store,
+ *   used to show or hide the time-travel controls.
  * @public
  */
-export function BottomBar({ status }: { status: HubConnectionStatus }) {
+export function BottomBar({
+  effectiveStoreId,
+  entries,
+  status,
+  capabilities,
+}: {
+  effectiveStoreId: string | null;
+  entries: EventLogEntry[];
+  status: HubConnectionStatus;
+  capabilities: StoreCapabilities | null;
+}) {
+  const { currentIndex, isTimeTraveling, jumpTo, stepBack, stepForward, resume } =
+    useTimeTravel(effectiveStoreId, entries);
+
   return (
-    <footer style={containerStyle}>
-      <span
-        style={{ display: "flex", alignItems: "center", gap: "var(--devtools-spacing-sm)" }}
-      >
-        <ConnectionDot status={status} />
-        Hub: {status}
-      </span>
-      <span>Protocol v{PROTOCOL_VERSION}</span>
+    <footer>
+      <div>
+        <span>
+          <ConnectionDot status={status} />
+          Hub: {status}
+        </span>
+        <span>Protocol v{PROTOCOL_VERSION}</span>
+      </div>
+
+      {capabilities?.replay && (
+        <TimeTravelPanel
+          entries={entries}
+          currentIndex={currentIndex}
+          isTimeTraveling={isTimeTraveling}
+          onJumpTo={jumpTo}
+          onStepBack={stepBack}
+          onStepForward={stepForward}
+          onResume={resume}
+        />
+      )}
     </footer>
   );
 }

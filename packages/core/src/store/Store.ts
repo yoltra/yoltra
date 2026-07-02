@@ -32,6 +32,26 @@ import type {
   When,
 } from "../types";
 import { freezeState } from "../utils/immutability";
+
+/**
+ * Deep-freezes a value **in development only**, returning it untouched in
+ * production.
+ *
+ * @remarks
+ * Deep-freezing is a dev-time guard against accidental state mutation; in
+ * production it is pure overhead. Because {@link freezeState} freezes in place
+ * and early-exits on already-frozen nodes, freezing a structurally-shared value
+ * touches only the **newly-created** nodes — O(change), not O(state size). This
+ * is why the write path does **not** deep-clone before freezing.
+ *
+ * @internal
+ */
+function freezeInDev<T>(value: T): DeepReadonly<T> {
+  return process.env.NODE_ENV === "production"
+    ? (value as unknown as DeepReadonly<T>)
+    : freezeState(value);
+}
+
 export class Store<EM extends EventMapBase, R extends string, S extends Record<R, any>>
   implements StoreInstance<R, S, EM> {
   /**
@@ -195,6 +215,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private readonly processedEvents = new Map<string, number>();
+
+  /**
+   * Lifetime count of events suppressed by the deduplication cache.
+   * Exposed via {@link __devtoolsIntrospect} so the DevTools agent can
+   * surface it in the STORE_METRICS response without further core changes.
+   *
+   * @internal
+   */
+  private dedupCount = 0;
 
   /**
    * Configuration for event deduplication.
@@ -364,6 +393,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (existing !== undefined) {
       // Check if within dedup window
       if (now - existing < this.dedupConfig.windowMs) {
+        this.dedupCount++;
         return true; // Duplicate, skip
       }
     }
@@ -591,8 +621,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // if nothing actually changed at the leaves, treat as a no-op
     if (leafPaths.length === 0) return false;
 
-    // freeze & commit new slice WITH NEW STATE REFERENCE (shallow clone)
-    const frozen = freezeState(structuredClone(next)) as DeepReadonly<S[R]>;
+    // Commit the new slice under a NEW top-level state reference (shallow spread).
+    // No deep clone: the reducer already returned a fresh `next` (purity contract),
+    // so structural sharing is preserved and freezeInDev only touches new nodes.
+    const frozen = freezeInDev(next) as DeepReadonly<S[R]>;
     this.state = { ...this.state, [rName]: frozen } as DeepReadonly<S>;
 
     // emit deep + ancestor paths once each
@@ -698,7 +730,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // Coarse subscribers count
     const coarse = this.listeners.size;
 
-    return { reducers, effects, middleware, atomic, event, coarse };
+    return { reducers, effects, middleware, atomic, event, coarse, dedupHits: this.dedupCount };
   }
 
   /**
@@ -726,10 +758,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // if reference equal, nothing to emit
       if (prevSlice === nextSlice) return;
 
-      // freeze the incoming slice before storing
-      const frozenNextSlice = freezeState(structuredClone(nextSlice)) as DeepReadonly<
-        S[typeof rName]
-      >;
+      // freeze the incoming slice before storing (dev-only; no deep clone — the
+      // external snapshot is freshly deserialized and owned by the store)
+      const frozenNextSlice = freezeInDev(nextSlice) as DeepReadonly<S[typeof rName]>;
       newState[rName] = frozenNextSlice;
       anyChanged = true;
 
@@ -1476,7 +1507,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     // Initialize state unless preserving an existing value
     if (!opts.preserveState || (this.state as any)[rName] === undefined) {
-      (this.state as any)[rName] = freezeState(structuredClone(state));
+      // Clone the user-provided initial state once so the store owns an
+      // independent copy; freeze is dev-only.
+      (this.state as any)[rName] = freezeInDev(structuredClone(state));
     }
 
     // Check if this is a pattern-based reducer (any, channel, channels)

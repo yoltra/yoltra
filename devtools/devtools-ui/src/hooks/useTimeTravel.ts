@@ -11,9 +11,10 @@
  * @module @yoltra/devtools-ui
  */
 
-import { DevtoolsRole } from "@yoltra/devtools-protocol";
-import { useCallback, useState } from "react";
+import { DevtoolsRole, type DevtoolsMessage } from "@yoltra/devtools-protocol";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { EventLogEntry } from "../types";
+import { applyPatches } from "../utils/apply-patch";
 import { useHubConnection } from "./useHubConnection";
 
 /**
@@ -65,9 +66,55 @@ export function useTimeTravel(
   stepForward: () => void;
   resume: () => void;
 } {
-  const { send } = useHubConnection();
+  const { send, subscribe } = useHubConnection();
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [isTimeTraveling, setIsTimeTraveling] = useState(false);
+
+  // The first STATE_SNAPSHOT received for this store, used as the baseline
+  // for forward-replay state reconstruction. Only the first snapshot is
+  // captured (the connect-time snapshot); time-travel response snapshots
+  // sent back by the store are intentionally ignored so they don't overwrite
+  // the baseline and corrupt future reconstructions.
+  const baselineRef = useRef<{ state: unknown; version: number } | null>(null);
+
+  useEffect(() => {
+    // Reset baseline whenever the target store changes so a fresh snapshot
+    // is captured for the new store.
+    baselineRef.current = null;
+    if (!storeId) return;
+
+    return subscribe((msg: DevtoolsMessage) => {
+      if (
+        msg.type === "STATE_SNAPSHOT" &&
+        msg.storeId === storeId &&
+        baselineRef.current === null
+      ) {
+        baselineRef.current = { state: msg.state, version: msg.version };
+      }
+    });
+  }, [storeId, subscribe]);
+
+  // Reconstruct the store state at a specific entries index by applying
+  // each entry's patches sequentially from the baseline forward.
+  // Returns null when no baseline has been captured yet (devtools still
+  // waiting for the first STATE_SNAPSHOT).
+  const buildStateAt = useCallback(
+    (index: number): unknown => {
+      const baseline = baselineRef.current;
+      if (!baseline) return null;
+
+      let state = baseline.state;
+      for (let i = 0; i <= index; i++) {
+        const entry = entries[i];
+        if (!entry) break;
+        // Skip entries that pre-date our baseline snapshot.
+        if (entry.snapshotVersion <= baseline.version) continue;
+        state = applyPatches(state as any, entry.patches);
+      }
+      return state;
+    },
+    [entries],
+  );
 
   const jumpTo = useCallback(
     (index: number) => {
@@ -76,22 +123,18 @@ export function useTimeTravel(
       setCurrentIndex(index);
       setIsTimeTraveling(true);
 
-      // We need to reconstruct state at this index.
-      // Send TIME_TRAVEL with the state. The extension needs to have
-      // computed this state from initial snapshot + patches.
-      // For v1, we send the snapshot version and let the store handle it.
-      const entry = entries[index];
+      const entry = entries[index]!;
       send({
         type: "TIME_TRAVEL",
         storeId,
-        state: null, // State must be provided by the view layer that has it
+        state: buildStateAt(index),
         snapshotVersion: entry.snapshotVersion,
         timestamp: new Date().toISOString(),
         sourceId: "",
         sourceRole: DevtoolsRole.EXTENSION,
       });
     },
-    [storeId, entries, send],
+    [storeId, entries, send, buildStateAt],
   );
 
   const stepBack = useCallback(() => {
@@ -113,20 +156,22 @@ export function useTimeTravel(
   const resume = useCallback(() => {
     setIsTimeTraveling(false);
     setCurrentIndex(-1);
-    // Jump to latest state — send the latest entry's version
+    // Restore the store to the latest known state by computing the state at
+    // the last entry and sending a TIME_TRAVEL to snap it back.
     if (storeId && entries.length > 0) {
-      const latest = entries[entries.length - 1];
+      const latestIndex = entries.length - 1;
+      const latest = entries[latestIndex]!;
       send({
         type: "TIME_TRAVEL",
         storeId,
-        state: null,
+        state: buildStateAt(latestIndex),
         snapshotVersion: latest.snapshotVersion,
         timestamp: new Date().toISOString(),
         sourceId: "",
         sourceRole: DevtoolsRole.EXTENSION,
       });
     }
-  }, [storeId, entries, send]);
+  }, [storeId, entries, send, buildStateAt]);
 
   return {
     currentIndex,
