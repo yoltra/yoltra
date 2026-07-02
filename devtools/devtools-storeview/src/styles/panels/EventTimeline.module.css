@@ -115,3 +115,48 @@
   max-height: 40%;
   overflow-y: auto;
 }
+
+.changeCount {
+  color: var(--devtools-fg-muted);
+  font-size: var(--devtools-font-size-sm);
+  flex-shrink: 0;
+}
+
+.changes {
+  margin-bottom: var(--devtools-spacing-md);
+}
+
+.changesTitle {
+  color: var(--devtools-fg-muted);
+  font-size: var(--devtools-font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--devtools-spacing-sm, 4px);
+}
+
+.changeRow {
+  display: flex;
+  gap: var(--devtools-spacing-sm, 6px);
+  align-items: baseline;
+  font-family: var(--devtools-font-mono, monospace);
+  font-size: var(--devtools-font-size-sm);
+  padding: 2px 0;
+}
+
+.changeOp {
+  color: var(--devtools-fg-muted);
+  min-width: 52px;
+  text-transform: uppercase;
+}
+
+.changePath {
+  color: var(--devtools-info);
+  white-space: nowrap;
+}
+
+.changeValue {
+  color: var(--devtools-fg-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

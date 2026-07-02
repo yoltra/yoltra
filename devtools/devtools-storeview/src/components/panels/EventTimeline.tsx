@@ -8,6 +8,18 @@ import styles from "../../styles/panels/EventTimeline.module.css";
 import { FilterBar } from "../shared/FilterBar";
 import { JsonTree } from "../shared/JsonTree";
 
+/** Compact, truncated preview of a patch value for the changes list. */
+function formatPatchValue(value: unknown): string {
+  if (value === undefined) return "undefined";
+  let s: string;
+  try {
+    s = JSON.stringify(value) ?? String(value);
+  } catch {
+    s = String(value);
+  }
+  return s.length > 60 ? `${s.slice(0, 60)}…` : s;
+}
+
 /**
  * Scrollable event timeline with filtering and detail inspection.
  *
@@ -79,6 +91,9 @@ export function EventTimeline({
                 ? JSON.stringify(entry.event.payload).slice(0, 80)
                 : "—"}
             </span>
+            {entry.committed && entry.patches.length > 0 && (
+              <span className={styles.changeCount}>{`Δ${entry.patches.length}`}</span>
+            )}
             <span className={styles.timestamp}>
               {new Date(entry.timestamp).toLocaleTimeString()}
             </span>
@@ -95,6 +110,23 @@ export function EventTimeline({
       </div>
       {selectedEntry && (
         <div className={styles.detail}>
+          {selectedEntry.patches.length > 0 && (
+            <div className={styles.changes}>
+              <div className={styles.changesTitle}>
+                {selectedEntry.patches.length} change
+                {selectedEntry.patches.length === 1 ? "" : "s"}
+              </div>
+              {selectedEntry.patches.map((p, pi) => (
+                <div key={pi} className={styles.changeRow}>
+                  <span className={styles.changeOp}>{p.op}</span>
+                  <span className={styles.changePath}>{p.path}</span>
+                  {p.op !== "remove" && (
+                    <span className={styles.changeValue}>{formatPatchValue(p.value)}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           <JsonTree data={selectedEntry} name='event' defaultExpanded />
         </div>
       )}
