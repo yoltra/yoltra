@@ -58,6 +58,9 @@ describe("Store advanced coverage", () => {
     const store = createStore({
       name: "CoverageStore-dispose",
       reducer: makeBaseReducers(),
+      // Enable content-dedup so the cleanup timer is started (it is gated on
+      // dedup being active); this test verifies dispose tears it down.
+      dedupWindowMs: 50,
     });
 
     const anyStore = store as any;

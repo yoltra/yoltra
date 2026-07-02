@@ -26,6 +26,7 @@ import type {
   Unsubscribe,
   EMFromReducersStrict,
   Emit,
+  EmitOptions,
   EventPhase,
   EventSubscriptionHandler,
   NarrowedEventHandler,
@@ -51,6 +52,14 @@ function freezeInDev<T>(value: T): DeepReadonly<T> {
     ? (value as unknown as DeepReadonly<T>)
     : freezeState(value);
 }
+
+/**
+ * Default window (ms) for identity-based dedup via {@link EmitOptions.dedupKey}
+ * when content-based dedup (`dedupWindowMs`) is disabled. Large enough to absorb
+ * a synchronous re-fire (e.g. React Strict Mode's mount → unmount → mount),
+ * small enough not to swallow genuine user repeats.
+ */
+const DEFAULT_DEDUP_KEY_WINDOW_MS = 100;
 
 export class Store<EM extends EventMapBase, R extends string, S extends Record<R, any>>
   implements StoreInstance<R, S, EM> {
@@ -259,10 +268,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.state = {} as any;
     this.replayEnabled = spec.devtools?.allowReplay ?? false;
 
-    // Initialize dedup config with optional user override
-    const defaultWindowMs = process.env.NODE_ENV === "production" ? 100 : 50;
+    // Deduplication is OPT-IN. Content-based dedup is OFF by default because it
+    // can silently drop legitimate rapid-fire identical events; enable it with
+    // `dedupWindowMs > 0`, or use per-emit `dedupKey` for identity-based dedup.
     this.dedupConfig = {
-      windowMs: spec.dedupWindowMs ?? defaultWindowMs,
+      windowMs: spec.dedupWindowMs ?? 0,
       maxCacheSize: 1000,
     };
 
@@ -283,11 +293,17 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }
 
     /**
-     * Event dedup cleanup (run every 5 seconds to prune expired entries)
+     * Event dedup cleanup — only needed when content-based dedup is enabled.
+     * When it is off (the default), the processed-event cache stays empty
+     * (identity dedup via `dedupKey` is bounded by lazy size-based pruning), so
+     * no interval is started and the store never keeps the event loop alive
+     * unnecessarily.
      */
-    this.eventCleanupTimer = setInterval(() => {
-      this.pruneProcessedEvents(Date.now());
-    }, 5000);
+    if (this.dedupConfig.windowMs > 0) {
+      this.eventCleanupTimer = setInterval(() => {
+        this.pruneProcessedEvents(Date.now());
+      }, 5000);
+    }
 
     /**
      * Method bindings
@@ -386,13 +402,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
-  private shouldDedupe(fp: string): boolean {
+  private shouldDedupe(fp: string, windowMs: number): boolean {
     const now = Date.now();
     const existing = this.processedEvents.get(fp);
 
     if (existing !== undefined) {
       // Check if within dedup window
-      if (now - existing < this.dedupConfig.windowMs) {
+      if (now - existing < windowMs) {
         this.dedupCount++;
         return true; // Duplicate, skip
       }
@@ -417,7 +433,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private pruneProcessedEvents(now: number): void {
-    const cutoff = now - this.dedupConfig.windowMs * 2; // Keep 2x window for safety
+    // Keep 2x the largest window in play (content window or the keyed-dedup
+    // default) so entries aren't evicted before their dedup window elapses.
+    const effectiveWindow = Math.max(this.dedupConfig.windowMs, DEFAULT_DEDUP_KEY_WINDOW_MS);
+    const cutoff = now - effectiveWindow * 2;
 
     for (const [key, timestamp] of this.processedEvents) {
       if (timestamp < cutoff) {
@@ -852,7 +871,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * Events are queued and processed **sequentially** (FIFO).
    *
    * **Pipeline per event:**
-   * 1. **Deduplication check** - Skip if event ID already processed (React Strict Mode safety)
+   * 1. **Deduplication** (opt-in) - Skip when content-dedup is enabled (`dedupWindowMs > 0`) or a matching `dedupKey` recurs; off by default
    * 2. **Middleware** - Pre-reducer hooks; may cancel by returning `false`
    * 3. **Reducers** - Synchronous state updates via internal event bus
    * 4. **Effects** - Async side-effects keyed by `(channel, type)` for O(1) lookup
@@ -867,6 +886,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @param channel - Channel name.
    * @param type - Event type name.
    * @param payload - Payload typed as `EM[C][T]`.
+   * @param opts - Optional per-emit options (e.g. `dedupKey` for identity-based dedup).
    * @returns A promise that resolves when the event has finished processing.
    *
    * @example Basic usage
@@ -890,13 +910,24 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     channel: C,
     type: T,
     payload: EM[C][T],
+    opts?: EmitOptions,
   ): Promise<void> {
-    // Generate fingerprint for content-based deduplication
-    const fp = this.fingerprint(channel as string, type as string, payload);
-
-    // Check for duplicate within time window (React Strict Mode safety)
-    if (this.shouldDedupe(fp)) {
-      return; // Skip duplicate
+    // Deduplication is OPT-IN (see EmitOptions / StoreSpec.dedupWindowMs).
+    // Content-based dedup runs only when `dedupWindowMs > 0`; identity-based
+    // dedup runs when an explicit `dedupKey` is supplied. By default neither is
+    // active, so legitimate rapid-fire identical events are never silently dropped.
+    const dedupKey = opts?.dedupKey;
+    const contentWindow = this.dedupConfig.windowMs;
+    if (contentWindow > 0 || dedupKey !== undefined) {
+      const windowMs =
+        dedupKey !== undefined && contentWindow <= 0 ? DEFAULT_DEDUP_KEY_WINDOW_MS : contentWindow;
+      const fp =
+        dedupKey !== undefined
+          ? `${channel}::${type}::#${dedupKey}`
+          : this.fingerprint(channel as string, type as string, payload);
+      if (this.shouldDedupe(fp, windowMs)) {
+        return; // Skip duplicate
+      }
     }
 
     // Generate unique ID for this event instance

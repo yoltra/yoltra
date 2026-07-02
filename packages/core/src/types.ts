@@ -121,6 +121,24 @@ export interface Change<V = any> {
  *
  * @public
  */
+/**
+ * Per-emit options.
+ *
+ * @public
+ */
+export interface EmitOptions {
+  /**
+   * Opt this specific emit into **identity-based** deduplication: if another
+   * event with the same `(channel, type, dedupKey)` was emitted within the dedup
+   * window, this one is skipped. Unlike content-based dedup
+   * ({@link StoreSpec.dedupWindowMs}), it never coalesces two *distinct* logical
+   * emits that merely share a payload — only re-fires of the *same* keyed emit
+   * (e.g. a React Strict Mode double-invoke). Works even when `dedupWindowMs`
+   * is 0, using a short default window.
+   */
+  dedupKey?: string;
+}
+
 export type Emit<EM extends EventMapBase> = <
   C extends keyof EM & string,
   T extends keyof EM[C] & string,
@@ -128,6 +146,7 @@ export type Emit<EM extends EventMapBase> = <
   channel: C,
   type: T,
   payload: EM[C][T],
+  opts?: EmitOptions,
 ) => Promise<void>;
 
 /**
@@ -250,13 +269,17 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
   effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
 
   /**
-   * Time window in milliseconds for event deduplication.
-   * Events with identical fingerprints (channel + type + serialized payload)
-   * within this window are considered duplicates and skipped.
+   * Time window in milliseconds for **content-based** event deduplication.
+   * When greater than 0, events with identical fingerprints
+   * (channel + type + serialized payload) within this window are treated as
+   * duplicates and skipped.
    *
-   * This helps prevent double-firing in React Strict Mode.
+   * **Off by default.** Content-based dedup can silently drop legitimate
+   * rapid-fire identical events (double-clicks, repeated `+1`, sliders emitting
+   * the same value), so it is opt-in. To safely coalesce a *specific* re-fired
+   * emit (e.g. React Strict Mode), prefer the per-emit {@link EmitOptions.dedupKey}.
    *
-   * @default 50 in development, 100 in production
+   * @default 0 (disabled)
    */
   dedupWindowMs?: number;
 
