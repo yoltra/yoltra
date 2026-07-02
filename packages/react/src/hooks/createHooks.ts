@@ -15,7 +15,7 @@ import type {
 } from "@yoltra/core";
 import * as React from "react";
 import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
-import { getAtPath, hasWildcard, normalizePath, specsSignature } from "../utils/path";
+import { getAtPath, hasWildcard, normalizePath, specsSignature, toDottedPath } from "../utils/path";
 
 /**
  * Call signature for the typed `useAtomicProp` hook returned by {@link createHooks}.
@@ -43,6 +43,12 @@ import { getAtPath, hasWildcard, normalizePath, specsSignature } from "../utils/
  * @public
  */
 export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
+  // Typed accessor form: `p => p.a.b.c` gives full autocomplete + inferred return type.
+  <R1 extends R, V>(
+    reducer: R1,
+    accessor: (state: DeepReadonly<S[R1]>) => V,
+    isEqual?: (a: V, b: V) => boolean,
+  ): V;
   <R1 extends R, P extends Dotted<S[R1]>>(spec: {
     reducer: R1;
     property: P;
@@ -254,15 +260,25 @@ export function createHooks<
   type UseAtomicPropOverloads = UseAtomicProp<R, S>;
 
   const useAtomicPropImpl = (
-    spec: { reducer: R; property: string },
-    map?: (value: unknown) => unknown,
+    specOrReducer: { reducer: R; property: string } | R,
+    mapOrAccessor?: (value: any) => unknown,
     isEqual?: (a: unknown, b: unknown) => boolean,
   ): unknown => {
     const store = useStore();
+
+    // Two calling conventions, normalized to { reducer, property } + optional map:
+    //  - useAtomicProp({ reducer, property }, map?, isEqual?)  (dotted-path string)
+    //  - useAtomicProp(reducer, p => p.a.b, isEqual?)          (typed accessor)
+    const accessorForm = typeof specOrReducer === "string";
+    const reducer = (accessorForm ? specOrReducer : specOrReducer.reducer) as R;
+    const rawProperty = accessorForm
+      ? toDottedPath(mapOrAccessor as (p: any) => any)
+      : specOrReducer.property;
+    const map = accessorForm ? undefined : mapOrAccessor;
+
     const normalizedSpec = useMemo(() => {
-      const prop = normalizePath(spec.property);
-      return { reducer: spec.reducer, property: prop } as const;
-    }, [spec.reducer, spec.property]);
+      return { reducer, property: normalizePath(rawProperty) } as const;
+    }, [reducer, rawProperty]);
 
     const subscribe = useMemo(
       () => (notify: () => void) =>

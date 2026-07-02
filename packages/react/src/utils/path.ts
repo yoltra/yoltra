@@ -33,6 +33,33 @@ export function specsSignature(
     .join("|");
 }
 
+const PATH_SEGMENTS = Symbol("yoltra.pathSegments");
+
+function makePathProxy(segments: string[]): unknown {
+  return new Proxy(
+    {},
+    {
+      get(_target, prop) {
+        if (prop === PATH_SEGMENTS) return segments;
+        if (typeof prop === "symbol") return undefined;
+        return makePathProxy([...segments, String(prop)]);
+      },
+    },
+  );
+}
+
+/**
+ * Converts a typed path accessor (e.g. `p => p.items[0].title`) into a dotted
+ * path string (`"items.0.title"`) by recording property accesses on a proxy.
+ * The accessor must return a direct property access; computed values yield `""`.
+ * @internal
+ */
+export function toDottedPath(accessor: (p: any) => any): string {
+  const leaf = accessor(makePathProxy([]));
+  const segments: string[] = (leaf != null && (leaf as any)[PATH_SEGMENTS]) || [];
+  return segments.join(".");
+}
+
 /**
  * Reads a dotted path from an object; returns `undefined` when a segment is missing.
  * @internal
