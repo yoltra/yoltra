@@ -347,6 +347,26 @@ describe("Store - event subscriptions", () => {
       errorSpy.mockRestore();
     });
 
+    it("logs async subscriber rejections without breaking the emit", async () => {
+      const store = makeStore();
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const goodHandler = vi.fn();
+
+      store.onEvent("ui", "increment", async () => {
+        throw new Error("async subscription boom");
+      });
+      store.onEvent("ui", "increment", goodHandler);
+
+      await store.emit("ui", "increment", 1);
+      // Let the fire-and-forget rejection settle on its microtask.
+      await Promise.resolve();
+
+      expect(goodHandler).toHaveBeenCalledTimes(1);
+      expect(errorSpy).toHaveBeenCalledWith("Event subscription error:", expect.any(Error));
+
+      errorSpy.mockRestore();
+    });
+
     it("error in 'all' subscriber does not affect phase-specific subscribers", async () => {
       const store = makeStore();
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -400,7 +420,7 @@ describe("Store - event subscriptions", () => {
   });
 
   describe("async handlers", () => {
-    it("awaits async handlers", async () => {
+    it("invokes async handlers fire-and-forget (does not await their async tail)", async () => {
       const store = makeStore();
       const order: string[] = [];
 
@@ -412,6 +432,12 @@ describe("Store - event subscriptions", () => {
 
       await store.emit("ui", "increment", 1);
 
+      // The handler is invoked synchronously during the reduce phase, but emit
+      // does not await its async tail — event subscribers are notifications.
+      expect(order).toEqual(["handler-start"]);
+
+      // The tail resolves later, on its own schedule.
+      await new Promise((resolve) => setTimeout(resolve, 20));
       expect(order).toEqual(["handler-start", "handler-end"]);
     });
   });

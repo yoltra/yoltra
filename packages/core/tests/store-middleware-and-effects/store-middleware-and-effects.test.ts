@@ -9,18 +9,18 @@ describe("Store - middleware and effects", () => {
 
     const order: string[] = [];
 
-    const mw1: MiddlewareFunction<AppState, AppEvents> = async (_state, _event) => {
+    const mw1: MiddlewareFunction<AppState, AppEvents> = (_state, _event) => {
       order.push("mw1");
       return true;
     };
 
-    const mw2: MiddlewareFunction<AppState, AppEvents> = async (_state, event) => {
+    const mw2: MiddlewareFunction<AppState, AppEvents> = (_state, event) => {
       order.push("mw2");
       if (event.type === "dangerous") return false;
       return true;
     };
 
-    const mw3: MiddlewareFunction<AppState, AppEvents> = async () => {
+    const mw3: MiddlewareFunction<AppState, AppEvents> = () => {
       order.push("mw3");
       return true;
     };
@@ -115,7 +115,7 @@ describe("Store - middleware and effects", () => {
 
     const logs: string[] = [];
 
-    const mwOld: MiddlewareFunction<AppState, AppEvents> = async () => {
+    const mwOld: MiddlewareFunction<AppState, AppEvents> = () => {
       logs.push("old");
       return true;
     };
@@ -125,7 +125,7 @@ describe("Store - middleware and effects", () => {
     await store.emit("ui", "increment", 1);
     expect(logs).toEqual(["old"]);
 
-    const mwNew: MiddlewareFunction<AppState, AppEvents> = async () => {
+    const mwNew: MiddlewareFunction<AppState, AppEvents> = () => {
       logs.push("new");
       return true;
     };

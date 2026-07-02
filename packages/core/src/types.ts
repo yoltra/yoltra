@@ -664,8 +664,13 @@ export type EventUnion<EM extends EventMapBase> = {
 }[keyof EM & string];
 
 /**
- * Middleware function: may mutate, log, side-effect, or veto an event.
- * Return true to continue; false to swallow / cancel propagation.
+ * Middleware function: log, guard, or veto an event **synchronously**.
+ * Return `true` to continue, `false` to swallow / cancel propagation.
+ *
+ * @remarks
+ * Middleware runs in the synchronous reduce phase (so `getState()` is correct
+ * immediately after `emit()`), and therefore must be synchronous. Perform async
+ * work in effects instead.
  *
  * @typeParam S  - Store state (readonly).
  * @typeParam EM - Event map.
@@ -676,7 +681,7 @@ export type MiddlewareFunction<S = any, EM extends EventMapBase = EventMapBase> 
   state: S,
   event: EventUnion<EM>,
   emit: Emit<EM>,
-) => boolean | Promise<boolean>;
+) => boolean;
 
 /**
  * Middleware specification with optional event targeting and metadata.
@@ -721,7 +726,7 @@ export interface MiddlewareSpec<S = any, EM extends EventMapBase = EventMapBase>
   when?: When<EM>;
 
   /**
-   * Middleware function: `(state, event, emit) => boolean | Promise<boolean>`.
+   * Middleware function: `(state, event, emit) => boolean` (synchronous).
    * Return `false` to cancel event propagation.
    */
   middleware: MiddlewareFunction<S, EM>;

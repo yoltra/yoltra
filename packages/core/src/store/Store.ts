@@ -193,19 +193,25 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private readonly replayEnabled: boolean;
 
   /**
-   * FIFO event queue for serialized emission.
+   * Pending events awaiting the **synchronous** reduce phase (middleware +
+   * reducers + subscribers + coarse listeners). Drained by {@link drainReduce}.
    *
    * @internal
    */
-  private readonly eventQueue: Array<{ channel: string; type: string; payload: any; id: string }> =
-    [];
+  private readonly reduceQueue: Array<{
+    channel: string;
+    type: string;
+    payload: any;
+    id: string;
+    resolve: () => void;
+  }> = [];
 
   /**
-   * Re-entrancy guard while draining the queue.
+   * Re-entrancy guard for the synchronous reduce phase.
    *
    * @internal
    */
-  private isProcessingQueue = false;
+  private isReducing = false;
 
   /**
    * Tracks processed events by fingerprint with timestamps for TTL-based deduplication.
@@ -571,10 +577,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @param phase - The phase ('committed' or 'uncommitted').
    * @internal
    */
-  private async notifyEventSubscribers(
+  private notifyEventSubscribers(
     event: EventUnion<EM>,
     phase: "committed" | "uncommitted",
-  ): Promise<void> {
+  ): void {
     const key = `${String(event.channel)}::${String(event.type)}`;
 
     // Notify phase-specific subscribers
@@ -585,25 +591,35 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const phaseSet = phaseMap.get(key);
 
     if (phaseSet?.size) {
-      for (const handler of [...phaseSet]) {
-        try {
-          await handler(event, this.getState, this.emit, phase);
-        } catch (e) {
-          console.error("Event subscription error:", e);
-        }
-      }
+      for (const handler of [...phaseSet]) this.invokeEventSubscriber(handler, event, phase);
     }
 
     // Notify 'all' subscribers
     const allSet = this.allEventSubscribers.get(key);
     if (allSet?.size) {
-      for (const handler of [...allSet]) {
-        try {
-          await handler(event, this.getState, this.emit, phase);
-        } catch (e) {
-          console.error("Event subscription error:", e);
-        }
+      for (const handler of [...allSet]) this.invokeEventSubscriber(handler, event, phase);
+    }
+  }
+
+  /**
+   * Invokes a single event-subscription handler **fire-and-forget**: synchronous
+   * throws and async rejections are logged but never block the emit pipeline.
+   * Event subscribers are notifications, not part of the committed reduce result.
+   *
+   * @internal
+   */
+  private invokeEventSubscriber(
+    handler: EventSubscriptionHandler<DeepReadonly<S>, EM>,
+    event: EventUnion<EM>,
+    phase: "committed" | "uncommitted",
+  ): void {
+    try {
+      const result = handler(event, this.getState, this.emit, phase) as unknown;
+      if (result && typeof (result as Promise<unknown>).then === "function") {
+        (result as Promise<unknown>).catch((e) => console.error("Event subscription error:", e));
       }
+    } catch (e) {
+      console.error("Event subscription error:", e);
     }
   }
 
@@ -870,12 +886,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * Emits a typed event `(channel, type, payload)`.
    * Events are queued and processed **sequentially** (FIFO).
    *
-   * **Pipeline per event:**
+   * **Pipeline per event:** the *reduce phase* (steps 1-4) runs **synchronously**,
+   * so `getState()` reflects the change as soon as `emit()` returns; the *effect
+   * phase* (step 5) runs afterwards, asynchronously.
    * 1. **Deduplication** (opt-in) - Skip when content-dedup is enabled (`dedupWindowMs > 0`) or a matching `dedupKey` recurs; off by default
-   * 2. **Middleware** - Pre-reducer hooks; may cancel by returning `false`
-   * 3. **Reducers** - Synchronous state updates via internal event bus
-   * 4. **Effects** - Async side-effects keyed by `(channel, type)` for O(1) lookup
-   * 5. **Coarse subscribers** - External store subscribers (only if state changed)
+   * 2. **Middleware** (sync) - Pre-reducer hooks; may cancel by returning `false`
+   * 3. **Reducers** (sync) - state updates + fine-grained path notifications
+   * 4. **Subscribers + coarse** (sync) - event subscribers (fire-and-forget) then coarse listeners (only if state changed)
+   * 5. **Effects** (async) - side-effects keyed by `(channel, type)`; the returned promise resolves once they complete
    *
    * **Change Detection**: Uses reference equality (`===`) on `this.state` to determine
    * if any slice changed. Works because {@link forwardEvent} creates a new state reference
@@ -887,7 +905,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @param type - Event type name.
    * @param payload - Payload typed as `EM[C][T]`.
    * @param opts - Optional per-emit options (e.g. `dedupKey` for identity-based dedup).
-   * @returns A promise that resolves when the event has finished processing.
+   * @returns A promise that resolves once this event's effects have finished.
+   * State is already updated synchronously before `emit()` returns.
    *
    * @example Basic usage
    * ```ts
@@ -930,104 +949,131 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       }
     }
 
-    // Generate unique ID for this event instance
+    // Assign a unique id and a completion deferred, resolved after this event's
+    // effects run. Reducers run synchronously (see drainReduce), so state is
+    // already updated before emit() returns; the returned promise tracks the
+    // async effect phase for `await emit(...)`.
     const id = crypto.randomUUID();
+    let resolve!: () => void;
+    const done = new Promise<void>((r) => {
+      resolve = r;
+    });
 
-    /**
-     * enqueue always
-     */
-    this.eventQueue.push({
+    this.reduceQueue.push({
       channel: channel as string,
       type: type as string,
       payload,
       id,
+      resolve,
     });
 
-    if (this.isProcessingQueue) return;
+    // Synchronous reduce phase (drains re-entrant emits too), then async effects.
+    this.drainReduce();
 
-    this.isProcessingQueue = true;
+    return done;
+  }
+
+  /**
+   * Drains the reduce queue **synchronously**. For each event it runs middleware,
+   * reducers, event subscribers, and coarse listeners in the same tick, so
+   * `getState()` reflects the change the moment {@link emit} returns. Re-entrant
+   * emits (from middleware or subscribers) are appended and drained in the same
+   * pass — preserving FIFO order without interleaving reducers. Each committed
+   * event's effects then run in an independent task (see {@link runEventEffects}).
+   *
+   * @internal
+   */
+  private drainReduce(): void {
+    if (this.isReducing) return;
+    this.isReducing = true;
     try {
-      while (this.eventQueue.length) {
-        const { channel, type, payload, id } = this.eventQueue.shift()!;
-
-        const event = { channel, type, payload, id } as Event<EM, C, T>;
-        let propagate = true;
-
-        /**
-         * middleware - supports both raw functions and MiddlewareSpec objects
-         */
-        for (const mwInput of this.middleware) {
-          // Get the `when` matcher for this middleware
-          const when = this.getMiddlewareWhen(mwInput);
-
-          // Skip middleware that doesn't match this event
-          if (!this.matchesWhen(when, event as EventUnion<EM>)) {
-            continue;
-          }
-
-          // Extract the actual middleware function
-          const mw = this.getMiddlewareFunction(mwInput);
-
-          try {
-            const ok = await mw(this.state, event as EventUnion<EM>, this.emit);
-            if (!ok) {
-              propagate = false;
-              break;
-            }
-          } catch (err) {
-            console.error("Middleware error:", err);
-            propagate = false;
-            break;
-          }
+      while (this.reduceQueue.length > 0) {
+        const { channel, type, payload, id, resolve } = this.reduceQueue.shift()!;
+        const event = { channel, type, payload, id } as EventUnion<EM>;
+        let committed = false;
+        try {
+          committed = this.applyEventSync(event);
+        } catch (err) {
+          console.error("Emit reduce error:", err);
         }
-
-        if (!propagate) {
-          // Notify uncommitted event subscribers (event rejected by middleware)
-          await this.notifyEventSubscribers(event as any, "uncommitted");
-
-          continue;
-        }
-
-        /**
-         * Reducers - track if any slice changed via reference equality
-         */
-        const stateBefore = this.state;
-
-        // 1. Call key-based reducers via reducerBus
-        this.reducerBus.emit(channel as any, type as any, payload);
-
-        // 2. Call pattern-based reducers (runtime matching)
-        for (const [sliceName, when] of this.patternReducers) {
-          if (this.matchesWhen(when, event as EventUnion<EM>)) {
-            this.forwardEvent(sliceName, event as any);
-          }
-        }
-
-        const stateAfter = this.state;
-        const anySliceChanged = stateBefore !== stateAfter;
-
-        /**
-         * Committed event subscribers (after reducers, before effects)
-         */
-        await this.notifyEventSubscribers(event as any, "committed");
-
-        /**
-         * Effects (keyed lookup, async)
-         */
-        await this.notifyEffects(event as any);
-
-        /**
-         * Coarse subscribers (ONCE per event, only if state changed)
-         */
-        if (anySliceChanged) {
-          this.listeners.forEach((l) => l());
-        }
-
+        // Run this event's effects as an independent task and resolve its
+        // completion deferred when they finish. Independent per-event tasks
+        // (rather than one shared serialized loop) let an effect `await` a
+        // re-entrant emit without deadlocking.
+        void this.runEventEffects(event, committed, resolve);
       }
-    } catch (err) {
-      console.error("Emit queue error:", err);
     } finally {
-      this.isProcessingQueue = false;
+      this.isReducing = false;
+    }
+  }
+
+  /**
+   * Runs the **synchronous** part of the pipeline for a single event: middleware
+   * (may veto), key- and pattern-based reducers, committed/uncommitted event
+   * subscribers (fire-and-forget), and coarse listeners.
+   *
+   * @returns `true` if the event was committed (passed middleware), `false` if a
+   * middleware vetoed it.
+   *
+   * @internal
+   */
+  private applyEventSync(event: EventUnion<EM>): boolean {
+    // Middleware (synchronous). Return false to veto; async work belongs in effects.
+    for (const mwInput of this.middleware) {
+      const when = this.getMiddlewareWhen(mwInput);
+      if (!this.matchesWhen(when, event)) continue;
+      const mw = this.getMiddlewareFunction(mwInput);
+      let ok: boolean;
+      try {
+        ok = mw(this.state, event, this.emit);
+      } catch (err) {
+        console.error("Middleware error:", err);
+        ok = false;
+      }
+      if (!ok) {
+        // Rejected by middleware — notify uncommitted subscribers, do not commit.
+        this.notifyEventSubscribers(event, "uncommitted");
+        return false;
+      }
+    }
+
+    // Reducers — track whether any slice changed via reference equality.
+    const stateBefore = this.state;
+    this.reducerBus.emit(event.channel as any, event.type as any, event.payload as any);
+    for (const [sliceName, when] of this.patternReducers) {
+      if (this.matchesWhen(when, event)) {
+        this.forwardEvent(sliceName, event as any);
+      }
+    }
+    const changed = stateBefore !== this.state;
+
+    // Committed event subscribers (fire-and-forget), then coarse listeners.
+    this.notifyEventSubscribers(event, "committed");
+    if (changed) {
+      this.listeners.forEach((l) => l());
+    }
+    return true;
+  }
+
+  /**
+   * Runs a single committed event's effects as an **independent async task**,
+   * then resolves that event's completion deferred so `await emit(...)` settles
+   * once its effects finish. Per-event tasks (rather than one shared serialized
+   * loop) let an effect `await` a re-entrant emit without deadlocking.
+   *
+   * @internal
+   */
+  private async runEventEffects(
+    event: EventUnion<EM>,
+    committed: boolean,
+    resolve: () => void,
+  ): Promise<void> {
+    try {
+      if (committed) await this.notifyEffects(event);
+    } catch (err) {
+      console.error("Effect error:", err);
+    } finally {
+      resolve();
     }
   }
 

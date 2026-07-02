@@ -49,11 +49,11 @@ describe("Store - event queue and deduplication", () => {
       },
     });
 
-    // Middleware that emits nested events
-    store.registerMiddleware(async (_state, event, emit) => {
+    // Middleware that emits a nested event (synchronously queued for reduction)
+    store.registerMiddleware((_state, event, emit) => {
       if (event.channel === "ui" && event.type === "ping") {
         nestedLogs.push("mw-before");
-        await emit("ui", "nested", 2);
+        emit("ui", "nested", 2);
         nestedLogs.push("mw-after");
       }
       return true;

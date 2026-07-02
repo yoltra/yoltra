@@ -287,7 +287,7 @@ describe("Store advanced coverage", () => {
     expect(Store.buildAncestorPaths(".x.y.z")).toEqual(["x", "x.y", "x.y.z"]);
   });
 
-  it("emit handles middleware throwing and outer emit queue error path", async () => {
+  it("emit handles middleware throwing and reduce-phase error path", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => { });
 
     const store = createStore({
@@ -311,7 +311,7 @@ describe("Store advanced coverage", () => {
     // Remove the throwing middleware so we can reach reducerBus.emit
     offMw();
 
-    // 2) outer try/catch: force reducerBus.emit itself to throw
+    // 2) reduce-phase try/catch: force reducerBus.emit itself to throw
     const originalEmit = anyStore.reducerBus.emit.bind(anyStore.reducerBus);
     anyStore.reducerBus.emit = () => {
       throw new Error("bus-fail");
@@ -322,10 +322,10 @@ describe("Store advanced coverage", () => {
     // restore to avoid breaking other tests
     anyStore.reducerBus.emit = originalEmit;
 
-    // outer logger should have been triggered
+    // reduce-phase error logger should have been triggered
     expect(
       errorSpy.mock.calls.some((args) =>
-        String(args[0]).startsWith("Emit queue error:"),
+        String(args[0]).startsWith("Emit reduce error:"),
       ),
     ).toBe(true);
   });
