@@ -139,6 +139,19 @@ export function withDevtools<
     maxDelay: config.maxDelay ?? 30000,
   });
 
+  // Surface backpressure: warn (throttled) instead of dropping events silently
+  // when the hub is unreachable and the send buffer overflows.
+  let lastBackpressureWarn = 0;
+  wsClient.onBackpressure((dropped) => {
+    const nowMs = Date.now();
+    if (nowMs - lastBackpressureWarn > 5_000) {
+      lastBackpressureWarn = nowMs;
+      console.warn(
+        `[Yoltra DevTools] Backpressure: dropped ${dropped} event(s) while the hub was unreachable.`,
+      );
+    }
+  });
+
   const baseMsg = (): Pick<BaseMessage, "timestamp" | "sourceId" | "sourceRole"> => ({
     timestamp: new Date().toISOString(),
     sourceId: storeId,

@@ -128,7 +128,7 @@ export class Router {
       type: "STORE_CONNECTED",
       timestamp: new Date().toISOString(),
       sourceId: "hub",
-      sourceRole: DevtoolsRole.STORE,
+      sourceRole: DevtoolsRole.HUB,
       store: {
         id: info.id,
         name: info.storeInfo!.name,
@@ -152,7 +152,7 @@ export class Router {
       type: "STORE_DISCONNECTED",
       timestamp: new Date().toISOString(),
       sourceId: "hub",
-      sourceRole: DevtoolsRole.STORE,
+      sourceRole: DevtoolsRole.HUB,
       storeId,
       reason,
     };
@@ -171,7 +171,7 @@ export class Router {
       type: "STORE_REGISTRY",
       timestamp: new Date().toISOString(),
       sourceId: "hub",
-      sourceRole: DevtoolsRole.EXTENSION,
+      sourceRole: DevtoolsRole.HUB,
       stores: Array.from(this.stores.values()).map((s) => ({
         id: s.id,
         name: s.storeInfo!.name,

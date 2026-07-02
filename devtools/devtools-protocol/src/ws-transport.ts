@@ -73,6 +73,8 @@ export interface ReconnectingWsConfig {
   maxReconnectAttempts: number;
   baseDelay: number;
   maxDelay: number;
+  /** Max buffered messages while disconnected before dropping the oldest. Default 100. */
+  maxBufferSize?: number;
 }
 
 /**
@@ -100,6 +102,8 @@ export class ReconnectingWsClient {
   private onMessageHandler: ((data: string) => void) | null = null;
   private onConnectedHandler: (() => void) | null = null;
   private onDisconnectedHandler: (() => void) | null = null;
+  private onBackpressureHandler: ((droppedTotal: number) => void) | null = null;
+  private droppedCount = 0;
 
   constructor(
     private readonly storeId: string,
@@ -124,6 +128,15 @@ export class ReconnectingWsClient {
     this.onDisconnectedHandler = handler;
   }
 
+  /**
+   * Register a handler fired when a buffered message is dropped because the send
+   * buffer overflowed while disconnected (backpressure). Receives the running
+   * total of dropped messages so the loss is never silent.
+   */
+  onBackpressure(handler: (droppedTotal: number) => void): void {
+    this.onBackpressureHandler = handler;
+  }
+
   /** Connect to the DevTools hub at `host:port`. */
   connect(host: string, port: number): void {
     this.url = `ws://${host}:${port}`;
@@ -132,15 +145,18 @@ export class ReconnectingWsClient {
     this.doConnect();
   }
 
-  /** Send a message, buffering (FIFO, max 100) while disconnected. */
+  /** Send a message, buffering (FIFO) while disconnected; drops oldest on overflow. */
   send(message: string): void {
     if (this.socket && this.socket.readyState === WS_OPEN && this.handshakeResolved) {
       this.socket.send(message);
-    } else {
-      this.buffer.push(message);
-      if (this.buffer.length > 100) {
-        this.buffer.shift(); // Drop oldest
-      }
+      return;
+    }
+    this.buffer.push(message);
+    const max = this.config.maxBufferSize ?? 100;
+    if (this.buffer.length > max) {
+      this.buffer.shift(); // Drop oldest — surface backpressure so the loss is not silent.
+      this.droppedCount++;
+      this.onBackpressureHandler?.(this.droppedCount);
     }
   }
 
@@ -164,6 +180,11 @@ export class ReconnectingWsClient {
   /** Current connection state. */
   getState(): ConnectionState {
     return this.state;
+  }
+
+  /** Total messages dropped due to buffer overflow while disconnected. */
+  getDroppedCount(): number {
+    return this.droppedCount;
   }
 
   private doConnect(): void {
