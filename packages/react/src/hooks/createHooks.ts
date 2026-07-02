@@ -15,7 +15,7 @@ import type {
 } from "@yoltra/core";
 import * as React from "react";
 import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
-import { getAtPath, hasWildcard, normalizePath } from "../utils/path";
+import { getAtPath, hasWildcard, normalizePath, specsSignature } from "../utils/path";
 
 /**
  * Call signature for the typed `useAtomicProp` hook returned by {@link createHooks}.
@@ -314,7 +314,7 @@ export function createHooks<
           ? (sp.property as readonly string[]).map((p) => normalizePath(p))
           : normalizePath(sp.property as string),
       }));
-    }, [JSON.stringify(specs)]);
+    }, [specsSignature(specs)]);
 
     const subscribe = useMemo(
       () => (notify: () => void) => {

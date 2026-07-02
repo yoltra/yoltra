@@ -15,7 +15,7 @@ import type {
 } from "@yoltra/core";
 import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { StoreContext } from "../context/StoreContext";
-import { getAtPath, hasWildcard, normalizePath } from "../utils/path";
+import { getAtPath, hasWildcard, normalizePath, specsSignature } from "../utils/path";
 
 /**
  * Re-export of {@link PathValue} from `@yoltra/core`.
@@ -409,7 +409,7 @@ function _useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
         ? (sp.property as readonly string[]).map((p) => normalizePath(p as string))
         : normalizePath(sp.property as string),
     }));
-  }, [JSON.stringify(specs)]);
+  }, [specsSignature(specs)]);
 
   const subscribe = useMemo(
     () => (notify: () => void) => {
