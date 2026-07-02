@@ -157,6 +157,44 @@ export type Emit<EM extends EventMapBase> = <
 export type Unsubscribe = () => void;
 
 /**
+ * A single observed event delivered to an {@link InstrumentationObserver}.
+ *
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
+  /** The processed event, including its generated `id`. */
+  event: { id: string; channel: string; type: string; payload: unknown };
+  /** `true` if the event passed middleware and ran reducers; `false` if vetoed. */
+  committed: boolean;
+  /**
+   * Dotted **leaf** paths that changed, prefixed with the slice name (e.g.
+   * `"todos.items.0.title"`). Empty when nothing changed. These are the exact
+   * paths the store computed while reducing — no re-diff required.
+   */
+  changedPaths: string[];
+  /** Old value at each changed path, keyed by path. */
+  prevValues: Record<string, unknown>;
+  /** New value at each changed path, keyed by path. */
+  nextValues: Record<string, unknown>;
+  /** Wall-clock milliseconds spent in the synchronous reduce phase for this event. */
+  reduceTimeMs: number;
+}
+
+/**
+ * Observer for {@link StoreInstance.instrument}. Called once per emitted event
+ * (committed or vetoed), after the synchronous reduce phase.
+ *
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export type InstrumentationObserver<EM extends EventMapBase = EventMapBase> = (
+  info: InstrumentedEvent<EM>,
+) => void;
+
+/**
  * Store spec - what you feed into the constructor / factory.
  *
  * @typeParam R  - Reducer name union (string literal union).
@@ -499,7 +537,8 @@ export interface StoreInstance<
   /**
    * Returns a structured introspection snapshot for DevTools UIs.
    *
-   * @returns Reducers, effects, middleware, event subscriptions, and coarse subscriber count.
+   * @returns Reducers, effects, middleware, event subscriptions, coarse
+   * subscriber count, dedup hit count, and current queue depth.
    *
    * @internal
    */
@@ -510,7 +549,30 @@ export interface StoreInstance<
     atomic: Array<{ reducer: string; property: string }>;
     event: Array<{ channel: string; type: string; phase: string }>;
     coarse: number;
+    dedupHits: number;
+    queueDepth: number;
   };
+
+  /**
+   * Registers an instrumentation observer, called once per emitted event
+   * (committed or vetoed) after the synchronous reduce phase, with the exact
+   * changed paths, their old/new values, and reduce timing. This is the typed
+   * seam DevTools agents consume — no `as any` bridging required.
+   *
+   * @param observer - Receives an {@link InstrumentedEvent} per emit.
+   * @returns Unsubscribe function.
+   */
+  instrument(observer: InstrumentationObserver<EM>): Unsubscribe;
+
+  /**
+   * Applies an externally-provided whole-state snapshot (DevTools time-travel),
+   * emitting fine-grained path changes and notifying coarse subscribers.
+   *
+   * @param next - Plain state object to apply.
+   *
+   * @internal
+   */
+  __applyExternalState(next: unknown): void;
 }
 
 

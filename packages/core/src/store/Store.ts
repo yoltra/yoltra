@@ -27,6 +27,8 @@ import type {
   EMFromReducersStrict,
   Emit,
   EmitOptions,
+  InstrumentationObserver,
+  InstrumentedEvent,
   EventPhase,
   EventSubscriptionHandler,
   NarrowedEventHandler,
@@ -60,6 +62,15 @@ function freezeInDev<T>(value: T): DeepReadonly<T> {
  * small enough not to swallow genuine user repeats.
  */
 const DEFAULT_DEDUP_KEY_WINDOW_MS = 100;
+
+/**
+ * High-resolution monotonic clock in milliseconds for instrumentation timing;
+ * falls back to `Date.now()` where `performance` is unavailable.
+ */
+const now = (): number =>
+  typeof performance !== "undefined" && typeof performance.now === "function"
+    ? performance.now()
+    : Date.now();
 
 export class Store<EM extends EventMapBase, R extends string, S extends Record<R, any>>
   implements StoreInstance<R, S, EM> {
@@ -212,6 +223,30 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private isReducing = false;
+
+  /**
+   * Registered instrumentation observers (DevTools seam). See {@link instrument}.
+   *
+   * @internal
+   */
+  private readonly instrumentObservers = new Set<InstrumentationObserver<EM>>();
+
+  /**
+   * Scratch array collecting slice-prefixed changed leaf paths during an
+   * instrumented reduce. Set by {@link drainReduce} while observers are active;
+   * appended to by {@link forwardEvent}. `null` when not instrumenting.
+   *
+   * @internal
+   */
+  private changedPathSink: string[] | null = null;
+
+  /**
+   * Count of effect tasks currently in flight; surfaced as queue depth by
+   * {@link __devtoolsIntrospect}.
+   *
+   * @internal
+   */
+  private inFlightEffects = 0;
 
   /**
    * Tracks processed events by fingerprint with timestamps for TTL-based deduplication.
@@ -662,6 +697,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const frozen = freezeInDev(next) as DeepReadonly<S[R]>;
     this.state = { ...this.state, [rName]: frozen } as DeepReadonly<S>;
 
+    // Record slice-prefixed changed leaf paths for any active instrumentation
+    // (lets DevTools agents build precise patches without re-diffing state).
+    if (this.changedPathSink) {
+      for (const p of leafPaths) {
+        this.changedPathSink.push(p ? `${rName as string}.${p}` : (rName as string));
+      }
+    }
+
     // emit deep + ancestor paths once each
     const toEmit = new Set<string>();
     for (const p of leafPaths) {
@@ -765,7 +808,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // Coarse subscribers count
     const coarse = this.listeners.size;
 
-    return { reducers, effects, middleware, atomic, event, coarse, dedupHits: this.dedupCount };
+    return {
+      reducers,
+      effects,
+      middleware,
+      atomic,
+      event,
+      coarse,
+      dedupHits: this.dedupCount,
+      queueDepth: this.reduceQueue.length + this.inFlightEffects,
+    };
   }
 
   /**
@@ -779,7 +831,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
-  private __applyExternalState(nextPlain: any) {
+  public __applyExternalState(nextPlain: any) {
     const prev = this.state as any;
     const next = nextPlain;
 
@@ -990,12 +1042,34 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       while (this.reduceQueue.length > 0) {
         const { channel, type, payload, id, resolve } = this.reduceQueue.shift()!;
         const event = { channel, type, payload, id } as EventUnion<EM>;
+
+        // Instrumentation: capture prev state, collect changed paths, and time
+        // the synchronous reduce — all skipped entirely when no observers.
+        const instrumenting = this.instrumentObservers.size > 0;
+        const prevState = instrumenting ? this.state : undefined;
+        const sink: string[] = [];
+        if (instrumenting) this.changedPathSink = sink;
+        const t0 = instrumenting ? now() : 0;
+
         let committed = false;
         try {
           committed = this.applyEventSync(event);
         } catch (err) {
           console.error("Emit reduce error:", err);
+        } finally {
+          if (instrumenting) this.changedPathSink = null;
         }
+
+        if (instrumenting) {
+          this.emitInstrumentation(
+            event,
+            committed,
+            sink,
+            prevState as DeepReadonly<S>,
+            now() - t0,
+          );
+        }
+
         // Run this event's effects as an independent task and resolve its
         // completion deferred when they finish. Independent per-event tasks
         // (rather than one shared serialized loop) let an effect `await` a
@@ -1068,12 +1142,69 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     committed: boolean,
     resolve: () => void,
   ): Promise<void> {
+    this.inFlightEffects++;
     try {
       if (committed) await this.notifyEffects(event);
     } catch (err) {
       console.error("Effect error:", err);
     } finally {
+      this.inFlightEffects--;
       resolve();
+    }
+  }
+
+  /**
+   * Registers an instrumentation observer. See {@link StoreInstance.instrument}.
+   *
+   * @public
+   */
+  public instrument(observer: InstrumentationObserver<EM>): Unsubscribe {
+    this.instrumentObservers.add(observer);
+    return () => {
+      this.instrumentObservers.delete(observer);
+    };
+  }
+
+  /**
+   * Builds an {@link InstrumentedEvent} from the reduce result and notifies
+   * observers. `changedPaths` are the exact slice-prefixed leaf paths recorded
+   * by {@link forwardEvent} during this reduce, so DevTools patches need no
+   * re-diff.
+   *
+   * @internal
+   */
+  private emitInstrumentation(
+    event: EventUnion<EM>,
+    committed: boolean,
+    changedPaths: string[],
+    prevState: DeepReadonly<S>,
+    reduceTimeMs: number,
+  ): void {
+    const prevValues: Record<string, unknown> = {};
+    const nextValues: Record<string, unknown> = {};
+    for (const path of changedPaths) {
+      prevValues[path] = this.getAtPath(prevState, path);
+      nextValues[path] = this.getAtPath(this.state, path);
+    }
+    const info: InstrumentedEvent<EM> = {
+      event: {
+        id: event.id,
+        channel: event.channel as string,
+        type: event.type as string,
+        payload: event.payload,
+      },
+      committed,
+      changedPaths,
+      prevValues,
+      nextValues,
+      reduceTimeMs,
+    };
+    for (const observer of [...this.instrumentObservers]) {
+      try {
+        observer(info);
+      } catch (e) {
+        console.error("Instrumentation observer error:", e);
+      }
     }
   }
 
