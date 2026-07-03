@@ -32,21 +32,23 @@ Every `emit()` call flows through a deterministic pipeline:
 ```
 emit(channel, type, payload)
   │
-  ├─ 1. Dedup ─── Skip if identical fingerprint within time window
+  ├─ 0. Dedup (opt-in) ─── Skip a duplicate only when dedupWindowMs > 0 or a dedupKey is given
   │
-  ├─ 2. Middleware ─── Pre-reducer hooks (can reject → "uncommitted" event)
+  │  ══ SYNCHRONOUS reduce phase — runs before emit() returns ══
+  ├─ 1. Middleware ─── Synchronous pre-reducer hooks (return false to reject → "uncommitted" event)
+  ├─ 2. Reducers ─── Synchronous state updates, fine-grained path change detection
+  ├─ 3. Event subscribers ─── Committed/uncommitted event notifications
+  ├─ 4. Coarse subscribers ─── External store listeners (useSyncExternalStore, etc.), if state changed
   │
-  ├─ 3. Reducers ─── Synchronous state updates, fine-grained path change detection
-  │
-  ├─ 4. Event subscribers ─── Committed/uncommitted event notifications
-  │
-  ├─ 5. Effects ─── Async side-effects (post-reducer, keyed for O(1) lookup)
-  │
-  └─ 6. Coarse subscribers ─── External store listeners (useSyncExternalStore, etc.)
+  └─ 5. Effects ─── ASYNC side-effects, one independent task per event (keyed for O(1) lookup)
 ```
 
-Every stage is hook-able. Middleware can cancel events, creating "uncommitted" events that the
-UI can still react to. Effects run after reducers and see the final state.
+The reduce phase (1–4) is **synchronous**, so `getState()` is correct the instant `emit()` returns
+— even with middleware. Effects (5) run afterward as an independent async task; the promise from
+`emit()` resolves when that event's effects finish. Every stage is hook-able, and
+`store.instrument()` exposes the whole flow — changed leaf paths, reduce timing, committed/rejected
+phase — to the DevTools with no `as any`. See the
+[Event Pipeline Architecture](../../docs/en/design/event-queue-architecture.md) for the full model.
 
 ---
 
@@ -152,8 +154,9 @@ const globalLogger = {
 
 ## Middleware
 
-Middleware runs **before** reducers and can cancel event propagation. Supports both raw
-functions (legacy) and `MiddlewareSpec` objects with targeting:
+Middleware runs **synchronously, before** reducers and can cancel event propagation (return
+`false` to reject → "uncommitted" event). Async work belongs in effects, not middleware. Supports
+both raw functions (legacy) and `MiddlewareSpec` objects with targeting:
 
 ```typescript
 import type { MiddlewareSpec } from "@yoltra/core";
@@ -168,8 +171,8 @@ const adminGuard: MiddlewareSpec<AppState, AppEM> = {
   meta: { type: "middleware", name: "adminGuard" },
 };
 
-// Global middleware — runs for all events
-const logger = async (state, event, emit) => {
+// Global middleware — runs for all events (synchronous: return a boolean, never a Promise)
+const logger = (state, event) => {
   console.log("Event:", event.channel, event.type);
   return true;
 };
@@ -186,7 +189,7 @@ const store = createStore({
 ### Dynamic middleware
 
 ```typescript
-const off = store.registerMiddleware(async (state, event) => {
+const off = store.registerMiddleware((state, event) => {
   return event.type !== "forbidden";
 });
 off(); // Remove later
@@ -269,19 +272,23 @@ store.onEvent(
 
 ---
 
-## Event Deduplication
+## Event Deduplication (opt-in)
 
-Yoltra automatically deduplicates identical events within a configurable time window. This
-prevents double-processing in React Strict Mode:
+Deduplication is **off by default** — Yoltra never silently drops legitimate rapid-fire identical
+events (double-clicks, repeated `+1`). Opt in only when you actually want coalescing:
 
 ```typescript
+// Content-based: coalesce identical (channel, type, payload) within a window.
 const store = createStore({
   name: "Yoltra_Rocks",
   reducer: {
     /* ... */
   },
-  dedupWindowMs: 100, // default: 50ms dev, 100ms prod
+  dedupWindowMs: 100, // default: 0 (disabled)
 });
+
+// Identity-based: dedupe by an explicit key — e.g. a React Strict Mode double-invoke in an effect.
+await store.emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page}` });
 ```
 
 ---
@@ -333,16 +340,22 @@ if (import.meta.hot) {
 
 ## Best Practices
 
-### Always await `emit()`
+### State is synchronous; `await` only for effects
+
+The reduce phase is synchronous, so state reflects your event the moment `emit()` returns — no
+`await` needed to read it back. Await `emit()` when you also want _this event's_ effects to have
+finished:
 
 ```typescript
-await emit("todo", "add", todo);
-const state = store.getState(); // Guaranteed to reflect the new todo
+emit("todo", "add", todo);
+store.getState(); // Already reflects the new todo — no await required
+
+await emit("todo", "save", todo); // resolves once save's effects complete
 ```
 
 ### Keep reducers fast
 
-Reducers are synchronous and block the event queue. Move expensive work to effects:
+Reducers are synchronous and run in the same tick as `emit()`. Move expensive work to effects:
 
 ```typescript
 // Reducer: just set a loading flag

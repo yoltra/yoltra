@@ -1,8 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
 
-import { StoreProvider as QuoProvider } from "@yoltra/react";
 import { YoltraTodoPage } from "./components/yoltra/YoltraTodoPage";
-import { store as duxStore } from "./state/yoltra";
 
 import { Provider as RtkProvider } from "react-redux";
 import { Layout } from "./components/layout/Layout.component";
@@ -11,11 +9,8 @@ import { Home } from "./pages/Home.page";
 import { store as rtkStore } from "./state/redux";
 
 function QuoRoute() {
-  return (
-    <QuoProvider store={duxStore}>
-      <YoltraTodoPage />
-    </QuoProvider>
-  );
+  // No Provider — createYoltra's hooks default to the store.
+  return <YoltraTodoPage />;
 }
 
 function RtkRoute() {

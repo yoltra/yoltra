@@ -1,57 +1,39 @@
-import { useEmit } from "@yoltra/react";
-import type { iAsyncEvents, tAppEM } from "../../store";
 import type { eTodoStatus, iTodoSpec } from "../../../../types";
+import { useEmit } from "../../hooks";
 
 /**
- * This is completely NOT required, since emit directly gives you autocompletion.
- * It's just here to show how you would keep using the concept of event creators. */
+ * This is completely NOT required — `emit` already gives you autocompletion.
+ * It's here only to show how you would keep the concept of event creators. */
 export function useTodoEvents() {
-    const emit = useEmit<tAppEM>();
+  const emit = useEmit();
 
-    return {
-        addTodo: (todo: iTodoSpec) => emit("todo", "addTodo", todo),
-        deleteTodo: (id: string) => emit("todo", "deleteTodo", { id }),
-        setTodoTitle: (id: string, title: string) => emit("todo", "setTodoTitle", { id, title }),
-        setTodoCategory: (id: string, category: string) => emit("todo", "setTodoCategory", { id, category }),
-        setTodoStatus: (id: string, status: eTodoStatus) => emit("todo", "setTodoStatus", { id, status }),
+  return {
+    addTodo: (todo: iTodoSpec) => emit("todo", "addTodo", todo),
+    deleteTodo: (id: string) => emit("todo", "deleteTodo", { id }),
+    setTodoTitle: (id: string, title: string) => emit("todo", "setTodoTitle", { id, title }),
+    setTodoCategory: (id: string, category: string) =>
+      emit("todo", "setTodoCategory", { id, category }),
+    setTodoStatus: (id: string, status: eTodoStatus) =>
+      emit("todo", "setTodoStatus", { id, status }),
 
-        /**
-         * Perhaps this is the only important example: how to wire-up a simple
-         * fetch event (formerly Thunk).
-         *
-         * In this example, the fetchTodos event is going to be intercepted by `todoMiddleware`,
-         * which then will swallow the event and emit a combination of the ones declared in `actions`,
-         * depending on the result. It's basically the same as you would do in good-old Redux + Thunk,
-         * except you don't dispatch functions, you emit plain events. */
-        fetchTodos: (url: string = "https://jsonplaceholder.typicode.com/todos?id=0", offset: number = 0, limit: number = 10) => {
-            const actions: iAsyncEvents<tAppEM> = {
-                loading: {
-                    channel: "todo",
-                    type: "fetchTodosLoading",
-                },
-                success: {
-                    channel: "todo",
-                    type: "fetchTodosSuccess",
-                    payload: { todos: [] }
-                },
-                failure: {
-                    channel: "todo",
-                    type: "fetchTodosFailure",
-                    payload: { error: "" }
-                },
-            };
-
-            emit("todo", "fetchTodos", { offset, limit, url, actions });
-        }
-    };
-};
+    /**
+     * Wire up a simple fetch (formerly a Redux thunk). The `todo/fetchTodos`
+     * event is handled by `todoFetchEffect`, which emits the
+     * loading -> success/failure lifecycle. You emit a plain event, not a function. */
+    fetchTodos: (
+      url: string = "https://jsonplaceholder.typicode.com/todos?id=0",
+      offset: number = 0,
+      limit: number = 10,
+    ) => emit("todo", "fetchTodos", { url, offset, limit }),
+  };
+}
 
 export function useTodoFilterActions() {
-    const emit = useEmit<tAppEM>();
+  const emit = useEmit();
 
-    return {
-        setCategoryFilter: (by: string) => emit("todo", "setCategoryFilter", { by }),
-        setStatusFilter: (by: eTodoStatus) => emit("todo", "setStatusFilter", { by }),
-        clearFilters: () => emit("todo", "clearFilters", null),
-    };
-};
+  return {
+    setCategoryFilter: (by: string) => emit("todo", "setCategoryFilter", { by }),
+    setStatusFilter: (by: eTodoStatus) => emit("todo", "setStatusFilter", { by }),
+    clearFilters: () => emit("todo", "clearFilters", null),
+  };
+}

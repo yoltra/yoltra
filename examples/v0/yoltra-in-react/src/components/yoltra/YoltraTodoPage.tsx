@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 
-import { store, useTodoEvents } from "../../state/yoltra";
-import { AppStoreContext } from "../../state/yoltra/Store.context";
+import { useTodoEvents } from "../../state/yoltra";
 import { TodoFactory } from "./todoFactory/TodoFactory";
 import { TodoFilter } from "./todoFilter/TodoFilter";
 import { TodoList } from "./todoList/TodoList";
@@ -15,14 +14,13 @@ export const YoltraTodoPage: React.FC<iYoltraTodoPageProps> = (_: iYoltraTodoPag
     fetchTodos();
   }, []);
 
+  // No Provider — createYoltra's hooks default to the store in state/yoltra.
   return (
-    <AppStoreContext.Provider value={store}>
-      <div>
-        <h2>Yoltra's TODOs</h2>
-        <TodoFactory />
-        <TodoFilter />
-        <TodoList />
-      </div>
-    </AppStoreContext.Provider>
+    <div>
+      <h2>Yoltra's TODOs</h2>
+      <TodoFactory />
+      <TodoFilter />
+      <TodoList />
+    </div>
   );
 };

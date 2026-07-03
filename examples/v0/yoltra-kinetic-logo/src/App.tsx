@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
+import { ConfigPanel } from "./components/config-panel/ConfigPanel.component";
 import { Screen } from "./components/screen/Screen.component";
 import {
   DEFAULT_DOT_RADIUS_PX,
   DEFAULT_EXTRACTION_CONFIG,
   type ExtractionConfig,
 } from "./config";
-import { AppStoreContext } from "./context/Store.context";
-import { store } from "./state/store";
+import { store } from "./state/yoltra";
 import { Engine } from "./utils/engine/Engine";
 import { Simulation } from "./utils/engine/Simulation";
 import { extractDotSpecsFromImage } from "./utils/image/extract";
@@ -69,9 +69,12 @@ export default function App() {
     };
   }, [extractionConfig]);
 
+  // No Provider — createYoltra's hooks default to this store. The ConfigPanel's
+  // restart updates extractionConfig, which re-runs the effect above.
   return (
-    <AppStoreContext value={store}>
+    <>
+      <ConfigPanel onRestart={setExtractionConfig} />
       <Screen />
-    </AppStoreContext>
+    </>
   );
 }

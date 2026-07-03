@@ -1,8 +1,9 @@
-import { useAtomicProp, useEmit } from "../state/hooks";
+import { useAtomicProp, useEmit } from "../state/yoltra";
 
 export function Counter() {
-  // Only re-renders when counter.value changes
-  const value = useAtomicProp({ reducer: "counter", property: "value" });
+  // Typed accessor — `s` autocompletes the slice shape, `value` is inferred as
+  // number. Re-renders only when counter.value changes; no selectors, no memo.
+  const value = useAtomicProp("counter", (s) => s.value);
   const emit = useEmit();
 
   return (

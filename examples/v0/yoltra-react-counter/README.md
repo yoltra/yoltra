@@ -10,12 +10,11 @@ A minimal counter app demonstrating the core patterns of [Yoltra](https://github
 
 | Concept | Where |
 |---|---|
-| Typed store with `createStore` | [src/state/store.ts](./src/state/store.ts) |
-| Event map (`AppEM`) for type-safe events | [src/state/store.ts](./src/state/store.ts) |
-| Scoped hooks with `createHooks` | [src/state/hooks.ts](./src/state/hooks.ts) |
-| Fine-grained subscription with `useAtomicProp` | [src/components/Counter.tsx](./src/components/Counter.tsx) |
+| One-call setup with `createYoltra` (store + typed hooks) | [src/state/yoltra.ts](./src/state/yoltra.ts) |
+| Event map (`AppEM`) for type-safe events | [src/state/yoltra.ts](./src/state/yoltra.ts) |
+| Fine-grained subscription with a typed accessor | [src/components/Counter.tsx](./src/components/Counter.tsx) |
 | Dispatching events with `useEmit` | [src/components/Counter.tsx](./src/components/Counter.tsx) |
-| Providing the store via React context | [src/App.tsx](./src/App.tsx) |
+| No Provider needed — hooks default to the store | [src/App.tsx](./src/App.tsx) |
 
 ---
 
@@ -25,7 +24,7 @@ A minimal counter app demonstrating the core patterns of [Yoltra](https://github
 - **Vite** 7
 - **TypeScript** 5.9
 - **@yoltra/core** — store, reducers, event pipeline
-- **@yoltra/react** — React hooks and context integration
+- **@yoltra/react** — React hooks and `createYoltra`
 
 ---
 
@@ -47,10 +46,10 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ## Code walkthrough
 
-### 1. Define state shape and event map
+### 1. Define the event map
 
 ```ts
-// src/state/store.ts
+// src/state/yoltra.ts
 export type AppEM = {
   counter: {
     increment: number;   // payload: amount to add
@@ -58,17 +57,15 @@ export type AppEM = {
     reset: null;         // no payload
   };
 };
-
-export type AppState = { counter: { value: number } };
 ```
 
-The **event map** (`AppEM`) is a plain TypeScript type that maps every `(channel, type)` pair to its payload type. Yoltra uses it to make `emit` and `useEvent` fully type-safe.
+The **event map** (`AppEM`) maps every `(channel, type)` pair to its payload type. Yoltra uses it to make `emit` and the hooks fully type-safe.
 
-### 2. Create the store
+### 2. Create the store and hooks in one call
 
 ```ts
-// src/state/store.ts
-export const store = createStore<AppState, AppEM>({
+// src/state/yoltra.ts
+export const { store, useAtomicProp, useEmit } = createYoltra({
   name: "App",
   reducer: {
     counter: {
@@ -80,6 +77,7 @@ export const store = createStore<AppState, AppEM>({
           ["counter", "reset"],
         ]),
       },
+      // `event.payload` narrows to number / null on `event.type` — no casts.
       reducer: (state, event) => {
         switch (event.type) {
           case "increment": return { value: state.value + event.payload };
@@ -93,40 +91,16 @@ export const store = createStore<AppState, AppEM>({
 });
 ```
 
-`eventKeys` narrows which events trigger this reducer — only the three listed keys will cause it to run, keeping your reducers focused and efficient.
+`createYoltra` returns the store **and** every typed hook in one call — no separate context file, no `createHooks`, and no `<Provider>` (the hooks default to this store). `eventKeys` narrows which events trigger the reducer, keeping it focused and efficient.
 
-### 3. Scope hooks to the store context
-
-```ts
-// src/state/hooks.ts
-export const AppStoreContext = createContext<StoreInstance<...> | null>(null);
-
-export const { useAtomicProp, useEmit, useEvent, useSelector, shallowEqual } =
-  createHooks(AppStoreContext);
-```
-
-`createHooks` binds every hook to your specific context, so there is no ambiguity when multiple stores coexist in the same application.
-
-### 4. Provide the store
-
-```tsx
-// src/App.tsx
-function App() {
-  return (
-    <AppStoreContext.Provider value={store}>
-      <Counter />
-    </AppStoreContext.Provider>
-  );
-}
-```
-
-### 5. Subscribe and emit in a component
+### 3. Subscribe and emit in a component
 
 ```tsx
 // src/components/Counter.tsx
 export function Counter() {
-  // Re-renders ONLY when counter.value changes — nothing else
-  const value = useAtomicProp({ reducer: "counter", property: "value" });
+  // Typed accessor — `s` autocompletes the slice, `value` is inferred as number.
+  // Re-renders ONLY when counter.value changes; no selectors, no memo.
+  const value = useAtomicProp("counter", (s) => s.value);
   const emit = useEmit();
 
   return (
@@ -140,13 +114,13 @@ export function Counter() {
 }
 ```
 
-`useAtomicProp` subscribes to the exact path `counter.value`. If any other part of the state changes, this component will **not** re-render. There are no selectors, no memoization — the path subscription _is_ the optimization.
+The typed accessor `s => s.value` subscribes to the exact leaf `counter.value`. If any other part of the state changes, this component will **not** re-render. There are no selectors, no memoization — the path subscription _is_ the optimization. For dynamic or wildcard paths (e.g. `items.*.done`), the string form `useAtomicProp({ reducer, property })` is still available.
 
 ---
 
 ## Next steps
 
-- Add middleware (e.g. logging, validation) — see [@yoltra/core docs](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)
+- Add synchronous middleware (e.g. logging, authorization) or async effects — see [@yoltra/core docs](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)
 - React to blocked events with `useEvent(..., "uncommitted")` — see the [main README](https://github.com/yoltra/yoltra/blob/main/README.md)
 - Explore fine-grained wildcard paths like `"items.*.done"` — see the [Todo App example](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md)
 

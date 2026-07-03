@@ -1,7 +1,7 @@
 import { v4 } from "uuid";
 import type { ReducerSpec } from "@yoltra/core";
 import { eReducerStatus, eTodoStatus, type iTodo, type iTodoState } from "../../../../types";
-import type { tAppEM } from "../../store";
+import type { tAppEM } from "../../types";
 import { withImmer } from "../withImmer";
 
 export const todoInitialState: iTodoState = {

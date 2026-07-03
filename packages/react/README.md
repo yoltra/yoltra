@@ -28,24 +28,24 @@ npm install @yoltra/core @yoltra/react
 
 ---
 
-## Setup with `createHooks` (recommended)
+## Setup with `createYoltra` (recommended)
 
-`createHooks` binds fully-typed hooks to your store context. All type parameters are inferred —
-no explicit generics needed in components.
+`createYoltra` creates the store **and** every fully-typed hook in one call — no separate context
+file, no `createHooks` wiring, no required provider. All type parameters are inferred from your
+reducer, so components need no explicit generics.
 
-### 1. Define types and store
+### 1. Create the store and hooks
 
-```typescript
-// store.ts
-import { createStore, eventKeys } from "@yoltra/core";
+```tsx
+// yoltra.ts
+import { eventKeys } from "@yoltra/core";
+import { createYoltra } from "@yoltra/react";
 
 export type AppEM = {
   counter: { increment: number; decrement: number; reset: null };
 };
 
-export type AppState = { counter: { value: number } };
-
-export const store = createStore<AppState, AppEM>({
+export const { store, useAtomicProp, useEmit, StoreProvider } = createYoltra({
   name: "App",
   reducer: {
     counter: {
@@ -74,41 +74,18 @@ export const store = createStore<AppState, AppEM>({
 });
 ```
 
-### 2. Create typed hooks
+### 2. Use the hooks — no provider required
 
-```typescript
-// hooks.ts
-import { createContext } from "react";
-
-import { createHooks } from "@yoltra/react";
-import type { StoreInstance } from "@yoltra/core";
-
-import type { AppState, AppEM } from "./store";
-
-export const AppStoreContext = createContext<StoreInstance<"counter", AppState, AppEM> | null>(
-  null,
-);
-
-export const {
-  useStore,
-  useEmit,
-  useSelector,
-  useAtomicProp,
-  useAtomicProps,
-  useEvent,
-  shallowEqual,
-} = createHooks(AppStoreContext);
-```
-
-### 3. Provide and use
+The hooks default to the store above, so you can render components directly. Subscribe with a
+**typed accessor**: `s` autocompletes your state shape and the return type is inferred.
 
 ```tsx
-// App.tsx
-import { store } from "./store";
-import { AppStoreContext, useAtomicProp, useEmit } from "./hooks";
+// Counter.tsx
+import { useAtomicProp, useEmit } from "./yoltra";
 
-function Counter() {
-  const value = useAtomicProp({ reducer: "counter", property: "value" });
+export function Counter() {
+  // Typed accessor — re-renders only when counter.value changes. No selectors, no memo.
+  const value = useAtomicProp("counter", (s) => s.value);
   const emit = useEmit();
 
   return (
@@ -120,27 +97,52 @@ function Counter() {
     </div>
   );
 }
-
-export function App() {
-  return (
-    <AppStoreContext.Provider value={store}>
-      <Counter />
-    </AppStoreContext.Provider>
-  );
-}
 ```
+
+A `<StoreProvider>` is only needed to scope a **different** store instance to a subtree (e.g. a
+fresh store per test) — `createYoltra` returns one for exactly that.
+
+---
+
+## Advanced: manual wiring with `createHooks`
+
+When you need one set of hooks shared across several store instances through your own React
+context, bind them yourself with `createHooks(context)`. `createYoltra` is this same wiring
+collapsed into a single call.
+
+```typescript
+// hooks.ts
+import { createContext } from "react";
+import { createHooks } from "@yoltra/react";
+import type { StoreInstance } from "@yoltra/core";
+import type { AppState, AppEM } from "./store";
+
+export const AppStoreContext = createContext<StoreInstance<"counter", AppState, AppEM> | null>(
+  null,
+);
+
+export const { useStore, useEmit, useSelector, useAtomicProp, useAtomicProps, useEvent, shallowEqual } =
+  createHooks(AppStoreContext);
+```
+
+Provide the store with `<AppStoreContext.Provider value={store}>` at your root.
 
 ---
 
 ## Hooks API
 
-### `useAtomicProp({ reducer, property }, map?, isEqual?)`
+### `useAtomicProp(reducer, accessor)` — or `useAtomicProp({ reducer, property }, map?, isEqual?)`
 
-Fine-grained single-path selector. Re-renders only when the specified path changes.
+Fine-grained single-path selector. Re-renders only when the specified leaf changes. Prefer the
+**typed accessor** form — it autocompletes the state shape and infers the return type; use the
+string form for dynamic or wildcard paths.
 
 ```tsx
-// Exact path — re-renders when items[0].title changes
-const title = useAtomicProp({
+// Typed accessor (recommended) — autocompletes items[0].title, infers string
+const title = useAtomicProp("todos", (s) => s.items[0].title);
+
+// String form — same subscription, for dynamic paths
+const sameTitle = useAtomicProp({
   reducer: "todos",
   property: "items.0.title",
 });

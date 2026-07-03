@@ -28,24 +28,24 @@ npm install @yoltra/core @yoltra/react
 
 ---
 
-## Configuracion con `createHooks` (recomendado)
+## Configuracion con `createYoltra` (recomendado)
 
-`createHooks` vincula hooks completamente tipados al contexto de tu store. Todos los parametros
-de tipo se infieren -- no se necesitan generics explicitos en los componentes.
+`createYoltra` crea el store **y** todos los hooks tipados en una sola llamada — sin archivo de
+context aparte, sin cableado de `createHooks`, sin provider obligatorio. Todos los parametros de
+tipo se infieren de tu reducer, asi que los componentes no necesitan generics explicitos.
 
-### 1. Definir tipos y store
+### 1. Crea el store y los hooks
 
-```typescript
-// store.ts
-import { createStore, eventKeys } from "@yoltra/core";
+```tsx
+// yoltra.ts
+import { eventKeys } from "@yoltra/core";
+import { createYoltra } from "@yoltra/react";
 
 export type AppEM = {
   counter: { increment: number; decrement: number; reset: null };
 };
 
-export type AppState = { counter: { value: number } };
-
-export const store = createStore<AppState, AppEM>({
+export const { store, useAtomicProp, useEmit, StoreProvider } = createYoltra({
   name: "App",
   reducer: {
     counter: {
@@ -74,7 +74,42 @@ export const store = createStore<AppState, AppEM>({
 });
 ```
 
-### 2. Crear hooks tipados
+### 2. Usa los hooks — sin provider
+
+Los hooks usan por defecto el store de arriba, asi que puedes renderizar componentes directamente.
+Suscribete con un **accessor tipado**: `s` autocompleta la forma de tu estado y el tipo de retorno
+se infiere.
+
+```tsx
+// Counter.tsx
+import { useAtomicProp, useEmit } from "./yoltra";
+
+export function Counter() {
+  // Accessor tipado — se re-renderiza solo cuando counter.value cambia. Sin selectores, sin memo.
+  const value = useAtomicProp("counter", (s) => s.value);
+  const emit = useEmit();
+
+  return (
+    <div>
+      <h1>Count: {value}</h1>
+      <button onClick={() => emit("counter", "increment", 1)}>+</button>
+      <button onClick={() => emit("counter", "decrement", 1)}>-</button>
+      <button onClick={() => emit("counter", "reset", null)}>Reset</button>
+    </div>
+  );
+}
+```
+
+Un `<StoreProvider>` solo se necesita para acotar una instancia **diferente** del store a un
+subarbol (p. ej. un store nuevo por test) — `createYoltra` devuelve uno justo para eso.
+
+---
+
+## Avanzado: cableado manual con `createHooks`
+
+Cuando necesites un mismo conjunto de hooks compartido entre varias instancias de store a traves
+de tu propio context de React, vinculalos tu mismo con `createHooks(context)`. `createYoltra` es
+este mismo cableado colapsado en una sola llamada.
 
 ```typescript
 // hooks.ts
@@ -87,58 +122,28 @@ export const AppStoreContext = createContext<StoreInstance<"counter", AppState, 
   null,
 );
 
-export const {
-  useStore,
-  useEmit,
-  useSelector,
-  useAtomicProp,
-  useAtomicProps,
-  useEvent,
-  shallowEqual,
-} = createHooks(AppStoreContext);
+export const { useStore, useEmit, useSelector, useAtomicProp, useAtomicProps, useEvent, shallowEqual } =
+  createHooks(AppStoreContext);
 ```
 
-### 3. Proveer y usar
-
-```tsx
-// App.tsx
-import { store } from "./store";
-import { AppStoreContext, useAtomicProp, useEmit } from "./hooks";
-
-function Counter() {
-  const value = useAtomicProp({ reducer: "counter", property: "value" });
-  const emit = useEmit();
-
-  return (
-    <div>
-      <h1>Count: {value}</h1>
-      <button onClick={() => emit("counter", "increment", 1)}>+</button>
-      <button onClick={() => emit("counter", "decrement", 1)}>-</button>
-      <button onClick={() => emit("counter", "reset", null)}>Reset</button>
-    </div>
-  );
-}
-
-export function App() {
-  return (
-    <AppStoreContext.Provider value={store}>
-      <Counter />
-    </AppStoreContext.Provider>
-  );
-}
-```
+Provee el store con `<AppStoreContext.Provider value={store}>` en tu raiz.
 
 ---
 
 ## API de Hooks
 
-### `useAtomicProp({ reducer, property }, map?, isEqual?)`
+### `useAtomicProp(reducer, accessor)` — o `useAtomicProp({ reducer, property }, map?, isEqual?)`
 
-Selector de ruta unica con grano fino. Se re-renderiza solo cuando la ruta especificada cambia.
+Selector de ruta unica con grano fino. Se re-renderiza solo cuando la hoja especificada cambia.
+Prefiere la forma de **accessor tipado** — autocompleta la forma del estado e infiere el tipo de
+retorno; usa la forma string para rutas dinamicas o con comodines.
 
 ```tsx
-// Ruta exacta — se re-renderiza cuando items[0].title cambia
-const title = useAtomicProp({
+// Accessor tipado (recomendado) — autocompleta items[0].title, infiere string
+const title = useAtomicProp("todos", (s) => s.items[0].title);
+
+// Forma string — misma suscripcion, para rutas dinamicas
+const sameTitle = useAtomicProp({
   reducer: "todos",
   property: "items.0.title",
 });

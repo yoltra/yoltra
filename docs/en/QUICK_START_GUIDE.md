@@ -4,7 +4,7 @@
 
 > 👉 English &nbsp;|&nbsp; [🇲🇽 Español](../es/QUICK_START_GUIDE.md)
 
-Five steps from install to a working app. Or jump straight to
+Three steps from install to a working, fully-typed app. Or jump straight to
 [the example app](../../examples/v0/yoltra-react-counter/README.md).
 
 ---
@@ -19,13 +19,18 @@ npm install @yoltra/core @yoltra/react
 
 ---
 
-## 2. Define your event map and store
+## 2. Create your store and typed hooks in one call
 
-```typescript
-// store.ts
-import { createStore, eventKeys } from "@yoltra/core";
+`createYoltra` collapses the store, the React context, `createHooks`, and the provider into a
+single call. It returns the `store` **and** every hook, already typed to your state and event map.
 
-export type AppEM = {
+```tsx
+// yoltra.ts
+import { eventKeys } from "@yoltra/core";
+import { createYoltra } from "@yoltra/react";
+
+// 1. Describe your events: channel -> type -> payload type.
+type AppEM = {
   counter: {
     increment: number;
     decrement: number;
@@ -33,9 +38,8 @@ export type AppEM = {
   };
 };
 
-export type AppState = { counter: { value: number } };
-
-export const store = createStore<AppState, AppEM>({
+// One call — store + every typed hook. No context file, no createHooks, no Provider.
+export const { store, useAtomicProp, useEmit } = createYoltra({
   name: "App",
   reducer: {
     counter: {
@@ -47,6 +51,7 @@ export const store = createStore<AppState, AppEM>({
           ["counter", "reset"],
         ]),
       },
+      // `event.payload` narrows to `number` / `null` on `event.type` — no casts.
       reducer: (state, event) => {
         switch (event.type) {
           case "increment":
@@ -66,53 +71,19 @@ export const store = createStore<AppState, AppEM>({
 
 ---
 
-## 3. Create typed hooks with `createHooks`
+## 3. Use the hooks in components
 
-```typescript
-// hooks.ts
-import { createContext } from "react";
-
-import { createHooks } from "@yoltra/react";
-import type { StoreInstance } from "@yoltra/core";
-import type { AppState, AppEM } from "./store";
-
-export const AppStoreContext = createContext<StoreInstance<"counter", AppState, AppEM> | null>(
-  null,
-);
-
-export const { useAtomicProp, useEmit, useEvent, useSelector, shallowEqual } =
-  createHooks(AppStoreContext);
-```
-
----
-
-## 4. Provide the store
-
-```tsx
-// App.tsx
-import { store } from "./store";
-import { AppStoreContext } from "./hooks";
-
-export function App() {
-  return (
-    <AppStoreContext.Provider value={store}>
-      <Counter />
-    </AppStoreContext.Provider>
-  );
-}
-```
-
----
-
-## 5. Use hooks in components
+The hooks default to the store you just created, so **no `<Provider>` is required**. Subscribe to
+a leaf with a typed accessor — the component re-renders only when that exact leaf changes.
 
 ```tsx
 // Counter.tsx
-import { useAtomicProp, useEmit } from "./hooks";
+import { useAtomicProp, useEmit } from "./yoltra";
 
 export function Counter() {
-  // Only re-renders when counter.value changes
-  const value = useAtomicProp({ reducer: "counter", property: "value" });
+  // Typed accessor: `s` autocompletes the state shape, `value` is inferred as number.
+  // Re-renders ONLY when counter.value changes — no selectors, no memo.
+  const value = useAtomicProp("counter", (s) => s.value);
   const emit = useEmit();
 
   return (
@@ -126,16 +97,43 @@ export function Counter() {
 }
 ```
 
+That's a complete, type-safe app. `emit("counter", "increment", 1)` is checked against your event
+map — a wrong channel, type, or payload is a compile error.
+
+---
+
+## (Optional) Scope a store with `StoreProvider`
+
+You only need a provider to hand a **different** store instance to part of the tree — for example a
+fresh store per test, or two independent instances of the same app. `createYoltra` also returns a
+`StoreProvider` for exactly that:
+
+```tsx
+import { createYoltra } from "@yoltra/react";
+
+const { store, StoreProvider, useAtomicProp } = createYoltra({ name: "App", reducer: { counter } });
+
+// Hand a specific instance to a subtree (defaults to the store above when omitted).
+<StoreProvider store={freshStoreForThisTest}>
+  <Counter />
+</StoreProvider>;
+```
+
+For advanced cases — sharing one set of hooks across several stores wired through your own React
+context — the lower-level `createHooks(context)` API is still available.
+
 ---
 
 ## What's next?
 
 - **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** —
-  Middleware, effects, `When` matchers, event subscriptions
+  Middleware, effects, `When` matchers, event subscriptions, instrumentation
 - **[@yoltra/react API](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** —
-  `useAtomicProps`, Suspense hooks, wildcards
-- **[Event Queue Architecture](./design/event-queue-architecture.md)** — How the pipeline works
-  under the hood
-- **[Examples](https://github.com/yoltra/yoltra/blob/main/README.md#live-examples)** — Todo app,
-  kinetic logo, Next.js integration
-- **[Developer Guide](./DEVELOPER_GUIDE.md)** — Setting up the monorepo and contributing
+  `useAtomicProps`, typed accessors, wildcards, Suspense hooks
+- **[Event Pipeline Architecture](./design/event-queue-architecture.md)** — how the synchronous
+  reduce / async effect pipeline works under the hood
+- **[Library Comparison](./design/state-management-library-comparison.md)** — honest architectural
+  comparison with Redux, Zustand, Jotai, and others
+- **[Examples](https://github.com/yoltra/yoltra/blob/main/README.md#live-examples)** — todo app,
+  kinetic logo, counter
+- **[Developer Guide](./DEVELOPER_GUIDE.md)** — setting up the monorepo and contributing
