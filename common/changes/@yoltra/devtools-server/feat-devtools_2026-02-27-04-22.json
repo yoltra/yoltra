@@ -2,7 +2,7 @@
   "changes": [
     {
       "packageName": "@yoltra/devtools-server",
-      "comment": "feat(devtools): [server] - create initial devtools server (hub) implementation",
+      "comment": "Initial release: the devtools hub - connection router, ring-buffer history for late joiners, and role-based fan-out. WebSocket connections are origin-checked (loopback and browser-extension origins only) to prevent cross-site hijacking.",
       "type": "minor"
     }
   ],

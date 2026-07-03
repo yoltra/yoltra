@@ -98,13 +98,15 @@
       "packageName": "@yoltra/core",
       "projectFolder": "packages/core",
       "reviewCategory": "production",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
     },
     {
       "packageName": "@yoltra/react",
       "projectFolder": "packages/react",
       "reviewCategory": "production",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
     },
 
     // ------------------------------------------------------------------
@@ -114,49 +116,56 @@
       "packageName": "@yoltra/devtools-protocol",
       "projectFolder": "devtools/devtools-protocol",
       "reviewCategory": "devtools",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
     },
     {
       "packageName": "@yoltra/devtools-server",
       "projectFolder": "devtools/devtools-server",
       "reviewCategory": "devtools",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
     },
     {
       "packageName": "@yoltra/devtools-ui",
       "projectFolder": "devtools/devtools-ui",
       "reviewCategory": "devtools",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
     },
     {
       "packageName": "@yoltra/devtools-storeview",
       "projectFolder": "devtools/devtools-storeview",
       "reviewCategory": "devtools",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
     },
     {
       "packageName": "@yoltra/devtools-browser-agent",
       "projectFolder": "devtools/devtools-browser-agent",
       "reviewCategory": "devtools",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
     },
     {
       "packageName": "@yoltra/devtools-node-agent",
       "projectFolder": "devtools/devtools-node-agent",
       "reviewCategory": "devtools",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
     },
     {
       "packageName": "@yoltra/devtools-ext",
       "projectFolder": "devtools/devtools-ext",
       "reviewCategory": "devtools",
-      "shouldPublish": true
+      "shouldPublish": false
     },
     {
       "packageName": "@yoltra/devtools-cli",
       "projectFolder": "devtools/devtools-cli",
       "reviewCategory": "devtools",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
     },
 
     // ------------------------------------------------------------------

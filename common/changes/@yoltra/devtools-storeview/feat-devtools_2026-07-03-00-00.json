@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-storeview",
+      "comment": "Initial release: the devtools panel - filterable event timeline, live state tree, and precise per-event patch inspection driven by the core instrumentation seam.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-storeview"
+}

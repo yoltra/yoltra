@@ -1,1 +1,25 @@
-[]
+/**
+ * Version policies for the Yoltra monorepo.
+ * Docs: https://rushjs.io/pages/maintainer/publishing/
+ */
+[
+  {
+    /**
+     * The product suite versions in lockstep: @yoltra/core, @yoltra/react, and
+     * every @yoltra/devtools-* library always share one version and bump
+     * together. This is the version that `rush version --bump` moves.
+     *
+     * We stay pre-1.0 (0.x) until the APIs are stable. In 0.x semver, a breaking
+     * change is a MINOR bump, so `nextBump` is "minor" (0.1.0 -> 0.2.0). Set it
+     * to "patch" for a fix-only release.
+     *
+     * NOTE: @yoltra/devtools-ext (browser-extension app) and @yoltra/eslint-config-*
+     * (independent tooling) are intentionally NOT in this policy.
+     */
+    "definitionName": "lockStepVersion",
+    "policyName": "yoltra",
+    "version": "0.1.0",
+    "nextBump": "minor",
+    "mainProject": "@yoltra/core"
+  }
+]

@@ -2,7 +2,7 @@
   "changes": [
     {
       "packageName": "@yoltra/devtools-protocol",
-      "comment": "feat(devtools): [devtools] - create initial devtools protocol definition",
+      "comment": "Initial release: typed devtools message union, versioned handshake, RFC-6902 patch utilities, and a transport-agnostic reconnecting WebSocket client with backpressure signaling.",
       "type": "minor"
     }
   ],
