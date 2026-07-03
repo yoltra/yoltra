@@ -46,7 +46,7 @@
     "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-browser-agent-en.json"
   },
   "peerDependencies": {
-    "@yoltra/core": "workspace:*"
+    "@yoltra/core": "^0.1.0"
   },
   "dependencies": {
     "@yoltra/devtools-protocol": "workspace:*"
