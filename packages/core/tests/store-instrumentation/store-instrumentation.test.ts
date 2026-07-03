@@ -125,6 +125,7 @@ describe("Store - instrumentation (B1)", () => {
     const store = createStore<{ counter: CounterState }, EM>({
       name: "External",
       reducer: { counter: counterSpec },
+      devtools: { allowReplay: true },
     });
     const changes: number[] = [];
     store.connect({ reducer: "counter", property: "value" }, (c) => changes.push(c.newValue as number));
@@ -133,6 +134,22 @@ describe("Store - instrumentation (B1)", () => {
 
     expect(store.getState().counter.value).toBe(42);
     expect(changes).toEqual([42]);
+  });
+
+  it("__applyExternalState is a no-op without devtools.allowReplay (SEC-1 gate)", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const store = createStore<{ counter: CounterState }, EM>({
+      name: "ExternalGated",
+      reducer: { counter: counterSpec },
+      // no devtools.allowReplay → external state apply (time-travel) is rejected
+    });
+    const before = store.getState().counter.value;
+
+    store.__applyExternalState({ counter: { value: 999 } });
+
+    expect(store.getState().counter.value).toBe(before);
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
   });
 
   it("isolates a throwing observer without breaking the emit", async () => {

@@ -215,6 +215,11 @@ export function withDevtools<
       }
 
       case "TIME_TRAVEL": {
+        // Time-travel replaces the entire state tree — gate on the store's
+        // replay capability (default off), same as EVENT_REPLAY. The core seam
+        // enforces this too (defense in depth).
+        if (!capabilities.replay) break;
+
         // Guard against malformed messages — a null state would corrupt the
         // store and cause "Cannot read property of undefined" in reducers.
         if (msg.state == null) break;

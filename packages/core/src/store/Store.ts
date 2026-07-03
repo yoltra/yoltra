@@ -832,6 +832,17 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   public __applyExternalState(nextPlain: any) {
+    // Gate on the same runtime flag as __replayEvents: time-travel replaces the
+    // whole state tree, so it must stay off unless the app opted in via
+    // createStore({ devtools: { allowReplay: true } }). Enforced here at the
+    // seam so a devtools agent (or a client driving it) cannot bypass it.
+    if (!this.replayEnabled) {
+      console.warn(
+        "[yoltra] External state apply (time-travel) is disabled. Enable it with createStore({ devtools: { allowReplay: true } })",
+      );
+      return;
+    }
+
     const prev = this.state as any;
     const next = nextPlain;
 

@@ -30,6 +30,13 @@ export interface DevtoolsHubOptions {
   host?: string;
   /** Maximum events retained in the ring buffer for late-connecting extensions. @default 1000 */
   historySize?: number;
+  /**
+   * Extra WebSocket `Origin` values to accept, beyond the always-allowed set
+   * (no Origin, browser-extension origins, and loopback origins). Use this only
+   * for a non-loopback local dev host (e.g. a custom `.local` domain). Adding a
+   * remote origin re-opens the cross-site hijack surface — don't.
+   */
+  allowedOrigins?: string[];
 }
 
 /**
@@ -43,6 +50,52 @@ export interface DevtoolsHubOptions {
  * @internal
  */
 const HANDSHAKE_TIMEOUT_MS = 5_000;
+
+/**
+ * Whether a WebSocket `Origin` may connect to the hub.
+ *
+ * @remarks
+ * The hub binds to loopback, but that does not stop a page you visit from
+ * opening `ws://127.0.0.1:<port>` — WebSockets are exempt from same-origin/CORS,
+ * so a remote page could otherwise exfiltrate state and drive the store. We
+ * allow only: no Origin (node agent, CLI, some extension contexts), browser
+ * extension origins (the user-installed panel), loopback origins (the local dev
+ * app running the agent, or a local storeview), and any explicitly configured
+ * origins. A remote origin (e.g. `https://evil.com`) is rejected.
+ *
+ * @internal
+ */
+function isOriginAllowed(origin: string | undefined, allowed: readonly string[]): boolean {
+  if (!origin) return true; // non-browser client; not reachable from a web page
+  if (allowed.includes(origin)) return true;
+  let url: URL;
+  try {
+    url = new URL(origin);
+  } catch {
+    return false;
+  }
+  if (
+    url.protocol === "chrome-extension:" ||
+    url.protocol === "moz-extension:" ||
+    url.protocol === "safari-web-extension:"
+  ) {
+    return true;
+  }
+  return isLoopbackHost(url.hostname);
+}
+
+/** Loopback host check: `localhost`, the 127.0.0.0/8 block, and IPv6 `::1`. @internal */
+function isLoopbackHost(hostname: string): boolean {
+  const h = hostname.replace(/^\[|\]$/g, ""); // strip IPv6 brackets
+  return (
+    h === "localhost" ||
+    h.endsWith(".localhost") ||
+    h === "127.0.0.1" ||
+    h.startsWith("127.") ||
+    h === "::1" ||
+    h === "0:0:0:0:0:0:0:1"
+  );
+}
 
 /**
  * Central WebSocket hub that brokers messages between Yoltra stores and DevTools extensions.
@@ -69,6 +122,7 @@ const HANDSHAKE_TIMEOUT_MS = 5_000;
 export class DevtoolsHub {
   private readonly port: number;
   private readonly host: string;
+  private readonly allowedOrigins: readonly string[];
   private readonly router = new Router();
   private readonly history: RingBuffer<string>;
   private wss: WebSocketServer | null = null;
@@ -83,6 +137,7 @@ export class DevtoolsHub {
   constructor(opts: DevtoolsHubOptions = {}) {
     this.port = opts.port ?? 9800;
     this.host = opts.host ?? "127.0.0.1";
+    this.allowedOrigins = opts.allowedOrigins ?? [];
     this.history = new RingBuffer<string>(opts.historySize ?? 1000);
   }
 
@@ -97,7 +152,19 @@ export class DevtoolsHub {
    */
   async start(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.wss = new WebSocketServer({ port: this.port, host: this.host });
+      this.wss = new WebSocketServer({
+        port: this.port,
+        host: this.host,
+        // Reject cross-site WebSocket hijacking: the loopback bind alone does
+        // not stop a page you visit from opening ws://127.0.0.1:<port>.
+        verifyClient: (info: { origin?: string }) => {
+          if (isOriginAllowed(info.origin, this.allowedOrigins)) return true;
+          console.warn(
+            `[yoltra devtools] Rejected WebSocket connection from disallowed origin: ${info.origin}`,
+          );
+          return false;
+        },
+      });
 
       this.wss.on("listening", () => {
         resolve();

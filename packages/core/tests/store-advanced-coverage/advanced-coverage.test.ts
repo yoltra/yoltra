@@ -84,6 +84,7 @@ describe("Store advanced coverage", () => {
     const store = createStore({
       name: "CoverageStore-external-noop",
       reducer: makeBaseReducers(),
+      devtools: { allowReplay: true },
     });
 
     const anyStore = store as any;
@@ -102,6 +103,7 @@ describe("Store advanced coverage", () => {
     const store = createStore({
       name: "CoverageStore-external-deep-equal",
       reducer: makeBaseReducers(),
+      devtools: { allowReplay: true },
     });
 
     const anyStore = store as any;

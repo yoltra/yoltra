@@ -90,11 +90,21 @@ function parsePointer(pointer: string): string[] {
  *
  * @internal
  */
+/**
+ * Keys that must never be written from a JSON Pointer: assigning them walks the
+ * prototype chain and pollutes `Object.prototype`. Patch contents originate from
+ * a (possibly untrusted) peer store or hub, so the pointer is attacker-chosen.
+ */
+const FORBIDDEN_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
 function setAtPath(obj: any, segments: string[], value: unknown): any {
   if (segments.length === 0) return value;
 
   const result = Array.isArray(obj) ? [...obj] : { ...obj };
   const [head, ...rest] = segments;
+
+  // Prevent prototype pollution — ignore dangerous segments entirely.
+  if (FORBIDDEN_KEYS.has(head)) return result;
 
   if (rest.length === 0) {
     result[head] = value;
@@ -119,6 +129,9 @@ function removeAtPath(obj: any, segments: string[]): any {
 
   const result = Array.isArray(obj) ? [...obj] : { ...obj };
   const [head, ...rest] = segments;
+
+  // Prevent prototype-chain traversal from attacker-controlled pointers.
+  if (FORBIDDEN_KEYS.has(head)) return result;
 
   if (rest.length === 0) {
     if (Array.isArray(result)) {
