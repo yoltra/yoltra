@@ -32,7 +32,7 @@ export function BottomBar({
   capabilities: StoreCapabilities | null;
 }) {
   const { currentIndex, isTimeTraveling, jumpTo, stepBack, stepForward, resume } =
-    useTimeTravel(effectiveStoreId, entries);
+    useTimeTravel(effectiveStoreId, entries, capabilities?.replay ?? false);
 
   return (
     <footer>

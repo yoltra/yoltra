@@ -58,6 +58,12 @@ import { useHubConnection } from "./useHubConnection";
 export function useTimeTravel(
   storeId: string | null,
   entries: EventLogEntry[],
+  /**
+   * Whether the selected store advertised the `replay` capability. Time-travel
+   * commands are gated on it (DEV-4): the agent/core enforce it too, but the UI
+   * should not send commands that will be dropped. Defaults to `true`.
+   */
+  canReplay: boolean = true,
 ): {
   currentIndex: number;
   isTimeTraveling: boolean;
@@ -118,7 +124,8 @@ export function useTimeTravel(
 
   const jumpTo = useCallback(
     (index: number) => {
-      if (!storeId || index < 0 || index >= entries.length) return;
+      // Do not send if the store can't replay (DEV-4) — the command would be a no-op.
+      if (!storeId || !canReplay || index < 0 || index >= entries.length) return;
 
       setCurrentIndex(index);
       setIsTimeTraveling(true);
@@ -134,7 +141,7 @@ export function useTimeTravel(
         sourceRole: DevtoolsRole.EXTENSION,
       });
     },
-    [storeId, entries, send, buildStateAt],
+    [storeId, entries, send, buildStateAt, canReplay],
   );
 
   const stepBack = useCallback(() => {
@@ -157,8 +164,9 @@ export function useTimeTravel(
     setIsTimeTraveling(false);
     setCurrentIndex(-1);
     // Restore the store to the latest known state by computing the state at
-    // the last entry and sending a TIME_TRAVEL to snap it back.
-    if (storeId && entries.length > 0) {
+    // the last entry and sending a TIME_TRAVEL to snap it back (DEV-4: only if
+    // the store can replay; the local reset above still runs regardless).
+    if (canReplay && storeId && entries.length > 0) {
       const latestIndex = entries.length - 1;
       const latest = entries[latestIndex]!;
       send({
@@ -171,7 +179,7 @@ export function useTimeTravel(
         sourceRole: DevtoolsRole.EXTENSION,
       });
     }
-  }, [storeId, entries, send, buildStateAt]);
+  }, [storeId, entries, send, buildStateAt, canReplay]);
 
   return {
     currentIndex,

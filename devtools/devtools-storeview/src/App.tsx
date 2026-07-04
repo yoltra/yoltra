@@ -53,7 +53,7 @@ type TabName = (typeof TABS)[number];
  *
  * @public
  */
-export interface DevtoolsAppConfig extends HubConnectionConfig {}
+export type DevtoolsAppConfig = HubConnectionConfig;
 
 /**
  * Root DevTools app component. Wrap with {@link HubProvider} externally
@@ -118,7 +118,9 @@ function DevtoolsInner() {
     if (!tabRequires(activeTab, caps)) {
       setActiveTab("Events");
     }
-  }, [effectiveStoreId]); // intentionally only on store change, not caps identity
+    // Intentionally re-run only on store change, not on activeTab/caps identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveStoreId]);
 
   const { entries } = useEventLog(effectiveStoreId);
   const {

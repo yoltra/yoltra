@@ -41,7 +41,7 @@
   ],
   "scripts": {
     "build": "vite build",
-    "lint": "exit 0",
+    "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "test": "vitest --watch=false",
     "typecheck": "tsc --noEmit",
     "docs": "rushx docs:js && rushx docs:md",
@@ -55,13 +55,17 @@
     "@nivo/treemap": "^0.87.0",
     "@yoltra/devtools-protocol": "workspace:*",
     "@yoltra/devtools-ui": "workspace:*",
-    "classnames": "2.5.1",
-    "react": "19.1.1",
-    "react-dom": "19.1.1"
+    "classnames": "2.5.1"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19"
   },
   "devDependencies": {
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
     "typedoc": "^0.28.13",
     "typedoc-plugin-markdown": "4.9.0",
     "typedoc-plugin-localization": "3.0.6",

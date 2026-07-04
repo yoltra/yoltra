@@ -52,6 +52,14 @@ export interface DevtoolsHubOptions {
 const HANDSHAKE_TIMEOUT_MS = 5_000;
 
 /**
+ * Maximum accepted WebSocket frame size (bytes). Frames fan out to every
+ * extension and buffer into history, so an unbounded size is a local
+ * DoS / memory-amplification vector. 8 MiB comfortably covers real state
+ * snapshots while rejecting hostile oversized frames.
+ */
+const MAX_WS_PAYLOAD_BYTES = 8 * 1024 * 1024;
+
+/**
  * Whether a WebSocket `Origin` may connect to the hub.
  *
  * @remarks
@@ -155,6 +163,10 @@ export class DevtoolsHub {
       this.wss = new WebSocketServer({
         port: this.port,
         host: this.host,
+        // Bound the frame size (DEV-1): oversized frames fan out to every
+        // extension and buffer into history, so an unbounded cap is a local
+        // DoS / memory-amplification vector.
+        maxPayload: MAX_WS_PAYLOAD_BYTES,
         // Reject cross-site WebSocket hijacking: the loopback bind alone does
         // not stop a page you visit from opening ws://127.0.0.1:<port>.
         verifyClient: (info: { origin?: string }) => {
@@ -265,6 +277,12 @@ export class DevtoolsHub {
         return; // Ignore malformed messages
       }
 
+      // Ingress validation (DEV-3): every protocol message is a plain object
+      // with a string `type` discriminant. Reject anything else (null, arrays,
+      // primitives, missing type) before it reaches handshake/routing.
+      if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return;
+      if (typeof parsed.type !== "string") return;
+
       // Handle handshake
       if (!connectionInfo) {
         if (parsed.type === "HANDSHAKE_REQUEST") {
@@ -326,11 +344,21 @@ export class DevtoolsHub {
       return null;
     }
 
+    // A STORE handshake must carry `store`, an EXTENSION handshake `extension`.
+    // Guard the role/payload match instead of dereferencing a missing field.
+    const id = req.role === DevtoolsRole.STORE ? req.store?.id : req.extension?.id;
+    if (!id) {
+      console.warn(
+        `[yoltra devtools] Rejected handshake: role ${req.role} without a matching id payload`,
+      );
+      return null;
+    }
+
     // Build connection info
     const info: ConnectionInfo = {
       ws,
       role: req.role,
-      id: req.role === DevtoolsRole.STORE ? req.store!.id : req.extension!.id,
+      id,
       connectedAt: new Date().toISOString(),
     };
 
@@ -365,7 +393,7 @@ export class DevtoolsHub {
     if (req.role === DevtoolsRole.STORE) {
       // Broadcast STORE_CONNECTED to all extensions
       const connectMsg = this.router.buildStoreConnectedMessage(info);
-      this.router.fanOutToExtensions(connectMsg);
+      if (connectMsg) this.router.fanOutToExtensions(connectMsg);
     } else if (req.role === DevtoolsRole.EXTENSION) {
       // Send current store registry to the new extension
       ws.send(this.router.buildRegistryMessage());

@@ -167,6 +167,11 @@ export function withDevtools<
       return;
     }
 
+    // Ingress validation (DEV-3): require a well-formed message with a string
+    // `type` discriminant before acting on it (EMIT_TO_STORE forwards straight
+    // into store.emit, so a malformed payload must not reach it).
+    if (msg === null || typeof msg !== "object" || typeof msg.type !== "string") return;
+
     switch (msg.type) {
       case "REQUEST_STATE": {
         const state = store.getState();
@@ -272,14 +277,28 @@ export function withDevtools<
         wsClient.send(JSON.stringify(response));
         break;
       }
+
+      default: {
+        // Exhaustiveness fallback (DEV-3): an unhandled command type is protocol
+        // drift (a bug), not routine traffic — surface it instead of dropping it.
+        console.warn(`[Yoltra DevTools] Ignoring unknown message type: ${String(msg.type)}`);
+        break;
+      }
     }
   });
+
+  // If this store was already wrapped (HMR / remount / a double call), tear down
+  // the previous devtools attachment first so we don't leak the instrument
+  // observer + reconnecting socket or double-send every event (DEV-2).
+  const existingDispose = (store as unknown as { __yoltraDevtoolsDispose?: () => void })
+    .__yoltraDevtoolsDispose;
+  if (existingDispose) existingDispose();
 
   // Observe every event through the typed instrumentation seam. This single
   // observer replaces the old interceptor effect + metrics middleware + manual
   // diff + full-state clone: the core hands us the exact changed leaf paths and
   // their old/new values, so we build precise patches with no re-diff.
-  store.instrument((info: InstrumentedEvent<EM>) => {
+  const instrumentUnsub = store.instrument((info: InstrumentedEvent<EM>) => {
     totalAttemptedCount++;
     if (info.committed) {
       committedEventCount++;
@@ -316,6 +335,24 @@ export function withDevtools<
 
   // Connect to hub
   wsClient.connect(host, config.port);
+
+  // Devtools teardown (DEV-2): detach the instrument observer and disconnect the
+  // socket. Stored on the store so a later re-wrap tears down this attachment,
+  // and folded into store.dispose() so disposing the store also detaches devtools.
+  const disposeDevtools = () => {
+    instrumentUnsub();
+    wsClient.disconnect();
+    (store as unknown as { __yoltraDevtoolsDispose?: () => void }).__yoltraDevtoolsDispose =
+      undefined;
+  };
+  (store as unknown as { __yoltraDevtoolsDispose?: () => void }).__yoltraDevtoolsDispose =
+    disposeDevtools;
+
+  const prevDispose = store.dispose.bind(store);
+  store.dispose = () => {
+    disposeDevtools();
+    prevDispose();
+  };
 
   return store;
 }

@@ -1,0 +1,15 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-storeview",
+      "comment": "BottomBar now passes the selected store's replay capability to useTimeTravel, so the time-travel controls do not send commands to a store that cannot replay.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/devtools-storeview",
+      "comment": "react and react-dom moved from dependencies to peerDependencies (^18 || ^19), so a consuming app supplies its own copy and does not risk a second React instance (invalid hook call). They remain devDependencies for standalone builds.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-storeview"
+}

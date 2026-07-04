@@ -123,7 +123,11 @@ export class Router {
    *
    * @public
    */
-  buildStoreConnectedMessage(info: ConnectionInfo): string {
+  buildStoreConnectedMessage(info: ConnectionInfo): string | null {
+    // Only a fully-registered STORE connection carries storeInfo. Guard instead
+    // of asserting so an incomplete registration can't crash the hub; the caller
+    // skips fan-out when this returns null.
+    if (!info.storeInfo) return null;
     const msg: StoreConnected = {
       type: "STORE_CONNECTED",
       timestamp: new Date().toISOString(),
@@ -131,8 +135,8 @@ export class Router {
       sourceRole: DevtoolsRole.HUB,
       store: {
         id: info.id,
-        name: info.storeInfo!.name,
-        capabilities: info.storeInfo!.capabilities,
+        name: info.storeInfo.name,
+        capabilities: info.storeInfo.capabilities,
       },
     };
     return JSON.stringify(msg);
@@ -172,13 +176,19 @@ export class Router {
       timestamp: new Date().toISOString(),
       sourceId: "hub",
       sourceRole: DevtoolsRole.HUB,
-      stores: Array.from(this.stores.values()).map((s) => ({
-        id: s.id,
-        name: s.storeInfo!.name,
-        status: "connected" as const,
-        capabilities: s.storeInfo!.capabilities,
-        connectedAt: s.connectedAt,
-      })),
+      stores: Array.from(this.stores.values()).flatMap((s) => {
+        // Skip connections whose registration hasn't completed (no storeInfo).
+        if (!s.storeInfo) return [];
+        return [
+          {
+            id: s.id,
+            name: s.storeInfo.name,
+            status: "connected" as const,
+            capabilities: s.storeInfo.capabilities,
+            connectedAt: s.connectedAt,
+          },
+        ];
+      }),
     };
     return JSON.stringify(msg);
   }

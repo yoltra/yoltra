@@ -1,0 +1,15 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-node-agent",
+      "comment": "withNodetools now tears down its instrumentation observer and WebSocket connection when the store is disposed, and re-wrapping a store first tears down the previous attachment. Previously it leaked observers and reconnecting sockets and double-sent every event.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/devtools-node-agent",
+      "comment": "The agent now validates each incoming hub message (a plain object with a string type) before acting on it, and warns on unknown message types instead of silently ignoring them. This guards EMIT_TO_STORE, which forwards straight into store.emit.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-node-agent"
+}

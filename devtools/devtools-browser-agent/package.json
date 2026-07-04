@@ -39,6 +39,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "vite build",
+    "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "test": "vitest --watch=false",
     "typecheck": "tsc --noEmit",
     "docs": "rushx docs:js && rushx docs:md",
