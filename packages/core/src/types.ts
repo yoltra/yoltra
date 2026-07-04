@@ -845,19 +845,43 @@ export type StateFromReducers<R> = {
 };
 
 /**
- * Helper: derive event map from a reducers map (strict).
- * Used by createStore inference overload.
+ * Helper: turn a union into an intersection.
  *
  * @internal
  */
-export type EMFromReducersStrict<RM extends ReducersMapAny> = RM[keyof RM] extends ReducerSpec<
-  any,
-  infer EM
->
-  ? RM[keyof RM] extends ReducerSpec<any, EM>
-    ? EM
-    : never
+export type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends (
+  k: infer I,
+) => void
+  ? I
   : never;
+
+/**
+ * Helper: the event map of a single reducer spec.
+ *
+ * @internal
+ */
+export type EMOfSpec<Spec> = Spec extends ReducerSpec<any, infer EM> ? EM : never;
+
+/**
+ * Helper: derive the combined event map from a reducers map (strict).
+ * Used by the createStore inference overload.
+ *
+ * Each slice contributes its own event map; those maps are **merged** (channels,
+ * and each channel's `type → payload` entries, combined across slices) rather
+ * than collapsed to a single slice's map. `EMOfSpec` distributes over the union
+ * of specs to yield the union of per-slice event maps, and `UnionToIntersection`
+ * merges them — so a store whose slices declare divergent event maps still types
+ * `emit` against the union of every slice's channels/types.
+ *
+ * @internal
+ */
+export type EMFromReducersStrict<RM extends ReducersMapAny> = UnionToIntersection<
+  EMOfSpec<RM[keyof RM]>
+> extends infer Merged
+  ? Merged extends EventMapBase
+    ? Merged
+    : EventMapBase
+  : EventMapBase;
 
 // ============================================
 // Event Targeting (When Matcher)

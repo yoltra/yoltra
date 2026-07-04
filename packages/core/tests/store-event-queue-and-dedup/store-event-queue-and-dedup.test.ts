@@ -96,8 +96,11 @@ describe("Store - event queue and deduplication", () => {
       dedupWindowMs: 50,
     }) as any;
 
-    const timerBefore = store.eventCleanupTimer;
-    expect(timerBefore).not.toBeNull();
+    // Lazy: the timer is not running until a dedup-cached event starts it.
+    expect(store.eventCleanupTimer).toBeNull();
+    store.processedEvents.set("ui::increment::1", Date.now());
+    store.ensureCleanupTimer();
+    expect(store.eventCleanupTimer).not.toBeNull();
 
     store.dispose();
 

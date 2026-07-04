@@ -15,6 +15,7 @@ import type {
   DeepReadonly,
   EffectFunction,
   EffectSpec,
+  EventConsumerMeta,
   MiddlewareFunction,
   MiddlewareInput,
   MiddlewareSpec,
@@ -283,6 +284,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private dedupCount = 0;
 
   /**
+   * Store-owned metadata for registered effects, keyed by the effect function.
+   * Kept **off** the caller's function object: mutating a user-owned function
+   * (the old `fn.__quoMeta`) bled metadata across stores that share a handler
+   * and left it attached after unregister. Cleared on {@link dispose}.
+   *
+   * @internal
+   */
+  private effectMeta = new WeakMap<object, EventConsumerMeta<"effect">>();
+
+  /**
    * Configuration for event deduplication.
    * @internal
    */
@@ -341,18 +352,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       }
     }
 
-    /**
-     * Event dedup cleanup — only needed when content-based dedup is enabled.
-     * When it is off (the default), the processed-event cache stays empty
-     * (identity dedup via `dedupKey` is bounded by lazy size-based pruning), so
-     * no interval is started and the store never keeps the event loop alive
-     * unnecessarily.
-     */
-    if (this.dedupConfig.windowMs > 0) {
-      this.eventCleanupTimer = setInterval(() => {
-        this.pruneProcessedEvents(Date.now());
-      }, 5000);
-    }
+    // Event dedup cleanup runs on a lazily-started interval: it begins the first
+    // time an entry is cached (content dedup OR identity `dedupKey`) and stops
+    // when the cache empties (see ensureCleanupTimer / pruneProcessedEvents).
+    // When no dedup is used the cache stays empty, so no timer is ever started
+    // and the store never keeps the event loop alive unnecessarily.
 
     /**
      * Method bindings
@@ -407,6 +411,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.processedEvents.clear();
     this.effects.clear();
     this.patternEffects.clear();
+    this.effectMeta = new WeakMap();
 
     // Release every subscription and observer. Without this, the closures they
     // hold (React fibers, DevTools sockets, effect handlers) pin the store and
@@ -477,8 +482,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       }
     }
 
-    // Record this event
+    // Record this event and make sure the periodic prune is running (it may not
+    // be — e.g. identity `dedupKey` dedup at windowMs 0 never started it at
+    // construction). The timer stops itself once the cache drains.
     this.processedEvents.set(fp, now);
+    this.ensureCleanupTimer();
 
     // Lazy cleanup if cache is getting large
     if (this.processedEvents.size > this.dedupConfig.maxCacheSize) {
@@ -486,6 +494,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }
 
     return false; // Not a duplicate
+  }
+
+  /**
+   * Starts the periodic prune interval if it isn't already running. Called when
+   * the first entry is cached so the timer's lifetime tracks actual dedup use
+   * (content window or identity `dedupKey`), independent of `dedupWindowMs`.
+   *
+   * @internal
+   */
+  private ensureCleanupTimer(): void {
+    if (this.eventCleanupTimer !== null) return;
+    this.eventCleanupTimer = setInterval(() => {
+      this.pruneProcessedEvents(Date.now());
+    }, 5000);
+    // Never let the cleanup interval by itself keep a Node process alive.
+    (this.eventCleanupTimer as { unref?: () => void }).unref?.();
   }
 
   /**
@@ -505,6 +529,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       if (timestamp < cutoff) {
         this.processedEvents.delete(key);
       }
+    }
+
+    // Once the cache has drained, stop the interval so an idle store doesn't
+    // hold a repeating timer. It restarts on the next cached event.
+    if (this.processedEvents.size === 0 && this.eventCleanupTimer !== null) {
+      clearInterval(this.eventCleanupTimer);
+      this.eventCleanupTimer = null;
     }
   }
 
@@ -762,19 +793,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       return { name: name as string, when };
     });
 
-    // Effects (keyed) — metadata stored on fn.__quoMeta by registerEffect
+    // Effects (keyed) — metadata looked up from the store-owned effectMeta map
     const effects: Array<{ channel: string; type: string; name?: string; description?: string }> = [];
     for (const [key, set] of this.effects) {
       if (set.size === 0) continue;
       const [channel, type] = key.split("::");
       for (const fn of set) {
-        const meta = (fn as any).__quoMeta;
+        const meta = this.effectMeta.get(fn);
         effects.push({ channel, type, name: meta?.name, description: meta?.description });
       }
     }
-    // Effects (pattern-based) — entry is { effect, when }, metadata on effect.__quoMeta
+    // Effects (pattern-based) — entry is { effect, when }; metadata in effectMeta
     for (const entry of this.patternEffects) {
-      const meta = (entry.effect as any).__quoMeta;
+      const meta = this.effectMeta.get(entry.effect);
       effects.push({
         channel: "*",
         type: "*",
@@ -851,6 +882,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * **State Immutability**: If any slices change, a new state object is created via
    * shallow spread. This ensures consistent immutability with {@link forwardEvent}.
    *
+   * **Missing slices**: the snapshot should contain every slice. A slice absent
+   * from `nextPlain` is **retained at its current value** (not blanked to
+   * `undefined`, which would make `getState().<slice>` throw on next access).
+   *
    * @param nextPlain - Plain JS object to become the new state.
    *
    * @internal
@@ -876,6 +911,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     (Object.keys(this.reducers) as Array<R>).forEach((rName) => {
       const prevSlice = prev?.[rName];
       const nextSlice = next?.[rName];
+
+      // A snapshot missing this slice must not blank it out — retain the current
+      // slice (storing `undefined` would make getState().<slice>.x throw later).
+      if (nextSlice === undefined) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(
+            `[yoltra] External state is missing slice "${String(
+              rName,
+            )}"; retaining its current value. Time-travel snapshots should contain all slices.`,
+          );
+        }
+        return;
+      }
 
       // if reference equal, nothing to emit
       if (prevSlice === nextSlice) return;
@@ -1498,9 +1546,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const { effect, meta, when } = spec;
     const unsubs: Array<() => void> = [];
 
-    // Attach metadata if provided
+    // Record metadata in a store-owned map keyed by the effect function, rather
+    // than mutating the caller's function (which would bleed across stores).
     if (meta) {
-      (effect as any).__quoMeta = meta;
+      this.effectMeta.set(effect, meta);
     }
 
     // Check if this is a pattern-based effect (any, channel, channels)

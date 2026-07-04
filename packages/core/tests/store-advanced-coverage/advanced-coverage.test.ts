@@ -58,16 +58,18 @@ describe("Store advanced coverage", () => {
     const store = createStore({
       name: "CoverageStore-dispose",
       reducer: makeBaseReducers(),
-      // Enable content-dedup so the cleanup timer is started (it is gated on
-      // dedup being active); this test verifies dispose tears it down.
       dedupWindowMs: 50,
     });
 
     const anyStore = store as any;
 
-    // sanity: timer exists and we can simulate some processed fingerprints
-    expect(anyStore.eventCleanupTimer).toBeTruthy();
+    // The cleanup timer starts lazily on the first cached event, not at
+    // construction. Simulate a cached fingerprint + start, then verify dispose
+    // tears it down.
+    expect(anyStore.eventCleanupTimer).toBeNull();
     anyStore.processedEvents.set("test::event", Date.now());
+    anyStore.ensureCleanupTimer();
+    expect(anyStore.eventCleanupTimer).toBeTruthy();
     expect(anyStore.processedEvents.size).toBe(1);
 
     store.dispose();
