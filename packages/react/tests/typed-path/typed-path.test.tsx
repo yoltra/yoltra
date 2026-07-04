@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { act, render } from "@testing-library/react";
 
 import type { ReducerSpec } from "@yoltra/core";
@@ -13,8 +13,20 @@ describe("toDottedPath", () => {
     expect(toDottedPath((p: any) => p.a.b.c)).toBe("a.b.c");
   });
 
-  it("returns an empty string for computed (non-path) accessors", () => {
+  it("returns an empty string for computed (non-path) accessors and warns in dev (RX-3)", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     expect(toDottedPath(() => 5)).toBe("");
+    // An empty path silently subscribes to the whole slice — surface it in dev.
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("subscribe to the"));
+    warn.mockRestore();
+  });
+
+  it("throws a clear error when the accessor calls a method (RX-3)", () => {
+    // `p => p.items.map(...)` calls a function inside the recording proxy, which
+    // would otherwise throw an opaque "x is not a function".
+    expect(() => toDottedPath((p: any) => p.items.map((x: any) => x.id))).toThrow(
+      /member chain|method/i,
+    );
   });
 });
 

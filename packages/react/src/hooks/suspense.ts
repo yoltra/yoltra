@@ -17,6 +17,21 @@ type CacheEntry<T> =
   | { status: "pending"; promise: Promise<void>; expiresAt: number | null }
   | { status: "error"; error: any; expiresAt: number | null };
 
+/**
+ * Time-based expiry for a **settled** (`ready`) entry. A non-positive or `null`
+ * `staleTime` means "no time expiry" — the entry is served until it is
+ * invalidated (by a store change on the subscribed path, or an explicit
+ * `invalidate`/`clear`). Only a positive `staleTime` adds a wall-clock bound.
+ *
+ * Critically, `staleTime: 0` (the default) must NOT map to `Date.now()` here:
+ * an entry that expires on the same tick it was created would be re-loaded on
+ * the very next render, throwing a fresh promise each time (infinite suspend).
+ * @internal
+ */
+function computeExpiry(staleTime: number | null): number | null {
+  return staleTime == null || staleTime <= 0 ? null : Date.now() + staleTime;
+}
+
 /** @internal */
 class SuspenseCache {
   private store = new Map<CacheKey, CacheEntry<any>>();
@@ -25,42 +40,34 @@ class SuspenseCache {
     const now = Date.now();
     const entry = this.store.get(key);
 
+    // A ready value is served until it time-expires (staleTime > 0) or is
+    // invalidated. With staleTime 0/null it never time-expires (expiresAt null).
     if (entry && entry.status === "ready" && (entry.expiresAt == null || entry.expiresAt > now)) {
       return entry.value as T;
     }
-    if (
-      entry &&
-      entry.status === "pending" &&
-      (entry.expiresAt == null || entry.expiresAt > now)
-    ) {
+    // A load already in flight: always re-throw the SAME promise until it
+    // settles. Pending entries are never time-expired — otherwise every render
+    // during the load would spawn a fresh load (infinite suspend / request storm).
+    if (entry && entry.status === "pending") {
       throw entry.promise;
     }
-    if (entry && entry.status === "error" && (entry.expiresAt == null || entry.expiresAt > now)) {
+    // A cached error is re-thrown to the nearest error boundary until it is
+    // invalidated (by a store change on the subscribed path, or an explicit
+    // invalidate/clear). Error caching is independent of staleTime.
+    if (entry && entry.status === "error") {
       throw entry.error;
     }
 
     const promise = Promise.resolve()
       .then(load)
       .then((value) => {
-        this.store.set(key, {
-          status: "ready",
-          value,
-          expiresAt: staleTime == null ? null : Date.now() + staleTime,
-        });
+        this.store.set(key, { status: "ready", value, expiresAt: computeExpiry(staleTime) });
       })
       .catch((err) => {
-        this.store.set(key, {
-          status: "error",
-          error: err,
-          expiresAt: staleTime == null ? null : Date.now() + staleTime,
-        });
+        this.store.set(key, { status: "error", error: err, expiresAt: null });
       });
 
-    this.store.set(key, {
-      status: "pending",
-      promise,
-      expiresAt: staleTime == null ? null : Date.now() + staleTime,
-    });
+    this.store.set(key, { status: "pending", promise, expiresAt: null });
     throw promise;
   }
 
@@ -113,7 +120,12 @@ function buildKey(reducer: string, props: string[] | string, extraKey?: string):
 export interface SuspenseAtomicPropOptions<T, S> {
   /** Async loader that receives the value at the path and the full slice. */
   load: (valueAtPath: any, slice: S[keyof S]) => Promise<T> | T;
-  /** Time in ms before the cached value is considered stale (default: 0). */
+  /**
+   * Extra wall-clock TTL (ms) for a resolved value. `0` (the default) or omitted
+   * means the cached value is served until the subscribed path changes or you
+   * invalidate it explicitly; a positive value additionally expires it after that
+   * many ms. Cached errors ignore this and are re-thrown until invalidated.
+   */
   staleTime?: number;
   /** Optional extra key to differentiate cache entries for the same path. */
   key?: string;
@@ -217,7 +229,12 @@ function _useSuspenseAtomicPropImpl<
 export interface SuspenseAtomicPropsOptions<T, S> {
   /** Async loader that receives the full store state. */
   load: (state: S) => Promise<T> | T;
-  /** Time in ms before the cached value is considered stale (default: 0). */
+  /**
+   * Extra wall-clock TTL (ms) for a resolved value. `0` (the default) or omitted
+   * means the cached value is served until the subscribed path changes or you
+   * invalidate it explicitly; a positive value additionally expires it after that
+   * many ms. Cached errors ignore this and are re-thrown until invalidated.
+   */
   staleTime?: number;
   /** Optional extra key to differentiate cache entries. */
   key?: string;

@@ -16,6 +16,7 @@ import type {
 import * as React from "react";
 import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { getAtPath, hasWildcard, normalizePath, specsSignature, toDottedPath } from "../utils/path";
+import { shallowEqual } from "../utils/shallowEqual";
 
 /**
  * Call signature for the typed `useAtomicProp` hook returned by {@link createHooks}.
@@ -153,30 +154,39 @@ export type UseEvent<EM extends EventMapBase, S> = <
 ) => void;
 
 /**
- * Shallow object equality using `Object.is` per-key.
+ * The bundle of fully-typed hooks returned by {@link createHooks} (and, with the
+ * store and provider added, by {@link createYoltra}).
  *
- * Useful as the `isEqual` argument for `useAtomicProp` and `useAtomicProps`
- * when the derived value is a plain object. Also available as a standalone
- * export from `@yoltra/react` via {@link shallowEqual | hooks.shallowEqual}.
+ * Naming this return shape explicitly — rather than letting it be inferred —
+ * keeps `createYoltra`'s emitted `.d.ts` portable: the inferred form would leak
+ * a reference to a non-re-exported internal symbol and trip TS2742 in
+ * `composite`/`declaration` consumers.
  *
- * @example
- * ```ts
- * shallowEqual({ a: 1 }, { a: 1 }); // true
- * shallowEqual({ a: 1 }, { a: 2 }); // false
- * ```
+ * @typeParam R  - Reducer name union.
+ * @typeParam S  - State record keyed by `R`.
+ * @typeParam EM - Event map.
  *
  * @public
  */
-export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T) {
-  if (Object.is(a, b)) return true;
-  if (!a || !b) return false;
-  const ka = Object.keys(a),
-    kb = Object.keys(b);
-  if (ka.length !== kb.length) return false;
-  for (const k of ka) {
-    if (!Object.is(a[k], (b as Record<string, unknown>)[k])) return false;
-  }
-  return true;
+export interface YoltraHooks<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+> {
+  /** Reads the current store from context (falling back to the default store). */
+  useStore: () => StoreInstance<R, S, EM>;
+  /** Returns the store's typed `emit`. */
+  useEmit: () => Emit<EM>;
+  /** Subscribes to a derived value with an optional equality comparator. */
+  useSelector: <T>(selector: (state: DeepReadonly<S>) => T, isEqual?: (a: T, b: T) => boolean) => T;
+  /** Subscribes to a single dotted path (or typed accessor). */
+  useAtomicProp: UseAtomicProp<R, S>;
+  /** Subscribes to several paths and derives a value from the full state. */
+  useAtomicProps: UseAtomicProps<R, S>;
+  /** Runs a handler for a specific `(channel, type)` event. */
+  useEvent: UseEvent<EM, S>;
+  /** Shallow object equality using `Object.is` per-key. */
+  shallowEqual: <T extends Record<string, unknown>>(a: T, b: T) => boolean;
 }
 
 /**
@@ -230,7 +240,7 @@ export function createHooks<
   R extends string,
   S extends Record<R, any>,
   EM extends EventMapBase,
->(StoreContext: React.Context<StoreInstance<R, S, EM> | null>) {
+>(StoreContext: React.Context<StoreInstance<R, S, EM> | null>): YoltraHooks<R, S, EM> {
   function useStore(): StoreInstance<R, S, EM> {
     const ctx = useContext(StoreContext);
     if (!ctx) throw new Error("useStore must be used inside <StoreProvider>");

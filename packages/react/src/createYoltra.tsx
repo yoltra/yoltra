@@ -7,6 +7,8 @@ import {
   type DeepReadonly,
   type EffectSpec,
   type EMFromReducersStrict,
+  type EventMapBase,
+  type EventUnion,
   type MiddlewareFunction,
   type ReducersMapAny,
   type StateFromReducers,
@@ -14,7 +16,28 @@ import {
 } from "@yoltra/core";
 import React, { createContext, type ReactNode } from "react";
 
-import { createHooks } from "./hooks/createHooks";
+import { createHooks, type YoltraHooks } from "./hooks/createHooks";
+
+/**
+ * The value returned by {@link createYoltra}: the created `store`, an optional
+ * `StoreProvider` (plus its raw `StoreContext`), and the full set of typed hooks
+ * from {@link YoltraHooks}.
+ *
+ * @typeParam R  - Reducer name union.
+ * @typeParam S  - State record keyed by `R`.
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export interface Yoltra<R extends string, S extends Record<R, any>, EM extends EventMapBase>
+  extends YoltraHooks<R, S, EM> {
+  /** The store created by this call; the hooks default to it (no Provider needed). */
+  store: StoreInstance<R, S, EM>;
+  /** Raw context carrying the store — usually you only need `StoreProvider`. */
+  StoreContext: React.Context<StoreInstance<R, S, EM> | null>;
+  /** Optional provider to scope a different store instance to a subtree. */
+  StoreProvider: React.FC<{ store?: StoreInstance<R, S, EM>; children: ReactNode }>;
+}
 
 /**
  * One-call setup: create a store and its fully-typed React hooks together.
@@ -60,7 +83,8 @@ export function createYoltra<RM extends ReducersMapAny>(cfg: {
   effects?: Array<EffectSpec<DeepReadonly<StateFromReducers<RM>>, EMFromReducersStrict<RM>>>;
   dedupWindowMs?: number;
   devtools?: { allowReplay?: boolean };
-}) {
+  onEffectError?: (error: unknown, event: EventUnion<EMFromReducersStrict<RM>>) => void;
+}): Yoltra<keyof RM & string, StateFromReducers<RM>, EMFromReducersStrict<RM>> {
   type S = StateFromReducers<RM>;
   type EM = EMFromReducersStrict<RM>;
   type R = keyof RM & string;

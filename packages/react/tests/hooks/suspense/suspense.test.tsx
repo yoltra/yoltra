@@ -204,3 +204,82 @@ describe("useSuspenseAtomicProps", () => {
     expect(totalNode.textContent).toBe("1"); // still 1, now counting the undone item
   });
 });
+
+describe("SuspenseCache.read lifecycle (RX-1)", () => {
+  beforeEach(() => {
+    clearSuspenseCache();
+  });
+
+  it("serves a resolved value at the default staleTime without reloading (no request storm)", async () => {
+    const load = vi.fn(() => "V");
+
+    let thrown: unknown;
+    try {
+      suspenseCache.read("k::ready", load, 0);
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeInstanceOf(Promise);
+    await thrown; // let the load resolve and cache as "ready"
+
+    // At staleTime 0 a ready entry no longer expires on the same tick — repeated
+    // reads return the cached value instead of re-loading every render.
+    expect(suspenseCache.read("k::ready", load, 0)).toBe("V");
+    expect(suspenseCache.read("k::ready", load, 0)).toBe("V");
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-throws the SAME pending promise until it settles (never a fresh load per read)", async () => {
+    const load = vi.fn(() => new Promise<string>(() => {})); // never settles
+
+    let p1: unknown;
+    let p2: unknown;
+    try {
+      suspenseCache.read("k::pending", load, 0);
+    } catch (e) {
+      p1 = e;
+    }
+    try {
+      suspenseCache.read("k::pending", load, 0);
+    } catch (e) {
+      p2 = e;
+    }
+    expect(p1).toBeInstanceOf(Promise);
+    expect(p2).toBe(p1); // identical promise — the second read did not start a new load
+
+    await Promise.resolve(); // flush the one scheduled load microtask
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-throws a cached error until invalidated, independent of staleTime", async () => {
+    const err = new Error("boom");
+    const load = vi.fn(async () => {
+      throw err;
+    });
+
+    let thrown: unknown;
+    try {
+      suspenseCache.read("k::err", load, 0);
+    } catch (e) {
+      thrown = e;
+    }
+    await thrown; // wrapper resolves once the rejection is caught and cached
+
+    // The cached error is re-thrown on every read — staleTime 0 must NOT expire it.
+    expect(() => suspenseCache.read("k::err", load, 0)).toThrow(err);
+    expect(() => suspenseCache.read("k::err", load, 0)).toThrow(err);
+    expect(load).toHaveBeenCalledTimes(1);
+
+    // Invalidation clears the error and the next read retries.
+    suspenseCache.invalidate("k::err");
+    let retry: unknown;
+    try {
+      suspenseCache.read("k::err", load, 0);
+    } catch (e) {
+      retry = e;
+    }
+    expect(retry).toBeInstanceOf(Promise);
+    await retry;
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+});
