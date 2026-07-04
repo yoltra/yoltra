@@ -2,7 +2,7 @@
  * @module @yoltra/react
  */
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useRef, useSyncExternalStore } from "react";
 import type { EventMapBase, StoreInstance, Dotted, WithGlob } from "@yoltra/core";
 
 import { useStore } from "./hooks";
@@ -138,6 +138,12 @@ export interface SuspenseAtomicPropOptions<T, S> {
  * resolved value. While the promise is pending, React Suspense catches it and
  * renders the nearest `<Suspense>` fallback.
  *
+ * @remarks
+ * **Client-only loading.** During server rendering this hook does not suspend
+ * (throwing a promise would crash `renderToString`): `getServerSnapshot` returns
+ * the current value at the path **without** invoking `options.load`. Perform the
+ * actual load on the client.
+ *
  * @typeParam R - Reducer name union.
  * @typeParam S - State record keyed by `R`.
  * @typeParam P - Dotted path within `S[R]`.
@@ -205,17 +211,35 @@ function _useSuspenseAtomicPropImpl<
       });
   }, [store, reducer, path, key]);
 
+  // Keep the latest options in a ref so an inline `options` object doesn't
+  // rebuild getSnapshot every render (RX-5).
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   const getSnapshot = useMemo(() => {
     const isGlob = hasWildcard(path);
     return () => {
       const state = store.getState() as S;
       const slice = state[reducer];
       const val = isGlob ? slice : getAtPath(slice, path);
-      return suspenseCache.read<T>(key, () => options.load(val, slice), options.staleTime ?? 0);
+      const opts = optionsRef.current;
+      return suspenseCache.read<T>(key, () => opts.load(val, slice), opts.staleTime ?? 0);
     };
-  }, [store, reducer, path, key, options]);
+  }, [store, reducer, path, key]);
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  // Server render must NOT suspend — throwing a promise from getServerSnapshot
+  // crashes renderToString. Return the current value at the path without loading
+  // (client-only Suspense loading; see the hook's SSR note).
+  const getServerSnapshot = useMemo(() => {
+    const isGlob = hasWildcard(path);
+    return () => {
+      const state = store.getState() as S;
+      const slice = state[reducer];
+      return (isGlob ? slice : getAtPath(slice, path)) as T;
+    };
+  }, [store, reducer, path]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /**
@@ -246,6 +270,12 @@ export interface SuspenseAtomicPropsOptions<T, S> {
  * Subscribes to multiple dotted paths and calls `options.load` with the full state
  * to produce the resolved value. While the promise is pending, React Suspense
  * renders the nearest `<Suspense>` fallback.
+ *
+ * @remarks
+ * **Client-only loading.** During server rendering this hook does not suspend
+ * (throwing a promise would crash `renderToString`): `getServerSnapshot` uses a
+ * synchronous `options.load` result if one is available, otherwise `undefined`.
+ * Perform the actual load on the client.
  *
  * @typeParam R - Reducer name union.
  * @typeParam S - State record keyed by `R`.
@@ -347,14 +377,25 @@ function _useSuspenseAtomicPropsImpl<R extends string, S extends Record<R, any>,
     };
   }, [store, normalized, key]);
 
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   const getSnapshot = useMemo(() => {
     return () => {
       const state = store.getState() as S;
-      return suspenseCache.read<T>(key, () => options.load(state), options.staleTime ?? 0);
+      const opts = optionsRef.current;
+      return suspenseCache.read<T>(key, () => opts.load(state), opts.staleTime ?? 0);
     };
-  }, [store, key, options]);
+  }, [store, key]);
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  // Server render must NOT suspend. Use a synchronous load result if one is
+  // available; otherwise render `undefined` rather than throwing a promise.
+  const getServerSnapshot = () => {
+    const result = optionsRef.current.load(store.getState() as S);
+    return (result instanceof Promise ? undefined : result) as T;
+  };
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /**

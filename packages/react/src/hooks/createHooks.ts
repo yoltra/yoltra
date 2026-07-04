@@ -14,9 +14,10 @@ import type {
   WithGlob,
 } from "@yoltra/core";
 import * as React from "react";
-import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { getAtPath, hasWildcard, normalizePath, specsSignature, toDottedPath } from "../utils/path";
 import { shallowEqual } from "../utils/shallowEqual";
+import { useStableSnapshot } from "../utils/useStableSnapshot";
 
 /**
  * Call signature for the typed `useAtomicProp` hook returned by {@link createHooks}.
@@ -243,7 +244,16 @@ export function createHooks<
 >(StoreContext: React.Context<StoreInstance<R, S, EM> | null>): YoltraHooks<R, S, EM> {
   function useStore(): StoreInstance<R, S, EM> {
     const ctx = useContext(StoreContext);
-    if (!ctx) throw new Error("useStore must be used inside <StoreProvider>");
+    if (!ctx) {
+      // These hooks come from createHooks(context)/createYoltra. createYoltra
+      // defaults the context to its own store, so this only fires when the
+      // context was created with a `null` default and no StoreProvider supplied
+      // a store above this component.
+      throw new Error(
+        "[yoltra] No store in context. Wrap your tree in <StoreProvider store={...}>, " +
+          "or use the hooks returned by createYoltra (which default to their own store).",
+      );
+    }
     return ctx;
   }
 
@@ -257,13 +267,7 @@ export function createHooks<
   ): T {
     const store = useStore();
     const subscribe = useMemo(() => (notify: () => void) => store.subscribe(notify), [store]);
-    const getSnapshot = useMemo(() => {
-      let last = selector(store.getState());
-      return () => {
-        const next = selector(store.getState());
-        return isEqual(last, next) ? last : (last = next);
-      };
-    }, [store, selector, isEqual]);
+    const getSnapshot = useStableSnapshot(() => selector(store.getState()), isEqual, [store]);
     return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   }
 
@@ -299,21 +303,17 @@ export function createHooks<
       [store, normalizedSpec],
     );
 
-    const getSnapshot = useMemo(() => {
-      const isGlob = hasWildcard(normalizedSpec.property);
-      const read = () => {
+    const isGlob = hasWildcard(normalizedSpec.property);
+    const getSnapshot = useStableSnapshot(
+      () => {
         const full = store.getState() as DeepReadonly<S>;
         const slice = (full as any)[normalizedSpec.reducer];
         const source = isGlob ? slice : getAtPath(slice, normalizedSpec.property);
         return map ? map(source) : source;
-      };
-      const eq = isEqual ?? Object.is;
-      let last = read();
-      return () => {
-        const next = read();
-        return eq(last, next) ? last : (last = next);
-      };
-    }, [store, normalizedSpec, map, isEqual]);
+      },
+      isEqual ?? Object.is,
+      [store, normalizedSpec],
+    );
 
     return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   };
@@ -332,6 +332,14 @@ export function createHooks<
     const versionRef = useRef(0);
     const lastSelRef = useRef<T | undefined>(undefined);
     const lastVerRef = useRef<number>(-1);
+    const hasValueRef = useRef(false);
+
+    // Keep the latest selector/isEqual in refs so passing them inline does not
+    // rebuild getSnapshot (which would drop the memoized value) every render.
+    const selectorRef = useRef(selector);
+    selectorRef.current = selector;
+    const isEqualRef = useRef(isEqual);
+    isEqualRef.current = isEqual;
 
     const normalizedSpecs = useMemo(() => {
       return specs.map((sp) => ({
@@ -359,17 +367,19 @@ export function createHooks<
       [store, normalizedSpecs],
     );
 
-    const getSnapshot = useMemo(() => {
-      return () => {
-        if (lastVerRef.current !== versionRef.current) {
-          const next = selector(store.getState());
-          const prev = lastSelRef.current;
-          if (prev === undefined || !isEqual(prev, next)) lastSelRef.current = next;
-          lastVerRef.current = versionRef.current;
+    const getSnapshot = useCallback(() => {
+      if (lastVerRef.current !== versionRef.current || !hasValueRef.current) {
+        const next = selectorRef.current(store.getState());
+        // Track presence with a boolean so an `undefined` selection still caches
+        // (using `undefined` as "no value yet" would disable the equality cache).
+        if (!hasValueRef.current || !isEqualRef.current(lastSelRef.current as T, next)) {
+          lastSelRef.current = next;
+          hasValueRef.current = true;
         }
-        return lastSelRef.current as T;
-      };
-    }, [store, selector, isEqual]);
+        lastVerRef.current = versionRef.current;
+      }
+      return lastSelRef.current as T;
+    }, [store]);
 
     return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   };

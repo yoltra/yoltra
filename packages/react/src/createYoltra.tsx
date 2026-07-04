@@ -48,6 +48,12 @@ export interface Yoltra<R extends string, S extends Record<R, any>, EM extends E
  * tree in a `<StoreProvider>` is **optional** — use it only to scope a different
  * store instance to a subtree (e.g. a fresh store per test).
  *
+ * **Client-only convenience.** The store created here is a module-level
+ * singleton, and the Suspense hooks share a module-global cache. Do not reuse a
+ * `createYoltra(...)` module across SSR requests — state and cache would bleed
+ * between them. For SSR, create a store per request and scope it with
+ * `StoreProvider`.
+ *
  * @typeParam RM - Reducers map; state shape and event map are inferred from it.
  * @param cfg - The same configuration accepted by {@link createStore}.
  * @returns The `store`, an optional `StoreProvider`, the raw `StoreContext`, and

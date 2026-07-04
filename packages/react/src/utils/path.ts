@@ -72,7 +72,7 @@ function makePathProxy(segments: string[]): unknown {
  *
  * @internal
  */
-export function toDottedPath(accessor: (p: any) => any): string {
+export function toDottedPath(accessor: (p: any) => unknown): string {
   const leaf = accessor(makePathProxy([]));
   const recorded = leaf != null ? (leaf as any)[PATH_SEGMENTS] : undefined;
   const segments: string[] = Array.isArray(recorded) ? recorded : [];
@@ -92,17 +92,18 @@ export function toDottedPath(accessor: (p: any) => any): string {
 }
 
 /**
- * Reads a dotted path from an object; returns `undefined` when a segment is missing.
+ * Reads a dotted path from an object; returns `undefined` when a segment is
+ * missing. The caller may supply the expected value type via `T`.
  * @internal
  */
-export function getAtPath(obj: any, path: string): any {
-  if (!path) return obj;
+export function getAtPath<T = unknown>(obj: unknown, path: string): T {
+  if (!path) return obj as T;
 
-  let cur = obj;
+  let cur: any = obj;
   for (const seg of splitPath(path)) {
-    if (cur == null) return undefined;
+    if (cur == null) return undefined as T;
     cur = cur[seg];
   }
 
-  return cur;
+  return cur as T;
 }

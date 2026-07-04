@@ -13,9 +13,10 @@ import type {
   StoreInstance,
   WithGlob,
 } from "@yoltra/core";
-import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { StoreContext } from "../context/StoreContext";
 import { getAtPath, hasWildcard, normalizePath, specsSignature } from "../utils/path";
+import { useStableSnapshot } from "../utils/useStableSnapshot";
 
 /**
  * Re-export of {@link PathValue} from `@yoltra/core`.
@@ -116,13 +117,11 @@ export function useSelector<S extends Record<any, any>, T>(
 
   const subscribe = useMemo(() => (notify: () => void) => store.subscribe(notify), [store]);
 
-  const getSnapshot = useMemo(() => {
-    let last = selector(store.getState() as DeepReadonly<S>);
-    return () => {
-      const next = selector(store.getState() as DeepReadonly<S>);
-      return isEqual(last, next) ? last : (last = next);
-    };
-  }, [store, selector, isEqual]);
+  const getSnapshot = useStableSnapshot(
+    () => selector(store.getState() as DeepReadonly<S>),
+    isEqual,
+    [store],
+  );
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
@@ -150,21 +149,16 @@ function useAtomicPropImpl<
     [store, normalizedSpec],
   );
 
-  const getSnapshot = useMemo(() => {
-    const isGlob = hasWildcard(normalizedSpec.property);
-    const read = () => {
+  const isGlob = hasWildcard(normalizedSpec.property);
+  const getSnapshot = useStableSnapshot(
+    () => {
       const full = store.getState() as S;
       const slice = (full as any)[normalizedSpec.reducer];
-      const source = isGlob ? slice : getAtPath(slice, normalizedSpec.property);
-      return source;
-    };
-
-    let last = read();
-    return () => {
-      const next = read();
-      return Object.is(last, next) ? last : (last = next);
-    };
-  }, [store, normalizedSpec]);
+      return isGlob ? slice : getAtPath(slice, normalizedSpec.property);
+    },
+    Object.is,
+    [store, normalizedSpec],
+  );
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot) as PathValue<S[R1], P>;
 }
@@ -191,21 +185,17 @@ function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>
     [store, normalizedSpec],
   );
 
-  const getSnapshot = useMemo(() => {
-    const isGlob = hasWildcard(normalizedSpec.property);
-    const read = () => {
+  const isGlob = hasWildcard(normalizedSpec.property);
+  const getSnapshot = useStableSnapshot(
+    () => {
       const full = store.getState() as S;
       const slice = (full as any)[normalizedSpec.reducer];
       const source = isGlob ? slice : getAtPath(slice, normalizedSpec.property);
       return map ? map(source) : (source as unknown as T);
-    };
-
-    let last = read();
-    return () => {
-      const next = read();
-      return isEqual(last, next) ? last : (last = next);
-    };
-  }, [store, normalizedSpec, map, isEqual]);
+    },
+    isEqual,
+    [store, normalizedSpec],
+  );
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot) as any;
 }
@@ -377,6 +367,14 @@ function _useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
   const versionRef = useRef(0);
   const lastSelRef = useRef<T | undefined>(undefined);
   const lastVerRef = useRef<number>(-1);
+  const hasValueRef = useRef(false);
+
+  // Latest selector/isEqual via refs so passing them inline does not rebuild
+  // getSnapshot (which would drop the memoized value) every render.
+  const selectorRef = useRef(selector);
+  selectorRef.current = selector;
+  const isEqualRef = useRef(isEqual);
+  isEqualRef.current = isEqual;
 
   const normalizedSpecs = useMemo(() => {
     return specs.map((sp) => ({
@@ -406,22 +404,22 @@ function _useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
     [store, normalizedSpecs],
   );
 
-  const getSnapshot = useMemo(() => {
-    return () => {
-      if (lastVerRef.current !== versionRef.current) {
-        const next = selector(store.getState() as DeepReadonly<S>);
-        const prev = lastSelRef.current as T | undefined;
+  const getSnapshot = useCallback(() => {
+    if (lastVerRef.current !== versionRef.current || !hasValueRef.current) {
+      const next = selectorRef.current(store.getState() as DeepReadonly<S>);
 
-        if (prev === undefined || !isEqual(prev, next)) {
-          lastSelRef.current = next;
-        }
-
-        lastVerRef.current = versionRef.current;
+      // Track presence with a boolean so an `undefined` selection still caches
+      // (using `undefined` as "no value yet" would disable the equality cache).
+      if (!hasValueRef.current || !isEqualRef.current(lastSelRef.current as T, next)) {
+        lastSelRef.current = next;
+        hasValueRef.current = true;
       }
 
-      return lastSelRef.current as T;
-    };
-  }, [store, selector, isEqual]);
+      lastVerRef.current = versionRef.current;
+    }
+
+    return lastSelRef.current as T;
+  }, [store]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
