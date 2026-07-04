@@ -336,6 +336,21 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
      */
     allowReplay?: boolean;
   };
+
+  /**
+   * Called when an effect throws or its returned promise rejects.
+   *
+   * @remarks
+   * `await emit(...)` **never rejects** on effect failure: the reduce phase has
+   * already committed synchronously, and effects run as independent per-event
+   * tasks. Effect errors are logged to the console and delivered here (when
+   * provided), so this is the single place to observe and route them — e.g.
+   * report to a service or emit a failure event. Other effects still run.
+   *
+   * @param error - The thrown value or rejection reason.
+   * @param event - The event whose effect failed.
+   */
+  onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
 };
 
 /**

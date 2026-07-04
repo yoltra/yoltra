@@ -72,4 +72,39 @@ describe("detectChangedProps", () => {
     // The function must terminate; exact paths are less important here.
     expect(Array.isArray(paths)).toBe(true);
   });
+
+  it("diffs a shared sub-object at sibling paths (no false negative from aliasing)", () => {
+    // The SAME object is referenced from two keys and genuinely changes. Both
+    // sites must be reported — the old pair-tracker dropped the second (CORE-1).
+    const child = { v: 1 };
+    const child2 = { v: 2 };
+
+    const paths = detectChangedProps({ a: child, b: child }, { a: child2, b: child2 }).sort();
+    expect(paths).toEqual(["a.v", "b.v"]);
+  });
+
+  it("diffs a shared object aliased across two arrays", () => {
+    const oc = { v: 1 };
+    const nc = { v: 2 };
+
+    const paths = detectChangedProps({ x: [oc], y: [oc] }, { x: [nc], y: [nc] }).sort();
+    expect(paths).toEqual(["x.0.v", "y.0.v"]);
+  });
+
+  it("treats two NaN values as equal (no spurious change)", () => {
+    expect(detectChangedProps({ a: NaN }, { a: NaN })).toEqual([]);
+    expect(detectChangedProps(NaN, NaN, "n")).toEqual([]);
+    expect(detectChangedProps({ a: NaN }, { a: 1 })).toEqual(["a"]);
+  });
+
+  it("terminates on cycles while still reporting sibling changes", () => {
+    const oc: any = { v: 1 };
+    oc.self = oc;
+    const nc: any = { v: 2 };
+    nc.self = nc;
+
+    // Same cyclic object aliased at two keys, with a real change at each.
+    const paths = detectChangedProps({ a: oc, b: oc }, { a: nc, b: nc }).sort();
+    expect(paths).toEqual(["a.v", "b.v"]);
+  });
 });

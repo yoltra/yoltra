@@ -204,6 +204,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private readonly replayEnabled: boolean;
 
   /**
+   * Optional hook invoked when an effect throws/rejects. See
+   * {@link StoreSpec.onEffectError}. `await emit()` never rejects on effect
+   * failure — this is how callers observe effect errors.
+   */
+  private readonly onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
+
+  /**
    * Pending events awaiting the **synchronous** reduce phase (middleware +
    * reducers + subscribers + coarse listeners). Drained by {@link drainReduce}.
    *
@@ -308,6 +315,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.reducers = {} as Record<R, Reducer<S[R], EM>>;
     this.state = {} as any;
     this.replayEnabled = spec.devtools?.allowReplay ?? false;
+    this.onEffectError = spec.onEffectError;
 
     // Deduplication is OPT-IN. Content-based dedup is OFF by default because it
     // can silently drop legitimate rapid-fire identical events; enable it with
@@ -399,6 +407,20 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.processedEvents.clear();
     this.effects.clear();
     this.patternEffects.clear();
+
+    // Release every subscription and observer. Without this, the closures they
+    // hold (React fibers, DevTools sockets, effect handlers) pin the store and
+    // leak on per-route / SSR / test / HMR stores that create and dispose stores.
+    this.listeners.clear();
+    this.committedEventSubscribers.clear();
+    this.uncommittedEventSubscribers.clear();
+    this.allEventSubscribers.clear();
+    this.instrumentObservers.clear();
+    this.connectorBus.clear();
+    this.reducerBus.clear();
+    this.patternReducers.clear();
+    this.sliceUnsubs.clear();
+    this.changedPathSink = null;
   }
 
   /**
@@ -586,6 +608,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           await h(event, this.getState, this.emit);
         } catch (e) {
           console.error("Effect error:", e);
+          this.onEffectError?.(e, event);
         }
       }
     }
@@ -597,6 +620,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           await effect(event, this.getState, this.emit);
         } catch (e) {
           console.error("Effect error:", e);
+          this.onEffectError?.(e, event);
         }
       }
     }
@@ -1962,6 +1986,7 @@ export function createStore<
   effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
   dedupWindowMs?: number;
   devtools?: { allowReplay?: boolean };
+  onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
 }): StoreInstance<keyof S & string, S, EM>;
 
 /**
@@ -1999,6 +2024,7 @@ export function createStore<RM extends ReducersMapAny>(cfg: {
   effects?: Array<EffectSpec<DeepReadonly<StateFromReducers<RM>>, EMFromReducersStrict<RM>>>;
   dedupWindowMs?: number;
   devtools?: { allowReplay?: boolean };
+  onEffectError?: (error: unknown, event: EventUnion<EMFromReducersStrict<RM>>) => void;
 }): StoreInstance<keyof RM & string, StateFromReducers<RM>, EMFromReducersStrict<RM>>;
 
 export function createStore(cfg: any) {
@@ -2014,6 +2040,7 @@ export function createStore(cfg: any) {
     effects: (cfg.effects ?? []) as any,
     dedupWindowMs: cfg.dedupWindowMs,
     devtools: cfg.devtools,
+    onEffectError: cfg.onEffectError,
   });
 }
 

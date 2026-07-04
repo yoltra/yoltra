@@ -1,0 +1,20 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Fix a fine-grained reactivity bug in change detection: an object referenced from two sibling paths that genuinely changed was reported at only the first path, so components bound to the second path kept rendering stale values. Change detection now tracks only the ancestors on the active recursion path, so legitimate aliasing is fully diffed while cycles still terminate. Also treats two NaN values as equal instead of reporting a spurious change.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Fix a memory leak on store disposal: dispose() now clears all coarse listeners, committed/uncommitted/all event subscribers, instrumentation observers, the connector and reducer buses, pattern reducers, and slice subscriptions, so a disposed store no longer retains references to subscriber closures.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Add an onEffectError hook to createStore and StoreSpec. Effect errors are still logged to the console but can now also be routed to a caller-provided handler that receives the error and the failing event. Documents the contract: await emit() never rejects on effect failure because the reduce phase has already committed synchronously, and effects run as independent per-event tasks so the other effects for that event still run.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 
+import { createStore } from "../../src/store/Store";
 import type { MiddlewareFunction, EffectSpec } from "../../src/types";
-import { makeStore, AppState, AppEvents } from "./support/setupStore";
+import { makeStore, reducerSpec, AppState, AppEvents } from "./support/setupStore";
 
 describe("Store - middleware and effects", () => {
   it("runs middleware in order and allows cancellation", async () => {
@@ -106,6 +107,40 @@ describe("Store - middleware and effects", () => {
 
     expect(calls).toEqual([1]);
     expect(errorSpy).toHaveBeenCalled();
+
+    errorSpy.mockRestore();
+  });
+
+  it("delivers effect errors to onEffectError and still resolves emit() (CORE-3)", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const seen: Array<{ error: unknown; channel: string; type: string }> = [];
+
+    const store = createStore({
+      name: "EffectErrorStore",
+      reducer: { counter: reducerSpec },
+      onEffectError: (error, event) => {
+        seen.push({ error, channel: event.channel, type: event.type });
+      },
+    });
+
+    const boom = new Error("effect boom");
+    store.registerEffect({
+      events: [["ui", "increment"]],
+      effect: async () => {
+        throw boom;
+      },
+    });
+
+    // await emit() must RESOLVE (never reject) even though the effect throws...
+    await expect(store.emit("ui", "increment", 1)).resolves.toBeUndefined();
+
+    // ...and the error must have been delivered to onEffectError with its event,
+    // and still logged to the console (the hook augments, not replaces, logging).
+    expect(seen).toEqual([{ error: boom, channel: "ui", type: "increment" }]);
+    expect(errorSpy).toHaveBeenCalled();
+
+    // The synchronous reduce still committed — effect failure never rolls back state.
+    expect(store.getState().counter.value).toBe(1);
 
     errorSpy.mockRestore();
   });
