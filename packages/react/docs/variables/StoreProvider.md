@@ -8,7 +8,7 @@
 
 > `const` **StoreProvider**: `React.FC`\<\{ `children`: `ReactNode`; `store`: `StoreInstance`\<`any`, `any`, `any`\>; \}\>
 
-Defined in: [react/src/context/StoreProvider.tsx:56](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/context/StoreProvider.tsx#L56)
+Defined in: [react/src/context/StoreProvider.tsx:56](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/context/StoreProvider.tsx#L56)
 
 React provider that places a StoreInstance into [StoreContext](StoreContext.md).
 

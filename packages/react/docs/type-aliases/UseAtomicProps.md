@@ -8,7 +8,7 @@
 
 > **UseAtomicProps**\<`R`, `S`\> = \{\<`R1`, `T`\>(`specs`, `selector`, `isEqual?`): `T`; \<`R1`, `T`\>(`specs`, `selector`, `isEqual?`): `T`; \}
 
-Defined in: react/src/hooks/createHooks.ts:95
+Defined in: [react/src/hooks/createHooks.ts:103](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/createHooks.ts#L103)
 
 Call signature for the typed `useAtomicProps` hook returned by [createHooks](../functions/createHooks.md).
 

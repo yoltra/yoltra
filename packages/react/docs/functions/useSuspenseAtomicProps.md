@@ -10,7 +10,7 @@
 
 > **useSuspenseAtomicProps**\<`R`, `S`, `T`\>(`specs`, `options`): `T`
 
-Defined in: [react/src/hooks/suspense.ts:260](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L260)
+Defined in: [react/src/hooks/suspense.ts:307](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L307)
 
 Suspense-compatible version of `useAtomicProps` that throws a promise while loading.
 
@@ -57,6 +57,13 @@ Loading options (see [SuspenseAtomicPropsOptions](../interfaces/SuspenseAtomicPr
 `T`
 
 The resolved value of type `T`.
+
+### Remarks
+
+**Client-only loading.** During server rendering this hook does not suspend
+(throwing a promise would crash `renderToString`): `getServerSnapshot` uses a
+synchronous `options.load` result if one is available, otherwise `undefined`.
+Perform the actual load on the client.
 
 ### Throws
 
@@ -85,7 +92,7 @@ function Dashboard() {
 
 > **useSuspenseAtomicProps**\<`R`, `S`, `T`\>(`specs`, `options`): `T`
 
-Defined in: [react/src/hooks/suspense.ts:267](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L267)
+Defined in: [react/src/hooks/suspense.ts:314](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L314)
 
 Suspense-compatible version of `useAtomicProps` that throws a promise while loading.
 
@@ -132,6 +139,13 @@ Loading options (see [SuspenseAtomicPropsOptions](../interfaces/SuspenseAtomicPr
 `T`
 
 The resolved value of type `T`.
+
+### Remarks
+
+**Client-only loading.** During server rendering this hook does not suspend
+(throwing a promise would crash `renderToString`): `getServerSnapshot` uses a
+synchronous `options.load` result if one is available, otherwise `undefined`.
+Perform the actual load on the client.
 
 ### Throws
 

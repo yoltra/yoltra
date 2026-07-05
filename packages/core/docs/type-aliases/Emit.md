@@ -6,20 +6,15 @@
 
 # Type Alias: Emit()\<EM\>
 
-> **Emit**\<`EM`\> = \<`C`, `T`\>(`channel`, `type`, `payload`) => `Promise`\<`void`\>
+> **Emit**\<`EM`\> = \<`C`, `T`\>(`channel`, `type`, `payload`, `opts?`) => `Promise`\<`void`\>
 
-Defined in: [types.ts:124](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L124)
-
-Emit function narrowed to the developer's EventMap.
-Returns a Promise that resolves when the event has been fully processed.
+Defined in: [types.ts:142](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L142)
 
 ## Type Parameters
 
 ### EM
 
 `EM` *extends* [`EventMapBase`](EventMapBase.md)
-
-Event map.
 
 ## Type Parameters
 
@@ -45,14 +40,10 @@ Event map.
 
 `EM`\[`C`\]\[`T`\]
 
+### opts?
+
+[`EmitOptions`](../interfaces/EmitOptions.md)
+
 ## Returns
 
 `Promise`\<`void`\>
-
-## Example
-
-```ts
-type EM = { ui: { increment: number } };
-const emit: Emit<EM> = async (channel, type, payload) => { /* ... */ };
-await emit('ui', 'increment', 1);
-```

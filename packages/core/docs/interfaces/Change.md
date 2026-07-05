@@ -6,7 +6,7 @@
 
 # Interface: Change\<V\>
 
-Defined in: [types.ts:102](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L102)
+Defined in: [types.ts:102](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L102)
 
 Generic "old → new" wrapper for fine-grained change notifications.
 Carries the dotted `path` that changed.
@@ -35,7 +35,7 @@ Value type at the changed path.
 
 > **newValue**: `V`
 
-Defined in: [types.ts:104](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L104)
+Defined in: [types.ts:104](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L104)
 
 ***
 
@@ -43,7 +43,7 @@ Defined in: [types.ts:104](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf1
 
 > **oldValue**: `V`
 
-Defined in: [types.ts:103](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L103)
+Defined in: [types.ts:103](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L103)
 
 ***
 
@@ -51,6 +51,6 @@ Defined in: [types.ts:103](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf1
 
 > `optional` **path**: `string`
 
-Defined in: [types.ts:106](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L106)
+Defined in: [types.ts:106](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L106)
 
 Dotted path for fine-grained listeners; e.g., "data.items.0.title"
