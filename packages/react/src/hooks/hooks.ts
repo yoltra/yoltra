@@ -126,43 +126,6 @@ export function useSelector<S extends Record<any, any>, T>(
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-// Strongly-typed implementation for the common case
-function useAtomicPropImpl<
-  R extends string,
-  S extends Record<R, any>,
-  R1 extends R,
-  P extends Dotted<S[R1]>,
->(spec: { reducer: R1; property: P }): PathValue<S[R1], P> {
-  const store = useStore<any, R, S>();
-
-  const normalizedSpec = useMemo(() => {
-    const prop = normalizePath(spec.property);
-    return { reducer: spec.reducer, property: prop } as const;
-  }, [spec.reducer, spec.property]);
-
-  const subscribe = useMemo(
-    () => (notify: () => void) =>
-      store.connect(
-        { reducer: normalizedSpec.reducer, property: normalizedSpec.property },
-        () => notify(),
-      ),
-    [store, normalizedSpec],
-  );
-
-  const isGlob = hasWildcard(normalizedSpec.property);
-  const getSnapshot = useStableSnapshot(
-    () => {
-      const full = store.getState() as S;
-      const slice = (full as any)[normalizedSpec.reducer];
-      return isGlob ? slice : getAtPath(slice, normalizedSpec.property);
-    },
-    Object.is,
-    [store, normalizedSpec],
-  );
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot) as PathValue<S[R1], P>;
-}
-
 /** @internal */
 function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>(
   spec: { reducer: R; property: string },
@@ -299,9 +262,8 @@ export function useAtomicProp<R extends string, S extends Record<R, any>, T = an
   map?: (value: any) => T,
   isEqual: (a: T, b: T) => boolean = Object.is,
 ): T {
-  if (!map && !hasWildcard(spec.property)) {
-    return useAtomicPropImpl<R, S, any, any>(spec) as any;
-  }
+  // One implementation regardless of whether `map` is passed, so toggling `map`
+  // presence between renders never changes the hook call order (Rules of Hooks).
   return _useAtomicPropImpl<R, S, T>(spec, map, isEqual);
 }
 

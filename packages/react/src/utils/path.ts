@@ -18,21 +18,25 @@ export function splitPath(p: string): string[] {
 /**
  * Stable signature for a specs array, for use as a `useMemo` dependency instead
  * of `JSON.stringify` — deterministic and avoids serializing arbitrary values.
- * Reducer names and dotted paths never contain the `:`/`,`/`|` delimiters, so
- * the signature is collision-free for realistic inputs.
+ *
+ * Every segment is **length-prefixed** (`"<len>:<value>"`), so no delimiter
+ * character in a reducer name or path can make two semantically different spec
+ * arrays collide (the array length is encoded too, so `["a"]` and `["a", ""]`
+ * differ).
  * @internal
  */
 export function specsSignature(
   specs: ReadonlyArray<{ reducer: string; property: string | readonly string[] }>,
 ): string {
+  const enc = (s: string) => `${s.length}:${s}`;
   return specs
     .map((s) => {
-      const prop = Array.isArray(s.property)
-        ? (s.property as readonly string[]).join(",")
-        : (s.property as string);
-      return `${s.reducer}:${prop}`;
+      const props = Array.isArray(s.property)
+        ? (s.property as readonly string[])
+        : [s.property as string];
+      return enc(s.reducer) + enc(String(props.length)) + props.map(enc).join("");
     })
-    .join("|");
+    .join("");
 }
 
 const PATH_SEGMENTS = Symbol("yoltra.pathSegments");

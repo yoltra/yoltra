@@ -3,12 +3,12 @@
 # @yoltra/react
 
 > 👉 🇲🇽 Versión en Español&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)&nbsp;
+> &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp;
 
 ![npm downloads](https://badgen.net/npm/dm/@yoltra/react)
 ![License](https://badgen.net/npm/license/@yoltra/react)
 
-**Hooks de React para [yoltra](https://github.com/yoltra/yoltra/blob/main/README.md) con
+**Hooks de React para [yoltra](../../README.md) con
 suscripciones de grano fino por ruta.**
 
 Suscribete a `"items.0.title"` o `"items.*.done"` -- el componente se re-renderiza solo cuando
@@ -386,9 +386,9 @@ function TodoItem({ index }: { index: number }) {
 
 ## Documentacion
 
-- **[README raiz de yoltra](https://github.com/yoltra/yoltra/blob/main/README.md)** --
+- **[README raiz de yoltra](../../README.md)** --
   Descripcion general y configuracion rapida
-- **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)**
+- **[API de @yoltra/core](../core/README.md)**
   -- Store, middleware, efectos, matchers `When`
 - **[Guia de Inicio Rapido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**
   -- Cinco pasos hacia una app funcional

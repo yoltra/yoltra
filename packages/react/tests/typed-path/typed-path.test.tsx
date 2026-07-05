@@ -4,7 +4,34 @@ import { act, render } from "@testing-library/react";
 import type { ReducerSpec } from "@yoltra/core";
 
 import { createYoltra } from "../../src/createYoltra";
-import { toDottedPath } from "../../src/utils/path";
+import { specsSignature, toDottedPath } from "../../src/utils/path";
+
+describe("specsSignature (RX-8)", () => {
+  it("does not collide when delimiter chars appear in a reducer or path", () => {
+    // A naive `${reducer}:${prop}` join collapsed these to the same string;
+    // length-prefixing keeps them distinct.
+    expect(specsSignature([{ reducer: "a", property: "b:c" }])).not.toBe(
+      specsSignature([{ reducer: "a:b", property: "c" }]),
+    );
+    // Array property vs a comma-joined string stay distinct.
+    expect(specsSignature([{ reducer: "a", property: ["b", "c"] }])).not.toBe(
+      specsSignature([{ reducer: "a", property: "b,c" }]),
+    );
+    // Array length is encoded, so ["x"] and ["x", ""] differ.
+    expect(specsSignature([{ reducer: "a", property: ["x"] }])).not.toBe(
+      specsSignature([{ reducer: "a", property: ["x", ""] }]),
+    );
+  });
+
+  it("is stable for identical inputs", () => {
+    const build = () =>
+      specsSignature([
+        { reducer: "todos", property: "items.0.title" },
+        { reducer: "ui", property: ["a", "b"] },
+      ]);
+    expect(build()).toBe(build());
+  });
+});
 
 describe("toDottedPath", () => {
   it("records nested property + index access as a dotted path", () => {
