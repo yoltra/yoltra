@@ -31,6 +31,18 @@ describe("patch-utils", () => {
     it("returns an empty patch set when nothing changed", () => {
       expect(patchesFromChange([], {}, {})).toEqual([]);
     });
+
+    it("escapes ~ and / in path segments per RFC 6902 (DEV-5)", () => {
+      const patches = patchesFromChange(
+        ["weird.a/b", "weird.c~d"],
+        {},
+        { "weird.a/b": 1, "weird.c~d": 2 },
+      );
+      expect(patches).toEqual([
+        { op: "add", path: "/weird/a~1b", value: 1 },
+        { op: "add", path: "/weird/c~0d", value: 2 },
+      ]);
+    });
   });
 
   describe("computePatches", () => {

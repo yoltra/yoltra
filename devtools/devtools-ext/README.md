@@ -2,9 +2,9 @@
 
 # @yoltra/devtools-ext
 
-> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ext/README.es.md)&nbsp;
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
 > | &nbsp; 👉
-> [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ext/README.md)&nbsp;
+> [ 🇺🇸 English Version](./README.md)&nbsp;
 
 **Browser extension for Yoltra DevTools — Chrome and Firefox (Manifest V3).**
 

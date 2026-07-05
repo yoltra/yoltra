@@ -10,6 +10,12 @@
   "type": "module",
   "main": "dist/devtools-cli.esm.js",
   "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/devtools-cli.esm.js"
+    }
+  },
   "bin": {
     "yoltra-devtools": "./bin/devtools-cli.js"
   },

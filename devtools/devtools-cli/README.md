@@ -2,13 +2,13 @@
 
 # @yoltra/devtools-cli
 
-> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-cli/README.es.md)&nbsp;
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
 > |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-cli/README.pt.md)&nbsp;
+> &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp;
 > | &nbsp; 👉
-> [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-cli/README.md)&nbsp;
+> [ 🇺🇸 English Version](./README.md)&nbsp;
 > |
-> &nbsp;[ 🇫🇷 Version française](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-cli/README.fr.md)
+> &nbsp;[ 🇫🇷 Version française](./README.fr.md)
 
 **Terminal UI for Yoltra DevTools — inspect stores from the command line.**
 

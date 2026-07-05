@@ -2,9 +2,9 @@
 
 # @yoltra/devtools-browser-agent
 
-> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/README.es.md)&nbsp;
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
 > | 👉
-> [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/README.md)&nbsp;
+> [ 🇺🇸 English Version](./README.md)&nbsp;
 
 **Browser DevTools agent — connect a Yoltra store to the DevTools hub from the browser.**
 

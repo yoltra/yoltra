@@ -2,9 +2,9 @@
 
 # @yoltra/devtools-storeview
 
-> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/README.es.md)&nbsp;
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
 > | 👉
-> [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/README.md)&nbsp;
+> [ 🇺🇸 English Version](./README.md)&nbsp;
 
 **React DOM UI for Yoltra DevTools — the visual store inspector.**
 

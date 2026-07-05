@@ -2,13 +2,13 @@
 
 # @yoltra/devtools-node-agent
 
-> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/README.es.md)&nbsp;
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
 > |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/README.pt.md)&nbsp;
+> &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp;
 > | &nbsp; 👉
-> [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/README.md)&nbsp;
+> [ 🇺🇸 English Version](./README.md)&nbsp;
 > |
-> &nbsp;[ 🇫🇷 Version française](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/README.fr.md)
+> &nbsp;[ 🇫🇷 Version française](./README.fr.md)
 
 **Node.js DevTools agent — connect a Yoltra store to the DevTools hub from a Node.js process.**
 

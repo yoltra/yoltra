@@ -47,8 +47,12 @@ export function applyPatches<T = unknown>(target: T, patches: JsonPatch[]): T {
     const segments = parsePointer(patch.path);
     switch (patch.op) {
       case "add":
+        // RFC 6902 `add` inserts into arrays (replace only for objects); `replace`
+        // always overwrites. Threading the op keeps array indices correct.
+        result = setAtPath(result, segments, patch.value, true);
+        break;
       case "replace":
-        result = setAtPath(result, segments, patch.value);
+        result = setAtPath(result, segments, patch.value, false);
         break;
       case "remove":
         result = removeAtPath(result, segments);
@@ -97,7 +101,7 @@ function parsePointer(pointer: string): string[] {
  */
 const FORBIDDEN_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
-function setAtPath(obj: any, segments: string[], value: unknown): any {
+function setAtPath(obj: any, segments: string[], value: unknown, insert: boolean): any {
   if (segments.length === 0) return value;
 
   const result = Array.isArray(obj) ? [...obj] : { ...obj };
@@ -107,9 +111,20 @@ function setAtPath(obj: any, segments: string[], value: unknown): any {
   if (FORBIDDEN_KEYS.has(head)) return result;
 
   if (rest.length === 0) {
-    result[head] = value;
+    if (insert && Array.isArray(result)) {
+      // RFC 6902 `add` on an array: insert before `head` (shifting), or append
+      // when `head` is the "-" end-of-array token.
+      const index = head === "-" ? result.length : Number(head);
+      if (Number.isInteger(index) && index >= 0 && index <= result.length) {
+        result.splice(index, 0, value);
+      } else {
+        (result as any)[head] = value; // out-of-range / non-numeric: best-effort set
+      }
+    } else {
+      result[head] = value;
+    }
   } else {
-    result[head] = setAtPath(result[head] ?? {}, rest, value);
+    result[head] = setAtPath(result[head] ?? {}, rest, value, insert);
   }
 
   return result;

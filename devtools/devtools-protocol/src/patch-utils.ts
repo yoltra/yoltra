@@ -74,7 +74,7 @@ export function computePatches(
 ): JsonPatch[] {
   const patches: JsonPatch[] = [];
   for (const dottedPath of changedPaths) {
-    const pointer = "/" + dottedPath.replace(/\./g, "/");
+    const pointer = toJsonPointer(dottedPath);
     const oldVal = getAtPath(prevState, dottedPath);
     const newVal = getAtPath(nextState, dottedPath);
 
@@ -96,8 +96,9 @@ export function computePatches(
  * @remarks
  * This is the preferred bridge now that the core reports exact changed paths and
  * values per event — no full-state diff or clone is required. Op is chosen per
- * path the same way as {@link computePatches}. Assumes property names do not
- * contain `/` or `~` (safe for Yoltra state shapes).
+ * path the same way as {@link computePatches}. Keys containing `/` or `~` are
+ * escaped per RFC 6902; a key containing `.` cannot be represented by a dotted
+ * path (documented limitation of the dotted-path bridge).
  *
  * @param changedPaths - Dotted leaf paths that changed (slice-prefixed).
  * @param prevValues - Old value at each changed path, keyed by path.
@@ -113,7 +114,7 @@ export function patchesFromChange(
 ): JsonPatch[] {
   const patches: JsonPatch[] = [];
   for (const dottedPath of changedPaths) {
-    const pointer = "/" + dottedPath.replace(/\./g, "/");
+    const pointer = toJsonPointer(dottedPath);
     const oldVal = prevValues[dottedPath];
     const newVal = nextValues[dottedPath];
 
@@ -126,4 +127,22 @@ export function patchesFromChange(
     }
   }
   return patches;
+}
+
+/**
+ * Converts a dotted leaf path to an RFC 6902 JSON Pointer, escaping `~` as `~0`
+ * and `/` as `~1` in each segment (in that order). Dotted paths split on `.`,
+ * so a key containing a literal `.` cannot be represented — a known limitation
+ * of the dotted-path bridge.
+ *
+ * @internal
+ */
+function toJsonPointer(dottedPath: string): string {
+  return (
+    "/" +
+    dottedPath
+      .split(".")
+      .map((seg) => seg.replace(/~/g, "~0").replace(/\//g, "~1"))
+      .join("/")
+  );
 }

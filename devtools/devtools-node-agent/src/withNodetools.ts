@@ -280,7 +280,11 @@ export function withNodetools<
 
     if (isSampledOut(info.event.channel, info.event.type)) return;
 
-    snapshotVersion++;
+    // Only a committed event advances the state version — it carries patches. A
+    // vetoed event is logged with committed:false and no bump, so time-travel
+    // reconstruction stays correlated (DEV-7). Wire ordering is preserved by the
+    // event log's array insertion order, not by this version.
+    if (info.committed) snapshotVersion++;
     const storeEvent: StoreEvent = {
       type: "STORE_EVENT",
       ...baseMsg(),
