@@ -3,7 +3,7 @@
 # @yoltra/core
 
 > 👉 🇲🇽 Versión en Español&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)&nbsp;
+> &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp;
 
 ![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
 ![License](https://badgen.net/npm/license/@yoltra/core)
@@ -11,7 +11,7 @@
 **Contenedor de estado orientado a eventos, agnostico de framework, con suscripciones de grano
 fino por ruta.**
 
-`@yoltra/core` es la base de [yoltra](https://github.com/yoltra/yoltra/blob/main/README.md).
+`@yoltra/core` es la base de [yoltra](../../README.md).
 Proporciona el store, el pipeline de eventos, middleware, efectos y el sistema de suscripciones
 `connect()`. Cero dependencias de framework.
 
@@ -445,9 +445,9 @@ store.registerEffect({
 
 ## Documentacion
 
-- **[README raiz de yoltra](https://github.com/yoltra/yoltra/blob/main/README.md)** --
+- **[README raiz de yoltra](../../README.md)** --
   Descripcion general y configuracion rapida
-- **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** --
+- **[@yoltra/react](../react/README.md)** --
   Hooks de React y Suspense
 - **[Guia de Inicio Rapido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**
   -- Cinco pasos hacia una app funcional
@@ -471,7 +471,7 @@ store.registerEffect({
 
 ## Contribuir
 
-- [Raiz del Monorepo](https://github.com/yoltra/yoltra/blob/main/README.md)
+- [Raiz del Monorepo](../../README.md)
 - [Guia de Contribucion](https://github.com/yoltra/yoltra/blob/main/CONTRIBUTING.md)
 
 ---

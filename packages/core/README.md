@@ -2,7 +2,7 @@
 
 # @yoltra/core
 
-> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/packages/core/README.es.md)&nbsp;
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
 > | &nbsp; 👉 🇺🇸 English Version
 
 ![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
@@ -11,7 +11,7 @@
 **Framework-agnostic event-driven state container with fine-grained path subscriptions.**
 
 `@yoltra/core` is the foundation of
-[yoltra](https://github.com/yoltra/yoltra/blob/main/README.md). It provides the store, event
+[yoltra](../../README.md). It provides the store, event
 pipeline, middleware, effects, and the `connect()` subscription system. Zero framework
 dependencies.
 
@@ -439,9 +439,9 @@ store.registerEffect({
 
 ## Documentation
 
-- **[yoltra Root README](https://github.com/yoltra/yoltra/blob/main/README.md)** — Overview and
+- **[yoltra Root README](../../README.md)** — Overview and
   quick start
-- **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** —
+- **[@yoltra/react](../react/README.md)** —
   React hooks and Suspense
 - **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**
   — Five steps to a working app
@@ -465,7 +465,7 @@ store.registerEffect({
 
 ## Contributing
 
-- [Monorepo Root](https://github.com/yoltra/yoltra/blob/main/README.md)
+- [Monorepo Root](../../README.md)
 - [Contributing Guide](https://github.com/yoltra/yoltra/blob/main/CONTRIBUTING.md)
 
 ---

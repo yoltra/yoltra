@@ -307,48 +307,35 @@ export class LooseEventBus<C extends string = string, T extends string = string,
     const pSegs = this.splitPath(pattern);
     const sSegs = this.splitPath(path);
 
-    let i = 0; // pattern idx
-    let j = 0; // subject idx
+    // Iterative segment glob with backtracking — no per-suffix recursion or
+    // string re-joining. `*` matches exactly one segment; `**` matches zero or
+    // more. Standard wildcard algorithm (`*`≈`?`, `**`≈`*`).
+    let i = 0; // pattern index
+    let j = 0; // subject index
+    let star = -1; // pSegs index of the most recent '**' seen
+    let matchIdx = 0; // sSegs index captured when that '**' was seen
 
-    while (i < pSegs.length && j < sSegs.length) {
-      const token = pSegs[i];
-
-      if (token === "**") {
-        // trailing '**' matches the rest
-        if (i === pSegs.length - 1) return true;
-
-        // collapse consecutive '**'
-        const rest = pSegs.slice(i).filter((t) => t !== "**");
-        if (rest.length === 0) return true; // all **
-
-        // try to align the next non-** token at any suffix position
-        for (let k = j; k <= sSegs.length; k++) {
-          if (this.matchPattern(pSegs.slice(i + 1).join("."), sSegs.slice(k).join("."))) {
-            return true;
-          }
-        }
-        return false;
-      }
-
-      if (token === "*" || token === sSegs[j]) {
+    while (j < sSegs.length) {
+      if (i < pSegs.length && (pSegs[i] === "*" || pSegs[i] === sSegs[j])) {
         i++;
         j++;
-        continue;
+      } else if (i < pSegs.length && pSegs[i] === "**") {
+        // '**' initially absorbs zero segments; remember it for backtracking.
+        star = i;
+        matchIdx = j;
+        i++;
+      } else if (star !== -1) {
+        // Backtrack: let the last '**' absorb one more subject segment.
+        i = star + 1;
+        j = ++matchIdx;
+      } else {
+        return false;
       }
-
-      return false;
     }
 
-    // Subject consumed. Remaining pattern tokens must be only '**'
-    if (j === sSegs.length) {
-      for (; i < pSegs.length; i++) {
-        if (pSegs[i] !== "**") return false;
-      }
-      return true;
-    }
-
-    // Subject remains but pattern exhausted (unless last was '**', handled above)
-    return false;
+    // Any leftover pattern tokens must all be '**' (each matching zero segments).
+    while (i < pSegs.length && pSegs[i] === "**") i++;
+    return i === pSegs.length;
   }
 
   /**
