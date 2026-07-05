@@ -1,0 +1,30 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "The Suspense hooks no longer throw a promise during server rendering (which crashed renderToString). getServerSnapshot returns the current value at the path without loading (single) or a synchronous load result if available otherwise undefined (multi). Documented that createYoltra's singleton store and the module Suspense cache are client-only; for SSR create a store per request and scope it with StoreProvider.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/react",
+      "comment": "getSnapshot for useSelector, useAtomicProp, useAtomicProps, and the Suspense hooks is now stable across renders even when map/selector/isEqual/options are passed inline (the common case). The latest closures are read from refs via a shared useStableSnapshot helper, so the memoized value is no longer discarded every render.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/react",
+      "comment": "useAtomicProps now tracks whether it has a cached value with a boolean flag instead of using undefined as a no-value sentinel, so a selector that legitimately returns undefined still uses the equality cache.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/react",
+      "comment": "useStore now throws a clearer error when no store is in context, explaining that the hooks from createYoltra default to their own store and that StoreProvider is only needed to supply or scope a different one.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/react",
+      "comment": "Tightened internal any types: getAtPath is now generic over the returned value type (unknown by default) taking unknown input, and toDottedPath's accessor returns unknown. shallowEqual was already narrowed to Record of unknown.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

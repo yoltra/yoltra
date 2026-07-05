@@ -1,14 +1,14 @@
 import Image from "next/image";
 
 import { ThemeName } from "@/state/types";
-import { useAtomicProp, useEmit } from "@/state/hooks";
+import { useAtomicProp, useEmit } from "@/state/yoltra";
 
 import yoltraLogo from "../assets/logo.svg";
 import yoltraLogoDark from "../assets/logo-dark.svg";
 
 export const Header = () => {
   const emit = useEmit();
-  const selectedTheme = useAtomicProp({ reducer: "theme", property: "resolved" });
+  const selectedTheme = useAtomicProp("theme", (s) => s.resolved);
 
 
   const setTheme = (t: ThemeName) => {

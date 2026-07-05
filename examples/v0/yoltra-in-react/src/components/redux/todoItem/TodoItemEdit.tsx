@@ -1,6 +1,5 @@
 import type React from "react";
 import { type ChangeEvent } from "react";
-import { Card, Input, Select, Space, Typography } from "antd";
 import { SaveOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 
@@ -29,22 +28,6 @@ export const TodoItemEdit: React.FC<iTodoItemEditProps> = ({ id, onSave }) => {
   const handleStatusSelectionChange = ({ target }: ChangeEvent<HTMLSelectElement>) => {
     setTodoStatus(id, target.value as unknown as eTodoStatus);
   };
-
-  let todoTextMarkup = <Typography.Text>{data?.category}: {data?.title}</Typography.Text>;
-  if (data?.status === eTodoStatus.Complete) {
-    todoTextMarkup = (
-      <Typography.Text type={"secondary"}>
-        {data?.category}: {data?.title}
-      </Typography.Text>
-    );
-  }
-  if (data?.status === eTodoStatus.Canceled) {
-    todoTextMarkup = (
-      <Typography.Text type={"warning"}>
-        {data?.category}: {data?.title}
-      </Typography.Text>
-    );
-  }
 
   return (
     <div className="todo-card">

@@ -8,7 +8,7 @@
 
 > **StoreSpec**\<`R`, `S`, `EM`\> = `object`
 
-Defined in: [types.ts:227](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L227)
+Defined in: [types.ts:284](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L284)
 
 Store configuration object passed to the [Store](../classes/Store.md) constructor or [createStore](../functions/createStore.md).
 
@@ -59,18 +59,22 @@ Event map.
 
 > `optional` **dedupWindowMs**: `number`
 
-Defined in: [types.ts:261](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L261)
+Defined in: [types.ts:322](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L322)
 
-Time window in milliseconds for event deduplication.
-Events with identical fingerprints (channel + type + serialized payload)
-within this window are considered duplicates and skipped.
+Time window in milliseconds for **content-based** event deduplication.
+When greater than 0, events with identical fingerprints
+(channel + type + serialized payload) within this window are treated as
+duplicates and skipped.
 
-This helps prevent double-firing in React Strict Mode.
+**Off by default.** Content-based dedup can silently drop legitimate
+rapid-fire identical events (double-clicks, repeated `+1`, sliders emitting
+the same value), so it is opt-in. To safely coalesce a *specific* re-fired
+emit (e.g. React Strict Mode), prefer the per-emit [EmitOptions.dedupKey](../interfaces/EmitOptions.md#dedupkey).
 
 #### Default
 
 ```ts
-50 in development, 100 in production
+0 (disabled)
 ```
 
 ***
@@ -79,7 +83,7 @@ This helps prevent double-firing in React Strict Mode.
 
 > `optional` **devtools**: `object`
 
-Defined in: [types.ts:269](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L269)
+Defined in: [types.ts:330](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L330)
 
 DevTools configuration options.
 
@@ -106,7 +110,7 @@ These options control runtime DevTools capabilities such as event replay.
 
 > `optional` **effects**: [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:250](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L250)
+Defined in: [types.ts:307](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L307)
 
 Optional side-effect handlers registered at construction time.
 Runs after reducers for every propagated event.
@@ -117,7 +121,7 @@ Runs after reducers for every propagated event.
 
 > `optional` **middleware**: [`MiddlewareInput`](MiddlewareInput.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:244](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L244)
+Defined in: [types.ts:301](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L301)
 
 Middleware chain executed before reducers/effects.
 Accepts either functions (legacy) or MiddlewareSpec objects (recommended).
@@ -129,9 +133,45 @@ If any middleware returns false (or resolves to false), the event will not propa
 
 > **name**: `string`
 
-Defined in: [types.ts:231](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L231)
+Defined in: [types.ts:288](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L288)
 
 Store name (used by DevTools to identify the instance).
+
+***
+
+### onEffectError()?
+
+> `optional` **onEffectError**: (`error`, `event`) => `void`
+
+Defined in: [types.ts:353](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L353)
+
+Called when an effect throws or its returned promise rejects.
+
+#### Parameters
+
+##### error
+
+`unknown`
+
+The thrown value or rejection reason.
+
+##### event
+
+[`EventUnion`](EventUnion.md)\<`EM`\>
+
+The event whose effect failed.
+
+#### Returns
+
+`void`
+
+#### Remarks
+
+`await emit(...)` **never rejects** on effect failure: the reduce phase has
+already committed synchronously, and effects run as independent per-event
+tasks. Effect errors are logged to the console and delivered here (when
+provided), so this is the single place to observe and route them — e.g.
+report to a service or emit a failure event. Other effects still run.
 
 ***
 
@@ -139,7 +179,7 @@ Store name (used by DevTools to identify the instance).
 
 > **reducer**: `Record`\<`R`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
 
-Defined in: [types.ts:237](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L237)
+Defined in: [types.ts:294](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L294)
 
 Map of slice name → reducer spec.
 Each entry declares initial state, the reducer function, and the event targeting.

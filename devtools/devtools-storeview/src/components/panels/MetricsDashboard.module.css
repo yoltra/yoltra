@@ -1,0 +1,104 @@
+/* ─── Outer container ────────────────────────────────────────────────────────── */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--devtools-spacing-xl);
+  padding: var(--devtools-spacing-xl);
+  overflow-y: auto;
+  height: 100%;
+}
+
+.loading,
+.empty {
+  padding: var(--devtools-spacing-lg);
+  color: var(--devtools-fg-muted);
+}
+
+/* ─── Section ────────────────────────────────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--devtools-spacing-md);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: baseline;
+  gap: var(--devtools-spacing-sm);
+  padding-bottom: var(--devtools-spacing-sm);
+  border-bottom: 1px solid var(--devtools-border);
+}
+
+.sectionTitle {
+  font-size: var(--devtools-font-size-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--devtools-fg-secondary);
+}
+
+.sectionNote {
+  font-size: var(--devtools-font-size-sm);
+  color: var(--devtools-fg-muted);
+}
+
+/* ─── Card grid ──────────────────────────────────────────────────────────────── */
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--devtools-spacing-md);
+}
+
+/* ─── Card ───────────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--devtools-bg-secondary);
+  border: 1px solid var(--devtools-border);
+  border-left: 3px solid var(--devtools-border);
+  border-radius: var(--devtools-radius);
+  padding: var(--devtools-spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--devtools-spacing-xs);
+}
+
+/* Left-border accent colours per section. */
+.cardLive {
+  border-left-color: var(--devtools-success);
+}
+
+.cardArch {
+  border-left-color: var(--devtools-info);
+}
+
+.cardUnavailable {
+  border-left-color: var(--devtools-border);
+  opacity: 0.55;
+}
+
+/* ─── Card content ───────────────────────────────────────────────────────────── */
+
+.metricLabel {
+  font-size: var(--devtools-font-size-sm);
+  color: var(--devtools-fg-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metricValue {
+  font-size: 20px;
+  font-family: var(--devtools-font-mono);
+  color: var(--devtools-fg);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.metricNote {
+  font-size: var(--devtools-font-size-sm);
+  color: var(--devtools-fg-muted);
+  font-style: italic;
+  margin-top: 1px;
+}

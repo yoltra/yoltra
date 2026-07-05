@@ -15,6 +15,7 @@ import type {
   DeepReadonly,
   EffectFunction,
   EffectSpec,
+  EventConsumerMeta,
   MiddlewareFunction,
   MiddlewareInput,
   MiddlewareSpec,
@@ -26,12 +27,52 @@ import type {
   Unsubscribe,
   EMFromReducersStrict,
   Emit,
+  EmitOptions,
+  InstrumentationObserver,
+  InstrumentedEvent,
   EventPhase,
   EventSubscriptionHandler,
   NarrowedEventHandler,
   When,
 } from "../types";
 import { freezeState } from "../utils/immutability";
+
+/**
+ * Deep-freezes a value **in development only**, returning it untouched in
+ * production.
+ *
+ * @remarks
+ * Deep-freezing is a dev-time guard against accidental state mutation; in
+ * production it is pure overhead. Because {@link freezeState} freezes in place
+ * and early-exits on already-frozen nodes, freezing a structurally-shared value
+ * touches only the **newly-created** nodes — O(change), not O(state size). This
+ * is why the write path does **not** deep-clone before freezing.
+ *
+ * @internal
+ */
+function freezeInDev<T>(value: T): DeepReadonly<T> {
+  return process.env.NODE_ENV === "production"
+    ? (value as unknown as DeepReadonly<T>)
+    : freezeState(value);
+}
+
+/**
+ * Default window (ms) for identity-based dedup via {@link EmitOptions.dedupKey}
+ * when content-based dedup (`dedupWindowMs`) is disabled. Large enough to absorb
+ * a synchronous re-fire (e.g. React Strict Mode's mount → unmount → mount),
+ * small enough not to swallow genuine user repeats.
+ */
+const DEFAULT_DEDUP_KEY_WINDOW_MS = 100;
+
+/**
+ * High-resolution monotonic clock in milliseconds for instrumentation timing;
+ * falls back to `Date.now()` where `performance` is unavailable.
+ */
+const now = (): number =>
+  typeof performance !== "undefined" && typeof performance.now === "function"
+    ? performance.now()
+    : Date.now();
+
 export class Store<EM extends EventMapBase, R extends string, S extends Record<R, any>>
   implements StoreInstance<R, S, EM> {
   /**
@@ -164,19 +205,56 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private readonly replayEnabled: boolean;
 
   /**
-   * FIFO event queue for serialized emission.
-   *
-   * @internal
+   * Optional hook invoked when an effect throws/rejects. See
+   * {@link StoreSpec.onEffectError}. `await emit()` never rejects on effect
+   * failure — this is how callers observe effect errors.
    */
-  private readonly eventQueue: Array<{ channel: string; type: string; payload: any; id: string }> =
-    [];
+  private readonly onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
 
   /**
-   * Re-entrancy guard while draining the queue.
+   * Pending events awaiting the **synchronous** reduce phase (middleware +
+   * reducers + subscribers + coarse listeners). Drained by {@link drainReduce}.
    *
    * @internal
    */
-  private isProcessingQueue = false;
+  private readonly reduceQueue: Array<{
+    channel: string;
+    type: string;
+    payload: any;
+    id: string;
+    resolve: () => void;
+  }> = [];
+
+  /**
+   * Re-entrancy guard for the synchronous reduce phase.
+   *
+   * @internal
+   */
+  private isReducing = false;
+
+  /**
+   * Registered instrumentation observers (DevTools seam). See {@link instrument}.
+   *
+   * @internal
+   */
+  private readonly instrumentObservers = new Set<InstrumentationObserver<EM>>();
+
+  /**
+   * Scratch array collecting slice-prefixed changed leaf paths during an
+   * instrumented reduce. Set by {@link drainReduce} while observers are active;
+   * appended to by {@link forwardEvent}. `null` when not instrumenting.
+   *
+   * @internal
+   */
+  private changedPathSink: string[] | null = null;
+
+  /**
+   * Count of effect tasks currently in flight; surfaced as queue depth by
+   * {@link __devtoolsIntrospect}.
+   *
+   * @internal
+   */
+  private inFlightEffects = 0;
 
   /**
    * Tracks processed events by fingerprint with timestamps for TTL-based deduplication.
@@ -195,6 +273,25 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private readonly processedEvents = new Map<string, number>();
+
+  /**
+   * Lifetime count of events suppressed by the deduplication cache.
+   * Exposed via {@link __devtoolsIntrospect} so the DevTools agent can
+   * surface it in the STORE_METRICS response without further core changes.
+   *
+   * @internal
+   */
+  private dedupCount = 0;
+
+  /**
+   * Store-owned metadata for registered effects, keyed by the effect function.
+   * Kept **off** the caller's function object: mutating a user-owned function
+   * (the old `fn.__quoMeta`) bled metadata across stores that share a handler
+   * and left it attached after unregister. Cleared on {@link dispose}.
+   *
+   * @internal
+   */
+  private effectMeta = new WeakMap<object, EventConsumerMeta<"effect">>();
 
   /**
    * Configuration for event deduplication.
@@ -229,11 +326,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.reducers = {} as Record<R, Reducer<S[R], EM>>;
     this.state = {} as any;
     this.replayEnabled = spec.devtools?.allowReplay ?? false;
+    this.onEffectError = spec.onEffectError;
 
-    // Initialize dedup config with optional user override
-    const defaultWindowMs = process.env.NODE_ENV === "production" ? 100 : 50;
+    // Deduplication is OPT-IN. Content-based dedup is OFF by default because it
+    // can silently drop legitimate rapid-fire identical events; enable it with
+    // `dedupWindowMs > 0`, or use per-emit `dedupKey` for identity-based dedup.
     this.dedupConfig = {
-      windowMs: spec.dedupWindowMs ?? defaultWindowMs,
+      windowMs: spec.dedupWindowMs ?? 0,
       maxCacheSize: 1000,
     };
 
@@ -253,12 +352,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       }
     }
 
-    /**
-     * Event dedup cleanup (run every 5 seconds to prune expired entries)
-     */
-    this.eventCleanupTimer = setInterval(() => {
-      this.pruneProcessedEvents(Date.now());
-    }, 5000);
+    // Event dedup cleanup runs on a lazily-started interval: it begins the first
+    // time an entry is cached (content dedup OR identity `dedupKey`) and stops
+    // when the cache empties (see ensureCleanupTimer / pruneProcessedEvents).
+    // When no dedup is used the cache stays empty, so no timer is ever started
+    // and the store never keeps the event loop alive unnecessarily.
 
     /**
      * Method bindings
@@ -313,6 +411,21 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.processedEvents.clear();
     this.effects.clear();
     this.patternEffects.clear();
+    this.effectMeta = new WeakMap();
+
+    // Release every subscription and observer. Without this, the closures they
+    // hold (React fibers, DevTools sockets, effect handlers) pin the store and
+    // leak on per-route / SSR / test / HMR stores that create and dispose stores.
+    this.listeners.clear();
+    this.committedEventSubscribers.clear();
+    this.uncommittedEventSubscribers.clear();
+    this.allEventSubscribers.clear();
+    this.instrumentObservers.clear();
+    this.connectorBus.clear();
+    this.reducerBus.clear();
+    this.patternReducers.clear();
+    this.sliceUnsubs.clear();
+    this.changedPathSink = null;
   }
 
   /**
@@ -357,19 +470,23 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
-  private shouldDedupe(fp: string): boolean {
+  private shouldDedupe(fp: string, windowMs: number): boolean {
     const now = Date.now();
     const existing = this.processedEvents.get(fp);
 
     if (existing !== undefined) {
       // Check if within dedup window
-      if (now - existing < this.dedupConfig.windowMs) {
+      if (now - existing < windowMs) {
+        this.dedupCount++;
         return true; // Duplicate, skip
       }
     }
 
-    // Record this event
+    // Record this event and make sure the periodic prune is running (it may not
+    // be — e.g. identity `dedupKey` dedup at windowMs 0 never started it at
+    // construction). The timer stops itself once the cache drains.
     this.processedEvents.set(fp, now);
+    this.ensureCleanupTimer();
 
     // Lazy cleanup if cache is getting large
     if (this.processedEvents.size > this.dedupConfig.maxCacheSize) {
@@ -380,6 +497,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
+   * Starts the periodic prune interval if it isn't already running. Called when
+   * the first entry is cached so the timer's lifetime tracks actual dedup use
+   * (content window or identity `dedupKey`), independent of `dedupWindowMs`.
+   *
+   * @internal
+   */
+  private ensureCleanupTimer(): void {
+    if (this.eventCleanupTimer !== null) return;
+    this.eventCleanupTimer = setInterval(() => {
+      this.pruneProcessedEvents(Date.now());
+    }, 5000);
+    // Never let the cleanup interval by itself keep a Node process alive.
+    (this.eventCleanupTimer as { unref?: () => void }).unref?.();
+  }
+
+  /**
    * Removes expired entries from the processed events cache.
    *
    * @param now - Current timestamp.
@@ -387,12 +520,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private pruneProcessedEvents(now: number): void {
-    const cutoff = now - this.dedupConfig.windowMs * 2; // Keep 2x window for safety
+    // Keep 2x the largest window in play (content window or the keyed-dedup
+    // default) so entries aren't evicted before their dedup window elapses.
+    const effectiveWindow = Math.max(this.dedupConfig.windowMs, DEFAULT_DEDUP_KEY_WINDOW_MS);
+    const cutoff = now - effectiveWindow * 2;
 
     for (const [key, timestamp] of this.processedEvents) {
       if (timestamp < cutoff) {
         this.processedEvents.delete(key);
       }
+    }
+
+    // Once the cache has drained, stop the interval so an idle store doesn't
+    // hold a repeating timer. It restarts on the next cached event.
+    if (this.processedEvents.size === 0 && this.eventCleanupTimer !== null) {
+      clearInterval(this.eventCleanupTimer);
+      this.eventCleanupTimer = null;
     }
   }
 
@@ -496,6 +639,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           await h(event, this.getState, this.emit);
         } catch (e) {
           console.error("Effect error:", e);
+          this.onEffectError?.(e, event);
         }
       }
     }
@@ -507,6 +651,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           await effect(event, this.getState, this.emit);
         } catch (e) {
           console.error("Effect error:", e);
+          this.onEffectError?.(e, event);
         }
       }
     }
@@ -522,10 +667,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @param phase - The phase ('committed' or 'uncommitted').
    * @internal
    */
-  private async notifyEventSubscribers(
+  private notifyEventSubscribers(
     event: EventUnion<EM>,
     phase: "committed" | "uncommitted",
-  ): Promise<void> {
+  ): void {
     const key = `${String(event.channel)}::${String(event.type)}`;
 
     // Notify phase-specific subscribers
@@ -536,25 +681,35 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const phaseSet = phaseMap.get(key);
 
     if (phaseSet?.size) {
-      for (const handler of [...phaseSet]) {
-        try {
-          await handler(event, this.getState, this.emit, phase);
-        } catch (e) {
-          console.error("Event subscription error:", e);
-        }
-      }
+      for (const handler of [...phaseSet]) this.invokeEventSubscriber(handler, event, phase);
     }
 
     // Notify 'all' subscribers
     const allSet = this.allEventSubscribers.get(key);
     if (allSet?.size) {
-      for (const handler of [...allSet]) {
-        try {
-          await handler(event, this.getState, this.emit, phase);
-        } catch (e) {
-          console.error("Event subscription error:", e);
-        }
+      for (const handler of [...allSet]) this.invokeEventSubscriber(handler, event, phase);
+    }
+  }
+
+  /**
+   * Invokes a single event-subscription handler **fire-and-forget**: synchronous
+   * throws and async rejections are logged but never block the emit pipeline.
+   * Event subscribers are notifications, not part of the committed reduce result.
+   *
+   * @internal
+   */
+  private invokeEventSubscriber(
+    handler: EventSubscriptionHandler<DeepReadonly<S>, EM>,
+    event: EventUnion<EM>,
+    phase: "committed" | "uncommitted",
+  ): void {
+    try {
+      const result = handler(event, this.getState, this.emit, phase) as unknown;
+      if (result && typeof (result as Promise<unknown>).then === "function") {
+        (result as Promise<unknown>).catch((e) => console.error("Event subscription error:", e));
       }
+    } catch (e) {
+      console.error("Event subscription error:", e);
     }
   }
 
@@ -591,9 +746,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // if nothing actually changed at the leaves, treat as a no-op
     if (leafPaths.length === 0) return false;
 
-    // freeze & commit new slice WITH NEW STATE REFERENCE (shallow clone)
-    const frozen = freezeState(structuredClone(next)) as DeepReadonly<S[R]>;
+    // Commit the new slice under a NEW top-level state reference (shallow spread).
+    // No deep clone: the reducer already returned a fresh `next` (purity contract),
+    // so structural sharing is preserved and freezeInDev only touches new nodes.
+    const frozen = freezeInDev(next) as DeepReadonly<S[R]>;
     this.state = { ...this.state, [rName]: frozen } as DeepReadonly<S>;
+
+    // Record slice-prefixed changed leaf paths for any active instrumentation
+    // (lets DevTools agents build precise patches without re-diffing state).
+    if (this.changedPathSink) {
+      for (const p of leafPaths) {
+        this.changedPathSink.push(p ? `${rName as string}.${p}` : (rName as string));
+      }
+    }
 
     // emit deep + ancestor paths once each
     const toEmit = new Set<string>();
@@ -628,19 +793,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       return { name: name as string, when };
     });
 
-    // Effects (keyed) — metadata stored on fn.__quoMeta by registerEffect
+    // Effects (keyed) — metadata looked up from the store-owned effectMeta map
     const effects: Array<{ channel: string; type: string; name?: string; description?: string }> = [];
     for (const [key, set] of this.effects) {
       if (set.size === 0) continue;
       const [channel, type] = key.split("::");
       for (const fn of set) {
-        const meta = (fn as any).__quoMeta;
+        const meta = this.effectMeta.get(fn);
         effects.push({ channel, type, name: meta?.name, description: meta?.description });
       }
     }
-    // Effects (pattern-based) — entry is { effect, when }, metadata on effect.__quoMeta
+    // Effects (pattern-based) — entry is { effect, when }; metadata in effectMeta
     for (const entry of this.patternEffects) {
-      const meta = (entry.effect as any).__quoMeta;
+      const meta = this.effectMeta.get(entry.effect);
       effects.push({
         channel: "*",
         type: "*",
@@ -698,7 +863,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // Coarse subscribers count
     const coarse = this.listeners.size;
 
-    return { reducers, effects, middleware, atomic, event, coarse };
+    return {
+      reducers,
+      effects,
+      middleware,
+      atomic,
+      event,
+      coarse,
+      dedupHits: this.dedupCount,
+      queueDepth: this.reduceQueue.length + this.inFlightEffects,
+    };
   }
 
   /**
@@ -708,11 +882,26 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * **State Immutability**: If any slices change, a new state object is created via
    * shallow spread. This ensures consistent immutability with {@link forwardEvent}.
    *
+   * **Missing slices**: the snapshot should contain every slice. A slice absent
+   * from `nextPlain` is **retained at its current value** (not blanked to
+   * `undefined`, which would make `getState().<slice>` throw on next access).
+   *
    * @param nextPlain - Plain JS object to become the new state.
    *
    * @internal
    */
-  private __applyExternalState(nextPlain: any) {
+  public __applyExternalState(nextPlain: any) {
+    // Gate on the same runtime flag as __replayEvents: time-travel replaces the
+    // whole state tree, so it must stay off unless the app opted in via
+    // createStore({ devtools: { allowReplay: true } }). Enforced here at the
+    // seam so a devtools agent (or a client driving it) cannot bypass it.
+    if (!this.replayEnabled) {
+      console.warn(
+        "[yoltra] External state apply (time-travel) is disabled. Enable it with createStore({ devtools: { allowReplay: true } })",
+      );
+      return;
+    }
+
     const prev = this.state as any;
     const next = nextPlain;
 
@@ -723,13 +912,25 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       const prevSlice = prev?.[rName];
       const nextSlice = next?.[rName];
 
+      // A snapshot missing this slice must not blank it out — retain the current
+      // slice (storing `undefined` would make getState().<slice>.x throw later).
+      if (nextSlice === undefined) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(
+            `[yoltra] External state is missing slice "${String(
+              rName,
+            )}"; retaining its current value. Time-travel snapshots should contain all slices.`,
+          );
+        }
+        return;
+      }
+
       // if reference equal, nothing to emit
       if (prevSlice === nextSlice) return;
 
-      // freeze the incoming slice before storing
-      const frozenNextSlice = freezeState(structuredClone(nextSlice)) as DeepReadonly<
-        S[typeof rName]
-      >;
+      // freeze the incoming slice before storing (dev-only; no deep clone — the
+      // external snapshot is freshly deserialized and owned by the store)
+      const frozenNextSlice = freezeInDev(nextSlice) as DeepReadonly<S[typeof rName]>;
       newState[rName] = frozenNextSlice;
       anyChanged = true;
 
@@ -820,12 +1021,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * Emits a typed event `(channel, type, payload)`.
    * Events are queued and processed **sequentially** (FIFO).
    *
-   * **Pipeline per event:**
-   * 1. **Deduplication check** - Skip if event ID already processed (React Strict Mode safety)
-   * 2. **Middleware** - Pre-reducer hooks; may cancel by returning `false`
-   * 3. **Reducers** - Synchronous state updates via internal event bus
-   * 4. **Effects** - Async side-effects keyed by `(channel, type)` for O(1) lookup
-   * 5. **Coarse subscribers** - External store subscribers (only if state changed)
+   * **Pipeline per event:** the *reduce phase* (steps 1-4) runs **synchronously**,
+   * so `getState()` reflects the change as soon as `emit()` returns; the *effect
+   * phase* (step 5) runs afterwards, asynchronously.
+   * 1. **Deduplication** (opt-in) - Skip when content-dedup is enabled (`dedupWindowMs > 0`) or a matching `dedupKey` recurs; off by default
+   * 2. **Middleware** (sync) - Pre-reducer hooks; may cancel by returning `false`
+   * 3. **Reducers** (sync) - state updates + fine-grained path notifications
+   * 4. **Subscribers + coarse** (sync) - event subscribers (fire-and-forget) then coarse listeners (only if state changed)
+   * 5. **Effects** (async) - side-effects keyed by `(channel, type)`; the returned promise resolves once they complete
    *
    * **Change Detection**: Uses reference equality (`===`) on `this.state` to determine
    * if any slice changed. Works because {@link forwardEvent} creates a new state reference
@@ -836,7 +1039,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @param channel - Channel name.
    * @param type - Event type name.
    * @param payload - Payload typed as `EM[C][T]`.
-   * @returns A promise that resolves when the event has finished processing.
+   * @param opts - Optional per-emit options (e.g. `dedupKey` for identity-based dedup).
+   * @returns A promise that resolves once this event's effects have finished.
+   * State is already updated synchronously before `emit()` returns.
    *
    * @example Basic usage
    * ```ts
@@ -859,113 +1064,230 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     channel: C,
     type: T,
     payload: EM[C][T],
+    opts?: EmitOptions,
   ): Promise<void> {
-    // Generate fingerprint for content-based deduplication
-    const fp = this.fingerprint(channel as string, type as string, payload);
-
-    // Check for duplicate within time window (React Strict Mode safety)
-    if (this.shouldDedupe(fp)) {
-      return; // Skip duplicate
+    // Deduplication is OPT-IN (see EmitOptions / StoreSpec.dedupWindowMs).
+    // Content-based dedup runs only when `dedupWindowMs > 0`; identity-based
+    // dedup runs when an explicit `dedupKey` is supplied. By default neither is
+    // active, so legitimate rapid-fire identical events are never silently dropped.
+    const dedupKey = opts?.dedupKey;
+    const contentWindow = this.dedupConfig.windowMs;
+    if (contentWindow > 0 || dedupKey !== undefined) {
+      const windowMs =
+        dedupKey !== undefined && contentWindow <= 0 ? DEFAULT_DEDUP_KEY_WINDOW_MS : contentWindow;
+      const fp =
+        dedupKey !== undefined
+          ? `${channel}::${type}::#${dedupKey}`
+          : this.fingerprint(channel as string, type as string, payload);
+      if (this.shouldDedupe(fp, windowMs)) {
+        return; // Skip duplicate
+      }
     }
 
-    // Generate unique ID for this event instance
+    // Assign a unique id and a completion deferred, resolved after this event's
+    // effects run. Reducers run synchronously (see drainReduce), so state is
+    // already updated before emit() returns; the returned promise tracks the
+    // async effect phase for `await emit(...)`.
     const id = crypto.randomUUID();
+    let resolve!: () => void;
+    const done = new Promise<void>((r) => {
+      resolve = r;
+    });
 
-    /**
-     * enqueue always
-     */
-    this.eventQueue.push({
+    this.reduceQueue.push({
       channel: channel as string,
       type: type as string,
       payload,
       id,
+      resolve,
     });
 
-    if (this.isProcessingQueue) return;
+    // Synchronous reduce phase (drains re-entrant emits too), then async effects.
+    this.drainReduce();
 
-    this.isProcessingQueue = true;
+    return done;
+  }
+
+  /**
+   * Drains the reduce queue **synchronously**. For each event it runs middleware,
+   * reducers, event subscribers, and coarse listeners in the same tick, so
+   * `getState()` reflects the change the moment {@link emit} returns. Re-entrant
+   * emits (from middleware or subscribers) are appended and drained in the same
+   * pass — preserving FIFO order without interleaving reducers. Each committed
+   * event's effects then run in an independent task (see {@link runEventEffects}).
+   *
+   * @internal
+   */
+  private drainReduce(): void {
+    if (this.isReducing) return;
+    this.isReducing = true;
     try {
-      while (this.eventQueue.length) {
-        const { channel, type, payload, id } = this.eventQueue.shift()!;
+      while (this.reduceQueue.length > 0) {
+        const { channel, type, payload, id, resolve } = this.reduceQueue.shift()!;
+        const event = { channel, type, payload, id } as EventUnion<EM>;
 
-        const event = { channel, type, payload, id } as Event<EM, C, T>;
-        let propagate = true;
+        // Instrumentation: capture prev state, collect changed paths, and time
+        // the synchronous reduce — all skipped entirely when no observers.
+        const instrumenting = this.instrumentObservers.size > 0;
+        const prevState = instrumenting ? this.state : undefined;
+        const sink: string[] = [];
+        if (instrumenting) this.changedPathSink = sink;
+        const t0 = instrumenting ? now() : 0;
 
-        /**
-         * middleware - supports both raw functions and MiddlewareSpec objects
-         */
-        for (const mwInput of this.middleware) {
-          // Get the `when` matcher for this middleware
-          const when = this.getMiddlewareWhen(mwInput);
-
-          // Skip middleware that doesn't match this event
-          if (!this.matchesWhen(when, event as EventUnion<EM>)) {
-            continue;
-          }
-
-          // Extract the actual middleware function
-          const mw = this.getMiddlewareFunction(mwInput);
-
-          try {
-            const ok = await mw(this.state, event as EventUnion<EM>, this.emit);
-            if (!ok) {
-              propagate = false;
-              break;
-            }
-          } catch (err) {
-            console.error("Middleware error:", err);
-            propagate = false;
-            break;
-          }
+        let committed = false;
+        try {
+          committed = this.applyEventSync(event);
+        } catch (err) {
+          console.error("Emit reduce error:", err);
+        } finally {
+          if (instrumenting) this.changedPathSink = null;
         }
 
-        if (!propagate) {
-          // Notify uncommitted event subscribers (event rejected by middleware)
-          await this.notifyEventSubscribers(event as any, "uncommitted");
-
-          continue;
+        if (instrumenting) {
+          this.emitInstrumentation(
+            event,
+            committed,
+            sink,
+            prevState as DeepReadonly<S>,
+            now() - t0,
+          );
         }
 
-        /**
-         * Reducers - track if any slice changed via reference equality
-         */
-        const stateBefore = this.state;
-
-        // 1. Call key-based reducers via reducerBus
-        this.reducerBus.emit(channel as any, type as any, payload);
-
-        // 2. Call pattern-based reducers (runtime matching)
-        for (const [sliceName, when] of this.patternReducers) {
-          if (this.matchesWhen(when, event as EventUnion<EM>)) {
-            this.forwardEvent(sliceName, event as any);
-          }
-        }
-
-        const stateAfter = this.state;
-        const anySliceChanged = stateBefore !== stateAfter;
-
-        /**
-         * Committed event subscribers (after reducers, before effects)
-         */
-        await this.notifyEventSubscribers(event as any, "committed");
-
-        /**
-         * Effects (keyed lookup, async)
-         */
-        await this.notifyEffects(event as any);
-
-        /**
-         * Coarse subscribers (ONCE per event, only if state changed)
-         */
-        if (anySliceChanged) {
-          this.listeners.forEach((l) => l());
-        }
-
+        // Run this event's effects as an independent task and resolve its
+        // completion deferred when they finish. Independent per-event tasks
+        // (rather than one shared serialized loop) let an effect `await` a
+        // re-entrant emit without deadlocking.
+        void this.runEventEffects(event, committed, resolve);
       }
-    } catch (err) {
-      console.error("Emit queue error:", err);
     } finally {
-      this.isProcessingQueue = false;
+      this.isReducing = false;
+    }
+  }
+
+  /**
+   * Runs the **synchronous** part of the pipeline for a single event: middleware
+   * (may veto), key- and pattern-based reducers, committed/uncommitted event
+   * subscribers (fire-and-forget), and coarse listeners.
+   *
+   * @returns `true` if the event was committed (passed middleware), `false` if a
+   * middleware vetoed it.
+   *
+   * @internal
+   */
+  private applyEventSync(event: EventUnion<EM>): boolean {
+    // Middleware (synchronous). Return false to veto; async work belongs in effects.
+    for (const mwInput of this.middleware) {
+      const when = this.getMiddlewareWhen(mwInput);
+      if (!this.matchesWhen(when, event)) continue;
+      const mw = this.getMiddlewareFunction(mwInput);
+      let ok: boolean;
+      try {
+        ok = mw(this.state, event, this.emit);
+      } catch (err) {
+        console.error("Middleware error:", err);
+        ok = false;
+      }
+      if (!ok) {
+        // Rejected by middleware — notify uncommitted subscribers, do not commit.
+        this.notifyEventSubscribers(event, "uncommitted");
+        return false;
+      }
+    }
+
+    // Reducers — track whether any slice changed via reference equality.
+    const stateBefore = this.state;
+    this.reducerBus.emit(event.channel as any, event.type as any, event.payload as any);
+    for (const [sliceName, when] of this.patternReducers) {
+      if (this.matchesWhen(when, event)) {
+        this.forwardEvent(sliceName, event as any);
+      }
+    }
+    const changed = stateBefore !== this.state;
+
+    // Committed event subscribers (fire-and-forget), then coarse listeners.
+    this.notifyEventSubscribers(event, "committed");
+    if (changed) {
+      this.listeners.forEach((l) => l());
+    }
+    return true;
+  }
+
+  /**
+   * Runs a single committed event's effects as an **independent async task**,
+   * then resolves that event's completion deferred so `await emit(...)` settles
+   * once its effects finish. Per-event tasks (rather than one shared serialized
+   * loop) let an effect `await` a re-entrant emit without deadlocking.
+   *
+   * @internal
+   */
+  private async runEventEffects(
+    event: EventUnion<EM>,
+    committed: boolean,
+    resolve: () => void,
+  ): Promise<void> {
+    this.inFlightEffects++;
+    try {
+      if (committed) await this.notifyEffects(event);
+    } catch (err) {
+      console.error("Effect error:", err);
+    } finally {
+      this.inFlightEffects--;
+      resolve();
+    }
+  }
+
+  /**
+   * Registers an instrumentation observer. See {@link StoreInstance.instrument}.
+   *
+   * @public
+   */
+  public instrument(observer: InstrumentationObserver<EM>): Unsubscribe {
+    this.instrumentObservers.add(observer);
+    return () => {
+      this.instrumentObservers.delete(observer);
+    };
+  }
+
+  /**
+   * Builds an {@link InstrumentedEvent} from the reduce result and notifies
+   * observers. `changedPaths` are the exact slice-prefixed leaf paths recorded
+   * by {@link forwardEvent} during this reduce, so DevTools patches need no
+   * re-diff.
+   *
+   * @internal
+   */
+  private emitInstrumentation(
+    event: EventUnion<EM>,
+    committed: boolean,
+    changedPaths: string[],
+    prevState: DeepReadonly<S>,
+    reduceTimeMs: number,
+  ): void {
+    const prevValues: Record<string, unknown> = {};
+    const nextValues: Record<string, unknown> = {};
+    for (const path of changedPaths) {
+      prevValues[path] = this.getAtPath(prevState, path);
+      nextValues[path] = this.getAtPath(this.state, path);
+    }
+    const info: InstrumentedEvent<EM> = {
+      event: {
+        id: event.id,
+        channel: event.channel as string,
+        type: event.type as string,
+        payload: event.payload,
+      },
+      committed,
+      changedPaths,
+      prevValues,
+      nextValues,
+      reduceTimeMs,
+    };
+    for (const observer of [...this.instrumentObservers]) {
+      try {
+        observer(info);
+      } catch (e) {
+        console.error("Instrumentation observer error:", e);
+      }
     }
   }
 
@@ -1224,9 +1546,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const { effect, meta, when } = spec;
     const unsubs: Array<() => void> = [];
 
-    // Attach metadata if provided
+    // Record metadata in a store-owned map keyed by the effect function, rather
+    // than mutating the caller's function (which would bleed across stores).
     if (meta) {
-      (effect as any).__quoMeta = meta;
+      this.effectMeta.set(effect, meta);
     }
 
     // Check if this is a pattern-based effect (any, channel, channels)
@@ -1476,7 +1799,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     // Initialize state unless preserving an existing value
     if (!opts.preserveState || (this.state as any)[rName] === undefined) {
-      (this.state as any)[rName] = freezeState(structuredClone(state));
+      // Clone the user-provided initial state once so the store owns an
+      // independent copy; freeze is dev-only.
+      (this.state as any)[rName] = freezeInDev(structuredClone(state));
     }
 
     // Check if this is a pattern-based reducer (any, channel, channels)
@@ -1710,6 +2035,7 @@ export function createStore<
   effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
   dedupWindowMs?: number;
   devtools?: { allowReplay?: boolean };
+  onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
 }): StoreInstance<keyof S & string, S, EM>;
 
 /**
@@ -1747,6 +2073,7 @@ export function createStore<RM extends ReducersMapAny>(cfg: {
   effects?: Array<EffectSpec<DeepReadonly<StateFromReducers<RM>>, EMFromReducersStrict<RM>>>;
   dedupWindowMs?: number;
   devtools?: { allowReplay?: boolean };
+  onEffectError?: (error: unknown, event: EventUnion<EMFromReducersStrict<RM>>) => void;
 }): StoreInstance<keyof RM & string, StateFromReducers<RM>, EMFromReducersStrict<RM>>;
 
 export function createStore(cfg: any) {
@@ -1762,6 +2089,7 @@ export function createStore(cfg: any) {
     effects: (cfg.effects ?? []) as any,
     dedupWindowMs: cfg.dedupWindowMs,
     devtools: cfg.devtools,
+    onEffectError: cfg.onEffectError,
   });
 }
 

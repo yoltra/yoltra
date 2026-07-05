@@ -13,9 +13,10 @@ import type {
   StoreInstance,
   WithGlob,
 } from "@yoltra/core";
-import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { StoreContext } from "../context/StoreContext";
-import { getAtPath, hasWildcard, normalizePath } from "../utils/path";
+import { getAtPath, hasWildcard, normalizePath, specsSignature } from "../utils/path";
+import { useStableSnapshot } from "../utils/useStableSnapshot";
 
 /**
  * Re-export of {@link PathValue} from `@yoltra/core`.
@@ -86,35 +87,11 @@ export function useEmit<EM extends EventMapBase>(): Emit<EM> {
   return useStore<EM, any, any>().emit;
 }
 
-/**
- * Shallow object equality using `Object.is` per-key.
- *
- * Useful as the `isEqual` argument for `useAtomicProp` and `useAtomicProps`
- * when the derived value is a plain object. Also available from the object
- * returned by {@link createHooks}.
- *
- * @example
- * ```ts
- * shallowEqual({ a: 1 }, { a: 1 }); // true
- * shallowEqual({ a: 1 }, { a: 2 }); // false
- * ```
- *
- * @public
- */
-export function shallowEqual<T extends Record<string, any>>(a: T, b: T) {
-  if (Object.is(a, b)) return true;
-  if (!a || !b) return false;
-
-  const ka = Object.keys(a),
-    kb = Object.keys(b);
-  if (ka.length !== kb.length) return false;
-
-  for (const k of ka) {
-    if (!Object.is(a[k], (b as any)[k])) return false;
-  }
-
-  return true;
-}
+// `shallowEqual` is single-sourced in `../utils/shallowEqual` and re-exported
+// here so both the public barrel (`@yoltra/react`) and the object returned by
+// `createHooks`/`createYoltra` reference the same symbol (avoids a TS2742
+// non-portable-type leak in `createYoltra`'s inferred return type).
+export { shallowEqual } from "../utils/shallowEqual";
 
 /**
  * Selects a derived value from the store using an external-store subscription.
@@ -140,57 +117,13 @@ export function useSelector<S extends Record<any, any>, T>(
 
   const subscribe = useMemo(() => (notify: () => void) => store.subscribe(notify), [store]);
 
-  const getSnapshot = useMemo(() => {
-    let last = selector(store.getState() as DeepReadonly<S>);
-    return () => {
-      const next = selector(store.getState() as DeepReadonly<S>);
-      return isEqual(last, next) ? last : (last = next);
-    };
-  }, [store, selector, isEqual]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
-// Strongly-typed implementation for the common case
-function useAtomicPropImpl<
-  R extends string,
-  S extends Record<R, any>,
-  R1 extends R,
-  P extends Dotted<S[R1]>,
->(spec: { reducer: R1; property: P }): PathValue<S[R1], P> {
-  const store = useStore<any, R, S>();
-
-  const normalizedSpec = useMemo(() => {
-    const prop = normalizePath(spec.property);
-    return { reducer: spec.reducer, property: prop } as const;
-  }, [spec.reducer, spec.property]);
-
-  const subscribe = useMemo(
-    () => (notify: () => void) =>
-      store.connect(
-        { reducer: normalizedSpec.reducer, property: normalizedSpec.property },
-        () => notify(),
-      ),
-    [store, normalizedSpec],
+  const getSnapshot = useStableSnapshot(
+    () => selector(store.getState() as DeepReadonly<S>),
+    isEqual,
+    [store],
   );
 
-  const getSnapshot = useMemo(() => {
-    const isGlob = hasWildcard(normalizedSpec.property);
-    const read = () => {
-      const full = store.getState() as S;
-      const slice = (full as any)[normalizedSpec.reducer];
-      const source = isGlob ? slice : getAtPath(slice, normalizedSpec.property);
-      return source;
-    };
-
-    let last = read();
-    return () => {
-      const next = read();
-      return Object.is(last, next) ? last : (last = next);
-    };
-  }, [store, normalizedSpec]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot) as PathValue<S[R1], P>;
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 /** @internal */
@@ -215,21 +148,17 @@ function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>
     [store, normalizedSpec],
   );
 
-  const getSnapshot = useMemo(() => {
-    const isGlob = hasWildcard(normalizedSpec.property);
-    const read = () => {
+  const isGlob = hasWildcard(normalizedSpec.property);
+  const getSnapshot = useStableSnapshot(
+    () => {
       const full = store.getState() as S;
       const slice = (full as any)[normalizedSpec.reducer];
       const source = isGlob ? slice : getAtPath(slice, normalizedSpec.property);
       return map ? map(source) : (source as unknown as T);
-    };
-
-    let last = read();
-    return () => {
-      const next = read();
-      return isEqual(last, next) ? last : (last = next);
-    };
-  }, [store, normalizedSpec, map, isEqual]);
+    },
+    isEqual,
+    [store, normalizedSpec],
+  );
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot) as any;
 }
@@ -333,9 +262,8 @@ export function useAtomicProp<R extends string, S extends Record<R, any>, T = an
   map?: (value: any) => T,
   isEqual: (a: T, b: T) => boolean = Object.is,
 ): T {
-  if (!map && !hasWildcard(spec.property)) {
-    return useAtomicPropImpl<R, S, any, any>(spec) as any;
-  }
+  // One implementation regardless of whether `map` is passed, so toggling `map`
+  // presence between renders never changes the hook call order (Rules of Hooks).
   return _useAtomicPropImpl<R, S, T>(spec, map, isEqual);
 }
 
@@ -401,6 +329,14 @@ function _useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
   const versionRef = useRef(0);
   const lastSelRef = useRef<T | undefined>(undefined);
   const lastVerRef = useRef<number>(-1);
+  const hasValueRef = useRef(false);
+
+  // Latest selector/isEqual via refs so passing them inline does not rebuild
+  // getSnapshot (which would drop the memoized value) every render.
+  const selectorRef = useRef(selector);
+  selectorRef.current = selector;
+  const isEqualRef = useRef(isEqual);
+  isEqualRef.current = isEqual;
 
   const normalizedSpecs = useMemo(() => {
     return specs.map((sp) => ({
@@ -409,7 +345,7 @@ function _useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
         ? (sp.property as readonly string[]).map((p) => normalizePath(p as string))
         : normalizePath(sp.property as string),
     }));
-  }, [JSON.stringify(specs)]);
+  }, [specsSignature(specs)]);
 
   const subscribe = useMemo(
     () => (notify: () => void) => {
@@ -430,22 +366,22 @@ function _useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
     [store, normalizedSpecs],
   );
 
-  const getSnapshot = useMemo(() => {
-    return () => {
-      if (lastVerRef.current !== versionRef.current) {
-        const next = selector(store.getState() as DeepReadonly<S>);
-        const prev = lastSelRef.current as T | undefined;
+  const getSnapshot = useCallback(() => {
+    if (lastVerRef.current !== versionRef.current || !hasValueRef.current) {
+      const next = selectorRef.current(store.getState() as DeepReadonly<S>);
 
-        if (prev === undefined || !isEqual(prev, next)) {
-          lastSelRef.current = next;
-        }
-
-        lastVerRef.current = versionRef.current;
+      // Track presence with a boolean so an `undefined` selection still caches
+      // (using `undefined` as "no value yet" would disable the equality cache).
+      if (!hasValueRef.current || !isEqualRef.current(lastSelRef.current as T, next)) {
+        lastSelRef.current = next;
+        hasValueRef.current = true;
       }
 
-      return lastSelRef.current as T;
-    };
-  }, [store, selector, isEqual]);
+      lastVerRef.current = versionRef.current;
+    }
+
+    return lastSelRef.current as T;
+  }, [store]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

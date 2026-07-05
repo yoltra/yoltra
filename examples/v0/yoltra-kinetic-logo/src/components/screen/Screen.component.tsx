@@ -1,6 +1,6 @@
 import { useRef } from "react";
 
-import { useEmit, useAtomicProp } from "../../state/hooks";
+import { useEmit, useAtomicProp } from "../../state/yoltra";
 import { eventToSvgUserCoords } from "../../utils";
 import { PixelDot } from "./items/dot/Dot.component";
 
@@ -22,9 +22,10 @@ export const Screen = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const emit = useEmit();
 
-  const { height, width } = useAtomicProp({ reducer: "pixel", property: "size" });
-  const isEnabled = useAtomicProp({ reducer: "pixel", property: "enabled" });
-  const count = useAtomicProp({ reducer: "pixel", property: "count" });
+  // Typed accessors — each re-renders only when that exact leaf changes.
+  const { height, width } = useAtomicProp("pixel", (s) => s.size);
+  const isEnabled = useAtomicProp("pixel", (s) => s.enabled);
+  const count = useAtomicProp("pixel", (s) => s.count);
 
   const handlePointer = (event: React.PointerEvent<SVGSVGElement>) => {
     if (!isEnabled || !svgRef.current) return;

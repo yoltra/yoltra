@@ -1,0 +1,69 @@
+# ------------------------------
+# OS & Editors
+# ------------------------------
+.DS_Store
+Thumbs.db
+*.sw?
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# ------------------------------
+# Logs
+# ------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------
+# Dependencies
+# ------------------------------
+node_modules/
+
+# ------------------------------
+# Build artifacts
+# ------------------------------
+dist/
+dist-ssr/
+build/
+out/
+# local publish tarballs
+*.tgz
+
+# ------------------------------
+# Test artifacts
+# ------------------------------
+coverage/
+coverage-final.json
+.nyc_output/
+
+# ------------------------------
+# TypeScript
+# ------------------------------
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# ------------------------------
+# Vite / Vitest caches
+# (Vite also caches in node_modules/.vite which is covered by node_modules/)
+# ------------------------------
+.vite/
+.vitest/
+
+# ------------------------------
+# Env files (keep examples)
+# ------------------------------
+.env
+.env.*
+!.env.example
+
+# ------------------------------
+# Rush (when working standalone)
+# ------------------------------
+.rush/
+.rush/temp/
+rush-logs

@@ -4,249 +4,171 @@
 
 > 👉 English &nbsp;|&nbsp; [🇲🇽 Español](../es/RELEASE_GUIDE.md)
 
-This guide covers the complete release cycle: bumping versions, testing against the local
-Verdaccio registry, and publishing to npm.
-
-For the branching model that feeds into this process see [WORKFLOW.md](./WORKFLOW.md).
+How to version, changelog, and publish the Yoltra packages. If you read one thing, read the
+[Cheat sheet](#cheat-sheet).
 
 ---
 
-## Release flow overview
+## Mental model
 
-```
-develop  (all PRs merged, change files present)
-    │
-    ├── git checkout -b release/v0.9.0
-    │       rush version --bump          ← consume change files, bump versions
-    │       review CHANGELOGs
-    │       [local Verdaccio test]       ← optional but strongly recommended
-    │
-    ├── PR: release/v0.9.0 → develop    ← sync version bumps back
-    │
-    └── PR: develop → main
-              │
-              rush publish --publish      ← publish to npm
-              git tag v0.9.0
-              git push --tags
-```
+Three **independent** mechanisms — don't conflate them:
+
+1. **The changelog comes from _change files_, not commit messages.** Every PR that touches a
+   publishable package includes a change file (`rush change`). At release time `rush version --bump`
+   turns those into `CHANGELOG.md` entries and version bumps. Your commit messages do **not** drive
+   the changelog.
+2. **One version for the whole suite (lockstep).** `@yoltra/core`, `@yoltra/react`, and every
+   `@yoltra/devtools-*` share a single version via the **`yoltra`** version policy
+   ([version-policies.json](../../common/config/rush/version-policies.json)). They always bump
+   together (e.g. all `0.1.0 → 0.2.0`). You never track a version per package. `@yoltra/eslint-config-*`
+   and `@yoltra/devtools-ext` are intentionally on their own tracks.
+3. **Commit format is enforced separately.** A `commit-msg` git hook runs **commitlint**
+   (Conventional Commits); non-conforming messages are rejected. This is hygiene — unrelated to the
+   changelog.
+
+## Staying on 0.x
+
+We stay `< 1.0.0` until the API is stable. In 0.x semver a **breaking change is a MINOR bump**, so
+the policy's `nextBump` is `minor` (`0.1.0 → 0.2.0`). For a fix-only release, do a patch (see
+below). **Do not bump to 1.0.0 yet** — change `nextBump` deliberately when the time comes.
 
 ---
 
-## Step 1 — Ensure develop is green
-
-Before cutting a release branch, verify all gates pass:
+## One-time setup
 
 ```bash
-git checkout develop
-git pull
-
-rush install
-rush build
-rush test
-rush lint
-rush typecheck
+npm i -g @microsoft/rush          # Rush drives everything
+rush install                      # installs deps AND copies the git hooks into .git/hooks
+rush update-autoinstaller --name rush-commitlint   # installs commitlint for the commit hook
 ```
 
-Also check that all publishable PRs included change files:
+To publish you also need an npm token with publish rights to the `@yoltra` scope:
 
 ```bash
-rush change -v
+export NPM_AUTH_TOKEN="npm_xxx"   # only set this when you actually intend to publish
 ```
 
 ---
 
-## Step 2 — Cut the release branch and bump versions
+## During development: change files
+
+Whenever a branch changes a **publishable** package, add a change file before it merges:
 
 ```bash
-git checkout -b release/v0.9.0
+rush change
+#  → select the packages you touched
+#  → choose a type: patch | minor | none
+#  → write a one-line description → this becomes the CHANGELOG entry
+```
 
-# Consume all change files and bump package.json versions + write CHANGELOG.md
+Notes:
+
+- Under lockstep the **actual** version bump is decided by the policy at release time (`nextBump`),
+  not by the per-package type here — but still run `rush change` so your description lands in the
+  changelog. Use `none` for changes that shouldn't appear in a changelog (pure docs, examples).
+- Verify a branch has its change files:
+
+  ```bash
+  rush change --verify     # alias: rush change -v
+  ```
+---
+
+## Cutting a release
+
+From an up-to-date `main`:
+
+```bash
+git checkout main && git pull
+git checkout -b release/v0.2.0        # short-lived release branch
+
+# 1. Consume change files → bump versions + write CHANGELOGs (deletes the change files)
 rush version --bump
+#    Every "yoltra" package moves together to the next version (minor by default: 0.1.0 → 0.2.0).
 
-# Review the generated CHANGELOG files in each package
-# Review the updated version numbers in package.json files
-
-git add .
-git commit -s -m "chore(release): bump versions for v0.9.0"
+# 2. Review the new version in each package.json and each CHANGELOG.md, then commit
+git add -A && git commit -m "chore(release): v0.2.0"
 ```
 
-`rush version --bump` reads every file in `common/changes/`, applies the appropriate
-semver bump to each affected package, updates `CHANGELOG.md`, and deletes the change files.
+### Patch instead of minor
 
-**Important:** `@yoltra/core` and `@yoltra/react` share the `"lockstep"` version policy, so
-they always move to the same version together.
+The policy defaults to `minor`. For a fix-only release, override at bump time:
+
+```bash
+rush version --bump --override-bump patch      # 0.1.0 → 0.1.1
+```
+
+(or edit `nextBump` in [version-policies.json](../../common/config/rush/version-policies.json)).
 
 ---
 
-## Step 3 — Test against the local Verdaccio registry
+## Dry-run against local Verdaccio (recommended)
 
-This step lets you verify the full consumer install experience before touching npm.
-
-### 3a. Start Verdaccio
-
-```bash
-cd tools/registry
-docker compose up -d
-
-# Verify it is healthy
-curl http://localhost:4873/-/ping
-```
-
-### 3b. Create a local user (first time only)
+Test the real consumer-install experience before touching npm. `.npmrc-publish` targets **npm**, so
+point at Verdaccio explicitly with `--registry`:
 
 ```bash
+# start the local registry
+docker compose -f tools/registry/docker-compose.yml up -d
+
+# first time only: create a local user
 npm adduser --registry http://localhost:4873
-# Enter a username, password, and email when prompted.
-# These are local-only credentials — they do not touch npmjs.com.
-```
 
-### 3c. Publish to Verdaccio
+# publish the suite to the LOCAL registry
+rush publish --publish --include-all --version-policy yoltra --registry http://localhost:4873
 
-```bash
-# From the repo root — publishes all shouldPublish:true packages to Verdaccio
-rush publish --publish --registry http://localhost:4873
-
-# If the version already exists in Verdaccio from a previous test run,
-# use --include-all to force-publish all packages regardless:
-rush publish --publish --registry http://localhost:4873 --include-all
-```
-
-### 3d. Consume from Verdaccio in a test project
-
-In a throwaway project outside this repo:
-
-```bash
-# Point pnpm at the local registry for the @yoltra scope
+# in a throwaway project outside this repo:
 echo '@yoltra:registry=http://localhost:4873/' >> .npmrc
+npm add @yoltra/core@0.2.0 @yoltra/react@0.2.0
 
-npm add @yoltra/core@0.9.0 @yoltra/react@0.9.0
-# Use the exact version numbers from your package.json files
-```
-
-Verify the package works as expected.
-
-### 3e. Tear down Verdaccio
-
-```bash
-# Stop but keep data (useful for repeat tests)
-docker compose down
-
-# Stop AND wipe all stored packages + users (clean slate)
-docker compose down -v
+# tear down (‑v also wipes stored packages)
+docker compose -f tools/registry/docker-compose.yml down -v
 ```
 
 ---
 
-## Step 4 — Sync release branch back to develop
-
-Before merging to `main`, sync the version bumps back to `develop` so the two branches
-do not diverge:
+## Publishing to npm
 
 ```bash
-# Open a PR: release/v0.9.0 → develop
-# Review, approve, and merge as normal.
+export NPM_AUTH_TOKEN="npm_xxx"   # token with @yoltra publish rights
+
+# publish ONLY the lockstep product suite (core, react, devtools-*) to npm
+rush publish --publish --include-all --version-policy yoltra
 ```
+
+Rush reads the registry + token from [.npmrc-publish](../../common/config/rush/.npmrc-publish).
+
+**There is no accidental-publish path:** `rush publish` does nothing without `--publish`, and it
+can't authenticate unless `NPM_AUTH_TOKEN` is set. npm rejects republishing an existing version
+(409), so re-running after a partial publish is safe.
+
+Then merge and tag:
+
+```bash
+# PR release/v0.2.0 → main, review, merge
+git checkout main && git pull
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+Create a GitHub release from the tag and paste the relevant `CHANGELOG.md` section as the notes.
 
 ---
 
-## Step 5 — Merge to main and publish to npm
+## Hotfix (patch on a shipped release)
 
 ```bash
-# Open a PR: develop → main
-# Review, approve, and merge as normal.
+git checkout main && git pull
+git checkout -b hotfix/v0.2.1
 
-git checkout main
-git pull
-```
+# minimal fix + a patch change file
+git commit -m "fix(core): resolve <critical issue>"
+rush change                              # choose "patch"
 
-Set your npm auth token (use an environment variable, not a hardcoded value):
+rush version --bump --override-bump patch   # 0.2.0 → 0.2.1
+git add -A && git commit -m "chore(release): v0.2.1"
 
-```bash
-export NPM_AUTH_TOKEN="your_npm_token_here"
-```
-
-Publish to npm:
-
-```bash
-# Dry run first — shows what would be published without actually publishing
-rush publish --publish --dry-run
-
-# Publish for real
-rush publish --publish
-```
-
-Rush reads the registry and auth token from `common/config/rush/.npmrc-publish`.
-
----
-
-## Step 6 — Tag the release
-
-```bash
-git tag v0.9.0
-git push origin v0.9.0
-```
-
-Create a GitHub release from the tag and paste the relevant `CHANGELOG.md` section as the
-release notes.
-
----
-
-## Publishing only specific packages
-
-To publish a single package without touching others:
-
-```bash
-rush publish --publish --include-all --version-policy lockstep
-# or target a specific package:
-rush publish --publish --include-all --to @yoltra/core
-```
-
----
-
-## Re-publishing after a failed publish
-
-If the publish was interrupted and some packages made it through while others did not:
-
-```bash
-# --include-all forces Rush to attempt all packages, skipping those already on npm
-rush publish --publish --include-all
-```
-
-npm rejects attempts to republish the same version with a 409 error, so `--include-all`
-is safe to run multiple times.
-
----
-
-## Hotfix releases
-
-A hotfix follows the same steps but branches from `main` instead of `develop`:
-
-```bash
-git checkout main
-git pull
-git checkout -b hotfix/v0.8.1
-
-# Apply the minimal fix
-git commit -s -m "fix(core): resolve critical issue"
-
-# Create a patch-level change file
-rush change   # choose "patch" for all affected packages
-
-# Bump versions
-rush version --bump
-
-git add .
-git commit -s -m "chore(release): bump to v0.8.1"
-
-# [Optional] test in Verdaccio (steps 3a–3e above)
-
-# PR hotfix/v0.8.1 → main, merge, then publish
-rush publish --publish
-
-# Tag
-git tag v0.8.1 && git push origin v0.8.1
-
-# Back-merge: PR main → develop to stay in sync
+# PR → main, merge, then publish + tag as above
+rush publish --publish --include-all --version-policy yoltra
+git tag v0.2.1 && git push origin v0.2.1
 ```
 
 ---
@@ -254,41 +176,33 @@ git tag v0.8.1 && git push origin v0.8.1
 ## Pre-releases (alpha / beta / rc)
 
 ```bash
-# Create a pre-release change file (choose "prerelease" bump type)
-rush change
-
-# Bump — produces versions like 0.9.0-alpha.0
-rush version --bump
-
-# Publish to npm with a dist-tag (consumers must opt in with @next)
-rush publish --publish --tag next
+rush version --bump --override-bump preminor   # e.g. 0.2.0-0
+rush publish --publish --include-all --version-policy yoltra --tag next
 ```
 
-Consumers install pre-releases explicitly:
-
-```bash
-npm add @yoltra/core@next
-```
-
-To test pre-releases locally, publish to Verdaccio using step 3 above.
+Consumers opt in explicitly: `npm add @yoltra/core@next`. Test pre-releases in Verdaccio first.
 
 ---
 
-## Quick reference
+## Cheat sheet
 
 ```bash
-# --- prepare ---
-rush change                             # create change files (during development)
-rush change -v                          # validate change files exist
-rush version --bump                     # apply bumps, write changelogs
+# --- during development ---
+rush change                # add a changelog entry for your change
+rush change -v             # verify change files exist
 
-# --- local test ---
+# --- cut a release ---
+git checkout -b release/vX.Y.Z
+rush version --bump                       # bump the whole suite + write CHANGELOGs (minor default)
+#   fix-only release:  rush version --bump --override-bump patch
+
+# --- dry-run in Verdaccio ---
 docker compose -f tools/registry/docker-compose.yml up -d
-rush publish --publish --registry http://localhost:4873
+rush publish --publish --include-all --version-policy yoltra --registry http://localhost:4873
 
-# --- npm ---
-rush publish --publish                  # publish using .npmrc-publish
-rush publish --publish --include-all    # force-publish all packages
+# --- publish to npm ---
+export NPM_AUTH_TOKEN=...
+rush publish --publish --include-all --version-policy yoltra
 
 # --- tag ---
 git tag vX.Y.Z && git push origin vX.Y.Z

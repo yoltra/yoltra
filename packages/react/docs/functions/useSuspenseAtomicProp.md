@@ -10,7 +10,7 @@
 
 > **useSuspenseAtomicProp**\<`R`, `S`, `P`, `T`\>(`storeSpec`, `options`): `T`
 
-Defined in: [react/src/hooks/suspense.ts:159](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L159)
+Defined in: [react/src/hooks/suspense.ts:177](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L177)
 
 Suspense-compatible version of `useAtomicProp` that throws a promise while loading.
 
@@ -70,6 +70,13 @@ Loading options (see [SuspenseAtomicPropOptions](../interfaces/SuspenseAtomicPro
 
 The resolved value of type `T`.
 
+### Remarks
+
+**Client-only loading.** During server rendering this hook does not suspend
+(throwing a promise would crash `renderToString`): `getServerSnapshot` returns
+the current value at the path **without** invoking `options.load`. Perform the
+actual load on the client.
+
 ### Throws
 
 A `Promise` while loading (caught by React Suspense).
@@ -99,7 +106,7 @@ function UserName({ userId }: { userId: string }) {
 
 > **useSuspenseAtomicProp**\<`R`, `S`, `T`\>(`storeSpec`, `options`): `T`
 
-Defined in: [react/src/hooks/suspense.ts:165](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L165)
+Defined in: [react/src/hooks/suspense.ts:183](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L183)
 
 Suspense-compatible version of `useAtomicProp` that throws a promise while loading.
 
@@ -152,6 +159,13 @@ Loading options (see [SuspenseAtomicPropOptions](../interfaces/SuspenseAtomicPro
 `T`
 
 The resolved value of type `T`.
+
+### Remarks
+
+**Client-only loading.** During server rendering this hook does not suspend
+(throwing a promise would crash `renderToString`): `getServerSnapshot` returns
+the current value at the path **without** invoking `options.load`. Perform the
+actual load on the client.
 
 ### Throws
 

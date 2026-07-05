@@ -7,8 +7,8 @@
 Una pequena demostracion enfocada en React que aloja **ambas implementaciones de estado** lado a
 lado -- la prueba definitiva esta en la comparacion de flamegraph:
 
-- **Yoltra** (store orientado a eventos con eventos basados en canales y suscripciones de grano
-  fino)
+- **Yoltra** (store orientado a eventos con eventos basados en canales, suscripciones de grano
+  fino, y un **efecto** para el fetch asíncrono de todos — la capa async; el middleware es síncrono)
 - **Redux Toolkit (RTK)** (stack estandar de Redux con `createSlice` + `createAsyncThunk`)
 
 Usa este proyecto para ejecutar la UI localmente y reproducir el
@@ -20,8 +20,8 @@ Ambas implementaciones exponen la misma UI y flujos de usuario (listar, agregar,
 eliminar). La aplicación de comparación monta cada página bajo rutas separadas para que puedas
 perfilarlas de forma aislada.
 
-- Ruta **/yoltra** → Página de Yoltra envuelta en su propio provider
-- Ruta **/rtk** → Página de RTK envuelta en su propio provider
+- Ruta **/yoltra** → Página de Yoltra (los hooks de `createYoltra` usan el store por defecto — sin provider)
+- Ruta **/redux** → Página de RTK envuelta en su propio `<Provider>`
 
 La aplicación es un proyecto **Vite** que vive dentro de un monorepo **Rush**.
 
@@ -56,14 +56,14 @@ rush build
 La aplicación de comparación es una app Vite que enruta a cada implementación.
 
 ```bash
-cd examples/yoltra-in-react
+cd examples/v0/yoltra-in-react
 rushx dev             # igual que: pnpm dev
 ```
 
 Abre **http://localhost:5173** (o lo que Vite imprima).
 
 - Visita **/yoltra** para la página de Yoltra.
-- Visita **/rtk** para la página de RTK.
+- Visita **/redux** para la página de RTK.
 
 ## Build de producción y vista previa (para números estables de profiling)
 
@@ -72,13 +72,13 @@ y transformaciones de desarrollo). Para tiempos más estables, perfila un build 
 **producción**:
 
 ```bash
-cd examples/yoltra-in-react
+cd examples/v0/yoltra-in-react
 rushx build           # Build de producción con Vite
 rushx preview         # Sirve el build de producción
 # por defecto: http://localhost:4173
 ```
 
-Luego abre `/yoltra` o `/rtk` en el servidor de vista previa.
+Luego abre `/yoltra` o `/redux` en el servidor de vista previa.
 
 ## Usando el Profiler de React
 

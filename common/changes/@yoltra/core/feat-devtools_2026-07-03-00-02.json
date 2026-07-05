@@ -1,0 +1,25 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "The processed-event dedup prune timer now starts lazily on the first cached event and stops when the cache drains, instead of only starting when dedupWindowMs is greater than 0. Identity dedup via dedupKey (which caches entries even at windowMs 0) is now pruned on idle rather than only at the 1000-entry cap, and the interval unrefs so it never keeps a Node process alive by itself.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Effect metadata is now stored in a store-owned map keyed by the effect function, instead of being written onto the caller's function object. Registering the same handler on two stores no longer bleeds metadata between them, and the metadata no longer persists on the function after unregister.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/core",
+      "comment": "External state apply (devtools time-travel) now retains a slice that is missing from the incoming snapshot instead of blanking it to undefined, which previously made getState() of that slice throw on next access. A development warning names the missing slice.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/core",
+      "comment": "EMFromReducersStrict now merges each slice's event map (unioning channels and their type-to-payload entries) instead of collapsing them to a single slice's map, so a store whose slices declare divergent event maps types emit against the union of all of them.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

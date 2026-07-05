@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build, lint, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Rush change verification diffs against the target branch.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Corepack activates the pnpm version pinned in package.json / rush.json.
+      - name: Enable Corepack
+        run: corepack enable
+
+      # Install via the Rush bootstrap (fixed in REL-2 to load under ESM).
+      - name: Rush install
+        run: node common/scripts/install-run-rush.js install
+
+      - name: Rush build
+        run: node common/scripts/install-run-rush.js build --verbose
+
+      - name: Rush lint
+        run: node common/scripts/install-run-rush.js lint
+
+      - name: Rush test
+        run: node common/scripts/install-run-rush.js test
+
+      # Fails if a changed project is missing a change file (keeps CHANGELOGs honest).
+      - name: Verify change files
+        run: node common/scripts/install-run-rush.js change --verify

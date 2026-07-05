@@ -8,7 +8,7 @@
 
 > **ReducerFunction**\<`S`, `EM`\> = (`state`, `event`) => `S`
 
-Defined in: [types.ts:566](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L566)
+Defined in: [types.ts:666](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L666)
 
 Pure reducer function (stateful event consumer).
 

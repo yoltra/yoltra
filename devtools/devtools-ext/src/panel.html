@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yoltra DevTools</title>
+    <style>
+      html,
+      body,
+      #root {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: #c7c7c7;
+      }
+
+      main {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+
+        background: var(--devtools-bg);
+
+        color: var(--devtools-fg);
+        font-family: var(--devtools-font-family);
+        font-size: var(--devtools-font-size);
+        line-height: var(--devtools-line-height);
+
+        display: grid;
+        grid-template-columns: 2fr 10fr;
+        grid-template-rows: 56px 10fr 1fr;
+        grid-template-areas:
+          "logo header"
+          "aside content"
+          "footer footer";
+      }
+
+      .yoltra-logo {
+        grid-area: logo;
+        width: 190px;
+        height: 46px;
+        margin: 4px;
+      }
+
+      header {
+        grid-area: header;
+
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-start;
+      }
+
+      header > button {
+        min-width: 92px;
+        padding: 8px 6px 2px 4px;
+
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+
+        border: 1px solid rgb(61, 61, 61);
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-bottom: none;
+      }
+
+      header > button:first-child {
+        margin: 0 0 0 -1px;
+      }
+
+      header > button:hover,
+      header > button:focus,
+      header > button:active {
+        outline: none;
+      }
+
+      header > button.active {
+        padding: 8px 6px 4px 4px;
+        font-weight: 600;
+
+        border: 2px solid #1a7fe2;
+        border-bottom: none;
+
+        margin-bottom: -2px;
+        z-index: 10;
+      }
+
+      header > button > span {
+        display: inline-block;
+
+        width: 8px;
+        height: 8px;
+        margin: 0 4px;
+
+        border-radius: 50%;
+      }
+
+      header > button > span.disconnected {
+        background-color: rgb(56, 56, 56);
+      }
+
+      header > button > span.connecting {
+        background-color: orange;
+      }
+
+      header > button > span.connected {
+        background-color: green;
+      }
+
+      aside {
+        grid-area: aside;
+
+        height: 100%;
+
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+
+        background: #ffffff;
+        border-top: 2px solid #1a7fe2;
+      }
+
+      aside > button {
+        text-align: left;
+
+        background: #ffffff;
+        border: 2px transparent;
+      }
+
+      aside > button:hover,
+      aside > button:focus,
+      aside > button:active {
+        font-weight: 600;
+        outline: none;
+      }
+
+      aside > button.active {
+        font-weight: 600;
+        color: #1a7fe2;
+      }
+
+      article {
+        width: calc(100% - 16px);
+        height: calc(100vh - 136px);
+        padding: 8px;
+        background: #ffffff;
+        border-top: 2px solid #1a7fe2;
+      }
+
+      footer {
+        padding: 8px;
+        grid-area: footer;
+        background: #ffffff;
+
+        display: flex;
+      }
+
+      footer > div {
+        margin: 8px;
+      }
+
+      footer > div:first-child {
+        flex-grow: 0;
+      }
+
+      footer > div:last-child {
+        flex-grow: 1;
+      }
+
+      .tabButton {
+        display: flex;
+        align-items: center;
+        padding: 0 var(--devtools-spacing-lg);
+        height: 100%;
+        border: none;
+        border-right: 1px solid var(--devtools-border);
+        background: transparent;
+        color: var(--devtools-fg-secondary);
+        font-family: inherit;
+        font-size: var(--devtools-font-size-sm);
+        cursor: pointer;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+        transition:
+          color 0.12s,
+          background 0.12s,
+          border-color 0.12s;
+      }
+
+      .tabButton:hover {
+        color: var(--devtools-fg);
+        background: var(--devtools-bg-hover);
+      }
+
+      .tabButtonActive {
+        color: var(--devtools-fg);
+        background: var(--devtools-bg);
+        border-bottom-color: var(--devtools-accent);
+      }
+
+      .emptyState {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--devtools-fg-muted);
+        font-size: var(--devtools-font-size-lg);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="panel.ts" type="module"></script>
+  </body>
+</html>

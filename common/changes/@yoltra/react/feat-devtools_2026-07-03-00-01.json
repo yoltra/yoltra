@@ -1,0 +1,25 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "Fix the Suspense cache lifecycle at the default staleTime of 0: a pending load is never time-expired (the same in-flight promise is re-thrown until it settles) and a cached error is re-thrown until invalidated, so useSuspenseAtomicProp and useSuspenseAtomicProps no longer start a fresh load on every render (previously an infinite suspend or request storm). staleTime 0 now means serve a resolved value until it is invalidated; a positive value adds a wall-clock TTL.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/react",
+      "comment": "Fix a TS2742 portable-type error: a composite or declaration build that re-exported the result of createYoltra failed to emit its .d.ts because the inferred type referenced an internal shallowEqual. shallowEqual is now single-sourced, and createHooks and createYoltra have explicit named return types (YoltraHooks and Yoltra).",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/react",
+      "comment": "Harden the typed path accessor: calling a method inside the accessor (for example p => p.items.map(...)) now throws a clear error instead of an opaque one, and an accessor that records no property access warns in development because it would silently subscribe to the whole slice. The accessor must be a plain member chain.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/react",
+      "comment": "createYoltra now accepts the onEffectError option (forwarded to the store), and the YoltraHooks and Yoltra return types are exported so consumers can name the shape returned by createHooks and createYoltra.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

@@ -6,8 +6,8 @@
 > [ 🇺🇸 English Version](./README.md)&nbsp;
 
 A minimal example showing how **[Yoltra](https://yoltra.dev)** — fine-grained reactive state for
-event-driven applications — can run **inside a Next.js (App Router) application**, including
-SSR-compatible client components.
+event-driven applications — runs **inside a Next.js (Pages Router) application** for client-side
+interactivity.
 
 This demo implements a simple **theme switcher** (light ↔ dark) powered by `@yoltra/core` and
 `@yoltra/react`, proving Yoltra can manage application state seamlessly in **React 19 + Next.js
@@ -19,10 +19,11 @@ This demo implements a simple **theme switcher** (light ↔ dark) powered by `@y
 
 This example is designed to:
 
-- Demonstrate that **Yoltra works under Next.js SSR** (Server-Side Rendering)
+- Run **Yoltra inside a Next.js app** with one-call `createYoltra` setup (the store is a module
+  singleton — per-request SSR isolation is out of scope for this client-focused demo)
 - Showcase **atomic subscriptions** — UI updates only the components that depend on changed
   properties
-- Implement a **theme system** using Yoltra reducers and atomic selectors
+- Implement a **theme system** using a Yoltra reducer and typed accessors
 
 ---
 
@@ -50,12 +51,9 @@ yoltra-in-nextjs/
 │   │   ├── Head.component.tsx
 │   │   ├── Header.component.tsx
 │   │   └── Content.component.tsx
-│   ├── context/
-│   │   └── Store.context.ts
 │   ├── state/
 │   │   ├── theme/Theme.reducer.ts
-│   │   ├── hooks.ts
-│   │   ├── store.ts
+│   │   ├── yoltra.ts          createYoltra() — store + typed hooks
 │   │   └── types.ts
 │   └── pages/
 │       └── index.tsx

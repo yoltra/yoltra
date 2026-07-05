@@ -6,7 +6,7 @@
 > | &nbsp; 👉
 > [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)&nbsp;
 
-**Version:** 0.7.0 **Ultima actualizacion:** Febrero 2026
+**Version:** 0.8.0 **Ultima actualizacion:** Julio 2026
 
 ## Introduccion
 
@@ -23,23 +23,24 @@ donde ese modelo sobresale, y resalta como difiere del enfoque de Yoltra.
 
 ## Yoltra en Breve
 
-Yoltra esta construido sobre tres apuestas arquitectonicas:
+Yoltra esta construido sobre cuatro apuestas arquitectonicas:
 
 1. **Suscripciones a nivel de ruta** -- Los componentes se suscriben a rutas con notacion de
-   puntos (`"items.0.title"`, `"items.*.done"`) y se re-renderizan solo cuando esa ruta exacta
-   cambia.
-2. **Pipeline de eventos estructurado** -- Los eventos fluyen a traves de un pipeline formal e
-   interceptable: dedup -> middleware (puede rechazar) -> reducers -> suscriptores de eventos ->
-   efectos -> suscriptores gruesos.
+   puntos (`"items.0.title"`, `"items.*.done"`), via un accessor tipado o un string, y se
+   re-renderizan solo cuando esa ruta exacta cambia.
+2. **Event sourcing con un pipeline estructurado** -- Los eventos fluyen a traves de un pipeline
+   formal e interceptable: middleware (puede rechazar) -> reducers -> suscriptores de eventos ->
+   oyentes gruesos, todo **sincrono**, y despues los efectos asincronos. La deduplicacion por
+   contenido es opt-in.
 3. **Eventos tipados por canal** -- Los eventos son tuplas `(channel, type, payload)` en lugar
    de strings planos de accion.
+4. **DevTools con introspeccion de primera** -- El store expone una costura de instrumentacion
+   tipada, asi que el viaje en el tiempo, la repeticion de eventos y los parches precisos por
+   evento son de primera clase, no algo agregado despues.
 
 ```typescript
-// Suscripcion por ruta: solo se re-renderiza cuando items[0].title cambia
-const title = useAtomicProp({
-  reducer: "todos",
-  property: "items.0.title",
-});
+// Suscripcion por ruta via accessor tipado: solo re-renderiza cuando items[0].title cambia
+const title = useAtomicProp("todos", (s) => s.items[0].title);
 
 // Evento tipado por canal
 await emit("todos", "toggle", { id: "123" });
@@ -48,7 +49,8 @@ await emit("todos", "toggle", { id: "123" });
 **Donde esta arquitectura brilla:** Aplicaciones con muchos elementos de UI que se actualizan
 independientemente (dashboards, editores colaborativos, grids de datos, sistemas de particulas),
 aplicaciones que necesitan autorizacion/validacion de eventos en la capa de middleware, y
-aplicaciones universales que comparten logica de estado entre cliente y servidor.
+cualquier app donde importe la depurabilidad de los cambios de estado (un log de eventos con
+viaje en el tiempo viene gratis).
 
 **Donde genera friccion:** Apps simples donde la granularidad a nivel de ruta es overhead
 innecesario. Aplicaciones donde el tamano del bundle debe estar por debajo de 5KB. Proyectos
@@ -85,8 +87,8 @@ dispatch(addTodo({ id: "1", title: "Buy milk" }));
 **Equipos grandes con patrones establecidos.** Redux es la solucion de gestion de estado mas
 probada en batalla en React. Sus convenciones estrictas (acciones, reducers, selectores) crean
 consistencia en bases de codigo grandes. RTK Query proporciona una solucion completa de
-obtencion de datos con cache y re-obtencion automatica. El ecosistema de DevTools es
-inigualable.
+obtencion de datos con cache y re-obtencion automatica. Su ecosistema de DevTools es el mas
+maduro del espacio.
 
 **Apps que necesitan middleware extenso.** El modelo de middleware de Redux es maduro y tiene
 miles de soluciones comunitarias para logging, analiticas, persistencia y seguimiento de
@@ -120,9 +122,17 @@ de Yoltra son tuplas tipadas por canal (`('todos', 'add', payload)`). Ambos enfo
 los canales proporcionan namespacing natural a escala, mientras que los strings planos se
 integran mejor con Redux DevTools y el ecosistema de middleware.
 
-**Modelo asincrono.** Redux separa los reducers sincronos de los thunks asincronos. El
-middleware y los efectos de Yoltra son asincronos por defecto -- las operaciones asincronas son
-parte del pipeline central en lugar de una capa separada.
+**Capas sincronas vs. asincronas.** Ambos mantienen los reducers sincronos. Redux pone el
+trabajo asincrono en thunks / RTK Query. Yoltra mantiene el **middleware tambien sincrono** --
+asi `getState()` es correcto en el instante en que `emit()` retorna -- y pone el trabajo
+asincrono en los efectos: una division comparable, integrada en el pipeline central.
+
+**DevTools.** Las devtools de Redux son las mas maduras del ecosistema y una razon importante por
+la que los equipos se quedan. Yoltra cierra la mayor parte de esa brecha desde otro angulo: como
+el store reporta las rutas hoja exactas que cambiaron en cada evento, sus devtools renderizan
+parches RFC-6902 precisos, tiempos de reduccion reales, un log de eventos con fases
+confirmado/rechazado, y viaje en el tiempo + repeticion de eventos -- conservando la reactividad
+de grano fino y el setup de una sola llamada que a Redux le faltan.
 
 ---
 
@@ -438,7 +448,7 @@ Cada biblioteca optimiza para una dimension diferente:
 | **Jotai**         | Atomos distribuidos y composables                   | Mas dificil coordinar estado global                        |
 | **MobX**          | Reactividad implicita, ergonomia mutable            | Mas dificil rastrear y depurar cambios de estado           |
 | **XState**        | Correccion de flujos de trabajo, estados imposibles | Verboso para gestion de datos general                      |
-| **Yoltra**        | Suscripciones de grano fino, pipeline de eventos    | Mas configuracion que Zustand/Jotai, bundle mas grande     |
+| **Yoltra**        | Grano fino + log de eventos + viaje en el tiempo    | Bundle mas grande que Zustand; modelo de eventos opinado   |
 
 No hay una biblioteca universalmente "mejor". La eleccion correcta depende de lo que tu
 aplicacion necesita mas:
@@ -447,15 +457,15 @@ aplicacion necesita mas:
 - **El equipo ya conoce Redux?** Redux Toolkit.
 - **OOP reactivo con actualizaciones mutables?** MobX.
 - **Modelado de flujos de trabajo complejos?** XState.
-- **Suscripciones de grano fino por ruta, autorizacion de eventos o estado universal (cliente +
-  servidor)?** Yoltra.
+- **Reactividad de grano fino _y_ un log de eventos con devtools de viaje en el tiempo real, sin
+  el boilerplate de Redux?** Yoltra.
 
 ---
 
 ## Lectura Adicional
 
-- **[Arquitectura de Cola de Eventos](./event-queue-architecture.md)** -- Como funciona el
-  pipeline de eventos asincronos de Yoltra internamente
+- **[Arquitectura del Pipeline de Eventos](./event-queue-architecture.md)** -- Como funciona el
+  pipeline de reduccion sincrona / efectos asincronos de Yoltra internamente
 - **[Guia de Inicio Rapido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**
   -- Cinco pasos hacia una app funcional
 - **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)**

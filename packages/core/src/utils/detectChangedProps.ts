@@ -6,7 +6,7 @@
  * Computes the list of **dotted leaf paths** that changed between two values.
  *
  * The algorithm performs a deep structural comparison with special handling for:
- * - **Primitives / null** → treated as leafs (change = current `path`)
+ * - **Primitives / null** → treated as leafs (change = current `path`; two `NaN`s are equal)
  * - **Date** → compares `getTime()`
  * - **RegExp** → compares `source` and `flags`
  * - **Arrays** → if lengths differ, the whole array path is marked changed; otherwise compares
@@ -14,14 +14,17 @@
  * - **Objects** → compares by the **union of keys**, recursing into shared keys and marking
  *   added/removed keys as changed at their **full path**
  *
- * Cycles and repeated object aliases are handled via **pair-wise** tracking using a
- * `WeakMap<object, WeakSet<object>>` so recursion doesn't loop and shared subgraphs do not
- * produce false negatives.
+ * Cycles are handled by tracking the `(old, new)` pairs currently on the **recursion path**
+ * (added on entry, removed on unwind). A pair is skipped only when it is a genuine ancestor of
+ * itself (a real cycle) — a pair that merely appears again at a *sibling* path (legitimate
+ * aliasing, e.g. the same object referenced from two keys) is still diffed, so real changes at
+ * the second site are never dropped.
  *
  * @param oldState - Previous value to diff.
  * @param newState - Next value to diff.
  * @param path - Current dotted path (callers pass `""` for root; recursion appends segments).
- * @param seenPairs - (Advanced) Pair tracker for cycle/alias detection. You generally never pass this.
+ * @param ancestors - (Advanced) Pairs on the current recursion path, for cycle detection. You
+ * generally never pass this.
  * @returns An array of **dotted leaf paths** that changed. Paths use `"."` as a separator and
  * indices for arrays (e.g., `"todos.0.title"`). If nothing changed, returns `[]`.
  *
@@ -69,7 +72,7 @@ export function detectChangedProps(
   oldState: any,
   newState: any,
   path = "",
-  seenPairs: WeakMap<object, WeakSet<object>> = new WeakMap(),
+  ancestors: Map<object, Set<object>> = new Map(),
 ): string[] {
   if (oldState === newState) return [];
 
@@ -79,6 +82,10 @@ export function detectChangedProps(
     oldState === null ||
     newState === null
   ) {
+    // Two NaNs are never `===` but represent no change — don't report a spurious diff.
+    if (typeof oldState === "number" && Number.isNaN(oldState) && Number.isNaN(newState as number)) {
+      return [];
+    }
     return [path];
   }
 
@@ -92,56 +99,55 @@ export function detectChangedProps(
 
   const oldObj = oldState as object;
   const newObj = newState as object;
-  let bucket = seenPairs.get(oldObj);
-  if (bucket) {
-    if (bucket.has(newObj)) return [];
-    bucket.add(newObj);
-  } else {
-    bucket = new WeakSet<object>();
-    bucket.add(newObj);
-    seenPairs.set(oldObj, bucket);
-  }
 
-  const isArrOld = Array.isArray(oldState);
-  const isArrNew = Array.isArray(newState);
-  if (isArrOld !== isArrNew) return [path];
+  // Cycle guard: skip a pair only when it is currently an ANCESTOR on this
+  // recursion path (a genuine cycle). A pair seen earlier at a sibling path is
+  // legitimate aliasing and must still be diffed.
+  const active = ancestors.get(oldObj);
+  if (active?.has(newObj)) return [];
+  const onPath = active ?? new Set<object>();
+  onPath.add(newObj);
+  if (!active) ancestors.set(oldObj, onPath);
 
-  const changedPaths: string[] = [];
+  try {
+    const isArrOld = Array.isArray(oldState);
+    const isArrNew = Array.isArray(newState);
+    if (isArrOld !== isArrNew) return [path];
 
-  if (isArrOld) {
-    const a = oldState;
-    const b = newState as any[];
-    if (a.length !== b.length) return [path];
+    const changedPaths: string[] = [];
 
-    for (let i = 0; i < a.length; i++) {
-      const childPath = path ? `${path}.${i}` : `${i}`;
-      const elementPaths = detectChangedProps(a[i], b[i], childPath, seenPairs);
-      changedPaths.push(...elementPaths);
+    if (isArrOld) {
+      const a = oldState;
+      const b = newState as any[];
+      if (a.length !== b.length) return [path];
+
+      for (let i = 0; i < a.length; i++) {
+        const childPath = path ? `${path}.${i}` : `${i}`;
+        changedPaths.push(...detectChangedProps(a[i], b[i], childPath, ancestors));
+      }
+      return changedPaths.filter(Boolean);
     }
+
+    const allKeys = new Set([...Object.keys(oldState), ...Object.keys(newState)]);
+
+    for (const key of allKeys) {
+      const nextPath = path ? `${path}.${key}` : key;
+      const hasOld = Object.prototype.hasOwnProperty.call(oldState, key);
+      const hasNew = Object.prototype.hasOwnProperty.call(newState, key);
+
+      if (!hasOld || !hasNew) {
+        changedPaths.push(nextPath);
+        continue;
+      }
+
+      changedPaths.push(...detectChangedProps(oldState[key], newState[key], nextPath, ancestors));
+    }
+
     return changedPaths.filter(Boolean);
+  } finally {
+    // Unwind: leave the current recursion path so sibling branches can revisit
+    // this pair (legitimate aliasing) without being suppressed as a cycle.
+    onPath.delete(newObj);
+    if (onPath.size === 0) ancestors.delete(oldObj);
   }
-
-  const oldKeys = Object.keys(oldState);
-  const newKeys = Object.keys(newState);
-  const allKeys = new Set([...oldKeys, ...newKeys]);
-
-  for (const key of allKeys) {
-    const nextPath = path ? `${path}.${key}` : key;
-    const hasOld = Object.prototype.hasOwnProperty.call(oldState, key);
-    const hasNew = Object.prototype.hasOwnProperty.call(newState, key);
-
-    if (!hasOld) {
-      changedPaths.push(nextPath);
-      continue;
-    }
-    if (!hasNew) {
-      changedPaths.push(nextPath);
-      continue;
-    }
-
-    const nested = detectChangedProps(oldState[key], newState[key], nextPath, seenPairs);
-    changedPaths.push(...nested);
-  }
-
-  return changedPaths.filter(Boolean);
 }

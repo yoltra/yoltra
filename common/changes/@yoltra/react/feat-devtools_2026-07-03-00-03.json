@@ -1,0 +1,15 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "specsSignature now length-prefixes each segment, so a reducer name or dotted path that contains a delimiter character can no longer collide with a different spec array in the useAtomicProps memo key.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/react",
+      "comment": "The standalone useAtomicProp now always calls a single internal implementation regardless of whether a map function is passed, so toggling map presence between renders can no longer cause a Rules-of-Hooks violation. The redundant second implementation was removed.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

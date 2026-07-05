@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-ui",
+      "comment": "Initial release: devtools UI hooks and RFC-6902 patch application. Patch application ignores __proto__, constructor, and prototype pointer segments to prevent prototype pollution.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-ui"
+}

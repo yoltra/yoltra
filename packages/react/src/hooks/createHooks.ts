@@ -14,8 +14,10 @@ import type {
   WithGlob,
 } from "@yoltra/core";
 import * as React from "react";
-import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
-import { getAtPath, hasWildcard, normalizePath } from "../utils/path";
+import { useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { getAtPath, hasWildcard, normalizePath, specsSignature, toDottedPath } from "../utils/path";
+import { shallowEqual } from "../utils/shallowEqual";
+import { useStableSnapshot } from "../utils/useStableSnapshot";
 
 /**
  * Call signature for the typed `useAtomicProp` hook returned by {@link createHooks}.
@@ -43,6 +45,12 @@ import { getAtPath, hasWildcard, normalizePath } from "../utils/path";
  * @public
  */
 export type UseAtomicProp<R extends string, S extends Record<R, any>> = {
+  // Typed accessor form: `p => p.a.b.c` gives full autocomplete + inferred return type.
+  <R1 extends R, V>(
+    reducer: R1,
+    accessor: (state: DeepReadonly<S[R1]>) => V,
+    isEqual?: (a: V, b: V) => boolean,
+  ): V;
   <R1 extends R, P extends Dotted<S[R1]>>(spec: {
     reducer: R1;
     property: P;
@@ -147,30 +155,39 @@ export type UseEvent<EM extends EventMapBase, S> = <
 ) => void;
 
 /**
- * Shallow object equality using `Object.is` per-key.
+ * The bundle of fully-typed hooks returned by {@link createHooks} (and, with the
+ * store and provider added, by {@link createYoltra}).
  *
- * Useful as the `isEqual` argument for `useAtomicProp` and `useAtomicProps`
- * when the derived value is a plain object. Also available as a standalone
- * export from `@yoltra/react` via {@link shallowEqual | hooks.shallowEqual}.
+ * Naming this return shape explicitly — rather than letting it be inferred —
+ * keeps `createYoltra`'s emitted `.d.ts` portable: the inferred form would leak
+ * a reference to a non-re-exported internal symbol and trip TS2742 in
+ * `composite`/`declaration` consumers.
  *
- * @example
- * ```ts
- * shallowEqual({ a: 1 }, { a: 1 }); // true
- * shallowEqual({ a: 1 }, { a: 2 }); // false
- * ```
+ * @typeParam R  - Reducer name union.
+ * @typeParam S  - State record keyed by `R`.
+ * @typeParam EM - Event map.
  *
  * @public
  */
-export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T) {
-  if (Object.is(a, b)) return true;
-  if (!a || !b) return false;
-  const ka = Object.keys(a),
-    kb = Object.keys(b);
-  if (ka.length !== kb.length) return false;
-  for (const k of ka) {
-    if (!Object.is(a[k], (b as Record<string, unknown>)[k])) return false;
-  }
-  return true;
+export interface YoltraHooks<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+> {
+  /** Reads the current store from context (falling back to the default store). */
+  useStore: () => StoreInstance<R, S, EM>;
+  /** Returns the store's typed `emit`. */
+  useEmit: () => Emit<EM>;
+  /** Subscribes to a derived value with an optional equality comparator. */
+  useSelector: <T>(selector: (state: DeepReadonly<S>) => T, isEqual?: (a: T, b: T) => boolean) => T;
+  /** Subscribes to a single dotted path (or typed accessor). */
+  useAtomicProp: UseAtomicProp<R, S>;
+  /** Subscribes to several paths and derives a value from the full state. */
+  useAtomicProps: UseAtomicProps<R, S>;
+  /** Runs a handler for a specific `(channel, type)` event. */
+  useEvent: UseEvent<EM, S>;
+  /** Shallow object equality using `Object.is` per-key. */
+  shallowEqual: <T extends Record<string, unknown>>(a: T, b: T) => boolean;
 }
 
 /**
@@ -224,10 +241,19 @@ export function createHooks<
   R extends string,
   S extends Record<R, any>,
   EM extends EventMapBase,
->(StoreContext: React.Context<StoreInstance<R, S, EM> | null>) {
+>(StoreContext: React.Context<StoreInstance<R, S, EM> | null>): YoltraHooks<R, S, EM> {
   function useStore(): StoreInstance<R, S, EM> {
     const ctx = useContext(StoreContext);
-    if (!ctx) throw new Error("useStore must be used inside <StoreProvider>");
+    if (!ctx) {
+      // These hooks come from createHooks(context)/createYoltra. createYoltra
+      // defaults the context to its own store, so this only fires when the
+      // context was created with a `null` default and no StoreProvider supplied
+      // a store above this component.
+      throw new Error(
+        "[yoltra] No store in context. Wrap your tree in <StoreProvider store={...}>, " +
+          "or use the hooks returned by createYoltra (which default to their own store).",
+      );
+    }
     return ctx;
   }
 
@@ -241,28 +267,32 @@ export function createHooks<
   ): T {
     const store = useStore();
     const subscribe = useMemo(() => (notify: () => void) => store.subscribe(notify), [store]);
-    const getSnapshot = useMemo(() => {
-      let last = selector(store.getState());
-      return () => {
-        const next = selector(store.getState());
-        return isEqual(last, next) ? last : (last = next);
-      };
-    }, [store, selector, isEqual]);
+    const getSnapshot = useStableSnapshot(() => selector(store.getState()), isEqual, [store]);
     return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   }
 
   type UseAtomicPropOverloads = UseAtomicProp<R, S>;
 
   const useAtomicPropImpl = (
-    spec: { reducer: R; property: string },
-    map?: (value: unknown) => unknown,
+    specOrReducer: { reducer: R; property: string } | R,
+    mapOrAccessor?: (value: any) => unknown,
     isEqual?: (a: unknown, b: unknown) => boolean,
   ): unknown => {
     const store = useStore();
+
+    // Two calling conventions, normalized to { reducer, property } + optional map:
+    //  - useAtomicProp({ reducer, property }, map?, isEqual?)  (dotted-path string)
+    //  - useAtomicProp(reducer, p => p.a.b, isEqual?)          (typed accessor)
+    const accessorForm = typeof specOrReducer === "string";
+    const reducer = (accessorForm ? specOrReducer : specOrReducer.reducer) as R;
+    const rawProperty = accessorForm
+      ? toDottedPath(mapOrAccessor as (p: any) => any)
+      : specOrReducer.property;
+    const map = accessorForm ? undefined : mapOrAccessor;
+
     const normalizedSpec = useMemo(() => {
-      const prop = normalizePath(spec.property);
-      return { reducer: spec.reducer, property: prop } as const;
-    }, [spec.reducer, spec.property]);
+      return { reducer, property: normalizePath(rawProperty) } as const;
+    }, [reducer, rawProperty]);
 
     const subscribe = useMemo(
       () => (notify: () => void) =>
@@ -273,21 +303,17 @@ export function createHooks<
       [store, normalizedSpec],
     );
 
-    const getSnapshot = useMemo(() => {
-      const isGlob = hasWildcard(normalizedSpec.property);
-      const read = () => {
+    const isGlob = hasWildcard(normalizedSpec.property);
+    const getSnapshot = useStableSnapshot(
+      () => {
         const full = store.getState() as DeepReadonly<S>;
         const slice = (full as any)[normalizedSpec.reducer];
         const source = isGlob ? slice : getAtPath(slice, normalizedSpec.property);
         return map ? map(source) : source;
-      };
-      const eq = isEqual ?? Object.is;
-      let last = read();
-      return () => {
-        const next = read();
-        return eq(last, next) ? last : (last = next);
-      };
-    }, [store, normalizedSpec, map, isEqual]);
+      },
+      isEqual ?? Object.is,
+      [store, normalizedSpec],
+    );
 
     return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   };
@@ -306,6 +332,14 @@ export function createHooks<
     const versionRef = useRef(0);
     const lastSelRef = useRef<T | undefined>(undefined);
     const lastVerRef = useRef<number>(-1);
+    const hasValueRef = useRef(false);
+
+    // Keep the latest selector/isEqual in refs so passing them inline does not
+    // rebuild getSnapshot (which would drop the memoized value) every render.
+    const selectorRef = useRef(selector);
+    selectorRef.current = selector;
+    const isEqualRef = useRef(isEqual);
+    isEqualRef.current = isEqual;
 
     const normalizedSpecs = useMemo(() => {
       return specs.map((sp) => ({
@@ -314,7 +348,7 @@ export function createHooks<
           ? (sp.property as readonly string[]).map((p) => normalizePath(p))
           : normalizePath(sp.property as string),
       }));
-    }, [JSON.stringify(specs)]);
+    }, [specsSignature(specs)]);
 
     const subscribe = useMemo(
       () => (notify: () => void) => {
@@ -333,17 +367,19 @@ export function createHooks<
       [store, normalizedSpecs],
     );
 
-    const getSnapshot = useMemo(() => {
-      return () => {
-        if (lastVerRef.current !== versionRef.current) {
-          const next = selector(store.getState());
-          const prev = lastSelRef.current;
-          if (prev === undefined || !isEqual(prev, next)) lastSelRef.current = next;
-          lastVerRef.current = versionRef.current;
+    const getSnapshot = useCallback(() => {
+      if (lastVerRef.current !== versionRef.current || !hasValueRef.current) {
+        const next = selectorRef.current(store.getState());
+        // Track presence with a boolean so an `undefined` selection still caches
+        // (using `undefined` as "no value yet" would disable the equality cache).
+        if (!hasValueRef.current || !isEqualRef.current(lastSelRef.current as T, next)) {
+          lastSelRef.current = next;
+          hasValueRef.current = true;
         }
-        return lastSelRef.current as T;
-      };
-    }, [store, selector, isEqual]);
+        lastVerRef.current = versionRef.current;
+      }
+      return lastSelRef.current as T;
+    }, [store]);
 
     return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   };

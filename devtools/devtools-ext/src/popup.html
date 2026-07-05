@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yoltra DevTools Config</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="popup">
+      <h1>Yoltra DevTools</h1>
+      <div class="field">
+        <label for="host">Hub Host</label>
+        <input id="host" type="text" value="localhost" />
+      </div>
+      <div class="field">
+        <label for="port">Hub Port</label>
+        <input id="port" type="number" value="9800" />
+      </div>
+      <button id="save">Save</button>
+      <div id="status"></div>
+    </div>
+    <script src="popup.ts" type="module"></script>
+  </body>
+</html>

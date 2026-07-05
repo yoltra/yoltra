@@ -1,794 +1,449 @@
 ![Yoltra logo](../../../assets/yoltra-logo.png)
 
-# Arquitectura de Cola de Eventos
+# Arquitectura del Pipeline de Eventos
 
-> 👉
-> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/docs/es/design/event-queue-architecture.md)&nbsp;
-> |
-> &nbsp;[ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)&nbsp;
+> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/docs/es/design/event-queue-architecture.md)&nbsp; | &nbsp; 👉 🇺🇸 English Version
 
-**Versión:** 0.7.0 **Última actualización:** Enero 2026 **Estado:** Estable
+**Versión:** 0.8.0
+**Última actualización:** Julio 2026
+**Estado:** Estable
 
 ## Descripción General
 
-Yoltra emplea una **cola de eventos asíncrona y serializada** con un guardia de reentrada para
-control de contrapresión. Esta arquitectura garantiza un ordenamiento predecible de eventos y
-previene condiciones de carrera mientras soporta middleware y efectos asíncronos.
+Yoltra procesa cada evento en **dos fases**:
+
+1. **Una fase de reducción síncrona** — el middleware, los reducers, los suscriptores de eventos
+   confirmados/no confirmados y los oyentes gruesos se ejecutan todos **en el mismo tick, antes de
+   que `emit()` retorne**. Así, `getState()` es correcto en el instante en que `emit()` retorna —
+   con o sin middleware.
+2. **Una fase de efectos asíncrona** — los efectos de cada evento confirmado se ejecutan después,
+   como una **tarea independiente**. La promesa que devuelve `emit()` se resuelve cuando los
+   efectos de _ese evento_ terminan.
+
+Esta división es el núcleo del diseño: **las transiciones de estado son síncronas y predecibles**
+(estilo Redux), mientras que **los efectos secundarios son asíncronos y no bloqueantes** (estilo
+thunk/saga), sin una capa de orquestación aparte. Los reducers se mantienen puros y síncronos;
+cualquier cosa asíncrona pertenece a un efecto.
+
+> Esto reemplaza la anterior cola serializada totalmente asíncrona (≤ v0.7). Ahora el middleware es
+> síncrono, los reducers confirman antes de que `emit()` retorne, y la promesa de finalización es
+> por-evento y honesta.
 
 ## Mecanismo Central
 
-### Estructura de la Cola
+### Estructuras
 
 ```typescript
-private readonly eventQueue: Array<{
+// Cola FIFO de eventos que esperan la fase de reducción síncrona.
+private readonly reduceQueue: Array<{
   channel: string;
   type: string;
-  payload: any;
-  id: symbol;
+  payload: unknown;
+  id: string;
+  resolve: () => void; // deferred de finalización para este evento en concreto
 }> = [];
 
-private isProcessingQueue = false;
+private isReducing = false;   // guardia de reentrada para el drenado síncrono
+private inFlightEffects = 0;   // numero de tareas de efectos en ejecucion
 ```
 
 **Propiedades:**
 
-- **Cola FIFO sin límites** - Eventos encolados en el orden recibido
-- **Bandera de procesamiento única** - Previene operaciones de drenaje concurrentes
-- **Deduplicación de eventos** - IDs de símbolos únicos previenen el doble procesamiento
-  (seguridad en Modo Estricto de React)
+- **Cola de reducción FIFO** — los eventos se reducen en el orden en que se emitieron; los emits
+  reentrantes preservan el orden.
+- **Guardia `isReducing`** — garantiza que haya un único drenado síncrono en curso; los emits
+  reentrantes se anexan a la cola y los drena el mismo pase (sin intercalado de reducers).
+- **Deferred de finalización por-evento** — cada evento lleva su propio `resolve`, así que
+  `await emit(...)` se resuelve cuando los efectos de ese evento terminan — no antes, y no por un
+  evento no relacionado.
+- **Deduplicación opt-in** — desactivada por defecto; se activa por-store (`dedupWindowMs`) o
+  por-emit (`dedupKey`). Ver [Deduplicación](#deduplicación-opt-in).
 
-### Pipeline de Emisión
+### El punto de entrada `emit()`
 
 ```typescript
-public async emit<C, T>(
-  channel: C,
-  type: T,
-  payload: EM[C][T]
-): Promise<void>
+public async emit<C, T>(channel: C, type: T, payload: EM[C][T], opts?: EmitOptions): Promise<void>
 ```
 
 **Pasos:**
 
-1. **Generación de ID** - Asignar `Symbol` único al evento
-2. **Encolar** - Agregar a `eventQueue` (siempre ocurre)
-3. **Verificación de Contrapresión** - Si `isProcessingQueue === true`, retornar inmediatamente
-4. **Adquirir Bloqueo** - Establecer `isProcessingQueue = true`
-5. **Bucle de Drenaje** - Procesar todos los eventos encolados secuencialmente
-6. **Liberar Bloqueo** - Establecer `isProcessingQueue = false`
+1. **Deduplicación (opt-in)** — si la dedup por contenido está activa (`dedupWindowMs > 0`) o se
+   suministra un `dedupKey` explícito, se omite el evento cuando coincide con uno reciente.
+   Desactivada por defecto.
+2. **Asignar id + deferred de finalización** — un id único y una `Promise` cuyo `resolve` se
+   dispara después de que corran los efectos de este evento.
+3. **Encolar** — empujar el evento a `reduceQueue`.
+4. **Drenar síncronamente** — llamar a `drainReduce()`, que reduce cada evento encolado en este
+   tick.
+5. **Devolver la promesa de finalización** — se resuelve cuando los efectos de este evento se
+   asientan.
 
-### Flujo de Procesamiento
+### Flujo de procesamiento
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ emit(channel, type, payload)                                │
-└────────────────┬────────────────────────────────────────────┘
-                 │
-                 ▼
-         ┌───────────────┐
-         │ Generar ID    │
-         └───────┬───────┘
-                 │
-                 ▼
-         ┌───────────────┐
-         │ Encolar Evento│
-         └───────┬───────┘
-                 │
-                 ▼
-         ┌────────────────────┐
-         │ isProcessingQueue? │
-         └───────┬────────┬───┘
-                 │        │
-            SÍ   │        │ NO
-                 │        │
-                 ▼        ▼
-         ┌────────┐  ┌──────────────┐
-         │ Retorno│  │ Flag=true    │
-         └────────┘  └──────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │ while(queue)  │
-                    └───────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────────┐
-                    │ Deduplicación     │
-                    └───────┬───────────┘
-                            │
-                            ▼
-                    ┌───────────────────┐
-                    │ Middleware        │──────────────────┐
-                    │ (puede cancelar)  │                  │
-                    └───────┬───────────┘                  │
-                            │                              │
-                            │ (permitido)                  │ (rechazado)
-                            │                              │
-                            ▼                              ▼
-                    ┌───────────────────┐      ┌─────────────────────────┐
-                    │ Reducers (sync)   │      │ Suscriptores de Eventos │
-                    └───────┬───────────┘      │ No Confirmados + Subs   │
-                            │                  │ 'all' (phase=           │
-                            ▼                  │    'uncommitted')       │
-                    ┌───────────────────┐      └─────────────┬───────────┘
-                    │ Suscriptores de   │                    │
-                    │ Eventos Confirma- │                    ▼
-                    │ dos + Subs 'all'  │            ┌───────────────┐
-                    │ (phase='committed')│            │ DevTools      │
-                    └───────┬───────────┘            │ [CANCELADO]   │
-                            │                        └───────┬───────┘
-                            ▼                                │
-                    ┌───────────────────┐            ┌───────────────┐
-                    │ Efectos (async)   │            │ Continuar Loop│
-                    └───────┬───────────┘            └───────────────┘
-                            │
-                            ▼
-                    ┌───────────────────┐
-                    │ Suscriptores      │
-                    │ (si estado cambió)│
-                    └───────┬───────────┘
-                            │
-                            ▼
-                    ┌───────────────────┐
-                    │ DevTools          │
-                    └───────┬───────────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │ Flag=false    │
-                    └───────────────┘
+emit(channel, type, payload)
+        │
+        ▼
+  ┌───────────────────────┐   duplicado
+  │ chequeo dedup opt-in?  │ ───────────► return (omitido)
+  └───────────┬───────────┘
+              │ no es duplicado
+              ▼
+  asignar id + deferred de finalizacion
+              │
+              ▼
+  empujar a reduceQueue
+              │
+              ▼
+  drainReduce()  ── SINCRONO, en este tick ────────────────────────┐
+              │   mientras reduceQueue no este vacia:               │
+              ▼                                                     │
+     ┌────────────────────────────┐   veto    ┌───────────────────┐│
+     │ middleware (sinc, veta)     │ ────────► │ suscriptores de   ││
+     └────────────┬───────────────┘           │ evento no confirm.││
+                  │ confirmado                 └───────────────────┘│
+                  ▼                                                 │
+     ┌────────────────────────────┐                                │
+     │ reducers (clave + patron)   │                                │
+     └────────────┬───────────────┘                                │
+                  ▼                                                 │
+     ┌────────────────────────────┐                                │
+     │ suscriptores confirmados    │  (fire-and-forget)             │
+     └────────────┬───────────────┘                                │
+                  ▼                                                 │
+     ┌────────────────────────────┐                                │
+     │ oyentes gruesos (si el      │                                │
+     │ estado cambio) + instrum.   │                                │
+     └────────────┬───────────────┘                                │
+                  ▼                                                 │
+     void runEventEffects(event) ── async, tarea independiente ─────┘
+                  │
+                  ▼
+  return promesa `done`  ── se resuelve cuando terminan los efectos de ESTE evento
 ```
 
-## Modelo de Contrapresión
+## Fase 1 — Reducción síncrona
 
-### Guardia de Reentrada
-
-El store usa una **bandera booleana** (`isProcessingQueue`) para implementar contrapresión:
+`drainReduce()` ejecuta toda la fase de reducción de cada evento encolado en un único pase
+síncrono, protegido por `isReducing`:
 
 ```typescript
-if (this.isProcessingQueue) return; // Contrapresión aplicada aquí
+private drainReduce(): void {
+  if (this.isReducing) return;        // ya hay un drenado en curso
+  this.isReducing = true;
+  try {
+    while (this.reduceQueue.length > 0) {
+      const { channel, type, payload, id, resolve } = this.reduceQueue.shift()!;
+      const event = { channel, type, payload, id };
+
+      // (la instrumentacion captura estado previo, rutas cambiadas y tiempos aqui —
+      //  se omite por completo cuando no hay observadores adjuntos)
+
+      const committed = this.applyEventSync(event);   // ← sincrono
+
+      // Los efectos corren como tarea independiente; el bucle NO los espera.
+      void this.runEventEffects(event, committed, resolve);
+    }
+  } finally {
+    this.isReducing = false;
+  }
+}
 ```
 
-**Mecanismo:**
-
-- **Primera llamada a `emit()`** adquiere el bloqueo y comienza el drenaje
-- **Llamadas subsecuentes a `emit()`** (durante el drenaje) encolan y retornan inmediatamente
-- **Llamadas anidadas a `emit()`** (desde middleware/efectos) se encolan para procesamiento
-  posterior
-
-### Modelo de Ejecución
-
-Yoltra usa un modelo de **"paso de testigo"** donde la primera llamada desbloqueada a `emit()`
-consume toda la cola:
-
-```
-Línea de tiempo:
-
-T0: emit('evento1') [Componente A]
-    → isProcessingQueue = false
-    → Adquirir bloqueo
-    → Comenzar bucle de drenaje
-
-T1: emit('evento2') [Middleware durante evento1]
-    → isProcessingQueue = true (BLOQUEADO)
-    → Solo encolar
-    → Retornar inmediatamente
-
-T2: emit('evento3') [Efecto durante evento1]
-    → isProcessingQueue = true (BLOQUEADO)
-    → Solo encolar
-    → Retornar inmediatamente
-
-T3: Continúa bucle de drenaje [emit('evento1') original]
-    → Procesar evento1
-    → Procesar evento2 (tomado de la cola)
-    → Procesar evento3 (tomado de la cola)
-    → Liberar bloqueo
-    → Retornar
-```
-
-**Propiedad Clave:** No hay **hilo consumidor separado o worker**. El consumo de la cola es
-impulsado enteramente por llamadas a `emit()`.
-
-## Garantías de Ordenamiento
-
-### Ordenamiento FIFO
-
-Los eventos se procesan en estricto orden de encolamiento:
+`applyEventSync()` es el núcleo síncrono — middleware, reducers, suscriptores, oyentes gruesos:
 
 ```typescript
-await emit("ui", "evento1", p1); // Encolado en índice 0
-await emit("ui", "evento2", p2); // Encolado en índice 1
-await emit("ui", "evento3", p3); // Encolado en índice 2
-
-// Orden de procesamiento: evento1 → evento2 → evento3 (garantizado)
-```
-
-### Serialización
-
-Los eventos **nunca** se procesan concurrentemente:
-
-```typescript
-while (this.eventQueue.length) {
-  const event = this.eventQueue.shift()!;
-
-  // Deduplicación
-  if (this.processedEventIds.has(event.id)) continue;
-  this.processedEventIds.add(event.id);
-
-  // Middleware (async)
-  for (const mw of this.middleware) {
-    const ok = await mw(state, event, emit); // ← Espera cada uno
-    if (!ok) break;
+private applyEventSync(event): boolean {
+  // Middleware (sincrono). Devolver false para vetar; el trabajo async va en efectos.
+  for (const mw of this.matchingMiddleware(event)) {
+    let ok: boolean;
+    try {
+      ok = mw(this.state, event, this.emit);   // ← boolean, no una Promise
+    } catch (err) {
+      console.error("Middleware error:", err);
+      ok = false;
+    }
+    if (!ok) {
+      this.notifyEventSubscribers(event, "uncommitted"); // rechazado → subs no confirmados
+      return false;                                       // no confirmar
+    }
   }
 
-  // Reducers (sync)
+  // Reducers — por clave + por patron; rastrea cambio de slice por igualdad de referencia.
+  const stateBefore = this.state;
   this.reducerBus.emit(event.channel, event.type, event.payload);
-
-  // Efectos (async)
-  await this.notifyEffects(event); // ← Espera completación
-
-  // Suscriptores (sync)
-  if (stateChanged) this.listeners.forEach((l) => l());
-
-  // DevTools (sync)
-  this.devtools?.send(action, state);
-}
-```
-
-**Propiedad:** El siguiente evento en la cola no comienza a procesarse hasta que el evento
-actual completa todo su pipeline (incluyendo efectos asíncronos).
-
-### Seguridad de Reentrada
-
-Las llamadas anidadas a `emit()` durante el procesamiento de eventos son seguras:
-
-```typescript
-// Middleware que emite
-const middleware: MiddlewareFunction = async (state, event, emit) => {
-  if (event.type === "fetchData") {
-    await emit("ui", "loading", true); // ← Emit anidado
-    const data = await fetch("/api");
-    await emit("data", "loaded", data); // ← Emit anidado
+  for (const [slice, when] of this.patternReducers) {
+    if (this.matchesWhen(when, event)) this.forwardEvent(slice, event);
   }
+  const changed = stateBefore !== this.state;
+
+  // Suscriptores confirmados (fire-and-forget), luego oyentes gruesos si el estado cambio.
+  this.notifyEventSubscribers(event, "committed");
+  if (changed) this.listeners.forEach((l) => l());
   return true;
-};
-
-// Código de usuario
-await emit("api", "fetchData", { url: "/todos" });
-// Resultado: 'fetchData' → 'loading' → 'loaded' (en orden)
-```
-
-## Modelo de Concurrencia
-
-### JavaScript de un Solo Hilo
-
-El bucle de eventos de JavaScript asegura que solo una llamada a `emit()` se ejecute a la vez:
-
-```typescript
-// Componente A (microtarea 1)
-emit("evento1");
-
-// Componente B (microtarea 2)
-emit("evento2");
-
-// Ejecución real:
-// 1. emit('evento1') se ejecuta hasta completarse (o cede a await)
-// 2. emit('evento2') se ejecuta (puede encolarse si evento1 aún está drenando)
-```
-
-### Programación de Microtareas
-
-Async/await coloca continuaciones en la cola de microtareas:
-
-```typescript
-async function ejemplo() {
-  await emit("evento1"); // Cede aquí
-  // Continuación programada como microtarea
-  console.log("después de evento1");
 }
 ```
 
-**Implicación:** Múltiples llamadas a `emit()` desde diferentes componentes pueden intercalarse
-en límites de await, pero el ordenamiento de la cola se preserva.
-
-## Deduplicación de Eventos
-
-### Protección del Modo Estricto de React
-
-React 18+ Modo Estricto ejecuta efectos dos veces en desarrollo:
+**Como todo esto corre antes de que `emit()` retorne:**
 
 ```typescript
+store.emit("counter", "increment", 1);
+store.getState().counter.value; // ← ya actualizado, incluso con middleware presente
+```
+
+## Fase 2 — Efectos asíncronos
+
+Los efectos de cada evento confirmado corren en su **propia tarea asíncrona**, no en un bucle
+serializado compartido:
+
+```typescript
+private async runEventEffects(event, committed, resolve): Promise<void> {
+  this.inFlightEffects++;
+  try {
+    if (committed) await this.notifyEffects(event);
+  } catch (err) {
+    console.error("Effect error:", err);   // que un efecto falle nunca rompe el pipeline
+  } finally {
+    this.inFlightEffects--;
+    resolve();                              // asienta la promesa de emit() para ESTE evento
+  }
+}
+```
+
+Las tareas independientes por-evento (en lugar de un único bucle serializado compartido) permiten
+que un efecto haga `await` de un `emit()` reentrante **sin deadlock** — el evento reentrante se
+reduce síncronamente por su cuenta y sus efectos se agendan de forma independiente.
+
+## Reentrada y ordenamiento
+
+Los emits anidados son seguros y ordenados:
+
+- **Un `emit()` dentro de middleware o de un suscriptor** (es decir, durante la reducción síncrona)
+  se anexa a `reduceQueue`; el pase activo de `drainReduce()` lo recoge y lo reduce después del
+  evento actual — FIFO, sin intercalado de reducers.
+- **Un `emit()` dentro de un efecto** (asíncrono) encola y llama a `drainReduce()` de nuevo, que
+  inicia un nuevo pase síncrono (el anterior ya terminó).
+
+```typescript
+await emit("ui", "event1", p1); // reducido primero
+await emit("ui", "event2", p2); // reducido despues de event1
+// Orden de reduccion: event1 → event2 (garantizado, sincrono)
+```
+
+> **Concurrencia de efectos:** como los efectos son tareas independientes, los efectos de event1 y
+> los de event2 pueden estar en vuelo al mismo tiempo. Si un efecto debe correr estrictamente
+> después de que otro termine, modela ese orden explícitamente (p. ej. emite el siguiente desde
+> dentro del primer efecto). El orden de los reducers siempre es estricto; el orden de finalización
+> de los efectos no lo es.
+
+## Deduplicación (opt-in)
+
+La deduplicación está **desactivada por defecto** — Yoltra nunca descarta en silencio eventos
+idénticos legítimos y rápidos (doble-clics, un slider emitiendo el mismo valor, dos `+1`). Te
+suscribes de dos formas:
+
+| Modo | Cómo | Cuándo se dispara |
+| --- | --- | --- |
+| **Por contenido** | `createStore({ dedupWindowMs: N })` (o `createYoltra`) | Omite un evento cuya huella `channel::type::payload` se repite dentro de `N` ms |
+| **Por identidad** | `emit(c, t, p, { dedupKey })` | Omite un evento cuyo `dedupKey` explícito se repite dentro de la ventana de la clave |
+
+```typescript
+// Desactivada por defecto — ambos se despachan:
+await emit("counter", "increment", 1);
+await emit("counter", "increment", 1);
+
+// Dedup por identidad para un doble-invoke de React Strict Mode en un efecto:
 useEffect(() => {
-  emit("analytics", "pageView", { page }); // ¡Se dispara 2 veces en dev!
+  emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page}` });
 }, [page]);
 ```
 
-**Solución:** El seguimiento de IDs de eventos previene el doble procesamiento:
+La dedup por identidad es la herramienta correcta para la doble-invocación (solo en desarrollo) de
+efectos de Strict Mode: el mismo emit lógico reutiliza la clave, mientras que dos acciones reales
+del usuario no.
+
+## El contrato de la promesa de `emit()`
+
+`emit()` devuelve una `Promise<void>` que se resuelve **cuando los efectos de ese evento en
+concreto terminan**:
 
 ```typescript
-private readonly processedEventIds = new Set<symbol>();
-
-// En el bucle de drenaje:
-if (this.processedEventIds.has(event.id)) continue;  // Saltar duplicado
-this.processedEventIds.add(event.id);
+await emit("api", "save", payload);
+// ← se resuelve tras terminar los efectos de save (el estado ya se actualizo sincronamente)
 ```
 
-### Estrategia de Limpieza
+Esto es honesto bajo concurrencia: cada evento tiene su propio deferred de finalización, así que
+`await emit(b)` nunca se resuelve antes de tiempo porque otro evento `a` estuviera en vuelo. Si solo
+te importa el cambio de estado (no los efectos), no necesitas hacer `await` en absoluto — el cambio
+ya es visible.
 
-Los IDs se limpian periódicamente para prevenir fugas de memoria:
+## Suscripciones de eventos
 
-```typescript
-// Constructor
-this.eventIdCleanupTimer = setInterval(() => {
-  this.processedEventIds.clear();
-}, cleanupInterval);  // 30s dev, 5min prod
+Las suscripciones de eventos observan los eventos sin afectar el flujo. Se disparan durante la fase
+**síncrona**.
 
-// Disposición
-public dispose(): void {
-  if (this.eventIdCleanupTimer) {
-    clearInterval(this.eventIdCleanupTimer);
-    this.eventIdCleanupTimer = null;
-  }
-  this.processedEventIds.clear();
-}
-```
-
-**Suposición:** Los eventos más antiguos que el intervalo de limpieza nunca serán re-emitidos
-(seguro para la mayoría de las aplicaciones).
-
-## Características de Rendimiento
-
-### Complejidad Temporal
-
-| Operación                            | Complejidad | Notas                               |
-| ------------------------------------ | ----------- | ----------------------------------- |
-| `emit()` encolar                     | O(1)        | Push de array                       |
-| `emit()` drenar (cola vacía)         | O(n×m)      | n = eventos, m = middleware+efectos |
-| `emit()` drenar (cola tiene eventos) | O(1)        | Retorna inmediatamente              |
-| Deduplicación de eventos             | O(1)        | Búsqueda en Set                     |
-| Pipeline de middleware               | O(k)        | k = número de middleware            |
-| Despacho de reducer                  | O(1)        | Emisión directa de EventBus         |
-| Despacho de efecto                   | O(1)        | Búsqueda en Map por clave           |
-
-### Complejidad Espacial
-
-| Estructura          | Complejidad | Notas                              |
-| ------------------- | ----------- | ---------------------------------- |
-| `eventQueue`        | O(n)        | n = eventos encolados (sin límite) |
-| `processedEventIds` | O(m)        | m = eventos desde última limpieza  |
-| `middleware`        | O(k)        | k = middleware registrado          |
-| `effects`           | O(e)        | e = efectos registrados            |
-
-### Cuellos de Botella
-
-1. **Reducers Lentos** - Bloquean toda la cola (síncrono)
-2. **Middleware Lento** - Bloquea el procesamiento de eventos (asíncrono pero secuencial)
-3. **Efectos Lentos** - Bloquea el siguiente evento en la cola (asíncrono pero secuencial)
-4. **Crecimiento de Cola** - Uso de memoria sin límite si los eventos se encolan más rápido que
-   el procesamiento
-
-## Modos de Falla
-
-### Desbordamiento de Cola (Crecimiento Sin Límite)
-
-**Escenario:** Los eventos se encolan más rápido de lo que pueden procesarse.
+| Fase | Cuándo se notifica | Caso de uso |
+| --- | --- | --- |
+| `'committed'` | Tras los reducers, antes de los efectos de este evento | Reaccionar a cambios de estado exitosos |
+| `'uncommitted'` | Tras el veto del middleware | Reaccionar a eventos bloqueados (auth, validación) |
+| `'all'` | Ambas fases (el handler recibe la fase) | Logging, analíticas, depuración |
 
 ```typescript
-// Caso patológico: Emisión recursiva
-registerEffect({
-  events: [["ui", "tick"]],
-  effect: async (evt, getState, emit) => {
-    await emit("ui", "tick", evt.payload + 1); // ¡Recursión infinita!
-  },
+// Confirmado (por defecto)
+store.onEvent("ui", "save", (event, getState) => {
+  console.log("Save confirmado, nuevo estado:", getState());
 });
 
-emit("ui", "tick", 0); // La cola crece sin límite
+// No confirmado — el middleware lo bloqueo
+store.onEvent("ui", "delete", () => console.log("Delete bloqueado por middleware"), "uncommitted");
+
+// Todos — con el parametro de fase
+store.onEvent("ui", "action", (event, _get, _emit, phase) => {
+  analytics.track(`event_${phase}`, { type: event.type });
+}, "all");
 ```
 
-**Síntomas:**
+Los errores de un suscriptor se capturan y registran, así que un suscriptor que lanza nunca detiene
+a los demás.
 
-- Uso creciente de memoria
-- Rendimiento degradado
-- Eventual fallo por OOM
+## Modos de fallo
 
-**Mitigación:** La aplicación debe evitar bucles infinitos. El store no tiene protección
-incorporada.
+### Veto del middleware
 
-### Inanición del Bucle de Eventos
-
-**Escenario:** Un reducer de larga ejecución bloquea el bucle de eventos.
+Un middleware que devuelve `false` veta el evento: los reducers y efectos nunca lo ven, se disparan
+los suscriptores no confirmados, y el evento no se confirma. El middleware es síncrono — haz aquí la
+autorización y validación, no I/O.
 
 ```typescript
-reducer: (state, event) => {
-  // Computación síncrona y costosa
-  for (let i = 0; i < 1e9; i++) {
-    // Trabajo intensivo de CPU
-  }
-  return { ...state, result: i };
-};
-```
-
-**Síntomas:**
-
-- UI se congela
-- Otros eventos atascados en la cola
-- Mala experiencia de usuario
-
-**Mitigación:** Mantener reducers rápidos y puros. Mover computación pesada a efectos o Web
-Workers.
-
-### Cancelación de Middleware
-
-**Escenario:** El middleware cancela el evento retornando `false`.
-
-```typescript
-const authMiddleware: MiddlewareFunction = (state, event) => {
-  if (!state.auth.isAuthenticated) {
-    console.warn("Evento no autorizado:", event);
-    return false; // Cancelar propagación
-  }
+const auth: MiddlewareFunction = (state, event) => {
+  if (!state.auth.isAuthenticated) return false; // veto → no confirmado
   return true;
 };
 ```
 
-**Comportamiento:**
+### Errores de efectos
 
-- El evento se desencola pero no se procesa
-- Los reducers y efectos nunca ven el evento
-- Los suscriptores no son notificados
-- El evento se pierde (sin mecanismo de reintento)
-
-**Consideración:** Asegurar que la cancelación sea intencional y apropiadamente registrada.
-
-### Errores de Efectos
-
-**Escenario:** Un efecto lanza un error.
-
-```typescript
-registerEffect({
-  events: [["api", "fetch"]],
-  effect: async (evt) => {
-    const res = await fetch(evt.payload.url);
-    const data = await res.json(); // Puede lanzar si no es JSON
-    // ...
-  },
-});
-```
-
-**Comportamiento:**
-
-- El error se captura y registra: `console.error("Error de efecto:", err);`
-- Otros efectos aún se ejecutan
-- El drenaje de cola continúa
-- La aplicación debe manejar el estado de error mediante eventos de error
-
-**Mejor Práctica:** Los efectos deben capturar errores y emitir eventos de falla:
+Un efecto que lanza se captura y registra (`Effect error:`); los demás efectos y el pipeline
+continúan. Los efectos deben capturar sus propios errores y emitir eventos de fallo:
 
 ```typescript
 effect: async (evt, getState, emit) => {
   try {
-    const data = await fetchData(evt.payload.url);
-    await emit("api", "fetchSuccess", data);
+    await emit("api", "fetchSuccess", await fetchData(evt.payload.url));
   } catch (error) {
-    await emit("api", "fetchFailure", { error: error.message });
+    await emit("api", "fetchFailure", { error: String(error) });
   }
 };
 ```
 
-## Suscripciones a Eventos (v0.7.0+)
+### Reducers síncronos y largos
 
-### Descripción General
+Los reducers corren en el hilo principal durante la fase síncrona. Un reducer con mucho CPU bloquea
+ese tick y la UI. Manten los reducers rápidos y puros; mueve el trabajo pesado o asíncrono a los
+efectos (o a un Web Worker).
 
-Las suscripciones a eventos proporcionan una forma de observar eventos sin afectar el flujo de
-eventos. A diferencia del middleware (que puede cancelar eventos) y los efectos (que se ejecutan
-después del pipeline de eventos), las suscripciones a eventos son puramente observacionales.
+### Re-emisión descontrolada
 
-### Fases de Suscripción
+Un efecto que re-emite incondicionalmente su propio disparador recurre sin límite. Yoltra no vigila
+esto — protege las cadenas de emit recursivas en el código de la aplicación.
 
-| Fase            | Cuándo se Notifica                    | Caso de Uso                             |
-| --------------- | ------------------------------------- | --------------------------------------- |
-| `'committed'`   | Después de reducers, antes de efectos | Reaccionar a cambios de estado exitosos |
-| `'uncommitted'` | Después de rechazo del middleware     | Reaccionar a eventos bloqueados         |
-| `'all'`         | Ambas fases (con parámetro phase)     | Logging, analíticas, depuración         |
+## Comparación con otras librerías
 
-### Orden de Procesamiento
+### Redux (síncrono)
 
-**Para eventos confirmados:**
+Reducers síncronos; `getState()` refleja el cambio de inmediato. Lo asíncrono necesita
+thunks/sagas. **Yoltra iguala el timing de estado síncrono de Redux** a la vez que provee una fase
+de efectos asíncrona integrada.
 
-```
-Middleware (permite) → Reducers → Subs de Eventos Confirmados → Efectos → Suscriptores Gruesos
-```
+### Zustand (síncrono)
 
-**Para eventos no confirmados:**
+`set()` síncrono; overhead mínimo, sin orquestación async integrada ni ordenamiento de eventos.
+Yoltra añade un log de eventos, ordenamiento y la fase de efectos.
 
-```
-Middleware (rechaza) → Subs de Eventos No Confirmados → DevTools [CANCELADO]
-```
+### XState (mailbox de actores)
 
-### Firma del Handler
+Mailboxes asíncronos por-actor; potente pero con un modelo mental más pesado. Yoltra mantiene una
+única ruta de reducción ordenada con efectos asíncronos ligeros.
 
-```typescript
-type EventSubscriptionHandler = (
-  event: EventUnion<EM>,
-  getState: () => S,
-  emit: Emit<EM>,
-  phase: "committed" | "uncommitted",
-) => void | Promise<void>;
-```
-
-**Parámetros:**
-
-- `event` - El objeto de evento completo `{ channel, type, payload, id }`
-- `getState` - Retorna el estado actual (después de reducers para confirmados, sin cambios para
-  no confirmados)
-- `emit` - Permite emitir nuevos eventos desde el handler
-- `phase` - La fase que activó esta notificación
-
-### Manejo de Errores
-
-Los errores en suscripciones de eventos se capturan y registran, permitiendo que otras
-suscripciones continúen:
+### Yoltra (reducción síncrona + efectos asíncronos)
 
 ```typescript
-// Si una suscripción lanza error, las demás aún se ejecutan
-store.onEvent("ui", "click", () => {
-  throw new Error("boom");
-});
-store.onEvent("ui", "click", () => {
-  console.log("aún se ejecuta");
-}); // ✅
+emit("todo", "add", todo);        // estado actualizado sincronamente, antes de retornar
+await emit("todo", "add", todo);  // haz await para esperar tambien los efectos de add
 ```
 
-### Ejemplo de Uso
+- ✅ Transiciones de estado síncronas y predecibles (`getState()` correcto tras `emit`)
+- ✅ Efectos asíncronos integrados sin una capa de orquestación aparte
+- ✅ Orden estricto de reducers; seguro ante reentrada
+- ✅ Promesa de finalización por-evento honesta
+- ⚠️ El orden de finalización de efectos entre eventos no está serializado (por diseño)
 
-```typescript
-// Eventos confirmados (por defecto)
-store.onEvent("ui", "save", (event, getState, emit, phase) => {
-  console.log("Guardado confirmado, nuevo estado:", getState());
-});
+## Justificación de diseño
 
-// Eventos no confirmados
-store.onEvent(
-  "ui",
-  "delete",
-  (event, getState, emit, phase) => {
-    console.log("Eliminación fue bloqueada por el middleware");
-  },
-  "uncommitted",
-);
+### ¿Por qué reducción síncrona + efectos asíncronos?
 
-// Todos los eventos
-store.onEvent(
-  "ui",
-  "action",
-  (event, getState, emit, phase) => {
-    analytics.track(`event_${phase}`, { type: event.type });
-  },
-  "all",
-);
-```
+Una versión anterior hacía todo el pipeline asíncrono, incluyendo el middleware. Eso hacía que
+`getState()` tras `emit()` dependiera de si existía middleware, y la promesa de finalización se
+resolvía antes de tiempo para eventos encolados. Dividir las fases arregla ambas cosas: los reducers
+confirman síncronamente (estado predecible), los efectos siguen siendo asíncronos (no bloqueantes),
+y cada `emit()` obtiene una promesa de finalización veraz.
 
-## Comparación con Otras Bibliotecas
+### ¿Por qué middleware síncrono?
 
-### Redux (Síncrono)
+El middleware controla las confirmaciones (autorización, validación, veto). Hacerlo síncrono
+mantiene la decisión de confirmar en el mismo tick que el cambio de estado; el trabajo genuinamente
+asíncrono (I/O) es un efecto, igualando la división reducer/thunk de Redux.
 
-```typescript
-// Redux: Procesamiento inmediato y síncrono
-dispatch({ type: "ADD_TODO", payload: todo });
-// ↑ Bloquea hasta que todos los reducers completan
-// ↑ Sin cola, sin soporte asíncrono
+### ¿Por qué una única cola de reducción?
 
-const state = store.getState(); // Refleja el cambio inmediatamente
-```
+Una sola cola FIFO garantiza el orden global de los reducers y una semántica simple y sin carreras.
+Los emits reentrantes se unen al mismo pase en lugar de intercalarse.
 
-**Propiedades:**
+### ¿Por qué dedup opt-in?
 
-- ✅ Temporización predecible
-- ✅ Modelo mental simple
-- ❌ Sin soporte de middleware asíncrono (requiere redux-thunk/saga)
-- ❌ Bloquea el bucle de eventos si el reducer es lento
-
-### Zustand (Síncrono)
-
-```typescript
-// Zustand: Actualizaciones de estado inmediatas y síncronas
-set({ todos: [...todos, newTodo] });
-// ↑ Mutación síncrona + notificación
-
-get().todos; // Tiene inmediatamente el nuevo todo
-```
-
-**Propiedades:**
-
-- ✅ Sobrecarga mínima
-- ✅ API simple
-- ❌ Sin patrones asíncronos incorporados
-- ❌ Sin garantías de ordenamiento de eventos con actualizaciones concurrentes
-
-### XState (Modelo de Actor)
-
-```typescript
-// XState: Buzón de actor asíncrono
-actor.send({ type: "FETCH" });
-actor.send({ type: "UPDATE" });
-// ↑ Eventos encolados en el buzón del actor
-// ↑ Procesados asincrónicamente por la máquina de estado
-
-// Múltiples actores pueden procesar concurrentemente
-```
-
-**Propiedades:**
-
-- ✅ Verdadero procesamiento concurrente (múltiples actores)
-- ✅ Semántica de máquina de estado asíncrona incorporada
-- ❌ Modelo mental complejo
-- ❌ Mayor sobrecarga de memoria (un buzón por actor)
-
-### Yoltra (Cola Asíncrona)
-
-```typescript
-// Yoltra: Cola asíncrona serializada
-await emit("todo", "add", todo);
-// ↑ Retorna promesa cuando el procesamiento se completa
-// ↑ Encolado si otro evento está procesándose
-
-await emit("todo", "delete", id);
-// ↑ Garantizado procesar después de 'add'
-```
-
-**Propiedades:**
-
-- ✅ Soporte de middleware/efectos asíncronos
-- ✅ Garantías estrictas de ordenamiento
-- ✅ Seguro para reentrada
-- ❌ Cola sin límites (riesgo de memoria)
-- ❌ Sin procesamiento paralelo (cola única)
-
-## Justificación del Diseño
-
-### ¿Por Qué Asíncrono?
-
-**Requisito:** Soportar middleware y efectos asíncronos sin bloquear la aplicación.
-
-**Alternativa Considerada:** Modelo síncrono (como Redux)
-
-- **Rechazada:** Requiere capa de orquestación asíncrona separada (thunks, sagas)
-- **Elegida:** Soporte asíncrono incorporado mediante tipo de retorno `Promise<void>`
-
-### ¿Por Qué Cola Única?
-
-**Requisito:** Garantizar ordenamiento de eventos para transiciones de estado predecibles.
-
-**Alternativa Considerada:** Múltiples colas (por canal o por reducer)
-
-- **Rechazada:** Semántica de ordenamiento compleja, potenciales condiciones de carrera
-- **Elegida:** Cola única asegura ordenamiento global
-
-### ¿Por Qué Guardia de Reentrada?
-
-**Requisito:** Prevenir corrupción de cola por llamadas anidadas a `emit()`.
-
-**Alternativa Considerada:** Prohibir emits anidados (lanzar error)
-
-- **Rechazada:** Rompe patrones comunes (middleware emitiendo eventos)
-- **Elegida:** Encolar y diferir eventos anidados
-
-### ¿Por Qué Sin Límite de Cola?
-
-**Requisito:** Nunca descartar eventos en producción (riesgo de pérdida de datos).
-
-**Alternativa Considerada:** Buffer circular de tamaño fijo con política de desbordamiento
-
-- **Considerada:** Podría descartar eventos o lanzar errores en desbordamiento
-- **Elegida:** Cola sin límites prioriza corrección sobre seguridad de memoria
-- **Futuro:** Puede agregar límites opcionales con políticas configurables
+La dedup silenciosa por contenido cambiaba una garantía de corrección por un artefacto de Strict
+Mode exclusivo de desarrollo. Hacerla opt-in (y añadir la dedup por identidad `dedupKey`) restaura
+"cada emit se despacha" como comportamiento por defecto y a la vez resuelve Strict Mode en su
+origen.
 
 ---
 
-## Apéndice: Referencia de Implementación
+## Apéndice: referencia de implementación
 
-### Bucle de Eventos Central
+El drenado síncrono y la tarea de efectos asíncrona, condensados:
 
 ```typescript
-public async emit<C extends keyof EM, T extends keyof EM[C]>(
-  channel: C,
-  type: T,
-  payload: EM[C][T],
-): Promise<void> {
-  const id = Symbol("event");
+public async emit(channel, type, payload, opts?): Promise<void> {
+  // 1. Dedup opt-in (ventana de contenido o dedupKey explicito); desactivada por defecto.
+  if (this.dedupConfig.windowMs > 0 || opts?.dedupKey !== undefined) {
+    if (this.shouldDedupe(/* fingerprint o #dedupKey */)) return;
+  }
 
-  this.eventQueue.push({
-    channel: channel as string,
-    type: type as string,
-    payload,
-    id,
-  });
+  // 2. id + deferred de finalizacion por-evento.
+  const id = crypto.randomUUID();
+  let resolve!: () => void;
+  const done = new Promise<void>((r) => (resolve = r));
 
-  if (this.isProcessingQueue) return;
+  // 3. Encolar, luego 4. drenar sincronamente.
+  this.reduceQueue.push({ channel, type, payload, id, resolve });
+  this.drainReduce();
 
-  this.isProcessingQueue = true;
+  // 5. Se resuelve cuando terminan los efectos de ESTE evento.
+  return done;
+}
+
+private drainReduce(): void {
+  if (this.isReducing) return;
+  this.isReducing = true;
   try {
-    while (this.eventQueue.length) {
-      const { channel, type, payload, id } = this.eventQueue.shift()!;
-
-      if (this.processedEventIds.has(id)) {
-        continue;
-      }
-
-      this.processedEventIds.add(id);
-
-      const event = { channel, type, payload, id } as Event<EM, C, T>;
-      let propagate = true;
-
-      for (const mw of this.middleware) {
-        try {
-          const ok = await mw(this.state, event, this.emit);
-          if (!ok) {
-            propagate = false;
-            break;
-          }
-        } catch (err) {
-          console.error("Error de middleware:", err);
-          propagate = false;
-          break;
-        }
-      }
-
-      if (!propagate) {
-        this.devtools?.send(
-          { type: `Channel: ${channel} - Type: ${type} [CANCELADO]`, payload },
-          this.state,
-        );
-        continue;
-      }
-
-      const stateBefore = this.state;
-      this.reducerBus.emit(channel as C, type as T, payload);
-      const stateAfter = this.state;
-      const anySliceChanged = stateBefore !== stateAfter;
-
-      await this.notifyEffects(event as any);
-
-      if (anySliceChanged) {
-        this.listeners.forEach((l) => l());
-      }
-
-      this.devtools?.send(
-        { type: `Channel: ${channel} - Type: ${type}`, payload },
-        this.state,
-      );
+    while (this.reduceQueue.length > 0) {
+      const { resolve, ...ev } = this.reduceQueue.shift()!;
+      const committed = this.applyEventSync(ev);   // sinc: middleware → reducers → subs → gruesos
+      void this.runEventEffects(ev, committed, resolve); // async, tarea independiente por-evento
     }
-  } catch (err) {
-    console.error("Error de cola de emit:", err);
   } finally {
-    this.isProcessingQueue = false;
+    this.isReducing = false;
   }
-}
-```
-
-### Deduplicación de Eventos
-
-```typescript
-private readonly processedEventIds = new Set<symbol>();
-private eventIdCleanupTimer: ReturnType<typeof setInterval> | null = null;
-
-constructor(spec: StoreSpec<R, S, EM>) {
-  // ...
-
-  const cleanupInterval =
-    process.env.NODE_ENV === "production" ? 5 * 60 * 1000 : 30 * 1000;
-
-  this.eventIdCleanupTimer = setInterval(() => {
-    this.processedEventIds.clear();
-  }, cleanupInterval);
-}
-
-public dispose(): void {
-  if (this.eventIdCleanupTimer) {
-    clearInterval(this.eventIdCleanupTimer);
-    this.eventIdCleanupTimer = null;
-  }
-  this.processedEventIds.clear();
 }
 ```
 
@@ -796,29 +451,33 @@ public dispose(): void {
 
 ## Glosario
 
-**Contrapresión**: Mecanismo para prevenir desbordamiento de cola ralentizando o bloqueando la
-producción de eventos.
+**Fase de reducción** — la parte síncrona de `emit()`: middleware, reducers, suscriptores, oyentes
+gruesos. Se completa antes de que `emit()` retorne.
 
-**Paso de Testigo**: Modelo de ejecución donde el control se transfiere de una operación
-asíncrona a otra.
+**Fase de efectos** — la parte asíncrona: los efectos de cada evento confirmado, corridos como una
+tarea independiente.
 
-**Bucle de Drenaje**: El bucle `while` que procesa todos los eventos encolados secuencialmente.
+**Deferred de finalización** — el `resolve` por-evento que asienta la promesa que `emit()` devuelve,
+una vez que los efectos de ese evento terminan.
 
-**FIFO**: First-In-First-Out - los eventos se procesan en orden de encolamiento.
+**`isReducing`** — guardia de reentrada que garantiza un único drenado síncrono; los emits
+reentrantes se anexan a la cola y los drena el mismo pase.
 
-**Reentrada**: Propiedad que permite que una función sea llamada mientras ya se está ejecutando.
+**FIFO** — First-In-First-Out; los reducers corren en el orden de emisión.
 
-**Serialización**: Procesar eventos uno a la vez, nunca concurrentemente.
+**Veto** — un middleware que devuelve `false`, produciendo un evento no confirmado.
 
 ---
 
 ## Historial de Revisiones
 
-| Versión | Fecha   | Cambios                                                                             |
-| ------- | ------- | ----------------------------------------------------------------------------------- |
-| 0.7.0   | 2026-01 | Añadida característica de Suscripciones a Eventos (fases committed/uncommitted/all) |
-| 0.5.0   | 2026-01 | Documentación inicial de arquitectura de cola asíncrona                             |
+| Versión | Fecha | Cambios |
+| --- | --- | --- |
+| 0.8.0 | 2026-07 | Pipeline de dos fases: reducción síncrona (middleware síncrono, reducers confirman antes de que `emit()` retorne) + efectos asíncronos independientes; promesa de finalización por-evento honesta; deduplicación opt-in (`dedupWindowMs` / `dedupKey`) |
+| 0.7.0 | 2026-01 | Suscripciones de eventos (fases confirmado/no confirmado/todos) |
+| 0.5.0 | 2026-01 | Documentación inicial del pipeline de eventos |
 
 ---
 
-**Autor**: Equipo Yoltra **Licencia**: MIT **Repositorio**: https://github.com/yoltra/yoltra
+**Licencia:** MIT
+**Repositorio:** https://github.com/yoltra/yoltra

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "comment": "Initial release: browser agent that relays a store to the hub through the typed instrument seam over an injected WebSocket, keeping node-only transports out of the browser bundle. Devtools time-travel is gated behind the store allowReplay capability.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-browser-agent"
+}

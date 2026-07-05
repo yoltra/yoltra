@@ -2,16 +2,13 @@ import { default as NextHead } from "next/head";
 import { useSearchParams } from "next/navigation";
 
 import { useEffect } from "react";
-import { useAtomicProp } from "@/state/hooks";
+import { useAtomicProp } from "@/state/yoltra";
 
 export const Head = () => {
   const searchParams = useSearchParams();
   const lang = searchParams.get("lang") ?? "en";
 
-  const selectedTheme = useAtomicProp({
-    reducer: "theme",
-    property: "resolved",
-  });
+  const selectedTheme = useAtomicProp("theme", (s) => s.resolved);
 
   useEffect(() => {
     document.documentElement.lang = lang;

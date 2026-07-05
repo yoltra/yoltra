@@ -93,16 +93,19 @@ See **[RELEASE_GUIDE.md](./RELEASE_GUIDE.md)** for the full step-by-step.
 
 ## Breaking changes while `< 1.0.0`
 
-Until the library reaches `1.0.0`, bump `minor` (not `major`) for breaking changes.
+Until the suite reaches `1.0.0`, a **breaking change is a `minor` bump** (not `major`). The whole
+product suite — `@yoltra/core`, `@yoltra/react`, and every `@yoltra/devtools-*` — versions in
+**lockstep** via the `yoltra` policy, so they always move together to the same version. You do
+**not** choose a per-package bump.
 
-When `@yoltra/core` has a breaking change:
+1. Add a change file so the change is captured in the changelog:
 
-1. Pick **minor** in the `rush change` prompt for core.
-2. Update `@yoltra/react`'s `peerDependencies` range to match:
-   ```json
-   "@yoltra/core": "^0.9.0"
+   ```bash
+   rush change    # write a short description; the type is informational under lockstep
    ```
-3. Add a change file for `@yoltra/react` as well (minor or patch, depending on impact).
+
+2. At release time `rush version --bump` moves the entire suite to the next minor (the policy's
+   `nextBump`). See the **[Release Guide](./RELEASE_GUIDE.md)** for the full flow.
 
 ---
 

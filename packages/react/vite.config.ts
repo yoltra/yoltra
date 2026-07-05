@@ -1,7 +1,7 @@
-import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
-import dts from "vite-plugin-dts";
+import { defineConfig } from "vite";
 import banner from "vite-plugin-banner";
+import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 import pkg from "./package.json" assert { type: "json" };
@@ -12,6 +12,9 @@ const licenseText = `/*!
  * (c) ${year} ${pkg.author.name}
  * License: ${pkg.license}
  * Homepage: ${pkg.homepage || ""}
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree
  */`;
 
 export default defineConfig({
@@ -22,20 +25,20 @@ export default defineConfig({
       insertTypesEntry: true,
       outDir: "dist/types",
       include: ["src"],
-      logLevel: "silent"
+      logLevel: "silent",
     }),
     tsconfigPaths({
       projects: ["./tsconfig.json"],
-      ignoreConfigErrors: true
+      ignoreConfigErrors: true,
     }),
-    banner(licenseText)
+    banner(licenseText),
   ],
   build: {
     lib: {
       entry: "src/index.ts",
       name: "yoltra-react",
       formats: ["es", "cjs"],
-      fileName: (format) => (format === "cjs" ? "index.cjs" : "index.mjs")
+      fileName: (format) => (format === "cjs" ? "index.cjs" : "index.mjs"),
     },
     outDir: "dist",
     sourcemap: true,
@@ -49,17 +52,17 @@ export default defineConfig({
         globals: {
           react: "React",
           "react-dom": "ReactDOM",
-          tslib: "tslib"
-        }
+          tslib: "tslib",
+        },
       },
-      treeshake: true
-    }
+      treeshake: true,
+    },
   },
   resolve: {
-    dedupe: ["tslib"]
+    dedupe: ["tslib"],
   },
   optimizeDeps: {
     include: [],
-    exclude: ["tslib", "@yoltra/core"]
-  }
+    exclude: ["tslib", "@yoltra/core"],
+  },
 });

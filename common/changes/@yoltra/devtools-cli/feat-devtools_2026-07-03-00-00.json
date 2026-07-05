@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-cli",
+      "comment": "Initial release: devtools CLI to launch and manage the hub.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-cli"
+}

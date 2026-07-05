@@ -2,13 +2,10 @@
 
 # State Management: Architectural Comparison
 
-> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/docs/es/design/state-management-library-comparison.md)&nbsp; |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](https://github.com/yoltra/yoltra/blob/main/docs/pt/design/state-management-library-comparison.md)&nbsp; |
-> &nbsp; 👉 [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)&nbsp; |
-> &nbsp;[ 🇫🇷 Version française](https://github.com/yoltra/yoltra/blob/main/docs/fr/design/state-management-library-comparison.md)
+> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/docs/es/design/state-management-library-comparison.md)&nbsp; | &nbsp; 👉 🇺🇸 English Version
 
-**Version:** 0.7.0
-**Last Updated:** February 2026
+**Version:** 0.8.0
+**Last Updated:** July 2026
 
 ## Introduction
 
@@ -20,26 +17,24 @@ Each section describes a library's core model, explains the class of application
 
 ## Yoltra in Brief
 
-Yoltra is built on three architectural bets:
+Yoltra is built on four architectural bets:
 
-1. **Path-level subscriptions** — Components subscribe to dotted paths (`"items.0.title"`, `"items.*.done"`) and re-render only when that exact path changes.
-2. **Structured event pipeline** — Events flow through a formal, hookable pipeline: dedup → middleware (can reject) → reducers → event subscribers → effects → coarse subscribers.
+1. **Path-level subscriptions** — Components subscribe to dotted paths (`"items.0.title"`, `"items.*.done"`), via a typed accessor or a string, and re-render only when that exact path changes.
+2. **Event sourcing with a structured pipeline** — Events flow through a formal, hookable pipeline: middleware (can reject) → reducers → event subscribers → coarse listeners, all **synchronous**, then async effects. Content dedup is opt-in.
 3. **Channel-typed events** — Events are `(channel, type, payload)` tuples instead of flat action strings.
+4. **Introspection-first devtools** — The store exposes a typed instrumentation seam, so time-travel, event replay, and precise per-event patches are first-class rather than bolted on.
 
 ```typescript
-// Path subscription: only re-renders when items[0].title changes
-const title = useAtomicProp({
-  reducer: 'todos',
-  property: 'items.0.title',
-});
+// Path subscription via a typed accessor: re-renders only when items[0].title changes
+const title = useAtomicProp('todos', (s) => s.items[0].title);
 
 // Channel-typed event
 await emit('todos', 'toggle', { id: '123' });
 ```
 
-**Where this architecture shines:** Applications with many independently-updating UI elements (dashboards, collaborative editors, data grids, particle systems), applications that need event authorization/validation at the middleware layer, and universal apps that share state logic between client and server.
+**Where this architecture shines:** Applications with many independently-updating UI elements (dashboards, collaborative editors, data grids, particle systems), applications that need event authorization/validation at the middleware layer, and any app where debuggability of state changes matters (an event log with time-travel comes for free).
 
-**Where it creates friction:** Simple apps where path-level granularity is unnecessary overhead. Applications where bundle size must be under 5KB. Projects where the team prefers mutable-style updates or distributed atom-based state.
+**Where it creates friction:** Simple apps where path-level granularity is unnecessary overhead, or where bundle size must be minimal. Projects where the team prefers mutable-style updates or distributed atom-based state.
 
 ---
 
@@ -88,7 +83,9 @@ This difference matters most in UIs with many independently-updating elements. I
 
 **Event model.** Redux actions are flat strings (`"todos/addTodo"`). Yoltra events are channel-typed tuples (`('todos', 'add', payload)`). Both approaches work; channels provide natural namespacing at scale, while flat strings integrate better with Redux DevTools and middleware ecosystem.
 
-**Async model.** Redux separates sync reducers from async thunks. Yoltra middleware and effects are async by default — async operations are part of the core pipeline rather than a separate layer.
+**Sync vs. async layers.** Both keep reducers synchronous. Redux puts async work in thunks / RTK Query. Yoltra keeps **middleware synchronous too** — so `getState()` is correct the instant `emit()` returns — and puts async work in effects: a comparable split, built into the core pipeline.
+
+**DevTools.** Redux's devtools are the most mature in the ecosystem and a major reason teams stay. Yoltra closes most of that gap from a different angle: because the store reports the exact changed leaf paths per event, its devtools render precise RFC-6902 patches, real reduce timing, an event log with committed/rejected phases, and time-travel + event replay — while keeping the fine-grained reactivity and one-call setup Redux lacks.
 
 ---
 
@@ -319,7 +316,7 @@ Each library optimizes for a different dimension:
 | **Jotai** | Distributed, composable atoms | Harder to coordinate global state |
 | **MobX** | Implicit reactivity, mutable ergonomics | Harder to trace and debug state changes |
 | **XState** | Workflow correctness, impossible states | Verbose for general data management |
-| **Yoltra** | Fine-grained subscriptions, event pipeline | More setup than Zustand/Jotai, larger bundle |
+| **Yoltra** | Fine-grained subscriptions + event log + time-travel devtools | Larger bundle than Zustand; opinionated event model |
 
 There is no universally "best" library. The right choice depends on what your application needs most:
 
@@ -327,13 +324,13 @@ There is no universally "best" library. The right choice depends on what your ap
 - **Team already knows Redux?** Redux Toolkit.
 - **Reactive OOP with mutable updates?** MobX.
 - **Complex workflow modeling?** XState.
-- **Fine-grained path subscriptions, event authorization, or universal (client + server) state?** Yoltra.
+- **Fine-grained reactivity _and_ an event log with real time-travel devtools, without Redux's boilerplate?** Yoltra.
 
 ---
 
 ## Further Reading
 
-- **[Event Queue Architecture](./event-queue-architecture.md)** — How Yoltra's async event pipeline works under the hood
+- **[Event Pipeline Architecture](./event-queue-architecture.md)** — How Yoltra's synchronous reduce / async effect pipeline works under the hood
 - **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)** — Five steps to a working app
 - **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** — Store, middleware, effects, `When` matchers
 - **[@yoltra/react API](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** — Hooks with fine-grained subscriptions

@@ -121,6 +121,24 @@ export interface Change<V = any> {
  *
  * @public
  */
+/**
+ * Per-emit options.
+ *
+ * @public
+ */
+export interface EmitOptions {
+  /**
+   * Opt this specific emit into **identity-based** deduplication: if another
+   * event with the same `(channel, type, dedupKey)` was emitted within the dedup
+   * window, this one is skipped. Unlike content-based dedup
+   * ({@link StoreSpec.dedupWindowMs}), it never coalesces two *distinct* logical
+   * emits that merely share a payload — only re-fires of the *same* keyed emit
+   * (e.g. a React Strict Mode double-invoke). Works even when `dedupWindowMs`
+   * is 0, using a short default window.
+   */
+  dedupKey?: string;
+}
+
 export type Emit<EM extends EventMapBase> = <
   C extends keyof EM & string,
   T extends keyof EM[C] & string,
@@ -128,6 +146,7 @@ export type Emit<EM extends EventMapBase> = <
   channel: C,
   type: T,
   payload: EM[C][T],
+  opts?: EmitOptions,
 ) => Promise<void>;
 
 /**
@@ -136,6 +155,44 @@ export type Emit<EM extends EventMapBase> = <
  * @public
  */
 export type Unsubscribe = () => void;
+
+/**
+ * A single observed event delivered to an {@link InstrumentationObserver}.
+ *
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
+  /** The processed event, including its generated `id`. */
+  event: { id: string; channel: string; type: string; payload: unknown };
+  /** `true` if the event passed middleware and ran reducers; `false` if vetoed. */
+  committed: boolean;
+  /**
+   * Dotted **leaf** paths that changed, prefixed with the slice name (e.g.
+   * `"todos.items.0.title"`). Empty when nothing changed. These are the exact
+   * paths the store computed while reducing — no re-diff required.
+   */
+  changedPaths: string[];
+  /** Old value at each changed path, keyed by path. */
+  prevValues: Record<string, unknown>;
+  /** New value at each changed path, keyed by path. */
+  nextValues: Record<string, unknown>;
+  /** Wall-clock milliseconds spent in the synchronous reduce phase for this event. */
+  reduceTimeMs: number;
+}
+
+/**
+ * Observer for {@link StoreInstance.instrument}. Called once per emitted event
+ * (committed or vetoed), after the synchronous reduce phase.
+ *
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export type InstrumentationObserver<EM extends EventMapBase = EventMapBase> = (
+  info: InstrumentedEvent<EM>,
+) => void;
 
 /**
  * Store spec - what you feed into the constructor / factory.
@@ -250,13 +307,17 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
   effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
 
   /**
-   * Time window in milliseconds for event deduplication.
-   * Events with identical fingerprints (channel + type + serialized payload)
-   * within this window are considered duplicates and skipped.
+   * Time window in milliseconds for **content-based** event deduplication.
+   * When greater than 0, events with identical fingerprints
+   * (channel + type + serialized payload) within this window are treated as
+   * duplicates and skipped.
    *
-   * This helps prevent double-firing in React Strict Mode.
+   * **Off by default.** Content-based dedup can silently drop legitimate
+   * rapid-fire identical events (double-clicks, repeated `+1`, sliders emitting
+   * the same value), so it is opt-in. To safely coalesce a *specific* re-fired
+   * emit (e.g. React Strict Mode), prefer the per-emit {@link EmitOptions.dedupKey}.
    *
-   * @default 50 in development, 100 in production
+   * @default 0 (disabled)
    */
   dedupWindowMs?: number;
 
@@ -275,6 +336,21 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
      */
     allowReplay?: boolean;
   };
+
+  /**
+   * Called when an effect throws or its returned promise rejects.
+   *
+   * @remarks
+   * `await emit(...)` **never rejects** on effect failure: the reduce phase has
+   * already committed synchronously, and effects run as independent per-event
+   * tasks. Effect errors are logged to the console and delivered here (when
+   * provided), so this is the single place to observe and route them — e.g.
+   * report to a service or emit a failure event. Other effects still run.
+   *
+   * @param error - The thrown value or rejection reason.
+   * @param event - The event whose effect failed.
+   */
+  onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
 };
 
 /**
@@ -476,7 +552,8 @@ export interface StoreInstance<
   /**
    * Returns a structured introspection snapshot for DevTools UIs.
    *
-   * @returns Reducers, effects, middleware, event subscriptions, and coarse subscriber count.
+   * @returns Reducers, effects, middleware, event subscriptions, coarse
+   * subscriber count, dedup hit count, and current queue depth.
    *
    * @internal
    */
@@ -487,7 +564,30 @@ export interface StoreInstance<
     atomic: Array<{ reducer: string; property: string }>;
     event: Array<{ channel: string; type: string; phase: string }>;
     coarse: number;
+    dedupHits: number;
+    queueDepth: number;
   };
+
+  /**
+   * Registers an instrumentation observer, called once per emitted event
+   * (committed or vetoed) after the synchronous reduce phase, with the exact
+   * changed paths, their old/new values, and reduce timing. This is the typed
+   * seam DevTools agents consume — no `as any` bridging required.
+   *
+   * @param observer - Receives an {@link InstrumentedEvent} per emit.
+   * @returns Unsubscribe function.
+   */
+  instrument(observer: InstrumentationObserver<EM>): Unsubscribe;
+
+  /**
+   * Applies an externally-provided whole-state snapshot (DevTools time-travel),
+   * emitting fine-grained path changes and notifying coarse subscribers.
+   *
+   * @param next - Plain state object to apply.
+   *
+   * @internal
+   */
+  __applyExternalState(next: unknown): void;
 }
 
 
@@ -641,8 +741,13 @@ export type EventUnion<EM extends EventMapBase> = {
 }[keyof EM & string];
 
 /**
- * Middleware function: may mutate, log, side-effect, or veto an event.
- * Return true to continue; false to swallow / cancel propagation.
+ * Middleware function: log, guard, or veto an event **synchronously**.
+ * Return `true` to continue, `false` to swallow / cancel propagation.
+ *
+ * @remarks
+ * Middleware runs in the synchronous reduce phase (so `getState()` is correct
+ * immediately after `emit()`), and therefore must be synchronous. Perform async
+ * work in effects instead.
  *
  * @typeParam S  - Store state (readonly).
  * @typeParam EM - Event map.
@@ -653,7 +758,7 @@ export type MiddlewareFunction<S = any, EM extends EventMapBase = EventMapBase> 
   state: S,
   event: EventUnion<EM>,
   emit: Emit<EM>,
-) => boolean | Promise<boolean>;
+) => boolean;
 
 /**
  * Middleware specification with optional event targeting and metadata.
@@ -698,7 +803,7 @@ export interface MiddlewareSpec<S = any, EM extends EventMapBase = EventMapBase>
   when?: When<EM>;
 
   /**
-   * Middleware function: `(state, event, emit) => boolean | Promise<boolean>`.
+   * Middleware function: `(state, event, emit) => boolean` (synchronous).
    * Return `false` to cancel event propagation.
    */
   middleware: MiddlewareFunction<S, EM>;
@@ -740,19 +845,43 @@ export type StateFromReducers<R> = {
 };
 
 /**
- * Helper: derive event map from a reducers map (strict).
- * Used by createStore inference overload.
+ * Helper: turn a union into an intersection.
  *
  * @internal
  */
-export type EMFromReducersStrict<RM extends ReducersMapAny> = RM[keyof RM] extends ReducerSpec<
-  any,
-  infer EM
->
-  ? RM[keyof RM] extends ReducerSpec<any, EM>
-    ? EM
-    : never
+export type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends (
+  k: infer I,
+) => void
+  ? I
   : never;
+
+/**
+ * Helper: the event map of a single reducer spec.
+ *
+ * @internal
+ */
+export type EMOfSpec<Spec> = Spec extends ReducerSpec<any, infer EM> ? EM : never;
+
+/**
+ * Helper: derive the combined event map from a reducers map (strict).
+ * Used by the createStore inference overload.
+ *
+ * Each slice contributes its own event map; those maps are **merged** (channels,
+ * and each channel's `type → payload` entries, combined across slices) rather
+ * than collapsed to a single slice's map. `EMOfSpec` distributes over the union
+ * of specs to yield the union of per-slice event maps, and `UnionToIntersection`
+ * merges them — so a store whose slices declare divergent event maps still types
+ * `emit` against the union of every slice's channels/types.
+ *
+ * @internal
+ */
+export type EMFromReducersStrict<RM extends ReducersMapAny> = UnionToIntersection<
+  EMOfSpec<RM[keyof RM]>
+> extends infer Merged
+  ? Merged extends EventMapBase
+    ? Merged
+    : EventMapBase
+  : EventMapBase;
 
 // ============================================
 // Event Targeting (When Matcher)

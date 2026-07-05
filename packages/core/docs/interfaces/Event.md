@@ -6,7 +6,7 @@
 
 # Interface: Event\<EM, C, T, P\>
 
-Defined in: [types.ts:72](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L72)
+Defined in: [types.ts:72](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L72)
 
 A single event object: `{ channel, type, payload, id }`.
 
@@ -55,7 +55,7 @@ Payload type (defaults to `EM[C][T]`).
 
 > **channel**: `C`
 
-Defined in: [types.ts:78](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L78)
+Defined in: [types.ts:78](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L78)
 
 ***
 
@@ -63,7 +63,7 @@ Defined in: [types.ts:78](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf11
 
 > **id**: `string`
 
-Defined in: [types.ts:82](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L82)
+Defined in: [types.ts:82](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L82)
 
 Unique identifier for deduplication and devtools tracking (automatically added by store)
 
@@ -73,7 +73,7 @@ Unique identifier for deduplication and devtools tracking (automatically added b
 
 > **payload**: `P`
 
-Defined in: [types.ts:80](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L80)
+Defined in: [types.ts:80](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L80)
 
 ***
 
@@ -81,4 +81,4 @@ Defined in: [types.ts:80](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf11
 
 > **type**: `T`
 
-Defined in: [types.ts:79](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L79)
+Defined in: [types.ts:79](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L79)

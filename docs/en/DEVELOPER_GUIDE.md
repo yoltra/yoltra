@@ -210,14 +210,16 @@ Snapshot tests are only allowed for stable, deterministic output.
 
 ## Change files (required for every publishable PR)
 
-Any PR that modifies `@yoltra/core`, `@yoltra/react`, or a published `tools/` package **must**
-include a Rush change file. CI will reject PRs that are missing one.
+Any PR that modifies `@yoltra/core`, `@yoltra/react`, or another published package **must**
+include a Rush change file. (There is no CI yet — verify it locally with the command below; wiring
+`rush change --verify` into CI is the recommended enforcement, see the
+[Release Guide](./RELEASE_GUIDE.md).)
 
 ```bash
 # Interactive prompt — select the packages you changed and the bump type
 rush change
 
-# Verify a change file exists (CI runs this on every PR)
+# Verify a change file exists
 rush change -v
 ```
 
@@ -236,8 +238,9 @@ generate `CHANGELOG.md` entries.
 3. Add a minimal `rush-project.json` (declare `outputFolderNames` if the package builds).
 4. Register the package in `rush.json` under `"projects"`.
 5. Run `rush update` to regenerate the lockfile.
-6. Assign it to the `"lockstep"` version policy (if it ships in sync with core/react) or leave
-   `versionPolicyName` unset for independent versioning.
+6. If it ships in sync with the product suite, set `"versionPolicyName": "yoltra"` (the lockstep
+   policy — see the [Release Guide](./RELEASE_GUIDE.md)); otherwise leave it unset for independent
+   versioning.
 
 ---
 
@@ -255,7 +258,7 @@ Never touch `common/config/rush/pnpm-lock.yaml` by hand.
 
 | Symptom                              | Fix                                                                                         |
 | ------------------------------------ | ------------------------------------------------------------------------------------------- |
-| CI rejects PR: "missing change file" | `rush change`, commit the file in `common/changes/`.                                        |
+| Missing change file (rush change -v) | `rush change`, commit the file in `common/changes/`.                                        |
 | `rush install` peer dep errors       | `strictPeerDependencies: false` is already set; try `rush install --purge`.                 |
 | Commit rejected                      | Ensure Conventional Commits format + DCO sign-off (`git commit -s`).                        |
 | Stale build output                   | `rush rebuild` bypasses cache and forces a full recompile.                                  |

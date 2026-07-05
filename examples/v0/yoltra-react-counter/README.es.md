@@ -10,12 +10,11 @@ Una aplicación de contador minimalista que demuestra los patrones principales d
 
 | Concepto | Ubicación |
 |---|---|
-| Store tipado con `createStore` | [src/state/store.ts](./src/state/store.ts) |
-| Mapa de eventos (`AppEM`) para eventos con tipos seguros | [src/state/store.ts](./src/state/store.ts) |
-| Hooks con alcance definido usando `createHooks` | [src/state/hooks.ts](./src/state/hooks.ts) |
-| Suscripción de grano fino con `useAtomicProp` | [src/components/Counter.tsx](./src/components/Counter.tsx) |
+| Configuración de una sola llamada con `createYoltra` (store + hooks tipados) | [src/state/yoltra.ts](./src/state/yoltra.ts) |
+| Mapa de eventos (`AppEM`) para eventos con tipos seguros | [src/state/yoltra.ts](./src/state/yoltra.ts) |
+| Suscripción de grano fino con un accessor tipado | [src/components/Counter.tsx](./src/components/Counter.tsx) |
 | Despacho de eventos con `useEmit` | [src/components/Counter.tsx](./src/components/Counter.tsx) |
-| Provisión del store mediante contexto de React | [src/App.tsx](./src/App.tsx) |
+| Sin Provider — los hooks usan el store por defecto | [src/App.tsx](./src/App.tsx) |
 
 ---
 
@@ -25,7 +24,7 @@ Una aplicación de contador minimalista que demuestra los patrones principales d
 - **Vite** 7
 - **TypeScript** 5.9
 - **@yoltra/core** — store, reducers, pipeline de eventos
-- **@yoltra/react** — hooks de React e integración con contexto
+- **@yoltra/react** — hooks de React y `createYoltra`
 
 ---
 
@@ -47,10 +46,10 @@ Abre [http://localhost:5173](http://localhost:5173).
 
 ## Recorrido por el código
 
-### 1. Define la forma del estado y el mapa de eventos
+### 1. Define el mapa de eventos
 
 ```ts
-// src/state/store.ts
+// src/state/yoltra.ts
 export type AppEM = {
   counter: {
     increment: number;   // payload: cantidad a sumar
@@ -58,17 +57,15 @@ export type AppEM = {
     reset: null;         // sin payload
   };
 };
-
-export type AppState = { counter: { value: number } };
 ```
 
-El **mapa de eventos** (`AppEM`) es un tipo TypeScript plano que asocia cada par `(canal, tipo)` con el tipo de su payload. Yoltra lo utiliza para que `emit` y `useEvent` sean completamente seguros en tipos.
+El **mapa de eventos** (`AppEM`) asocia cada par `(canal, tipo)` con el tipo de su payload. Yoltra lo utiliza para que `emit` y los hooks sean completamente seguros en tipos.
 
-### 2. Crea el store
+### 2. Crea el store y los hooks en una sola llamada
 
 ```ts
-// src/state/store.ts
-export const store = createStore<AppState, AppEM>({
+// src/state/yoltra.ts
+export const { store, useAtomicProp, useEmit } = createYoltra({
   name: "App",
   reducer: {
     counter: {
@@ -80,6 +77,7 @@ export const store = createStore<AppState, AppEM>({
           ["counter", "reset"],
         ]),
       },
+      // `event.payload` se estrecha a number / null según `event.type` — sin casts.
       reducer: (state, event) => {
         switch (event.type) {
           case "increment": return { value: state.value + event.payload };
@@ -93,40 +91,16 @@ export const store = createStore<AppState, AppEM>({
 });
 ```
 
-`eventKeys` acota qué eventos activan este reducer — solo las tres claves listadas lo ejecutarán, manteniendo tus reducers enfocados y eficientes.
+`createYoltra` devuelve el store **y** todos los hooks tipados en una sola llamada — sin archivo de context aparte, sin `createHooks` y sin `<Provider>` (los hooks usan este store por defecto). `eventKeys` acota qué eventos activan el reducer, manteniéndolo enfocado y eficiente.
 
-### 3. Vincula los hooks al contexto del store
-
-```ts
-// src/state/hooks.ts
-export const AppStoreContext = createContext<StoreInstance<...> | null>(null);
-
-export const { useAtomicProp, useEmit, useEvent, useSelector, shallowEqual } =
-  createHooks(AppStoreContext);
-```
-
-`createHooks` vincula cada hook a tu contexto específico, eliminando toda ambigüedad cuando coexisten múltiples stores en la misma aplicación.
-
-### 4. Provee el store
-
-```tsx
-// src/App.tsx
-function App() {
-  return (
-    <AppStoreContext.Provider value={store}>
-      <Counter />
-    </AppStoreContext.Provider>
-  );
-}
-```
-
-### 5. Suscríbete y emite eventos desde un componente
+### 3. Suscríbete y emite eventos desde un componente
 
 ```tsx
 // src/components/Counter.tsx
 export function Counter() {
-  // Se re-renderiza SOLO cuando counter.value cambia — nada más
-  const value = useAtomicProp({ reducer: "counter", property: "value" });
+  // Accessor tipado — `s` autocompleta la slice, `value` se infiere como number.
+  // Se re-renderiza SOLO cuando counter.value cambia; sin selectores, sin memo.
+  const value = useAtomicProp("counter", (s) => s.value);
   const emit = useEmit();
 
   return (
@@ -140,13 +114,13 @@ export function Counter() {
 }
 ```
 
-`useAtomicProp` se suscribe exactamente a la ruta `counter.value`. Si cualquier otra parte del estado cambia, este componente **no** se re-renderizará. No hay selectores ni memoización — la suscripción por ruta _es_ la optimización.
+El accessor tipado `s => s.value` se suscribe exactamente a la hoja `counter.value`. Si cualquier otra parte del estado cambia, este componente **no** se re-renderizará. No hay selectores ni memoización — la suscripción por ruta _es_ la optimización. Para rutas dinámicas o con comodines (p. ej. `items.*.done`), la forma string `useAtomicProp({ reducer, property })` sigue disponible.
 
 ---
 
 ## Próximos pasos
 
-- Agrega middleware (ej. logging, validación) — consulta la [documentación de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)
+- Agrega middleware síncrono (ej. logging, autorización) o efectos asíncronos — consulta la [documentación de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)
 - Reacciona a eventos bloqueados con `useEvent(..., "uncommitted")` — consulta el [README principal](https://github.com/yoltra/yoltra/blob/main/docs/es/README.md)
 - Explora rutas con comodines como `"items.*.done"` — consulta el [ejemplo de la aplicación Todo](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md)
 
