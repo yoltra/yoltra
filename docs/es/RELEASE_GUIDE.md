@@ -9,7 +9,7 @@ Cómo versionar, generar changelog y publicar los paquetes de Yoltra. Si solo le
 
 ---
 
-## Modelo mental (léelo una vez)
+## Modelo mental
 
 Tres mecanismos **independientes** — no los confundas:
 
@@ -72,10 +72,6 @@ Notas:
   ```bash
   rush change --verify     # alias: rush change -v
   ```
-
-  Aún **no hay CI** que lo obligue — es un ítem manual del checklist (ver
-  [Recomendado: CI](#recomendado-obligar-change-files-en-ci)).
-
 ---
 
 ## Cortar un release
@@ -109,7 +105,7 @@ rush version --bump --override-bump patch      # 0.1.0 → 0.1.1
 ## Prueba local contra Verdaccio (recomendado)
 
 Prueba la experiencia real de instalación antes de tocar npm. `.npmrc-publish` apunta a **npm**, así
-que apunta a Verdaccio explícitamente con `--registry`:
+que apuntalo a Verdaccio explícitamente con `--registry`:
 
 ```bash
 # inicia el registry local
@@ -190,24 +186,6 @@ Verdaccio primero.
 
 ---
 
-## Recomendado: obligar change files en CI
-
-Aún no hay CI, así que nada _garantiza_ que cada PR traiga un change file. Agrega un workflow de
-GitHub Actions que corra en los PRs (es el follow-up de mayor impacto):
-
-```yaml
-# .github/workflows/ci.yml (boceto)
-- run: node common/scripts/install-run-rush.js install
-- run: node common/scripts/install-run-rush.js change --verify
-- run: node common/scripts/install-run-rush.js build
-- run: node common/scripts/install-run-rush.js test
-- run: node common/scripts/install-run-rush.js lint
-```
-
-(El bootstrap `install-run-rush.js` ya funciona — ver la nota de abajo.)
-
----
-
 ## Chuleta
 
 ```bash
@@ -231,22 +209,3 @@ rush publish --publish --include-all --version-policy yoltra
 # --- etiquetar ---
 git tag vX.Y.Z && git push origin vX.Y.Z
 ```
-
----
-
-## Qué cambió respecto a la guía anterior (2026-07)
-
-Esta guía antes documentaba una configuración que no existía. Corregido:
-
-- La **política `lockstep` que referenciaba nunca existió** (`version-policies.json` era `[]`), así
-  que `rush publish --version-policy lockstep` fallaba y "core/react se mueven juntos" era falso. La
-  política lockstep ahora es real y se llama **`yoltra`**, cubriendo toda la suite de producto.
-- **Las publicaciones ya no van a localhost por defecto.** Se quitó el "safeguard"
-  `@yoltra:registry=http://localhost:4873/` de `.npmrc-publish`; usa `--registry` para las pruebas
-  con Verdaccio.
-- Los **scripts de bootstrap de `rush` estaban rotos bajo ESM** (`require is not defined`); un
-  `common/scripts/package.json` ahora los fija a CommonJS.
-- Los **mensajes de commit ahora se validan** con un hook `commit-msg` (commitlint / Conventional
-  Commits).
-- Los paquetes devtools en `0.0.0` fueron **alineados a la versión de la suite** (`0.1.0`) bajo
-  lockstep.

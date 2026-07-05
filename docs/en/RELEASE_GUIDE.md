@@ -9,7 +9,7 @@ How to version, changelog, and publish the Yoltra packages. If you read one thin
 
 ---
 
-## Mental model (read this once)
+## Mental model
 
 Three **independent** mechanisms — don't conflate them:
 
@@ -71,10 +71,6 @@ Notes:
   ```bash
   rush change --verify     # alias: rush change -v
   ```
-
-  There is **no CI yet** to enforce this — it's a manual checklist item (see
-  [Recommended: CI](#recommended-enforce-change-files-in-ci)).
-
 ---
 
 ## Cutting a release
@@ -188,24 +184,6 @@ Consumers opt in explicitly: `npm add @yoltra/core@next`. Test pre-releases in V
 
 ---
 
-## Recommended: enforce change files in CI
-
-There is no CI yet, so nothing _guarantees_ every PR ships a change file. Add a GitHub Actions
-workflow that runs on PRs (this is the highest-leverage follow-up):
-
-```yaml
-# .github/workflows/ci.yml (sketch)
-- run: node common/scripts/install-run-rush.js install
-- run: node common/scripts/install-run-rush.js change --verify
-- run: node common/scripts/install-run-rush.js build
-- run: node common/scripts/install-run-rush.js test
-- run: node common/scripts/install-run-rush.js lint
-```
-
-(The `install-run-rush.js` bootstrap works now — see the note below.)
-
----
-
 ## Cheat sheet
 
 ```bash
@@ -229,19 +207,3 @@ rush publish --publish --include-all --version-policy yoltra
 # --- tag ---
 git tag vX.Y.Z && git push origin vX.Y.Z
 ```
-
----
-
-## What changed from the old guide (2026-07)
-
-This guide previously documented a setup that did not exist. Fixed:
-
-- The **`lockstep` version policy it referenced never existed** (`version-policies.json` was `[]`),
-  so `rush publish --version-policy lockstep` failed and "core/react move together" was untrue. The
-  lockstep policy is now real and named **`yoltra`**, covering the whole product suite.
-- **Publishes no longer go to localhost by default.** The `@yoltra:registry=http://localhost:4873/`
-  "safeguard" was removed from `.npmrc-publish`; use `--registry` for Verdaccio dry-runs instead.
-- The **`rush` bootstrap scripts were ESM-broken** (`require is not defined`); a
-  `common/scripts/package.json` now scopes them to CommonJS.
-- **Commit messages are now enforced** by a `commit-msg` hook (commitlint / Conventional Commits).
-- The `0.0.0` devtools packages were **aligned to the suite version** (`0.1.0`) under lockstep.

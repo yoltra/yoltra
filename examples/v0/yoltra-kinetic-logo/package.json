@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "test": "exit 0",
-    "build": "exit 0",
+    "build": "vite build",
     "docs": "exit 0",
     "lint": "exit 0"
   },
