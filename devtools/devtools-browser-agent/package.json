@@ -54,6 +54,7 @@
   },
   "devDependencies": {
     "@yoltra/core": "workspace:*",
+    "@yoltra/devtools-ui": "workspace:*",
     "typedoc": "^0.28.13",
     "typedoc-plugin-markdown": "4.9.0",
     "typedoc-plugin-localization": "3.0.6",

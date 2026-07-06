@@ -1,0 +1,322 @@
+:root {
+  --bg: #0a0e1a;
+  --bg-2: #111725;
+  --panel: #151c2c;
+  --line: #26304a;
+  --text: #e6ebf5;
+  --muted: #8a93ad;
+  --cyan: #35d0e0;
+  --amber: #ffb454;
+  --red: #ff5c72;
+  --green: #52e0a0;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.mission-pane {
+  flex: 1 1 56%;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 24px 28px 48px;
+  background: radial-gradient(1200px 600px at 20% -10%, #16203a 0%, var(--bg) 55%);
+}
+
+.devtools-pane {
+  flex: 1 1 44%;
+  min-width: 460px;
+  height: 100vh;
+  border-left: 1px solid var(--line);
+  background: var(--bg-2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Let the embedded DevtoolsApp fill the pane. */
+.devtools-pane > * {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.mission-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "brand stats" "alert alert";
+  gap: 14px 24px;
+  align-items: center;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  grid-area: brand;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand .logo {
+  font-size: 34px;
+  color: var(--cyan);
+  filter: drop-shadow(0 0 10px rgba(53, 208, 224, 0.5));
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.3px;
+}
+
+.brand p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.mission-stats {
+  grid-area: stats;
+  display: flex;
+  gap: 10px;
+}
+
+.stat {
+  min-width: 104px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  text-align: right;
+}
+
+.stat-value {
+  display: block;
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.stat-label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+}
+
+.stat.tone-warn .stat-value {
+  color: var(--amber);
+}
+
+.last-alert {
+  grid-area: alert;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.last-alert.warn {
+  color: var(--amber);
+  border-color: rgba(255, 180, 84, 0.4);
+}
+
+.hint {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 720px;
+  margin: 18px 0 22px;
+}
+
+.hint b {
+  color: var(--text);
+}
+
+/* ── Satellite grid ─────────────────────────────────────────────────────── */
+
+.sat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.sat-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+  transition: border-color 0.3s ease;
+}
+
+.sat-card.low {
+  border-color: rgba(255, 92, 114, 0.55);
+  box-shadow: 0 0 0 1px rgba(255, 92, 114, 0.25) inset;
+}
+
+.sat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.sat-name {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.render-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.05);
+  animation: pulse 0.55s ease-out;
+}
+
+@keyframes pulse {
+  0% {
+    background: var(--cyan);
+    color: #04121a;
+    transform: scale(1.12);
+  }
+  100% {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--muted);
+    transform: scale(1);
+  }
+}
+
+.sat-status {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.status-boosting {
+  color: var(--amber);
+  background: rgba(255, 180, 84, 0.14);
+}
+.status-deploying {
+  color: var(--cyan);
+  background: rgba(53, 208, 224, 0.14);
+}
+.status-transmitting {
+  color: var(--green);
+  background: rgba(82, 224, 160, 0.14);
+}
+
+.gauge {
+  margin-bottom: 9px;
+}
+
+.gauge-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  font-family: var(--mono);
+}
+
+.gauge-track {
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.gauge-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.35s ease;
+}
+
+.tone-ok {
+  background: linear-gradient(90deg, #2fa7b8, var(--cyan));
+}
+.tone-warn {
+  background: linear-gradient(90deg, #c98a2f, var(--amber));
+}
+.tone-bad {
+  background: linear-gradient(90deg, #b83a4c, var(--red));
+}
+
+.sat-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin: 10px 0 12px;
+}
+
+.sat-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.sat-actions button {
+  flex: 1;
+  padding: 7px 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--text);
+  background: #1c2740;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.sat-actions button:hover:not(:disabled) {
+  background: #24325a;
+  border-color: var(--cyan);
+}
+
+.sat-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

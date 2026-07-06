@@ -132,12 +132,18 @@ export function withDevtools<
   }
 
   // Create browser WS client
-  const wsClient = new DevtoolsWsClient(storeId, store.name, capabilities, {
-    autoReconnect: config.autoReconnect ?? true,
-    maxReconnectAttempts: config.maxReconnectAttempts ?? Infinity,
-    baseDelay: config.baseDelay ?? 1000,
-    maxDelay: config.maxDelay ?? 30000,
-  });
+  const wsClient = new DevtoolsWsClient(
+    storeId,
+    store.name,
+    capabilities,
+    {
+      autoReconnect: config.autoReconnect ?? true,
+      maxReconnectAttempts: config.maxReconnectAttempts ?? Infinity,
+      baseDelay: config.baseDelay ?? 1000,
+      maxDelay: config.maxDelay ?? 30000,
+    },
+    config.socketFactory,
+  );
 
   // Surface backpressure: warn (throttled) instead of dropping events silently
   // when the hub is unreachable and the send buffer overflows.

@@ -4,7 +4,7 @@
  * @module @yoltra/devtools-browser-agent
  */
 
-import type { SamplingConfig } from "@yoltra/devtools-protocol";
+import type { DevtoolsSocketFactory, SamplingConfig } from "@yoltra/devtools-protocol";
 
 /**
  * Configuration for the browser DevTools store wrapper ({@link withDevtools}).
@@ -106,4 +106,13 @@ export interface DevtoolsWrapperConfig {
    * @defaultValue `30000`
    */
   maxDelay?: number;
+
+  /**
+   * Custom socket factory (advanced). By default the agent opens a native
+   * browser `WebSocket`. Inject a different transport — e.g. an in-memory
+   * loopback for an embedded panel or a test — to connect the agent without a
+   * real network socket.
+   * @defaultValue the native browser WebSocket factory
+   */
+  socketFactory?: DevtoolsSocketFactory;
 }

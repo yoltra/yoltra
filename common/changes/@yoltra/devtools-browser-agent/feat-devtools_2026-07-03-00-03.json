@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "comment": "withDevtools now accepts an optional socketFactory in its config, so the agent can connect to the hub over a custom transport (for example an in-memory loopback used by an embedded panel or a test) instead of always opening a native browser WebSocket. Defaults to the native WebSocket factory.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-browser-agent"
+}

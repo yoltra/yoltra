@@ -53,7 +53,8 @@ export class DevtoolsWsClient extends ReconnectingWsClient {
     storeName: string,
     capabilities: StoreCapabilities,
     config: ReconnectingWsConfig,
+    socketFactory: DevtoolsSocketFactory = browserSocketFactory,
   ) {
-    super(storeId, storeName, capabilities, config, browserSocketFactory);
+    super(storeId, storeName, capabilities, config, socketFactory);
   }
 }

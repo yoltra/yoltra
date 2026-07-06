@@ -19,6 +19,9 @@ importers:
       '@yoltra/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@yoltra/devtools-ui':
+        specifier: workspace:*
+        version: link:../devtools-ui
       typedoc:
         specifier: ^0.28.13
         version: 0.28.17(typescript@5.9.3)
@@ -538,6 +541,52 @@ importers:
       typescript-eslint:
         specifier: ^8.35.1
         version: 8.56.0(eslint@9.39.3)(typescript@5.9.3)
+      vite:
+        specifier: ^7.1.11
+        version: 7.3.1(@types/node@24.10.13)(sass-embedded@1.97.3)(sass@1.97.3)(yaml@2.8.2)
+
+  ../../examples/v0/yoltra-mission-control:
+    dependencies:
+      '@yoltra/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@yoltra/devtools-browser-agent':
+        specifier: workspace:*
+        version: link:../../../devtools/devtools-browser-agent
+      '@yoltra/devtools-protocol':
+        specifier: workspace:*
+        version: link:../../../devtools/devtools-protocol
+      '@yoltra/devtools-storeview':
+        specifier: workspace:*
+        version: link:../../../devtools/devtools-storeview
+      '@yoltra/devtools-ui':
+        specifier: workspace:*
+        version: link:../../../devtools/devtools-ui
+      '@yoltra/react':
+        specifier: workspace:*
+        version: link:../../../packages/react
+      react:
+        specifier: 19.1.1
+        version: 19.1.1
+      react-dom:
+        specifier: 19.1.1
+        version: 19.1.1(react@19.1.1)
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.12
+        version: 24.10.13
+      '@types/react':
+        specifier: ^19.1.8
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.1.6
+        version: 19.2.3(@types/react@19.2.14)
+      '@vitejs/plugin-react-swc':
+        specifier: ^3.10.2
+        version: 3.11.0(vite@7.3.1(@types/node@24.10.13)(sass-embedded@1.97.3)(sass@1.97.3)(yaml@2.8.2))
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
       vite:
         specifier: ^7.1.11
         version: 7.3.1(@types/node@24.10.13)(sass-embedded@1.97.3)(sass@1.97.3)(yaml@2.8.2)

@@ -24,6 +24,10 @@ export { useTimeTravel } from "./hooks/useTimeTravel";
 // Utilities
 export { applyPatches } from "./utils/apply-patch";
 
+// In-memory loopback transport (embed the agent + hub + panel in one process)
+export { createLoopbackHub } from "./transport/loopback";
+export type { LoopbackHub } from "./transport/loopback";
+
 // Types
 export type {
   EventLogEntry,

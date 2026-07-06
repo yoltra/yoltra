@@ -195,6 +195,12 @@
       "reviewCategory": "samples",
       "shouldPublish": false
     },
+    {
+      "packageName": "yoltra-mission-control",
+      "projectFolder": "examples/v0/yoltra-mission-control",
+      "reviewCategory": "samples",
+      "shouldPublish": false
+    },
 
     {
       "packageName": "@eraelco/repo-tools",
