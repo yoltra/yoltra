@@ -1,0 +1,21 @@
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--devtools-fg-muted);
+}
+
+.connected {
+  background: var(--devtools-success);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--devtools-success) 25%, transparent);
+}
+
+.connecting {
+  background: var(--devtools-warning);
+}
+
+.disconnected {
+  background: var(--devtools-error);
+}

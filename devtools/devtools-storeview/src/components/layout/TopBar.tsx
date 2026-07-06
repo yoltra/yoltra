@@ -3,18 +3,21 @@
  */
 
 import type { RegisteredStore } from "@yoltra/devtools-ui";
+import cx from "classnames";
 import { ConnectionDot } from "../shared/ConnectionDot";
+import styles from "./TopBar.module.css";
+import yoltraLogo from "../../assets/logo.svg";
 
 /**
- * Top bar with store tabs and connection indicators.
+ * Top bar with the Yoltra brand and a store selector.
  *
- * Renders a horizontal tab strip where each registered store is displayed
- * as a selectable button alongside a {@link ConnectionDot} reflecting its
- * live connection status.
+ * Shows the DevTools wordmark on the left and each registered store as a
+ * selectable pill on the right, alongside a {@link ConnectionDot} reflecting
+ * its live connection status.
  *
- * @param props.stores - Array of registered stores to display as tabs.
+ * @param props.stores - Array of registered stores to display.
  * @param props.selectedStoreId - The currently selected store ID, or `null`.
- * @param props.onSelectStore - Callback invoked when a store tab is clicked.
+ * @param props.onSelectStore - Callback invoked when a store is chosen.
  * @public
  */
 export function TopBar({
@@ -27,18 +30,29 @@ export function TopBar({
   onSelectStore: (id: string) => void;
 }) {
   return (
-    <header>
-      {stores.map((store) => (
-        <button
-          className={selectedStoreId === store.id ? "active" : ""}
-          key={store.id}
-          onClick={() => onSelectStore(store.id)}
-        >
-          <ConnectionDot status={store.status} />
-          {store.name}
-        </button>
-      ))}
-      {stores.length === 0 && <span>No stores connected</span>}
+    <header className={styles.topBar}>
+      <div className={styles.brand}>
+        <img className={styles.logo} src={yoltraLogo} alt="Yoltra" />
+        <span className={styles.wordmark}>DevTools</span>
+      </div>
+      <div className={styles.stores}>
+        {stores.map((store) => (
+          <button
+            key={store.id}
+            className={cx(styles.storeTab, {
+              [styles.storeTabActive]: selectedStoreId === store.id,
+            })}
+            onClick={() => onSelectStore(store.id)}
+            title={store.name}
+          >
+            <ConnectionDot status={store.status} />
+            <span className={styles.storeName}>{store.name}</span>
+          </button>
+        ))}
+        {stores.length === 0 && (
+          <span className={styles.noStores}>No stores connected</span>
+        )}
+      </div>
     </header>
   );
 }

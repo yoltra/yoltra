@@ -3,63 +3,35 @@
  */
 
 import type { EventLogEntry } from "@yoltra/devtools-ui";
-
-const containerStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  height: "100%",
-  padding: "var(--devtools-spacing-md)",
-  gap: "var(--devtools-spacing-md)",
-};
-
-const controlsStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: "var(--devtools-spacing-md)",
-};
-
-const btnStyle: React.CSSProperties = {
-  padding: "var(--devtools-spacing-sm) var(--devtools-spacing-md)",
-  background: "var(--devtools-bg-tertiary)",
-  border: "1px solid var(--devtools-border)",
-  borderRadius: "var(--devtools-radius)",
-  color: "var(--devtools-fg)",
-  cursor: "pointer",
-  fontSize: "var(--devtools-font-size-sm)",
-  fontFamily: "inherit",
-};
-
-const sliderStyle: React.CSSProperties = {
-  flex: 1,
-  accentColor: "var(--devtools-accent)",
-};
-
-const infoStyle: React.CSSProperties = {
-  fontFamily: "var(--devtools-font-mono)",
-  fontSize: "var(--devtools-font-size-sm)",
-  color: "var(--devtools-fg-secondary)",
-};
+import { JsonTree } from "../shared/JsonTree";
+import styles from "./TimeTravelPanel.module.css";
 
 /**
- * Time travel slider/stepper through event history.
+ * Time-travel view: a scrubber over the event history plus a live preview of
+ * the store state reconstructed at the selected point.
  *
- * Provides a range slider and step-back / step-forward buttons to
- * navigate through recorded events. A "Resume Live" button appears
- * while time-traveling to return to the real-time event stream.
+ * A range slider and step controls navigate the recorded events; the store is
+ * snapped to the chosen point via `TIME_TRAVEL` while a "Resume Live" action
+ * returns to the real-time stream. The reconstructed state at the current
+ * position is rendered below so the effect of stepping through history is
+ * visible without leaving the panel.
  *
  * @param props.entries - The full event log history.
- * @param props.currentIndex - The index of the currently viewed event.
+ * @param props.currentIndex - Index of the currently viewed event.
  * @param props.isTimeTraveling - Whether time-travel mode is active.
- * @param props.onJumpTo - Callback to jump to a specific event index.
- * @param props.onStepBack - Callback to move one event backward.
- * @param props.onStepForward - Callback to move one event forward.
- * @param props.onResume - Callback to exit time-travel and resume live.
+ * @param props.previewState - Store state reconstructed at the current position.
+ * @param props.onJumpTo - Jump to a specific event index.
+ * @param props.onStepBack - Move one event backward.
+ * @param props.onStepForward - Move one event forward.
+ * @param props.onResume - Exit time-travel and resume live.
  * @public
  */
 export function TimeTravelPanel({
   entries,
   currentIndex,
   isTimeTraveling,
+  previewState,
+  frameCount,
   onJumpTo,
   onStepBack,
   onStepForward,
@@ -68,59 +40,82 @@ export function TimeTravelPanel({
   entries: EventLogEntry[];
   currentIndex: number;
   isTimeTraveling: boolean;
+  previewState?: unknown;
+  /**
+   * Timeline length to measure against — frozen at travel-start so a live
+   * store cannot shift the scrubber. Falls back to the live entry count.
+   */
+  frameCount?: number | null;
   onJumpTo: (index: number) => void;
   onStepBack: () => void;
   onStepForward: () => void;
   onResume: () => void;
 }) {
-  const sliderValue = isTimeTraveling ? currentIndex : entries.length - 1;
+  const hasEvents = entries.length > 0;
+  // While traveling, the range is the frozen frame; live, it tracks the log.
+  const total = frameCount ?? entries.length;
+  const lastIndex = total - 1;
+  const sliderValue = isTimeTraveling ? currentIndex : lastIndex;
   const currentEntry = entries[sliderValue];
 
+  // Back is possible whenever there is an earlier event to view; Forward only
+  // while traveling (there is nothing past the live stream).
+  const canStepBack = hasEvents && sliderValue > 0;
+  const canStepForward = isTimeTraveling;
+
   return (
-    <div style={containerStyle}>
-      <div style={controlsStyle}>
-        <button style={btnStyle} onClick={onStepBack} disabled={entries.length === 0}>
-          Step Back
+    <div className={styles.container}>
+      <div className={styles.controls}>
+        <button className={styles.button} onClick={onStepBack} disabled={!canStepBack}>
+          ‹ Back
         </button>
         <input
-          type='range'
-          style={sliderStyle}
+          type="range"
+          className={styles.slider}
           min={0}
-          max={Math.max(0, entries.length - 1)}
+          max={Math.max(0, lastIndex)}
           value={sliderValue >= 0 ? sliderValue : 0}
           onChange={(e) => onJumpTo(Number(e.target.value))}
-          disabled={entries.length === 0}
+          disabled={!hasEvents}
         />
-        <button style={btnStyle} onClick={onStepForward} disabled={entries.length === 0}>
-          Step Forward
+        <button className={styles.button} onClick={onStepForward} disabled={!canStepForward}>
+          Forward ›
         </button>
         {isTimeTraveling && (
-          <button
-            style={{
-              ...btnStyle,
-              background: "var(--devtools-accent)",
-              color: "var(--devtools-accent-fg)",
-            }}
-            onClick={onResume}
-          >
+          <button className={styles.resumeButton} onClick={onResume}>
             Resume Live
           </button>
         )}
       </div>
-      <div style={infoStyle}>
-        {entries.length === 0 ? (
-          "No events recorded"
+
+      <div className={styles.info}>
+        {!hasEvents ? (
+          "No events recorded yet"
         ) : (
           <>
-            Event {sliderValue + 1} / {entries.length}
+            Event {sliderValue + 1} / {total}
             {currentEntry && (
               <>
-                {" "}
-                — {currentEntry.event.channel}::{currentEntry.event.type}
+                {" — "}
+                <span className={styles.infoEvent}>
+                  {currentEntry.event.channel}.{currentEntry.event.type}
+                </span>
               </>
             )}
-            {isTimeTraveling && " (time-traveling)"}
+            {isTimeTraveling && <span className={styles.infoTravel}> (time-traveling)</span>}
           </>
+        )}
+      </div>
+
+      <div className={styles.preview}>
+        {previewState != null ? (
+          <JsonTree data={previewState} name="state" defaultExpanded />
+        ) : (
+          <div className={styles.previewEmpty}>
+            {hasEvents
+              ? "State preview appears once the baseline snapshot arrives."
+              : "Emit some events, then scrub to replay the store’s history."}
+          </div>
         )}
       </div>
     </div>

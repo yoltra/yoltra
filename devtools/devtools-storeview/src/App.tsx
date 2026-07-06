@@ -11,6 +11,7 @@ import {
   useStoreRegistry,
   useStoreState,
   useStoreSubscriptions,
+  useTimeTravel,
   type HubConnectionConfig,
 } from "@yoltra/devtools-ui";
 import { ThemeProvider } from "./theme";
@@ -20,31 +21,14 @@ import { useEffect, useState } from "react";
 
 import { BottomBar } from "./components/layout/BottomBar";
 import { TopBar } from "./components/layout/TopBar";
-import { EventEmitterPanel } from "./components/panels/EventEmitter";
-import { EventTimeline } from "./components/panels/EventTimeline";
+import { Inspector } from "./components/panels/Inspector";
 import { MetricsDashboard } from "./components/panels/MetricsDashboard";
 import { StateTreeExplorer } from "./components/panels/StateTreeExplorer";
-import { SubscriptionsPanel } from "./components/panels/SubscriptionsPanel";
-import {
-  EventFrequencyHeatmap,
-  ReducerActivityBars,
-  StateTreemap,
-} from "./components/panels/visualizations";
+import { TimeTravelPanel } from "./components/panels/TimeTravelPanel";
 
-import yoltraLogo from "./assets/logo-large.png";
 import appStyles from "./styles/App.module.css";
 
-const TABS = [
-  "Events",
-  "State",
-  "Subscriptions",
-  "Time Travel",
-  "Emit",
-  "Metrics",
-  "Heatmap",
-  "Reducers",
-  "Treemap",
-] as const;
+const TABS = ["Inspector", "State", "Time Travel", "Metrics"] as const;
 
 type TabName = (typeof TABS)[number];
 
@@ -71,28 +55,17 @@ export function DevtoolsApp({ config }: { config: DevtoolsAppConfig }) {
   );
 }
 
-// Maps each tab to the capability it requires. `null` means always available.
+// Maps each tab to the capability it requires. Inspector and Metrics are
+// always available; State and Time Travel depend on the store's capabilities.
 function tabRequires(tab: TabName, caps: StoreCapabilities | null): boolean {
-  if (!caps) {
-    // No store selected yet — only show always-on tabs.
-    return tab === "Events" || tab === "Metrics" || tab === "Heatmap";
-  }
   switch (tab) {
-    case "Events":
+    case "Inspector":
     case "Metrics":
-    case "Heatmap":
       return true;
     case "State":
-    case "Treemap":
-      return caps.stateSnapshot;
-    case "Subscriptions":
-      return caps.subscriptionMeta || caps.pipelineMeta;
-    case "Reducers":
-      return caps.pipelineMeta;
+      return caps?.stateSnapshot ?? false;
     case "Time Travel":
-      return caps.replay;
-    case "Emit":
-      return caps.emit;
+      return caps?.replay ?? false;
   }
 }
 
@@ -100,7 +73,7 @@ function DevtoolsInner() {
   const { status } = useHubConnection();
   const stores = useStoreRegistry();
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabName>("Events");
+  const [activeTab, setActiveTab] = useState<TabName>("Inspector");
 
   // Auto-select first store if none selected.
   const effectiveStoreId =
@@ -112,11 +85,11 @@ function DevtoolsInner() {
   const caps: StoreCapabilities | null =
     stores.find((s) => s.id === effectiveStoreId)?.capabilities ?? null;
 
-  // When the store changes, redirect to "Events" if the active tab is no
+  // When the store changes, redirect to "Inspector" if the active tab is no
   // longer supported by the new store's capabilities.
   useEffect(() => {
     if (!tabRequires(activeTab, caps)) {
-      setActiveTab("Events");
+      setActiveTab("Inspector");
     }
     // Intentionally re-run only on store change, not on activeTab/caps identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -128,41 +101,47 @@ function DevtoolsInner() {
     loading: stateLoading,
     refresh: refreshState,
   } = useStoreState(effectiveStoreId);
-  const { data: subscriptions, loading: subsLoading } = useStoreSubscriptions(effectiveStoreId);
+  const { data: subscriptions } = useStoreSubscriptions(effectiveStoreId);
   const { metrics, loading: metricsLoading } = useStoreMetrics(effectiveStoreId);
   const { emit } = useEventEmitter(effectiveStoreId);
+  const timeTravel = useTimeTravel(effectiveStoreId, entries, caps?.replay ?? false);
 
   const availableTabs = TABS.filter((tab) => tabRequires(tab, caps));
 
   return (
     <main className={appStyles.main}>
-      <img className={"yoltra-logo"} src={yoltraLogo} />
       <TopBar
         stores={stores}
         selectedStoreId={effectiveStoreId}
         onSelectStore={setSelectedStoreId}
       />
-      <aside className={appStyles.aside}>
+      <nav className={appStyles.tabBar}>
         {availableTabs.map((tab) => (
           <button
             key={tab}
-            className={cx({ active: activeTab === tab })}
+            className={cx(appStyles.tab, { [appStyles.tabActive]: activeTab === tab })}
             onClick={() => setActiveTab(tab)}
           >
             {tab}
           </button>
         ))}
-      </aside>
-      <article className={appStyles.content}>
+      </nav>
+      <div className={appStyles.content}>
         {effectiveStoreId == null ? (
           <div className={appStyles.emptyState}>
             {status === "connected"
-              ? "Waiting for stores to connect..."
-              : "Connecting to hub..."}
+              ? "Waiting for stores to connect…"
+              : "Connecting to hub…"}
           </div>
         ) : (
           <>
-            {activeTab === "Events" && <EventTimeline entries={entries} />}
+            {activeTab === "Inspector" && (
+              <Inspector
+                entries={entries}
+                canEmit={caps?.emit ?? false}
+                onEmit={emit}
+              />
+            )}
             {activeTab === "State" && caps?.stateSnapshot && (
               <StateTreeExplorer
                 state={state}
@@ -170,29 +149,33 @@ function DevtoolsInner() {
                 onRefresh={refreshState}
               />
             )}
-            {activeTab === "Subscriptions" &&
-              (caps?.subscriptionMeta || caps?.pipelineMeta) && (
-                <SubscriptionsPanel data={subscriptions} loading={subsLoading} />
-              )}
-            {activeTab === "Emit" && caps?.emit && <EventEmitterPanel onEmit={emit} />}
+            {activeTab === "Time Travel" && caps?.replay && (
+              <TimeTravelPanel
+                entries={entries}
+                currentIndex={timeTravel.currentIndex}
+                isTimeTraveling={timeTravel.isTimeTraveling}
+                previewState={timeTravel.previewState}
+                frameCount={timeTravel.frameCount}
+                onJumpTo={timeTravel.jumpTo}
+                onStepBack={timeTravel.stepBack}
+                onStepForward={timeTravel.stepForward}
+                onResume={timeTravel.resume}
+              />
+            )}
             {activeTab === "Metrics" && (
-              <MetricsDashboard metrics={metrics} loading={metricsLoading} />
-            )}
-            {activeTab === "Heatmap" && <EventFrequencyHeatmap entries={entries} />}
-            {activeTab === "Reducers" && caps?.pipelineMeta && (
-              <ReducerActivityBars entries={entries} subscriptions={subscriptions} />
-            )}
-            {activeTab === "Treemap" && caps?.stateSnapshot && (
-              <StateTreemap state={state} loading={stateLoading} entries={entries} />
+              <MetricsDashboard
+                metrics={metrics}
+                loading={metricsLoading}
+                subscriptions={subscriptions}
+              />
             )}
           </>
         )}
-      </article>
+      </div>
       <BottomBar
         status={status}
-        effectiveStoreId={effectiveStoreId}
         entries={entries}
-        capabilities={caps}
+        isTimeTraveling={timeTravel.isTimeTraveling}
       />
     </main>
   );

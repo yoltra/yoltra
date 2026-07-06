@@ -28,19 +28,19 @@
   align-items: baseline;
   gap: var(--devtools-spacing-sm);
   padding-bottom: var(--devtools-spacing-sm);
-  border-bottom: 1px solid var(--devtools-border);
+  border-bottom: 1px solid var(--devtools-border-subtle);
 }
 
 .sectionTitle {
   font-size: var(--devtools-font-size-sm);
-  font-weight: 600;
+  font-weight: var(--ds-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--devtools-fg-secondary);
+  letter-spacing: var(--ds-tracking-wider);
+  color: var(--devtools-fg);
 }
 
 .sectionNote {
-  font-size: var(--devtools-font-size-sm);
+  font-size: var(--devtools-font-size-xs);
   color: var(--devtools-fg-muted);
 }
 
@@ -48,57 +48,112 @@
 
 .cardGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: var(--devtools-spacing-md);
 }
 
 /* ─── Card ───────────────────────────────────────────────────────────────────── */
 
 .card {
-  background: var(--devtools-bg-secondary);
-  border: 1px solid var(--devtools-border);
-  border-left: 3px solid var(--devtools-border);
-  border-radius: var(--devtools-radius);
-  padding: var(--devtools-spacing-md);
+  position: relative;
+  background: var(--devtools-surface);
+  border: 1px solid var(--devtools-border-subtle);
+  border-radius: var(--devtools-radius-lg);
+  padding: var(--devtools-spacing-md) var(--devtools-spacing-lg);
   display: flex;
   flex-direction: column;
   gap: var(--devtools-spacing-xs);
+  box-shadow: var(--devtools-shadow-sm);
+  transition: border-color var(--devtools-duration-fast) var(--devtools-ease);
 }
 
-/* Left-border accent colours per section. */
+.card:hover {
+  border-color: var(--devtools-border);
+}
+
+/* Left accent rail, drawn as an inset shadow so it follows the rounded corners. */
 .cardLive {
-  border-left-color: var(--devtools-success);
+  box-shadow:
+    inset 3px 0 0 0 var(--devtools-accent),
+    var(--devtools-shadow-sm);
 }
 
 .cardArch {
-  border-left-color: var(--devtools-info);
-}
-
-.cardUnavailable {
-  border-left-color: var(--devtools-border);
-  opacity: 0.55;
+  box-shadow:
+    inset 3px 0 0 0 var(--devtools-info),
+    var(--devtools-shadow-sm);
 }
 
 /* ─── Card content ───────────────────────────────────────────────────────────── */
 
 .metricLabel {
-  font-size: var(--devtools-font-size-sm);
+  font-size: var(--devtools-font-size-xs);
   color: var(--devtools-fg-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--ds-tracking-wide);
 }
 
 .metricValue {
-  font-size: 20px;
+  font-size: var(--devtools-font-size-2xl);
   font-family: var(--devtools-font-mono);
   color: var(--devtools-fg);
-  font-weight: 600;
-  line-height: 1.2;
+  font-weight: var(--ds-weight-semibold);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
 }
 
-.metricNote {
+/* ─── Consumers ──────────────────────────────────────────────────────────────── */
+
+.consumers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--devtools-spacing-lg);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--devtools-spacing-sm);
+}
+
+.groupLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--devtools-spacing-sm);
+  font-size: var(--devtools-font-size-xs);
+  font-weight: var(--ds-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--ds-tracking-wide);
+  color: var(--devtools-fg-secondary);
+}
+
+.groupCount {
+  font-family: var(--devtools-font-mono);
+  color: var(--devtools-fg-muted);
+  background: var(--devtools-bg-tertiary);
+  border-radius: var(--devtools-radius-pill);
+  padding: 0 var(--devtools-spacing-sm);
+  letter-spacing: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--devtools-spacing-sm);
+}
+
+.chip {
+  font-family: var(--devtools-font-mono);
+  font-size: var(--devtools-font-size-sm);
+  color: var(--devtools-fg);
+  background: var(--devtools-surface);
+  border: 1px solid var(--devtools-border-subtle);
+  border-radius: var(--devtools-radius-sm);
+  padding: 2px var(--devtools-spacing-md);
+}
+
+.emptyChip {
   font-size: var(--devtools-font-size-sm);
   color: var(--devtools-fg-muted);
   font-style: italic;
-  margin-top: 1px;
 }

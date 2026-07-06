@@ -10,6 +10,10 @@ function cssInjectedByJs(): Plugin {
   return {
     name: "css-injected-by-js",
     apply: "build",
+    // Run AFTER Vite's own `vite:css-post` plugin has emitted the extracted
+    // CSS asset — otherwise `generateBundle` sees no `.css` in the bundle, the
+    // injection is skipped, and consumers get a component with no styles.
+    enforce: "post",
     generateBundle(_, bundle) {
       let css = "";
       for (const [name, chunk] of Object.entries(bundle)) {
@@ -48,12 +52,18 @@ export default defineConfig({
         format === "cjs" ? "devtools-storeview.cjs.js" : "devtools-storeview.esm.js",
     },
     rollupOptions: {
-      external: ["react", "react-dom", "@yoltra/devtools-protocol", "@yoltra/devtools-ui"],
+      // Externalize React and its subpath entrypoints (react-dom/client,
+      // react/jsx-runtime, …). Matching only the bare specifiers would bundle
+      // the entire react-dom reconciler via `react-dom/client`.
+      external: [/^react(\/|$)/, /^react-dom(\/|$)/, /^@yoltra\//],
     },
     outDir: "dist",
     sourcemap: true,
     target: "es2020",
     minify: true,
     emptyOutDir: true,
+    // Inline assets (e.g. the brand logo) as data URIs so the library has no
+    // separate asset files to resolve when consumed from `dist/`.
+    assetsInlineLimit: 16384,
   },
 });

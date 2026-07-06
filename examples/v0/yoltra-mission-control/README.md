@@ -5,6 +5,9 @@ A live satellite-fleet control room that puts every Yoltra feature — and the
 extension: the store agent, the hub, and the panel all run in the page over an
 in-memory loopback transport.
 
+> 🛰️ **New here?** Read the **[guided tour →](./GUIDE.md)** — what you're
+> looking at, how to read the DevTools panel, and how to drive time-travel.
+
 ## What it shows
 
 | Feature | Where to look |

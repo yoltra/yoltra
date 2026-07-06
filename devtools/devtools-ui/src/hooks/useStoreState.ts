@@ -14,7 +14,18 @@
 import { DevtoolsRole, type DevtoolsMessage, type JsonPatch } from "@yoltra/devtools-protocol";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { applyPatches } from "../utils/apply-patch";
+import { startSnapshotRetry } from "./snapshotRetry";
 import { useHubConnection } from "./useHubConnection";
+
+/**
+ * How often to re-send `REQUEST_STATE` until the first `STATE_SNAPSHOT`
+ * arrives. A single request can be lost if it races store registration or
+ * the hub handshake, which would otherwise hang the panel forever; retrying
+ * until the baseline lands makes the State view self-heal.
+ *
+ * @internal
+ */
+const SNAPSHOT_RETRY_INTERVAL_MS = 1500;
 
 /**
  * Lazily fetches a store's full state and keeps it up-to-date via patches.
@@ -61,6 +72,12 @@ export function useStoreState(storeId: string | null): {
   const [loading, setLoading] = useState(false);
   const versionRef = useRef(0);
   const pendingPatchesRef = useRef<Array<{ patches: JsonPatch[]; version: number }>>([]);
+  const cancelRetryRef = useRef<(() => void) | null>(null);
+
+  const stopRetry = useCallback(() => {
+    cancelRetryRef.current?.();
+    cancelRetryRef.current = null;
+  }, []);
 
   const requestState = useCallback(() => {
     if (!storeId) return;
@@ -84,8 +101,19 @@ export function useStoreState(storeId: string | null): {
 
     requestState();
 
+    // Keep re-requesting until the first snapshot lands. A single REQUEST_STATE
+    // can be dropped if it races store registration / the handshake, which used
+    // to hang the State (and time-travel baseline) view indefinitely. The
+    // snapshot handler below cancels this the moment a snapshot arrives.
+    cancelRetryRef.current = startSnapshotRetry({
+      request: requestState,
+      isSettled: () => versionRef.current !== 0,
+      intervalMs: SNAPSHOT_RETRY_INTERVAL_MS,
+    });
+
     const unsub = subscribe((msg: DevtoolsMessage) => {
       if (msg.type === "STATE_SNAPSHOT" && msg.storeId === storeId) {
+        stopRetry();
         setState(msg.state);
         setVersion(msg.version);
         versionRef.current = msg.version;
@@ -135,9 +163,10 @@ export function useStoreState(storeId: string | null): {
 
     return () => {
       unsub();
+      stopRetry();
       pendingPatchesRef.current = [];
     };
-  }, [storeId, subscribe, requestState]);
+  }, [storeId, subscribe, requestState, stopRetry]);
 
   return { state, version, loading, refresh: requestState };
 }

@@ -7,42 +7,61 @@
 .filterBar {
   display: flex;
   align-items: center;
-  gap: var(--devtools-spacing-md);
+  gap: var(--devtools-spacing-sm);
   padding: var(--devtools-spacing-sm) var(--devtools-spacing-md);
-  border-bottom: 1px solid var(--devtools-border);
-  background: var(--devtools-bg-secondary);
 }
 
 .filterInput {
   flex: 1;
-  padding: var(--devtools-spacing-xs) var(--devtools-spacing-sm);
-  background: var(--devtools-bg);
+  min-width: 0;
+  padding: 5px var(--devtools-spacing-md);
+  background: var(--devtools-bg-tertiary);
   border: 1px solid var(--devtools-border);
-  border-radius: var(--devtools-radius);
+  border-radius: var(--devtools-radius-sm);
   color: var(--devtools-fg);
   font-family: var(--devtools-font-mono);
   font-size: var(--devtools-font-size-sm);
   outline: none;
+  transition:
+    border-color var(--devtools-duration-fast) var(--devtools-ease),
+    box-shadow var(--devtools-duration-fast) var(--devtools-ease);
+}
+
+.filterInput::placeholder {
+  color: var(--devtools-fg-muted);
 }
 
 .filterInput:focus {
   border-color: var(--devtools-accent);
+  box-shadow: 0 0 0 3px var(--devtools-accent-ring);
 }
 
 .filterToggle {
-  padding: var(--devtools-spacing-xs) var(--devtools-spacing-sm);
+  padding: 4px var(--devtools-spacing-md);
   border: 1px solid var(--devtools-border);
-  border-radius: var(--devtools-radius);
+  border-radius: var(--devtools-radius-pill);
   background: transparent;
   color: var(--devtools-fg-secondary);
-  font-size: var(--devtools-font-size-sm);
+  font-size: var(--devtools-font-size-xs);
+  font-weight: var(--ds-weight-medium);
   cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--devtools-duration-fast) var(--devtools-ease),
+    color var(--devtools-duration-fast) var(--devtools-ease),
+    border-color var(--devtools-duration-fast) var(--devtools-ease);
 }
 
-.filterToggleActive {
-  background: var(--devtools-accent);
-  color: var(--devtools-accent-fg);
-  border-color: var(--devtools-accent);
+.filterToggle:hover {
+  border-color: var(--devtools-border-active);
+  color: var(--devtools-fg);
+}
+
+.filterToggleActive,
+.filterToggleActive:hover {
+  background: var(--devtools-accent-tint);
+  color: var(--devtools-accent);
+  border-color: color-mix(in srgb, var(--devtools-accent) 45%, transparent);
 }
 
 .list {

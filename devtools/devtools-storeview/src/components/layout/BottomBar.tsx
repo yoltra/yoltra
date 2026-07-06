@@ -2,59 +2,44 @@
  * @module @yoltra/devtools-storeview
  */
 
-import { PROTOCOL_VERSION, type StoreCapabilities } from "@yoltra/devtools-protocol";
-import {
-  useTimeTravel,
-  type EventLogEntry,
-  type HubConnectionStatus,
-} from "@yoltra/devtools-ui";
-import { TimeTravelPanel } from "../panels/TimeTravelPanel";
+import { PROTOCOL_VERSION } from "@yoltra/devtools-protocol";
+import type { EventLogEntry, HubConnectionStatus } from "@yoltra/devtools-ui";
 import { ConnectionDot } from "../shared/ConnectionDot";
+import styles from "./BottomBar.module.css";
 
 /**
- * Bottom bar showing hub connection status, protocol version, and
- * (when the selected store supports it) the time-travel controls.
+ * Bottom status line: hub connection, event count, a time-travel indicator,
+ * and the protocol version. The time-travel controls themselves live in the
+ * Time Travel view; this bar only reflects that a session is active.
  *
- * @param props.status - The hub connection status string.
- * @param props.capabilities - Capabilities of the currently selected store,
- *   used to show or hide the time-travel controls.
+ * @param props.status - The hub connection status.
+ * @param props.entries - The event log (for the running count).
+ * @param props.isTimeTraveling - Whether a time-travel session is active.
  * @public
  */
 export function BottomBar({
-  effectiveStoreId,
-  entries,
   status,
-  capabilities,
+  entries,
+  isTimeTraveling,
 }: {
-  effectiveStoreId: string | null;
-  entries: EventLogEntry[];
   status: HubConnectionStatus;
-  capabilities: StoreCapabilities | null;
+  entries: EventLogEntry[];
+  isTimeTraveling?: boolean;
 }) {
-  const { currentIndex, isTimeTraveling, jumpTo, stepBack, stepForward, resume } =
-    useTimeTravel(effectiveStoreId, entries, capabilities?.replay ?? false);
-
   return (
-    <footer>
-      <div>
-        <span>
-          <ConnectionDot status={status} />
-          Hub: {status}
-        </span>
-        <span>Protocol v{PROTOCOL_VERSION}</span>
-      </div>
-
-      {capabilities?.replay && (
-        <TimeTravelPanel
-          entries={entries}
-          currentIndex={currentIndex}
-          isTimeTraveling={isTimeTraveling}
-          onJumpTo={jumpTo}
-          onStepBack={stepBack}
-          onStepForward={stepForward}
-          onResume={resume}
-        />
+    <footer className={styles.bottomBar}>
+      <span className={styles.item}>
+        <ConnectionDot status={status} />
+        <span>Hub {status}</span>
+      </span>
+      {isTimeTraveling && (
+        <span className={styles.travelPill}>&#9200; Time-traveling</span>
       )}
+      <span className={styles.spacer} />
+      <span className={styles.item}>
+        {entries.length} event{entries.length === 1 ? "" : "s"}
+      </span>
+      <span className={styles.item}>Protocol v{PROTOCOL_VERSION}</span>
     </footer>
   );
 }

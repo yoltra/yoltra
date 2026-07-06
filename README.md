@@ -104,6 +104,10 @@ patches (`replace /todos/items/0/title`), a filterable event log with committed/
 real metrics (reduce timing, dedup hits, queue depth), and **time-travel + event replay**. This is
 the capability the fine-grained camp can't cheaply match.
 
+> **See it live →** [**Orbital Mission Control**](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/README.md)
+> runs the store, the hub, and this exact panel in one page — no install. Pause the telemetry,
+> scrub the mission timeline, and watch the state rebuild. ([Guided tour](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/GUIDE.md).)
+
 ### One call to set up — no boilerplate
 
 `createYoltra(spec)` returns the store and every typed hook (`useAtomicProp`, `useEmit`,
@@ -165,6 +169,12 @@ pulls in a Node-only WebSocket, and vice versa.
 ---
 
 ## Live examples
+
+> ### 🛰️ [Orbital Mission Control](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/README.md) — the flagship demo
+>
+> **Start here.** Every Yoltra feature _and_ the live **DevTools panel** on one screen — fine-grained
+> render counters, wildcard subscriptions, async effects, middleware veto, and time-travel — running
+> over an in-memory hub with **no install**. → **[Guided tour](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/GUIDE.md)**
 
 | Example                                                                                                                   | Description                                                                                                                                                |
 | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |

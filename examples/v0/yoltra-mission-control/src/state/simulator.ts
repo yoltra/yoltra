@@ -6,9 +6,14 @@ import { store } from "./store";
  * Self-driving telemetry. Every ~900 ms the mission clock ticks and a random
  * satellite reports telemetry — this keeps the DevTools timeline alive and
  * slowly drains batteries, so `boost` eventually trips the safety middleware.
+ *
+ * @param running - When `false` the loop is paused (no new events emitted).
+ *   Pause it before time-travelling so the timeline holds still while you scrub.
  */
-export function useMissionSimulator(): void {
+export function useMissionSimulator(running: boolean): void {
   useEffect(() => {
+    if (!running) return;
+
     const timer = setInterval(() => {
       void store.emit("system", "tick", null);
 
@@ -26,5 +31,5 @@ export function useMissionSimulator(): void {
     }, 900);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [running]);
 }

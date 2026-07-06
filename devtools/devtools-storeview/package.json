@@ -36,9 +36,7 @@
   "files": [
     "dist"
   ],
-  "sideEffects": [
-    "**/*.css"
-  ],
+  "sideEffects": true,
   "scripts": {
     "build": "vite build",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
@@ -49,10 +47,6 @@
     "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-storeview-en.json"
   },
   "dependencies": {
-    "@nivo/bar": "^0.87.0",
-    "@nivo/core": "^0.87.0",
-    "@nivo/heatmap": "^0.87.0",
-    "@nivo/treemap": "^0.87.0",
     "@yoltra/devtools-protocol": "workspace:*",
     "@yoltra/devtools-ui": "workspace:*",
     "classnames": "2.5.1"

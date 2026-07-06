@@ -49,6 +49,15 @@ export function StateTreeExplorer({
           onChange={(e) => setSearch(e.target.value)}
           placeholder='Search state...'
         />
+        {onRefresh && (
+          <button
+            className={styles.refreshButton}
+            onClick={onRefresh}
+            title='Re-fetch the full state snapshot'
+          >
+            Refresh
+          </button>
+        )}
       </div>
       <JsonTree data={filteredState} name='state' defaultExpanded />
     </div>

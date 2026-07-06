@@ -9,9 +9,12 @@
 import { createRoot } from "react-dom/client";
 import { DevtoolsApp, type DevtoolsAppConfig } from "./App";
 
-// Global styles — CSS custom properties + VSCode theme integration
+// Global styles — CSS custom properties + VSCode theme integration.
+// `variables.css` and `vscode-theme.css` are plain (non-module) CSS on
+// purpose: they define only `:root` tokens. As a CSS *module* imported for
+// side-effect, the token block would be tree-shaken out of the bundle.
 import "./styles/App.module.css";
-import "./styles/variables.module.css";
+import "./styles/variables.css";
 import "./styles/vscode-theme.css";
 
 // ─── Mount API ───────────────────────────────────────────────────────
@@ -43,6 +46,7 @@ export { TopBar } from "./components/layout/TopBar";
 // Panels
 export { EventEmitterPanel } from "./components/panels/EventEmitter";
 export { EventTimeline } from "./components/panels/EventTimeline";
+export { Inspector } from "./components/panels/Inspector";
 export { MetricsDashboard } from "./components/panels/MetricsDashboard";
 export { StateTreeExplorer } from "./components/panels/StateTreeExplorer";
 export { SubscriptionsPanel } from "./components/panels/SubscriptionsPanel";
