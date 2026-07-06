@@ -166,6 +166,9 @@ importers:
       '@yoltra/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@yoltra/devtools-server':
+        specifier: workspace:*
+        version: link:../devtools-server
       typedoc:
         specifier: ^0.28.13
         version: 0.28.17(typescript@5.9.3)
@@ -278,12 +281,6 @@ importers:
       classnames:
         specifier: 2.5.1
         version: 2.5.1
-      react:
-        specifier: 19.1.1
-        version: 19.1.1
-      react-dom:
-        specifier: 19.1.1
-        version: 19.1.1(react@19.1.1)
     devDependencies:
       '@types/react':
         specifier: ^19.1.8
@@ -291,6 +288,12 @@ importers:
       '@types/react-dom':
         specifier: ^19.1.6
         version: 19.2.3(@types/react@19.2.14)
+      react:
+        specifier: 19.1.1
+        version: 19.1.1
+      react-dom:
+        specifier: 19.1.1
+        version: 19.1.1(react@19.1.1)
       typedoc:
         specifier: ^0.28.13
         version: 0.28.17(typescript@5.9.3)

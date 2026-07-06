@@ -19,6 +19,10 @@ export default defineConfig({
     },
     sourcemap: false,
     minify: true,
+    // The extension panel bundles the full devtools UI, so a large single chunk
+    // is expected. Raise Vite's advisory threshold — Rush treats build warnings
+    // as failures and this bundle-size advisory is not actionable here.
+    chunkSizeWarningLimit: 2000,
     emptyOutDir: true,
     copyPublicDir: true,
   },

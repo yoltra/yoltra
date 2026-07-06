@@ -25,6 +25,10 @@ const yoltraDistAliases = {
 export default defineConfig({
   plugins: [react()],
   resolve: { alias: yoltraDistAliases },
+  // This demo bundles several state libraries side by side for comparison, so a
+  // large single chunk is expected. Raise Vite's advisory threshold — Rush treats
+  // build warnings as failures and this size advisory is not actionable.
+  build: { chunkSizeWarningLimit: 2000 },
   // The dist bundles reference process.env.NODE_ENV for dev-only gating.
   define: { "process.env.NODE_ENV": JSON.stringify("development") },
   server: { fs: { allow: [fromHere("../../../")] } },
