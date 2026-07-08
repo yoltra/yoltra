@@ -135,4 +135,4 @@ src/
 
 # License
 
-GPL-2.0-only - **Yoltra Kinetic Logo** project is for comparison/documentation purposes.
+MIT - **Yoltra Kinetic Logo** is an example project, provided for demonstration and documentation purposes.

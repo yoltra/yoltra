@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "license": "GPL-2.0-only",
+  "license": "MIT",
   "author": {
     "name": "Manu Ramirez",
     "email": "manu@yoltra.dev"
