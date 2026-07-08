@@ -459,7 +459,7 @@ store.registerEffect({
 - **[Kinetic Logo](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo)**
   — 3000 circles with physics simulation
 - **[Next.js Integration](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs)**
-  — SSR + App Router + theme switcher
+  — Pages Router, client-side state + theme switcher
 
 ---
 

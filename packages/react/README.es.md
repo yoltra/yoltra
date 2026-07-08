@@ -380,7 +380,7 @@ function TodoItem({ index }: { index: number }) {
   comparacion de flamegraph
 - **[Logo Cinetico (3000 particulas)](../../examples/v0/yoltra-kinetic-logo)** -- Suscripciones
   independientes por circulo SVG
-- **[Next.js 15 App Router](../../examples/v0/yoltra-in-nextjs)** -- SSR + cambio de tema
+- **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)** -- estado de cliente + cambio de tema
 
 ---
 

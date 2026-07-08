@@ -377,7 +377,7 @@ function TodoItem({ index }: { index: number }) {
   comparison
 - **[Kinetic Logo (3000 particles)](../../examples/v0/yoltra-kinetic-logo)** — Independent
   subscriptions per circle
-- **[Next.js 15 App Router](../../examples/v0/yoltra-in-nextjs)** — SSR + theme switcher
+- **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)** — client-side state + theme switcher
 
 ---
 
