@@ -905,7 +905,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const prev = this.state as any;
     const next = nextPlain;
 
-    let newState = { ...this.state } as any;
+    const newState = { ...this.state } as any;
     let anyChanged = false;
 
     (Object.keys(this.reducers) as Array<R>).forEach((rName) => {
