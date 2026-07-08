@@ -127,7 +127,7 @@ export function useSelector<S extends Record<any, any>, T>(
 }
 
 /** @internal */
-function _useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>(
+function useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>(
   spec: { reducer: R; property: string },
   map?: (value: any) => T,
   isEqual: (a: T, b: T) => boolean = Object.is,
@@ -264,7 +264,7 @@ export function useAtomicProp<R extends string, S extends Record<R, any>, T = an
 ): T {
   // One implementation regardless of whether `map` is passed, so toggling `map`
   // presence between renders never changes the hook call order (Rules of Hooks).
-  return _useAtomicPropImpl<R, S, T>(spec, map, isEqual);
+  return useAtomicPropImpl<R, S, T>(spec, map, isEqual);
 }
 
 /**
@@ -312,11 +312,11 @@ export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
   selector: (state: DeepReadonly<S>) => T,
   isEqual: (a: T, b: T) => boolean = Object.is,
 ): T {
-  return _useAtomicPropsImpl<R, S, T>(specs as any, selector, isEqual);
+  return useAtomicPropsImpl<R, S, T>(specs as any, selector, isEqual);
 }
 
 /** @internal */
-function _useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
+function useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
   specs: Array<{
     reducer: R;
     property: OneOrMany<string> | OneOrMany<WithGlob<Dotted<S[R]>>>;
@@ -345,6 +345,10 @@ function _useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
         ? (sp.property as readonly string[]).map((p) => normalizePath(p as string))
         : normalizePath(sp.property as string),
     }));
+    // `specsSignature` is a stable structural key for `specs`; keying the memo
+    // on it (not the array, a fresh reference each render) is intentional and
+    // already covers `specs`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [specsSignature(specs)]);
 
   const subscribe = useMemo(
