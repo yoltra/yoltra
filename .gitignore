@@ -9,6 +9,8 @@ Thumbs.db
 *.sw?
 .idea/
 .vscode/*
+.claude
+.copilot
 !.vscode/extensions.json
 
 # Logs

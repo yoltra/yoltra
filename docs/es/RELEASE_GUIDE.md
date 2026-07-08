@@ -11,7 +11,7 @@ Cómo versionar, generar changelog y publicar los paquetes de Yoltra. Si solo le
 
 ## Modelo mental
 
-Tres mecanismos **independientes** — no los confundas:
+Cuatro mecanismos **independientes** — no los confundas:
 
 1. **El changelog sale de los _change files_, no de los mensajes de commit.** Cada PR que toca un
    paquete publicable incluye un change file (`rush change`). Al publicar, `rush version --bump`
@@ -22,7 +22,12 @@ Tres mecanismos **independientes** — no los confundas:
    ([version-policies.json](../../common/config/rush/version-policies.json)). Siempre bumpean
    juntos (p. ej. todos `0.1.0 → 0.2.0`). Nunca llevas una versión por paquete.
    `@yoltra/eslint-config-*` y `@yoltra/devtools-ext` van, a propósito, en pistas separadas.
-3. **El formato de commit se valida por separado.** Un git hook `commit-msg` corre **commitlint**
+3. **La publicación es automática con un tag de versión.** Nunca corres `npm publish` a mano. Hacer
+   push de un tag `v*.*.*` dispara
+   [`.github/workflows/release.yml`](../../.github/workflows/release.yml), que compila y publica vía
+   **npm [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) (OIDC)** — sin token de
+   larga vida. Mergear a `main` **no** publica.
+4. **El formato de commit se valida por separado.** Un git hook `commit-msg` corre **commitlint**
    (Conventional Commits); los mensajes que no cumplen se rechazan. Esto es higiene — no tiene que
    ver con el changelog.
 
@@ -43,11 +48,12 @@ rush install                      # instala deps Y copia los git hooks a .git/ho
 rush update-autoinstaller --name rush-commitlint   # instala commitlint para el hook de commit
 ```
 
-Para publicar también necesitas un token de npm con permisos de publicación en el scope `@yoltra`:
-
-```bash
-export NPM_AUTH_TOKEN="npm_xxx"   # ponlo solo cuando de verdad vayas a publicar
-```
+La publicación usa **npm Trusted Publishing (OIDC)** — **no hay secreto `NPM_TOKEN`**. La única
+configuración es del lado de npm: para cada paquete publicable `@yoltra/*`, agrega un **Trusted
+Publisher** (npmjs.com → paquete → _Settings → Trusted Publisher_) apuntando al repo `yoltra/yoltra`,
+workflow `release.yml`, entorno `production`. Ve [RELEASING.md](../../RELEASING.md) para los valores
+exactos. npm permite pre-registrar un nombre que nunca se ha publicado, así que los paquetes de
+devtools pueden configurarse antes de su primer release.
 
 ---
 
@@ -70,13 +76,15 @@ Notas:
 - Verifica que una rama tenga sus change files:
 
   ```bash
-  rush change --verify     # alias: rush change -v
+  rush change --verify     # alias: rush change -v   (CI lo corre en cada PR)
   ```
+
 ---
 
 ## Cortar un release
 
-Desde un `main` actualizado:
+El bump de versión vive en su **propio PR** — los PRs de feature solo llevan change files; el PR de
+release es el que los convierte en un bump de versión. La publicación ocurre en CI cuando etiquetas.
 
 ```bash
 git checkout main && git pull
@@ -88,7 +96,27 @@ rush version --bump
 
 # 2. Revisa la nueva versión en cada package.json y cada CHANGELOG.md, luego commitea
 git add -A && git commit -m "chore(release): v0.2.0"
+git push -u origin release/v0.2.0
 ```
+
+Luego:
+
+1. **Abre un PR** `release/v0.2.0 → main`. Contiene el bump de versión + changelogs; revísalo y
+   **mergéalo**.
+2. **Etiqueta el commit de merge** y haz push del tag — esto es lo que publica:
+
+   ```bash
+   git checkout main && git pull
+   git tag v0.2.0 && git push origin v0.2.0
+   ```
+
+   > El tag es solo el disparador. `rush publish` publica la versión que está en `package.json`, así
+   > que el bump ya debe estar en `main` (paso 1) y el nombre del tag debe coincidir con ella.
+
+3. El workflow **Release** compila y publica a npm vía OIDC. Si el entorno `production` tiene una
+   compuerta de aprobación, aprueba la ejecución.
+4. **Crea un release de GitHub** desde el tag y pega la sección relevante de `CHANGELOG.md` como
+   notas.
 
 ### Patch en vez de minor
 
@@ -104,8 +132,9 @@ rush version --bump --override-bump patch      # 0.1.0 → 0.1.1
 
 ## Prueba local contra Verdaccio (recomendado)
 
-Prueba la experiencia real de instalación antes de tocar npm. `.npmrc-publish` apunta a **npm**, así
-que apuntalo a Verdaccio explícitamente con `--registry`:
+Prueba la experiencia real de instalación antes de tocar npm — totalmente local, sin auth de npm ni
+OIDC. `.npmrc-publish` apunta a **npm**, así que apúntalo a Verdaccio explícitamente con
+`--registry`:
 
 ```bash
 # inicia el registry local
@@ -114,7 +143,8 @@ docker compose -f tools/registry/docker-compose.yml up -d
 # solo la primera vez: crea un usuario local
 npm adduser --registry http://localhost:4873
 
-# publica la suite al registry LOCAL
+# publica la suite al registry LOCAL (esta es la única vez que corres rush publish a mano —
+# y siempre solo contra localhost)
 rush publish --publish --include-all --version-policy yoltra --registry http://localhost:4873
 
 # en un proyecto desechable, fuera de este repo:
@@ -129,28 +159,16 @@ docker compose -f tools/registry/docker-compose.yml down -v
 
 ## Publicar a npm
 
-```bash
-export NPM_AUTH_TOKEN="npm_xxx"   # token con permisos de publicación en @yoltra
+**No lo haces tú — lo hace CI.** Hacer push del tag `v*.*.*` (arriba) corre
+[`release.yml`](../../.github/workflows/release.yml), que ejecuta
+`rush publish --publish --include-all --set-access-level public` autenticado con OIDC. No hay token
+que configurar ni nada que correr localmente.
 
-# publica SOLO la suite de producto en lockstep (core, react, devtools-*) a npm
-rush publish --publish --include-all --version-policy yoltra
-```
-
-Rush lee el registry + token de [.npmrc-publish](../../common/config/rush/.npmrc-publish).
-
-**No hay ruta de publicación accidental:** `rush publish` no hace nada sin `--publish`, y no puede
-autenticarse a menos que `NPM_AUTH_TOKEN` esté definido. npm rechaza republicar una versión
-existente (409), así que re-ejecutar tras una publicación parcial es seguro.
-
-Luego mergea y etiqueta:
-
-```bash
-# PR release/v0.2.0 → main, revisa, mergea
-git checkout main && git pull
-git tag v0.2.0 && git push origin v0.2.0
-```
-
-Crea un release de GitHub desde el tag y pega la sección relevante de `CHANGELOG.md` como notas.
+**Seguridad:** mergear a `main` nunca publica (solo un tag lo hace); el entorno `production` puede
+gatear la ejecución con una aprobación; y npm rechaza republicar una versión existente (409), así
+que re-ejecutar el workflow tras una publicación parcial es seguro. Para reintentar la publicación
+de un tag existente, re-ejecuta el workflow desde la pestaña Actions (también tiene un disparador
+manual `workflow_dispatch`).
 
 ---
 
@@ -162,13 +180,14 @@ git checkout -b hotfix/v0.2.1
 
 # fix mínimo + un change file de tipo patch
 git commit -m "fix(core): resolver <problema crítico>"
-rush change                              # elige "patch"
+rush change                                 # elige "patch"
 
 rush version --bump --override-bump patch   # 0.2.0 → 0.2.1
 git add -A && git commit -m "chore(release): v0.2.1"
+git push -u origin hotfix/v0.2.1
 
-# PR → main, mergea, luego publica + etiqueta como arriba
-rush publish --publish --include-all --version-policy yoltra
+# PR → main, revisa, mergea, luego etiqueta el commit de merge para publicar:
+git checkout main && git pull
 git tag v0.2.1 && git push origin v0.2.1
 ```
 
@@ -176,36 +195,38 @@ git tag v0.2.1 && git push origin v0.2.1
 
 ## Pre-releases (alpha / beta / rc)
 
+El workflow disparado por tag siempre publica al dist-tag `latest`, así que los pre-releases **no**
+están conectados a él todavía. Para lanzar uno:
+
 ```bash
 rush version --bump --override-bump preminor   # p. ej. 0.2.0-0
-rush publish --publish --include-all --version-policy yoltra --tag next
 ```
 
-Los consumidores optan explícitamente: `npm add @yoltra/core@next`. Prueba los pre-releases en
-Verdaccio primero.
+luego **pruébalo en Verdaccio** (arriba), o publica ese único pre-release a npm con un dist-tag — lo
+que por ahora implica extender [`release.yml`](../../.github/workflows/release.yml) para pasar
+`--tag next` en tags de pre-release. Los consumidores optan explícitamente: `npm add @yoltra/core@next`.
 
 ---
 
 ## Chuleta
 
 ```bash
-# --- durante el desarrollo ---
+# --- durante el desarrollo (rama feature) ---
 rush change                # agrega una entrada de changelog para tu cambio
-rush change -v             # verifica que existan change files
+rush change -v             # verifica que existan change files (CI lo exige)
 
-# --- cortar un release ---
+# --- cortar un release (rama release → PR → main) ---
 git checkout -b release/vX.Y.Z
 rush version --bump                       # bumpea toda la suite + escribe CHANGELOGs (minor por defecto)
 #   release solo de fixes:  rush version --bump --override-bump patch
+git commit -am "chore(release): vX.Y.Z" && git push -u origin release/vX.Y.Z
+#   → abre PR a main, revisa, mergea
 
-# --- prueba en Verdaccio ---
+# --- publicar (etiqueta el commit de merge; CI hace el resto vía OIDC) ---
+git checkout main && git pull
+git tag vX.Y.Z && git push origin vX.Y.Z
+
+# --- opcional: prueba en Verdaccio (solo local) ---
 docker compose -f tools/registry/docker-compose.yml up -d
 rush publish --publish --include-all --version-policy yoltra --registry http://localhost:4873
-
-# --- publicar a npm ---
-export NPM_AUTH_TOKEN=...
-rush publish --publish --include-all --version-policy yoltra
-
-# --- etiquetar ---
-git tag vX.Y.Z && git push origin vX.Y.Z
 ```
