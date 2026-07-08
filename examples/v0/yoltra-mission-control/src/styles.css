@@ -327,13 +327,16 @@ body {
   transition: width 0.35s ease;
 }
 
-.tone-ok {
+/* Gauge-fill gradients — scoped to `.gauge-fill` so the shared `tone-*` class
+   names don't bleed onto the `.stat` cards (which use `tone-*` only to tint the
+   value text, and keep their dark panel background). */
+.gauge-fill.tone-ok {
   background: linear-gradient(90deg, #2fa7b8, var(--cyan));
 }
-.tone-warn {
+.gauge-fill.tone-warn {
   background: linear-gradient(90deg, #c98a2f, var(--amber));
 }
-.tone-bad {
+.gauge-fill.tone-bad {
   background: linear-gradient(90deg, #b83a4c, var(--red));
 }
 
