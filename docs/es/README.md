@@ -186,6 +186,9 @@ Node, y viceversa.
 ## Documentación
 
 - **[Guía de inicio rápido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)** --- cinco pasos hacia una app funcional
+- **[Guía de migración](https://github.com/yoltra/yoltra/blob/main/docs/es/MIGRATION_GUIDE.md)** --- si vienes de Redux, Zustand o Jotai
+- **[Guía de testing](https://github.com/yoltra/yoltra/blob/main/docs/es/TESTING_GUIDE.md)** --- prueba stores, efectos, middleware y componentes
+- **[Guía de Next.js](https://github.com/yoltra/yoltra/blob/main/docs/es/NEXTJS_GUIDE.md)** --- uso en cliente con Pages y App Router
 - **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** --- store, middleware, efectos, matchers `When`, instrumentación
 - **[API de @yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** --- hooks, accessors tipados, `createYoltra`, Suspense
 - **[Arquitectura del pipeline de eventos](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)** --- cómo funciona el pipeline de reducción síncrona / efectos asíncronos
