@@ -348,6 +348,10 @@ export function createHooks<
           ? (sp.property as readonly string[]).map((p) => normalizePath(p))
           : normalizePath(sp.property as string),
       }));
+      // `specsSignature` is a stable structural key for `specs`; keying the memo
+      // on it (not the array, a fresh reference each render) is intentional and
+      // already covers `specs`.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [specsSignature(specs)]);
 
     const subscribe = useMemo(

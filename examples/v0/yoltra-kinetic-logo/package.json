@@ -11,7 +11,7 @@
     "lint": "exit 0"
   },
   "private": true,
-  "license": "GPL-2.0-only",
+  "license": "MIT",
   "author": {
     "name": "Manu Ramirez",
     "email": "manu@yoltra.dev"

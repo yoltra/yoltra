@@ -188,11 +188,11 @@ export function useSuspenseAtomicProp<R extends string, S extends Record<R, any>
   storeSpec: { reducer: R; property: string },
   options: SuspenseAtomicPropOptions<T, S>,
 ): T {
-  return _useSuspenseAtomicPropImpl<R, S, any, T>(storeSpec as any, options);
+  return useSuspenseAtomicPropImpl<R, S, any, T>(storeSpec as any, options);
 }
 
 /** @internal */
-function _useSuspenseAtomicPropImpl<
+function useSuspenseAtomicPropImpl<
   R extends string,
   S extends Record<R, any>,
   P extends Dotted<S[R]>,
@@ -327,11 +327,11 @@ export function useSuspenseAtomicProps<R extends string, S extends Record<R, any
   }>,
   options: SuspenseAtomicPropsOptions<T, S>,
 ): T {
-  return _useSuspenseAtomicPropsImpl<R, S, T>(specs as any, options);
+  return useSuspenseAtomicPropsImpl<R, S, T>(specs as any, options);
 }
 
 /** @internal */
-function _useSuspenseAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
+function useSuspenseAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
   specs: Array<{
     reducer: R;
     property:
@@ -353,6 +353,9 @@ function _useSuspenseAtomicPropsImpl<R extends string, S extends Record<R, any>,
           ? (sp.property as readonly string[]).map((p) => normalizePath(p as string))
           : normalizePath(sp.property as string),
       })),
+    // `specs` is a fresh reference each render; keying the memo on its JSON
+    // signature is intentional and already covers `specs`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [JSON.stringify(specs)],
   );
 

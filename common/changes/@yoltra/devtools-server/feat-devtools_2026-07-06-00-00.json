@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-server",
+      "comment": "Add unit tests for the hub RingBuffer (retention, overflow eviction, clear) and Router (registration, fan-out to open extensions, targeted store delivery, registry and lifecycle messages). Test-only; no runtime change.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-server"
+}

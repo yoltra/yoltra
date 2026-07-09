@@ -19,7 +19,12 @@ export const {
 } = createYoltra({
   name: "YoltraPixelLogo",
   reducer: { pixel: pixelReducer },
+  // Allow the core to apply externally-supplied state — required for the
+  // DevTools Time Travel panel to rewind the store.
+  devtools: { allowReplay: true },
 });
 
 // Instrument the store — streams events to the devtools hub on ws://localhost:9800.
-withDevtools(store, { port: 9800 });
+// `allowReplay` makes the agent advertise the `replay` capability so the
+// extension shows the Time Travel tab and can send TIME_TRAVEL commands.
+withDevtools(store, { port: 9800, allowReplay: true });

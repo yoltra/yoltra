@@ -160,4 +160,4 @@ Retraso inicial `extract.ts` → opción `delay` aleatorio `[0, 0.8 s]`
 
 # Licencia
 
-GPL-2.0-only - El proyecto **Yoltra Kinetic Logo** es para fines de demostración/documentación.
+MIT - **Yoltra Kinetic Logo** es un proyecto de ejemplo, provisto con fines de demostración y documentación.

@@ -12,42 +12,41 @@ the monorepo healthy. For actually cutting a release see [RELEASE_GUIDE.md](./RE
 ## Branch model
 
 ```
-main          ←── stable, published to npm, always releasable
-  ↑
-develop       ←── integration branch, always green
+main          ←── stable, always releasable; published to npm by pushing a tag
   ↑
 release/vX.Y  ←── short-lived; version bump + release prep only
-  ↑
 feature/*     ←── one feature / fix per branch
 fix/*
 chore/*
+hotfix/*
 ```
 
 **Rules:**
 
-- `main` is protected. Only PRs from `develop` are merged here (after a release cycle).
-- `develop` is protected. Only PRs are merged here — never force-push.
-- `release/*` branches are cut from `develop`, bumped, tested, then PR'd back into
-  `develop` first and then into `main`.
-- `feature/*` / `fix/*` / `chore/*` branches are cut from `develop`.
+- `main` is protected. Everything lands via PR — never force-push. Merging to `main` does **not**
+  publish; pushing a `v*.*.*` tag does.
+- `feature/*` / `fix/*` / `chore/*` branches are cut from `main` and PR'd back into `main`.
+- `release/*` branches are cut from `main`, bumped (`rush version --bump`), then PR'd into `main`;
+  the merge commit is tagged to publish.
+- `hotfix/*` branches are cut from `main` for a critical fix and PR'd straight back into `main`.
 
 ---
 
 ## Day-to-day: feature or fix
 
 ```
-develop
+main
   └─ feature/123-my-feature
          │  commits with conventional commits + DCO
          │  rush change (at least once)
-         └─► PR → develop
+         └─► PR → main
 ```
 
 **Step by step:**
 
 ```bash
-# 1. Branch from develop
-git checkout develop
+# 1. Branch from main
+git checkout main
 git pull
 git checkout -b feature/123-my-feature
 
@@ -61,7 +60,7 @@ rush change
 # 3. Do your work — commits must follow Conventional Commits + DCO sign-off
 git commit -S -s -m "feat(core): add wildcard event matcher"
 
-# 4. Push and open PR against develop
+# 4. Push and open PR against main
 git push -u origin feature/123-my-feature
 ```
 
@@ -79,15 +78,16 @@ git push -u origin feature/123-my-feature
 ## Preparing a release (maintainers)
 
 ```
-develop
+main
   └─ release/v0.9.0
          │  rush version --bump
          │  manual review of changelogs
-         └─► PR → develop  (sync version bumps back)
-               └─► PR → main (trigger NPM publish)
+         └─► PR → main, then push tag vX.Y.Z  ── the tag (not the merge) publishes via CI
 ```
 
-See **[RELEASE_GUIDE.md](./RELEASE_GUIDE.md)** for the full step-by-step.
+Publishing is triggered by pushing a `v*.*.*` tag, **not** by merging to `main` — the tag runs
+`release.yml`, which publishes via npm Trusted Publishing (OIDC). See
+**[RELEASE_GUIDE.md](./RELEASE_GUIDE.md)** for the full step-by-step.
 
 ---
 
@@ -117,36 +117,32 @@ A hotfix is a critical fix that must ship without waiting for the next planned r
 main
   └─ hotfix/v0.8.1-critical-bug
          │  minimal fix + rush change (patch)
+         │  rush version --bump --override-bump patch
          └─► PR → main  (reviewed and merged directly)
-               └─► back-merge PR → develop
+               └─► push tag v0.8.1 → CI publishes
 ```
 
-After the hotfix PR lands on `main`:
-
-1. Publish from `main` (see RELEASE_GUIDE.md).
-2. Immediately open a back-merge PR from `main` → `develop` to keep them in sync.
+After the hotfix PR lands on `main`, tag the merge commit
+(`git tag v0.8.1 && git push origin v0.8.1`) — the tag triggers CI, which publishes via OIDC (see
+RELEASE_GUIDE.md).
 
 ---
 
 ## Pre-releases
 
-For experimental features that are not ready for a stable release:
+For experimental features that are not ready for a stable release, bump to a pre-release version:
 
 ```bash
-# Tag the version as a pre-release in the change file (select "prerelease" bump)
-rush change
-
-# Publish with a dist-tag so consumers must opt in explicitly
-rush publish --publish --tag next
+rush version --bump --override-bump preminor   # e.g. 0.2.0-0
 ```
 
-Consumers install pre-releases with:
+Pre-releases are **not** wired into the tag-triggered CI (it publishes the `latest` dist-tag). Test
+them in the local Verdaccio registry, or see **[RELEASE_GUIDE.md](./RELEASE_GUIDE.md) → Pre-releases**
+to ship one to npm under a `next` dist-tag. Consumers install with:
+
 ```bash
 npm add @yoltra/core@next @yoltra/react@next
 ```
-
-Pre-releases can also be published to the local Verdaccio registry for testing without
-touching npm at all (see RELEASE_GUIDE.md).
 
 ---
 
