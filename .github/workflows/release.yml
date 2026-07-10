@@ -47,8 +47,10 @@ jobs:
 
       # Trusted Publishing (OIDC) + provenance require npm >= 11.5.1; node 20
       # ships an older npm. `rush publish` shells out to this npm.
+      # Pin to npm 11.x: it supports Node 20 (^20.17) and OIDC, whereas
+      # npm@latest (12.x) requires Node >= 22 and fails on this runner.
       - name: Upgrade npm for OIDC publishing
-        run: npm install -g npm@latest
+        run: npm install -g npm@11
 
       - name: Rush install
         run: node common/scripts/install-run-rush.js install
