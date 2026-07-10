@@ -6,7 +6,7 @@
 
 # Interface: SuspenseAtomicPropsOptions\<T, S\>
 
-Defined in: [react/src/hooks/suspense.ts:217](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L217)
+Defined in: [react/src/hooks/suspense.ts:253](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L253)
 
 Options for [useSuspenseAtomicProps](../functions/useSuspenseAtomicProps.md).
 
@@ -30,7 +30,7 @@ Store state record.
 
 > `optional` **key**: `string`
 
-Defined in: [react/src/hooks/suspense.ts:223](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L223)
+Defined in: [react/src/hooks/suspense.ts:264](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L264)
 
 Optional extra key to differentiate cache entries.
 
@@ -40,7 +40,7 @@ Optional extra key to differentiate cache entries.
 
 > **load**: (`state`) => `T` \| `Promise`\<`T`\>
 
-Defined in: [react/src/hooks/suspense.ts:219](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L219)
+Defined in: [react/src/hooks/suspense.ts:255](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L255)
 
 Async loader that receives the full store state.
 
@@ -60,6 +60,9 @@ Async loader that receives the full store state.
 
 > `optional` **staleTime**: `number`
 
-Defined in: [react/src/hooks/suspense.ts:221](https://github.com/yoltra/yoltra/blob/a987f4d35946c58f44d8b45d3fefadd911124683/packages/react/src/hooks/suspense.ts#L221)
+Defined in: [react/src/hooks/suspense.ts:262](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L262)
 
-Time in ms before the cached value is considered stale (default: 0).
+Extra wall-clock TTL (ms) for a resolved value. `0` (the default) or omitted
+means the cached value is served until the subscribed path changes or you
+invalidate it explicitly; a positive value additionally expires it after that
+many ms. Cached errors ignore this and are re-thrown until invalidated.

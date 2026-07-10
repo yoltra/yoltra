@@ -19,7 +19,8 @@
   ],
   "scripts": {
     "build": "exit 0",
-    "lint": "exit 0"
+    "lint": "exit 0",
+    "prepublishOnly": "node ../../common/scripts/copy-license.cjs"
   },
   "peerDependencies": {
     "eslint": ">=9.0.0"

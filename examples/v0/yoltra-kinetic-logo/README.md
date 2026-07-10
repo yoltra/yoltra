@@ -18,7 +18,8 @@ to repel the dots; they ease back when you pull away.
 
 | Yoltra feature        | Where it is used                                                                                                                               |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `useAtomicProp`       | Each `<PixelDot>` subscribes to exactly `pixel.dots.<id>` — only that component re-renders when its dot moves                                  |
+| `createYoltra`        | One call in `state/yoltra.ts` returns the store and every typed hook — no context file, no `createHooks`, no provider                          |
+| `useAtomicProp`       | Each `<PixelDot>` subscribes to exactly `pixel.dots.<id>` (dynamic string path); `Screen` uses typed accessors for its static paths            |
 | `when: { channel }`   | The reducer targets the entire `pixel` channel with a single matcher                                                                           |
 | `store.onEffect`      | The `Engine` wires `pixel/stop` and `pixel/start` effects to the rAF loop; the `Simulation` wires `on/mousemove` effects to the quadtree query |
 | `batchUpdate` reducer | Single-pass, lazy-allocation strategy: the `dots` record is spread **at most once per frame** regardless of how many dots moved                |
@@ -80,7 +81,8 @@ Same frame: 1 × 1 000 (dots spread) + 1 × handful (state spread) = **~1 000 pr
 ```bash
 # from the repo root
 rush install
-cd examples/v1/yoltra-pixel-logo
+rush build
+cd examples/v0/yoltra-kinetic-logo
 pnpm dev
 ```
 
@@ -95,17 +97,16 @@ src/
 ├── App.tsx                        Bootstrap: load image → extract specs → start engine
 ├── state/
 │   ├── types.ts                   AppState / AppEM / Dot / DotUpdate
-│   ├── store.ts                   createStore()
-│   ├── hooks.ts                   createHooks() — typed useAtomicProp etc.
+│   ├── yoltra.ts                  createYoltra() — store + typed hooks + withDevtools
 │   └── pixel/
 │       └── Pixel.reducer.ts       Optimised reducer for the `pixel` channel
-├── context/
-│   └── Store.context.tsx          React context holding the store
 ├── components/
+│   ├── config-panel/
+│   │   └── ConfigPanel.component.tsx  Live physics / sampling controls
 │   └── screen/
-│       ├── Screen.component.tsx   SVG canvas + pointer events
+│       ├── Screen.component.tsx   SVG canvas + pointer events (typed accessors)
 │       └── items/dot/
-│           └── Dot.component.tsx  One dot → one atomic subscription
+│           └── Dot.component.tsx  One dot → one atomic subscription (dynamic path)
 └── utils/
     ├── index.ts                   Math helpers (expApproach, orbit, clamp…)
     ├── Quadtree.ts                Generic QuadTree<T extends PointItem>
@@ -134,4 +135,4 @@ src/
 
 # License
 
-GPL-2.0-only - **Yoltra Kinetic Logo** project is for comparison/documentation purposes.
+MIT - **Yoltra Kinetic Logo** is an example project, provided for demonstration and documentation purposes.

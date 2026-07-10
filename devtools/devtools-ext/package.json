@@ -1,0 +1,60 @@
+{
+  "name": "@yoltra/devtools-ext",
+  "version": "0.1.0",
+  "description": "Yoltra DevTools browser extension (Chrome + Firefox MV3)",
+  "license": "MIT",
+  "author": {
+    "name": "Manu Ramirez <@pixerael>",
+    "email": "manu@yoltra.dev"
+  },
+  "maintainers": [],
+  "homepage": "https://yoltra.dev",
+  "keywords": [
+    "yoltra",
+    "devtools",
+    "browser",
+    "extension"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yoltra/yoltra.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yoltra/yoltra/issues"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "package": "pnpm build && node scripts/pack-extension.mjs",
+    "pack": "node scripts/pack-extension.mjs",
+    "test": "exit 0",
+    "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "docs": "rushx docs:js && rushx docs:md",
+    "docs:md": "pnpm typedoc --options ./typedoc.json",
+    "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-ext-en.json"
+  },
+  "dependencies": {
+    "@yoltra/devtools-storeview": "workspace:*",
+    "@yoltra/devtools-ui": "workspace:*",
+    "@yoltra/devtools-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@types/chrome": "^0.0.260",
+    "typedoc": "^0.28.13",
+    "typedoc-plugin-markdown": "4.9.0",
+    "typedoc-plugin-localization": "3.0.6",
+    "typescript": "5.9.3",
+    "vite": "^7.1.11",
+    "vite-plugin-dts": "^4.5.4",
+    "vite-plugin-banner": "0.8.1",
+    "vitest": "3.2.4"
+  },
+  "engines": {
+    "node": ">=18.18"
+  }
+}

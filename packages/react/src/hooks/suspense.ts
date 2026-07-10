@@ -2,7 +2,7 @@
  * @module @yoltra/react
  */
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useRef, useSyncExternalStore } from "react";
 import type { EventMapBase, StoreInstance, Dotted, WithGlob } from "@yoltra/core";
 
 import { useStore } from "./hooks";
@@ -17,6 +17,21 @@ type CacheEntry<T> =
   | { status: "pending"; promise: Promise<void>; expiresAt: number | null }
   | { status: "error"; error: any; expiresAt: number | null };
 
+/**
+ * Time-based expiry for a **settled** (`ready`) entry. A non-positive or `null`
+ * `staleTime` means "no time expiry" — the entry is served until it is
+ * invalidated (by a store change on the subscribed path, or an explicit
+ * `invalidate`/`clear`). Only a positive `staleTime` adds a wall-clock bound.
+ *
+ * Critically, `staleTime: 0` (the default) must NOT map to `Date.now()` here:
+ * an entry that expires on the same tick it was created would be re-loaded on
+ * the very next render, throwing a fresh promise each time (infinite suspend).
+ * @internal
+ */
+function computeExpiry(staleTime: number | null): number | null {
+  return staleTime == null || staleTime <= 0 ? null : Date.now() + staleTime;
+}
+
 /** @internal */
 class SuspenseCache {
   private store = new Map<CacheKey, CacheEntry<any>>();
@@ -25,42 +40,34 @@ class SuspenseCache {
     const now = Date.now();
     const entry = this.store.get(key);
 
+    // A ready value is served until it time-expires (staleTime > 0) or is
+    // invalidated. With staleTime 0/null it never time-expires (expiresAt null).
     if (entry && entry.status === "ready" && (entry.expiresAt == null || entry.expiresAt > now)) {
       return entry.value as T;
     }
-    if (
-      entry &&
-      entry.status === "pending" &&
-      (entry.expiresAt == null || entry.expiresAt > now)
-    ) {
+    // A load already in flight: always re-throw the SAME promise until it
+    // settles. Pending entries are never time-expired — otherwise every render
+    // during the load would spawn a fresh load (infinite suspend / request storm).
+    if (entry && entry.status === "pending") {
       throw entry.promise;
     }
-    if (entry && entry.status === "error" && (entry.expiresAt == null || entry.expiresAt > now)) {
+    // A cached error is re-thrown to the nearest error boundary until it is
+    // invalidated (by a store change on the subscribed path, or an explicit
+    // invalidate/clear). Error caching is independent of staleTime.
+    if (entry && entry.status === "error") {
       throw entry.error;
     }
 
     const promise = Promise.resolve()
       .then(load)
       .then((value) => {
-        this.store.set(key, {
-          status: "ready",
-          value,
-          expiresAt: staleTime == null ? null : Date.now() + staleTime,
-        });
+        this.store.set(key, { status: "ready", value, expiresAt: computeExpiry(staleTime) });
       })
       .catch((err) => {
-        this.store.set(key, {
-          status: "error",
-          error: err,
-          expiresAt: staleTime == null ? null : Date.now() + staleTime,
-        });
+        this.store.set(key, { status: "error", error: err, expiresAt: null });
       });
 
-    this.store.set(key, {
-      status: "pending",
-      promise,
-      expiresAt: staleTime == null ? null : Date.now() + staleTime,
-    });
+    this.store.set(key, { status: "pending", promise, expiresAt: null });
     throw promise;
   }
 
@@ -113,7 +120,12 @@ function buildKey(reducer: string, props: string[] | string, extraKey?: string):
 export interface SuspenseAtomicPropOptions<T, S> {
   /** Async loader that receives the value at the path and the full slice. */
   load: (valueAtPath: any, slice: S[keyof S]) => Promise<T> | T;
-  /** Time in ms before the cached value is considered stale (default: 0). */
+  /**
+   * Extra wall-clock TTL (ms) for a resolved value. `0` (the default) or omitted
+   * means the cached value is served until the subscribed path changes or you
+   * invalidate it explicitly; a positive value additionally expires it after that
+   * many ms. Cached errors ignore this and are re-thrown until invalidated.
+   */
   staleTime?: number;
   /** Optional extra key to differentiate cache entries for the same path. */
   key?: string;
@@ -125,6 +137,12 @@ export interface SuspenseAtomicPropOptions<T, S> {
  * Subscribes to a single dotted path and calls `options.load` to produce the
  * resolved value. While the promise is pending, React Suspense catches it and
  * renders the nearest `<Suspense>` fallback.
+ *
+ * @remarks
+ * **Client-only loading.** During server rendering this hook does not suspend
+ * (throwing a promise would crash `renderToString`): `getServerSnapshot` returns
+ * the current value at the path **without** invoking `options.load`. Perform the
+ * actual load on the client.
  *
  * @typeParam R - Reducer name union.
  * @typeParam S - State record keyed by `R`.
@@ -170,11 +188,11 @@ export function useSuspenseAtomicProp<R extends string, S extends Record<R, any>
   storeSpec: { reducer: R; property: string },
   options: SuspenseAtomicPropOptions<T, S>,
 ): T {
-  return _useSuspenseAtomicPropImpl<R, S, any, T>(storeSpec as any, options);
+  return useSuspenseAtomicPropImpl<R, S, any, T>(storeSpec as any, options);
 }
 
 /** @internal */
-function _useSuspenseAtomicPropImpl<
+function useSuspenseAtomicPropImpl<
   R extends string,
   S extends Record<R, any>,
   P extends Dotted<S[R]>,
@@ -193,17 +211,35 @@ function _useSuspenseAtomicPropImpl<
       });
   }, [store, reducer, path, key]);
 
+  // Keep the latest options in a ref so an inline `options` object doesn't
+  // rebuild getSnapshot every render (RX-5).
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   const getSnapshot = useMemo(() => {
     const isGlob = hasWildcard(path);
     return () => {
       const state = store.getState() as S;
       const slice = state[reducer];
       const val = isGlob ? slice : getAtPath(slice, path);
-      return suspenseCache.read<T>(key, () => options.load(val, slice), options.staleTime ?? 0);
+      const opts = optionsRef.current;
+      return suspenseCache.read<T>(key, () => opts.load(val, slice), opts.staleTime ?? 0);
     };
-  }, [store, reducer, path, key, options]);
+  }, [store, reducer, path, key]);
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  // Server render must NOT suspend — throwing a promise from getServerSnapshot
+  // crashes renderToString. Return the current value at the path without loading
+  // (client-only Suspense loading; see the hook's SSR note).
+  const getServerSnapshot = useMemo(() => {
+    const isGlob = hasWildcard(path);
+    return () => {
+      const state = store.getState() as S;
+      const slice = state[reducer];
+      return (isGlob ? slice : getAtPath(slice, path)) as T;
+    };
+  }, [store, reducer, path]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /**
@@ -217,7 +253,12 @@ function _useSuspenseAtomicPropImpl<
 export interface SuspenseAtomicPropsOptions<T, S> {
   /** Async loader that receives the full store state. */
   load: (state: S) => Promise<T> | T;
-  /** Time in ms before the cached value is considered stale (default: 0). */
+  /**
+   * Extra wall-clock TTL (ms) for a resolved value. `0` (the default) or omitted
+   * means the cached value is served until the subscribed path changes or you
+   * invalidate it explicitly; a positive value additionally expires it after that
+   * many ms. Cached errors ignore this and are re-thrown until invalidated.
+   */
   staleTime?: number;
   /** Optional extra key to differentiate cache entries. */
   key?: string;
@@ -229,6 +270,12 @@ export interface SuspenseAtomicPropsOptions<T, S> {
  * Subscribes to multiple dotted paths and calls `options.load` with the full state
  * to produce the resolved value. While the promise is pending, React Suspense
  * renders the nearest `<Suspense>` fallback.
+ *
+ * @remarks
+ * **Client-only loading.** During server rendering this hook does not suspend
+ * (throwing a promise would crash `renderToString`): `getServerSnapshot` uses a
+ * synchronous `options.load` result if one is available, otherwise `undefined`.
+ * Perform the actual load on the client.
  *
  * @typeParam R - Reducer name union.
  * @typeParam S - State record keyed by `R`.
@@ -280,11 +327,11 @@ export function useSuspenseAtomicProps<R extends string, S extends Record<R, any
   }>,
   options: SuspenseAtomicPropsOptions<T, S>,
 ): T {
-  return _useSuspenseAtomicPropsImpl<R, S, T>(specs as any, options);
+  return useSuspenseAtomicPropsImpl<R, S, T>(specs as any, options);
 }
 
 /** @internal */
-function _useSuspenseAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
+function useSuspenseAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
   specs: Array<{
     reducer: R;
     property:
@@ -306,6 +353,9 @@ function _useSuspenseAtomicPropsImpl<R extends string, S extends Record<R, any>,
           ? (sp.property as readonly string[]).map((p) => normalizePath(p as string))
           : normalizePath(sp.property as string),
       })),
+    // `specs` is a fresh reference each render; keying the memo on its JSON
+    // signature is intentional and already covers `specs`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [JSON.stringify(specs)],
   );
 
@@ -330,14 +380,25 @@ function _useSuspenseAtomicPropsImpl<R extends string, S extends Record<R, any>,
     };
   }, [store, normalized, key]);
 
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   const getSnapshot = useMemo(() => {
     return () => {
       const state = store.getState() as S;
-      return suspenseCache.read<T>(key, () => options.load(state), options.staleTime ?? 0);
+      const opts = optionsRef.current;
+      return suspenseCache.read<T>(key, () => opts.load(state), opts.staleTime ?? 0);
     };
-  }, [store, key, options]);
+  }, [store, key]);
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  // Server render must NOT suspend. Use a synchronous load result if one is
+  // available; otherwise render `undefined` rather than throwing a promise.
+  const getServerSnapshot = () => {
+    const result = optionsRef.current.load(store.getState() as S);
+    return (result instanceof Promise ? undefined : result) as T;
+  };
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /**

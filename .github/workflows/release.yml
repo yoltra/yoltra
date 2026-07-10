@@ -1,0 +1,68 @@
+name: Release
+
+# Publishes the Yoltra packages to npm when a version tag is pushed.
+#
+# The version bump, CHANGELOG generation, and tagging happen locally via the
+# Rush release ritual (see RELEASING.md) — this workflow only builds and
+# publishes the already-versioned packages, so npm never sees an unbuilt or
+# half-versioned release.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  # Manual re-run (e.g. to retry a failed publish for an existing tag).
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # Required for npm Trusted Publishing: lets the job mint the OIDC token npm
+  # exchanges for a short-lived publish credential (no long-lived NPM_TOKEN).
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    # Must match the environment configured on the npm Trusted Publisher.
+    # Note: if this environment has deployment branch/tag protection rules,
+    # allow the `v*.*.*` tags (or "All branches") so tag-triggered releases run.
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+
+      # Corepack activates the pnpm version pinned in rush.json.
+      - name: Enable Corepack
+        run: corepack enable
+
+      # Trusted Publishing (OIDC) + provenance require npm >= 11.5.1; node 20
+      # ships an older npm. `rush publish` shells out to this npm.
+      - name: Upgrade npm for OIDC publishing
+        run: npm install -g npm@latest
+
+      - name: Rush install
+        run: node common/scripts/install-run-rush.js install
+
+      - name: Rush build
+        run: node common/scripts/install-run-rush.js build --verbose
+
+      # Publish every `shouldPublish` project at its current (already-bumped)
+      # version. Auth is via OIDC (see the id-token permission above); no token
+      # flag. --set-access-level public is required for the first publish of
+      # scoped @yoltra/* packages.
+      - name: Rush publish
+        run: >
+          node common/scripts/install-run-rush.js publish
+          --publish
+          --include-all
+          --set-access-level public

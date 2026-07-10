@@ -6,9 +6,9 @@
 
 # Function: createHooks()
 
-> **createHooks**\<`R`, `S`, `EM`\>(`StoreContext`): `object`
+> **createHooks**\<`R`, `S`, `EM`\>(`StoreContext`): [`YoltraHooks`](../interfaces/YoltraHooks.md)\<`R`, `S`, `EM`\>
 
-Defined in: react/src/hooks/createHooks.ts:223
+Defined in: [react/src/hooks/createHooks.ts:240](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/createHooks.ts#L240)
 
 Factory that creates fully-typed React hooks bound to a specific store context.
 
@@ -46,97 +46,10 @@ A React context carrying a `StoreInstance<R, S, EM>`.
 
 ## Returns
 
+[`YoltraHooks`](../interfaces/YoltraHooks.md)\<`R`, `S`, `EM`\>
+
 An object with typed hooks: `useStore`, `useEmit`, `useSelector`,
   `useAtomicProp`, `useAtomicProps`, `useEvent`, and `shallowEqual`.
-
-### shallowEqual()
-
-> **shallowEqual**: \<`T`\>(`a`, `b`) => `boolean`
-
-Shallow object equality using `Object.is` per-key.
-
-Useful as the `isEqual` argument for `useAtomicProp` and `useAtomicProps`
-when the derived value is a plain object. Also available as a standalone
-export from `@yoltra/react` via [hooks.shallowEqual](#createhooks).
-
-#### Type Parameters
-
-##### T
-
-`T` *extends* `Record`\<`string`, `unknown`\>
-
-#### Parameters
-
-##### a
-
-`T`
-
-##### b
-
-`T`
-
-#### Returns
-
-`boolean`
-
-#### Example
-
-```ts
-shallowEqual({ a: 1 }, { a: 1 }); // true
-shallowEqual({ a: 1 }, { a: 2 }); // false
-```
-
-### useAtomicProp
-
-> **useAtomicProp**: [`UseAtomicProp`](../type-aliases/UseAtomicProp.md)\<`R`, `S`\>
-
-### useAtomicProps
-
-> **useAtomicProps**: [`UseAtomicProps`](../type-aliases/UseAtomicProps.md)\<`R`, `S`\>
-
-### useEmit()
-
-> **useEmit**: () => `Emit`\<`EM`\>
-
-#### Returns
-
-`Emit`\<`EM`\>
-
-### useEvent
-
-> **useEvent**: [`UseEvent`](../type-aliases/UseEvent.md)\<`EM`, `S`\>
-
-### useSelector()
-
-> **useSelector**: \<`T`\>(`selector`, `isEqual`) => `T`
-
-#### Type Parameters
-
-##### T
-
-`T`
-
-#### Parameters
-
-##### selector
-
-(`state`) => `T`
-
-##### isEqual
-
-(`a`, `b`) => `boolean`
-
-#### Returns
-
-`T`
-
-### useStore()
-
-> **useStore**: () => `StoreInstance`\<`R`, `S`, `EM`\>
-
-#### Returns
-
-`StoreInstance`\<`R`, `S`, `EM`\>
 
 ## Throws
 

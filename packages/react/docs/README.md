@@ -1,8 +1,8 @@
-![Yoltra logo](../../../assets/yoltra-logo.png)
+![yoltra logo](../../../assets/yoltra-logo.png)
 
 **@yoltra/react**
 
----
+***
 
 # @yoltra/react
 
@@ -10,6 +10,8 @@
 
 - [SuspenseAtomicPropOptions](interfaces/SuspenseAtomicPropOptions.md)
 - [SuspenseAtomicPropsOptions](interfaces/SuspenseAtomicPropsOptions.md)
+- [Yoltra](interfaces/Yoltra.md)
+- [YoltraHooks](interfaces/YoltraHooks.md)
 
 ## Type Aliases
 
@@ -29,6 +31,7 @@
 
 - [clearSuspenseCache](functions/clearSuspenseCache.md)
 - [createHooks](functions/createHooks.md)
+- [createYoltra](functions/createYoltra.md)
 - [invalidateAtomicProp](functions/invalidateAtomicProp.md)
 - [invalidateAtomicPropsByReducer](functions/invalidateAtomicPropsByReducer.md)
 - [shallowEqual](functions/shallowEqual.md)

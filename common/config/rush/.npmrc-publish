@@ -1,14 +1,14 @@
-# Rush publish-time registry
-# Used when running: rush publish --publish
+# Rush publish-time registry — used by: rush publish --publish
 #
-# The NPM_AUTH_TOKEN variable must be set in your environment (or CI secrets)
-# before running `rush publish --publish`.
+# Publishing uses npm Trusted Publishers (OIDC). The GitHub Actions release
+# workflow authenticates with a short-lived OIDC token, so NO auth token is
+# configured here — an `_authToken` line (even an empty one) would suppress the
+# OIDC flow. Requirements, all handled by .github/workflows/release.yml:
+#   - the job grants `permissions: id-token: write`
+#   - npm >= 11.5.1 (the workflow upgrades npm; node 20 ships an older npm)
+#   - a Trusted Publisher is configured on npmjs.com for each @yoltra package,
+#     pointing at this repo + workflow (release.yml)
 #
-# To override the registry at call time (e.g. for local Verdaccio):
+# For a local dry run against Verdaccio, override the registry at call time:
 #   rush publish --publish --registry http://localhost:4873
 registry=https://registry.npmjs.org/
-
-# safeguard to prevent unintended NPM releases
-@yoltra:registry=http://localhost:4873/
-//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}
-//localhost:4873/:_authToken=${NPM_AUTH_TOKEN}

@@ -1,0 +1,61 @@
+{
+  "name": "@yoltra/devtools-cli",
+  "version": "0.1.0",
+  "description": "Yoltra DevTools terminal UI (React + Ink)",
+  "author": {
+    "name": "Manu Ramirez <@pixerael>",
+    "email": "manu@yoltra.dev"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/devtools-cli.esm.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/devtools-cli.esm.js"
+    }
+  },
+  "bin": {
+    "yoltra-devtools": "./bin/devtools-cli.js"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "test": "exit 0",
+    "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "docs": "rushx docs:js && rushx docs:md",
+    "docs:md": "pnpm typedoc --options ./typedoc.json",
+    "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-cli-en.json"
+  },
+  "dependencies": {
+    "@yoltra/devtools-protocol": "workspace:*",
+    "@yoltra/devtools-server": "workspace:*",
+    "@yoltra/devtools-ui": "workspace:*",
+    "ink": "^6.8.0",
+    "ink-text-input": "^6.0.0",
+    "react": "19.1.1",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1",
+    "@types/react": "^19.1.8",
+    "@types/node": "^24.0.12",
+    "typedoc": "^0.28.13",
+    "typedoc-plugin-markdown": "4.9.0",
+    "typedoc-plugin-localization": "3.0.6",
+    "typescript": "5.9.3",
+    "vite": "^7.1.11",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "engines": {
+    "node": ">=18.18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

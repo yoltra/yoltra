@@ -14,7 +14,9 @@ async function enableMocking() {
 
   const { worker } = await import('./mocks/browser')
 
-  return worker.start()
+  // Only the mocked API endpoints are handled; let everything else (SPA
+  // navigation, vite assets, the devtools websocket) pass through untouched.
+  return worker.start({ onUnhandledRequest: 'bypass' })
 }
 
 enableMocking().then(() => {

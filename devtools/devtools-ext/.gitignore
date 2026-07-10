@@ -1,0 +1,5 @@
+# Store-ready artifacts produced by `pnpm package`
+store/
+
+# Maintainer-only publishing guide — kept local, not published to the repo
+PUBLISHING.md

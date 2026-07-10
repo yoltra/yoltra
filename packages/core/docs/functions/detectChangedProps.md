@@ -6,14 +6,14 @@
 
 # Function: detectChangedProps()
 
-> **detectChangedProps**(`oldState`, `newState`, `path`, `seenPairs`): `string`[]
+> **detectChangedProps**(`oldState`, `newState`, `path`, `ancestors`): `string`[]
 
-Defined in: [utils/detectChangedProps.ts:68](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/utils/detectChangedProps.ts#L68)
+Defined in: [utils/detectChangedProps.ts:71](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/utils/detectChangedProps.ts#L71)
 
 Computes the list of **dotted leaf paths** that changed between two values.
 
 The algorithm performs a deep structural comparison with special handling for:
-- **Primitives / null** → treated as leafs (change = current `path`)
+- **Primitives / null** → treated as leafs (change = current `path`; two `NaN`s are equal)
 - **Date** → compares `getTime()`
 - **RegExp** → compares `source` and `flags`
 - **Arrays** → if lengths differ, the whole array path is marked changed; otherwise compares
@@ -21,9 +21,11 @@ The algorithm performs a deep structural comparison with special handling for:
 - **Objects** → compares by the **union of keys**, recursing into shared keys and marking
   added/removed keys as changed at their **full path**
 
-Cycles and repeated object aliases are handled via **pair-wise** tracking using a
-`WeakMap<object, WeakSet<object>>` so recursion doesn't loop and shared subgraphs do not
-produce false negatives.
+Cycles are handled by tracking the `(old, new)` pairs currently on the **recursion path**
+(added on entry, removed on unwind). A pair is skipped only when it is a genuine ancestor of
+itself (a real cycle) — a pair that merely appears again at a *sibling* path (legitimate
+aliasing, e.g. the same object referenced from two keys) is still diffed, so real changes at
+the second site are never dropped.
 
 ## Parameters
 
@@ -45,11 +47,12 @@ Next value to diff.
 
 Current dotted path (callers pass `""` for root; recursion appends segments).
 
-### seenPairs
+### ancestors
 
-`WeakMap`\<`object`, `WeakSet`\<`object`\>\> = `...`
+`Map`\<`object`, `Set`\<`object`\>\> = `...`
 
-(Advanced) Pair tracker for cycle/alias detection. You generally never pass this.
+(Advanced) Pairs on the current recursion path, for cycle detection. You
+generally never pass this.
 
 ## Returns
 

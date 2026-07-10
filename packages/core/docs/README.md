@@ -1,8 +1,8 @@
-![Yoltra logo](../../../assets/yoltra-logo.png)
+![yoltra logo](../../../assets/yoltra-logo.png)
 
 **@yoltra/core**
 
----
+***
 
 # @yoltra/core
 
@@ -17,8 +17,10 @@
 
 - [Change](interfaces/Change.md)
 - [EffectSpec](interfaces/EffectSpec.md)
+- [EmitOptions](interfaces/EmitOptions.md)
 - [Event](interfaces/Event.md)
 - [EventConsumerMeta](interfaces/EventConsumerMeta.md)
+- [InstrumentedEvent](interfaces/InstrumentedEvent.md)
 - [MiddlewareSpec](interfaces/MiddlewareSpec.md)
 - [ReducerSpec](interfaces/ReducerSpec.md)
 - [StoreInstance](interfaces/StoreInstance.md)
@@ -36,6 +38,7 @@
 - [EventPhase](type-aliases/EventPhase.md)
 - [EventSubscriptionHandler](type-aliases/EventSubscriptionHandler.md)
 - [EventUnion](type-aliases/EventUnion.md)
+- [InstrumentationObserver](type-aliases/InstrumentationObserver.md)
 - [MiddlewareFunction](type-aliases/MiddlewareFunction.md)
 - [MiddlewareInput](type-aliases/MiddlewareInput.md)
 - [NarrowedEventHandler](type-aliases/NarrowedEventHandler.md)

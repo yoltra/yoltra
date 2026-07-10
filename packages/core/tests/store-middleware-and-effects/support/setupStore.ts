@@ -12,7 +12,7 @@ export type AppEvents = {
   };
 };
 
-const reducerSpec: ReducerSpec<AppState["counter"], AppEvents> = {
+export const reducerSpec: ReducerSpec<AppState["counter"], AppEvents> = {
   state: { value: 0 },
   events: [
     ["ui", "increment"],

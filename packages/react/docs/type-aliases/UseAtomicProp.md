@@ -6,9 +6,9 @@
 
 # Type Alias: UseAtomicProp()\<R, S\>
 
-> **UseAtomicProp**\<`R`, `S`\> = \{\<`R1`, `P`\>(`spec`): [`PathValue`](PathValue.md)\<`S`\[`R1`\], `P`\>; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`\>(`spec`): `unknown`; \<`R1`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \}
+> **UseAtomicProp**\<`R`, `S`\> = \{\<`R1`, `V`\>(`reducer`, `accessor`, `isEqual?`): `V`; \<`R1`, `P`\>(`spec`): [`PathValue`](PathValue.md)\<`S`\[`R1`\], `P`\>; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`\>(`spec`): `unknown`; \<`R1`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \}
 
-Defined in: react/src/hooks/createHooks.ts:45
+Defined in: [react/src/hooks/createHooks.ts:47](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/createHooks.ts#L47)
 
 Call signature for the typed `useAtomicProp` hook returned by [createHooks](../functions/createHooks.md).
 
@@ -29,6 +29,38 @@ Reducer name union.
 `S` *extends* `Record`\<`R`, `any`\>
 
 State record keyed by `R`.
+
+## Call Signature
+
+> \<`R1`, `V`\>(`reducer`, `accessor`, `isEqual?`): `V`
+
+### Type Parameters
+
+#### R1
+
+`R1` *extends* `string`
+
+#### V
+
+`V`
+
+### Parameters
+
+#### reducer
+
+`R1`
+
+#### accessor
+
+(`state`) => `V`
+
+#### isEqual?
+
+(`a`, `b`) => `boolean`
+
+### Returns
+
+`V`
 
 ## Call Signature
 

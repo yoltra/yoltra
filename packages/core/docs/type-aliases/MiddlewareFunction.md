@@ -6,12 +6,12 @@
 
 # Type Alias: MiddlewareFunction()\<S, EM\>
 
-> **MiddlewareFunction**\<`S`, `EM`\> = (`state`, `event`, `emit`) => `boolean` \| `Promise`\<`boolean`\>
+> **MiddlewareFunction**\<`S`, `EM`\> = (`state`, `event`, `emit`) => `boolean`
 
-Defined in: [types.ts:652](https://github.com/yoltra/yoltra/blob/7bf784f9e7daaf114608ff30306ac3400da926ed/packages/core/src/types.ts#L652)
+Defined in: [types.ts:757](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L757)
 
-Middleware function: may mutate, log, side-effect, or veto an event.
-Return true to continue; false to swallow / cancel propagation.
+Middleware function: log, guard, or veto an event **synchronously**.
+Return `true` to continue, `false` to swallow / cancel propagation.
 
 ## Type Parameters
 
@@ -43,4 +43,10 @@ Event map.
 
 ## Returns
 
-`boolean` \| `Promise`\<`boolean`\>
+`boolean`
+
+## Remarks
+
+Middleware runs in the synchronous reduce phase (so `getState()` is correct
+immediately after `emit()`), and therefore must be synchronous. Perform async
+work in effects instead.

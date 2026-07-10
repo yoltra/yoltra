@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-ui",
+      "comment": "useTimeTravel now accepts a canReplay argument and gates its TIME_TRAVEL sends (jumpTo, resume) on it, so the panel does not send time-travel commands to a store that did not advertise the replay capability (the agent and core enforce this too). Defaults to true for backward compatibility.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-ui"
+}

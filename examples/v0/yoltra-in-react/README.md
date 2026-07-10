@@ -16,8 +16,9 @@ data.
 
 Both implementations use:
 
-- **Yoltra** — event-driven store with channel-based events and fine-grained subscriptions via
-  `useAtomicProp`
+- **Yoltra** — event-driven store with channel-based events, fine-grained subscriptions via
+  `useAtomicProp`, and an **effect** for the async todo fetch (the async layer; middleware is
+  synchronous)
 - **Redux Toolkit (RTK)** — standard Redux stack with `createSlice` + `createAsyncThunk`
 
 ## Project layout
@@ -25,8 +26,8 @@ Both implementations use:
 Both implementations expose the same UI and user flows (list, add, update, delete). The
 comparison shell mounts either page under separate routes so you can profile them in isolation.
 
-- Route **/yoltra** → Yoltra page wrapped in its own provider
-- Route **/rtk** → RTK page wrapped in its own provider
+- Route **/yoltra** → Yoltra page (the `createYoltra` hooks default to the store — no provider needed)
+- Route **/redux** → RTK page wrapped in its own `<Provider>`
 
 The app is a **Vite** project that lives inside a **Rush** monorepo.
 
@@ -60,14 +61,14 @@ rush build
 The comparison shell is a Vite app that routes to each implementation.
 
 ```bash
-cd examples/yoltra-in-react
+cd examples/v0/yoltra-in-react
 rushx dev             # same as: pnpm dev
 ```
 
 Open **http://localhost:5173** (or whatever Vite prints).
 
 - Visit **/yoltra** for the Yoltra page.
-- Visit **/rtk** for the RTK page.
+- Visit **/redux** for the RTK page.
 
 ## Production build & preview (for stable profiling numbers)
 
@@ -75,13 +76,13 @@ Dev builds include extra checks (e.g., React Strict Mode effects and development
 For more stable timing, profile a **production** build:
 
 ```bash
-cd examples/yoltra-in-react
+cd examples/v0/yoltra-in-react
 rushx build           # Vite production build
 rushx preview         # Serves the production build
 # default: http://localhost:4173
 ```
 
-Then open `/yoltra` or `/rtk` on the preview server.
+Then open `/yoltra` or `/redux` on the preview server.
 
 ## Using the React Profiler
 

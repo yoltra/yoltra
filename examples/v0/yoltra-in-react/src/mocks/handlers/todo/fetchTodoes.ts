@@ -3,7 +3,7 @@ export interface iMockResponse {
     status: number;
     statusText: string;
     headers: HeadersInit;
-    body: Record<string, unknown> | Blob
+    body: Record<string, unknown> | unknown[] | Blob
     | ArrayBuffer
     | FormData
     | ReadableStream

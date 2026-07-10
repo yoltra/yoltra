@@ -1,0 +1,130 @@
+/* ─── Shell ──────────────────────────────────────────────────────────────────
+ * TopBar (brand + store selector) / a horizontal view-tab strip / a scrollable
+ * content area / a BottomBar status line. Sized off the design-system tokens.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  color: var(--devtools-fg);
+  font-family: var(--devtools-font-family);
+  font-size: var(--devtools-font-size);
+  line-height: var(--devtools-line-height);
+  overflow: hidden;
+  /* A soft glow at the top gives the flat panel some depth, echoing the app. */
+  background:
+    radial-gradient(130% 80% at 50% -25%, var(--ds-slate-850) 0%, var(--devtools-bg) 62%);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── View-tab strip ─────────────────────────────────────────────────────── */
+
+.tabBar {
+  display: flex;
+  align-items: stretch;
+  gap: var(--devtools-spacing-xs);
+  height: var(--devtools-tab-height);
+  min-height: var(--devtools-tab-height);
+  padding: 0 var(--devtools-spacing-sm);
+  background: color-mix(in srgb, var(--devtools-bg-secondary) 55%, transparent);
+  border-bottom: 1px solid var(--devtools-border-subtle);
+}
+
+.tab {
+  position: relative;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--devtools-fg-secondary);
+  font-family: inherit;
+  font-size: var(--devtools-font-size);
+  font-weight: var(--ds-weight-medium);
+  padding: 0 var(--devtools-spacing-md);
+  cursor: pointer;
+  transition:
+    color var(--devtools-duration-fast) var(--devtools-ease);
+}
+
+.tab::after {
+  content: "";
+  position: absolute;
+  left: var(--devtools-spacing-md);
+  right: var(--devtools-spacing-md);
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: transparent;
+  transition: background var(--devtools-duration) var(--devtools-ease);
+}
+
+.tab:hover {
+  color: var(--devtools-fg);
+}
+
+.tabActive {
+  color: var(--devtools-fg);
+}
+
+.tabActive::after {
+  background: var(--devtools-accent);
+  box-shadow: 0 0 8px var(--devtools-accent-ring);
+}
+
+/* ─── Content area ───────────────────────────────────────────────────────── */
+
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.emptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--devtools-fg-muted);
+  font-size: var(--devtools-font-size-lg);
+  padding: var(--devtools-spacing-xl);
+  text-align: center;
+}
+
+/* ─── Scoped reset + scrollbars ──────────────────────────────────────────── */
+
+.main *,
+.main *::before,
+.main *::after {
+  box-sizing: border-box;
+}
+
+.main {
+  scrollbar-width: thin;
+  scrollbar-color: var(--devtools-scrollbar-thumb) transparent;
+}
+
+.main :global(::-webkit-scrollbar) {
+  width: var(--devtools-scrollbar-width);
+  height: var(--devtools-scrollbar-width);
+}
+
+.main :global(::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+.main :global(::-webkit-scrollbar-thumb) {
+  background: var(--devtools-scrollbar-thumb);
+  border-radius: var(--devtools-radius-pill);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.main :global(::-webkit-scrollbar-thumb:hover) {
+  background: var(--devtools-scrollbar-thumb-hover);
+  border-radius: var(--devtools-radius-pill);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}

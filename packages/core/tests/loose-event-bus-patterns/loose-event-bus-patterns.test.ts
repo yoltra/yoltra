@@ -60,6 +60,23 @@ describe("LooseEventBus - exact vs pattern behaviour", () => {
     expect(calls).toEqual(["glob", "glob", "glob"]);
   });
 
+  it("handles adversarial glob patterns with backtracking (CORE-8)", () => {
+    const hits: string[] = [];
+    bus.on("ui", "**.**.end", () => hits.push("consec")); // consecutive **
+    bus.on("ui", "a.**.b", () => hits.push("mid")); // ** in the middle (zero or more)
+    bus.on("ui", "**.a.b", () => hits.push("back")); // requires backtracking
+
+    bus.emit("ui", "x.y.end", null); // consec
+    bus.emit("ui", "a.b", null); // mid (** = zero) + back (** = zero)
+    bus.emit("ui", "a.x.y.b", null); // mid (** = x.y)
+    bus.emit("ui", "z.a.b", null); // back (** = z)
+    bus.emit("ui", "a.a.b", null); // mid + back
+
+    expect(hits.sort()).toEqual(
+      ["back", "back", "back", "consec", "mid", "mid", "mid"].sort(),
+    );
+  });
+
   it("de-dupes the same handler registered as exact and pattern", () => {
     const calls: string[] = [];
     const h = (p: any) => calls.push(`h:${p}`);

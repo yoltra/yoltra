@@ -3,7 +3,7 @@
 # @yoltra/core
 
 > 👉 🇲🇽 Versión en Español&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)&nbsp;
+> &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp;
 
 ![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
 ![License](https://badgen.net/npm/license/@yoltra/core)
@@ -11,7 +11,7 @@
 **Contenedor de estado orientado a eventos, agnostico de framework, con suscripciones de grano
 fino por ruta.**
 
-`@yoltra/core` es la base de [yoltra](https://github.com/yoltra/yoltra/blob/main/README.md).
+`@yoltra/core` es la base de [yoltra](../../README.md).
 Proporciona el store, el pipeline de eventos, middleware, efectos y el sistema de suscripciones
 `connect()`. Cero dependencias de framework.
 
@@ -32,22 +32,24 @@ Cada llamada a `emit()` fluye a traves de un pipeline determinista:
 ```
 emit(channel, type, payload)
   │
-  ├─ 1. Dedup ─── Omitir si la huella es identica dentro de la ventana de tiempo
+  ├─ 0. Dedup (opt-in) ─── Omite un duplicado solo si dedupWindowMs > 0 o se pasa un dedupKey
   │
-  ├─ 2. Middleware ─── Hooks pre-reducer (pueden rechazar → evento "no confirmado")
+  │  ══ fase de reduccion SINCRONA — corre antes de que emit() retorne ══
+  ├─ 1. Middleware ─── Hooks pre-reducer sincronos (devolver false para rechazar → evento "no confirmado")
+  ├─ 2. Reducers ─── Actualizaciones de estado sincronas, deteccion de cambios de grano fino por ruta
+  ├─ 3. Suscriptores de eventos ─── Notificaciones de eventos confirmados/no confirmados
+  ├─ 4. Suscriptores gruesos ─── Listeners externos del store (useSyncExternalStore, etc.), si el estado cambio
   │
-  ├─ 3. Reducers ─── Actualizaciones de estado sincronas, deteccion de cambios de grano fino por ruta
-  │
-  ├─ 4. Suscriptores de eventos ─── Notificaciones de eventos confirmados/no confirmados
-  │
-  ├─ 5. Efectos ─── Efectos secundarios async (post-reducer, indexados para busqueda O(1))
-  │
-  └─ 6. Suscriptores gruesos ─── Listeners externos del store (useSyncExternalStore, etc.)
+  └─ 5. Efectos ─── Efectos secundarios ASYNC, una tarea independiente por evento (indexados para busqueda O(1))
 ```
 
-Cada etapa es interceptable. El middleware puede cancelar eventos, creando eventos "no
-confirmados" a los que la UI aun puede reaccionar. Los efectos se ejecutan despues de los
-reducers y ven el estado final.
+La fase de reduccion (1–4) es **sincrona**, asi que `getState()` es correcto en el instante en que
+`emit()` retorna — incluso con middleware. Los efectos (5) corren despues como una tarea async
+independiente; la promesa de `emit()` se resuelve cuando terminan los efectos de ese evento. Cada
+etapa es interceptable, y `store.instrument()` expone todo el flujo — rutas hoja cambiadas, tiempos
+de reduccion, fase confirmado/rechazado — a las DevTools sin ningun `as any`. Ver la
+[Arquitectura del Pipeline de Eventos](../../docs/es/design/event-queue-architecture.md) para el
+modelo completo.
 
 ---
 
@@ -98,7 +100,7 @@ state.counter.value = 999; // TypeError: Cannot assign to read-only property
 
 ---
 
-## Targeting de Eventos con Matchers `When`
+## Consumo de Eventos con Matchers `When`
 
 Los reducers, efectos y middleware usan un matcher `When` unificado para declarar a cuales
 eventos responden:
@@ -154,8 +156,10 @@ const globalLogger = {
 
 ## Middleware
 
-El middleware se ejecuta **antes** de los reducers y puede cancelar la propagacion de eventos.
-Soporta tanto funciones directas (legacy) como objetos `MiddlewareSpec` con targeting:
+El middleware se ejecuta **sincronamente, antes** de los reducers y puede cancelar la propagacion
+de eventos (devolver `false` para rechazar → evento "no confirmado"). El trabajo async va en los
+efectos, no en el middleware. Soporta tanto funciones directas (legacy) como objetos
+`MiddlewareSpec` con targeting:
 
 ```typescript
 import type { MiddlewareSpec } from "@yoltra/core";
@@ -170,8 +174,8 @@ const adminGuard: MiddlewareSpec<AppState, AppEM> = {
   meta: { type: "middleware", name: "adminGuard" },
 };
 
-// Middleware global — se ejecuta para todos los eventos
-const logger = async (state, event, emit) => {
+// Middleware global — se ejecuta para todos los eventos (sincrono: devuelve un boolean, nunca una Promise)
+const logger = (state, event) => {
   console.log("Event:", event.channel, event.type);
   return true;
 };
@@ -188,7 +192,7 @@ const store = createStore({
 ### Middleware dinamico
 
 ```typescript
-const off = store.registerMiddleware(async (state, event) => {
+const off = store.registerMiddleware((state, event) => {
   return event.type !== "forbidden";
 });
 off(); // Remover despues
@@ -272,19 +276,24 @@ store.onEvent(
 
 ---
 
-## Deduplicacion de Eventos
+## Deduplicacion de Eventos (opt-in)
 
-yoltra deduplica automaticamente eventos identicos dentro de una ventana de tiempo configurable.
-Esto previene el doble procesamiento en React Strict Mode:
+La deduplicacion esta **desactivada por defecto** — yoltra nunca descarta en silencio eventos
+identicos legitimos y rapidos (doble-clics, `+1` repetidos). Actívala solo cuando de verdad quieras
+coalescer:
 
 ```typescript
+// Por contenido: coalescer (channel, type, payload) identicos dentro de una ventana.
 const store = createStore({
   name: "App",
   reducer: {
     /* ... */
   },
-  dedupWindowMs: 100, // default: 50ms dev, 100ms prod
+  dedupWindowMs: 100, // default: 0 (desactivado)
 });
+
+// Por identidad: dedup por una clave explicita — p. ej. un doble-invoke de React Strict Mode en un efecto.
+await store.emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page}` });
 ```
 
 ---
@@ -336,16 +345,22 @@ if (import.meta.hot) {
 
 ## Mejores Practicas
 
-### Siempre hacer await de `emit()`
+### El estado es sincrono; haz `await` solo por los efectos
+
+La fase de reduccion es sincrona, asi que el estado refleja tu evento en el instante en que `emit()`
+retorna — sin `await` para leerlo. Haz `await` de `emit()` cuando ademas quieras que los efectos de
+_ese evento_ hayan terminado:
 
 ```typescript
-await emit("todo", "add", todo);
-const state = store.getState(); // Garantiza que refleja la nueva tarea
+emit("todo", "add", todo);
+store.getState(); // Ya refleja la nueva tarea — sin await
+
+await emit("todo", "save", todo); // se resuelve cuando terminan los efectos de save
 ```
 
 ### Mantener los reducers rapidos
 
-Los reducers son sincronos y bloquean la cola de eventos. Mueve el trabajo costoso a los
+Los reducers son sincronos y corren en el mismo tick que `emit()`. Mueve el trabajo costoso a los
 efectos:
 
 ```typescript
@@ -430,9 +445,9 @@ store.registerEffect({
 
 ## Documentacion
 
-- **[README raiz de yoltra](https://github.com/yoltra/yoltra/blob/main/README.md)** --
+- **[README raiz de yoltra](../../README.md)** --
   Descripcion general y configuracion rapida
-- **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** --
+- **[@yoltra/react](../react/README.md)** --
   Hooks de React y Suspense
 - **[Guia de Inicio Rapido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**
   -- Cinco pasos hacia una app funcional
@@ -450,13 +465,13 @@ store.registerEffect({
 - **[Logo Cinetico](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo)**
   -- 3000 círculos con simulación física.
 - **[Integracion con Next.js](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs)**
-  -- SSR + App Router + cambio de tema
+  -- Pages Router, estado de cliente + cambio de tema
 
 ---
 
 ## Contribuir
 
-- [Raiz del Monorepo](https://github.com/yoltra/yoltra/blob/main/README.md)
+- [Raiz del Monorepo](../../README.md)
 - [Guia de Contribucion](https://github.com/yoltra/yoltra/blob/main/CONTRIBUTING.md)
 
 ---

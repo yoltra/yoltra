@@ -1,4 +1,4 @@
-import { useAtomicProp } from "../../../../state/hooks";
+import { useAtomicProp } from "../../../../state/yoltra";
 
 interface PixelDotProps {
   id: string;
@@ -14,6 +14,7 @@ interface PixelDotProps {
  * No `memo`, no `useMemo` — Yoltra's atomic subscriptions are the
  * single source of render isolation. */
 export const PixelDot = ({ id }: PixelDotProps) => {
+  // Dynamic per-id path → string form (the typed-accessor form is for static paths).
   const dot = useAtomicProp({
     reducer: "pixel",
     property: `dots.${id}`,

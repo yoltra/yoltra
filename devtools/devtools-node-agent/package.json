@@ -1,0 +1,60 @@
+{
+  "name": "@yoltra/devtools-node-agent",
+  "version": "0.1.0",
+  "description": "Node.js store agent for Yoltra DevTools — instruments stores and reports to the hub",
+  "author": {
+    "name": "Manu Ramirez <@pixerael>",
+    "email": "manu@yoltra.dev"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/devtools-node-agent.cjs.js",
+  "module": "dist/devtools-node-agent.esm.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/devtools-node-agent.esm.js",
+      "require": "./dist/devtools-node-agent.cjs.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build",
+    "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
+    "test": "vitest --watch=false",
+    "typecheck": "tsc --noEmit",
+    "docs": "rushx docs:js && rushx docs:md",
+    "docs:md": "pnpm typedoc --options ./typedoc.json",
+    "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-node-agent-en.json"
+  },
+  "peerDependencies": {
+    "@yoltra/core": "^0.1.0"
+  },
+  "dependencies": {
+    "@yoltra/devtools-protocol": "workspace:*",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@yoltra/core": "workspace:*",
+    "@yoltra/devtools-server": "workspace:*",
+    "@types/ws": "^8.18.1",
+    "@types/node": "^24.0.12",
+    "typedoc": "^0.28.13",
+    "typedoc-plugin-markdown": "4.9.0",
+    "typedoc-plugin-localization": "3.0.6",
+    "typescript": "5.9.3",
+    "vite": "^7.1.11",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "3.2.4"
+  },
+  "engines": {
+    "node": ">=18.18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

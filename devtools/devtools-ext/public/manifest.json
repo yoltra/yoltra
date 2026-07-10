@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Yoltra DevTools",
+  "version": "0.1.0",
+  "description": "Inspect Yoltra state: event timeline, state tree, subscriptions, time-travel, and metrics — in DevTools.",
+  "homepage_url": "https://yoltra.dev",
+  "devtools_page": "devtools.html",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/logo-16.png",
+      "48": "icons/logo-48.png",
+      "128": "icons/logo-128.png"
+    }
+  },
+  "permissions": ["storage"],
+  "icons": {
+    "16": "icons/logo-16.png",
+    "48": "icons/logo-48.png",
+    "128": "icons/logo-128.png"
+  }
+}

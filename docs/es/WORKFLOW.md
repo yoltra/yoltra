@@ -13,42 +13,47 @@ cambio que mantienen el monorepo en buen estado. Para realizar un lanzamiento co
 ## Modelo de ramas
 
 ```
-main          ←── estable, publicado en npm, siempre listo para release
+main          ←── estable, siempre lista para release; se publica a npm al hacer push de un tag
   ↑
-develop       ←── rama de integración, siempre verde
-  ↑
-release/vX.Y  ←── de vida corta; solo bump de versiones + preparación del release
+release/next  ←── rama de integración del próximo release; lleva el bump de versión a main
   ↑
 feature/*     ←── una funcionalidad / corrección por rama
 fix/*
 chore/*
+hotfix/*
 ```
 
 **Reglas:**
 
-- `main` está protegida. Solo se fusionan PRs desde `develop` (tras un ciclo de release).
-- `develop` está protegida. Solo se fusionan PRs — nunca force-push.
-- Las ramas `release/*` se crean desde `develop`, se suben de versión, se prueban y luego se
-  hacen PR de vuelta a `develop` primero y después a `main`.
-- Las ramas `feature/*` / `fix/*` / `chore/*` se crean desde `develop`.
+- El trabajo entra vía PR (nunca hagas force-push a una rama compartida). Mergear a `main` **no**
+  publica; hacer push de un tag `v*.*.*` sí.
+- Las ramas `feature/*` / `fix/*` / `chore/*` se crean desde `release/next` y se hacen PR de vuelta a
+  ella, cada una con su change file (`rush change`).
+- `release/next` es la rama de integración permanente. Las features + sus change files fluyen por
+  ella hacia `main` vía PR (que pasa `rush change --verify`). El **bump de versión se aplica en
+  `main` tras el merge** — no en el PR — y luego se empuja con el tag `v*.*.*`. (El bump _consume_
+  los change files, lo que fallaría el verify del PR; `main` no tiene protección, así que el bump
+  aterriza ahí directo.)
+- Las ramas `hotfix/*` se crean desde `main` para una corrección crítica, se hacen PR directo de
+  vuelta a `main` y luego se etiquetan; después, mergea `main` de vuelta a `release/next`.
 
 ---
 
 ## Día a día: funcionalidad o corrección
 
 ```
-develop
+main
   └─ feature/123-mi-funcionalidad
          │  commits con Conventional Commits + DCO
          │  rush change (al menos una vez)
-         └─► PR → develop
+         └─► PR → main
 ```
 
 **Paso a paso:**
 
 ```bash
-# 1. Crear rama desde develop
-git checkout develop
+# 1. Crear rama desde main
+git checkout main
 git pull
 git checkout -b feature/123-mi-funcionalidad
 
@@ -62,7 +67,7 @@ rush change
 # 3. Realiza tu trabajo — los commits deben seguir Conventional Commits + firma DCO
 git commit -S -s -m "feat(core): añadir coincidencia de eventos con wildcard"
 
-# 4. Publicar rama y abrir PR contra develop
+# 4. Publicar rama y abrir PR contra main
 git push -u origin feature/123-mi-funcionalidad
 ```
 
@@ -80,30 +85,34 @@ git push -u origin feature/123-mi-funcionalidad
 ## Preparar un release (mantenedores)
 
 ```
-develop
-  └─ release/v0.9.0
-         │  rush version --bump
-         │  revisión manual de changelogs
-         └─► PR → develop  (sincronizar bumps de versión de vuelta)
-               └─► PR → main (desencadenar publicación en NPM)
+release/next ──► PR (features + change files, sin bump) ──► merge a main
+                                                              │
+main:  rush version --bump  →  commit "chore(release): vX.Y.Z"  →  push main --follow-tags
+       (bump + CHANGELOGs aterrizan en main; el tag, no el merge, publica vía CI)
 ```
 
-Consulta **[RELEASE_GUIDE.md](./RELEASE_GUIDE.md)** para el paso a paso completo.
+La publicación se dispara al hacer push de un tag `v*.*.*` a `main`, **no** al mergear — el tag
+corre `release.yml`, que publica vía npm Trusted Publishing (OIDC). Como el bump es parte del PR
+`release/next → main`, `main` ya lleva las nuevas versiones cuando etiquetas. Consulta
+**[RELEASE_GUIDE.md](./RELEASE_GUIDE.md)** para el paso a paso completo.
 
 ---
 
 ## Cambios breaking mientras `< 1.0.0`
 
-Hasta que la librería alcance `1.0.0`, usa `minor` (no `major`) para cambios breaking.
+Hasta que la suite alcance `1.0.0`, un **cambio breaking es un bump `minor`** (no `major`). Toda la
+suite de producto — `@yoltra/core`, `@yoltra/react` y cada `@yoltra/devtools-*` — se versiona en
+**lockstep** vía la política `yoltra`, así que siempre se mueven juntos a la misma versión. **No**
+eliges un bump por paquete.
 
-Cuando `@yoltra/core` tiene un cambio breaking:
+1. Agrega un archivo de cambio para que quede en el changelog:
 
-1. Elige **minor** en el prompt de `rush change` para core.
-2. Actualiza el rango de `peerDependencies` de `@yoltra/react` para que coincida:
-   ```json
-   "@yoltra/core": "^0.9.0"
+   ```bash
+   rush change    # escribe una descripción breve; el tipo es informativo bajo lockstep
    ```
-3. Añade también un archivo de cambio para `@yoltra/react` (minor o patch, según el impacto).
+
+2. Al publicar, `rush version --bump` mueve toda la suite al siguiente minor (el `nextBump` de la
+   política). Ver la **[Guía de Publicación](./RELEASE_GUIDE.md)** para el flujo completo.
 
 ---
 
@@ -116,38 +125,34 @@ planificado.
 main
   └─ hotfix/v0.8.1-bug-critico
          │  corrección mínima + rush change (patch)
+         │  rush version --bump --override-bump patch
          └─► PR → main  (revisado y fusionado directamente)
-               └─► PR de back-merge → develop
+               └─► push del tag v0.8.1 → CI publica
 ```
 
-Después de que el PR del hotfix llegue a `main`:
-
-1. Publicar desde `main` (consulta RELEASE_GUIDE.md).
-2. Abrir inmediatamente un PR de back-merge desde `main` → `develop` para mantenerlas en
-   sincronía.
+Después de que el PR del hotfix llegue a `main`, etiqueta el commit de merge
+(`git tag v0.8.1 && git push origin v0.8.1`) — el tag dispara CI, que publica vía OIDC (consulta
+RELEASE_GUIDE.md).
 
 ---
 
 ## Pre-releases
 
-Para funcionalidades experimentales que no están listas para un release estable:
+Para funcionalidades experimentales que no están listas para un release estable, bumpea a una
+versión pre-release:
 
 ```bash
-# Etiqueta la versión como pre-release en el archivo de cambio (elige bump "prerelease")
-rush change
-
-# Publicar con un dist-tag para que los usuarios deban optar explícitamente
-rush publish --publish --tag next
+rush version --bump --override-bump preminor   # p. ej. 0.2.0-0
 ```
 
-Los usuarios instalan pre-releases de forma explícita:
+Los pre-releases **no** están conectados al CI disparado por tag (que publica el dist-tag `latest`).
+Pruébalos en el registro Verdaccio local, o consulta
+**[RELEASE_GUIDE.md](./RELEASE_GUIDE.md) → Pre-releases** para publicar uno a npm bajo el dist-tag
+`next`. Los usuarios instalan con:
 
 ```bash
 npm add @yoltra/core@next @yoltra/react@next
 ```
-
-Los pre-releases también se pueden publicar en el registro Verdaccio local para pruebas sin
-tocar npm (consulta RELEASE_GUIDE.md).
 
 ---
 

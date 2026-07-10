@@ -6,7 +6,7 @@
     "dev": "vite",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix",
-    "test": "pnpm vitest --coverage --watch=false",
+    "test": "vitest --coverage --watch=false",
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "typecheck:tools": "tsc -p tsconfig.tools.json --noEmit",

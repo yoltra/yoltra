@@ -1,3 +1,5 @@
+import { warnOnce } from "./warnOnce";
+
 /** @internal */
 export function hasWildcard(p: string): boolean {
   return p.includes("*");
@@ -14,17 +16,98 @@ export function splitPath(p: string): string[] {
 }
 
 /**
- * Reads a dotted path from an object; returns `undefined` when a segment is missing.
+ * Stable signature for a specs array, for use as a `useMemo` dependency instead
+ * of `JSON.stringify` — deterministic and avoids serializing arbitrary values.
+ *
+ * Every segment is **length-prefixed** (`"<len>:<value>"`), so no delimiter
+ * character in a reducer name or path can make two semantically different spec
+ * arrays collide (the array length is encoded too, so `["a"]` and `["a", ""]`
+ * differ).
  * @internal
  */
-export function getAtPath(obj: any, path: string): any {
-  if (!path) return obj;
+export function specsSignature(
+  specs: ReadonlyArray<{ reducer: string; property: string | readonly string[] }>,
+): string {
+  const enc = (s: string) => `${s.length}:${s}`;
+  return specs
+    .map((s) => {
+      const props = Array.isArray(s.property)
+        ? (s.property as readonly string[])
+        : [s.property as string];
+      return enc(s.reducer) + enc(String(props.length)) + props.map(enc).join("");
+    })
+    .join("");
+}
 
-  let cur = obj;
+const PATH_SEGMENTS = Symbol("yoltra.pathSegments");
+
+function makePathProxy(segments: string[]): unknown {
+  // The target is a function so that *calling* the proxy hits the `apply` trap
+  // (a plain-object target is simply not callable and throws an opaque
+  // "x is not a function"). This lets us reject method calls inside an accessor
+  // — e.g. `p => p.items.map(...)` — with a message that says what went wrong.
+  const target = () => undefined;
+  return new Proxy(target, {
+    get(_target, prop) {
+      if (prop === PATH_SEGMENTS) return segments;
+      if (typeof prop === "symbol") return undefined;
+      return makePathProxy([...segments, String(prop)]);
+    },
+    apply() {
+      throw new Error(
+        `[yoltra] A typed path accessor called a method (near "${segments.join(".")}"). ` +
+          "The accessor must be a plain member chain like `p => p.items[0].title` — it cannot " +
+          "call functions such as `.map()` or `.toString()`. Compute derived values in the " +
+          "component or a selector, or use the `{ reducer, property }` string form.",
+      );
+    },
+  });
+}
+
+/**
+ * Converts a typed path accessor (e.g. `p => p.items[0].title`) into a dotted
+ * path string (`"items.0.title"`) by recording property accesses on a proxy.
+ *
+ * The accessor **must be a pure member chain**. It cannot return a computed
+ * value (`p => p.a.b ?? 0`, `p => 5`) or call a method (`p => p.items.map(...)`):
+ * - a method call throws immediately (see the proxy's `apply` trap);
+ * - anything that records no property access yields an empty path — which would
+ *   silently subscribe to the whole slice — so we `warnOnce` in dev.
+ *
+ * @internal
+ */
+export function toDottedPath(accessor: (p: any) => unknown): string {
+  const leaf = accessor(makePathProxy([]));
+  const recorded = leaf != null ? (leaf as any)[PATH_SEGMENTS] : undefined;
+  const segments: string[] = Array.isArray(recorded) ? recorded : [];
+  const path = segments.join(".");
+
+  if (path === "") {
+    warnOnce(
+      "yoltra.toDottedPath.empty",
+      "[yoltra] A typed path accessor recorded no property access, so it will subscribe to the " +
+        "entire slice. The accessor must be a plain member chain like `p => p.items[0].title` and " +
+        "cannot return a computed value or a default. For a whole-slice or dynamic subscription, " +
+        "use the `{ reducer, property }` string form instead.",
+    );
+  }
+
+  return path;
+}
+
+/**
+ * Reads a dotted path from an object; returns `undefined` when a segment is
+ * missing. The caller may supply the expected value type via `T`.
+ * @internal
+ */
+export function getAtPath<T = unknown>(obj: unknown, path: string): T {
+  if (!path) return obj as T;
+
+  let cur: any = obj;
   for (const seg of splitPath(path)) {
-    if (cur == null) return undefined;
+    if (cur == null) return undefined as T;
     cur = cur[seg];
   }
 
-  return cur;
+  return cur as T;
 }

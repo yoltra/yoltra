@@ -1,0 +1,29 @@
+/* VSCode theme integration.
+ *
+ * When the panel runs as a VSCode webview, adopt the editor's live palette so
+ * it blends into the user's theme. Everywhere else (browser extension panel,
+ * the embedded demo) the `--vscode-*` vars are undefined, so each token falls
+ * back to the Yoltra DevTools design-system primitive — i.e. this file is a
+ * no-op outside VSCode and never reverts the polished theme.
+ *
+ * Only colour + font family adapt; the type scale, spacing, radius, and
+ * elevation always come from the design system for a consistent shape. */
+:root {
+  --devtools-bg: var(--vscode-editor-background, var(--ds-slate-950));
+  --devtools-bg-secondary: var(--vscode-sideBar-background, var(--ds-slate-850));
+  --devtools-bg-tertiary: var(--vscode-editorGroupHeader-tabsBackground, var(--ds-slate-800));
+  --devtools-bg-hover: var(--vscode-list-hoverBackground, var(--ds-white-a04));
+  --devtools-bg-active: var(--vscode-list-activeSelectionBackground, var(--ds-teal-a15));
+  --devtools-fg: var(--vscode-editor-foreground, var(--ds-ink-100));
+  --devtools-fg-secondary: var(--vscode-descriptionForeground, var(--ds-ink-500));
+  --devtools-fg-muted: var(--vscode-disabledForeground, var(--ds-ink-600));
+  --devtools-border: var(--vscode-panel-border, var(--ds-slate-700));
+  --devtools-accent: var(--vscode-focusBorder, var(--ds-teal-400));
+  --devtools-accent-fg: var(--vscode-button-foreground, #04121a);
+  --devtools-success: var(--vscode-terminal-ansiGreen, var(--ds-green-400));
+  --devtools-warning: var(--vscode-editorWarning-foreground, var(--ds-amber-400));
+  --devtools-error: var(--vscode-errorForeground, var(--ds-red-400));
+  --devtools-info: var(--vscode-textLink-foreground, var(--ds-blue-400));
+  --devtools-font-family: var(--vscode-font-family, var(--ds-font-sans));
+  --devtools-font-mono: var(--vscode-editor-font-family, var(--ds-font-mono));
+}

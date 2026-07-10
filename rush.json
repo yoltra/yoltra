@@ -98,13 +98,81 @@
       "packageName": "@yoltra/core",
       "projectFolder": "packages/core",
       "reviewCategory": "production",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
     },
     {
       "packageName": "@yoltra/react",
       "projectFolder": "packages/react",
       "reviewCategory": "production",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
+    },
+    {
+      "packageName": "@yoltra/ds",
+      "projectFolder": "packages/ds",
+      "reviewCategory": "production",
+      "shouldPublish": true,
+      "versionPolicyName": "ds"
+    },
+
+    // ------------------------------------------------------------------
+    // Devtools — published
+    // ------------------------------------------------------------------
+    {
+      "packageName": "@yoltra/devtools-protocol",
+      "projectFolder": "devtools/devtools-protocol",
+      "reviewCategory": "devtools",
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
+    },
+    {
+      "packageName": "@yoltra/devtools-server",
+      "projectFolder": "devtools/devtools-server",
+      "reviewCategory": "devtools",
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
+    },
+    {
+      "packageName": "@yoltra/devtools-ui",
+      "projectFolder": "devtools/devtools-ui",
+      "reviewCategory": "devtools",
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
+    },
+    {
+      "packageName": "@yoltra/devtools-storeview",
+      "projectFolder": "devtools/devtools-storeview",
+      "reviewCategory": "devtools",
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
+    },
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "projectFolder": "devtools/devtools-browser-agent",
+      "reviewCategory": "devtools",
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
+    },
+    {
+      "packageName": "@yoltra/devtools-node-agent",
+      "projectFolder": "devtools/devtools-node-agent",
+      "reviewCategory": "devtools",
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
+    },
+    {
+      "packageName": "@yoltra/devtools-ext",
+      "projectFolder": "devtools/devtools-ext",
+      "reviewCategory": "devtools",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@yoltra/devtools-cli",
+      "projectFolder": "devtools/devtools-cli",
+      "reviewCategory": "devtools",
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
     },
 
     // ------------------------------------------------------------------
@@ -126,6 +194,25 @@
       "packageName": "yoltra-kinetic-logo",
       "projectFolder": "examples/v0/yoltra-kinetic-logo",
       "reviewCategory": "samples",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "yoltra-react-counter",
+      "projectFolder": "examples/v0/yoltra-react-counter",
+      "reviewCategory": "samples",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "yoltra-mission-control",
+      "projectFolder": "examples/v0/yoltra-mission-control",
+      "reviewCategory": "samples",
+      "shouldPublish": false
+    },
+
+    {
+      "packageName": "@eraelco/repo-tools",
+      "projectFolder": "tools/repo-tools",
+      "reviewCategory": "tools",
       "shouldPublish": false
     }
   ]

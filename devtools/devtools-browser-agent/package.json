@@ -1,0 +1,73 @@
+{
+  "name": "@yoltra/devtools-browser-agent",
+  "version": "0.1.0",
+  "description": "Browser store agent for Yoltra DevTools — instruments stores and reports to the hub via native WebSocket",
+  "license": "MIT",
+  "author": {
+    "name": "Manu Ramirez <@pixerael>",
+    "email": "manu@yoltra.dev"
+  },
+  "maintainers": [],
+  "homepage": "https://yoltra.dev",
+  "keywords": [
+    "yoltra",
+    "devtools",
+    "browser",
+    "agent"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yoltra/yoltra.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yoltra/yoltra/issues"
+  },
+  "type": "module",
+  "main": "dist/devtools-browser-agent.cjs.js",
+  "module": "dist/devtools-browser-agent.esm.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/devtools-browser-agent.esm.js",
+      "require": "./dist/devtools-browser-agent.cjs.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build",
+    "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
+    "test": "vitest --watch=false",
+    "typecheck": "tsc --noEmit",
+    "docs": "rushx docs:js && rushx docs:md",
+    "docs:md": "pnpm typedoc --options ./typedoc.json",
+    "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-browser-agent-en.json"
+  },
+  "peerDependencies": {
+    "@yoltra/core": "^0.1.0"
+  },
+  "dependencies": {
+    "@yoltra/devtools-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@yoltra/core": "workspace:*",
+    "@yoltra/devtools-ui": "workspace:*",
+    "typedoc": "^0.28.13",
+    "typedoc-plugin-markdown": "4.9.0",
+    "typedoc-plugin-localization": "3.0.6",
+    "typescript": "5.9.3",
+    "vite": "^7.1.11",
+    "vite-plugin-dts": "^4.5.4",
+    "vite-plugin-banner": "0.8.1",
+    "vitest": "3.2.4"
+  },
+  "engines": {
+    "node": ">=18.18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

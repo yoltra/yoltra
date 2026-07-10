@@ -1,0 +1,19 @@
+#!/bin/sh
+# Enforce Conventional Commits with commitlint.
+#
+# Managed by Rush: this file is copied into .git/hooks/ during `rush install`.
+# commitlint is provided by the rush-commitlint autoinstaller. If it is missing:
+#   rush update-autoinstaller --name rush-commitlint
+#
+# $1 is the path to the file containing the proposed commit message.
+
+COMMITLINT="common/autoinstallers/rush-commitlint/node_modules/.bin/commitlint"
+
+if [ ! -x "$COMMITLINT" ]; then
+  echo "commit-msg: commitlint is not installed." >&2
+  echo "  Run: rush update-autoinstaller --name rush-commitlint" >&2
+  exit 1
+fi
+
+exec "$COMMITLINT" --edit "$1" \
+  --config common/autoinstallers/rush-commitlint/commitlint.config.js

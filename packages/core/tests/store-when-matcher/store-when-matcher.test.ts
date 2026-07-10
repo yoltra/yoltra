@@ -385,7 +385,7 @@ describe("Store - when matcher", () => {
   });
 
   describe("Metadata support", () => {
-    it("attaches metadata to effects", async () => {
+    it("records effect metadata store-owned (not on the handler) and surfaces it via introspection", async () => {
       const store = makeStoreWithLegacyEvents();
 
       const effectSpec: EffectSpec<Readonly<AppState>, AppEvents> = {
@@ -400,9 +400,14 @@ describe("Store - when matcher", () => {
 
       store.registerEffect(effectSpec);
 
-      // The metadata is attached to the effect function
-      expect((effectSpec.effect as any).__quoMeta).toEqual({
-        type: "effect",
+      // Metadata is NOT attached to the caller's function anymore (CORE-5).
+      expect((effectSpec.effect as any).__quoMeta).toBeUndefined();
+
+      // It is store-owned and surfaces through devtools introspection.
+      const introspected = (store as any)
+        .__devtoolsIntrospect()
+        .effects.find((e: any) => e.name === "uiLogger");
+      expect(introspected).toMatchObject({
         name: "uiLogger",
         description: "Logs all UI events",
       });

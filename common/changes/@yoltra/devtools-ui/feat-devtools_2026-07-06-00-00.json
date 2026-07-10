@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-ui",
+      "comment": "useStoreState now re-sends REQUEST_STATE on an interval until the first STATE_SNAPSHOT arrives, so the State and time-travel views no longer hang when the initial request races store registration or the handshake. useTimeTravel exposes previewState (the state reconstructed at the viewed history position) and gains robust stepping: Forward now advances (and resyncs to live at the end) instead of no-opping, and the timeline frame is frozen at travel-start so a store that keeps emitting cannot shift the scrubber under the user and make a fixed position appear to drift backward. It also exposes frameCount for sizing the scrubber.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-ui"
+}

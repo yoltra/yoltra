@@ -213,14 +213,16 @@ Los snapshots solo están permitidos para salidas estables y deterministas.
 
 ## Archivos de cambio (requeridos en cada PR publicable)
 
-Cualquier PR que modifique `@yoltra/core`, `@yoltra/react` o un paquete publicado de `tools/`
-**debe** incluir un archivo de cambio de Rush. El CI rechazará los PRs que no lo tengan.
+Cualquier PR que modifique `@yoltra/core`, `@yoltra/react` u otro paquete publicado **debe**
+incluir un archivo de cambio de Rush. (Aún no hay CI — verifícalo localmente con el comando de
+abajo; conectar `rush change --verify` al CI es la validación recomendada, ver la
+[Guía de Publicación](./RELEASE_GUIDE.md).)
 
 ```bash
 # Prompt interactivo — selecciona los paquetes que cambiaste y el tipo de bump
 rush change
 
-# Verificar que existe un archivo de cambio (el CI también ejecuta esto en cada PR)
+# Verificar que existe un archivo de cambio
 rush change -v
 ```
 
@@ -240,8 +242,9 @@ generar las entradas de `CHANGELOG.md`.
 3. Añade un `rush-project.json` mínimo (declara `outputFolderNames` si el paquete compila).
 4. Registra el paquete en `rush.json` bajo `"projects"`.
 5. Ejecuta `rush update` para regenerar el lockfile.
-6. Asígnalo a la política de versiones `"lockstep"` (si se publica junto con core/react) o deja
-   `versionPolicyName` sin definir para versionado independiente.
+6. Si se publica junto con la suite de producto, define `"versionPolicyName": "yoltra"` (la
+   política lockstep — ver la [Guía de Publicación](./RELEASE_GUIDE.md)); si no, déjalo sin definir
+   para versionado independiente.
 
 ---
 
@@ -260,7 +263,7 @@ Nunca toques `common/config/rush/pnpm-lock.yaml` manualmente.
 
 | Síntoma                                      | Solución                                                                                      |
 | -------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| CI rechaza el PR: "missing change file"      | Ejecuta `rush change` y haz commit del archivo en `common/changes/`.                          |
+| Falta el archivo de cambio                   | Ejecuta `rush change` y haz commit del archivo en `common/changes/`.                          |
 | `rush install` falla con errores de peer dep | `strictPeerDependencies: false` ya está configurado; prueba `rush install --purge`.           |
 | Commit rechazado                             | Asegúrate del formato Conventional Commits + firma DCO (`git commit -s`).                     |
 | Salida de compilación desactualizada         | `rush rebuild` ignora la caché y fuerza una recompilación completa.                           |

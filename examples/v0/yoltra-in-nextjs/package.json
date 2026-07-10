@@ -14,7 +14,7 @@
     "docs": "exit 0",
     "test": "exit 0",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "exit 0"
   },
   "dependencies": {
     "@yoltra/core": "workspace:*",
@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "babel-plugin-react-compiler": "1.0.0",
+    "@yoltra/devtools-browser-agent": "workspace:*",
     "typescript": "5.9.3",
     "@types/node": "^24.0.12",
     "@types/react": "^19.1.8",

@@ -1,17 +1,14 @@
-
-import { AppStoreContext } from "@/context/Store.context";
-import { store } from "@/state/store";
-
-import { Head } from "@/components/Head.component";
 import { MainContent } from "@/components/Content.component";
+import { Head } from "@/components/Head.component";
 import { Header } from "@/components/Header.component";
 
+// No Provider — createYoltra's hooks default to the store in @/state/yoltra.
 export default function Home() {
   return (
-    <AppStoreContext.Provider value={store}>
+    <>
       <Head />
       <Header />
       <MainContent />
-    </AppStoreContext.Provider>
+    </>
   );
 }

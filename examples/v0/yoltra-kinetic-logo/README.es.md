@@ -25,8 +25,11 @@ Función de Yoltra Dónde se utiliza
 
 ---
 
-`useAtomicProp` Cada `<PixelDot>` se suscribe exactamente a `pixel.dots.<id>` --- solo ese
-componente se vuelve a renderizar cuando su punto se mueve
+`createYoltra` Una sola llamada en `state/yoltra.ts` devuelve el store y todos los hooks tipados
+--- sin archivo de context, sin `createHooks`, sin provider
+
+`useAtomicProp` Cada `<PixelDot>` se suscribe exactamente a `pixel.dots.<id>` (ruta string
+dinámica); `Screen` usa accessors tipados para sus rutas estáticas
 
 `when: { channel }` El reducer apunta a todo el canal `pixel` con un único matcher
 
@@ -94,7 +97,8 @@ copias de propiedades**.
 ```bash
 # desde la raíz del repositorio
 rush install
-cd examples/v1/yoltra-pixel-logo
+rush build
+cd examples/v0/yoltra-kinetic-logo
 pnpm dev
 ```
 
@@ -108,17 +112,16 @@ Luego abre `http://localhost:5173`.
     ├── App.tsx                        Bootstrap: carga imagen → extrae specs → inicia el engine
     ├── state/
     │   ├── types.ts                   AppState / AppEM / Dot / DotUpdate
-    │   ├── store.ts                   createStore()
-    │   ├── hooks.ts                   createHooks() — useAtomicProp tipado, etc.
+    │   ├── yoltra.ts                  createYoltra() — store + hooks tipados + withDevtools
     │   └── pixel/
     │       └── Pixel.reducer.ts       Reducer optimizado para el canal `pixel`
-    ├── context/
-    │   └── Store.context.tsx          Contexto de React que contiene el store
     ├── components/
+    │   ├── config-panel/
+    │   │   └── ConfigPanel.component.tsx  Controles en vivo de física / muestreo
     │   └── screen/
-    │       ├── Screen.component.tsx   Lienzo SVG + eventos de puntero
+    │       ├── Screen.component.tsx   Lienzo SVG + eventos de puntero (accessors tipados)
     │       └── items/dot/
-    │           └── Dot.component.tsx  Un punto → una suscripción atómica
+    │           └── Dot.component.tsx  Un punto → una suscripción atómica (ruta dinámica)
     └── utils/
         ├── index.ts                   Helpers matemáticos (expApproach, orbit, clamp…)
         ├── Quadtree.ts                QuadTree genérico<T extends PointItem>
@@ -157,4 +160,4 @@ Retraso inicial `extract.ts` → opción `delay` aleatorio `[0, 0.8 s]`
 
 # Licencia
 
-GPL-2.0-only - El proyecto **Yoltra Kinetic Logo** es para fines de demostración/documentación.
+MIT - **Yoltra Kinetic Logo** es un proyecto de ejemplo, provisto con fines de demostración y documentación.
