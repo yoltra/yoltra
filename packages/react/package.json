@@ -1,6 +1,6 @@
 {
   "name": "@yoltra/react",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "React bindings for Yoltra",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && vite build",
@@ -51,7 +51,7 @@
     "node": ">=18.18"
   },
   "peerDependencies": {
-    "@yoltra/core": "^0.1.0",
+    "@yoltra/core": "^0.2.0",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19"
   },

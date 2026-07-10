@@ -1,0 +1,22 @@
+{
+  "name": "@yoltra/devtools-cli",
+  "entries": [
+    {
+      "version": "0.2.0",
+      "tag": "@yoltra/devtools-cli_v0.2.0",
+      "date": "Fri, 10 Jul 2026 07:51:29 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Initial release: devtools CLI to launch and manage the hub."
+          }
+        ],
+        "patch": [
+          {
+            "comment": "Added an explicit exports map (types + import) declaring the package as intentionally ESM-only, consistent with it being a CLI/Ink app rather than a dual cjs+esm library."
+          }
+        ]
+      }
+    }
+  ]
+}
