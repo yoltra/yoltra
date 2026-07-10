@@ -25,6 +25,8 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
+    "package": "pnpm build && node scripts/pack-extension.mjs",
+    "pack": "node scripts/pack-extension.mjs",
     "test": "exit 0",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc --noEmit",
