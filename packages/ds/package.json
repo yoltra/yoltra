@@ -1,0 +1,84 @@
+{
+  "name": "@yoltra/ds",
+  "version": "0.1.0",
+  "description": "Yoltra Design System — tokens and primitive React components shared across the website, docs, and examples",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && vite build",
+    "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "node ../../common/scripts/copy-license.cjs"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Manu Ramirez <@pixerael>",
+    "email": "manu@yoltra.dev"
+  },
+  "maintainers": [],
+  "homepage": "https://yoltra.dev",
+  "keywords": [
+    "design-system",
+    "react",
+    "tokens",
+    "ui",
+    "yoltra"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yoltra/yoltra.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yoltra/yoltra/issues"
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/types/index.d.ts",
+  "private": false,
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist/",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18.18"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19"
+  },
+  "dependencies": {
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.12",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react-swc": "^3.10.2",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "typescript": "5.9.3",
+    "vite": "^7.1.11",
+    "vite-plugin-banner": "0.8.1",
+    "vite-plugin-dts": "^4.5.4",
+    "vite-tsconfig-paths": "^4.3.2"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    },
+    "./client": {
+      "types": "./dist/types/client.d.ts",
+      "import": "./dist/client.mjs",
+      "require": "./dist/client.cjs",
+      "default": "./dist/client.mjs"
+    },
+    "./package.json": "./package.json"
+  }
+}

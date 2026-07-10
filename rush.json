@@ -108,6 +108,13 @@
       "shouldPublish": true,
       "versionPolicyName": "yoltra"
     },
+    {
+      "packageName": "@yoltra/ds",
+      "projectFolder": "packages/ds",
+      "reviewCategory": "production",
+      "shouldPublish": true,
+      "versionPolicyName": "yoltra"
+    },
 
     // ------------------------------------------------------------------
     // Devtools — published
