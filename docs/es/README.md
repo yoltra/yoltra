@@ -223,7 +223,7 @@ para más detalles.
 
 ## Estado
 
-Yoltra está en etapa de **Release Candidate** (v0.1.0):
+Yoltra está en etapa de **Release Candidate** (v0.2.0):
 
 - Las APIs de core y React son estables y se usan en aplicaciones en producción.
 - Los tipos de TypeScript son estrictos y completos.

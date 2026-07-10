@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Split interactive components behind a dedicated \"@yoltra/ds/client\" subpath entry (ThemeProvider, useTheme, applyTheme, CodeBlock, Tabs) that carries the \"use client\" directive, so the default \"@yoltra/ds\" entry stays safe to import from React Server Components (for themeCss() and the static primitives). The package \"exports\" map declares both \".\" and \"./client\", each with types + import + require conditions.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

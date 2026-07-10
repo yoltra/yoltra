@@ -21,5 +21,16 @@
     "version": "0.1.0",
     "nextBump": "minor",
     "mainProject": "@yoltra/core"
+  },
+  {
+    /**
+     * @yoltra/ds versions independently of the product suite. It is a design
+     * system whose release cadence is driven by its own changes, not by core /
+     * react / devtools, so it uses `individualVersion` and self-versions from
+     * its own package.json + change files (`rush change`) — the suite's
+     * `rush version --bump` never moves it.
+     */
+    "definitionName": "individualVersion",
+    "policyName": "ds"
   }
 ]

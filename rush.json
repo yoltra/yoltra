@@ -113,7 +113,7 @@
       "projectFolder": "packages/ds",
       "reviewCategory": "production",
       "shouldPublish": true,
-      "versionPolicyName": "yoltra"
+      "versionPolicyName": "ds"
     },
 
     // ------------------------------------------------------------------
