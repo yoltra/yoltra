@@ -14,7 +14,8 @@ the monorepo healthy. For actually cutting a release see [RELEASE_GUIDE.md](./RE
 ```
 main          ←── stable, always releasable; published to npm by pushing a tag
   ↑
-release/vX.Y  ←── short-lived; version bump + release prep only
+release/next  ←── integration branch for the next release; carries the version bump into main
+  ↑
 feature/*     ←── one feature / fix per branch
 fix/*
 chore/*
@@ -25,10 +26,13 @@ hotfix/*
 
 - `main` is protected. Everything lands via PR — never force-push. Merging to `main` does **not**
   publish; pushing a `v*.*.*` tag does.
-- `feature/*` / `fix/*` / `chore/*` branches are cut from `main` and PR'd back into `main`.
-- `release/*` branches are cut from `main`, bumped (`rush version --bump`), then PR'd into `main`;
-  the merge commit is tagged to publish.
-- `hotfix/*` branches are cut from `main` for a critical fix and PR'd straight back into `main`.
+- `feature/*` / `fix/*` / `chore/*` branches are cut from `release/next` and PR'd back into it, each
+  carrying a change file (`rush change`).
+- `release/next` is the standing integration branch. At release time it is bumped
+  (`rush version --bump`) and that bump **rides the `release/next → main` PR** — you never bump on
+  `main`. After the PR merges, tag `main` (`v*.*.*`) to publish.
+- `hotfix/*` branches are cut from `main` for a critical fix, PR'd straight back into `main`, then
+  tagged; merge `main` back into `release/next` afterward.
 
 ---
 
@@ -78,15 +82,15 @@ git push -u origin feature/123-my-feature
 ## Preparing a release (maintainers)
 
 ```
-main
-  └─ release/v0.9.0
-         │  rush version --bump
-         │  manual review of changelogs
-         └─► PR → main, then push tag vX.Y.Z  ── the tag (not the merge) publishes via CI
+release/next
+  │  rush version --bump              (edits files only — no git ops)
+  │  commit "chore(release): vX.Y.Z" + review changelogs
+  └─► PR release/next → main  →  merge  →  tag main vX.Y.Z  ── the tag (not the merge) publishes via CI
 ```
 
-Publishing is triggered by pushing a `v*.*.*` tag, **not** by merging to `main` — the tag runs
-`release.yml`, which publishes via npm Trusted Publishing (OIDC). See
+Publishing is triggered by pushing a `v*.*.*` tag to `main`, **not** by merging — the tag runs
+`release.yml`, which publishes via npm Trusted Publishing (OIDC). Because the bump is part of the
+`release/next → main` PR, `main` already carries the new versions when you tag. See
 **[RELEASE_GUIDE.md](./RELEASE_GUIDE.md)** for the full step-by-step.
 
 ---

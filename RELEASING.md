@@ -49,11 +49,15 @@ a version that supports OIDC + provenance — nothing to configure in the repo.
 
 ## Every release
 
-Run from a clean `main` (all intended changes merged, working tree clean).
+The version bump rides in the `release/next → main` PR; the tag (pushed to
+`main` after the merge) is what publishes. You never bump directly on `main`.
+
+Run from `release/next` with all intended changes merged and the tree clean.
 
 1. **Confirm change files exist** for every changed publishable package:
 
    ```sh
+   git checkout release/next && git pull
    rush change --verify
    ```
 
@@ -62,8 +66,9 @@ Run from a clean `main` (all intended changes merged, working tree clean).
 
 2. **Bump versions + write CHANGELOGs.** This applies the change files, moves
    the lock-step version per the policy's `nextBump` (currently `minor`, e.g.
-   `0.1.0 → 0.2.0`), updates each `CHANGELOG.md`, and deletes the consumed
-   change files:
+   `0.1.0 → 0.2.0`), bumps `@yoltra/ds` per its own policy, updates each
+   `CHANGELOG.md`, and deletes the consumed change files (no git operations —
+   files only):
 
    ```sh
    rush version --bump
@@ -72,18 +77,22 @@ Run from a clean `main` (all intended changes merged, working tree clean).
    To hold the suite on a patch release instead, use
    `rush version --bump --override-bump patch`.
 
-3. **Review** the version changes and generated CHANGELOGs, then **commit**:
+3. **Review** the version changes and generated CHANGELOGs, then **commit onto
+   `release/next`** and open (or update) the `release/next → main` PR:
 
    ```sh
    git add -A
-   git commit -m "release: v0.2.0"
+   git commit -m "chore(release): v0.2.0"
+   git push origin release/next
    ```
 
-4. **Tag and push** (the tag must match `v*.*.*` to trigger the workflow):
+4. **Merge the PR, then tag `main`** (the tag must match `v*.*.*` to trigger the
+   workflow — the bump is already on `main` via the merge):
 
    ```sh
+   git checkout main && git pull
    git tag v0.2.0
-   git push origin main --follow-tags
+   git push origin v0.2.0
    ```
 
 5. **Watch the Release workflow.** On success, every `shouldPublish` package is

@@ -15,7 +15,8 @@ cambio que mantienen el monorepo en buen estado. Para realizar un lanzamiento co
 ```
 main          ←── estable, siempre lista para release; se publica a npm al hacer push de un tag
   ↑
-release/vX.Y  ←── de vida corta; solo bump de versiones + preparación del release
+release/next  ←── rama de integración del próximo release; lleva el bump de versión a main
+  ↑
 feature/*     ←── una funcionalidad / corrección por rama
 fix/*
 chore/*
@@ -26,11 +27,13 @@ hotfix/*
 
 - `main` está protegida. Todo entra vía PR — nunca force-push. Mergear a `main` **no** publica;
   hacer push de un tag `v*.*.*` sí.
-- Las ramas `feature/*` / `fix/*` / `chore/*` se crean desde `main` y se hacen PR de vuelta a `main`.
-- Las ramas `release/*` se crean desde `main`, se bumpean (`rush version --bump`) y se hacen PR a
-  `main`; el commit de merge se etiqueta para publicar.
-- Las ramas `hotfix/*` se crean desde `main` para una corrección crítica y se hacen PR directo de
-  vuelta a `main`.
+- Las ramas `feature/*` / `fix/*` / `chore/*` se crean desde `release/next` y se hacen PR de vuelta a
+  ella, cada una con su change file (`rush change`).
+- `release/next` es la rama de integración permanente. Al momento del release se bumpea
+  (`rush version --bump`) y ese bump **viaja en el PR `release/next → main`** — nunca bumpeas en
+  `main`. Tras mergear el PR, etiquetas `main` (`v*.*.*`) para publicar.
+- Las ramas `hotfix/*` se crean desde `main` para una corrección crítica, se hacen PR directo de
+  vuelta a `main` y luego se etiquetan; después, mergea `main` de vuelta a `release/next`.
 
 ---
 
@@ -80,15 +83,15 @@ git push -u origin feature/123-mi-funcionalidad
 ## Preparar un release (mantenedores)
 
 ```
-main
-  └─ release/v0.9.0
-         │  rush version --bump
-         │  revisión manual de changelogs
-         └─► PR → main, luego push del tag vX.Y.Z  ── el tag (no el merge) publica vía CI
+release/next
+  │  rush version --bump              (solo edita archivos — sin operaciones git)
+  │  commit "chore(release): vX.Y.Z" + revisión de changelogs
+  └─► PR release/next → main  →  merge  →  tag en main vX.Y.Z  ── el tag (no el merge) publica vía CI
 ```
 
-La publicación se dispara al hacer push de un tag `v*.*.*`, **no** al mergear a `main` — el tag
-corre `release.yml`, que publica vía npm Trusted Publishing (OIDC). Consulta
+La publicación se dispara al hacer push de un tag `v*.*.*` a `main`, **no** al mergear — el tag
+corre `release.yml`, que publica vía npm Trusted Publishing (OIDC). Como el bump es parte del PR
+`release/next → main`, `main` ya lleva las nuevas versiones cuando etiquetas. Consulta
 **[RELEASE_GUIDE.md](./RELEASE_GUIDE.md)** para el paso a paso completo.
 
 ---

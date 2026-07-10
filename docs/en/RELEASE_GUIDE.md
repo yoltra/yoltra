@@ -81,35 +81,38 @@ Notes:
 
 ## Cutting a release
 
-The version bump lives in its **own PR** — feature PRs only carry change files; the release PR is
-the one that turns them into a version bump. Publishing then happens in CI when you tag.
+The version bump rides **inside the `release/next → main` PR** — it's the last commit on
+`release/next` before you promote it. Feature work carries only change files; the release bump turns
+them into versions + changelogs. Publishing then happens in CI when you tag `main` after the merge.
 
 ```bash
-git checkout main && git pull
-git checkout -b release/v0.2.0        # short-lived release branch
+# On release/next, once all the work for this release (and its change files) has landed:
+git checkout release/next && git pull
 
 # 1. Consume change files → bump versions + write CHANGELOGs (deletes the change files)
 rush version --bump
-#    Every "yoltra" package moves together to the next version (minor by default: 0.1.0 → 0.2.0).
+#    yoltra lockstep (core / react / devtools-*):  minor by default, e.g. 0.1.0 → 0.2.0
+#    @yoltra/ds (its own policy):                   bumps per its own change files
 
-# 2. Review the new version in each package.json and each CHANGELOG.md, then commit
+# 2. Review the new version in each package.json and each CHANGELOG.md, then commit onto release/next
 git add -A && git commit -m "chore(release): v0.2.0"
-git push -u origin release/v0.2.0
+git push origin release/next
 ```
 
 Then:
 
-1. **Open a PR** `release/v0.2.0 → main`. It contains the version bump + changelogs; review and
-   **merge** it.
-2. **Tag the merge commit** and push the tag — this is what publishes:
+1. **Open (or update) the `release/next → main` PR.** It now carries the feature work **and** the
+   version bump + changelogs — review and **merge** it. The bump is part of this PR; you never bump
+   directly on `main`.
+2. **Pull `main` and tag the merge commit** — this is what publishes:
 
    ```bash
    git checkout main && git pull
    git tag v0.2.0 && git push origin v0.2.0
    ```
 
-   > The tag is only the trigger. `rush publish` publishes whatever version is in `package.json`,
-   > so the bump must already be on `main` (step 1) and the tag name should match it.
+   > The tag is only the trigger. `rush publish` publishes whatever version is in `package.json`, so
+   > the bump must already be on `main` (it rode in with the PR) and the tag name must match it.
 
 3. The **Release** workflow builds and publishes to npm via OIDC. If the `production` environment
    has an approval gate, approve the run.
@@ -211,14 +214,14 @@ pass `--tag next` for pre-release tags. Consumers opt in explicitly: `npm add @y
 rush change                # add a changelog entry for your change
 rush change -v             # verify change files exist (CI enforces this)
 
-# --- cut a release (release branch → PR → main) ---
-git checkout -b release/vX.Y.Z
-rush version --bump                       # bump the whole suite + write CHANGELOGs (minor default)
+# --- cut a release (bump on release/next → PR → main) ---
+git checkout release/next && git pull
+rush version --bump                       # bump the suite + write CHANGELOGs (minor default)
 #   fix-only release:  rush version --bump --override-bump patch
-git commit -am "chore(release): vX.Y.Z" && git push -u origin release/vX.Y.Z
-#   → open PR to main, review, merge
+git commit -am "chore(release): vX.Y.Z" && git push origin release/next
+#   → open/update PR release/next → main, review, merge  (the bump rides this PR)
 
-# --- publish (tag the merge commit; CI does the rest via OIDC) ---
+# --- publish (after the PR merges, tag main; CI does the rest via OIDC) ---
 git checkout main && git pull
 git tag vX.Y.Z && git push origin vX.Y.Z
 
