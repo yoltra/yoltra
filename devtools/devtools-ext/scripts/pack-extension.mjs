@@ -7,6 +7,7 @@
  * shells out to the system `zip`. Run `pnpm build` first (or use `pnpm package`,
  * which builds then packs).
  */
+/* global console, process */
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
