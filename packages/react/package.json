@@ -6,7 +6,7 @@
     "build": "tsc -p tsconfig.build.json && vite build",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix",
-    "test": "pnpm vitest --coverage --watch=false",
+    "test": "vitest --coverage --watch=false",
     "test:watch": "vitest --coverage",
     "prepublishOnly": "node ../../common/scripts/copy-license.cjs",
     "docs": "rushx docs:js && rushx docs:md",
