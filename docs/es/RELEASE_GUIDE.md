@@ -83,44 +83,37 @@ Notas:
 
 ## Cortar un release
 
-El bump de versión viaja **dentro del PR `release/next → main`** — es el último commit en
-`release/next` antes de promoverlo. El trabajo de features solo lleva change files; el bump de
-release los convierte en versiones + changelogs. La publicación ocurre en CI cuando etiquetas `main`
-tras el merge.
+Los change files viajan con el trabajo de features y el PR `release/next → main`; el **bump de
+versión NO es parte del PR** — lo aplicas en `main` tras el merge y lo empujas con el tag. Es
+deliberado: `rush version --bump` _consume_ (borra) los change files, pero `rush change --verify`
+corre en cada PR y exige un change file por cada paquete cambiado — así que bumpear en la rama del PR
+fallaría el chequeo. Bumpear directo en `main` (sin protección) lo evita.
 
 ```bash
-# En release/next, una vez que todo el trabajo de este release (y sus change files) ha aterrizado:
-git checkout release/next && git pull
+# 1. Aterriza todo el trabajo + change files en release/next, abre el PR release/next → main
+#    (features + change files, SIN bump) y mergéalo. CI está verde porque cada paquete
+#    publicable cambiado todavía tiene su change file.
 
-# 1. Consume los change files → bumpea versiones + escribe CHANGELOGs (borra los change files)
+# 2. Bumpea en main, tras el merge:
+git checkout main && git pull
+
 rush version --bump
 #    yoltra en lockstep (core / react / devtools-*):  minor por defecto, p. ej. 0.1.0 → 0.2.0
 #    @yoltra/ds (su propia política):                  bumpea según sus propios change files
+#    → consume TODOS los change files, escribe cada CHANGELOG (solo archivos — sin git)
 
-# 2. Revisa la nueva versión en cada package.json y cada CHANGELOG.md, luego commitea en release/next
-git add -A && git commit -m "chore(release): v0.2.0"
-git push origin release/next
+git commit -am "chore(release): v0.2.0"
+
+# 3. Empuja el bump + tag juntos — el tag es lo que publica:
+git push origin main --follow-tags
+#    (equivalente: git push origin main && git tag v0.2.0 && git push origin v0.2.0)
 ```
 
 Luego:
 
-1. **Abre (o actualiza) el PR `release/next → main`.** Ahora contiene el trabajo de features **y** el
-   bump de versión + changelogs — revísalo y **mergéalo**. El bump es parte de este PR; nunca
-   bumpeas directamente en `main`.
-2. **Haz pull de `main` y etiqueta el commit de merge** — esto es lo que publica:
-
-   ```bash
-   git checkout main && git pull
-   git tag v0.2.0 && git push origin v0.2.0
-   ```
-
-   > El tag es solo el disparador. `rush publish` publica la versión que está en `package.json`, así
-   > que el bump ya debe estar en `main` (viajó con el PR) y el nombre del tag debe coincidir con ella.
-
-3. El workflow **Release** compila y publica a npm vía OIDC. Si el entorno `production` tiene una
+1. El workflow **Release** compila y publica a npm vía OIDC. Si el entorno `production` tiene una
    compuerta de aprobación, aprueba la ejecución.
-4. **Crea un release de GitHub** desde el tag y pega la sección relevante de `CHANGELOG.md` como
-   notas.
+2. **Crea un release de GitHub** desde el tag y pega la sección relevante de `CHANGELOG.md` como notas.
 
 ### Patch en vez de minor
 
@@ -219,16 +212,16 @@ que por ahora implica extender [`release.yml`](../../.github/workflows/release.y
 rush change                # agrega una entrada de changelog para tu cambio
 rush change -v             # verifica que existan change files (CI lo exige)
 
-# --- cortar un release (bump en release/next → PR → main) ---
-git checkout release/next && git pull
-rush version --bump                       # bumpea la suite + escribe CHANGELOGs (minor por defecto)
-#   release solo de fixes:  rush version --bump --override-bump patch
-git commit -am "chore(release): vX.Y.Z" && git push origin release/next
-#   → abre/actualiza el PR release/next → main, revisa, mergea  (el bump viaja en este PR)
-
-# --- publicar (tras mergear el PR, etiqueta main; CI hace el resto vía OIDC) ---
+# --- cortar un release (los change files viajan en el PR; bump en main TRAS el merge) ---
+#   aterriza features + change files en release/next → PR a main → mergea
+#   (CI verde: rush change --verify ve un change file por cada paquete cambiado)
 git checkout main && git pull
-git tag vX.Y.Z && git push origin vX.Y.Z
+rush version --bump                       # consume change files → versiones + CHANGELOGs (minor por defecto)
+#   release solo de fixes:  rush version --bump --override-bump patch
+git commit -am "chore(release): vX.Y.Z"
+
+# --- publicar (empuja el bump + tag; CI hace el resto vía OIDC) ---
+git push origin main --follow-tags        # o: git push origin main && git tag vX.Y.Z && git push origin vX.Y.Z
 
 # --- opcional: prueba en Verdaccio (solo local) ---
 docker compose -f tools/registry/docker-compose.yml up -d

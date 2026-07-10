@@ -49,53 +49,42 @@ a version that supports OIDC + provenance — nothing to configure in the repo.
 
 ## Every release
 
-The version bump rides in the `release/next → main` PR; the tag (pushed to
-`main` after the merge) is what publishes. You never bump directly on `main`.
+Change files travel with the feature work and the `release/next → main` PR; the
+**version bump happens on `main` after the merge**, then is pushed with the tag.
+You never bump on a branch that CI runs `rush change --verify` against — the bump
+consumes the change files that check requires, so it would fail the PR.
 
-Run from `release/next` with all intended changes merged and the tree clean.
+1. **Merge the `release/next → main` PR** (features + change files, no bump). CI is
+   green because every changed publishable package still has its change file.
 
-1. **Confirm change files exist** for every changed publishable package:
-
-   ```sh
-   git checkout release/next && git pull
-   rush change --verify
-   ```
-
-   If it complains, add them with `rush change` (one line per package; pick
-   `patch` / `minor` / `major`, or `none` for test/docs-only changes).
-
-2. **Bump versions + write CHANGELOGs.** This applies the change files, moves
-   the lock-step version per the policy's `nextBump` (currently `minor`, e.g.
-   `0.1.0 → 0.2.0`), bumps `@yoltra/ds` per its own policy, updates each
+2. **On `main`, bump versions + write CHANGELOGs.** This applies the change files,
+   moves the lock-step version per the policy's `nextBump` (currently `minor`,
+   e.g. `0.1.0 → 0.2.0`), bumps `@yoltra/ds` per its own policy, updates each
    `CHANGELOG.md`, and deletes the consumed change files (no git operations —
    files only):
 
    ```sh
+   git checkout main && git pull
    rush version --bump
    ```
 
    To hold the suite on a patch release instead, use
    `rush version --bump --override-bump patch`.
 
-3. **Review** the version changes and generated CHANGELOGs, then **commit onto
-   `release/next`** and open (or update) the `release/next → main` PR:
+3. **Review** the version changes and generated CHANGELOGs, then **commit and tag
+   on `main`** — the tag (matching `v*.*.*`) triggers the workflow:
 
    ```sh
-   git add -A
-   git commit -m "chore(release): v0.2.0"
-   git push origin release/next
-   ```
-
-4. **Merge the PR, then tag `main`** (the tag must match `v*.*.*` to trigger the
-   workflow — the bump is already on `main` via the merge):
-
-   ```sh
-   git checkout main && git pull
+   git commit -am "chore(release): v0.2.0"
    git tag v0.2.0
-   git push origin v0.2.0
+   git push origin main --follow-tags
    ```
 
-5. **Watch the Release workflow.** On success, every `shouldPublish` package is
+   > `main` is unprotected, so the bump lands directly. If it ever becomes
+   > protected, either push the bump via an admin-merge that skips the verify
+   > check, or exempt the release commit from `rush change --verify`.
+
+4. **Watch the Release workflow.** On success, every `shouldPublish` package is
    live on npm at the new version. Re-run the workflow (`workflow_dispatch`) if
    a transient publish step fails.
 

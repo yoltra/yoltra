@@ -25,13 +25,15 @@ hotfix/*
 
 **Reglas:**
 
-- `main` está protegida. Todo entra vía PR — nunca force-push. Mergear a `main` **no** publica;
-  hacer push de un tag `v*.*.*` sí.
+- El trabajo entra vía PR (nunca hagas force-push a una rama compartida). Mergear a `main` **no**
+  publica; hacer push de un tag `v*.*.*` sí.
 - Las ramas `feature/*` / `fix/*` / `chore/*` se crean desde `release/next` y se hacen PR de vuelta a
   ella, cada una con su change file (`rush change`).
-- `release/next` es la rama de integración permanente. Al momento del release se bumpea
-  (`rush version --bump`) y ese bump **viaja en el PR `release/next → main`** — nunca bumpeas en
-  `main`. Tras mergear el PR, etiquetas `main` (`v*.*.*`) para publicar.
+- `release/next` es la rama de integración permanente. Las features + sus change files fluyen por
+  ella hacia `main` vía PR (que pasa `rush change --verify`). El **bump de versión se aplica en
+  `main` tras el merge** — no en el PR — y luego se empuja con el tag `v*.*.*`. (El bump _consume_
+  los change files, lo que fallaría el verify del PR; `main` no tiene protección, así que el bump
+  aterriza ahí directo.)
 - Las ramas `hotfix/*` se crean desde `main` para una corrección crítica, se hacen PR directo de
   vuelta a `main` y luego se etiquetan; después, mergea `main` de vuelta a `release/next`.
 
@@ -83,10 +85,10 @@ git push -u origin feature/123-mi-funcionalidad
 ## Preparar un release (mantenedores)
 
 ```
-release/next
-  │  rush version --bump              (solo edita archivos — sin operaciones git)
-  │  commit "chore(release): vX.Y.Z" + revisión de changelogs
-  └─► PR release/next → main  →  merge  →  tag en main vX.Y.Z  ── el tag (no el merge) publica vía CI
+release/next ──► PR (features + change files, sin bump) ──► merge a main
+                                                              │
+main:  rush version --bump  →  commit "chore(release): vX.Y.Z"  →  push main --follow-tags
+       (bump + CHANGELOGs aterrizan en main; el tag, no el merge, publica vía CI)
 ```
 
 La publicación se dispara al hacer push de un tag `v*.*.*` a `main`, **no** al mergear — el tag

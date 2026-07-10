@@ -81,42 +81,37 @@ Notes:
 
 ## Cutting a release
 
-The version bump rides **inside the `release/next → main` PR** — it's the last commit on
-`release/next` before you promote it. Feature work carries only change files; the release bump turns
-them into versions + changelogs. Publishing then happens in CI when you tag `main` after the merge.
+Change files travel with the feature work and the `release/next → main` PR; the **version bump is
+NOT part of the PR** — you apply it on `main` after the merge, then push it with the tag. This is
+deliberate: `rush version --bump` _consumes_ (deletes) change files, but `rush change --verify` runs
+on every PR and requires a change file for each changed package — so bumping on the PR branch would
+fail the check. Bumping directly on `main` (unprotected) sidesteps it.
 
 ```bash
-# On release/next, once all the work for this release (and its change files) has landed:
-git checkout release/next && git pull
+# 1. Land all work + change files on release/next, then open the release/next → main PR
+#    (features + change files, NO bump) and merge it. CI is green because every
+#    changed publishable package still has its change file.
 
-# 1. Consume change files → bump versions + write CHANGELOGs (deletes the change files)
+# 2. Bump on main, after the merge:
+git checkout main && git pull
+
 rush version --bump
 #    yoltra lockstep (core / react / devtools-*):  minor by default, e.g. 0.1.0 → 0.2.0
 #    @yoltra/ds (its own policy):                   bumps per its own change files
+#    → consumes ALL change files, writes every CHANGELOG (files only — no git ops)
 
-# 2. Review the new version in each package.json and each CHANGELOG.md, then commit onto release/next
-git add -A && git commit -m "chore(release): v0.2.0"
-git push origin release/next
+git commit -am "chore(release): v0.2.0"
+
+# 3. Push the bump + tag together — the tag is what publishes:
+git push origin main --follow-tags
+#    (equivalently: git push origin main && git tag v0.2.0 && git push origin v0.2.0)
 ```
 
 Then:
 
-1. **Open (or update) the `release/next → main` PR.** It now carries the feature work **and** the
-   version bump + changelogs — review and **merge** it. The bump is part of this PR; you never bump
-   directly on `main`.
-2. **Pull `main` and tag the merge commit** — this is what publishes:
-
-   ```bash
-   git checkout main && git pull
-   git tag v0.2.0 && git push origin v0.2.0
-   ```
-
-   > The tag is only the trigger. `rush publish` publishes whatever version is in `package.json`, so
-   > the bump must already be on `main` (it rode in with the PR) and the tag name must match it.
-
-3. The **Release** workflow builds and publishes to npm via OIDC. If the `production` environment
+1. The **Release** workflow builds and publishes to npm via OIDC. If the `production` environment
    has an approval gate, approve the run.
-4. **Create a GitHub release** from the tag and paste the relevant `CHANGELOG.md` section as the
+2. **Create a GitHub release** from the tag and paste the relevant `CHANGELOG.md` section as the
    notes.
 
 ### Patch instead of minor
@@ -214,16 +209,16 @@ pass `--tag next` for pre-release tags. Consumers opt in explicitly: `npm add @y
 rush change                # add a changelog entry for your change
 rush change -v             # verify change files exist (CI enforces this)
 
-# --- cut a release (bump on release/next → PR → main) ---
-git checkout release/next && git pull
-rush version --bump                       # bump the suite + write CHANGELOGs (minor default)
-#   fix-only release:  rush version --bump --override-bump patch
-git commit -am "chore(release): vX.Y.Z" && git push origin release/next
-#   → open/update PR release/next → main, review, merge  (the bump rides this PR)
-
-# --- publish (after the PR merges, tag main; CI does the rest via OIDC) ---
+# --- cut a release (change files ride the PR; bump on main AFTER merge) ---
+#   land features + change files on release/next → PR to main → merge
+#   (CI is green: rush change --verify sees a change file for every changed package)
 git checkout main && git pull
-git tag vX.Y.Z && git push origin vX.Y.Z
+rush version --bump                       # consumes change files → versions + CHANGELOGs (minor default)
+#   fix-only release:  rush version --bump --override-bump patch
+git commit -am "chore(release): vX.Y.Z"
+
+# --- publish (push the bump + tag; CI does the rest via OIDC) ---
+git push origin main --follow-tags        # or: git push origin main && git tag vX.Y.Z && git push origin vX.Y.Z
 
 # --- optional: dry-run in Verdaccio (local only) ---
 docker compose -f tools/registry/docker-compose.yml up -d

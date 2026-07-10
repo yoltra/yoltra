@@ -24,13 +24,14 @@ hotfix/*
 
 **Rules:**
 
-- `main` is protected. Everything lands via PR — never force-push. Merging to `main` does **not**
+- Feature work lands via PR (never force-push a shared branch). Merging to `main` does **not**
   publish; pushing a `v*.*.*` tag does.
 - `feature/*` / `fix/*` / `chore/*` branches are cut from `release/next` and PR'd back into it, each
   carrying a change file (`rush change`).
-- `release/next` is the standing integration branch. At release time it is bumped
-  (`rush version --bump`) and that bump **rides the `release/next → main` PR** — you never bump on
-  `main`. After the PR merges, tag `main` (`v*.*.*`) to publish.
+- `release/next` is the standing integration branch. Features + their change files flow through it
+  into `main` via PR (which passes `rush change --verify`). The **version bump is applied on `main`
+  after the merge** — not in the PR — then pushed with the `v*.*.*` tag. (Bumping _consumes_ change
+  files, which would fail the PR's verify; `main` is unprotected, so the bump lands there directly.)
 - `hotfix/*` branches are cut from `main` for a critical fix, PR'd straight back into `main`, then
   tagged; merge `main` back into `release/next` afterward.
 
@@ -82,10 +83,10 @@ git push -u origin feature/123-my-feature
 ## Preparing a release (maintainers)
 
 ```
-release/next
-  │  rush version --bump              (edits files only — no git ops)
-  │  commit "chore(release): vX.Y.Z" + review changelogs
-  └─► PR release/next → main  →  merge  →  tag main vX.Y.Z  ── the tag (not the merge) publishes via CI
+release/next ──► PR (features + change files, no bump) ──► merge to main
+                                                              │
+main:  rush version --bump  →  commit "chore(release): vX.Y.Z"  →  push main --follow-tags
+       (bump + CHANGELOGs land on main; the tag, not the merge, publishes via CI)
 ```
 
 Publishing is triggered by pushing a `v*.*.*` tag to `main`, **not** by merging — the tag runs
