@@ -39,8 +39,8 @@ Yoltra esta construido sobre cuatro apuestas arquitectonicas:
    evento son de primera clase, no algo agregado despues.
 
 ```typescript
-// Suscripcion por ruta via accessor tipado: solo re-renderiza cuando items[0].title cambia
-const title = useAtomicProp("todos", (s) => s.items[0].title);
+// Suscripcion por ruta: solo re-renderiza cuando items.0.title cambia
+const title = useAtomicProp({ reducer: "todos", property: "items.0.title" });
 
 // Evento tipado por canal
 await emit("todos", "toggle", { id: "123" });

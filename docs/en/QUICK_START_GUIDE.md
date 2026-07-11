@@ -81,9 +81,9 @@ a leaf with a typed accessor — the component re-renders only when that exact l
 import { useAtomicProp, useEmit } from "./yoltra";
 
 export function Counter() {
-  // Typed accessor: `s` autocompletes the state shape, `value` is inferred as number.
+  // Object form: subscribe to the exact leaf `counter.value`.
   // Re-renders ONLY when counter.value changes — no selectors, no memo.
-  const value = useAtomicProp("counter", (s) => s.value);
+  const value = useAtomicProp({ reducer: "counter", property: "value" });
   const emit = useEmit();
 
   return (

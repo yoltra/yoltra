@@ -47,7 +47,7 @@ export const { useAtomicProp, useEmit } = createYoltra({
 import { useAtomicProp, useEmit } from "@/state/yoltra";
 
 export function ThemeToggle() {
-  const theme = useAtomicProp("theme", (s) => s.mode);
+  const theme = useAtomicProp({ reducer: "theme", property: "mode" });
   const emit = useEmit();
   return <button onClick={() => emit("theme", "toggle", null)}>{theme}</button>;
 }
@@ -86,7 +86,7 @@ export const { useAtomicProp, useEmit } = createYoltra({
 import { useAtomicProp, useEmit } from "@/state/yoltra";
 
 export function Cart() {
-  const count = useAtomicProp("cart", (s) => s.items.length);
+  const count = useAtomicProp({ reducer: "cart", property: "items" }, (items) => items.length);
   // …
 }
 ```

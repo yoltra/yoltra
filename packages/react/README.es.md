@@ -77,16 +77,16 @@ export const { store, useAtomicProp, useEmit, StoreProvider } = createYoltra({
 ### 2. Usa los hooks — sin provider
 
 Los hooks usan por defecto el store de arriba, asi que puedes renderizar componentes directamente.
-Suscribete con un **accessor tipado**: `s` autocompleta la forma de tu estado y el tipo de retorno
-se infiere.
+Suscribete con una spec **`{ reducer, property }`**: el `property` con puntos nombra la ruta exacta
+a leer.
 
 ```tsx
 // Counter.tsx
 import { useAtomicProp, useEmit } from "./yoltra";
 
 export function Counter() {
-  // Accessor tipado — se re-renderiza solo cuando counter.value cambia. Sin selectores, sin memo.
-  const value = useAtomicProp("counter", (s) => s.value);
+  // Forma objeto — se re-renderiza solo cuando counter.value cambia. Sin selectores, sin memo.
+  const value = useAtomicProp({ reducer: "counter", property: "value" });
   const emit = useEmit();
 
   return (
@@ -132,21 +132,18 @@ Provee el store con `<AppStoreContext.Provider value={store}>` en tu raiz.
 
 ## API de Hooks
 
-### `useAtomicProp(reducer, accessor)` — o `useAtomicProp({ reducer, property }, map?, isEqual?)`
+### `useAtomicProp({ reducer, property }, map?, isEqual?)`
 
-Selector de ruta unica con grano fino. Se re-renderiza solo cuando la hoja especificada cambia.
-Prefiere la forma de **accessor tipado** — autocompleta la forma del estado e infiere el tipo de
-retorno; usa la forma string para rutas dinamicas o con comodines.
+Selector de ruta unica con grano fino. Se re-renderiza solo cuando la hoja especificada cambia. El
+`property` con puntos nombra la ruta exacta — incluyendo rutas dinamicas
+(`` `items.${id}.title` ``) y con comodines.
 
 ```tsx
-// Accessor tipado (recomendado) — autocompleta items[0].title, infiere string
-const title = useAtomicProp("todos", (s) => s.items[0].title);
+// Forma objeto (recomendada) — suscribete a la ruta exacta
+const title = useAtomicProp({ reducer: "todos", property: "items.0.title" });
 
-// Forma string — misma suscripcion, para rutas dinamicas
-const sameTitle = useAtomicProp({
-  reducer: "todos",
-  property: "items.0.title",
-});
+// Ruta dinamica — interpola la clave
+const byId = useAtomicProp({ reducer: "todos", property: `items.${id}.title` });
 
 // Con mapper — derivar un valor de la ruta
 const count = useAtomicProp({ reducer: "todos", property: "items" }, (items) => items.length);
@@ -158,6 +155,9 @@ const allTitles = useAtomicProp(
   shallowEqual,
 );
 ```
+
+> Tambien existe una sobrecarga con accessor tipado — `useAtomicProp("todos", (s) => s.items[0].title)`
+> — para rutas estaticas; autocompleta la forma del estado e infiere el tipo de retorno.
 
 **Patrones soportados:**
 

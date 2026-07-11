@@ -10,7 +10,7 @@
 
 > **useSuspenseAtomicProp**\<`R`, `S`, `P`, `T`\>(`storeSpec`, `options`): `T`
 
-Defined in: [react/src/hooks/suspense.ts:177](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L177)
+Defined in: [react/src/hooks/suspense.ts:177](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L177)
 
 Suspense-compatible version of `useAtomicProp` that throws a promise while loading.
 
@@ -106,7 +106,7 @@ function UserName({ userId }: { userId: string }) {
 
 > **useSuspenseAtomicProp**\<`R`, `S`, `T`\>(`storeSpec`, `options`): `T`
 
-Defined in: [react/src/hooks/suspense.ts:183](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L183)
+Defined in: [react/src/hooks/suspense.ts:183](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L183)
 
 Suspense-compatible version of `useAtomicProp` that throws a promise while loading.
 

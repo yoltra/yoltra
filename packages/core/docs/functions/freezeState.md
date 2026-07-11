@@ -8,7 +8,7 @@
 
 > **freezeState**\<`T`\>(`obj`, `seen`): [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`T`\>
 
-Defined in: [utils/immutability.ts:52](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/utils/immutability.ts#L52)
+Defined in: [utils/immutability.ts:52](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/utils/immutability.ts#L52)
 
 Deep-freezes a value **in place** and returns it as [\`DeepReadonly\<T\>\`](../type-aliases/DeepReadonly.md).
 

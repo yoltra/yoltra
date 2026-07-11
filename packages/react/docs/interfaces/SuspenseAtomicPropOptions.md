@@ -6,7 +6,7 @@
 
 # Interface: SuspenseAtomicPropOptions\<T, S\>
 
-Defined in: [react/src/hooks/suspense.ts:120](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L120)
+Defined in: [react/src/hooks/suspense.ts:120](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L120)
 
 Options for [useSuspenseAtomicProp](../functions/useSuspenseAtomicProp.md).
 
@@ -40,7 +40,7 @@ Store state record.
 
 > `optional` **key**: `string`
 
-Defined in: [react/src/hooks/suspense.ts:131](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L131)
+Defined in: [react/src/hooks/suspense.ts:131](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L131)
 
 Optional extra key to differentiate cache entries for the same path.
 
@@ -50,7 +50,7 @@ Optional extra key to differentiate cache entries for the same path.
 
 > **load**: (`valueAtPath`, `slice`) => `T` \| `Promise`\<`T`\>
 
-Defined in: [react/src/hooks/suspense.ts:122](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L122)
+Defined in: [react/src/hooks/suspense.ts:122](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L122)
 
 Async loader that receives the value at the path and the full slice.
 
@@ -74,7 +74,7 @@ Async loader that receives the value at the path and the full slice.
 
 > `optional` **staleTime**: `number`
 
-Defined in: [react/src/hooks/suspense.ts:129](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L129)
+Defined in: [react/src/hooks/suspense.ts:129](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L129)
 
 Extra wall-clock TTL (ms) for a resolved value. `0` (the default) or omitted
 means the cached value is served until the subscribed path changes or you

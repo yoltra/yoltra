@@ -8,7 +8,7 @@
 
 > `const` **suspenseCache**: `SuspenseCache`
 
-Defined in: [react/src/hooks/suspense.ts:95](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L95)
+Defined in: [react/src/hooks/suspense.ts:95](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L95)
 
 Default Suspense cache instance shared by all `useSuspense*` hooks.
 

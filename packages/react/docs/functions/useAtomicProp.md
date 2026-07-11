@@ -10,7 +10,7 @@
 
 > **useAtomicProp**\<`R`, `S`, `R1`, `P`\>(`spec`): [`PathValue`](../type-aliases/PathValue.md)\<`S`\[`R1`\], `P`\>
 
-Defined in: [react/src/hooks/hooks.ts:223](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/hooks.ts#L223)
+Defined in: [react/src/hooks/hooks.ts:223](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/hooks.ts#L223)
 
 Fine-grained **single-path** selector for a reducer's state.
 
@@ -102,7 +102,7 @@ const titles = useAtomicProp(
 
 > **useAtomicProp**\<`R`, `S`, `R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`
 
-Defined in: [react/src/hooks/hooks.ts:229](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/hooks.ts#L229)
+Defined in: [react/src/hooks/hooks.ts:229](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/hooks.ts#L229)
 
 Fine-grained **single-path** selector for a reducer's state.
 
@@ -206,7 +206,7 @@ const titles = useAtomicProp(
 
 > **useAtomicProp**\<`R`, `S`, `R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`
 
-Defined in: [react/src/hooks/hooks.ts:240](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/hooks.ts#L240)
+Defined in: [react/src/hooks/hooks.ts:240](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/hooks.ts#L240)
 
 Fine-grained **single-path** selector for a reducer's state.
 
@@ -310,7 +310,7 @@ const titles = useAtomicProp(
 
 > **useAtomicProp**\<`R`, `S`\>(`spec`): `unknown`
 
-Defined in: [react/src/hooks/hooks.ts:251](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/hooks.ts#L251)
+Defined in: [react/src/hooks/hooks.ts:251](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/hooks.ts#L251)
 
 Fine-grained **single-path** selector for a reducer's state.
 
@@ -394,7 +394,7 @@ const titles = useAtomicProp(
 
 > **useAtomicProp**\<`R`, `S`, `T`\>(`spec`, `map`, `isEqual?`): `T`
 
-Defined in: [react/src/hooks/hooks.ts:255](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/hooks.ts#L255)
+Defined in: [react/src/hooks/hooks.ts:255](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/hooks.ts#L255)
 
 Fine-grained **single-path** selector for a reducer's state.
 

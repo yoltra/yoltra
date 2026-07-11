@@ -42,9 +42,9 @@ export const { useAtomicProp, useEmit } = createYoltra({
 });
 
 function TodoTitle() {
-  // Accessor tipado: autocompleta `items[0].title` e infiere `string`.
+  // Forma objeto: suscríbete a la hoja exacta `items.0.title`.
   // Se re-renderiza SOLO cuando esa hoja exacta cambia — sin selectores, sin memo.
-  const title = useAtomicProp("todos", (s) => s.items[0].title);
+  const title = useAtomicProp({ reducer: "todos", property: "items.0.title" });
   const emit = useEmit();
   return <span onClick={() => emit("todos", "rename", { id: "1", title: "New title" })}>{title}</span>;
 }
@@ -89,10 +89,10 @@ cambie --- a través de objetos anidados, arrays y claves dinámicas. Sin select
 sin `React.memo` en cada hoja.
 
 ```tsx
-// Accessor tipado — autocompleta la forma e infiere el tipo de retorno
-const title = useAtomicProp("todos", (s) => s.items[0].title);
+// Forma objeto — suscríbete a la ruta exacta
+const title = useAtomicProp({ reducer: "todos", property: "items.0.title" });
 
-// Forma string (para rutas dinámicas) + comodín
+// Ruta con comodín + deriva con un mapper
 const allDone = useAtomicProp({ reducer: "todos", property: "items.*.done" }, (s) =>
   s.items.every((i) => i.done),
 );

@@ -185,7 +185,7 @@ import { StoreProvider, useAtomicProp, useEmit } from "@/state/yoltra";
 import { makeStore } from "@/state/makeStore";
 
 function Counter() {
-  const value = useAtomicProp("counter", (s) => s.value);
+  const value = useAtomicProp({ reducer: "counter", property: "value" });
   const emit = useEmit();
   return <button onClick={() => emit("counter", "increment", 1)}>{value}</button>;
 }
@@ -215,7 +215,7 @@ To prove only the right component re-rendered, count renders:
 let renders = 0;
 function Value() {
   renders++;
-  const v = useAtomicProp("counter", (s) => s.value);
+  const v = useAtomicProp({ reducer: "counter", property: "value" });
   return <span>{v}</span>;
 }
 // emit an unrelated event → assert `renders` did NOT increase

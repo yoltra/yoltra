@@ -82,9 +82,9 @@ cuando esa hoja exacta cambia.
 import { useAtomicProp, useEmit } from "./yoltra";
 
 export function Counter() {
-  // Accessor tipado: `s` autocompleta la forma del estado, `value` se infiere como number.
+  // Forma objeto: suscríbete a la hoja exacta `counter.value`.
   // Se re-renderiza SOLO cuando counter.value cambia — sin selectores, sin memo.
-  const value = useAtomicProp("counter", (s) => s.value);
+  const value = useAtomicProp({ reducer: "counter", property: "value" });
   const emit = useEmit();
 
   return (

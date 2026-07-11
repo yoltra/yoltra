@@ -8,7 +8,7 @@
 
 > **shallowEqual**\<`T`\>(`a`, `b`): `boolean`
 
-Defined in: [react/src/utils/shallowEqual.ts:20](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/utils/shallowEqual.ts#L20)
+Defined in: [react/src/utils/shallowEqual.ts:20](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/utils/shallowEqual.ts#L20)
 
 Shallow object equality using `Object.is` per-key.
 

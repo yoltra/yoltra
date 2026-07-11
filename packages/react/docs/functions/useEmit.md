@@ -8,7 +8,7 @@
 
 > **useEmit**\<`EM`\>(): `Emit`\<`EM`\>
 
-Defined in: [react/src/hooks/hooks.ts:86](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/hooks.ts#L86)
+Defined in: [react/src/hooks/hooks.ts:86](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/hooks.ts#L86)
 
 Returns the store's `emit` function (stable reference).
 

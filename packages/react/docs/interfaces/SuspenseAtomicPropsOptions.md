@@ -6,7 +6,7 @@
 
 # Interface: SuspenseAtomicPropsOptions\<T, S\>
 
-Defined in: [react/src/hooks/suspense.ts:253](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L253)
+Defined in: [react/src/hooks/suspense.ts:253](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L253)
 
 Options for [useSuspenseAtomicProps](../functions/useSuspenseAtomicProps.md).
 
@@ -30,7 +30,7 @@ Store state record.
 
 > `optional` **key**: `string`
 
-Defined in: [react/src/hooks/suspense.ts:264](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L264)
+Defined in: [react/src/hooks/suspense.ts:264](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L264)
 
 Optional extra key to differentiate cache entries.
 
@@ -40,7 +40,7 @@ Optional extra key to differentiate cache entries.
 
 > **load**: (`state`) => `T` \| `Promise`\<`T`\>
 
-Defined in: [react/src/hooks/suspense.ts:255](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L255)
+Defined in: [react/src/hooks/suspense.ts:255](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L255)
 
 Async loader that receives the full store state.
 
@@ -60,7 +60,7 @@ Async loader that receives the full store state.
 
 > `optional` **staleTime**: `number`
 
-Defined in: [react/src/hooks/suspense.ts:262](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/suspense.ts#L262)
+Defined in: [react/src/hooks/suspense.ts:262](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L262)
 
 Extra wall-clock TTL (ms) for a resolved value. `0` (the default) or omitted
 means the cached value is served until the subscribed path changes or you

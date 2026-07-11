@@ -19,7 +19,7 @@ only when the exact leaf it reads changes. Async work lives in **effects**.
 ```tsx
 emit("todos", "add", { title: "Buy milk" }); // 1. emit an event
 // 2. a reducer computes the next state (synchronously)
-const title = useAtomicProp("todos", (s) => s.items[0].title); // 3. read one path
+const title = useAtomicProp({ reducer: "todos", property: "items.0.title" }); // 3. read one path
 ```
 
 That is the whole model. Everything below is a translation of your current
@@ -98,7 +98,7 @@ dispatch(increment(1));
 
 ```tsx
 // Yoltra — re-renders only when counter.value changes; no memo, no reselect
-const value = useAtomicProp("counter", (s) => s.value);
+const value = useAtomicProp({ reducer: "counter", property: "value" });
 const emit = useEmit();
 emit("counter", "increment", 1);
 ```
@@ -182,7 +182,7 @@ export const { useAtomicProp, useEmit } = createYoltra({
 ```tsx
 // Zustand: const value = useStore((s) => s.value); useStore.getState().increment(1);
 // Yoltra:
-const value = useAtomicProp("counter", (s) => s.value);
+const value = useAtomicProp({ reducer: "counter", property: "value" });
 const emit = useEmit();
 emit("counter", "increment", 1);
 ```
@@ -215,8 +215,8 @@ setCount((c) => c + 1);
 
 ```tsx
 // Yoltra — one slice, paths are your "atoms", derivations are selectors
-const count = useAtomicProp("counter", (s) => s.value);
-const doubled = useAtomicProp("counter", (s) => s.value * 2);
+const count = useAtomicProp({ reducer: "counter", property: "value" });
+const doubled = useAtomicProp({ reducer: "counter", property: "value" }, (v) => v * 2);
 
 const emit = useEmit();
 emit("counter", "increment", 1);

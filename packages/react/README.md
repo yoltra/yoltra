@@ -77,15 +77,15 @@ export const { store, useAtomicProp, useEmit, StoreProvider } = createYoltra({
 ### 2. Use the hooks — no provider required
 
 The hooks default to the store above, so you can render components directly. Subscribe with a
-**typed accessor**: `s` autocompletes your state shape and the return type is inferred.
+**`{ reducer, property }`** spec: the dotted `property` names the exact path to read.
 
 ```tsx
 // Counter.tsx
 import { useAtomicProp, useEmit } from "./yoltra";
 
 export function Counter() {
-  // Typed accessor — re-renders only when counter.value changes. No selectors, no memo.
-  const value = useAtomicProp("counter", (s) => s.value);
+  // Object form — re-renders only when counter.value changes. No selectors, no memo.
+  const value = useAtomicProp({ reducer: "counter", property: "value" });
   const emit = useEmit();
 
   return (
@@ -131,21 +131,17 @@ Provide the store with `<AppStoreContext.Provider value={store}>` at your root.
 
 ## Hooks API
 
-### `useAtomicProp(reducer, accessor)` — or `useAtomicProp({ reducer, property }, map?, isEqual?)`
+### `useAtomicProp({ reducer, property }, map?, isEqual?)`
 
-Fine-grained single-path selector. Re-renders only when the specified leaf changes. Prefer the
-**typed accessor** form — it autocompletes the state shape and infers the return type; use the
-string form for dynamic or wildcard paths.
+Fine-grained single-path selector. Re-renders only when the specified leaf changes. The dotted
+`property` names the exact path — including dynamic (`` `items.${id}.title` ``) and wildcard paths.
 
 ```tsx
-// Typed accessor (recommended) — autocompletes items[0].title, infers string
-const title = useAtomicProp("todos", (s) => s.items[0].title);
+// Object form (recommended) — subscribe to the exact path
+const title = useAtomicProp({ reducer: "todos", property: "items.0.title" });
 
-// String form — same subscription, for dynamic paths
-const sameTitle = useAtomicProp({
-  reducer: "todos",
-  property: "items.0.title",
-});
+// Dynamic path — interpolate the key
+const byId = useAtomicProp({ reducer: "todos", property: `items.${id}.title` });
 
 // With mapper — derive a value from the path
 const count = useAtomicProp({ reducer: "todos", property: "items" }, (items) => items.length);
@@ -157,6 +153,9 @@ const allTitles = useAtomicProp(
   shallowEqual,
 );
 ```
+
+> A typed-accessor overload — `useAtomicProp("todos", (s) => s.items[0].title)` — is also available
+> for static paths; it autocompletes the state shape and infers the return type.
 
 **Supported patterns:**
 

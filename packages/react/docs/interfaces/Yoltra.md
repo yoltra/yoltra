@@ -6,7 +6,7 @@
 
 # Interface: Yoltra\<R, S, EM\>
 
-Defined in: [react/src/createYoltra.tsx:32](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/createYoltra.tsx#L32)
+Defined in: [react/src/createYoltra.tsx:32](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/createYoltra.tsx#L32)
 
 The value returned by [createYoltra](../functions/createYoltra.md): the created `store`, an optional
 `StoreProvider` (plus its raw `StoreContext`), and the full set of typed hooks
@@ -42,7 +42,7 @@ Event map.
 
 > **shallowEqual**: \<`T`\>(`a`, `b`) => `boolean`
 
-Defined in: [react/src/hooks/createHooks.ts:190](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/createHooks.ts#L190)
+Defined in: [react/src/hooks/createHooks.ts:190](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/createHooks.ts#L190)
 
 Shallow object equality using `Object.is` per-key.
 
@@ -76,7 +76,7 @@ Shallow object equality using `Object.is` per-key.
 
 > **store**: `StoreInstance`\<`R`, `S`, `EM`\>
 
-Defined in: [react/src/createYoltra.tsx:35](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/createYoltra.tsx#L35)
+Defined in: [react/src/createYoltra.tsx:35](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/createYoltra.tsx#L35)
 
 The store created by this call; the hooks default to it (no Provider needed).
 
@@ -86,7 +86,7 @@ The store created by this call; the hooks default to it (no Provider needed).
 
 > **StoreContext**: `Context`\<`StoreInstance`\<`R`, `S`, `EM`\>\>
 
-Defined in: [react/src/createYoltra.tsx:37](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/createYoltra.tsx#L37)
+Defined in: [react/src/createYoltra.tsx:37](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/createYoltra.tsx#L37)
 
 Raw context carrying the store — usually you only need `StoreProvider`.
 
@@ -96,7 +96,7 @@ Raw context carrying the store — usually you only need `StoreProvider`.
 
 > **StoreProvider**: `FC`\<\{ `children`: `ReactNode`; `store?`: `StoreInstance`\<`R`, `S`, `EM`\>; \}\>
 
-Defined in: [react/src/createYoltra.tsx:39](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/createYoltra.tsx#L39)
+Defined in: [react/src/createYoltra.tsx:39](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/createYoltra.tsx#L39)
 
 Optional provider to scope a different store instance to a subtree.
 
@@ -106,7 +106,7 @@ Optional provider to scope a different store instance to a subtree.
 
 > **useAtomicProp**: [`UseAtomicProp`](../type-aliases/UseAtomicProp.md)\<`R`, `S`\>
 
-Defined in: [react/src/hooks/createHooks.ts:184](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/createHooks.ts#L184)
+Defined in: [react/src/hooks/createHooks.ts:184](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/createHooks.ts#L184)
 
 Subscribes to a single dotted path (or typed accessor).
 
@@ -120,7 +120,7 @@ Subscribes to a single dotted path (or typed accessor).
 
 > **useAtomicProps**: [`UseAtomicProps`](../type-aliases/UseAtomicProps.md)\<`R`, `S`\>
 
-Defined in: [react/src/hooks/createHooks.ts:186](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/createHooks.ts#L186)
+Defined in: [react/src/hooks/createHooks.ts:186](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/createHooks.ts#L186)
 
 Subscribes to several paths and derives a value from the full state.
 
@@ -134,7 +134,7 @@ Subscribes to several paths and derives a value from the full state.
 
 > **useEmit**: () => `Emit`\<`EM`\>
 
-Defined in: [react/src/hooks/createHooks.ts:180](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/createHooks.ts#L180)
+Defined in: [react/src/hooks/createHooks.ts:180](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/createHooks.ts#L180)
 
 Returns the store's typed `emit`.
 
@@ -152,7 +152,7 @@ Returns the store's typed `emit`.
 
 > **useEvent**: [`UseEvent`](../type-aliases/UseEvent.md)\<`EM`, `S`\>
 
-Defined in: [react/src/hooks/createHooks.ts:188](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/createHooks.ts#L188)
+Defined in: [react/src/hooks/createHooks.ts:188](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/createHooks.ts#L188)
 
 Runs a handler for a specific `(channel, type)` event.
 
@@ -166,7 +166,7 @@ Runs a handler for a specific `(channel, type)` event.
 
 > **useSelector**: \<`T`\>(`selector`, `isEqual?`) => `T`
 
-Defined in: [react/src/hooks/createHooks.ts:182](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/createHooks.ts#L182)
+Defined in: [react/src/hooks/createHooks.ts:182](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/createHooks.ts#L182)
 
 Subscribes to a derived value with an optional equality comparator.
 
@@ -200,7 +200,7 @@ Subscribes to a derived value with an optional equality comparator.
 
 > **useStore**: () => `StoreInstance`\<`R`, `S`, `EM`\>
 
-Defined in: [react/src/hooks/createHooks.ts:178](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/createHooks.ts#L178)
+Defined in: [react/src/hooks/createHooks.ts:178](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/createHooks.ts#L178)
 
 Reads the current store from context (falling back to the default store).
 

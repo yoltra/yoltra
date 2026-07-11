@@ -42,9 +42,9 @@ export const { useAtomicProp, useEmit } = createYoltra({
 });
 
 function TodoTitle() {
-  // Typed accessor: autocompletes `items[0].title`, infers `string`.
+  // Object form: subscribe to the exact leaf `items.0.title`.
   // Re-renders ONLY when this exact leaf changes — no selectors, no memo.
-  const title = useAtomicProp("todos", (s) => s.items[0].title);
+  const title = useAtomicProp({ reducer: "todos", property: "items.0.title" });
   const emit = useEmit();
   return <span onClick={() => emit("todos", "rename", { id: "1", title: "New title" })}>{title}</span>;
 }
@@ -85,10 +85,10 @@ path changes — across nested objects, arrays, and dynamic keys. No selectors, 
 `React.memo` on every leaf.
 
 ```tsx
-// Typed accessor — autocompletes the shape, infers the return type
-const title = useAtomicProp("todos", (s) => s.items[0].title);
+// Object form — subscribe to the exact path
+const title = useAtomicProp({ reducer: "todos", property: "items.0.title" });
 
-// String form (for dynamic paths) + wildcard
+// Wildcard path + derive with a mapper
 const allDone = useAtomicProp({ reducer: "todos", property: "items.*.done" }, (s) =>
   s.items.every((i) => i.done),
 );
