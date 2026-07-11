@@ -16,7 +16,7 @@ export const YoltraTodoPage: React.FC<iYoltraTodoPageProps> = (_: iYoltraTodoPag
 
   // No Provider — createYoltra's hooks default to the store in state/yoltra.
   return (
-    <div>
+    <div className="todo-page">
       <h2>Yoltra's TODOs</h2>
       <TodoFactory />
       <TodoFilter />

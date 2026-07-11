@@ -22,6 +22,7 @@
     "react-dom": "19.1.1",
     "@yoltra/core": "workspace:*",
     "@yoltra/react": "workspace:*",
+    "@yoltra/ds": "workspace:*",
     "react-redux": "9.2.0",
     "react-router": "7.8.2",
     "@reduxjs/toolkit": "2.9.0",

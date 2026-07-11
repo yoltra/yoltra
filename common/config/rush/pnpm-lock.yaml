@@ -352,6 +352,9 @@ importers:
       '@yoltra/core':
         specifier: workspace:*
         version: link:../../../packages/core
+      '@yoltra/ds':
+        specifier: workspace:*
+        version: link:../../../packages/ds
       '@yoltra/react':
         specifier: workspace:*
         version: link:../../../packages/react
@@ -404,6 +407,9 @@ importers:
       '@yoltra/core':
         specifier: workspace:*
         version: link:../../../packages/core
+      '@yoltra/ds':
+        specifier: workspace:*
+        version: link:../../../packages/ds
       '@yoltra/react':
         specifier: workspace:*
         version: link:../../../packages/react
@@ -483,6 +489,9 @@ importers:
       '@yoltra/core':
         specifier: workspace:*
         version: link:../../../packages/core
+      '@yoltra/ds':
+        specifier: workspace:*
+        version: link:../../../packages/ds
       '@yoltra/react':
         specifier: workspace:*
         version: link:../../../packages/react
@@ -550,6 +559,9 @@ importers:
       '@yoltra/devtools-ui':
         specifier: workspace:*
         version: link:../../../devtools/devtools-ui
+      '@yoltra/ds':
+        specifier: workspace:*
+        version: link:../../../packages/ds
       '@yoltra/react':
         specifier: workspace:*
         version: link:../../../packages/react
@@ -584,6 +596,9 @@ importers:
       '@yoltra/core':
         specifier: workspace:*
         version: link:../../../packages/core
+      '@yoltra/ds':
+        specifier: workspace:*
+        version: link:../../../packages/ds
       '@yoltra/react':
         specifier: workspace:*
         version: link:../../../packages/react

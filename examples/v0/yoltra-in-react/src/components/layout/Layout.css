@@ -1,0 +1,50 @@
+/* Yoltra brand shell for the React comparison demo. Composed from DS tokens so
+   it tracks the theme (light/dark) automatically. */
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--yl-space-6);
+  padding: var(--yl-space-4) var(--yl-space-6);
+  border-bottom: 1px solid var(--yl-color-border);
+  background: var(--yl-color-bg-panel);
+}
+.app-header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yl-space-2);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--yl-color-fg);
+  text-decoration: none;
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--yl-space-4);
+  margin-right: auto;
+}
+.app-nav a {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--yl-color-fg-secondary);
+  text-decoration: none;
+  padding: var(--yl-space-1) 0;
+  border-bottom: 2px solid transparent;
+}
+.app-nav a:hover {
+  color: var(--yl-color-fg);
+}
+.app-nav a.is-active {
+  color: var(--yl-color-brand);
+  border-bottom-color: var(--yl-color-brand);
+}
+
+.app-main {
+  padding-block: var(--yl-space-8) var(--yl-space-16);
+}

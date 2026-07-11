@@ -1,10 +1,30 @@
+/* Filter row — DS Selects arranged as labelled columns. */
 div.todo-filter {
+    margin-bottom: var(--yl-space-4);
 
-    div {
+    h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--yl-color-fg-secondary);
+        margin: 0 0 var(--yl-space-2);
+    }
+
+    > div {
         display: flex;
+        flex-wrap: wrap;
+        gap: var(--yl-space-4);
 
         label {
-            margin-right: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--yl-color-fg-secondary);
         }
+    }
+
+    .yl-select {
+        min-width: 160px;
     }
 }

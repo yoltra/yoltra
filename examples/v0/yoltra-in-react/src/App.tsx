@@ -8,7 +8,7 @@ import { ReduxTodoPage } from "./components/redux/ReduxTodoPage";
 import { Home } from "./pages/Home.page";
 import { store as rtkStore } from "./state/redux";
 
-function QuoRoute() {
+function YoltraRoute() {
   // No Provider — createYoltra's hooks default to the store.
   return <YoltraTodoPage />;
 }
@@ -26,7 +26,7 @@ export const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { path: "/", element: <Home /> },
-      { path: "/yoltra", element: <QuoRoute /> },
+      { path: "/yoltra", element: <YoltraRoute /> },
       { path: "/redux", element: <RtkRoute /> },
     ],
   },

@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent, type FC } from "react";
+import { Button, Input, Select } from "@yoltra/ds";
 
 import { eTodoStatus } from "../../../types";
 import "./TodoFactory.style.scss";
@@ -39,25 +40,24 @@ export const TodoFactory: FC<iTodoFactoryProps> = (_: iTodoFactoryProps) => {
 
     return (
         <div className="todo-factory">
-            <label htmlFor="titleInput"> Title:
-                <input id="titleInput" name="titleInput" onChange={handleTitleInputChange} value={newTodoTitle} />
+            <label htmlFor="titleInput">Title
+                <Input id="titleInput" name="titleInput" placeholder="e.g. Buy milk" onChange={handleTitleInputChange} value={newTodoTitle} />
             </label>
-            <label htmlFor="categoryInput"> Category:
-                <input id="categoryInput" name="categoryInput" onChange={handleCategoryInputChange} value={newTodoCategory} />
+            <label htmlFor="categoryInput">Category
+                <Input id="categoryInput" name="categoryInput" placeholder="e.g. Groceries" onChange={handleCategoryInputChange} value={newTodoCategory} />
             </label>
-            <label htmlFor="statusSelect"> Status:
-                <select
+            <label htmlFor="statusSelect">Status
+                <Select
                     name="statusSelect"
                     id="statusSelect"
                     value={newTodoStatus}
-                    style={{ width: 120 }}
                     onChange={handleStatusSelectionChange}>
                     <option value={eTodoStatus.Pending}>Pending</option>
                     <option value={eTodoStatus.Complete}>Complete</option>
                     <option value={eTodoStatus.Canceled}>Canceled</option>
-                </select>
+                </Select>
             </label>
-            <button type="button" onClick={handleAddTodoButtonClick}>Add</button>
+            <Button type="button" onClick={handleAddTodoButtonClick}>Add</Button>
         </div>
     )
 };

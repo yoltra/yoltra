@@ -1,0 +1,29 @@
+.brand-chip {
+  position: fixed;
+  top: 20px;
+  left: 24px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yl-space-2, 8px);
+  padding: 8px 14px 8px 10px;
+  border-radius: var(--yl-radius-round, 9999px);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(18, 24, 38, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #e5eef8;
+  font-family: var(--yl-font-sans, system-ui, sans-serif);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+.brand-chip:hover {
+  border-color: rgba(74, 157, 255, 0.5);
+  background: rgba(18, 24, 38, 0.72);
+}
+.brand-chip img {
+  display: block;
+}

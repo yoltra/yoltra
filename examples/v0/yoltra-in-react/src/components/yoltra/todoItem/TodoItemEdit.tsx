@@ -1,6 +1,7 @@
 import type React from "react";
 import { type ChangeEvent } from "react";
 import { SaveOutlined } from "@ant-design/icons";
+import { Input, Select } from "@yoltra/ds";
 
 import { eTodoStatus, type iTodo } from "../../../types";
 import { useEmit, useAtomicProp } from "../../../state/yoltra/hooks";
@@ -34,23 +35,22 @@ export const TodoItemEdit: React.FC<iTodoItemEditProps> = ({
 
     return (
         <div className="todo-card">
-            <label htmlFor="titleInput"> Title:
-                <input name="titleInput" onChange={handleTitleInputChange} value={data?.title} />
+            <label htmlFor="titleInput">Title
+                <Input name="titleInput" placeholder="Title" onChange={handleTitleInputChange} value={data?.title} />
             </label>
-            <label htmlFor="titleInput"> Category:
-                <input name="categoryInput" onChange={handleCategoryInputChange} value={data?.category} />
+            <label htmlFor="categoryInput">Category
+                <Input name="categoryInput" placeholder="Category" onChange={handleCategoryInputChange} value={data?.category} />
             </label>
-            <label htmlFor="statusSelect"> Status:<br />
-                <select
+            <label htmlFor="statusSelect">Status
+                <Select
                     id={"statusSelect"}
                     name={"statusSelect"}
                     value={data?.status}
-                    style={{ width: 120 }}
                     onChange={handleStatusSelectionChange}>
-                    <option value={eTodoStatus.Pending} selected>Pending</option>
+                    <option value={eTodoStatus.Pending}>Pending</option>
                     <option value={eTodoStatus.Complete}>Complete</option>
                     <option value={eTodoStatus.Canceled}>Canceled</option>
-                </select>
+                </Select>
             </label>
             <SaveOutlined onClick={() => onSave()} />
         </div>

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
+import { Select } from "@yoltra/ds";
 
 import { eTodoStatus } from "../../../types";
 import type { AppState } from "../../../state/redux/store";
@@ -24,33 +25,27 @@ export const TodoFilter = (_: iTodoFilterProps) => {
     <div className="todo-filter">
       <h3>Filter by:</h3>
       <div>
-        <label htmlFor="categorySelect">Category:<br />
-          <select
+        <label htmlFor="categorySelect">Category
+          <Select
             id={"categorySelect"}
-            style={{ width: 120 }}
             onChange={setCategoryFilter}
             value={filter.selectedCategory}>
-            <>
-              <option value={""}>ALL</option>
-              {categoriesOptions}
-            </>
-          </select>
+            <option value={""}>ALL</option>
+            {categoriesOptions}
+          </Select>
         </label>
 
-        <label htmlFor="statusSelect">Status:<br />
-          <select
+        <label htmlFor="statusSelect">Status
+          <Select
             id="statusSelect"
             value={filter.selectedStatus as eTodoStatus | ""}
-            style={{ width: 120 }}
             onChange={setStatusFilter}
           >
-            <>
-              <option value={""}>ALL</option>
-              <option value={eTodoStatus.Pending}>Pending</option>
-              <option value={eTodoStatus.Complete}>Complete</option>
-              <option value={eTodoStatus.Canceled}>Canceled</option>
-            </>
-          </select>
+            <option value={""}>ALL</option>
+            <option value={eTodoStatus.Pending}>Pending</option>
+            <option value={eTodoStatus.Complete}>Complete</option>
+            <option value={eTodoStatus.Canceled}>Canceled</option>
+          </Select>
         </label>
       </div>
     </div>

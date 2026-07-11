@@ -53,7 +53,7 @@ export const TodoItem: React.FC<iTodoItemProps> = ({ id }) => {
   actions.push(<DeleteOutlined className="delete" key="delete" onClick={handleRemoveTodoClick} />);
 
   return isEditing ? (<TodoItemEdit id={id} onSave={() => setIsEditing(false)} />) : (
-    <div className="todo-card" style={{ background: "#ffffff" }}>
+    <div className="todo-card">
       <p className={classNames}>{data?.category}: {data?.title}</p>
       <div>
         {actions}

@@ -23,6 +23,7 @@
     "react-dom": "19.1.1",
     "@yoltra/core": "workspace:*",
     "@yoltra/react": "workspace:*",
+    "@yoltra/ds": "workspace:*",
     "@yoltra/devtools-protocol": "workspace:*",
     "@yoltra/devtools-browser-agent": "workspace:*",
     "@yoltra/devtools-ui": "workspace:*",

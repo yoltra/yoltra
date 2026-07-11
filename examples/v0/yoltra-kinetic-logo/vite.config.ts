@@ -24,6 +24,10 @@ const fromHere = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 const yoltraDistAliases = {
   "@yoltra/core": fromHere("../../../packages/core/dist/yoltra.esm.js"),
   "@yoltra/react": fromHere("../../../packages/react/dist/index.mjs"),
+  // Design system: the `/client` subpath must be aliased before the bare
+  // specifier so the more specific match wins.
+  "@yoltra/ds/client": fromHere("../../../packages/ds/dist/client.mjs"),
+  "@yoltra/ds": fromHere("../../../packages/ds/dist/index.mjs"),
   "@yoltra/devtools-browser-agent": fromHere(
     "../../../devtools/devtools-browser-agent/dist/devtools-browser-agent.esm.js",
   ),

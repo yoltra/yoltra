@@ -1,4 +1,5 @@
 import type { ChangeEvent } from "react";
+import { Select } from "@yoltra/ds";
 
 import { eTodoStatus, type iFilterState } from "../../../types";
 import { useEmit, useAtomicProps } from "../../../state/yoltra/hooks";
@@ -30,39 +31,35 @@ export const TodoFilter = (_: iTodoFilterPorps) => {
         <div className="todo-filter">
             <h3>Filter by:</h3>
             <div>
-                <label htmlFor="categorySelect">Category:<br />
-                    <select
+                <label htmlFor="categorySelect">Category
+                    <Select
                         id={"categorySelect"}
-                        style={{ width: 120 }}
                         onChange={handleCategorySelectionChange}
                         value={filter.selectedCategory}>
-                        <>
-                            <option value={""}>ALL</option>
-                            {
-                                Object.keys(filter.categories).map(
-                                    (category) => (
-                                        <option
-                                            key={category}
-                                            value={category}>
-                                            {category}
-                                        </option>
-                                    )
+                        <option value={""}>ALL</option>
+                        {
+                            Object.keys(filter.categories).map(
+                                (category) => (
+                                    <option
+                                        key={category}
+                                        value={category}>
+                                        {category}
+                                    </option>
                                 )
-                            }
-                        </>
-                    </select>
+                            )
+                        }
+                    </Select>
                 </label>
-                <label htmlFor="statusSelect">Status:<br />
-                    <select
+                <label htmlFor="statusSelect">Status
+                    <Select
                         id={"statusSelect"}
                         value={filter.selectedStatus as unknown as eTodoStatus}
-                        style={{ width: 120 }}
                         onChange={handleStatusSelectionChange}>
                         <option value={""}>ALL</option>
                         <option value={eTodoStatus.Pending}>Pending</option>
                         <option value={eTodoStatus.Complete}>Complete</option>
                         <option value={eTodoStatus.Canceled}>Canceled</option>
-                    </select>
+                    </Select>
                 </label>
             </div>
         </div>

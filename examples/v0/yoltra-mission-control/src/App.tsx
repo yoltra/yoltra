@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Callout } from "@yoltra/ds";
 
 import { DevtoolsPanel } from "./components/DevtoolsPanel";
 import { MissionHeader } from "./components/MissionHeader";
@@ -31,12 +32,14 @@ export default function App() {
           </span>
         </div>
 
-        <p className="hint">
-          Telemetry streams in on its own. Send <b>Boost</b> / <b>Deploy</b> / <b>Transmit</b>{" "}
-          commands, then scrub the timeline in the panel to rewind the mission. Watch each card&rsquo;s{" "}
-          <b>render counter</b>: only the satellite whose data changed re-renders — that is
-          fine-grained reactivity, no selectors or memoization required.
-        </p>
+        <Callout kind="info">
+          <p>
+            Telemetry streams in on its own. Send <b>Boost</b> / <b>Deploy</b> / <b>Transmit</b>{" "}
+            commands, then scrub the timeline in the panel to rewind the mission. Watch each
+            card&rsquo;s <b>render counter</b>: only the satellite whose data changed re-renders —
+            that is fine-grained reactivity, no selectors or memoization required.
+          </p>
+        </Callout>
         <SatelliteGrid />
       </section>
 
