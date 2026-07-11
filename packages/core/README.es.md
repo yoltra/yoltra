@@ -461,11 +461,11 @@ store.registerEffect({
 ## Ejemplos
 
 - **[App de Tareas](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react)** --
-  CRUD completo con perfilado de rendimiento
+  CRUD completo con perfilado de rendimiento · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-react)
 - **[Logo Cinetico](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo)**
-  -- 3000 círculos con simulación física.
+  -- 3000 círculos con simulación física. · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/kinetic-logo)
 - **[Integracion con Next.js](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs)**
-  -- Pages Router, estado de cliente + cambio de tema
+  -- Pages Router, estado de cliente + cambio de tema · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)
 
 ---
 

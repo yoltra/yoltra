@@ -5,6 +5,8 @@
 > [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | &nbsp; 👉
 > [ 🇺🇸 English Version](./README.md)&nbsp;
 
+> ⚡ **[Open the live demo](https://yoltra.dev/en/demos/in-nextjs)** — no install, runs in your browser.
+
 A minimal example showing how **[Yoltra](https://yoltra.dev)** — fine-grained reactive state for
 event-driven applications — runs **inside a Next.js (Pages Router) application** for client-side
 interactivity.

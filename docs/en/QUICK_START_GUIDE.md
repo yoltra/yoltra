@@ -5,7 +5,7 @@
 > 👉 English &nbsp;|&nbsp; [🇲🇽 Español](../es/QUICK_START_GUIDE.md)
 
 Three steps from install to a working, fully-typed app. Or jump straight to
-[the example app](../../examples/v0/yoltra-react-counter/README.md).
+[the example app](../../examples/v0/yoltra-react-counter/README.md) — [▶ open the live demo](https://yoltra.dev/en/demos/react-counter).
 
 ---
 

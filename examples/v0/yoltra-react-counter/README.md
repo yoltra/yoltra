@@ -4,6 +4,8 @@
 
 A minimal counter app demonstrating the core patterns of [Yoltra](https://github.com/yoltra/yoltra) with React 19. This is the example referenced in the [Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md).
 
+> ⚡ **[Open the live demo](https://yoltra.dev/en/demos/react-counter)** — no install, runs in your browser.
+
 ---
 
 ## What this example shows
@@ -122,7 +124,7 @@ The typed accessor `s => s.value` subscribes to the exact leaf `counter.value`. 
 
 - Add synchronous middleware (e.g. logging, authorization) or async effects — see [@yoltra/core docs](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)
 - React to blocked events with `useEvent(..., "uncommitted")` — see the [main README](https://github.com/yoltra/yoltra/blob/main/README.md)
-- Explore fine-grained wildcard paths like `"items.*.done"` — see the [Todo App example](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md)
+- Explore fine-grained wildcard paths like `"items.*.done"` — see the [Todo App example](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md) · [▶ Open the live demo](https://yoltra.dev/en/demos/in-react)
 
 ---
 

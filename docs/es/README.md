@@ -14,7 +14,7 @@ tiempo — para aplicaciones complejas e interactivas.**
 
 > 3000 círculos, cada uno suscrito a su propia posición. Cada círculo se re-renderiza de forma
 > independiente --- el resto del árbol no se toca. Sin selectores. Sin memoización.
-> [Ver el código fuente de la demo.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)
+> [Ver el código fuente de la demo.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md) · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/kinetic-logo)
 
 ---
 
@@ -177,9 +177,9 @@ Node, y viceversa.
 
 | Ejemplo | Descripción |
 | --- | --- |
-| **[Logo cinético (3000 partículas)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)** | Simulación de física con una suscripción de ruta independiente por círculo |
-| **[App de tareas con Profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md)** | Comparación de flamegraph lado a lado con Redux ([resultados](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)) |
-| **[Contador](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-react-counter/README.md)** | El ejemplo mínimo de extremo a extremo |
+| **[Logo cinético (3000 partículas)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)** | Simulación de física con una suscripción de ruta independiente por círculo · [▶ Demo en vivo](https://yoltra.dev/es/demos/kinetic-logo) |
+| **[App de tareas con Profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md)** | Comparación de flamegraph lado a lado con Redux ([resultados](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)) · [▶ Demo en vivo](https://yoltra.dev/es/demos/in-react) |
+| **[Contador](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-react-counter/README.md)** | El ejemplo mínimo de extremo a extremo · [▶ Demo en vivo](https://yoltra.dev/es/demos/react-counter) |
 
 ---
 

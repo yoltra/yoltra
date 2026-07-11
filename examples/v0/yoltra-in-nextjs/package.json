@@ -17,9 +17,9 @@
     "lint": "exit 0"
   },
   "dependencies": {
-    "@yoltra/core": "workspace:*",
-    "@yoltra/react": "workspace:*",
-    "@yoltra/ds": "workspace:*",
+    "@yoltra/core": "^0.2.0",
+    "@yoltra/react": "^0.2.0",
+    "@yoltra/ds": "^0.1.0",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "next": "16.0.1",
@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "babel-plugin-react-compiler": "1.0.0",
-    "@yoltra/devtools-browser-agent": "workspace:*",
+    "@yoltra/devtools-browser-agent": "^0.2.0",
     "typescript": "5.9.3",
     "@types/node": "^24.0.12",
     "@types/react": "^19.1.8",

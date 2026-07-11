@@ -4,6 +4,8 @@
 
 > [🇲🇽 Versión en Español](./README.es.md) &nbsp; | &nbsp; 👉 🇺🇸 English Version
 
+> ⚡ **[Open the live demo](https://yoltra.dev/en/demos/in-react)** — no install, runs in your browser.
+
 A side-by-side React demo comparing fine-grained path subscriptions (Yoltra) against
 selector-based subscriptions (Redux Toolkit). Both implementations expose the same UI and user
 flows, making the **[React Profiler flamegraph comparison](./redux-yoltra-profiler.md)** a fair,

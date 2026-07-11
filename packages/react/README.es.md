@@ -377,10 +377,10 @@ function TodoItem({ index }: { index: number }) {
 ## Ejemplos
 
 - **[App de Tareas con Profiler](../../examples/v0/yoltra-in-react)** -- CRUD completo con
-  comparacion de flamegraph
+  comparacion de flamegraph · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-react)
 - **[Logo Cinetico (3000 particulas)](../../examples/v0/yoltra-kinetic-logo)** -- Suscripciones
-  independientes por circulo SVG
-- **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)** -- estado de cliente + cambio de tema
+  independientes por circulo SVG · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/kinetic-logo)
+- **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)** -- estado de cliente + cambio de tema · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)
 
 ---
 

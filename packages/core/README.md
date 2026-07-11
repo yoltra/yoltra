@@ -455,11 +455,11 @@ store.registerEffect({
 ## Examples
 
 - **[Todo App](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react)** — Full
-  CRUD with performance profiling
+  CRUD with performance profiling · [▶ Open the live demo](https://yoltra.dev/en/demos/in-react)
 - **[Kinetic Logo](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo)**
-  — 3000 circles with physics simulation
+  — 3000 circles with physics simulation · [▶ Open the live demo](https://yoltra.dev/en/demos/kinetic-logo)
 - **[Next.js Integration](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs)**
-  — Pages Router, client-side state + theme switcher
+  — Pages Router, client-side state + theme switcher · [▶ Open the live demo](https://yoltra.dev/en/demos/in-nextjs)
 
 ---
 

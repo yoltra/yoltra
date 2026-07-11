@@ -373,10 +373,10 @@ function TodoItem({ index }: { index: number }) {
 ## Examples
 
 - **[Todo App with Profiler](../../examples/v0/yoltra-in-react)** — Full CRUD with flamegraph
-  comparison
+  comparison · [▶ Open the live demo](https://yoltra.dev/en/demos/in-react)
 - **[Kinetic Logo (3000 particles)](../../examples/v0/yoltra-kinetic-logo)** — Independent
-  subscriptions per circle
-- **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)** — client-side state + theme switcher
+  subscriptions per circle · [▶ Open the live demo](https://yoltra.dev/en/demos/kinetic-logo)
+- **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)** — client-side state + theme switcher · [▶ Open the live demo](https://yoltra.dev/en/demos/in-nextjs)
 
 ---
 

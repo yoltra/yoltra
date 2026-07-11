@@ -25,7 +25,7 @@ in the App Router; every component in the Pages Router already is one).
 
 ## Pages Router (the included example)
 
-The [`yoltra-in-nextjs`](../../examples/v0/yoltra-in-nextjs) example uses the
+The [`yoltra-in-nextjs`](../../examples/v0/yoltra-in-nextjs) example ([▶ Open the live demo](https://yoltra.dev/en/demos/in-nextjs)) uses the
 Pages Router, where every component is a Client Component — so `createYoltra`'s
 "no provider needed" model just works.
 
@@ -157,5 +157,5 @@ the extension is installed.
 ## Next steps
 
 - [Migration Guide](./MIGRATION_GUIDE.md) · [Testing Guide](./TESTING_GUIDE.md)
-- [Next.js example](../../examples/v0/yoltra-in-nextjs) — Pages Router + theme switcher
+- [Next.js example](../../examples/v0/yoltra-in-nextjs) — Pages Router + theme switcher · [▶ Open the live demo](https://yoltra.dev/en/demos/in-nextjs)
 - [@yoltra/react API](../../packages/react/README.md)

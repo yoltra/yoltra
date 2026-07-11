@@ -14,7 +14,7 @@ interactive apps.**
 
 > 3000 circles, each subscribing to its own position. Every circle re-renders independently —
 > the rest of the tree is untouched. No selectors. No memoization.
-> [See the demo source.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)
+> [See the demo source.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md) · [▶ Open the live demo](https://yoltra.dev/en/demos/kinetic-logo)
 
 ---
 
@@ -106,7 +106,7 @@ the capability the fine-grained camp can't cheaply match.
 
 > **See it live →** [**Orbital Mission Control**](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/README.md)
 > runs the store, the hub, and this exact panel in one page — no install. Pause the telemetry,
-> scrub the mission timeline, and watch the state rebuild. ([Guided tour](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/GUIDE.md).)
+> scrub the mission timeline, and watch the state rebuild. ([Guided tour](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/GUIDE.md).) · [▶ Open the live demo](https://yoltra.dev/en/demos/mission-control)
 
 ### One call to set up — no boilerplate
 
@@ -174,13 +174,13 @@ pulls in a Node-only WebSocket, and vice versa.
 >
 > **Start here.** Every Yoltra feature _and_ the live **DevTools panel** on one screen — fine-grained
 > render counters, wildcard subscriptions, async effects, middleware veto, and time-travel — running
-> over an in-memory hub with **no install**. → **[Guided tour](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/GUIDE.md)**
+> over an in-memory hub with **no install**. → **[Guided tour](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/GUIDE.md)** · **[▶ Open the live demo](https://yoltra.dev/en/demos/mission-control)**
 
 | Example                                                                                                                   | Description                                                                                                                                                |
 | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[Kinetic Logo (3000 particles)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)** | Physics simulation with an independent path subscription per circle                                                                                        |
-| **[Todo App with Profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md)**            | Side-by-side flamegraph comparison with Redux ([results](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)) |
-| **[Counter](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-react-counter/README.md)**                      | The minimal end-to-end example                                                                                                                             |
+| **[Kinetic Logo (3000 particles)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md)** | Physics simulation with an independent path subscription per circle · [▶ Live demo](https://yoltra.dev/en/demos/kinetic-logo)                                                                                        |
+| **[Todo App with Profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md)**            | Side-by-side flamegraph comparison with Redux ([results](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)) · [▶ Live demo](https://yoltra.dev/en/demos/in-react) |
+| **[Counter](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-react-counter/README.md)**                      | The minimal end-to-end example · [▶ Live demo](https://yoltra.dev/en/demos/react-counter) |
 
 ---
 

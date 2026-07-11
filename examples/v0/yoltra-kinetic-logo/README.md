@@ -8,6 +8,8 @@
 
 > A performant kinetic logo animation that showcases Yoltra's **atomic subscriptions**.
 
+> ⚡ **[Open the live demo](https://yoltra.dev/en/demos/kinetic-logo)** — no install, runs in your browser.
+
 Every non-transparent pixel of the Yoltra logo becomes an independent dot. Up to **3000** dots
 fly in from random positions and settle on their home pixel. Move your cursor across the canvas
 to repel the dots; they ease back when you pull away.
