@@ -182,30 +182,65 @@
       "packageName": "yoltra-in-react",
       "projectFolder": "examples/v0/yoltra-in-react",
       "reviewCategory": "samples",
+      // Examples consume @yoltra/* from the published npm feed (real versions,
+      // not workspace:*) so they work in StackBlitz and a plain `npm install`.
+      // decoupledLocalDependencies tells Rush this is intentional.
+      "decoupledLocalDependencies": [
+        "@yoltra/core",
+        "@yoltra/react",
+        "@yoltra/ds",
+        "@yoltra/devtools-browser-agent"
+      ],
       "shouldPublish": false
     },
     {
       "packageName": "yoltra-in-nextjs",
       "projectFolder": "examples/v0/yoltra-in-nextjs",
       "reviewCategory": "samples",
+      "decoupledLocalDependencies": [
+        "@yoltra/core",
+        "@yoltra/react",
+        "@yoltra/ds",
+        "@yoltra/devtools-browser-agent"
+      ],
       "shouldPublish": false
     },
     {
       "packageName": "yoltra-kinetic-logo",
       "projectFolder": "examples/v0/yoltra-kinetic-logo",
       "reviewCategory": "samples",
+      "decoupledLocalDependencies": [
+        "@yoltra/core",
+        "@yoltra/react",
+        "@yoltra/ds",
+        "@yoltra/devtools-browser-agent"
+      ],
       "shouldPublish": false
     },
     {
       "packageName": "yoltra-react-counter",
       "projectFolder": "examples/v0/yoltra-react-counter",
       "reviewCategory": "samples",
+      "decoupledLocalDependencies": [
+        "@yoltra/core",
+        "@yoltra/react",
+        "@yoltra/ds"
+      ],
       "shouldPublish": false
     },
     {
       "packageName": "yoltra-mission-control",
       "projectFolder": "examples/v0/yoltra-mission-control",
       "reviewCategory": "samples",
+      "decoupledLocalDependencies": [
+        "@yoltra/core",
+        "@yoltra/react",
+        "@yoltra/ds",
+        "@yoltra/devtools-protocol",
+        "@yoltra/devtools-browser-agent",
+        "@yoltra/devtools-ui",
+        "@yoltra/devtools-storeview"
+      ],
       "shouldPublish": false
     },
 
