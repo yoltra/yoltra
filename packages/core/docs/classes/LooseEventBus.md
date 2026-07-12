@@ -6,7 +6,7 @@
 
 # Class: LooseEventBus\<C, T, P\>
 
-Defined in: [eventBus/LooseEventBus.ts:44](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/eventBus/LooseEventBus.ts#L44)
+Defined in: [eventBus/LooseEventBus.ts:44](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/eventBus/LooseEventBus.ts#L44)
 
 Flexible, synchronous pub/sub bus that supports **exact** and **pattern** event subscriptions.
 
@@ -78,7 +78,7 @@ Payload type for all events (defaults to `any`).
 
 > **clear**(): `void`
 
-Defined in: [eventBus/LooseEventBus.ts:351](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/eventBus/LooseEventBus.ts#L351)
+Defined in: [eventBus/LooseEventBus.ts:351](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/eventBus/LooseEventBus.ts#L351)
 
 Removes **all** listeners (exact and pattern). Useful for tests/HMR teardown.
 
@@ -98,7 +98,7 @@ afterEach(() => bus.clear());
 
 > **emit**(`channel`, `type`, `payload`): `void`
 
-Defined in: [eventBus/LooseEventBus.ts:209](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/eventBus/LooseEventBus.ts#L209)
+Defined in: [eventBus/LooseEventBus.ts:209](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/eventBus/LooseEventBus.ts#L209)
 
 Emits an event to all exact subscribers first, then to **matching pattern** subscribers.
 Duplicate handler references are called **once** (de-duped).
@@ -144,7 +144,7 @@ bus.emit('ui', 'panel.open', { id: 1 });
 
 > **off**(`channel`, `type`, `handler`): `void`
 
-Defined in: [eventBus/LooseEventBus.ts:135](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/eventBus/LooseEventBus.ts#L135)
+Defined in: [eventBus/LooseEventBus.ts:135](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/eventBus/LooseEventBus.ts#L135)
 
 Unsubscribes an **exact** handler. The `type` key is normalized internally,
 so callers can pass `"foo"` or `".foo"` interchangeably.
@@ -188,7 +188,7 @@ bus.off('ui', '.panel.open', h);
 
 > **on**(`channel`, `type`, `handler`): () => `void`
 
-Defined in: [eventBus/LooseEventBus.ts:89](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/eventBus/LooseEventBus.ts#L89)
+Defined in: [eventBus/LooseEventBus.ts:89](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/eventBus/LooseEventBus.ts#L89)
 
 Subscribes a handler to either an **exact** type or a **pattern**.
 

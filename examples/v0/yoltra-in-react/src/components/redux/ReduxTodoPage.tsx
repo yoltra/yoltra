@@ -16,8 +16,8 @@ export const ReduxTodoPage: React.FC<iReduxTodoPageProps> = () => {
   }, []);
 
   return (
-    <div>
-      <h2>RTK TODOs</h2 >
+    <div className="todo-page">
+      <h2>RTK TODOs</h2>
       <TodoFactory />
       <TodoFilter />
       <TodoList />

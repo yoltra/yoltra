@@ -6,7 +6,7 @@
 
 # Interface: ReducerSpec\<S, EM\>
 
-Defined in: [types.ts:629](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L629)
+Defined in: [types.ts:629](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L629)
 
 One reducer's definition blob (stateful event consumer).
 
@@ -58,7 +58,7 @@ Event map.
 
 > `optional` **events**: readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
 
-Defined in: [types.ts:645](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L645)
+Defined in: [types.ts:645](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L645)
 
 List of EventKeys `[channel, type]` that this reducer responds to.
 
@@ -72,7 +72,7 @@ Use `when: { keys: [...] }` instead for better type inference.
 
 > `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"reducer"`\>
 
-Defined in: [types.ts:655](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L655)
+Defined in: [types.ts:655](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L655)
 
 Optional metadata for debugging tools and DevTools integration.
 
@@ -82,7 +82,7 @@ Optional metadata for debugging tools and DevTools integration.
 
 > **reducer**: [`ReducerFunction`](../type-aliases/ReducerFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:650](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L650)
+Defined in: [types.ts:650](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L650)
 
 Pure reducer function: `(state, event) => nextState`.
 
@@ -92,7 +92,7 @@ Pure reducer function: `(state, event) => nextState`.
 
 > **state**: `S`
 
-Defined in: [types.ts:633](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L633)
+Defined in: [types.ts:633](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L633)
 
 Initial state for this reducer.
 
@@ -102,7 +102,7 @@ Initial state for this reducer.
 
 > `optional` **when**: [`When`](../type-aliases/When.md)\<`EM`\>
 
-Defined in: [types.ts:639](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L639)
+Defined in: [types.ts:639](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L639)
 
 Event targeting using the unified `When` matcher.
 Preferred over `events` for new code.

@@ -91,7 +91,7 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #4a9eff;
+  background: var(--yl-color-brand, #4a9eff);
   cursor: pointer;
 }
 
@@ -100,7 +100,7 @@
   height: 12px;
   border: none;
   border-radius: 50%;
-  background: #4a9eff;
+  background: var(--yl-color-brand, #4a9eff);
   cursor: pointer;
 }
 
@@ -110,7 +110,7 @@
   background: rgba(74, 158, 255, 0.15);
   border: 1px solid rgba(74, 158, 255, 0.35);
   border-radius: 5px;
-  color: #4a9eff;
+  color: var(--yl-color-brand, #4a9eff);
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;

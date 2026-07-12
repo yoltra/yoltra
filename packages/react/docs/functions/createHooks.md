@@ -8,7 +8,7 @@
 
 > **createHooks**\<`R`, `S`, `EM`\>(`StoreContext`): [`YoltraHooks`](../interfaces/YoltraHooks.md)\<`R`, `S`, `EM`\>
 
-Defined in: [react/src/hooks/createHooks.ts:240](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/createHooks.ts#L240)
+Defined in: [react/src/hooks/createHooks.ts:240](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/createHooks.ts#L240)
 
 Factory that creates fully-typed React hooks bound to a specific store context.
 

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Add Input, Select, and Textarea form primitives — server-safe React components (with `size` and `block` props) plus `.yl-input` / `.yl-select` / `.yl-textarea` styles emitted by themeCss(): padding, border, background, a themed placeholder, hover, a brand focus ring, and disabled state, with `--sm` / `--block` modifiers and a `.yl-field` / `.yl-label` helper.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

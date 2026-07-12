@@ -8,7 +8,7 @@
 
 > **EventKey**\<`EM`\> = `{ [C in keyof EM & string]: [C, keyof EM[C] & string] }`\[keyof `EM` & `string`\]
 
-Defined in: [types.ts:47](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/core/src/types.ts#L47)
+Defined in: [types.ts:47](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L47)
 
 Canonical routing concept: a readonly tuple `[channel, type]` that uniquely identifies an event.
 

@@ -37,4 +37,6 @@ export { Badge } from "./primitives/Badge";
 export type { BadgeProps } from "./primitives/Badge";
 export { Callout } from "./primitives/Callout";
 export type { CalloutProps } from "./primitives/Callout";
+export { Input, Select, Textarea } from "./primitives/Field";
+export type { InputProps, SelectProps, TextareaProps } from "./primitives/Field";
 export { Table, THead, TBody, TR, TH, TD } from "./primitives/Table";

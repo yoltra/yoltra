@@ -25,8 +25,8 @@ Yoltra is built on four architectural bets:
 4. **Introspection-first devtools** — The store exposes a typed instrumentation seam, so time-travel, event replay, and precise per-event patches are first-class rather than bolted on.
 
 ```typescript
-// Path subscription via a typed accessor: re-renders only when items[0].title changes
-const title = useAtomicProp('todos', (s) => s.items[0].title);
+// Path subscription: re-renders only when items.0.title changes
+const title = useAtomicProp({ reducer: 'todos', property: 'items.0.title' });
 
 // Channel-typed event
 await emit('todos', 'toggle', { id: '123' });

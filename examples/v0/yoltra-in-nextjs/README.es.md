@@ -5,6 +5,8 @@
 > 👉 [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; |
 > &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp;
 
+> ⚡ **[Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)** — sin instalar, corre en tu navegador.
+
 Un ejemplo minimo que muestra como **[Yoltra](https://yoltra.dev)** -- reactividad de grano fino
 para aplicaciones orientadas a eventos -- se ejecuta **dentro de una aplicacion Next.js (Pages
 Router)** para interactividad del lado del cliente.

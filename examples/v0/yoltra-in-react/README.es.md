@@ -4,6 +4,8 @@
 
 > 👉 🇲🇽 Versión en Español &nbsp; | &nbsp; [ 🇺🇸 English Version](./README.md)
 
+> ⚡ **[Abrir la demo en vivo](https://yoltra.dev/es/demos/in-react)** — sin instalar, corre en tu navegador.
+
 Una pequena demostracion enfocada en React que aloja **ambas implementaciones de estado** lado a
 lado -- la prueba definitiva esta en la comparacion de flamegraph:
 

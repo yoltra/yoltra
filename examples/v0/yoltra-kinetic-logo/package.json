@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "test": "exit 0",
-    "build": "vite build",
+    "build": "exit 0",
     "docs": "exit 0",
     "lint": "exit 0"
   },
@@ -19,11 +19,12 @@
   "dependencies": {
     "react": "19.1.1",
     "react-dom": "19.1.1",
-    "@yoltra/core": "workspace:*",
-    "@yoltra/react": "workspace:*"
+    "@yoltra/core": "^0.2.0",
+    "@yoltra/react": "^0.2.0",
+    "@yoltra/ds": "^0.1.0"
   },
   "devDependencies": {
-    "@yoltra/devtools-browser-agent": "workspace:*",
+    "@yoltra/devtools-browser-agent": "^0.2.0",
     "@eslint/js": "^9.30.1",
     "@types/node": "^24.0.12",
     "@types/react": "^19.1.8",

@@ -1,5 +1,3 @@
-![yoltra logo](../../../assets/yoltra-logo.png)
-
 **@yoltra/react**
 
 ***

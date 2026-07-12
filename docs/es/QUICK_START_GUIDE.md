@@ -5,7 +5,7 @@
 > [🇺🇸 English](../en/QUICK_START_GUIDE.md) &nbsp;|&nbsp; 👉 Español
 
 Tres pasos desde la instalación hasta una app funcional y totalmente tipada. Si prefieres, visita
-[la app de ejemplo](../../examples/v0/yoltra-react-counter/README.es.md).
+[la app de ejemplo](../../examples/v0/yoltra-react-counter/README.es.md) — [▶ ábrela en vivo](https://yoltra.dev/es/demos/react-counter).
 
 ---
 
@@ -82,9 +82,9 @@ cuando esa hoja exacta cambia.
 import { useAtomicProp, useEmit } from "./yoltra";
 
 export function Counter() {
-  // Accessor tipado: `s` autocompleta la forma del estado, `value` se infiere como number.
+  // Forma objeto: suscríbete a la hoja exacta `counter.value`.
   // Se re-renderiza SOLO cuando counter.value cambia — sin selectores, sin memo.
-  const value = useAtomicProp("counter", (s) => s.value);
+  const value = useAtomicProp({ reducer: "counter", property: "value" });
   const emit = useEmit();
 
   return (

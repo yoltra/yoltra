@@ -28,7 +28,7 @@ ya lo es).
 
 ## Pages Router (el ejemplo incluido)
 
-El ejemplo [`yoltra-in-nextjs`](../../examples/v0/yoltra-in-nextjs) usa el Pages
+El ejemplo [`yoltra-in-nextjs`](../../examples/v0/yoltra-in-nextjs) ([▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)) usa el Pages
 Router, donde cada componente es un Client Component — así que el modelo "sin
 provider" de `createYoltra` simplemente funciona.
 
@@ -47,7 +47,7 @@ export const { useAtomicProp, useEmit } = createYoltra({
 import { useAtomicProp, useEmit } from "@/state/yoltra";
 
 export function ThemeToggle() {
-  const theme = useAtomicProp("theme", (s) => s.mode);
+  const theme = useAtomicProp({ reducer: "theme", property: "mode" });
   const emit = useEmit();
   return <button onClick={() => emit("theme", "toggle", null)}>{theme}</button>;
 }
@@ -86,7 +86,7 @@ export const { useAtomicProp, useEmit } = createYoltra({
 import { useAtomicProp, useEmit } from "@/state/yoltra";
 
 export function Cart() {
-  const count = useAtomicProp("cart", (s) => s.items.length);
+  const count = useAtomicProp({ reducer: "cart", property: "items" }, (items) => items.length);
   // …
 }
 ```
@@ -161,5 +161,5 @@ una vez instalada la extensión.
 ## Siguientes pasos
 
 - [Guía de Migración](./MIGRATION_GUIDE.md) · [Guía de Testing](./TESTING_GUIDE.md)
-- [Ejemplo de Next.js](../../examples/v0/yoltra-in-nextjs) — Pages Router + cambio de tema
+- [Ejemplo de Next.js](../../examples/v0/yoltra-in-nextjs) — Pages Router + cambio de tema · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)
 - [API de @yoltra/react](../../packages/react/README.es.md)

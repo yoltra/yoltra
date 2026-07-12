@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "exit 0",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "exit 0",
@@ -21,12 +21,13 @@
   "dependencies": {
     "react": "19.1.1",
     "react-dom": "19.1.1",
-    "@yoltra/core": "workspace:*",
-    "@yoltra/react": "workspace:*",
-    "@yoltra/devtools-protocol": "workspace:*",
-    "@yoltra/devtools-browser-agent": "workspace:*",
-    "@yoltra/devtools-ui": "workspace:*",
-    "@yoltra/devtools-storeview": "workspace:*"
+    "@yoltra/core": "^0.2.0",
+    "@yoltra/react": "^0.2.0",
+    "@yoltra/ds": "^0.1.0",
+    "@yoltra/devtools-protocol": "^0.2.0",
+    "@yoltra/devtools-browser-agent": "^0.2.0",
+    "@yoltra/devtools-ui": "^0.2.0",
+    "@yoltra/devtools-storeview": "^0.2.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.12",

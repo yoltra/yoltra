@@ -1,78 +1,73 @@
+/* Todo card — branded via Yoltra DS tokens so it tracks light/dark and matches
+   the rest of the example. Shared, identical to the Redux section's copy. */
 .todo-card {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    gap: var(--yl-space-3);
 
-    input {
-        padding: 0.2rem 0.4rem;
-        margin-left: 0.5rem;
+    padding: var(--yl-space-3) var(--yl-space-4);
+    margin-bottom: var(--yl-space-2);
+    border: 1px solid var(--yl-color-border);
+    border-radius: var(--yl-radius-md);
+    background: var(--yl-color-bg-panel);
 
-        border: 1px solid #595959;
-        border-radius: 0.4rem;
+    /* edit-mode fields (DS Input/Select) sit inline as labelled columns */
+    label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--yl-color-fg-secondary);
     }
 
-    input:active,
-    input:focus-visible {
-        outline: 1px solid #595959;
+    .yl-input,
+    .yl-select {
+        min-width: 120px;
     }
 
-    div {
+    /* action-icon row */
+    > div {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--yl-space-3);
 
-        span {
-
-            svg {
-                margin-right: 0.25rem;
-                width: 1rem;
-                height: auto;
-            }
+        svg {
+            width: 16px;
+            height: auto;
+            cursor: pointer;
         }
     }
 }
 
 .todo-card p {
-    font-size: 1.3rem;
+    margin: 0;
+    font-size: 15px;
+    color: var(--yl-color-fg);
 }
 
+/* Status colors — DS tokens, readable on the panel in both themes. antd icons
+   inherit via currentColor, so setting `color` tints the svg too. */
 .pending {
-    color: #595959;
-
-    span > svg {
-        fill: #595959;
-    }
+    color: var(--yl-color-fg-muted);
 }
 
 .complete {
-    color: #5b8c00;
+    color: var(--yl-color-success-fg);
     text-decoration: line-through;
-
-    span > svg {
-        fill: #5b8c00;
-    }
 }
 
 .edit {
-    color: #006b8c;
-    text-decoration: line-through;
-
-    span > svg {
-        fill: #006b8c;
-    }
+    color: var(--yl-color-link);
 }
 
 .canceled,
 .delete {
-    color: #ff4d4f;
-
-    span > svg {
-        fill: #ff4d4f;
-    }
+    color: var(--yl-color-error-fg);
 }
 
 .cancel {
-    color: #991f21;
-
-    span > svg {
-        fill: #991f21;
-    }
+    color: var(--yl-color-error-fg);
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+import { BrandChip } from "./components/brand-chip/BrandChip.component";
 import { ConfigPanel } from "./components/config-panel/ConfigPanel.component";
 import { Screen } from "./components/screen/Screen.component";
 import {
@@ -73,6 +74,7 @@ export default function App() {
   // restart updates extractionConfig, which re-runs the effect above.
   return (
     <>
+      <BrandChip />
       <ConfigPanel onRestart={setExtractionConfig} />
       <Screen />
     </>

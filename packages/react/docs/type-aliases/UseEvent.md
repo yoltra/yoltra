@@ -8,7 +8,7 @@
 
 > **UseEvent**\<`EM`, `S`\> = \<`C`, `T`\>(`channel`, `type`, `handler`, `phase?`) => `void`
 
-Defined in: [react/src/hooks/createHooks.ts:142](https://github.com/yoltra/yoltra/blob/ae94dea5790844eac37ee002f0fbed302029371e/packages/react/src/hooks/createHooks.ts#L142)
+Defined in: [react/src/hooks/createHooks.ts:142](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/createHooks.ts#L142)
 
 Call signature for the typed `useEvent` hook returned by [createHooks](../functions/createHooks.md).
 

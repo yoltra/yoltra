@@ -9,6 +9,8 @@
 > Una animación cinética del logo, de alto rendimiento, que demuestra las **suscripciones
 > atómicas** de Yoltra.
 
+> ⚡ **[Abrir la demo en vivo](https://yoltra.dev/es/demos/kinetic-logo)** — sin instalar, corre en tu navegador.
+
 Cada píxel no transparente del logo de Yoltra se convierte en un punto independiente. Hasta
 **3000** puntos\
 entran volando desde posiciones aleatorias y se acomodan en su píxel de destino. Mueve el cursor

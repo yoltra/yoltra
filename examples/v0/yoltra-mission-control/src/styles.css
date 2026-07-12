@@ -85,9 +85,9 @@ body {
 }
 
 .brand .logo {
-  font-size: 34px;
-  color: var(--cyan);
-  filter: drop-shadow(0 0 10px rgba(53, 208, 224, 0.5));
+  width: 34px;
+  height: 34px;
+  filter: drop-shadow(0 0 10px rgba(26, 127, 226, 0.45));
 }
 
 .brand h1 {
@@ -96,10 +96,11 @@ body {
   letter-spacing: 0.3px;
 }
 
-.brand p {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: var(--muted);
+.brand-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
 }
 
 .mission-stats {

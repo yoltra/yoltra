@@ -8,6 +8,8 @@ in-memory loopback transport.
 > 🛰️ **New here?** Read the **[guided tour →](./GUIDE.md)** — what you're
 > looking at, how to read the DevTools panel, and how to drive time-travel.
 
+> ⚡ **[Open the live demo](https://yoltra.dev/en/demos/mission-control)** — no install, runs in your browser.
+
 ## What it shows
 
 | Feature | Where to look |

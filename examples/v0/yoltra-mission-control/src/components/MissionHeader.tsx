@@ -1,3 +1,4 @@
+import { Badge } from "@yoltra/ds";
 import { useAtomicProp, useAtomicProps } from "../state/store";
 
 export function MissionHeader() {
@@ -19,10 +20,15 @@ export function MissionHeader() {
   return (
     <header className="mission-header">
       <div className="brand">
-        <span className="logo">◐</span>
+        <img className="logo" src="/logo.svg" width={34} height={34} alt="Yoltra" />
         <div>
           <h1>Orbital Mission Control</h1>
-          <p>Yoltra — event-sourced · fine-grained · live DevTools</p>
+          <div className="brand-badges">
+            <Badge variant="brand">Yoltra</Badge>
+            <Badge>event-sourced</Badge>
+            <Badge>fine-grained</Badge>
+            <Badge>live DevTools</Badge>
+          </div>
         </div>
       </div>
 

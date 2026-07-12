@@ -1,17 +1,32 @@
+/* "Add todo" toolbar — a branded DS panel. The fields are DS Input/Select/Button,
+   so this file only owns layout. */
 div.todo-factory {
     display: flex;
-    flex-wrap: nowrap;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--yl-space-3);
 
-    input {
-        max-width: 7.2rem;
-        margin-left: 0.5rem;
+    padding: var(--yl-space-4);
+    margin-bottom: var(--yl-space-4);
+    border: 1px solid var(--yl-color-border);
+    border-radius: var(--yl-radius-lg);
+    background: var(--yl-color-bg-panel);
+
+    label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--yl-color-fg-secondary);
     }
 
-    select {
-        max-width: 7.2rem;
-        margin-left: 0.5rem;
+    .yl-input,
+    .yl-select {
+        min-width: 160px;
+    }
+
+    .yl-btn {
+        align-self: flex-end;
     }
 }

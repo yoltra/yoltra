@@ -4,6 +4,8 @@
 
 Una aplicación de contador minimalista que demuestra los patrones principales de [Yoltra](https://github.com/yoltra/yoltra) con React 19. Este es el ejemplo referenciado en la [Guía de inicio rápido](https://github.com/yoltra/yoltra/blob/main/docs/es/QUICK_START_GUIDE.md).
 
+> ⚡ **[Abrir la demo en vivo](https://yoltra.dev/es/demos/react-counter)** — sin instalar, corre en tu navegador.
+
 ---
 
 ## Qué demuestra este ejemplo
@@ -122,7 +124,7 @@ El accessor tipado `s => s.value` se suscribe exactamente a la hoja `counter.val
 
 - Agrega middleware síncrono (ej. logging, autorización) o efectos asíncronos — consulta la [documentación de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)
 - Reacciona a eventos bloqueados con `useEvent(..., "uncommitted")` — consulta el [README principal](https://github.com/yoltra/yoltra/blob/main/docs/es/README.md)
-- Explora rutas con comodines como `"items.*.done"` — consulta el [ejemplo de la aplicación Todo](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md)
+- Explora rutas con comodines como `"items.*.done"` — consulta el [ejemplo de la aplicación Todo](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.md) · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-react)
 
 ---
 
