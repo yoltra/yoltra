@@ -1,6 +1,6 @@
 {
   "name": "@yoltra/devtools-cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Yoltra DevTools terminal UI (React + Ink)",
   "author": {
     "name": "Manu Ramirez <@pixerael>",

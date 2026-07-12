@@ -1,6 +1,6 @@
 {
   "name": "@yoltra/devtools-browser-agent",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Browser store agent for Yoltra DevTools — instruments stores and reports to the hub via native WebSocket",
   "license": "MIT",
   "author": {
@@ -47,7 +47,7 @@
     "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-browser-agent-en.json"
   },
   "peerDependencies": {
-    "@yoltra/core": "^0.2.0"
+    "@yoltra/core": "^0.3.0"
   },
   "dependencies": {
     "@yoltra/devtools-protocol": "workspace:*"

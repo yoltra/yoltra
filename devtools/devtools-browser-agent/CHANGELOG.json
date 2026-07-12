@@ -2,6 +2,12 @@
   "name": "@yoltra/devtools-browser-agent",
   "entries": [
     {
+      "version": "0.3.0",
+      "tag": "@yoltra/devtools-browser-agent_v0.3.0",
+      "date": "Sun, 12 Jul 2026 00:20:57 GMT",
+      "comments": {}
+    },
+    {
       "version": "0.2.0",
       "tag": "@yoltra/devtools-browser-agent_v0.2.0",
       "date": "Fri, 10 Jul 2026 07:51:29 GMT",

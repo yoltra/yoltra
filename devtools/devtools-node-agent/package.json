@@ -1,6 +1,6 @@
 {
   "name": "@yoltra/devtools-node-agent",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Node.js store agent for Yoltra DevTools — instruments stores and reports to the hub",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
@@ -32,7 +32,7 @@
     "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-node-agent-en.json"
   },
   "peerDependencies": {
-    "@yoltra/core": "^0.2.0"
+    "@yoltra/core": "^0.3.0"
   },
   "dependencies": {
     "@yoltra/devtools-protocol": "workspace:*",
