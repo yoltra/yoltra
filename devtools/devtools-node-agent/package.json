@@ -7,6 +7,10 @@
     "email": "manu@yoltra.dev"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yoltra/yoltra.git"
+  },
   "type": "module",
   "main": "dist/devtools-node-agent.cjs.js",
   "module": "dist/devtools-node-agent.esm.js",
