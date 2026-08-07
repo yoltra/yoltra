@@ -1,0 +1,18 @@
+.yl-tooltip {
+  position: fixed;
+  // Above the anchored surfaces: a tooltip can describe a control inside a popover, and it is
+  // always the most transient thing on screen.
+  z-index: var(--yl-z-tooltip);
+  max-width: 28rem;
+  padding: var(--yl-space-2) var(--yl-space-3);
+  font-family: var(--yl-font-sans);
+  font-size: 1.3rem;
+  line-height: 1.4;
+  color: var(--yl-color-fg-inverse);
+  background: var(--yl-color-fg);
+  border-radius: var(--yl-radius-sm);
+  box-shadow: var(--yl-elevation-md);
+  // It follows the pointer's target; letting it catch the pointer would let it flicker itself
+  // out of existence by triggering the leave handler on the element underneath.
+  pointer-events: none;
+}

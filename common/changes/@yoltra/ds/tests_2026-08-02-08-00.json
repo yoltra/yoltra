@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Tests the design system, which had none.\n\n110 tests at 96.1% statements and 93.9% branches, with thresholds set at that floor. They cover every component's rendered element and class composition, the accessibility wiring for the form tier, the two interactive components behind the client entry, and the token and theme invariants.\n\nThe one worth naming is a stylesheet invariant: every var(--yl-*) a compiled component reads must be a property the token emitter defines. A typo in a custom property does not fail anything \u2014 it compiles, ships, and renders as though the declaration were absent, on one component, in one theme. Writing the check found exactly that: --yl-color-bg-surface never existed, so every Card fell through to its fallback and rendered the same colour as the page behind it. The theme defines bg-panel for precisely this, and Card now uses it.\n\nTwo more dead fallbacks went the same way. The rule is now that anything in a token namespace must resolve whether or not it has a fallback; only component-local properties, which a component sets per instance, may be undefined.\n\nThe size budget is re-based and split: a typical four-component import is 2.4 KB against a 5.4 KB barrel, and the gap between them is the tree-shaking claim being checked rather than asserted.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

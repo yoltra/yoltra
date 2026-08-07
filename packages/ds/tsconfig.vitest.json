@@ -1,0 +1,15 @@
+// Typecheck configuration for the test sources.
+//
+// The build config excludes tests: it describes what ships, and a test file is not part of
+// the package. Without this they would be checked by nothing — vitest strips types rather
+// than verifying them — so `rushx typecheck` runs both.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "tests/**/*.tsx"],
+  "exclude": ["dist", "node_modules"]
+}

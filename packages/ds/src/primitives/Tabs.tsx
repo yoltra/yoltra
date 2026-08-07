@@ -13,6 +13,25 @@ export interface TabsProps {
   defaultId?: string;
 }
 
+/**
+ * Tabbed panels.
+ *
+ * @remarks
+ * Holds the selected tab in React state, which is why it ships from `@yoltra/ds/client` rather
+ * than the server-safe entry.
+ *
+ * @example
+ * ```tsx
+ * <Tabs
+ *   items={[
+ *     { id: "npm", label: "npm", content: <CodeBlock code="npm i @yoltra/core" /> },
+ *     { id: "pnpm", label: "pnpm", content: <CodeBlock code="pnpm add @yoltra/core" /> },
+ *   ]}
+ * />
+ * ```
+ *
+ * @public
+ */
 export function Tabs({ items, defaultId }: TabsProps) {
   const [active, setActive] = useState(defaultId ?? items[0]?.id);
   const current = items.find((i) => i.id === active) ?? items[0];

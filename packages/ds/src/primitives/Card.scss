@@ -1,0 +1,11 @@
+.yl-card {
+  padding: var(--yl-card-padding, var(--yl-space-5));
+  border-radius: var(--yl-radius-lg);
+  border: 1px solid var(--yl-color-border);
+  background: var(--yl-color-bg-panel);
+  box-shadow: var(--yl-card-shadow, var(--yl-elevation-xs));
+
+  &--borderless {
+    border-color: transparent;
+  }
+}

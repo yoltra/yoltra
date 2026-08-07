@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Declares a bundle-size budget, checked by `rush size` against the package bundled the way a consumer ships it \u2014 tree-shaken, minified and gzipped \u2014 rather than against the unminified file in `dist`, which measures nothing anybody downloads.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

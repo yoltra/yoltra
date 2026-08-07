@@ -1,0 +1,46 @@
+.yl-code {
+  position: relative;
+  margin: var(--yl-space-4) 0;
+  border-radius: var(--yl-radius-lg);
+  border: 1px solid var(--yl-color-code-border);
+  background: var(--yl-color-code-bg);
+  overflow: hidden;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--yl-space-2) var(--yl-space-3);
+    border-bottom: 1px solid var(--yl-color-code-border);
+    font-family: var(--yl-font-mono);
+    font-size: 1.2rem;
+    color: rgba(229, 238, 248, 0.7);
+  }
+
+  pre {
+    margin: 0;
+    padding: var(--yl-space-4);
+    overflow-x: auto;
+    font-family: var(--yl-font-mono);
+    font-size: 1.35rem;
+    line-height: 1.6;
+    color: var(--yl-color-code-fg);
+  }
+
+  &__copy {
+    font-family: var(--yl-font-sans);
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: rgba(229, 238, 248, 0.85);
+    background: rgba(148, 163, 184, 0.14);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: var(--yl-radius-sm);
+    padding: 0.2rem var(--yl-space-2);
+    transition: background var(--yl-motion-fast) var(--yl-ease);
+
+    &:hover {
+      background: rgba(148, 163, 184, 0.26);
+    }
+  }
+}

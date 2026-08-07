@@ -12,7 +12,8 @@ import type { ThemeId } from "../tokens/themes";
 
 const STORAGE_KEY = "yoltra-theme";
 
-interface ThemeContextValue {
+/** What {@link useTheme} returns. @public */
+export interface ThemeContextValue {
   theme: ThemeId;
   setTheme: (t: ThemeId) => void;
   toggle: () => void;
@@ -26,12 +27,40 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 /** Apply the theme to the document root. Safe to call before hydration. */
+/**
+ * Sets `data-theme` on the document root.
+ *
+ * @remarks
+ * The whole theming mechanism is this attribute: every colour is a CSS custom property
+ * redefined under `[data-theme='dark']`, so switching is one attribute write and no React
+ * re-render. Call it directly to theme a page that does not mount {@link ThemeProvider}.
+ *
+ * @example
+ * ```ts
+ * // Before hydration, from an inline script, to avoid a flash of the wrong theme.
+ * applyTheme(localStorage.getItem("theme") === "dark" ? "dark" : "light");
+ * ```
+ *
+ * @public
+ */
 export function applyTheme(theme: ThemeId): void {
   if (typeof document !== "undefined") {
     document.documentElement.setAttribute("data-theme", theme);
   }
 }
 
+/**
+ * Holds the current theme and applies it to the document.
+ *
+ * @example
+ * ```tsx
+ * <ThemeProvider defaultTheme="dark">
+ *   <App />
+ * </ThemeProvider>
+ * ```
+ *
+ * @public
+ */
 export function ThemeProvider({ children, defaultTheme = "light" }: { children: ReactNode; defaultTheme?: ThemeId }) {
   const [theme, setThemeState] = useState<ThemeId>(defaultTheme);
 
@@ -55,6 +84,20 @@ export function ThemeProvider({ children, defaultTheme = "light" }: { children: 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
+/**
+ * Reads and sets the current theme.
+ *
+ * @throws When called outside {@link ThemeProvider} — a hook that silently returned a default
+ * would leave a toggle that renders correctly and changes nothing.
+ *
+ * @example
+ * ```tsx
+ * const { theme, setTheme } = useTheme();
+ * <Button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>Toggle theme</Button>
+ * ```
+ *
+ * @public
+ */
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error("useTheme must be used within a <ThemeProvider>");

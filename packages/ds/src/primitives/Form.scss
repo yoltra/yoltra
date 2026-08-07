@@ -1,0 +1,160 @@
+@use "../styles/mixins" as *;
+
+.yl-field {
+  &__required {
+    color: var(--yl-color-error-fg);
+    margin-inline-start: 0.2rem;
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 1.2rem;
+    line-height: 1.5;
+    color: var(--yl-color-fg-muted);
+  }
+
+  &__error {
+    margin: 0;
+    font-size: 1.2rem;
+    line-height: 1.5;
+    color: var(--yl-color-error-fg);
+
+    // The region is always in the document so a later message is an update to something the
+    // reader is already watching. Empty, it must take no space.
+    &:empty {
+      display: none;
+    }
+  }
+}
+
+.yl-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0; // `fieldset` defaults to min-content, which breaks flex children.
+
+  &__legend {
+    padding: 0;
+    font-family: var(--yl-font-sans);
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--yl-color-fg-secondary);
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--yl-space-2);
+    margin-top: var(--yl-space-2);
+
+    &--inline {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--yl-space-4);
+    }
+  }
+}
+
+.yl-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yl-space-1);
+
+  &__label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--yl-space-2);
+    font-family: var(--yl-font-sans);
+    font-size: 1.4rem;
+    line-height: 1.4;
+    color: var(--yl-color-fg);
+    cursor: pointer;
+
+    &:has(input:disabled) {
+      color: var(--yl-color-fg-disabled);
+      cursor: not-allowed;
+    }
+  }
+
+  // The hint sits under the control, aligned with its label text rather than its box.
+  .yl-field__hint {
+    padding-inline-start: calc(1.6rem + var(--yl-space-2));
+  }
+}
+
+// Native controls, tinted rather than replaced. `accent-color` gets the platform's own
+// checkbox — with its keyboard handling, indeterminate state and assistive-technology
+// behaviour intact — in the design system's colour.
+.yl-checkbox,
+.yl-radio {
+  inline-size: 1.6rem;
+  block-size: 1.6rem;
+  margin: 0;
+  accent-color: var(--yl-color-brand);
+  cursor: pointer;
+
+  @include focus-ring(2px);
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.yl-switch {
+  appearance: none;
+  inline-size: 3.6rem;
+  block-size: 2rem;
+  margin: 0;
+  border-radius: var(--yl-radius-round);
+  background: var(--yl-color-border-strong);
+  position: relative;
+  cursor: pointer;
+  transition: background var(--yl-motion-fast) var(--yl-ease);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset-block-start: 0.2rem;
+    inset-inline-start: 0.2rem;
+    inline-size: 1.6rem;
+    block-size: 1.6rem;
+    border-radius: var(--yl-radius-round);
+    background: var(--yl-color-fg-inverse);
+    transition: translate var(--yl-motion-fast) var(--yl-ease);
+  }
+
+  &:checked {
+    background: var(--yl-color-brand);
+
+    &::after {
+      translate: 1.6rem 0;
+    }
+  }
+
+  @include focus-ring(2px);
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.yl-slider {
+  inline-size: 100%;
+  accent-color: var(--yl-color-brand);
+  cursor: pointer;
+
+  @include focus-ring(2px);
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yl-switch,
+  .yl-switch::after {
+    transition: none;
+  }
+}
