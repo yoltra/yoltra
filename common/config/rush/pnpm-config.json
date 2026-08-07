@@ -1,0 +1,29 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/pnpm-config.schema.json",
+
+  /**
+   * PNPM options, moved here from rush.json's deprecated pnpmOptions field so
+   * this file can also carry globalOverrides (rush.json pnpmOptions cannot).
+   */
+  "pnpmStore": "global",
+  "strictPeerDependencies": false,
+  "preventManualShrinkwrapChanges": true,
+  "useWorkspaces": true,
+
+  /**
+   * Applied to every project in the workspace (pnpm `overrides`).
+   *
+   * These pins previously sat in the root package.json's pnpm.overrides field,
+   * which Rush does NOT propagate into the generated workspace root
+   * (common/temp/package.json) — they were never enforced. Here they are.
+   */
+  "globalOverrides": {
+    "rollup": "4.52.5",
+    "vite": "7.1.11",
+    "typedoc": "0.28.13",
+    "typescript": "5.9.3",
+    "typedoc>typescript": "5.9.3",
+    "typedoc-plugin-markdown>typedoc": "0.28.13",
+    "typedoc-plugin-markdown>typescript": "5.9.3"
+  }
+}

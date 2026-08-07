@@ -68,3 +68,19 @@ jobs:
           --publish
           --include-all
           --set-access-level public
+
+      # The extension does not go to npm — it goes to a browser store, by hand, through a review
+      # queue. Attaching the packaged zip to the release means the artefact that gets submitted
+      # is the one this tag built, rather than whatever a maintainer had in `dist/` locally.
+      - name: Package the browser extension
+        run: node common/scripts/install-run-rushx.js package
+        working-directory: devtools/devtools-ext
+        continue-on-error: true
+
+      - name: Attach the extension to the release
+        uses: actions/upload-artifact@v4
+        with:
+          name: yoltra-devtools-extension
+          path: devtools/devtools-ext/store/*.zip
+          if-no-files-found: warn
+
