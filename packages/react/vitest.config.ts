@@ -26,16 +26,21 @@ export default defineConfig({
 
     coverage: {
       reporter: ["text", "html", "lcov"],
+      // Scoped to the shipped sources, as in `packages/core`. Without it coverage measured
+      // whatever a run happened to load and excluded the rest one path at a time — and a
+      // `benchmarks` directory, which by design executes nothing under `vitest run`, counted
+      // as 0% and dragged the aggregate under the gate.
+      include: ["src/**/*.ts", "src/**/*.tsx"],
       exclude: [
         "dist",
-        "common",
         "src/index.ts",
         "src/types.ts",
         "**/*.d.ts",
-        "**/*.config.ts",
-        "tests"
+        "**/*.config.ts"
       ],
-      thresholds: { lines: 0.95, branches: 0.95, functions: 0.95, statements: 0.95 }
+      // Percentages, not fractions — see the note in `packages/core/vitest.config.ts`. As
+      // fractions these enforced 0.95%, so the gate never failed anything.
+      thresholds: { lines: 96, statements: 96, branches: 95, functions: 95 }
     },
   },
   resolve: {

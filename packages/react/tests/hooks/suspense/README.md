@@ -31,7 +31,7 @@ load(valueAtPath, slice) => Promise<T> | T
 
 The hooks then handle:
 
-- cache keying (per path + optional extra key)
+- cache keying (per store + path + optional extra key)
 - invalidation on state changes
 - subscription wiring via `store.connect`
 - Suspense integration via `useSyncExternalStore`
@@ -43,10 +43,13 @@ The hooks then handle:
 ### Cache Utilities
 
 - `invalidateAtomicProp(reducer, property, extraKey?)`  
-  ✓ Deletes a single cache entry for a specific path.
+  ✓ Deletes the entry for that path in every store that cached it. The helper names no store,
+  so it cannot address one; an entry differentiated by `options.key` is a different path and is
+  left alone.
 
 - `invalidateAtomicPropsByReducer(reducer)`  
-  ✓ Deletes all cache entries whose key starts with the reducer prefix.
+  ✓ Deletes every entry that reads from the reducer, in any store — including multi-path entries
+  where the reducer is not the first component of the key.
 
 - `clearSuspenseCache()`  
   ✓ Clears the entire in-memory Suspense cache.
@@ -93,6 +96,23 @@ Tests check that:
 
 - Initial load is performed once.
 - After state changes on a dependent path, `load` is called again with the updated state.
+
+---
+
+## Which context each hook reads (`context-boundary.test.tsx`)
+
+`createYoltra` and `createHooks` build a private context and return every hook bound to it,
+Suspense included. The copies exported from the package barrel read the package-level
+`StoreContext`, which neither factory fills.
+
+The file pins both sides, because the two are identical in shape and nothing in the types tells
+them apart:
+
+- A hook returned by `createYoltra` resolves and re-loads with no `<StoreProvider>` anywhere.
+- Two stores with the same reducer and path keep separate cache entries — the store id in the key
+  is what stops one from serving the other's value.
+- An entry created by a bound hook is still reachable from `invalidateAtomicProp`.
+- The barrel's copies still throw without a provider, and still work with one.
 
 ---
 

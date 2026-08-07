@@ -51,12 +51,12 @@ describe("StrictMode / useSyncExternalStore safety (TEST-1)", () => {
 
     const aSpec: ReducerSpec<AppState["a"], EM> = {
       state: { x: 0 },
-      events: [["ui", "bumpA"]],
+      when: { keys: [["ui", "bumpA"]] },
       reducer: (s, e) => (e.type === "bumpA" ? { x: s.x + (e.payload as number) } : s),
     };
     const bSpec: ReducerSpec<AppState["b"], EM> = {
       state: { y: 0 },
-      events: [["ui", "bumpB"]],
+      when: { keys: [["ui", "bumpB"]] },
       reducer: (s, e) => (e.type === "bumpB" ? { y: s.y + (e.payload as number) } : s),
     };
 

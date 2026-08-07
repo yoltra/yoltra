@@ -20,28 +20,42 @@ describe("Suspense cache utilities", () => {
     clearSuspenseCache();
   });
 
-  it("invalidateAtomicProp removes a single cached key", () => {
+  // Entry keys are `<storeId>::<reducer>::<path>`: the id keeps two stores with the same reducer
+  // and path from sharing a value. The public invalidate helpers name no store, so they have to
+  // reach across every id — which is what these two check.
+  const ready = (value: unknown) => ({ status: "ready", value, expiresAt: null });
+
+  it("invalidateAtomicProp removes that path in every store that cached it", () => {
     const internalStore = (suspenseCache as any).store as Map<string, any>;
-    internalStore.set("todos::items.0.title", { status: "ready", value: "a", expiresAt: null });
-    internalStore.set("other::x", { status: "ready", value: 1, expiresAt: null });
+    internalStore.set("s1::todos::items.0.title", ready("a"));
+    internalStore.set("s2::todos::items.0.title", ready("b"));
+    internalStore.set("s1::todos::items.0.title::detail", ready("c"));
+    internalStore.set("s1::other::x", ready(1));
 
     invalidateAtomicProp("todos", "items.0.title");
 
-    expect(internalStore.has("todos::items.0.title")).toBe(false);
-    expect(internalStore.has("other::x")).toBe(true);
+    expect(internalStore.has("s1::todos::items.0.title")).toBe(false);
+    expect(internalStore.has("s2::todos::items.0.title")).toBe(false);
+    // An `options.key` makes a distinct entry, so it is not this path.
+    expect(internalStore.has("s1::todos::items.0.title::detail")).toBe(true);
+    expect(internalStore.has("s1::other::x")).toBe(true);
   });
 
-  it("invalidateAtomicPropsByReducer removes all keys for a reducer prefix", () => {
+  it("invalidateAtomicPropsByReducer removes every entry that reads from the reducer", () => {
     const internalStore = (suspenseCache as any).store as Map<string, any>;
-    internalStore.set("todos::items.0.title", { status: "ready", value: "a", expiresAt: null });
-    internalStore.set("todos::items.1.title", { status: "ready", value: "b", expiresAt: null });
-    internalStore.set("filter::q", { status: "ready", value: "x", expiresAt: null });
+    internalStore.set("s1::todos::items.0.title", ready("a"));
+    internalStore.set("s2::todos::items.1.title", ready("b"));
+    // A multi-path entry joins its parts with `||`, sorted — so the reducer can land anywhere
+    // in the key rather than only at the front.
+    internalStore.set("s1::filter::q||todos::items.**", ready("c"));
+    internalStore.set("s1::filter::q", ready("x"));
 
     invalidateAtomicPropsByReducer("todos");
 
-    expect(internalStore.has("todos::items.0.title")).toBe(false);
-    expect(internalStore.has("todos::items.1.title")).toBe(false);
-    expect(internalStore.has("filter::q")).toBe(true);
+    expect(internalStore.has("s1::todos::items.0.title")).toBe(false);
+    expect(internalStore.has("s2::todos::items.1.title")).toBe(false);
+    expect(internalStore.has("s1::filter::q||todos::items.**")).toBe(false);
+    expect(internalStore.has("s1::filter::q")).toBe(true);
   });
 
   it("clearSuspenseCache wipes all entries", () => {
@@ -215,7 +229,7 @@ describe("SuspenseCache.read lifecycle (RX-1)", () => {
 
     let thrown: unknown;
     try {
-      suspenseCache.read("k::ready", load, 0);
+      suspenseCache.read("k::ready", load, 0, undefined);
     } catch (e) {
       thrown = e;
     }
@@ -224,8 +238,8 @@ describe("SuspenseCache.read lifecycle (RX-1)", () => {
 
     // At staleTime 0 a ready entry no longer expires on the same tick — repeated
     // reads return the cached value instead of re-loading every render.
-    expect(suspenseCache.read("k::ready", load, 0)).toBe("V");
-    expect(suspenseCache.read("k::ready", load, 0)).toBe("V");
+    expect(suspenseCache.read("k::ready", load, 0, undefined)).toBe("V");
+    expect(suspenseCache.read("k::ready", load, 0, undefined)).toBe("V");
     expect(load).toHaveBeenCalledTimes(1);
   });
 
@@ -235,12 +249,12 @@ describe("SuspenseCache.read lifecycle (RX-1)", () => {
     let p1: unknown;
     let p2: unknown;
     try {
-      suspenseCache.read("k::pending", load, 0);
+      suspenseCache.read("k::pending", load, 0, undefined);
     } catch (e) {
       p1 = e;
     }
     try {
-      suspenseCache.read("k::pending", load, 0);
+      suspenseCache.read("k::pending", load, 0, undefined);
     } catch (e) {
       p2 = e;
     }
@@ -251,7 +265,47 @@ describe("SuspenseCache.read lifecycle (RX-1)", () => {
     expect(load).toHaveBeenCalledTimes(1);
   });
 
-  it("re-throws a cached error until invalidated, independent of staleTime", async () => {
+  it("delivers a failure once, then retries — so resetting a boundary actually retries", async () => {
+    // The bug this replaced: a cached error was held until something invalidated it, so a
+    // retry button reset the boundary, the component re-rendered, and the stored error was
+    // thrown again without the loader ever running. A network blip became permanent.
+    const err = new Error("boom");
+    let attempts = 0;
+    const load = vi.fn(async () => {
+      attempts += 1;
+      if (attempts === 1) throw err;
+      return "recovered";
+    });
+
+    let thrown: unknown;
+    try {
+      suspenseCache.read("k::err", load, 0, undefined);
+    } catch (e) {
+      thrown = e;
+    }
+    await thrown;
+
+    // The failure reaches the boundary once — and it must, or the component would suspend
+    // again instead of showing an error.
+    expect(() => suspenseCache.read("k::err", load, 0, undefined)).toThrow(err);
+    expect(load).toHaveBeenCalledTimes(1);
+
+    // The next read — a boundary reset, in React terms — retries rather than re-delivering.
+    let pending: unknown;
+    try {
+      suspenseCache.read("k::err", load, 0, undefined);
+    } catch (e) {
+      pending = e;
+    }
+    expect(pending).toBeInstanceOf(Promise);
+    await pending;
+    expect(load).toHaveBeenCalledTimes(2);
+    expect(suspenseCache.read("k::err", load, 0, undefined)).toBe("recovered");
+  });
+
+  it("holds a failure until invalidated when asked to", async () => {
+    // The old behaviour, still available — now something a caller opts into rather than the
+    // default nobody chose.
     const err = new Error("boom");
     const load = vi.fn(async () => {
       throw err;
@@ -259,27 +313,133 @@ describe("SuspenseCache.read lifecycle (RX-1)", () => {
 
     let thrown: unknown;
     try {
-      suspenseCache.read("k::err", load, 0);
+      suspenseCache.read("k::held", load, 0, null);
     } catch (e) {
       thrown = e;
     }
-    await thrown; // wrapper resolves once the rejection is caught and cached
+    await thrown;
 
-    // The cached error is re-thrown on every read — staleTime 0 must NOT expire it.
-    expect(() => suspenseCache.read("k::err", load, 0)).toThrow(err);
-    expect(() => suspenseCache.read("k::err", load, 0)).toThrow(err);
+    expect(() => suspenseCache.read("k::held", load, 0, null)).toThrow(err);
+    expect(() => suspenseCache.read("k::held", load, 0, null)).toThrow(err);
     expect(load).toHaveBeenCalledTimes(1);
 
-    // Invalidation clears the error and the next read retries.
-    suspenseCache.invalidate("k::err");
+    suspenseCache.invalidate("k::held");
     let retry: unknown;
     try {
-      suspenseCache.read("k::err", load, 0);
+      suspenseCache.read("k::held", load, 0, null);
     } catch (e) {
       retry = e;
     }
-    expect(retry).toBeInstanceOf(Promise);
+    // The loader runs in a microtask, not during `read`, so the count only settles after it.
     await retry;
     expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it("puts a floor between attempts when given one", async () => {
+    // For a loader that fails fast and would otherwise be re-attempted on every reset.
+    const load = vi.fn(async () => {
+      throw new Error("boom");
+    });
+
+    let thrown: unknown;
+    try {
+      suspenseCache.read("k::floor", load, 0, 10_000);
+    } catch (e) {
+      thrown = e;
+    }
+    await thrown;
+
+    expect(() => suspenseCache.read("k::floor", load, 0, 10_000)).toThrow();
+    expect(() => suspenseCache.read("k::floor", load, 0, 10_000)).toThrow();
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("suspense cache bounds", () => {
+  it("stops growing once past its cap", async () => {
+    clearSuspenseCache();
+
+    // A component reading a dynamic path mints a key per value it has ever seen. Unbounded,
+    // that grows for the lifetime of the process — and because the cache is module-scoped, it
+    // grows across server requests too.
+    for (let i = 0; i < 2500; i++) {
+      try {
+        suspenseCache.read(`slice::byId.${i}.name`, () => i, null, undefined);
+      } catch (promise) {
+        await promise;
+      }
+    }
+
+    expect(suspenseCache.size).toBeLessThanOrEqual(2000);
+  });
+
+  it("keeps the entries still being read and drops the coldest", async () => {
+    clearSuspenseCache();
+
+    const settle = async (key: string, value: number) => {
+      try {
+        return suspenseCache.read(key, () => value, null, undefined);
+      } catch (promise) {
+        await promise;
+        return suspenseCache.read(key, () => value, null, undefined);
+      }
+    };
+
+    await settle("slice::hot", 1);
+    for (let i = 0; i < 2100; i++) {
+      await settle(`slice::cold.${i}`, i);
+      // Reading the hot key keeps it young; eviction order should follow last use, not the
+      // order things were first loaded.
+      if (i % 100 === 0) await settle("slice::hot", 1);
+    }
+
+    expect(await settle("slice::hot", 1)).toBe(1);
+    expect(suspenseCache.size).toBeLessThanOrEqual(2000);
+  });
+});
+
+describe("suspense cache eviction never drops a load in flight", () => {
+  it("skips a pending entry and evicts a settled one instead", async () => {
+    clearSuspenseCache();
+
+    // A load nobody has resolved yet: a suspended component is waiting on exactly this promise,
+    // so evicting it would leave that component suspended forever with nothing to resume it.
+    let release: ((v: number) => void) | undefined;
+    const pending = new Promise<number>((r) => {
+      release = r;
+    });
+    // Counting loads is what proves survival: an evicted entry would be reloaded on the next
+    // read, and the cache wraps the caller's promise so identity cannot be compared directly.
+    const load = vi.fn(() => pending);
+    try {
+      suspenseCache.read("slice::in-flight", load, null, undefined);
+    } catch {
+      /* suspended, as intended */
+    }
+    // The cache defers the loader to a microtask, so let it start before counting.
+    await Promise.resolve();
+    expect(load).toHaveBeenCalledTimes(1);
+
+    // Push far past the cap so eviction has to run repeatedly and meet the pending entry.
+    for (let i = 0; i < 2200; i++) {
+      try {
+        suspenseCache.read(`slice::filler.${i}`, () => i, null, undefined);
+      } catch (promise) {
+        await promise;
+      }
+    }
+
+    // Still there, still pending: it was passed over rather than discarded.
+    let suspended = false;
+    try {
+      suspenseCache.read("slice::in-flight", load, null, undefined);
+    } catch {
+      suspended = true;
+    }
+    expect(suspended).toBe(true);
+    expect(load).toHaveBeenCalledTimes(1);
+
+    release?.(1);
+    await pending;
   });
 });

@@ -122,8 +122,17 @@ export const AppStoreContext = createContext<StoreInstance<"counter", AppState, 
   null,
 );
 
-export const { useStore, useEmit, useSelector, useAtomicProp, useAtomicProps, useEvent, shallowEqual } =
-  createHooks(AppStoreContext);
+export const {
+  useStore,
+  useEmit,
+  useSelector,
+  useAtomicProp,
+  useAtomicProps,
+  useEvent,
+  useSuspenseAtomicProp,
+  useSuspenseAtomicProps,
+  shallowEqual,
+} = createHooks(AppStoreContext);
 ```
 
 Provee el store con `<AppStoreContext.Provider value={store}>` en tu raiz.
@@ -252,8 +261,18 @@ Retorna la instancia del store. Lanza error si se llama fuera de un provider.
 
 ```tsx
 const store = useStore();
-const state = store.getState();
+
+// ✅ En un callback o un efecto: lee el valor en el momento en que se quiere.
+const onSave = () => save(store.getState());
+
+// ❌ En el cuerpo del render: esto no se suscribe a nada.
+const value = store.getState().counter.value;
 ```
+
+`getState()` es una lectura, no una suscripción. Llamado durante el render, el componente se
+renderiza una vez con ese valor y nunca más — nada le avisó de que el valor cambió. Parece que
+funciona hasta que el estado cambia y la pantalla no. Lee con `useAtomicProp` o `useSelector` lo
+que vayas a renderizar, y deja `getState()` para callbacks y efectos, que es para lo que es.
 
 ---
 
@@ -295,6 +314,27 @@ const stats = useSuspenseAtomicProps(
   { load: async (state) => computeDashboardStats(state) },
 );
 ```
+
+### Importalos de tu conjunto de hooks, no del barrel
+
+`createYoltra` y `createHooks` devuelven estos dos junto con el resto, ligados al mismo contexto.
+Deliberadamente **no** se exportan desde el barrel del paquete: una copia a nivel de paquete seria
+identica en forma y aun asi lanzaria `useStore must be used inside <StoreProvider>` en tiempo de
+ejecucion cuando el contexto que lee nunca se lleno — un error que los tipos no podian atrapar.
+Importarlos desde cualquier sitio que no sea el resultado de tu propio `createYoltra`/`createHooks`
+es ahora un error de compilacion, que es el mismo aviso llegando en el momento correcto.
+
+```tsx
+// store.ts
+export const { store, useAtomicProp, useSuspenseAtomicProp } = createYoltra({ ... });
+
+// Forecast.tsx
+import { useSuspenseAtomicProp } from "./store";   // ✅ conoce el store
+```
+
+Los valores en cache tienen alcance por store, asi que dos stores que compartan nombre de reducer
+y ruta mantienen entradas separadas; las utilidades de invalidacion de abajo reciben una ruta y la
+limpian en todos los stores que la hayan cacheado.
 
 ### Utilidades de cache
 
@@ -410,6 +450,25 @@ function TodoItem({ index }: { index: number }) {
 antes de v1.0.0.
 
 ---
+
+## Colecciones normalizadas
+
+`useEntityIds`, `useEntity` y `useEntityField` se emparejan con `createEntityAdapter` de
+`@yoltra/core`. Son envoltorios delgados sobre `useAtomicProp`; el valor esta en que la ruta viene
+del adapter en vez de escribirse a mano en un componente, donde nada la verifica.
+
+```tsx
+function List() {
+  const ids = useEntityIds('todos', todos);
+  return <>{ids.map((id) => <Row key={id} id={id} />)}</>;
+}
+
+function Row({ id }: { id: string }) {
+  // Despierta cuando cambia este titulo, y no cuando cambia el de otra fila.
+  const title = useEntityField('todos', todos, id, 'title');
+  return <li>{title}</li>;
+}
+```
 
 ## Licencia
 

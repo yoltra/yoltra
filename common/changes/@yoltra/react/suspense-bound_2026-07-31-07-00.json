@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "The Suspense cache is bounded. Keys are built from the reducer and the subscribed path, so a component reading a dynamic path mints one per value it has ever seen — unbounded, that grew for the lifetime of the process, and because the cache is module-scoped it grew across server requests too. Entries are now capped with least-recently-used eviction, keyed on read order rather than load order, and a load still in flight is never evicted: a suspended component is waiting on that promise and dropping it would leave it suspended with nothing to resume it.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

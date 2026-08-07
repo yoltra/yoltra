@@ -15,6 +15,7 @@ import type {
 } from "@yoltra/core";
 import { useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { StoreContext } from "../context/StoreContext";
+import { guardProjection, projectDeclared } from "../utils/declaredProjection";
 import { getAtPath, hasWildcard, normalizePath, specsSignature } from "../utils/path";
 import { useStableSnapshot } from "../utils/useStableSnapshot";
 
@@ -292,6 +293,19 @@ export function useAtomicProp<R extends string, S extends Record<R, any>, T = an
  * );
  * ```
  *
+ * @remarks
+ * The selector receives **only the paths declared in `specs`**, not the whole store. Reading
+ * anything else yields `undefined` in production and throws in development, naming the path.
+ *
+ * That is deliberate, and it replaced a real bug: the two arguments used to be independent, so
+ * a component could subscribe to one path and read another. It compiled, it ran, and it worked
+ * for as long as the two happened to change together — this repository shipped exactly that in
+ * its own example, where a list subscribed to `todo.filter` while reading `todo.data` and
+ * re-rendered only because adding a todo also rewrote `filter.categories`.
+ *
+ * Correct code is unaffected. Code that read more than it declared was already wrong, and now
+ * says so on the first render rather than on the first day the coincidence breaks.
+ *
  * @public
  */
 export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
@@ -370,9 +384,25 @@ function useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
     [store, normalizedSpecs],
   );
 
+  // Derived from the very specs that drive the subscriptions above, so what the selector can
+  // see and what wakes the component come from one source and cannot drift apart.
+  const declared = useMemo(
+    () =>
+      normalizedSpecs.flatMap((sp) =>
+        (Array.isArray(sp.property) ? sp.property : [sp.property]).map((property) => ({
+          reducer: sp.reducer as string,
+          property,
+        })),
+      ),
+    [normalizedSpecs],
+  );
+
   const getSnapshot = useCallback(() => {
     if (lastVerRef.current !== versionRef.current || !hasValueRef.current) {
-      const next = selectorRef.current(store.getState() as DeepReadonly<S>);
+      const projection = projectDeclared(store.getState(), declared);
+      const visible =
+        process.env.NODE_ENV !== "production" ? guardProjection(projection, declared) : projection;
+      const next = selectorRef.current(visible as DeepReadonly<S>);
 
       // Track presence with a boolean so an `undefined` selection still caches
       // (using `undefined` as "no value yet" would disable the equality cache).
@@ -385,7 +415,7 @@ function useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
     }
 
     return lastSelRef.current as T;
-  }, [store]);
+  }, [store, declared]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

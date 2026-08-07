@@ -8,7 +8,7 @@
 
 > **createYoltra**\<`RM`\>(`cfg`): [`Yoltra`](../interfaces/Yoltra.md)\<keyof `RM` & `string`, `StateFromReducers`\<`RM`\>, `EMFromReducersStrict`\<`RM`\>\>
 
-Defined in: [react/src/createYoltra.tsx:85](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/createYoltra.tsx#L85)
+Defined in: [react/src/createYoltra.tsx:102](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L102)
 
 One-call setup: create a store and its fully-typed React hooks together.
 
@@ -64,7 +64,8 @@ The same configuration accepted by createStore.
 
 The `store`, an optional `StoreProvider`, the raw `StoreContext`, and
 the full set of typed hooks (`useAtomicProp`, `useAtomicProps`, `useEmit`,
-`useEvent`, `useSelector`, `useStore`, `shallowEqual`).
+`useEvent`, `useSelector`, `useStore`, `useSuspenseAtomicProp`,
+`useSuspenseAtomicProps`, `shallowEqual`).
 
 ## Remarks
 
@@ -79,7 +80,22 @@ singleton, and the Suspense hooks share a module-global cache. Do not reuse a
 between them. For SSR, create a store per request and scope it with
 `StoreProvider`.
 
-## Example
+**The Suspense hooks are part of this set.** Take `useSuspenseAtomicProp` and
+`useSuspenseAtomicProps` from here, not from the `@yoltra/react` barrel: the
+barrel's copies read the *package-level* context, which this function never
+fills, so they would throw `useStore must be used inside <StoreProvider>` at
+runtime with nothing in the types to warn you — the two are identical in
+shape. The ones returned here are bound to this store's own context and need
+no provider, like the rest of the set.
+
+## Examples
+
+```tsx
+export const { store, useAtomicProp, useSuspenseAtomicProp } = createYoltra({ ... });
+
+// No <StoreProvider> anywhere: every hook above already knows this store.
+createRoot(el).render(<App />);
+```
 
 ```tsx
 export const { store, useAtomicProp, useEmit } = createYoltra({
@@ -87,7 +103,7 @@ export const { store, useAtomicProp, useEmit } = createYoltra({
   reducer: {
     counter: {
       state: { value: 0 },
-      events: [['ui', 'increment']],
+      when: { keys: [['ui', 'increment']] },
       reducer: (s, e) => (e.type === 'increment' ? { value: s.value + e.payload } : s),
     },
   },

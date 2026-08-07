@@ -54,11 +54,28 @@ export interface Yoltra<R extends string, S extends Record<R, any>, EM extends E
  * between them. For SSR, create a store per request and scope it with
  * `StoreProvider`.
  *
+ * **The Suspense hooks are part of this set.** Take `useSuspenseAtomicProp` and
+ * `useSuspenseAtomicProps` from here, not from the `@yoltra/react` barrel: the
+ * barrel's copies read the *package-level* context, which this function never
+ * fills, so they would throw `useStore must be used inside <StoreProvider>` at
+ * runtime with nothing in the types to warn you — the two are identical in
+ * shape. The ones returned here are bound to this store's own context and need
+ * no provider, like the rest of the set.
+ *
+ * @example Suspense alongside createYoltra
+ * ```tsx
+ * export const { store, useAtomicProp, useSuspenseAtomicProp } = createYoltra({ ... });
+ *
+ * // No <StoreProvider> anywhere: every hook above already knows this store.
+ * createRoot(el).render(<App />);
+ * ```
+ *
  * @typeParam RM - Reducers map; state shape and event map are inferred from it.
  * @param cfg - The same configuration accepted by {@link createStore}.
  * @returns The `store`, an optional `StoreProvider`, the raw `StoreContext`, and
  * the full set of typed hooks (`useAtomicProp`, `useAtomicProps`, `useEmit`,
- * `useEvent`, `useSelector`, `useStore`, `shallowEqual`).
+ * `useEvent`, `useSelector`, `useStore`, `useSuspenseAtomicProp`,
+ * `useSuspenseAtomicProps`, `shallowEqual`).
  *
  * @example
  * ```tsx
@@ -67,7 +84,7 @@ export interface Yoltra<R extends string, S extends Record<R, any>, EM extends E
  *   reducer: {
  *     counter: {
  *       state: { value: 0 },
- *       events: [['ui', 'increment']],
+ *       when: { keys: [['ui', 'increment']] },
  *       reducer: (s, e) => (e.type === 'increment' ? { value: s.value + e.payload } : s),
  *     },
  *   },

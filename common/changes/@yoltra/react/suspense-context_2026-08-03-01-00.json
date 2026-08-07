@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "`createYoltra` and `createHooks` now return `useSuspenseAtomicProp` and `useSuspenseAtomicProps` bound to their own context, so the hook set they hand back is complete.\\n\\nThose two were only ever exported from the package barrel, where they read the package-level `StoreContext`. Neither factory fills that context — both build a private one — so reaching for Suspense alongside them threw `useStore must be used inside <StoreProvider>` the moment the component rendered. Nothing in the types said so, because the barrel's copies and the bound ones are identical in shape, and the workaround (mount a `<StoreProvider>` carrying the store the factory already returned) reads as ceremony rather than as the fix for a real split.\\n\\nSuspense cache entries are now scoped per store as well. Keys were `reducer::path`, which two stores sharing a reducer name collide on: whichever loaded first served its value to the other. That was already reachable by scoping a store with `<StoreProvider>`, and binding the hooks per context makes it ordinary. `invalidateAtomicProp` and `invalidateAtomicPropsByReducer` name a path and no store, so they clear that path in every store that cached it; the by-reducer form also now reaches multi-path entries where the reducer is not the first component of the key.\\n\\nThe barrel's copies are unchanged and still read the package-level context — the right choice when you are providing the store with `<StoreProvider>` anyway.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

@@ -2,6 +2,11 @@
   "compilerOptions": {
     "jsx": "react-jsx",
 
+    // `tsconfig.build.json` extends this file, so the published declarations were emitted
+    // without it: consumers of a package whose selling point is end-to-end type safety were
+    // reading types checked more loosely than their own code.
+    "strict": true,
+
     // Keep default tsc runs happy (no output from this config)
     "noEmit": true,
 

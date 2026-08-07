@@ -18,6 +18,11 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalSto
 import { getAtPath, hasWildcard, normalizePath, specsSignature, toDottedPath } from "../utils/path";
 import { shallowEqual } from "../utils/shallowEqual";
 import { useStableSnapshot } from "../utils/useStableSnapshot";
+import {
+  createSuspenseHooks,
+  type UseSuspenseAtomicProp,
+  type UseSuspenseAtomicProps,
+} from "./suspense";
 
 /**
  * Call signature for the typed `useAtomicProp` hook returned by {@link createHooks}.
@@ -186,6 +191,10 @@ export interface YoltraHooks<
   useAtomicProps: UseAtomicProps<R, S>;
   /** Runs a handler for a specific `(channel, type)` event. */
   useEvent: UseEvent<EM, S>;
+  /** Suspense-loading variant of `useAtomicProp`, bound to the same context. */
+  useSuspenseAtomicProp: UseSuspenseAtomicProp<R, S>;
+  /** Suspense-loading variant of `useAtomicProps`, bound to the same context. */
+  useSuspenseAtomicProps: UseSuspenseAtomicProps<R, S>;
   /** Shallow object equality using `Object.is` per-key. */
   shallowEqual: <T extends Record<string, unknown>>(a: T, b: T) => boolean;
 }
@@ -203,7 +212,8 @@ export interface YoltraHooks<
  *
  * @param StoreContext - A React context carrying a `StoreInstance<R, S, EM>`.
  * @returns An object with typed hooks: `useStore`, `useEmit`, `useSelector`,
- *   `useAtomicProp`, `useAtomicProps`, `useEvent`, and `shallowEqual`.
+ *   `useAtomicProp`, `useAtomicProps`, `useEvent`, `useSuspenseAtomicProp`,
+ *   `useSuspenseAtomicProps`, and `shallowEqual`.
  *
  * @throws If any returned hook is called outside a `<StoreProvider>`.
  *
@@ -427,6 +437,10 @@ export function createHooks<
     }, [store, channel, type, phase]);
   };
 
+  // Bound to the context above, not the package-level one, so the returned set is complete:
+  // a caller who has these hooks never has to also mount a `<StoreProvider>` to reach Suspense.
+  const { useSuspenseAtomicProp, useSuspenseAtomicProps } = createSuspenseHooks<R, S, EM>(useStore);
+
   return {
     useStore,
     useEmit,
@@ -434,6 +448,8 @@ export function createHooks<
     useAtomicProp,
     useAtomicProps,
     useEvent,
+    useSuspenseAtomicProp,
+    useSuspenseAtomicProps,
     shallowEqual,
   };
 }
