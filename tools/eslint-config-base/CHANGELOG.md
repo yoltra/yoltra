@@ -1,6 +1,13 @@
 # Change Log - @yoltra/eslint-config-base
 
-This log was last generated on Fri, 10 Jul 2026 07:51:29 GMT and should not be manually modified.
+This log was last generated on Fri, 07 Aug 2026 13:15:02 GMT and should not be manually modified.
+
+## 0.2.2
+Fri, 07 Aug 2026 13:15:02 GMT
+
+### Patches
+
+- Add the repository field to package.json so npm can establish build provenance for published releases.
 
 ## 0.2.1
 Fri, 10 Jul 2026 07:51:29 GMT

@@ -1,6 +1,6 @@
 {
   "name": "@yoltra/ds",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Yoltra Design System \u2014 tokens and primitive React components shared across the website, docs, and examples",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && vite build && node scripts/build-styles.mjs",

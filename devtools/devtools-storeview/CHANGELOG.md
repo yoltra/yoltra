@@ -1,6 +1,18 @@
 # Change Log - @yoltra/devtools-storeview
 
-This log was last generated on Sun, 12 Jul 2026 00:20:57 GMT and should not be manually modified.
+This log was last generated on Fri, 07 Aug 2026 13:15:02 GMT and should not be manually modified.
+
+## 0.4.0
+Fri, 07 Aug 2026 13:15:02 GMT
+
+### Minor changes
+
+- The time-travel panel offers event replay, which the UI package had implemented and exported and no panel ever called. Replay differs from scrubbing: time-travel sets the state at a point, replay re-runs the recorded events through the reducers alone — no effects, no middleware — which is how a reducer is checked against the transitions actually recorded. The action appears only when the store advertises the capability. The package also renders in its tests now rather than being asserted by reading it.
+
+### Patches
+
+- Tab availability moves into a tested module. The rule is small but it decides what a user may click, and inside the app component it could only be reached by rendering the whole panel against a mock hub. Both capabilities it consults default to off, so most stores support only part of the panel, and offering a tab whose controls silently do nothing is worse than not offering it. Switching stores now resolves through the same rule, so a panel left on Time Travel and pointed at a store that cannot replay falls back rather than sitting on dead controls.
+- `TimeTravelPanelProps` is exported. The panel's props were declared inline, so no caller — including its own test — could name the type it renders from.
 
 ## 0.3.0
 Sun, 12 Jul 2026 00:20:57 GMT

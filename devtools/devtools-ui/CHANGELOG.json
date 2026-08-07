@@ -2,6 +2,31 @@
   "name": "@yoltra/devtools-ui",
   "entries": [
     {
+      "version": "0.4.0",
+      "tag": "@yoltra/devtools-ui_v0.4.0",
+      "date": "Fri, 07 Aug 2026 13:15:02 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Coverage is now measured and gated. No package in the devtools suite had a threshold of any kind, so nothing stopped coverage falling; the tooling to measure it was not installed either. Thresholds are set at what is actually met so a regression fails the build, with type declarations and entry points excluded because counting files that compile to nothing measures how much of a package is types rather than how much of its logic is tested. Modules that are genuinely under-tested are left in the numbers rather than excluded — hiding one makes the figure look better and the package no safer."
+          }
+        ],
+        "patch": [
+          {
+            "comment": "The in-memory hub names the negotiated protocol version by the field the interface and the real hub use. It sent `protocolVersion` where both declare `negotiatedVersion` — harmless only while nothing read it, and the moment something did, the embedded panel would have failed where the real hub worked, in the one path with no server to inspect."
+          },
+          {
+            "comment": "Two costs that made the panel unusable on a large store are gone. applyPatches deep-cloned the whole state before applying anything, although setAtPath and removeAtPath already copy each node along the touched path and never write into their input — so the clone duplicated the entire tree only to have the parts that mattered copied again, turning an operation proportional to the change into one proportional to the store, on every event. It also destroyed structural sharing, so a one-field update looked to the panel's memoization like the whole store had changed. Measured on a 3000-row state, applying one patch went from 4.9ms to 0.75ms. Separately, state reconstruction replayed from the baseline through every entry on every call, and live events arriving while the panel is open triggered one such replay each — quadratic in the length of the history. It now continues from the previous result, validated by the identity of the entry it was built against rather than by position, because the event log is capped and drops its oldest entries, which shifts every index and would otherwise let a cache resume from the wrong entry and produce a state that never existed. Measured over 300 events on a 500-row state, 2834ms became 19.7ms. The replay is extracted as a pure replayState function, following the same reasoning that put the step-boundary maths in planStep: it is the part with the interesting failure modes, and inside a hook it can only be reached through a rendered component."
+          }
+        ],
+        "minor": [
+          {
+            "comment": "Panel messages carry the identity the panel already had. Every command went out with an empty sourceId, so the hub could not tell one panel's commands from another's — with two open, or an authenticated hub auditing who drove a store, a time-travel or an injected event was attributable to nobody. The id generated for the handshake is now exposed on the hub context and stamped on everything sent."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.3.0",
       "tag": "@yoltra/devtools-ui_v0.3.0",
       "date": "Sun, 12 Jul 2026 00:20:57 GMT",
