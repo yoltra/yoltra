@@ -10,6 +10,10 @@ export default defineConfig({
         devtools: resolve(__dirname, "src/devtools.html"),
         panel: resolve(__dirname, "src/panel.html"),
         popup: resolve(__dirname, "src/popup.html"),
+        // The bridge that lets a page be inspected without a hub process. Both are named in the
+        // manifest, so they must emit at predictable paths — `entryFileNames` keeps them there.
+        "content-script": resolve(__dirname, "src/content-script.ts"),
+        background: resolve(__dirname, "src/background.ts"),
       },
       output: {
         entryFileNames: "[name].js",

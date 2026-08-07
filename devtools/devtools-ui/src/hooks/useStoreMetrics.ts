@@ -76,7 +76,7 @@ export function useStoreMetrics(
   loading: boolean;
   refresh: () => void;
 } {
-  const { send, subscribe } = useHubConnection();
+  const { send, subscribe, extensionId } = useHubConnection();
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(false);
   const intervalMs = options?.refreshIntervalMs ?? 2000;
@@ -89,10 +89,10 @@ export function useStoreMetrics(
       type: "REQUEST_METRICS",
       storeId,
       timestamp: new Date().toISOString(),
-      sourceId: "",
+      sourceId: extensionId,
       sourceRole: DevtoolsRole.EXTENSION,
     });
-  }, [storeId, send]);
+  }, [storeId, send, extensionId]);
 
   useEffect(() => {
     if (!storeId) {

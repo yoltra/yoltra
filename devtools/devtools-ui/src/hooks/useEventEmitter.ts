@@ -47,7 +47,7 @@ import { useHubConnection } from "./useHubConnection";
 export function useEventEmitter(storeId: string | null): {
   emit: (channel: string, type: string, payload: unknown) => void;
 } {
-  const { send } = useHubConnection();
+  const { send, extensionId } = useHubConnection();
 
   const emit = useCallback(
     (channel: string, type: string, payload: unknown) => {
@@ -58,11 +58,11 @@ export function useEventEmitter(storeId: string | null): {
         storeId,
         event: { channel, type, payload },
         timestamp: new Date().toISOString(),
-        sourceId: "",
+        sourceId: extensionId,
         sourceRole: DevtoolsRole.EXTENSION,
       });
     },
-    [storeId, send],
+    [storeId, send, extensionId],
   );
 
   return { emit };

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-ext",
+      "comment": "The panel can now inspect a page without a hub. A content script announces the bridge to the page and relays protocol frames, a service worker pairs each page with the panel inspecting its tab, and the panel plays the part the hub would by attaching the page to the in-memory broker that already speaks the protocol — so the extension carries no routing logic of its own, which would be a second implementation drifting from the one both ends share, in the one place no test suite reaches. Connecting to a hub over a socket remains the fallback for pages no extension is relaying, and for Node and remote sessions.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-ext"
+}

@@ -6,7 +6,7 @@
 
 # Interface: StoreSubscriptions
 
-Defined in: [messages.ts:136](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L136)
+Defined in: [messages.ts:149](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L149)
 
 Store subscription and consumer info.
 
@@ -27,7 +27,7 @@ data to render dependency graphs and subscription explorers.
 
 > **atomic**: `object`[]
 
-Defined in: [messages.ts:140](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L140)
+Defined in: [messages.ts:153](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L153)
 
 Fine-grained (connect) subscriptions.
 
@@ -45,7 +45,7 @@ Fine-grained (connect) subscriptions.
 
 > **coarse**: `number`
 
-Defined in: [messages.ts:151](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L151)
+Defined in: [messages.ts:164](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L164)
 
 Count of coarse subscribers.
 
@@ -55,7 +55,7 @@ Count of coarse subscribers.
 
 > **effects**: `object`[]
 
-Defined in: [messages.ts:153](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L153)
+Defined in: [messages.ts:166](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L166)
 
 Registered effects.
 
@@ -81,7 +81,7 @@ Registered effects.
 
 > **event**: `object`[]
 
-Defined in: [messages.ts:145](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L145)
+Defined in: [messages.ts:158](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L158)
 
 Event subscriptions (onEvent).
 
@@ -103,7 +103,7 @@ Event subscriptions (onEvent).
 
 > **middleware**: `object`[]
 
-Defined in: [messages.ts:160](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L160)
+Defined in: [messages.ts:173](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L173)
 
 Registered middleware.
 
@@ -125,7 +125,7 @@ Registered middleware.
 
 > **reducers**: `object`[]
 
-Defined in: [messages.ts:166](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L166)
+Defined in: [messages.ts:179](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L179)
 
 Registered reducers.
 
@@ -147,7 +147,7 @@ Registered reducers.
 
 > **sourceId**: `string`
 
-Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L23)
+Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L23)
 
 UUID of the sender (store wrapper ID or extension ID).
 
@@ -161,7 +161,7 @@ UUID of the sender (store wrapper ID or extension ID).
 
 > **sourceRole**: [`DevtoolsRole`](../enumerations/DevtoolsRole.md)
 
-Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L25)
+Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L25)
 
 Role of the sender.
 
@@ -175,7 +175,7 @@ Role of the sender.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:138](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L138)
+Defined in: [messages.ts:151](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L151)
 
 ***
 
@@ -183,7 +183,7 @@ Defined in: [messages.ts:138](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19
 
 > **timestamp**: `string`
 
-Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L21)
+Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L21)
 
 ISO 8601 timestamp of when the message was created.
 
@@ -197,7 +197,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"STORE_SUBSCRIPTIONS"`
 
-Defined in: [messages.ts:137](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L137)
+Defined in: [messages.ts:150](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L150)
 
 Discriminant field identifying the message type.
 

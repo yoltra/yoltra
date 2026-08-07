@@ -1,7 +1,7 @@
 {
   "name": "@yoltra/devtools-node-agent",
   "version": "0.3.0",
-  "description": "Node.js store agent for Yoltra DevTools — instruments stores and reports to the hub",
+  "description": "Node.js store agent for Yoltra DevTools \u2014 instruments stores and reports to the hub",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
     "email": "manu@yoltra.dev"
@@ -30,7 +30,7 @@
     "build": "vite build",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "test": "vitest --watch=false",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
     "docs": "rushx docs:js && rushx docs:md",
     "docs:md": "pnpm typedoc --options ./typedoc.json",
     "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-node-agent-en.json"

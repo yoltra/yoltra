@@ -1,7 +1,7 @@
 {
   "name": "@yoltra/devtools-server",
   "version": "0.3.0",
-  "description": "Hub WebSocket server for Yoltra DevTools — standalone CLI and embeddable library",
+  "description": "Hub WebSocket server for Yoltra DevTools \u2014 standalone CLI and embeddable library",
   "license": "MIT",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
@@ -42,9 +42,9 @@
   "sideEffects": false,
   "scripts": {
     "build": "vite build",
-    "test": "vitest --watch=false",
+    "test": "vitest --watch=false --coverage",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
     "docs": "rushx docs:js && rushx docs:md",
     "docs:md": "pnpm typedoc --options ./typedoc.json",
     "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-server-en.json",
@@ -55,15 +55,16 @@
     "ws": "^8.19.0"
   },
   "devDependencies": {
-    "@types/ws": "^8.18.1",
     "@types/node": "^24.0.12",
+    "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "3.2.4",
     "typedoc": "^0.28.13",
-    "typedoc-plugin-markdown": "4.9.0",
     "typedoc-plugin-localization": "3.0.6",
+    "typedoc-plugin-markdown": "4.9.0",
     "typescript": "5.9.3",
     "vite": "^7.1.11",
-    "vite-plugin-dts": "^4.5.4",
     "vite-plugin-banner": "0.8.1",
+    "vite-plugin-dts": "^4.5.4",
     "vitest": "3.2.4"
   },
   "engines": {

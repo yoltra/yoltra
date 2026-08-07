@@ -49,6 +49,12 @@ export type { BaseMessage } from "./wire";
 // Utilities
 export { computePatches, patchesFromChange, getAtPath } from "./patch-utils";
 
+// The state codec moved to `@yoltra/core`. It serializes store state, which is a core
+// concept, and persistence needs the same one — a serialization format with two
+// implementations is one that will eventually disagree with itself. Re-exporting it from
+// here would mean this package depending on core, and it is deliberately a leaf with no
+// dependencies at all.
+
 // Transport (reconnecting client with an injected socket — each agent supplies
 // its own WebSocket implementation, so this stays free of `ws` / browser globals)
 export { ReconnectingWsClient, WS_OPEN, WS_CONNECTING } from "./ws-transport";

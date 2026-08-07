@@ -41,7 +41,14 @@ import type { JsonPatch } from "@yoltra/devtools-protocol";
  * @public
  */
 export function applyPatches<T = unknown>(target: T, patches: JsonPatch[]): T {
-  let result: any = structuredClone(target);
+  // No clone. `setAtPath` and `removeAtPath` already copy each node along the touched path and
+  // never write into their input, so deep-cloning first duplicated the entire state tree only to
+  // have the parts that matter copied again — turning an operation proportional to the change
+  // into one proportional to the whole store, on every event.
+  //
+  // It also destroyed structural sharing: a fresh tree meant every subtree looked new to the
+  // panel's memoization, so a one-field update re-rendered the whole state view.
+  let result: any = target;
 
   for (const patch of patches) {
     const segments = parsePointer(patch.path);

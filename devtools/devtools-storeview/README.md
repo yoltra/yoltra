@@ -57,15 +57,14 @@ function MyPanel() {
 
 ## Panels
 
-The app provides six tabs, each backed by hooks from `@yoltra/devtools-ui`:
+The app provides four tabs, each backed by hooks from `@yoltra/devtools-ui`:
 
-| Panel             | Description                                                                           |
-| ----------------- | ------------------------------------------------------------------------------------- |
-| **Events**        | Scrollable event timeline with filtering by channel/type and committed/bounced status |
-| **State**         | Interactive JSON tree explorer with live state updates and manual refresh             |
-| **Subscriptions** | Inventory of registered reducers, effects, middleware, and active subscriptions       |
-| **Time Travel**   | Step through event history, jump to any index, resume live mode                       |
-| **Emit**          | Compose and emit synthetic events to the selected store                               |
+| Panel           | Description                                                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Inspector**   | Event timeline (filter by channel/type and committed/uncommitted status) with per-event detail — changed paths, patches — plus an ad-hoc **Emit** composer |
+| **State**       | Interactive JSON tree explorer with live state updates and manual refresh                                                            |
+| **Time Travel** | Step through event history, jump to any index, resume live mode                                                                      |
+| **Metrics**     | Store metrics dashboard (reduce timing, dedup hits, queue depth) plus the reducer/effect/middleware **subscriptions** inventory       |
 | **Metrics**       | Real-time dashboard of event rate, processing time, queue depth, and more             |
 
 ---

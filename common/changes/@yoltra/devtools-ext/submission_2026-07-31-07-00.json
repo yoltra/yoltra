@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-ext",
+      "comment": "Adds the material a store submission requires: a privacy policy stating that the extension collects nothing and justifying each permission, and listing copy kept in the repository so it is reviewed like anything else that ships rather than retyped into a form. The release workflow packages the extension and attaches the zip to the release, so the artefact submitted is the one that tag built. The remaining gaps — screenshots, and a published policy URL — are listed in the submission checklist rather than left to be discovered at the review queue.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-ext"
+}

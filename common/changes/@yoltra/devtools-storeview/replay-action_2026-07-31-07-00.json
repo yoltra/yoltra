@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-storeview",
+      "comment": "The time-travel panel offers event replay, which the UI package had implemented and exported and no panel ever called. Replay differs from scrubbing: time-travel sets the state at a point, replay re-runs the recorded events through the reducers alone — no effects, no middleware — which is how a reducer is checked against the transitions actually recorded. The action appears only when the store advertises the capability. The package also renders in its tests now rather than being asserted by reading it.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-storeview"
+}

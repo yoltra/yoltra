@@ -140,3 +140,46 @@ describe("Router — lifecycle + registry messages", () => {
     expect(msg.reason).toBe("socket closed");
   });
 });
+
+describe("Router — fan-out respects what an extension can display", () => {
+  /** An extension connection carrying declared capabilities. */
+  function extWithCaps(id: string, ws: WebSocket, performanceMetrics: boolean): ConnectionInfo {
+    return {
+      ...extConn(id, ws),
+      extensionInfo: { name: id, capabilities: { performanceMetrics } as never },
+    };
+  }
+
+  it("skips an extension whose capabilities the predicate rejects", () => {
+    const router = new Router();
+    const wantsWs = fakeWs();
+    const notWs = fakeWs();
+    router.register(extWithCaps("ext-wants", wantsWs, true));
+    router.register(extWithCaps("ext-not", notWs, false));
+
+    router.fanOutToExtensions("metrics", (caps) => caps?.performanceMetrics !== false);
+
+    // The capability flags were declared and then ignored: every extension received every
+    // message whether or not it had anywhere to put it.
+    expect(wantsWs.sent).toEqual(["metrics"]);
+    expect(notWs.sent).toEqual([]);
+  });
+
+  it("reaches everyone when no predicate is given", () => {
+    const router = new Router();
+    const ws = fakeWs();
+    router.register(extWithCaps("a", ws, false));
+
+    router.fanOutToExtensions("event");
+
+    expect(ws.sent).toEqual(["event"]);
+  });
+
+  it("lists the stores currently connected", () => {
+    const router = new Router();
+    router.register(storeConn("s1", fakeWs()));
+    router.register(storeConn("s2", fakeWs()));
+
+    expect(router.storeIds().sort()).toEqual(["s1", "s2"]);
+  });
+});

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-protocol",
+      "comment": "Adds encodeStateBounded, which shrinks an encoded value until its serialized form fits a byte budget, and truncated/truncationNote fields on StateSnapshot so a shortened tree can say that it is one. Node count is a poor proxy for bytes — a hundred nodes holding blobs outweigh a hundred thousand holding integers — so the output is measured and the node budget rescaled by how far it overshot. Scaling by the overshoot rather than halving is what makes it converge: from the default hundred thousand nodes, repeated halving needs a dozen rounds to reach the hundreds, and a state that could have been shown in part would have been abandoned instead.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-protocol"
+}

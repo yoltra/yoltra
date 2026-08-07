@@ -10,14 +10,10 @@ import { render } from "ink";
 import { createElement } from "react";
 import { WebSocket } from "ws";
 import { App } from "./app";
-
-const DEFAULT_PORT = 9800;
-const DEFAULT_HISTORY_SIZE = 1000;
+import { CliArgsError, parseArgs } from "./args";
 
 async function main() {
-  const args = process.argv.slice(2);
-  const port = getArg(args, "--port", DEFAULT_PORT);
-  const historySize = getArg(args, "--history-size", DEFAULT_HISTORY_SIZE);
+  const { port, historySize } = parseArgs(process.argv.slice(2));
 
   // Start embedded hub (or skip if one is already running)
   const hub = new DevtoolsHub({ port, historySize });
@@ -55,16 +51,13 @@ async function main() {
   }
 }
 
-function getArg(args: string[], flag: string, defaultValue: number): number {
-  const idx = args.indexOf(flag);
-  if (idx >= 0 && idx + 1 < args.length) {
-    const val = parseInt(args[idx + 1], 10);
-    if (!isNaN(val)) return val;
-  }
-  return defaultValue;
-}
-
 main().catch((err) => {
+  // A bad flag is the user's mistake, not a crash: say what was wrong with it and stop, rather
+  // than printing a stack trace from whichever dependency happened to reject the value.
+  if (err instanceof CliArgsError) {
+    console.error(err.message);
+    process.exit(2);
+  }
   console.error("Fatal:", err);
   process.exit(1);
 });

@@ -38,6 +38,7 @@ const noop = () => {};
  */
 export const HubContext = createContext<HubContextValue>({
   status: "disconnected",
+  extensionId: "",
   send: noop,
   subscribe: () => noop,
   disconnect: noop,

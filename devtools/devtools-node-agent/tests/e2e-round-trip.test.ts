@@ -76,7 +76,7 @@ type EM = { ui: { increment: number } };
 
 const counterSpec: ReducerSpec<{ value: number }, EM> = {
   state: { value: 0 },
-  events: [["ui", "increment"]],
+  when: { keys: [["ui", "increment"]] },
   reducer: (s, e) => (e.type === "increment" ? { value: s.value + (e.payload as number) } : s),
 };
 

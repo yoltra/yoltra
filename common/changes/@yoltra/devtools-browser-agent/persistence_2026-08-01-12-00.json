@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "comment": "Imports the state codec from `@yoltra/core`, where it now lives, rather than from the protocol package.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-browser-agent"
+}

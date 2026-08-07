@@ -6,15 +6,15 @@
 
 # Interface: SamplingConfig
 
-Defined in: [capabilities.ts:15](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L15)
+Defined in: [capabilities.ts:15](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L15)
 
 Sampling configuration for event throttling/filtering.
 
 ## Remarks
 
-Protocol-level design for v1. Implementation deferred to post-v1.
-Configured in the store wrapper and communicated via handshake.
-Each rule targets events by composite key (`[channel, type]` tuples).
+Configured in the store wrapper and communicated via handshake. Each rule targets events by
+composite key (`[channel, type]` tuples), and both agents apply them before an event is
+reported: an ignored route is never sent, a throttled one is sent at the configured rate.
 
 ## Properties
 
@@ -22,7 +22,7 @@ Each rule targets events by composite key (`[channel, type]` tuples).
 
 > `optional` **ignore**: `object`[]
 
-Defined in: [capabilities.ts:21](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L21)
+Defined in: [capabilities.ts:21](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L21)
 
 Ignore: never send events matching these keys.
 
@@ -36,7 +36,7 @@ Ignore: never send events matching these keys.
 
 > `optional` **skip**: `object`[]
 
-Defined in: [capabilities.ts:19](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L19)
+Defined in: [capabilities.ts:19](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L19)
 
 Skip-N: send every Nth event for specified keys.
 
@@ -54,7 +54,7 @@ Skip-N: send every Nth event for specified keys.
 
 > `optional` **throttle**: `object`[]
 
-Defined in: [capabilities.ts:17](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L17)
+Defined in: [capabilities.ts:17](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L17)
 
 Throttle: at most 1 update per intervalMs for specified event keys.
 

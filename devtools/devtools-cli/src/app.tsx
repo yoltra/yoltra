@@ -6,6 +6,7 @@ import {
   HubProvider,
   useEventEmitter,
   useEventLog,
+  useTimeTravel,
   useHubConnection,
   useStoreMetrics,
   useStoreRegistry,
@@ -18,6 +19,7 @@ import { EventEmitter } from "./components/EventEmitter";
 import { EventTimeline } from "./components/EventTimeline";
 import { MetricsDashboard } from "./components/MetricsDashboard";
 import { StateTree } from "./components/StateTree";
+import { TimeTravelPanel } from "./components/TimeTravelPanel";
 import { StatusBar } from "./components/StatusBar";
 import { StoreTabs } from "./components/StoreTabs";
 import { SubscriptionsPanel } from "./components/SubscriptionsPanel";
@@ -55,6 +57,10 @@ function AppInner() {
   const { data: subscriptions, loading: subsLoading } = useStoreSubscriptions(effectiveStoreId);
   const { metrics, loading: metricsLoading } = useStoreMetrics(effectiveStoreId);
   const { emit } = useEventEmitter(effectiveStoreId);
+  // The panel had time-travel from the start and the terminal did not, although both consume the
+  // same hook — so the same session could be scrubbed in a browser and not in a shell.
+  const canReplay = stores[selectedStoreIndex]?.capabilities?.replay ?? false;
+  const timeTravel = useTimeTravel(effectiveStoreId, entries, canReplay);
 
   useKeyBindings({
     onNextTab: nextTab,
@@ -62,6 +68,17 @@ function AppInner() {
     onNextStore: () => nextStore(stores.length),
     onPrevStore: () => prevStore(stores.length),
     onQuit: () => process.exit(0),
+    // Arrow keys scrub only on the tab that has a timeline; elsewhere they are free for the
+    // panels' own use.
+    onStepBack: () => {
+      if (activeTab === "Time Travel") timeTravel.stepBack();
+    },
+    onStepForward: () => {
+      if (activeTab === "Time Travel") timeTravel.stepForward();
+    },
+    onRefresh: () => {
+      if (activeTab === "Time Travel") timeTravel.resume();
+    },
   });
 
   return (
@@ -125,6 +142,15 @@ function AppInner() {
             )}
             {activeTab === "Metrics" && (
               <MetricsDashboard metrics={metrics} loading={metricsLoading} />
+            )}
+            {activeTab === "Time Travel" && (
+              <TimeTravelPanel
+                entries={entries}
+                currentIndex={timeTravel.currentIndex}
+                isTimeTraveling={timeTravel.isTimeTraveling}
+                frameCount={timeTravel.frameCount}
+                canReplay={canReplay}
+              />
             )}
             {activeTab === "Emit" && <EventEmitter onEmit={emit} />}
           </>

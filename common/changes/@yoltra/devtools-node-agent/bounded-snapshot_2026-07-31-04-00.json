@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-node-agent",
+      "comment": "State snapshots are bounded before they are sent, with a maxSnapshotBytes option defaulting to 6 MiB — under the hub's 8 MiB frame cap, since the snapshot travels inside an envelope and a frame that overshoots by a few hundred bytes is refused exactly like one that overshoots by a megabyte. An oversized frame was not a loud failure: the hub refused it and dropped the connection, so the client reconnected, asked again, was refused again, and the panel waited through the loop with nothing on screen to explain it. A shortened snapshot now says so rather than presenting a partial tree as the state.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-node-agent"
+}

@@ -51,7 +51,7 @@ import { useHubConnection } from "./useHubConnection";
 export function useEventReplay(storeId: string | null): {
   replay: (snapshot: unknown, events: EventLogEntry[]) => void;
 } {
-  const { send } = useHubConnection();
+  const { send, extensionId } = useHubConnection();
 
   const replay = useCallback(
     (snapshot: unknown, events: EventLogEntry[]) => {
@@ -68,11 +68,11 @@ export function useEventReplay(storeId: string | null): {
           payload: e.event.payload,
         })),
         timestamp: new Date().toISOString(),
-        sourceId: "",
+        sourceId: extensionId,
         sourceRole: DevtoolsRole.EXTENSION,
       });
     },
-    [storeId, send],
+    [storeId, send, extensionId],
   );
 
   return { replay };

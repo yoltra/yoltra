@@ -131,3 +131,34 @@ describe("loopback transport (in-memory hub)", () => {
     expect(agentRaw.slice(before).some((s) => JSON.parse(s).type === "STORE_EVENT")).toBe(false);
   });
 });
+
+describe("the loopback hub answers like the real one", () => {
+  it("names the negotiated version by the field the protocol declares", async () => {
+    const hub = createLoopbackHub();
+    const received: Array<Record<string, unknown>> = [];
+
+    const socket = hub.agentSocketFactory("loopback://hub", {
+      onOpen: () => undefined,
+      onClose: () => undefined,
+      onError: () => undefined,
+      onMessage: (raw) => received.push(JSON.parse(raw) as Record<string, unknown>),
+    });
+    await new Promise((r) => queueMicrotask(() => r(undefined)));
+
+    socket.send(
+      JSON.stringify({
+        type: "HANDSHAKE_REQUEST",
+        protocolVersion: PROTOCOL_VERSION,
+        role: DevtoolsRole.STORE,
+        store: { id: "s1", name: "s", capabilities: {} },
+      }),
+    );
+
+    const response = received.find((m) => m.type === "HANDSHAKE_RESPONSE");
+    // Two hub implementations disagreeing on a field name is harmless only while nothing reads
+    // it. The day something does, the embedded panel breaks where the real hub works — in the
+    // path that has no server to inspect.
+    expect(response?.negotiatedVersion).toBe(PROTOCOL_VERSION);
+    expect(response?.success).toBe(true);
+  });
+});

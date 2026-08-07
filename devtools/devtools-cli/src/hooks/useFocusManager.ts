@@ -4,7 +4,7 @@
 
 import { useCallback, useState } from "react";
 
-const TABS = ["Events", "State", "Subscriptions", "Metrics", "Emit"] as const;
+const TABS = ["Events", "State", "Time Travel", "Subscriptions", "Metrics", "Emit"] as const;
 
 /**
  * Union type of available CLI panel tab names.

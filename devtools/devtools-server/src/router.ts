@@ -6,6 +6,7 @@
 
 import {
   DevtoolsRole,
+  type ExtensionCapabilities,
   type StoreConnected,
   type StoreDisconnected,
   type StoreRegistry,
@@ -87,15 +88,31 @@ export class Router {
    * connections in a closing or closed state are silently skipped.
    *
    * @param message - Serialized JSON message string.
+   * @param wants - Optional predicate over an extension's declared capabilities. Used for
+   * traffic an extension has said it cannot display; omit to reach every extension.
    *
    * @public
    */
-  fanOutToExtensions(message: string): void {
+  fanOutToExtensions(
+    message: string,
+    wants?: (capabilities: ExtensionCapabilities | undefined) => boolean,
+  ): void {
     for (const [, ext] of this.extensions) {
-      if (ext.ws.readyState === ext.ws.OPEN) {
-        ext.ws.send(message);
-      }
+      if (ext.ws.readyState !== ext.ws.OPEN) continue;
+      if (wants !== undefined && !wants(ext.extensionInfo?.capabilities)) continue;
+      ext.ws.send(message);
     }
+  }
+
+  /**
+   * Ids of every currently-connected store.
+   *
+   * @returns The ids, in registration order.
+   *
+   * @public
+   */
+  storeIds(): string[] {
+    return [...this.stores.keys()];
   }
 
   /**

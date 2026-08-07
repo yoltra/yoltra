@@ -116,7 +116,11 @@ class LoopbackBroker {
       JSON.stringify({
         type: "HANDSHAKE_RESPONSE",
         success,
-        protocolVersion: PROTOCOL_VERSION,
+        // `negotiatedVersion`, the name the interface and the real hub use. This sent
+        // `protocolVersion` instead — harmless only for as long as nothing reads it, and the
+        // moment something did, the embedded panel would have failed where the real hub worked,
+        // in the one path with no server to inspect.
+        negotiatedVersion: PROTOCOL_VERSION,
         ...hubMeta(),
         ...(success ? {} : { error: "Loopback handshake rejected (version or id mismatch)" }),
       }),

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-protocol",
+      "comment": "The state codec moves to `@yoltra/core`. It serializes store state, and persistence there needs the same implementation; re-exporting it from here would mean this package depending on core, and it is deliberately a leaf with no dependencies at all. The browser and node agents already peer-depend on core and now import it from there.\\n\\nCoverage thresholds are re-based as a result. Nothing went untested: a well-covered 400-line module left the package and took its tests with it, leaving `patch-utils` at 96% beside `ws-transport` at 28%. The old numbers were the codec carrying the average, and the gap in `ws-transport` is now visible rather than averaged away.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-protocol"
+}

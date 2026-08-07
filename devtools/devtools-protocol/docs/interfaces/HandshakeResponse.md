@@ -6,7 +6,7 @@
 
 # Interface: HandshakeResponse
 
-Defined in: [handshake.ts:73](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/handshake.ts#L73)
+Defined in: [handshake.ts:85](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L85)
 
 Hub response to a [HandshakeRequest](HandshakeRequest.md).
 
@@ -22,7 +22,7 @@ the WebSocket and report the error to the user.
 
 > `optional` **error**: `string`
 
-Defined in: [handshake.ts:82](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/handshake.ts#L82)
+Defined in: [handshake.ts:94](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L94)
 
 Error message when `success` is `false`.
 
@@ -32,7 +32,7 @@ Error message when `success` is `false`.
 
 > **hubCapabilities**: [`HubCapabilities`](HubCapabilities.md)
 
-Defined in: [handshake.ts:80](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/handshake.ts#L80)
+Defined in: [handshake.ts:92](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L92)
 
 Hub-side capabilities.
 
@@ -42,7 +42,7 @@ Hub-side capabilities.
 
 > **negotiatedVersion**: `string`
 
-Defined in: [handshake.ts:78](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/handshake.ts#L78)
+Defined in: [handshake.ts:90](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L90)
 
 The negotiated protocol version (may differ from requested).
 
@@ -52,7 +52,7 @@ The negotiated protocol version (may differ from requested).
 
 > **success**: `boolean`
 
-Defined in: [handshake.ts:76](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/handshake.ts#L76)
+Defined in: [handshake.ts:88](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L88)
 
 Whether the handshake was successful.
 
@@ -62,4 +62,4 @@ Whether the handshake was successful.
 
 > **type**: `"HANDSHAKE_RESPONSE"`
 
-Defined in: [handshake.ts:74](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/handshake.ts#L74)
+Defined in: [handshake.ts:86](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L86)

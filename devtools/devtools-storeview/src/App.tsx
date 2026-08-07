@@ -6,6 +6,7 @@ import {
   HubProvider,
   useEventEmitter,
   useEventLog,
+  useEventReplay,
   useHubConnection,
   useStoreMetrics,
   useStoreRegistry,
@@ -28,9 +29,7 @@ import { TimeTravelPanel } from "./components/panels/TimeTravelPanel";
 
 import appStyles from "./styles/App.module.css";
 
-const TABS = ["Inspector", "State", "Time Travel", "Metrics"] as const;
-
-type TabName = (typeof TABS)[number];
+import { TABS, resolveTab, tabRequires, type TabName } from "./tabPolicy";
 
 /**
  * Configuration for mounting the DevTools app.
@@ -55,20 +54,6 @@ export function DevtoolsApp({ config }: { config: DevtoolsAppConfig }) {
   );
 }
 
-// Maps each tab to the capability it requires. Inspector and Metrics are
-// always available; State and Time Travel depend on the store's capabilities.
-function tabRequires(tab: TabName, caps: StoreCapabilities | null): boolean {
-  switch (tab) {
-    case "Inspector":
-    case "Metrics":
-      return true;
-    case "State":
-      return caps?.stateSnapshot ?? false;
-    case "Time Travel":
-      return caps?.replay ?? false;
-  }
-}
-
 function DevtoolsInner() {
   const { status } = useHubConnection();
   const stores = useStoreRegistry();
@@ -88,14 +73,15 @@ function DevtoolsInner() {
   // When the store changes, redirect to "Inspector" if the active tab is no
   // longer supported by the new store's capabilities.
   useEffect(() => {
-    if (!tabRequires(activeTab, caps)) {
-      setActiveTab("Inspector");
-    }
+    setActiveTab((current) => resolveTab(current, caps));
     // Intentionally re-run only on store change, not on activeTab/caps identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveStoreId]);
 
   const { entries } = useEventLog(effectiveStoreId);
+  // Replay re-runs the recorded events through the reducers only — no effects, no middleware —
+  // which is how a reducer's behaviour is checked against the transitions actually recorded.
+  const { replay } = useEventReplay(effectiveStoreId);
   const {
     state,
     loading: stateLoading,
@@ -160,6 +146,7 @@ function DevtoolsInner() {
                 onStepBack={timeTravel.stepBack}
                 onStepForward={timeTravel.stepForward}
                 onResume={timeTravel.resume}
+                onReplay={() => replay(state, entries)}
               />
             )}
             {activeTab === "Metrics" && (

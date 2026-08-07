@@ -6,7 +6,7 @@
 
 # Interface: ExtensionCapabilities
 
-Defined in: [capabilities.ts:65](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L65)
+Defined in: [capabilities.ts:65](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L65)
 
 Capabilities advertised by an extension during handshake.
 
@@ -22,7 +22,7 @@ broadcasts to extensions that set `performanceMetrics: false`).
 
 > **eventEmit**: `boolean`
 
-Defined in: [capabilities.ts:73](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L73)
+Defined in: [capabilities.ts:73](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L73)
 
 Extension can emit events to stores.
 
@@ -32,7 +32,7 @@ Extension can emit events to stores.
 
 > **eventReplay**: `boolean`
 
-Defined in: [capabilities.ts:69](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L69)
+Defined in: [capabilities.ts:69](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L69)
 
 Extension supports event replay (reducer-only replay).
 
@@ -42,7 +42,7 @@ Extension supports event replay (reducer-only replay).
 
 > **performanceMetrics**: `boolean`
 
-Defined in: [capabilities.ts:75](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L75)
+Defined in: [capabilities.ts:75](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L75)
 
 Extension can display performance metrics.
 
@@ -52,7 +52,7 @@ Extension can display performance metrics.
 
 > **stateExplorer**: `boolean`
 
-Defined in: [capabilities.ts:71](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L71)
+Defined in: [capabilities.ts:71](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L71)
 
 Extension has a state tree explorer.
 
@@ -62,6 +62,6 @@ Extension has a state tree explorer.
 
 > **timeTravel**: `boolean`
 
-Defined in: [capabilities.ts:67](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L67)
+Defined in: [capabilities.ts:67](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L67)
 
 Extension supports time-travel (state-only replay).

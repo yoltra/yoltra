@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-storeview",
+      "comment": "Tab availability moves into a tested module. The rule is small but it decides what a user may click, and inside the app component it could only be reached by rendering the whole panel against a mock hub. Both capabilities it consults default to off, so most stores support only part of the panel, and offering a tab whose controls silently do nothing is worse than not offering it. Switching stores now resolves through the same rule, so a panel left on Time Travel and pointed at a store that cannot replay falls back rather than sitting on dead controls.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-storeview"
+}

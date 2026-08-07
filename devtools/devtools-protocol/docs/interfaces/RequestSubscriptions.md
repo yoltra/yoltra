@@ -6,7 +6,7 @@
 
 # Interface: RequestSubscriptions
 
-Defined in: [messages.ts:198](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L198)
+Defined in: [messages.ts:211](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L211)
 
 Request subscription and consumer info from a store.
 
@@ -20,7 +20,7 @@ Request subscription and consumer info from a store.
 
 > **sourceId**: `string`
 
-Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L23)
+Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L23)
 
 UUID of the sender (store wrapper ID or extension ID).
 
@@ -34,7 +34,7 @@ UUID of the sender (store wrapper ID or extension ID).
 
 > **sourceRole**: [`DevtoolsRole`](../enumerations/DevtoolsRole.md)
 
-Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L25)
+Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L25)
 
 Role of the sender.
 
@@ -48,7 +48,7 @@ Role of the sender.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:200](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L200)
+Defined in: [messages.ts:213](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L213)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [messages.ts:200](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19
 
 > **timestamp**: `string`
 
-Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L21)
+Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L21)
 
 ISO 8601 timestamp of when the message was created.
 
@@ -70,7 +70,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"REQUEST_SUBSCRIPTIONS"`
 
-Defined in: [messages.ts:199](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L199)
+Defined in: [messages.ts:212](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L212)
 
 Discriminant field identifying the message type.
 

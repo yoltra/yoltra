@@ -24,19 +24,16 @@ import styles from "./TimeTravelPanel.module.css";
  * @param props.onStepBack - Move one event backward.
  * @param props.onStepForward - Move one event forward.
  * @param props.onResume - Exit time-travel and resume live.
+ * @param props.onReplay - Re-run the recorded events through the store's reducers only. Omit to
+ * hide the action; it is offered only when the store advertises the replay capability.
  * @public
  */
-export function TimeTravelPanel({
-  entries,
-  currentIndex,
-  isTimeTraveling,
-  previewState,
-  frameCount,
-  onJumpTo,
-  onStepBack,
-  onStepForward,
-  onResume,
-}: {
+/**
+ * What {@link TimeTravelPanel} renders from.
+ *
+ * @public
+ */
+export interface TimeTravelPanelProps {
   entries: EventLogEntry[];
   currentIndex: number;
   isTimeTraveling: boolean;
@@ -50,7 +47,21 @@ export function TimeTravelPanel({
   onStepBack: () => void;
   onStepForward: () => void;
   onResume: () => void;
-}) {
+  onReplay?: () => void;
+}
+
+export function TimeTravelPanel({
+  entries,
+  currentIndex,
+  isTimeTraveling,
+  previewState,
+  frameCount,
+  onJumpTo,
+  onStepBack,
+  onStepForward,
+  onResume,
+  onReplay,
+}: TimeTravelPanelProps) {
   const hasEvents = entries.length > 0;
   // While traveling, the range is the frozen frame; live, it tracks the log.
   const total = frameCount ?? entries.length;
@@ -84,6 +95,20 @@ export function TimeTravelPanel({
         {isTimeTraveling && (
           <button className={styles.resumeButton} onClick={onResume}>
             Resume Live
+          </button>
+        )}
+        {onReplay !== undefined && (
+          <button
+            className={styles.button}
+            onClick={onReplay}
+            disabled={!hasEvents}
+            // Distinct from the scrubber above it: time-travel *sets* the state at a point,
+            // replay re-runs the events through the reducers from the current snapshot, with no
+            // effects and no middleware. It is the way to see whether a reducer produces what
+            // the recorded transitions say it did.
+            title="Re-run the recorded events through the reducers only (no effects, no middleware)"
+          >
+            Replay events
           </button>
         )}
       </div>

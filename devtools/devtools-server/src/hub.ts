@@ -37,6 +37,47 @@ export interface DevtoolsHubOptions {
    * remote origin re-opens the cross-site hijack surface — don't.
    */
   allowedOrigins?: string[];
+  /**
+   * Shared secret every client must present in its handshake.
+   *
+   * @remarks
+   * The hub binds to loopback, which keeps the network out — but loopback is not an
+   * authentication boundary. Every other process on the machine can reach it, so without a token
+   * anything running locally can connect as a panel and read the application's entire state,
+   * inject events, and overwrite state through time-travel. That includes a package's install
+   * script, and anything else sharing a CI runner or a container.
+   *
+   * Unset by default, because requiring one would break the zero-configuration local flow that
+   * makes the tool worth using. When unset the hub says so once at startup rather than leaving
+   * the exposure unmentioned.
+   */
+  authToken?: string;
+  /**
+   * Extension ids allowed to connect, e.g. `["abcdefghijklmnopabcdefghijklmnop"]`.
+   *
+   * @remarks
+   * Extension origins all share one scheme, so permitting the scheme permits every extension the
+   * user has installed — any of which could open this socket from a devtools page of its own.
+   * Naming ids narrows that to the panel meant to connect.
+   *
+   * Empty by default, which keeps every extension origin allowed: an unpacked build and a store
+   * install have different ids, so assuming one would lock out a developer running the extension
+   * they just built. Set it alongside {@link DevtoolsHubOptions.authToken} on any machine where
+   * other extensions are not automatically trusted.
+   */
+  allowedExtensionIds?: string[];
+  /**
+   * Most messages one client may send per second before the excess is dropped.
+   *
+   * @remarks
+   * A command like `REQUEST_STATE` costs the *store* a full serialization of its state and the
+   * hub a fan-out, so a client that loops on it turns one cheap socket write into repeated work
+   * across every connected process. This bounds that without affecting a panel behaving
+   * normally, which sends a handful of commands per interaction.
+   *
+   * @defaultValue 200
+   */
+  maxMessagesPerSecond?: number;
 }
 
 /**
@@ -60,6 +101,25 @@ const HANDSHAKE_TIMEOUT_MS = 5_000;
 const MAX_WS_PAYLOAD_BYTES = 8 * 1024 * 1024;
 
 /**
+ * Compares two secrets without leaking their contents through timing.
+ *
+ * @remarks
+ * `===` on a secret returns as soon as two characters differ, which is a usable oracle for
+ * recovering it one character at a time from a process that can retry freely — and anything on
+ * this machine can.
+ *
+ * @internal
+ */
+function tokensMatch(expected: string, offered: unknown): boolean {
+  if (typeof offered !== "string" || offered.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i += 1) {
+    diff |= expected.charCodeAt(i) ^ offered.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+/**
  * Whether a WebSocket `Origin` may connect to the hub.
  *
  * @remarks
@@ -67,13 +127,24 @@ const MAX_WS_PAYLOAD_BYTES = 8 * 1024 * 1024;
  * opening `ws://127.0.0.1:<port>` — WebSockets are exempt from same-origin/CORS,
  * so a remote page could otherwise exfiltrate state and drive the store. We
  * allow only: no Origin (node agent, CLI, some extension contexts), browser
- * extension origins (the user-installed panel), loopback origins (the local dev
- * app running the agent, or a local storeview), and any explicitly configured
- * origins. A remote origin (e.g. `https://evil.com`) is rejected.
+ * extension origins (narrowed to specific ids when
+ * {@link DevtoolsHubOptions.allowedExtensionIds} names any), loopback origins
+ * (the local dev app running the agent, or a local storeview), and any
+ * explicitly configured origins. A remote origin (e.g. `https://evil.com`) is
+ * rejected.
+ *
+ * An origin check is not authentication: it constrains which *page* may open the
+ * socket, and says nothing about which *process* did. That is what
+ * {@link DevtoolsHubOptions.authToken} is for, and the two are meant to be used
+ * together.
  *
  * @internal
  */
-function isOriginAllowed(origin: string | undefined, allowed: readonly string[]): boolean {
+function isOriginAllowed(
+  origin: string | undefined,
+  allowed: readonly string[],
+  allowedExtensionIds: readonly string[],
+): boolean {
   if (!origin) return true; // non-browser client; not reachable from a web page
   if (allowed.includes(origin)) return true;
   let url: URL;
@@ -87,9 +158,37 @@ function isOriginAllowed(origin: string | undefined, allowed: readonly string[])
     url.protocol === "moz-extension:" ||
     url.protocol === "safari-web-extension:"
   ) {
-    return true;
+    // Every extension shares one origin scheme, so allowing the scheme allows all of them: any
+    // extension the user has installed, with a devtools page of its own, could open this socket
+    // and read whatever the connected stores hold. The extension id is the host part, so an
+    // allow-list narrows it to the panel actually meant to connect.
+    //
+    // Unset by default because there is no id to assume: an unpacked build and a store install
+    // have different ones, so a hardcoded default would reject the developer running the
+    // extension they just built.
+    if (allowedExtensionIds.length === 0) return true;
+    return allowedExtensionIds.includes(url.hostname);
   }
   return isLoopbackHost(url.hostname);
+}
+
+/**
+ * `true` when a buffered frame belongs to a store that is still connected.
+ *
+ * @remarks
+ * Parses only enough to read `storeId`. A frame that cannot be parsed is kept rather than
+ * dropped: it went into the buffer as valid traffic, and silently discarding it here would be a
+ * worse failure than replaying one frame too many.
+ *
+ * @internal
+ */
+function belongsToLiveStore(raw: string, live: ReadonlySet<string>): boolean {
+  try {
+    const parsed = JSON.parse(raw) as { storeId?: unknown };
+    return typeof parsed.storeId === "string" ? live.has(parsed.storeId) : true;
+  } catch {
+    return true;
+  }
 }
 
 /** Loopback host check: `localhost`, the 127.0.0.0/8 block, and IPv6 `::1`. @internal */
@@ -131,6 +230,12 @@ export class DevtoolsHub {
   private readonly port: number;
   private readonly host: string;
   private readonly allowedOrigins: readonly string[];
+  /** Shared secret required from every client, or `undefined` when the hub is open. */
+  private readonly authToken: string | undefined;
+  /** Extension ids permitted to connect; empty means every extension origin. */
+  private readonly allowedExtensionIds: readonly string[];
+  /** Per-second message allowance for one client. */
+  private readonly maxMessagesPerSecond: number;
   private readonly router = new Router();
   private readonly history: RingBuffer<string>;
   private wss: WebSocketServer | null = null;
@@ -146,6 +251,9 @@ export class DevtoolsHub {
     this.port = opts.port ?? 9800;
     this.host = opts.host ?? "127.0.0.1";
     this.allowedOrigins = opts.allowedOrigins ?? [];
+    this.authToken = opts.authToken;
+    this.allowedExtensionIds = opts.allowedExtensionIds ?? [];
+    this.maxMessagesPerSecond = opts.maxMessagesPerSecond ?? 200;
     this.history = new RingBuffer<string>(opts.historySize ?? 1000);
   }
 
@@ -170,7 +278,8 @@ export class DevtoolsHub {
         // Reject cross-site WebSocket hijacking: the loopback bind alone does
         // not stop a page you visit from opening ws://127.0.0.1:<port>.
         verifyClient: (info: { origin?: string }) => {
-          if (isOriginAllowed(info.origin, this.allowedOrigins)) return true;
+          if (isOriginAllowed(info.origin, this.allowedOrigins, this.allowedExtensionIds))
+            return true;
           console.warn(
             `[yoltra devtools] Rejected WebSocket connection from disallowed origin: ${info.origin}`,
           );
@@ -179,6 +288,17 @@ export class DevtoolsHub {
       });
 
       this.wss.on("listening", () => {
+        if (this.authToken === undefined) {
+          // Said once, at the only moment it can still be acted on. Binding to loopback keeps
+          // the network out but not the machine: every other local process — a package install
+          // script, another tenant on a shared runner — can connect as a panel and read the
+          // application's whole state. Silence here would present that as a secure default.
+          console.warn(
+            "[yoltra devtools] Hub is running without an auth token: any process on this " +
+              "machine can read and drive the connected stores. Pass { authToken } (and the " +
+              "same value to each agent) on a shared or containerised host.",
+          );
+        }
         resolve();
       });
 
@@ -261,6 +381,10 @@ export class DevtoolsHub {
    */
   private handleConnection(ws: WebSocket): void {
     let connectionInfo: ConnectionInfo | null = null;
+    // A fixed window rather than a token bucket: the point is to stop a runaway loop, not to
+    // shape traffic, and a counter reset on a timestamp comparison costs nothing per frame.
+    let windowStart = Date.now();
+    let inWindow = 0;
 
     // Handshake timeout: close if no handshake within 5s
     const handshakeTimer = setTimeout(() => {
@@ -282,6 +406,24 @@ export class DevtoolsHub {
       // primitives, missing type) before it reaches handshake/routing.
       if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return;
       if (typeof parsed.type !== "string") return;
+
+      const now = Date.now();
+      if (now - windowStart >= 1000) {
+        windowStart = now;
+        inWindow = 0;
+      }
+      inWindow += 1;
+      if (inWindow > this.maxMessagesPerSecond) {
+        // Dropped rather than answered. Closing the socket would punish a burst the same as a
+        // flood, and a panel that briefly exceeds the allowance recovers on the next window.
+        if (inWindow === this.maxMessagesPerSecond + 1) {
+          console.warn(
+            `[yoltra devtools] A ${connectionInfo?.role ?? "handshaking"} client exceeded ` +
+              `${this.maxMessagesPerSecond} messages/second; the excess is being dropped.`,
+          );
+        }
+        return;
+      }
 
       // Handle handshake
       if (!connectionInfo) {
@@ -326,6 +468,26 @@ export class DevtoolsHub {
    *          handshake was rejected.
    */
   private handleHandshake(ws: WebSocket, req: HandshakeRequest): ConnectionInfo | null {
+    // Checked before anything is registered or replayed, so an unauthenticated client never
+    // reaches the history buffer or the store registry.
+    if (this.authToken !== undefined && !tokensMatch(this.authToken, req.authToken)) {
+      const response: HandshakeResponse = {
+        type: "HANDSHAKE_RESPONSE",
+        success: false,
+        negotiatedVersion: PROTOCOL_VERSION,
+        hubCapabilities: {
+          maxHistorySize: this.history.capacity,
+          supportedFeatures: [],
+        },
+        error: "Invalid or missing auth token",
+      };
+      ws.send(JSON.stringify(response));
+      console.warn(
+        `[yoltra devtools] Rejected a ${req.role} handshake: wrong or missing auth token`,
+      );
+      return null;
+    }
+
     // Basic protocol version check (accept same major version)
     const reqMajor = parseInt(req.protocolVersion?.split(".")[0] ?? "0");
     const ourMajor = parseInt(PROTOCOL_VERSION.split(".")[0]);
@@ -397,8 +559,14 @@ export class DevtoolsHub {
     } else if (req.role === DevtoolsRole.EXTENSION) {
       // Send current store registry to the new extension
       ws.send(this.router.buildRegistryMessage());
-      // Send buffered event history
+
+      // Replay only what the panel can still act on. The buffer holds events from every store
+      // that has ever connected, so a long-lived hub greets each new panel with a burst of
+      // history for stores that are gone and cannot be selected — pure noise, sent one frame at
+      // a time, before anything useful arrives.
+      const live = new Set(this.router.storeIds());
       for (const msg of this.history.toArray()) {
+        if (!belongsToLiveStore(msg, live)) continue;
         ws.send(msg);
       }
     }
@@ -422,8 +590,14 @@ export class DevtoolsHub {
     const raw = JSON.stringify(msg);
 
     if (sender.role === DevtoolsRole.STORE) {
-      // Store messages → fan-out to all extensions
-      this.router.fanOutToExtensions(raw);
+      // Metrics go only to panels that said they display them. The other capability flags
+      // describe what an extension can render rather than what traffic it wants, so they are
+      // not filters — the documentation used to imply all of them were, and none were.
+      if (msg.type === "STORE_METRICS") {
+        this.router.fanOutToExtensions(raw, (caps) => caps?.performanceMetrics !== false);
+      } else {
+        this.router.fanOutToExtensions(raw);
+      }
 
       // Buffer STORE_EVENT messages in the ring buffer
       if (msg.type === "STORE_EVENT") {

@@ -86,12 +86,24 @@ export interface StoreEvent extends BaseMessage {
 export interface StateSnapshot extends BaseMessage {
   type: "STATE_SNAPSHOT";
   storeId: string;
-  /** Full serialized state tree. */
+  /** Serialized state tree — complete unless {@link StateSnapshot.truncated} says otherwise. */
   state: unknown;
   /** Snapshot version matching the latest event's `snapshotVersion`. */
   version: number;
   /** List of reducer slice names. */
   reducerNames: string[];
+  /**
+   * `true` when the state was too large to send whole and parts were replaced by markers.
+   *
+   * @remarks
+   * A frame over the hub's cap is rejected and the connection dropped, so the agent bounds the
+   * snapshot itself rather than sending one that will be refused. Without this flag the panel
+   * would render a partial tree as though it were the state — worse than showing nothing,
+   * because a debugger that quietly lies about state is not a debugger.
+   */
+  truncated?: boolean;
+  /** Explains what was dropped and why, for display alongside a truncated tree. */
+  truncationNote?: string;
 }
 
 /**

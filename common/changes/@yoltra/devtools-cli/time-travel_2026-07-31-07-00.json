@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-cli",
+      "comment": "The terminal gains a Time Travel tab. Both surfaces consume the same hook, so the same session could be scrubbed in a browser and not in a shell for no reason other than the tab never being added. A terminal has no slider, so arrow keys step through the history and the bindings are shown on screen; a store that did not advertise replay gets an explanation rather than an empty panel, since the capability is off by default and the reason is not obvious. Components are rendered in tests now.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-cli"
+}

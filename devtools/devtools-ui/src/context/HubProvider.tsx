@@ -208,6 +208,7 @@ export function HubProvider({
 
   const value: HubContextValue = {
     status,
+    extensionId: extensionIdRef.current,
     send,
     subscribe,
     disconnect,

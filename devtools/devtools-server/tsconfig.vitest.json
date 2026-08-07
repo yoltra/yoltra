@@ -1,0 +1,29 @@
+// Typecheck configuration for the test sources.
+//
+// The build config deliberately excludes tests: it describes what ships, and a test file is
+// not part of the package. That left the tests unchecked by anything — vitest strips types
+// rather than verifying them — so this config exists to check them, and `rushx typecheck`
+// runs both.
+//
+// It extends the build config so the tests are held to the same strictness as the code they
+// exercise, and raises only the language level: tests run on the repo's Node under vitest,
+// never in the oldest runtime the bundle supports, so idioms like `array.at(-1)` are fair
+// game here and would be a bug in `src`.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022"
+    ]
+  },
+  "include": [
+    "src/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "build",
+    "node_modules"
+  ]
+}

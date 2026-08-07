@@ -6,7 +6,7 @@
 
 # Interface: HubCapabilities
 
-Defined in: [capabilities.ts:88](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L88)
+Defined in: [capabilities.ts:88](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L88)
 
 Capabilities advertised by the hub during handshake response.
 
@@ -22,7 +22,7 @@ buffers to `maxHistorySize`).
 
 > **maxHistorySize**: `number`
 
-Defined in: [capabilities.ts:90](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L90)
+Defined in: [capabilities.ts:90](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L90)
 
 Maximum number of events kept in the ring buffer.
 
@@ -32,6 +32,6 @@ Maximum number of events kept in the ring buffer.
 
 > **supportedFeatures**: `string`[]
 
-Defined in: [capabilities.ts:92](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L92)
+Defined in: [capabilities.ts:92](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L92)
 
 Feature flags supported by this hub version.

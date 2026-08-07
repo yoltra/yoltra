@@ -66,7 +66,7 @@ export function useStoreSubscriptions(storeId: string | null): {
   loading: boolean;
   refresh: () => void;
 } {
-  const { send, subscribe } = useHubConnection();
+  const { send, subscribe, extensionId } = useHubConnection();
   const [data, setData] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -77,10 +77,10 @@ export function useStoreSubscriptions(storeId: string | null): {
       type: "REQUEST_SUBSCRIPTIONS",
       storeId,
       timestamp: new Date().toISOString(),
-      sourceId: "",
+      sourceId: extensionId,
       sourceRole: DevtoolsRole.EXTENSION,
     });
-  }, [storeId, send]);
+  }, [storeId, send, extensionId]);
 
   useEffect(() => {
     if (!storeId) {
