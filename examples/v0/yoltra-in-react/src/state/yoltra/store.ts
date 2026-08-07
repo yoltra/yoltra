@@ -38,7 +38,14 @@ export const {
 // Instrument the store — streams events to the devtools hub on ws://localhost:9800.
 // `allowReplay` makes the agent advertise the `replay` capability so the
 // extension shows the Time Travel tab and can send TIME_TRAVEL commands.
-withDevtools(store, { port: 9800, allowReplay: true });
+//
+// Guarded on `window` because this module is evaluated wherever it is imported, and the agent
+// opens a WebSocket the moment it is constructed. In a server render that is a connection
+// attempt from the server to a developer's laptop — which is why the Next.js guide's checklist
+// says to guard it, and why an example that does not is the wrong thing to copy.
+if (typeof window !== "undefined") {
+  withDevtools(store, { port: 9800, allowReplay: true });
+}
 
 /** Type of the store instance for use in annotations. */
 export type tAppStore = typeof store;

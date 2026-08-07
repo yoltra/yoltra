@@ -34,9 +34,9 @@ that subscribed to the _todo_ that actually changed. Atomic property subscriptio
 | 05    | Create new TODO, step #1                                                                                                         | ![Yoltra frame 05](./public/assets/profiler/yoltra/profiler-yoltra-frame-05.2025-10-20-22-51-21.png) | ![RTK frame 05](./public/assets/profiler/rtk/profiler-rtk-frame-05.2025-10-20-22-38-17.png) |
 |       | In TODO factory, the todo name (test) is pasted into the 'title' field. Both libraries re-render TODO factory only.              |                                                                                                   |                                                                                             |
 | 06    | Create new TODO, step #2                                                                                                         | ![Yoltra frame 06](./public/assets/profiler/yoltra/profiler-yoltra-frame-06.2025-10-20-22-52-03.png) | ![RTK frame 06](./public/assets/profiler/rtk/profiler-rtk-frame-06.2025-10-20-22-38-49.png) |
-|       | In TODO factory, the todo category (test) is pasted into the 'catgegory' field. Both libraries re-render TODO factory only.      |                                                                                                   |                                                                                             |
+|       | In TODO factory, the todo category (test) is pasted into the 'category' field. Both libraries re-render TODO factory only.       |                                                                                                   |                                                                                             |
 | 07    | Create new TODO, step #3                                                                                                         | ![Yoltra frame 07](./public/assets/profiler/yoltra/profiler-yoltra-frame-07.2025-10-20-22-52-20.png) | ![RTK frame 07](./public/assets/profiler/rtk/profiler-rtk-frame-07.2025-10-20-22-40-00.png) |
-|       | The 'Add' button was clicked and the TODO is added to the list. Both libraries re-render the whole list + filters + todo factor. |                                                                                                   |                                                                                             |
+|       | The 'Add' button was clicked and the TODO is added to the list. Both libraries re-render the whole list + filters + todo factory. |                                                                                                   |                                                                                             |
 | 08    | TODO with key `1` is toggled. Automatic update.                                                                                  | ![Yoltra frame 08](./public/assets/profiler/yoltra/profiler-yoltra-frame-08.2025-10-20-22-52-40.png) | ![RTK frame 08](./public/assets/profiler/rtk/profiler-rtk-frame-08.2025-10-20-22-40-23.png) |
 |       |                                                                                                                                  | Yoltra re-renders the specific TODO only                                                          | RTK re-renders the whole TODO list                                                          |
 | 09    | TODO with key `2` is toggled. Automatic update.                                                                                  | ![Yoltra frame 09](./public/assets/profiler/yoltra/profiler-yoltra-frame-09.2025-10-20-22-53-09.png) | ![RTK frame 09](./public/assets/profiler/rtk/profiler-rtk-frame-09.2025-10-20-22-40-48.png) |
@@ -59,8 +59,46 @@ that subscribed to the _todo_ that actually changed. Atomic property subscriptio
 |       |                                                                                                                                  | Yoltra re-renders the specific TODO only                                                          | RTK re-renders the whole TODO list                                                          |
 | 18    | TODO with key `11` is toggled. Automatic update.                                                                                 | ![Yoltra frame 18](./public/assets/profiler/yoltra/profiler-yoltra-frame-18.2025-10-20-22-56-44.png) | ![RTK frame 18](./public/assets/profiler/rtk/profiler-rtk-frame-18.2025-10-20-22-45-22.png) |
 |       |                                                                                                                                  | Yoltra re-renders the specific TODO only                                                          | RTK re-renders the whole TODO list                                                          |
-| 19    | TODO with key `12` is toggled. (creada en el frame #7). Automatic update.                                                        | ![Yoltra frame 19](./public/assets/profiler/yoltra/profiler-yoltra-frame-19.2025-10-20-22-57-05.png) | ![RTK frame 19](./public/assets/profiler/rtk/profiler-rtk-frame-19.2025-10-20-22-45-51.png) |
+| 19    | TODO with key `12` is toggled (created in frame #7). Automatic update.                                                           | ![Yoltra frame 19](./public/assets/profiler/yoltra/profiler-yoltra-frame-19.2025-10-20-22-57-05.png) | ![RTK frame 19](./public/assets/profiler/rtk/profiler-rtk-frame-19.2025-10-20-22-45-51.png) |
 |       | Profiler report (JSON)                                                                                                           | [Yoltra](./public/assets/profiler/yoltra/profiling-data.yoltra.10-20-2025.22-30-26.json)          | [RTK](./public/assets/profiler/rtk/profiling-data.rtk.10-20-2025.22-32-54.json)             |
+
+## Measured timings
+
+Computed from the two exported React Profiler sessions linked in the frame table above
+(19 commits each, same machine, same scenario):
+
+|                                        | Yoltra       | Redux Toolkit | Ratio     |
+| -------------------------------------- | ------------ | ------------- | --------- |
+| Whole session (19 commits)             | **165.3 ms** | **442.5 ms**  | **2.7×**  |
+| The 12 toggle commits (frames 08–19)   | **71.8 ms**  | **358.0 ms**  | **5.0×**  |
+| Average per toggle commit              | **5.98 ms**  | **29.83 ms**  | **5.0×**  |
+| Fibers rendered per toggle commit      | **16**       | **160**       | **10.0×** |
+
+> These figures are computed from the two linked exports by
+> `node tools/repo-tools/bin/profiler-report.cjs`, and a test asserts this table still matches
+> them. Editing a number here without recomputing fails that test — the numbers are a result,
+> not a transcription. Run the tool with `--write` to refresh `profiler-summary.json` too.
+
+### Recapturing
+
+The exports were taken by hand through the React DevTools Profiler, and reproducing them takes
+the same route:
+
+1. `rushx dev` in this example, with the React DevTools extension installed.
+2. Open the Profiler tab, tick **Record why each component rendered**, press record.
+3. Walk the scenario in the frame table above, in order: initial load, the two filter changes,
+   the factory typing, then toggle the twelve todos one at a time.
+4. Stop recording and use *Export* to save the JSON.
+5. Repeat against the RTK build, then drop both files into
+   `public/assets/profiler/{yoltra,rtk}/` and run the report tool.
+
+Same machine and same browser for both halves, or the ratio is measuring the machine. The
+window the table quotes is frames 08-19; the first seven are startup and are near-identical
+between the two implementations by design.
+
+The first seven commits (initial render, fetch, filters, factory typing) are nearly identical
+between the two implementations — the gap is entirely in the toggle commits, where the
+subscription model is the only difference.
 
 ## Key Observations
 
@@ -69,16 +107,19 @@ giving a total of 12 re-renders per toggled todo item. That is 144 re-renders in
 unnecessary re-renders.
 
 1. **Atomic subscriptions (Yoltra) vs Selector factories (RTK).**
-   - **Yoltra**: Direct path (`todo.data.4.status`) → one component.
+   - **Yoltra**: Direct path (`` data.${id} `` in `TodoItem`) → one row component re-renders.
    - RTK: Needs `createSelector` + memoization; easy to get wrong, easy to wake the list.
 
-2. **Wildcard aggregation.**
-   - **Yoltra**: `todo.filter.*` updates filters automatically.
+2. **The subscription is the optimization.**
+   - **Yoltra**: Filters subscribe to the `filter` path — one subscription, no memoized
+     selector graph. (Wildcard paths like `satellites.**` are demonstrated in the
+     [Mission Control example](../yoltra-mission-control/README.md).)
    - RTK: Must hand-roll per-row selectors; default approach causes whole list churn.
 
 3. **Async effects.**
-   - **Yoltra**: Built-in cancel/delay semantics.
-   - RTK: Must wire custom middleware or thunk chains; no natural cancellation.
+   - **Yoltra**: Effects are per-event async tasks — `await emit(...)` resolves when *that*
+     event's effects finish, and state is already updated when `emit` returns.
+   - RTK: Must wire thunk chains or listener middleware to get comparable sequencing.
 
 4. **Profiler outcome.**
    - **Yoltra** flamegraphs: flat, predictable, bounded updates.

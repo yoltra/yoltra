@@ -21,7 +21,20 @@
     "noUnusedParameters": true,
     "composite": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    // Types follow the same aliases `vite.config.ts` uses for the runtime.
+    //
+    // Without this, TypeScript resolves `@yoltra/*` from the published packages in
+    // node_modules while Vite loads the workspace build — so the typecheck validates this
+    // example against a different version of the library than the one it actually runs, and
+    // an API added since the last release cannot be used here even though the browser has it.
+    "paths": {
+      "@yoltra/core": ["../../../packages/core/dist/types/index.d.ts"],
+      "@yoltra/react": ["../../../packages/react/dist/types/index.d.ts"],
+      "@yoltra/ds": ["../../../packages/ds/dist/types/index.d.ts"],
+      "@yoltra/ds/client": ["../../../packages/ds/dist/types/client.d.ts"]
+    }
   },
   "include": ["src", "src/global.d.ts"]
 }

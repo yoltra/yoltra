@@ -1,6 +1,6 @@
 import react from "@vitejs/plugin-react-swc";
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 // Resolve a path relative to this config file. The repo root is three levels up
 // (examples/v0/yoltra-kinetic-logo -> repo root).
@@ -45,5 +45,12 @@ export default defineConfig({
   server: {
     // Allow serving the built dist that lives outside this example folder.
     fs: { allow: [fromHere("../../../")] },
+  },
+  test: {
+    // The suite exercises the pixel reducer's identity guarantees — pure logic, no DOM,
+    // and no devtools: tests build fresh stores from the reducer spec alone.
+    environment: "node",
+    globals: true,
+    include: ["tests/**/*.test.{ts,tsx}"],
   },
 });

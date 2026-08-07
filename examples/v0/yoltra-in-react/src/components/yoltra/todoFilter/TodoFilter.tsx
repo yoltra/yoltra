@@ -6,9 +6,7 @@ import { useEmit, useAtomicProps } from "../../../state/yoltra/hooks";
 
 import "./TodoFilter.style.scss";
 
-interface iTodoFilterPorps { }
-
-export const TodoFilter = (_: iTodoFilterPorps) => {
+export const TodoFilter = () => {
     const emit = useEmit();
     const { filter } = useAtomicProps(
         [

@@ -5,9 +5,8 @@ import { TodoFactory } from "./todoFactory/TodoFactory";
 import { TodoFilter } from "./todoFilter/TodoFilter";
 import { TodoList } from "./todoList/TodoList";
 
-export interface iYoltraTodoPageProps {}
 
-export const YoltraTodoPage: React.FC<iYoltraTodoPageProps> = (_: iYoltraTodoPageProps) => {
+export const YoltraTodoPage: React.FC = () => {
   const { fetchTodos } = useTodoEvents();
 
   useEffect(() => {

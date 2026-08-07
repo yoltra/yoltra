@@ -4,6 +4,7 @@
   "description": "An simple counter app, React + Yoltra",
   "private": true,
   "license": "MIT",
+  "type": "module",
   "author": {
     "name": "Manu Ramirez",
     "email": "manu@yoltra.dev"
@@ -12,9 +13,10 @@
     "dev": "vite",
     "build": "exit 0",
     "docs": "exit 0",
-    "test": "exit 0",
-    "lint": "exit 0",
-    "preview": "vite preview"
+    "test": "vitest --watch=false",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.vitest.json --noEmit"
   },
   "dependencies": {
     "react": "19.1.1",
@@ -25,6 +27,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "16.3.0",
     "@types/node": "^24.0.12",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
@@ -34,8 +39,10 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
+    "jsdom": "^24.0.0",
     "typescript": "5.9.3",
     "typescript-eslint": "^8.35.1",
-    "vite": "^7.1.11"
+    "vite": "^7.1.11",
+    "vitest": "3.2.4"
   }
 }

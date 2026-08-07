@@ -8,9 +8,8 @@ import { TodoItem } from "../todoItem/TodoItem";
 
 import "./TodoList.style.scss";
 
-export interface iTodoListProps {}
 
-export const TodoList: React.FC<iTodoListProps> = () => {
+export const TodoList: React.FC = () => {
   const data = useSelector((s: AppState) => s.todo.data);
   const filter = useSelector((s: AppState) => s.todo.filter);
 

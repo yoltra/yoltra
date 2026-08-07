@@ -1,4 +1,3 @@
-import type React from "react";
 import type { StoreInstance } from "@yoltra/core";
 
 export type ThemeName = "light" | "dark" | "system";

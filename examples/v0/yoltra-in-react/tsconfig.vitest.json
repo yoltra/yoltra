@@ -1,0 +1,12 @@
+{
+  // The tests see the app sources plus the vitest globals. `paths` is inherited from
+  // tsconfig.app.json; both files sit in the same folder, so the relative entries resolve
+  // identically.
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "composite": false,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.vitest.tsbuildinfo",
+    "types": ["vite/client", "vitest/globals"]
+  },
+  "include": ["src", "src/global.d.ts", "tests"]
+}

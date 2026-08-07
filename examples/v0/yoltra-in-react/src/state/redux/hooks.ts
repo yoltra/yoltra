@@ -22,7 +22,7 @@ export function useTodoActions() {
 
     return {
         addTodo: (todo: iTodoSpec) =>
-            dispatch(addTodo(todo as any)),
+            dispatch(addTodo(todo)),
         deleteTodo: (id: string) => dispatch(deleteTodo({ id })),
         setTodoTitle: (id: string, title: string) =>
             dispatch(setTodoTitle({ id, title })),

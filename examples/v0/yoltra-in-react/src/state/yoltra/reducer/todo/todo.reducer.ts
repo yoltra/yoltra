@@ -141,6 +141,11 @@ const todoReducer = withImmer<iTodoState, tAppEM>((draft, event) => {
       } else {
         draft.filter.categories["fetched"] += todos.length;
       }
+
+      // The Redux twin lands on Success here; without this the spinner state survives the
+      // fetch it was reporting on. The parity suite is what caught the drift.
+      draft.status = eReducerStatus.Success;
+      draft.statusDetails = "ok";
       return;
     }
 
@@ -180,7 +185,7 @@ const todoReducer = withImmer<iTodoState, tAppEM>((draft, event) => {
 });
 
 export const todoSpec: ReducerSpec<iTodoState, tAppEM> = {
-  events: [
+  when: { keys: [
     ["todo", "addTodo"],
     ["todo", "deleteTodo"],
     ["todo", "setTodoTitle"],
@@ -192,7 +197,7 @@ export const todoSpec: ReducerSpec<iTodoState, tAppEM> = {
     ["todo", "fetchTodosLoading"],
     ["todo", "fetchTodosSuccess"],
     ["todo", "fetchTodosFailure"],
-  ],
+  ] },
   state: todoInitialState,
   reducer: todoReducer,
 };

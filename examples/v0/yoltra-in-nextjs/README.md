@@ -2,8 +2,7 @@
 
 # Yoltra in Next.js (React 19)
 
-> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | &nbsp; 👉
-> [ 🇺🇸 English Version](./README.md)&nbsp;
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | &nbsp; 👉 🇺🇸 English Version &nbsp;
 
 > ⚡ **[Open the live demo](https://yoltra.dev/en/demos/in-nextjs)** — no install, runs in your browser.
 
@@ -75,12 +74,12 @@ rush update
 Then, open a terminal on this directory and run:
 
 ```bash
-rush dev
+rushx dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### 3. Switch themes
+### Switch themes
 
 Click the 🌙 / 🌞 icon in the header to toggle between light and dark modes. The change is
 handled by **Yoltra** through an atomic property update.

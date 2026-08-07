@@ -7,11 +7,15 @@ import { TodoItem } from "../todoItem/TodoItem";
 import "./TodoList.style.scss";
 import { useAtomicProps } from "../../../state/yoltra/hooks";
 
-export interface iTodoListProps { }
 
-export const TodoList: React.FC<iTodoListProps> = (_: iTodoListProps) => {
+export const TodoList: React.FC = () => {
+    // Subscribe to everything the selector reads. Listing only `filter` while reading
+    // `todo.data` happened to work, because adding or deleting a todo also rewrites
+    // `filter.categories` — so the list re-rendered by coincidence rather than by subscription.
+    // An edit that left the categories alone would not have re-rendered it at all.
     const { data, filter } = useAtomicProps(
         [
+            { reducer: "todo", property: "data" },
             { reducer: "todo", property: "filter" },
         ],
         ({ todo }) => ({
