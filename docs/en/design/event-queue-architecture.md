@@ -2,7 +2,7 @@
 
 # Event Pipeline Architecture
 
-> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/docs/es/design/event-queue-architecture.md)&nbsp; | &nbsp; 👉 🇺🇸 English Version
+> 👉 English &nbsp;|&nbsp; [🇲🇽 Español](../../es/design/event-queue-architecture.md)
 
 **Version:** 0.8.0
 **Last Updated:** July 2026

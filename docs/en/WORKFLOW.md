@@ -40,18 +40,18 @@ hotfix/*
 ## Day-to-day: feature or fix
 
 ```
-main
+release/next
   └─ feature/123-my-feature
          │  commits with conventional commits + DCO
          │  rush change (at least once)
-         └─► PR → main
+         └─► PR → release/next  ──► (release PR) ──► main
 ```
 
 **Step by step:**
 
 ```bash
-# 1. Branch from main
-git checkout main
+# 1. Branch from release/next (the standing integration branch — see the branch model above)
+git checkout release/next
 git pull
 git checkout -b feature/123-my-feature
 
@@ -65,7 +65,7 @@ rush change
 # 3. Do your work — commits must follow Conventional Commits + DCO sign-off
 git commit -S -s -m "feat(core): add wildcard event matcher"
 
-# 4. Push and open PR against main
+# 4. Push and open PR against release/next
 git push -u origin feature/123-my-feature
 ```
 
@@ -73,7 +73,8 @@ git push -u origin feature/123-my-feature
 
 - [ ] Conventional commit messages with DCO sign-off on every commit
 - [ ] `rush build` passes locally
-- [ ] `rush test` passes (coverage ≥ 95%)
+- [ ] `rush test` passes (per-package coverage thresholds hold — see the
+      [Developer Guide](./DEVELOPER_GUIDE.md#testing--coverage))
 - [ ] `rush lint` and `rush typecheck` pass
 - [ ] Change file committed in `common/changes/` (`rush change -v` is green)
 - [ ] PR description links the relevant issue(s)

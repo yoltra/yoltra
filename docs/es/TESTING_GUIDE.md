@@ -28,7 +28,7 @@ function makeStore() {
     reducer: {
       counter: {
         state: { value: 0 },
-        events: [["counter", "increment"], ["counter", "reset"]],
+        when: { keys: [["counter", "increment"], ["counter", "reset"]] },
         reducer: (s, e) =>
           e.type === "increment" ? { value: s.value + e.payload }
           : e.type === "reset"   ? { value: 0 }
@@ -95,7 +95,7 @@ it("carga todos y reduce el resultado", async () => {
     reducer: {
       todos: {
         state: { items: [] as { id: number; title: string }[] },
-        events: [["todos", "loaded"]],
+        when: { keys: [["todos", "loaded"]] },
         reducer: (s, e) => (e.type === "loaded" ? { items: e.payload } : s),
       },
     },
@@ -131,7 +131,7 @@ it("rechaza boost por debajo del umbral de batería", () => {
     reducer: {
       sat: {
         state: { battery: 10, boosting: false },
-        events: [["command", "boost"]],
+        when: { keys: [["command", "boost"]] },
         reducer: (s, e) => (e.type === "boost" ? { ...s, boosting: true } : s),
       },
     },

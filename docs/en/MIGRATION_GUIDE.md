@@ -65,6 +65,7 @@ export const store = configureStore({ reducer: { counter: counter.reducer } });
 
 ```ts
 // Yoltra
+import { eventKeys } from "@yoltra/core";
 import { createYoltra } from "@yoltra/react";
 
 export type AppEM = { counter: { increment: number; reset: null } };
@@ -74,7 +75,7 @@ export const { useAtomicProp, useEmit } = createYoltra({
   reducer: {
     counter: {
       state: { value: 0 },
-      events: [["counter", "increment"], ["counter", "reset"]],
+      when: { keys: eventKeys<AppEM>()([["counter", "increment"], ["counter", "reset"]]) },
       reducer: (s, e) => {
         switch (e.type) {
           case "increment": return { value: s.value + e.payload };
@@ -103,7 +104,7 @@ const emit = useEmit();
 emit("counter", "increment", 1);
 ```
 
-### Thunks / RTK Query → effects
+### Thunks → effects
 
 Async belongs in **effects**, which run after the reducer and can emit follow-up
 events (your success/failure actions):
@@ -129,6 +130,45 @@ effects: [
   },
 ],
 ```
+
+
+### RTK Query → nothing, and that is the honest answer
+
+There is no counterpart, because Yoltra is a state container and RTK Query is a data-fetching
+layer. It gives you a request cache, deduplication, tag-based invalidation, refetch on focus and
+reconnect, polling, optimistic updates and generated hooks. None of that is state management,
+and rebuilding it on effects is a project rather than a migration.
+
+**The usual answer is to keep it.** RTK Query needs a Redux store, so keeping it means keeping
+that store — which is fine, and is what the section below on adopting Yoltra incrementally is
+about. Server data stays where it is; the state that is genuinely yours moves.
+
+If you would rather not keep Redux at all, [TanStack Query](https://tanstack.com/query) does the
+same job without one, and composes with Yoltra the same way: it owns the server cache, Yoltra
+owns everything else.
+
+Building it yourself is the option to reach for last. The pieces are here — effects fetch,
+`createEntityAdapter` gives you a normalized cache, and the dedup window collapses duplicate
+emits — but request deduplication, cache invalidation and refetch policy are the hard parts, and
+they are hard wherever you write them:
+
+```ts
+const articles = createEntityAdapter<Article>();
+
+effects: [
+  {
+    when: { keys: [["articles", "requested"]] },
+    effect: async (event, getState, emit) => {
+      // Already have it, and it is fresh enough? Then this is a no-op.
+      if (articles.selectById(getState().articles, event.payload.id) !== undefined) return;
+      await emit("articles", "loaded", await api.getArticle(event.payload.id));
+    },
+  },
+],
+```
+
+That is a cache. It is not invalidation, and it is not a refetch policy. Write those only if you
+know you want them.
 
 ### Middleware
 
@@ -169,7 +209,7 @@ export const { useAtomicProp, useEmit } = createYoltra({
   reducer: {
     counter: {
       state: { value: 0 },
-      events: [["counter", "increment"], ["counter", "reset"]],
+      when: { keys: eventKeys<AppEM>()([["counter", "increment"], ["counter", "reset"]]) },
       reducer: (s, e) =>
         e.type === "increment" ? { value: s.value + e.payload }
         : e.type === "reset"   ? { value: 0 }
@@ -242,6 +282,119 @@ DevTools that the atom model doesn't have.
 
 ---
 
+## Adopting it beside what you have
+
+You do not have to choose. Two stores can run in the same application without knowing about each
+other, which is how a migration gets done in daylight rather than in one enormous branch.
+
+The [`yoltra-in-react` example](../../examples/v0/yoltra-in-react) is built exactly this way: the
+same todo application implemented twice, `src/state/redux` beside `src/state/yoltra` and
+`src/components/redux` beside `src/components/yoltra`, running side by side in one page. It
+exists to compare the two, but the arrangement is the same one an incremental adoption uses.
+
+**Pick a bounded slice and move it whole.** A feature whose state nothing else reads — a filter
+panel, a wizard, a settings drawer — is a good first move. Half a slice in each library is the
+one arrangement to avoid: two owners of the same value means the two disagree, and which one is
+right depends on which rendered last.
+
+```tsx
+// Redux keeps what it already owns.
+<Provider store={reduxStore}>
+  <App>
+    <LegacyDashboard />         {/* useSelector, dispatch */}
+    <StoreProvider store={yoltraStore}>
+      <NewSettingsPanel />      {/* useAtomicProp, useEmit */}
+    </StoreProvider>
+  </App>
+</Provider>
+```
+
+**Prefer no bridge.** If the slices are genuinely disjoint, the two stores never need to talk,
+and adding a bridge creates the coupling the split was meant to avoid.
+
+When one genuinely must react to the other, make the dependency one-directional and put it in an
+effect:
+
+```ts
+// Yoltra hears about something Redux owns. One direction only.
+effects: [
+  {
+    when: { keys: [["session", "endedElsewhere"]] },
+    effect: async (_event, _getState, emit) => {
+      await emit("settings", "cleared", null);
+    },
+  },
+],
+
+// Somewhere in the Redux side, once:
+reduxStore.subscribe(() => {
+  if (!selectIsAuthenticated(reduxStore.getState())) {
+    void yoltraStore.emit("session", "endedElsewhere", null);
+  }
+});
+```
+
+Two bridges pointing at each other is a loop, and a loop between two stores is a bug that
+reproduces only under timing you cannot control. If you find yourself wanting the second one,
+move the shared state into one store instead.
+
+---
+
+## Persistence: replacing redux-persist
+
+`@yoltra/core` ships `hydrate` and `persist`. The shape differs from redux-persist in one way
+worth understanding before you port anything.
+
+**The store is born hydrated.** redux-persist rehydrates an existing store by dispatching a
+`REHYDRATE` action, so every reducer has to tolerate its state being replaced from underneath it
+and the UI renders once with defaults before the real values arrive. Yoltra reads the payload
+*first* and uses it as the reducers' initial state, so there is no flash, no synthetic action,
+and no transition for effects to observe that never happened:
+
+```ts
+import {
+  createStore, createWebStorageAdapter, hydrate, persist, withHydration,
+} from "@yoltra/core";
+
+const adapter = createWebStorageAdapter(localStorage);
+const hydration = await hydrate({ key: "app", adapter, version: 3 });
+
+const store = createStore({
+  name: "App",
+  reducer: withHydration({ todos: todosSpec, ui: uiSpec }, hydration),
+});
+
+// Persist only what is worth persisting. A change to an unwatched slice costs nothing.
+const stop = persist(store, { key: "app", adapter, version: 3, slices: ["todos"] });
+```
+
+| redux-persist | Yoltra |
+| --- | --- |
+| `persistReducer` wraps each reducer | `withHydration` supplies initial state |
+| `PersistGate` hides the UI until rehydrated | nothing to hide — the first render is hydrated |
+| `migrate` keyed on a version number | `migrate(persisted, fromVersion)`, same idea |
+| `whitelist` / `blacklist` | `slices: ["todos"]` |
+| `transforms` | `serialize`, plus the codec below |
+| storage engines | `PersistenceAdapter`, three shipped |
+
+**A version mismatch is refused, not trusted.** Reducers change, and a snapshot written against
+an older shape may not be valid state for this build at all. Supply `migrate` to upgrade it, or
+it is discarded and you start from your declared defaults.
+
+**Nothing throws on boot.** A missing, unparseable or unmigratable payload falls back to those
+defaults and reports through `onError`. A store that will not start because `localStorage` holds
+stale JSON is worse than one that starts fresh, and a full disk should not take down the page it
+is persisting.
+
+**`Map`, `Set`, `Date`, `BigInt` and circular references survive the round trip.**
+`JSON.stringify` does not fail on a `Map`; it silently turns it into `{}`, which is the kind of
+data loss you find months later.
+
+For a server render, `dehydrate(store, { version })` produces the payload and
+`hydrate({ source, version })` consumes it.
+
+---
+
 ## Gotchas & FAQ
 
 - **"Where's `setState`?"** There isn't one by design. Emit an event; a reducer
@@ -265,5 +418,6 @@ DevTools that the atom model doesn't have.
 
 - [Quick Start Guide](./QUICK_START_GUIDE.md) — install to working app in three steps
 - [Testing Guide](./TESTING_GUIDE.md) — unit-test stores, effects, and components
+- [`yoltra-in-react`](../../examples/v0/yoltra-in-react) — the same app in Redux and in Yoltra, side by side
 - [@yoltra/core API](../../packages/core/README.md) · [@yoltra/react API](../../packages/react/README.md)
 - [Library Comparison](./design/state-management-library-comparison.md) — the honest architectural trade-offs
