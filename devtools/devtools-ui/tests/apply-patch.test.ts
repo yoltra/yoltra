@@ -79,3 +79,84 @@ describe("applyPatches: cost and identity", () => {
     expect(next.n).toBe(2);
   });
 });
+
+describe("applyPatches: a pointer is attacker-chosen", () => {
+  // Patches arrive from a peer store or hub, so the path is not ours. A segment that walks
+  // the prototype chain must be dropped, not followed: one `add` to `/__proto__/isAdmin`
+  // would otherwise land on every object in the panel's process.
+  const poisoned = ["__proto__", "constructor", "prototype"];
+
+  it("drops a write through a prototype-chain segment", () => {
+    for (const key of poisoned) {
+      const next = applyPatches({ safe: 1 }, [
+        { op: "add", path: `/${key}/polluted`, value: true },
+      ]) as Record<string, any>;
+
+      expect(next[key]?.polluted).toBeUndefined();
+      expect(next.safe).toBe(1);
+    }
+
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(Object.prototype, "polluted")).toBe(false);
+  });
+
+  it("drops a remove through one too", () => {
+    for (const key of poisoned) {
+      const next = applyPatches({ safe: 1 }, [{ op: "remove", path: `/${key}/toString` }]);
+      expect(next.safe).toBe(1);
+    }
+
+    expect(typeof ({} as Record<string, unknown>).toString).toBe("function");
+  });
+});
+
+describe("applyPatches: RFC 6901 pointer decoding", () => {
+  it("reads ~1 as / and ~0 as ~", () => {
+    // A slice keyed by a URL or a dotted name arrives escaped. Decoding it wrong writes a
+    // brand-new key beside the real one and the panel shows a slice that never updates.
+    const state = { "a/b": 0, "c~d": 0 };
+
+    const next = applyPatches(state, [
+      { op: "replace", path: "/a~1b", value: 1 },
+      { op: "replace", path: "/c~0d", value: 2 },
+    ]);
+
+    expect(next["a/b"]).toBe(1);
+    expect(next["c~d"]).toBe(2);
+    expect(Object.keys(next)).toEqual(["a/b", "c~d"]);
+  });
+
+  it("treats the empty pointer as the whole document", () => {
+    expect(applyPatches({ old: true }, [{ op: "replace", path: "", value: { fresh: 1 } }])).toEqual({
+      fresh: 1,
+    });
+    expect(applyPatches({ old: true }, [{ op: "replace", path: "/", value: { fresh: 2 } }])).toEqual(
+      { fresh: 2 },
+    );
+  });
+});
+
+describe("applyPatches: remove, and array indices that do not fit", () => {
+  it("removes an object member", () => {
+    const next = applyPatches({ obj: { a: 1, b: 2 } }, [{ op: "remove", path: "/obj/a" }]);
+    expect(next.obj).toEqual({ b: 2 });
+  });
+
+  it("removes an array element by index, closing the gap", () => {
+    const next = applyPatches({ list: ["a", "b", "c"] }, [{ op: "remove", path: "/list/1" }]);
+    expect(next.list).toEqual(["a", "c"]);
+  });
+
+  it("falls back to a plain set when an array add index is out of range or not a number", () => {
+    // Out of contract for RFC 6902, but a best-effort set keeps the value reachable instead
+    // of dropping it silently.
+    const outOfRange = applyPatches({ list: ["a"] }, [{ op: "add", path: "/list/9", value: "z" }]);
+    expect(outOfRange.list[9]).toBe("z");
+
+    const nonNumeric = applyPatches({ list: ["a"] }, [
+      { op: "add", path: "/list/label", value: "z" },
+    ]) as { list: string[] & { label?: string } };
+    expect(nonNumeric.list.label).toBe("z");
+    expect(nonNumeric.list[0]).toBe("a");
+  });
+});

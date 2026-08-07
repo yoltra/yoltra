@@ -1,6 +1,6 @@
 import { createServer } from "node:net";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WebSocket } from "ws";
 
 import { createStore, type ReducerSpec } from "@yoltra/core";
@@ -85,6 +85,13 @@ const counterSpec: ReducerSpec<{ value: number }, EM> = {
 describe("DevTools end-to-end round-trip (node agent <-> hub <-> extension)", () => {
   const cleanups: Array<() => void | Promise<void>> = [];
 
+  // The hub warns on startup that it is running without an auth token, which is the right
+  // thing for it to do and deliberate here — the test is about the wire, not about auth.
+  // Capturing it keeps `rush test` (which fails on any stderr) honest about real warnings.
+  beforeEach(() => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  });
+
   afterEach(async () => {
     for (const c of cleanups.splice(0).reverse()) {
       try {
@@ -93,6 +100,7 @@ describe("DevTools end-to-end round-trip (node agent <-> hub <-> extension)", ()
         /* best-effort teardown */
       }
     }
+    vi.restoreAllMocks();
   });
 
   it("streams a committed event as a patch and applies a time-travel command back to the store", async () => {

@@ -4,7 +4,7 @@
  * `undefined` past a null rather than throwing.
  */
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { getAtPath, toDottedPath } from "../../src/utils/path";
 
@@ -15,9 +15,23 @@ describe("toDottedPath", () => {
     );
   });
 
-  it("records nothing for a symbol access", () => {
+  it("records nothing for a symbol access, and says why", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
     expect(toDottedPath((p: any) => p[Symbol.toPrimitive])).toBe("");
+
+    // An empty path silently subscribes to the whole slice, so the accessor that produced it
+    // has to explain itself — otherwise the only symptom is a component re-rendering far more
+    // than its author expected.
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]?.[0]).toMatch(/recorded no property access/);
   });
+});
+
+// `warnOnce` dedupes on a module-scoped key, so restoring the spy between tests keeps a later
+// empty-path case from inheriting this one's suppression.
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("getAtPath", () => {

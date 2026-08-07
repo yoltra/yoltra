@@ -40,8 +40,16 @@ const bystanderSpec: ReducerSpec<State, Events> = {
   reducer: (state) => ({ n: state.n + 1 }),
 };
 
-beforeEach(() => vi.spyOn(console, "error").mockImplementation(() => undefined));
-afterEach(() => vi.restoreAllMocks());
+// Braces matter here. A concise arrow body returns the spy, and Vitest treats a function
+// returned from `beforeEach` as a per-test cleanup callback — one it runs *after* `afterEach`
+// has already restored the mock. The spy then fires with no arguments, falls through to the
+// real `console.error`, and prints a blank line per test.
+beforeEach(() => {
+  vi.spyOn(console, "error").mockImplementation(() => undefined);
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe.each(["keyed", "pattern"] as const)("a %s reducer that throws", (targeting) => {
   function build(onReducerError?: (e: unknown, ev: unknown, slice: string) => void) {

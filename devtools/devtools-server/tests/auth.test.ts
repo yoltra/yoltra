@@ -1,5 +1,6 @@
 import { DevtoolsRole, PROTOCOL_VERSION } from "@yoltra/devtools-protocol";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { MockInstance } from "vitest";
 import WebSocket from "ws";
 
 import { createServer } from "node:net";
@@ -29,9 +30,22 @@ function getFreePort(): Promise<number> {
  * tenant on a shared CI runner.
  */
 
+/**
+ * Refusing a client and running without a token are both things the hub is *supposed* to warn
+ * about, and most of the cases below provoke one on purpose. Captured here rather than left on
+ * stderr: `rush test` runs with `allowWarningsInSuccessfulBuild: false`, so a stray warning
+ * fails the build, and the tests that assert on the text read this same spy.
+ */
+let warn: MockInstance;
+beforeEach(() => {
+  warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+});
+
 const started: DevtoolsHub[] = [];
 afterEach(async () => {
+  // Stop the hubs before restoring, so anything they log on the way down is still captured.
   for (const hub of started.splice(0)) await hub.stop();
+  vi.restoreAllMocks();
 });
 
 async function startHub(authToken?: string) {
@@ -113,7 +127,6 @@ describe("hub authentication", () => {
   });
 
   it("stays open when no token is configured, and says so once", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const { hub, port } = await startHub();
 
     const response = await handshake(port);
@@ -123,7 +136,6 @@ describe("hub authentication", () => {
     expect(response.success).toBe(true);
     const message = warn.mock.calls.map((c) => String(c[0])).find((m) => m.includes("auth token"));
     expect(message).toContain("any process on this machine");
-    warn.mockRestore();
   });
 });
 
@@ -262,7 +274,6 @@ describe("history replayed to a newly-connected panel", () => {
 
 describe("a client that floods the hub", () => {
   it("drops the excess but keeps the connection", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const hub = new DevtoolsHub({ port: await getFreePort(), maxMessagesPerSecond: 5 });
     await hub.start();
     started.push(hub);
@@ -297,6 +308,5 @@ describe("a client that floods the hub", () => {
     expect(seen.some((m) => m.type === "HANDSHAKE_RESPONSE" && m.success === true)).toBe(true);
     expect(warn.mock.calls.some((c) => String(c[0]).includes("messages/second"))).toBe(true);
     ws.close();
-    warn.mockRestore();
   });
 });

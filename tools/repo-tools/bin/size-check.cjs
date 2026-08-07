@@ -13,14 +13,39 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 const zlib = require("node:zlib");
-const { build } = require("esbuild");
+const { build, transform } = require("esbuild");
+
+/**
+ * Import a TypeScript module from a plain Node script.
+ *
+ * Node cannot `import()` a `.ts` file before 22.6, and `rush size` runs on whatever the repo
+ * supports (>=18.18) — CI pins 20. So the source is type-stripped with the esbuild this script
+ * already depends on, then imported from a temp file. `size-budget.ts` imports nothing, so
+ * stripping types is the whole job; keep it that way or this needs to bundle instead.
+ */
+async function importTs(tsPath) {
+  const { code } = await transform(fs.readFileSync(tsPath, "utf8"), {
+    loader: "ts",
+    format: "esm",
+  });
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "yoltra-ts-"));
+  const file = path.join(dir, `${path.basename(tsPath, ".ts")}.mjs`);
+  fs.writeFileSync(file, code);
+  try {
+    return await import(pathToFileURL(file).href);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
 
 async function main() {
   const cwd = process.cwd();
   const manifest = JSON.parse(fs.readFileSync(path.join(cwd, "package.json"), "utf8"));
-  const { parseBudgets, entrySource, evaluate, formatResults, toKb } = await import(
-    "../src/size-budget.ts"
+  const { parseBudgets, entrySource, evaluate, formatResults, toKb } = await importTs(
+    path.join(__dirname, "../src/size-budget.ts"),
   );
 
   const budgets = parseBudgets(manifest);

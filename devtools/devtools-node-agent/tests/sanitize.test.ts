@@ -1,6 +1,6 @@
 import { createServer } from "node:net";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WebSocket } from "ws";
 
 import { createStore, type ReducerSpec } from "@yoltra/core";
@@ -72,6 +72,13 @@ const vaultSpec: ReducerSpec<VaultState, EM> = {
 describe("the sanitize hook, over real sockets", () => {
   const cleanups: Array<() => void | Promise<void>> = [];
 
+  // The hub warns on startup that it is running without an auth token, which is the right
+  // thing for it to do and deliberate here — the test is about redaction, not about auth.
+  // Capturing it keeps `rush test` (which fails on any stderr) honest about real warnings.
+  beforeEach(() => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  });
+
   afterEach(async () => {
     for (const c of cleanups.splice(0).reverse()) {
       try {
@@ -80,6 +87,7 @@ describe("the sanitize hook, over real sockets", () => {
         /* best-effort teardown */
       }
     }
+    vi.restoreAllMocks();
   });
 
   it("redacts snapshots, payloads and patches when configured", async () => {

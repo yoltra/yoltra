@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { Suspense } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -83,7 +83,11 @@ describe("Suspense hooks returned by createYoltra", () => {
     );
     await waitFor(() => expect(screen.getByTestId("out").textContent).toBe("2"));
 
-    await store.emit("ui", "bump", 4);
+    // The store commits synchronously and notifies the `useSyncExternalStore` subscriber on
+    // its own stack, so without `act` React re-renders outside the test's control.
+    await act(async () => {
+      await store.emit("ui", "bump", 4);
+    });
     await waitFor(() => expect(screen.getByTestId("out").textContent).toBe("10"));
   });
 
@@ -105,7 +109,9 @@ describe("Suspense hooks returned by createYoltra", () => {
     );
     await waitFor(() => expect(screen.getByTestId("out").textContent).toBe("v=2"));
 
-    await store.emit("ui", "bump", 3);
+    await act(async () => {
+      await store.emit("ui", "bump", 3);
+    });
     await waitFor(() => expect(screen.getByTestId("out").textContent).toBe("v=5"));
   });
 
