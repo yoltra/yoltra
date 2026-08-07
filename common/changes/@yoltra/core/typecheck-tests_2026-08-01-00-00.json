@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Two typing defects that no test could have caught, because the tests were never typechecked. `DeepReadonly` mapped over the method names of `Map`, `Set`, `Date`, `RegExp` and any function held in state, so reading a Map out of state and calling `.get()` on it was a type error against a value that is an ordinary Map at runtime; collections now become their `Readonly` counterparts, as arrays already did, and functions are left callable. And `createStore`, `registerMiddleware` and `hotReplace` all typed middleware as bare functions while the field behind them, the pipeline that reads it, and the documentation took either form \u2014 so the spec form the docs call recommended did not compile. Both are pinned by type-level tests.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

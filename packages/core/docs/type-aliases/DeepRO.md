@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/core**](../README.md)
 
 ***
@@ -8,7 +10,7 @@
 
 > **DeepRO**\<`T`\> = [`DeepReadonly`](DeepReadonly.md)\<`T`\>
 
-Defined in: [types.ts:1080](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L1080)
+Defined in: [types.ts:1170](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1170)
 
 Alias for DeepReadonly.
 

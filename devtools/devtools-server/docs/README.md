@@ -1,4 +1,6 @@
-![Yoltra logo](../../../assets/yoltra-logo.png)
+**@yoltra/devtools-server**
+
+***
 
 # @yoltra/devtools-server
 

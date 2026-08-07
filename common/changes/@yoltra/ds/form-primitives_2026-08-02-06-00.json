@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Adds the form and action tier: `Checkbox`, `Radio`, `RadioGroup`, `Switch`, `Slider`, `FormField`, `Fieldset`, `IconButton` and `ButtonGroup`.\n\nEvery control is a native element, tinted with accent-color rather than replaced. A div dressed as a checkbox has to re-implement keyboard handling, the indeterminate state, form participation and every assistive-technology behaviour the native control already has, and usually re-implements only some of them.\n\nFormField hands its child the wiring through a render function rather than cloning it: the id, the aria-describedby pointing at hint and error, and aria-invalid. Cloning reads more tidily and breaks the moment a caller wraps their control in a fragment or a component of their own, because the props land on the wrapper and nothing reports it. The error region is always rendered and carries role=alert, so a message appearing after a failed submit reaches a reader who has already moved past the field.\n\nFieldset and RadioGroup use a real fieldset and legend, the one construct that gets a group name announced before each control inside it. RadioGroup does not set the shared name on its children, for the same reason FormField does not clone: it is documented instead. Switch is a checkbox carrying role=switch, which is what makes a reader hear on and off rather than checked and unchecked. Slider takes a valueText for scales where the bare number says nothing. IconButton requires its label and renders it visually hidden, because an icon button with no accessible name is announced as 'button' and nothing else \u2014 so the component does not offer the option of omitting it.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

@@ -8,7 +8,7 @@
 
 > **getAtPath**(`obj`, `dottedPath`): `any`
 
-Defined in: [patch-utils.ts:30](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/patch-utils.ts#L30)
+Defined in: [patch-utils.ts:30](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/patch-utils.ts#L30)
 
 Walks a dotted path (e.g., `"counter.value"`) into an object.
 

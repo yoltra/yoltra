@@ -66,7 +66,7 @@ export function useStoreState(storeId: string | null): {
   loading: boolean;
   refresh: () => void;
 } {
-  const { send, subscribe } = useHubConnection();
+  const { send, subscribe, extensionId } = useHubConnection();
   const [state, setState] = useState<unknown>(null);
   const [version, setVersion] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -86,10 +86,10 @@ export function useStoreState(storeId: string | null): {
       type: "REQUEST_STATE",
       storeId,
       timestamp: new Date().toISOString(),
-      sourceId: "",
+      sourceId: extensionId,
       sourceRole: DevtoolsRole.EXTENSION,
     });
-  }, [storeId, send]);
+  }, [storeId, send, extensionId]);
 
   useEffect(() => {
     if (!storeId) {

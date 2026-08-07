@@ -6,7 +6,7 @@
 
 # Interface: StoreEvent
 
-Defined in: [messages.ts:57](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L57)
+Defined in: [messages.ts:58](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L58)
 
 An event emitted by a store, forwarded to extensions.
 
@@ -27,7 +27,7 @@ incrementally or request a full [StateSnapshot](StateSnapshot.md) when needed.
 
 > **committed**: `boolean`
 
-Defined in: [messages.ts:71](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L71)
+Defined in: [messages.ts:72](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L72)
 
 `true` if the event passed middleware; `false` if bounced.
 
@@ -37,7 +37,7 @@ Defined in: [messages.ts:71](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d
 
 > **event**: `object`
 
-Defined in: [messages.ts:60](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L60)
+Defined in: [messages.ts:61](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L61)
 
 #### channel
 
@@ -61,7 +61,7 @@ Defined in: [messages.ts:60](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d
 
 > **patches**: [`JsonPatch`](JsonPatch.md)[]
 
-Defined in: [messages.ts:67](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L67)
+Defined in: [messages.ts:68](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L68)
 
 RFC 6902 JSON Patch operations describing state changes.
 
@@ -71,7 +71,7 @@ RFC 6902 JSON Patch operations describing state changes.
 
 > **snapshotVersion**: `number`
 
-Defined in: [messages.ts:69](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L69)
+Defined in: [messages.ts:70](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L70)
 
 Monotonically increasing snapshot version counter.
 
@@ -81,7 +81,7 @@ Monotonically increasing snapshot version counter.
 
 > **sourceId**: `string`
 
-Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L23)
+Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L23)
 
 UUID of the sender (store wrapper ID or extension ID).
 
@@ -95,7 +95,7 @@ UUID of the sender (store wrapper ID or extension ID).
 
 > **sourceRole**: [`DevtoolsRole`](../enumerations/DevtoolsRole.md)
 
-Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L25)
+Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L25)
 
 Role of the sender.
 
@@ -109,7 +109,7 @@ Role of the sender.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:59](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L59)
+Defined in: [messages.ts:60](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L60)
 
 ***
 
@@ -117,7 +117,7 @@ Defined in: [messages.ts:59](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d
 
 > **timestamp**: `string`
 
-Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L21)
+Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L21)
 
 ISO 8601 timestamp of when the message was created.
 
@@ -131,7 +131,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"STORE_EVENT"`
 
-Defined in: [messages.ts:58](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L58)
+Defined in: [messages.ts:59](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L59)
 
 Discriminant field identifying the message type.
 

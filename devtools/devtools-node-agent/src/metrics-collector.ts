@@ -26,8 +26,6 @@ import type { StoreMetrics } from "@yoltra/devtools-protocol";
 export class MetricsCollector {
   private eventCount = 0;
   private totalProcessingTimeMs = 0;
-  private dedupHits = 0;
-  private middlewareRejections = 0;
   private recentEvents: number[] = []; // timestamps of recent events
   private readonly windowMs = 1000; // 1s rolling window for events/sec
 
@@ -44,35 +42,14 @@ export class MetricsCollector {
   }
 
   /**
-   * Record a deduplication hit (event skipped by the dedup guard).
-   *
-   * @remarks
-   * Increments the lifetime dedup-hit counter, which is included in the
-   * next metrics snapshot.
-   */
-  recordDedupHit(): void {
-    this.dedupHits++;
-  }
-
-  /**
-   * Record a middleware rejection (event blocked by middleware).
-   *
-   * @remarks
-   * Increments the lifetime middleware-rejection counter, which is included
-   * in the next metrics snapshot.
-   */
-  recordMiddlewareRejection(): void {
-    this.middlewareRejections++;
-  }
-
-  /**
    * Build a complete metrics snapshot by merging collected counters with
    * live store introspection data.
    *
    * @remarks
    * Prunes stale timestamps from the rolling window before computing
-   * `eventsPerSecond`. All lifetime counters (event count, dedup hits,
-   * middleware rejections) are included as-is.
+   * `eventsPerSecond`. Dedup hits and middleware rejections come from the store's own
+   * introspection rather than being counted here: this collector cannot observe either, and the
+   * counters it used to keep for them were never incremented by anything.
    *
    * @param storeInfo - Live introspection counts from the instrumented store
    *   (reducer count, effect count, etc.).

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "Adds `useEntityIds`, `useEntity` and `useEntityField`, pairing with `createEntityAdapter`. Thin wrappers over `useAtomicProp` whose value is that the subscription path comes from the adapter rather than being written by hand in a component, where nothing verifies it and an id-format change breaks it silently.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

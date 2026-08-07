@@ -1,0 +1,29 @@
+{
+  "recordedAt": "2026-08-02T03:39:30.691Z",
+  "samples": {
+    "specsSignature, per render > 1 spec(s)": {
+      "hz": 4563872.1835785955,
+      "meanMs": 0.0002191121836404906
+    },
+    "specsSignature, per render > 5 spec(s)": {
+      "hz": 1331861.4965564262,
+      "meanMs": 0.0007508288231062573
+    },
+    "specsSignature, per render > 20 spec(s)": {
+      "hz": 384941.2193391092,
+      "meanMs": 0.002597799221701593
+    },
+    "specsSignature, per render > 20 specs, JSON.stringify for comparison": {
+      "hz": 702143.9803403463,
+      "meanMs": 0.0014242093188853882
+    },
+    "accessor to dotted path, per render > shallow: p => p.title": {
+      "hz": 4204069.840253995,
+      "meanMs": 0.00023786474487768824
+    },
+    "accessor to dotted path, per render > deep: p => p.a.b.c.d.e": {
+      "hz": 1585262.0659804754,
+      "meanMs": 0.0006308105274578092
+    }
+  }
+}

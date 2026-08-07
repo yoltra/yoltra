@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/core**](../README.md)
 
 ***
@@ -8,7 +10,7 @@
 
 > **Path**\<`T`\> = `T` *extends* [`Primitive`](Primitive.md) ? `never` : `T` *extends* readonly infer U[] ? `` `${number}` `` \| `Path`\<`U`\> *extends* `never` ? `never` : `` `${number}.${Path<U>}` `` : \{ \[K in keyof T & string\]: T\[K\] extends Primitive ? K : K \| (Path\<T\[K\]\> extends never ? never : \`$\{K\}.$\{Path\<(...)\[(...)\]\>\}\`) \}\[keyof `T` & `string`\]
 
-Defined in: [types.ts:1105](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L1105)
+Defined in: [types.ts:1195](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1195)
 
 Compute dotted paths of T, including nested objects and arrays.
 

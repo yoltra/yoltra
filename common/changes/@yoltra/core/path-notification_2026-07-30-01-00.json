@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Two silent failures in change detection. A change to an array's length reported the array path and stopped there, so an exact subscription on a path inside it was never notified: after an unshift or a splice, a component bound to items.0.title — the example the documentation leads with — kept rendering the previous occupant of that index, with no selector or memo involved and no way to notice. The diff now reports the array path, the leaves that genuinely moved among the overlapping indices, and the indices that appeared or vanished. With positional paths a shift really does change the value at almost every index, so this is honest rather than noisy; the remedy for that cost is identity-keyed state, not a diff that stays quiet. Separately, Map and Set keep their contents outside own enumerable keys, so the key-walk compared two empty objects, reported no change, and the store — which treats no changed paths as a no-op — skipped the commit entirely: a reducer returning a new Map produced no state update, no subscriber notification and no error. Such values are now reported at their own path, making reactivity for them reference-level rather than absent, and two distinct references with nothing enumerable to compare (a class instance holding state in private fields, for example) are assumed changed rather than equal.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

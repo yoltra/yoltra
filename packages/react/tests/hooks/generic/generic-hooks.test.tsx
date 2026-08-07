@@ -140,10 +140,12 @@ describe("useSelector", () => {
     type State = { app: { arr: number[] } };
     const { store } = createMockStore<State>({ app: { arr: [1, 2] } });
 
-    const isEqual = (a: number[], b: number[]) => a.length === b.length;
+    // State reaches a selector deeply readonly, so a comparator written over the mutable
+    // type would not be callable with what it is actually handed.
+    const isEqual = (a: readonly number[], b: readonly number[]) => a.length === b.length;
 
     function Test() {
-      const arr = useSelector<State, number[]>((s) => s.app.arr, isEqual);
+      const arr = useSelector<State, readonly number[]>((s) => s.app.arr, isEqual);
       const renderCount = useRef(0);
       renderCount.current += 1;
 
@@ -226,9 +228,11 @@ describe("useAtomicProp", () => {
     });
 
     function Test() {
-      const title = useAtomicProp<"todos", RootState, "todos", ".items.0.title">({
+      // The type argument names the canonical path on purpose: a leading dot is tolerated at
+      // runtime for robustness, not blessed by the type, so the cast is what is under test.
+      const title = useAtomicProp<"todos", RootState, "todos", "items.0.title">({
         reducer: "todos",
-        property: ".items.0.title" as any,
+        property: ".items.0.title" as unknown as "items.0.title",
       });
       return <span data-testid="title">{title}</span>;
     }

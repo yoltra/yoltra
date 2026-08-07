@@ -1,0 +1,86 @@
+@use "../styles/mixins" as *;
+
+// Anchored surfaces are placed in viewport coordinates by `useAnchoredPosition`, so `fixed` is
+// not a preference — it is what makes those coordinates mean anything. `left`/`top` come from
+// the element's inline style.
+%yl-anchored-surface {
+  position: fixed;
+  z-index: var(--yl-z-popover);
+  max-width: min(36rem, calc(100vw - var(--yl-space-8)));
+  background: var(--yl-color-bg-elevated);
+  color: var(--yl-color-fg);
+  border: 1px solid var(--yl-color-border);
+  border-radius: var(--yl-radius-lg);
+  box-shadow: var(--yl-elevation-lg);
+
+  &:focus {
+    // Focus lands here as a fallback when the surface holds nothing focusable; that is a
+    // destination, not a navigation stop, so it should not draw a ring.
+    outline: none;
+  }
+}
+
+.yl-popover {
+  @extend %yl-anchored-surface;
+
+  padding: var(--yl-space-4);
+  font-size: 1.4rem;
+  line-height: 1.5;
+}
+
+.yl-menu {
+  @extend %yl-anchored-surface;
+
+  display: flex;
+  flex-direction: column;
+  min-width: 18rem;
+  // Long enough to scroll rather than run off the window. The placement maths declines to flip
+  // a surface that does not fit either way, on the grounds that this is the real answer.
+  max-height: min(40rem, calc(100vh - var(--yl-space-8)));
+  overflow-y: auto;
+  padding: var(--yl-space-1);
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: var(--yl-space-2);
+    width: 100%;
+    padding: var(--yl-space-2) var(--yl-space-3);
+    font-family: var(--yl-font-sans);
+    font-size: 1.4rem;
+    line-height: 1.4;
+    text-align: left;
+    color: var(--yl-color-fg);
+    background: transparent;
+    border: 0;
+    border-radius: var(--yl-radius-sm);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--yl-color-ghost-bg-hover);
+    }
+
+    // The keyboard equivalent of the hover state. Focus roves with the arrow keys, so this is
+    // the only thing telling a keyboard user which item Enter would run.
+    &:focus-visible {
+      outline: none;
+      background: var(--yl-color-ghost-bg-hover);
+      box-shadow: inset 0 0 0 2px var(--yl-color-border-focus);
+    }
+
+    &[aria-disabled="true"] {
+      color: var(--yl-color-fg-disabled);
+      cursor: default;
+
+      &:hover {
+        background: transparent;
+      }
+    }
+  }
+
+  &__separator {
+    height: 1px;
+    margin: var(--yl-space-1) 0;
+    background: var(--yl-color-divider);
+  }
+}

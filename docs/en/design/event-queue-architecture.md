@@ -1,8 +1,8 @@
-![Yoltra logo](../../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Event Pipeline Architecture
 
-> [ 🇲🇽 Versión en Español](https://github.com/yoltra/yoltra/blob/main/docs/es/design/event-queue-architecture.md)&nbsp; | &nbsp; 👉 🇺🇸 English Version
+> 👉 English &nbsp;|&nbsp; [🇲🇽 Español](../../es/design/event-queue-architecture.md)
 
 **Version:** 0.8.0
 **Last Updated:** July 2026
@@ -232,10 +232,10 @@ await emit("ui", "event2", p2); // reduced after event1
 Deduplication is **off by default** — Yoltra never silently drops legitimate rapid-fire identical
 events (double-clicks, a slider emitting the same value, two `+1`s). You opt in two ways:
 
-| Mode | How | When it fires |
-| --- | --- | --- |
-| **Content-based** | `createStore({ dedupWindowMs: N })` (or `createYoltra`) | Skips an event whose `channel::type::payload` fingerprint recurs within `N` ms |
-| **Identity-based** | `emit(c, t, p, { dedupKey })` | Skips an event whose explicit `dedupKey` recurs within the key window |
+| Mode               | How                                                     | When it fires                                                                  |
+| ------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Content-based**  | `createStore({ dedupWindowMs: N })` (or `createYoltra`) | Skips an event whose `channel::type::payload` fingerprint recurs within `N` ms |
+| **Identity-based** | `emit(c, t, p, { dedupKey })`                           | Skips an event whose explicit `dedupKey` recurs within the key window          |
 
 ```typescript
 // Off by default — both of these dispatch:
@@ -269,11 +269,11 @@ the state change (not the effects), you don't need to await at all — the chang
 Event subscriptions observe events without affecting flow. They fire during the **synchronous**
 phase.
 
-| Phase | When notified | Use case |
-| --- | --- | --- |
-| `'committed'` | After reducers, before this event's effects | React to successful state changes |
-| `'uncommitted'` | After middleware vetoes | React to blocked events (auth, validation) |
-| `'all'` | Both phases (handler receives the phase) | Logging, analytics, debugging |
+| Phase           | When notified                               | Use case                                   |
+| --------------- | ------------------------------------------- | ------------------------------------------ |
+| `'committed'`   | After reducers, before this event's effects | React to successful state changes          |
+| `'uncommitted'` | After middleware vetoes                     | React to blocked events (auth, validation) |
+| `'all'`         | Both phases (handler receives the phase)    | Logging, analytics, debugging              |
 
 ```typescript
 // Committed (default)
@@ -453,11 +453,11 @@ the queue and are drained by the same pass.
 
 ## Revision History
 
-| Version | Date | Changes |
-| --- | --- | --- |
-| 0.8.0 | 2026-07 | Two-phase pipeline: synchronous reduce (sync middleware, reducers commit before `emit()` returns) + independent async effects; honest per-event completion promise; opt-in deduplication (`dedupWindowMs` / `dedupKey`) |
-| 0.7.0 | 2026-01 | Event subscriptions (committed/uncommitted/all phases) |
-| 0.5.0 | 2026-01 | Initial documentation of the event pipeline |
+| Version | Date    | Changes                                                                                                                                                                                                                 |
+| ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.8.0   | 2026-07 | Two-phase pipeline: synchronous reduce (sync middleware, reducers commit before `emit()` returns) + independent async effects; honest per-event completion promise; opt-in deduplication (`dedupWindowMs` / `dedupKey`) |
+| 0.7.0   | 2026-01 | Event subscriptions (committed/uncommitted/all phases)                                                                                                                                                                  |
+| 0.5.0   | 2026-01 | Initial documentation of the event pipeline                                                                                                                                                                             |
 
 ---
 

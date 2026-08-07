@@ -2,7 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 
 import { createStore } from "../../src/store/Store";
 import type { MiddlewareFunction, EffectSpec } from "../../src/types";
-import { makeStore, reducerSpec, AppState, AppEvents } from "./support/setupStore";
+import { makeStore, reducerSpec } from "./support/setupStore";
+import type { AppState, AppEvents } from "./support/setupStore";
 
 describe("Store - middleware and effects", () => {
   it("runs middleware in order and allows cancellation", async () => {
@@ -63,7 +64,7 @@ describe("Store - middleware and effects", () => {
     const calls: Array<{ payload: any; value: number }> = [];
 
     const effectSpec: EffectSpec<Readonly<AppState>, AppEvents> = {
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       effect: async (evt, getState) => {
         const s = getState();
         calls.push({ payload: evt.payload, value: s.counter.value });
@@ -87,14 +88,14 @@ describe("Store - middleware and effects", () => {
     const calls: number[] = [];
 
     const badEffect: EffectSpec<Readonly<AppState>, AppEvents> = {
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       effect: async () => {
         throw new Error("effect boom");
       },
     };
 
     const goodEffect: EffectSpec<Readonly<AppState>, AppEvents> = {
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       effect: async (_evt, getState) => {
         calls.push(getState().counter.value);
       },
@@ -125,7 +126,7 @@ describe("Store - middleware and effects", () => {
 
     const boom = new Error("effect boom");
     store.registerEffect({
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       effect: async () => {
         throw boom;
       },
@@ -178,14 +179,14 @@ describe("Store - middleware and effects", () => {
     const calls: string[] = [];
 
     const oldEffect: EffectSpec<Readonly<AppState>, AppEvents> = {
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       effect: async () => {
         calls.push("old");
       },
     };
 
     const newEffect: EffectSpec<Readonly<AppState>, AppEvents> = {
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       effect: async () => {
         calls.push("new");
       },

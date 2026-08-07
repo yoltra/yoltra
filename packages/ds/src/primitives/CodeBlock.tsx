@@ -21,6 +21,20 @@ export interface CodeBlockProps {
  * delegated to the consumer (pass `children` as highlighted HTML); the DS owns
  * the chrome, copy behavior, and theming.
  */
+/**
+ * A block of code, with a copy button.
+ *
+ * @remarks
+ * Ships from `@yoltra/ds/client`: copying needs the clipboard API, and the button tracks
+ * whether it has just been pressed.
+ *
+ * @example
+ * ```tsx
+ * <CodeBlock title="store.ts" language="ts" code={`createStore(spec)`} />
+ * ```
+ *
+ * @public
+ */
 export function CodeBlock({ code, language, title, children }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
 

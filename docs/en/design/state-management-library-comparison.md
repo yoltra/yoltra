@@ -1,4 +1,4 @@
-![Yoltra logo](../../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # State Management: Architectural Comparison
 
@@ -309,14 +309,14 @@ const counterReducer = (state, event) => {
 
 Each library optimizes for a different dimension:
 
-| Library | Optimizes for | Core tradeoff |
-|---------|---------------|---------------|
-| **Redux Toolkit** | Ecosystem maturity, team conventions | More boilerplate and setup, coarser subscriptions |
-| **Zustand** | Minimal API surface, low ceremony | Less structure for complex async flows |
-| **Jotai** | Distributed, composable atoms | Harder to coordinate global state |
-| **MobX** | Implicit reactivity, mutable ergonomics | Harder to trace and debug state changes |
-| **XState** | Workflow correctness, impossible states | Verbose for general data management |
-| **Yoltra** | Fine-grained subscriptions + event log + time-travel devtools | Larger bundle than Zustand; opinionated event model |
+| Library           | Optimizes for                                                 | Core tradeoff                                       |
+| ----------------- | ------------------------------------------------------------- | --------------------------------------------------- |
+| **Redux Toolkit** | Ecosystem maturity, team conventions                          | More boilerplate and setup, coarser subscriptions   |
+| **Zustand**       | Minimal API surface, low ceremony                             | Less structure for complex async flows              |
+| **Jotai**         | Distributed, composable atoms                                 | Harder to coordinate global state                   |
+| **MobX**          | Implicit reactivity, mutable ergonomics                       | Harder to trace and debug state changes             |
+| **XState**        | Workflow correctness, impossible states                       | Verbose for general data management                 |
+| **Yoltra**        | Fine-grained subscriptions + event log + time-travel devtools | Larger bundle than Zustand; opinionated event model |
 
 There is no universally "best" library. The right choice depends on what your application needs most:
 

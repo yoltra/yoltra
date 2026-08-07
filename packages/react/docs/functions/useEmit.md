@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -8,7 +10,7 @@
 
 > **useEmit**\<`EM`\>(): `Emit`\<`EM`\>
 
-Defined in: [react/src/hooks/hooks.ts:86](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/hooks.ts#L86)
+Defined in: [react/src/hooks/hooks.ts:87](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/hooks.ts#L87)
 
 Returns the store's `emit` function (stable reference).
 

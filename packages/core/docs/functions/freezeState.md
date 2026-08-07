@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/core**](../README.md)
 
 ***
@@ -6,9 +8,9 @@
 
 # Function: freezeState()
 
-> **freezeState**\<`T`\>(`obj`, `seen`): [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`T`\>
+> **freezeState**\<`T`\>(`obj`, `seen`, `alias?`): [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`T`\>
 
-Defined in: [utils/immutability.ts:52](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/utils/immutability.ts#L52)
+Defined in: [utils/immutability.ts:52](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L52)
 
 Deep-freezes a value **in place** and returns it as [\`DeepReadonly\<T\>\`](../type-aliases/DeepReadonly.md).
 
@@ -33,6 +35,10 @@ Any value; objects and arrays are frozen recursively.
 `WeakSet`\<`object`\> = `...`
 
 (Advanced) A `WeakSet` used to track visited objects for cycle/alias safety.
+
+### alias?
+
+`AliasWatch`
 
 ## Returns
 

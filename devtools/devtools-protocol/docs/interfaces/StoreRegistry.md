@@ -6,7 +6,7 @@
 
 # Interface: StoreRegistry
 
-Defined in: [messages.ts:294](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L294)
+Defined in: [messages.ts:307](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L307)
 
 Registry of all connected stores, sent to extensions on connect
 and whenever the registry changes.
@@ -27,7 +27,7 @@ Each entry includes connection status and capabilities for UI rendering.
 
 > **sourceId**: `string`
 
-Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L23)
+Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L23)
 
 UUID of the sender (store wrapper ID or extension ID).
 
@@ -41,7 +41,7 @@ UUID of the sender (store wrapper ID or extension ID).
 
 > **sourceRole**: [`DevtoolsRole`](../enumerations/DevtoolsRole.md)
 
-Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L25)
+Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L25)
 
 Role of the sender.
 
@@ -55,7 +55,7 @@ Role of the sender.
 
 > **stores**: `object`[]
 
-Defined in: [messages.ts:296](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L296)
+Defined in: [messages.ts:309](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L309)
 
 #### capabilities
 
@@ -83,7 +83,7 @@ Defined in: [messages.ts:296](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19
 
 > **timestamp**: `string`
 
-Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L21)
+Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L21)
 
 ISO 8601 timestamp of when the message was created.
 
@@ -97,7 +97,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"STORE_REGISTRY"`
 
-Defined in: [messages.ts:295](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L295)
+Defined in: [messages.ts:308](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L308)
 
 Discriminant field identifying the message type.
 

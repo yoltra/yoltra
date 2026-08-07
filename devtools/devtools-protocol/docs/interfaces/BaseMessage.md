@@ -6,7 +6,7 @@
 
 # Interface: BaseMessage
 
-Defined in: [wire.ts:17](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L17)
+Defined in: [wire.ts:17](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L17)
 
 Base structure shared by all DevTools protocol messages.
 
@@ -38,7 +38,7 @@ union, enabling exhaustive `switch` routing on the receiving side.
 
 > **sourceId**: `string`
 
-Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L23)
+Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L23)
 
 UUID of the sender (store wrapper ID or extension ID).
 
@@ -48,7 +48,7 @@ UUID of the sender (store wrapper ID or extension ID).
 
 > **sourceRole**: [`DevtoolsRole`](../enumerations/DevtoolsRole.md)
 
-Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L25)
+Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L25)
 
 Role of the sender.
 
@@ -58,7 +58,7 @@ Role of the sender.
 
 > **timestamp**: `string`
 
-Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L21)
+Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L21)
 
 ISO 8601 timestamp of when the message was created.
 
@@ -68,6 +68,6 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `string`
 
-Defined in: [wire.ts:19](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L19)
+Defined in: [wire.ts:19](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L19)
 
 Discriminant field identifying the message type.

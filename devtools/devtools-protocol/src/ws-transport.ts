@@ -75,6 +75,14 @@ export interface ReconnectingWsConfig {
   maxDelay: number;
   /** Max buffered messages while disconnected before dropping the oldest. Default 100. */
   maxBufferSize?: number;
+  /**
+   * Shared secret the hub requires, when it was started with one.
+   *
+   * @remarks
+   * Presented on every handshake, including after a reconnect. Omit for a hub running without a
+   * token — the usual case on a developer machine, where the hub says so at startup.
+   */
+  authToken?: string;
 }
 
 /**
@@ -239,6 +247,7 @@ export class ReconnectingWsClient {
       type: "HANDSHAKE_REQUEST",
       protocolVersion: PROTOCOL_VERSION,
       role: DevtoolsRole.STORE,
+      ...(this.config.authToken !== undefined ? { authToken: this.config.authToken } : {}),
       store: {
         id: this.storeId,
         name: this.storeName,

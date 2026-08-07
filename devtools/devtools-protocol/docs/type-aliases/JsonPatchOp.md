@@ -8,7 +8,7 @@
 
 > **JsonPatchOp** = `"add"` \| `"remove"` \| `"replace"` \| `"move"` \| `"copy"` \| `"test"`
 
-Defined in: [json-patch.ts:15](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/json-patch.ts#L15)
+Defined in: [json-patch.ts:15](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/json-patch.ts#L15)
 
 JSON Patch operation types per [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902).
 

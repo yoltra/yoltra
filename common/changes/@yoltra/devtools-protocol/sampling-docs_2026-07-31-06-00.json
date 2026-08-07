@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-protocol",
+      "comment": "Sampling is documented as what it is. The type said implementation was deferred long after both agents had implemented it, so a reader had every reason to believe a working feature did nothing.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-protocol"
+}

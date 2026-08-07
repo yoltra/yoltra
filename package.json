@@ -15,16 +15,5 @@
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=18.18"
-  },
-  "pnpm": {
-    "overrides": {
-      "rollup": "4.52.5",
-      "vite": "7.1.11",
-      "typedoc": "0.28.13",
-      "typescript": "5.9.3",
-      "typedoc>typescript": "5.9.3",
-      "typedoc-plugin-markdown>typedoc": "0.28.13",
-      "typedoc-plugin-markdown>typescript": "5.9.3"
-    }
   }
 }

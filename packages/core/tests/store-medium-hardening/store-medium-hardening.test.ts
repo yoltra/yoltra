@@ -8,7 +8,7 @@ type CounterState = { value: number };
 
 const counterSpec: ReducerSpec<CounterState, EM> = {
   state: { value: 0 },
-  events: [["ui", "increment"]],
+  when: { keys: [["ui", "increment"]] },
   reducer: (s, e) => (e.type === "increment" ? { value: s.value + (e.payload as number) } : s),
 };
 
@@ -20,14 +20,14 @@ describe("Medium core hardening", () => {
       name: "A",
       reducer: { counter: counterSpec },
       effects: [
-        { events: [["ui", "increment"]], effect, meta: { type: "effect", name: "A-meta" } },
+        { when: { keys: [["ui", "increment"]] }, effect, meta: { type: "effect", name: "A-meta" } },
       ],
     });
     const b = createStore({
       name: "B",
       reducer: { counter: counterSpec },
       effects: [
-        { events: [["ui", "increment"]], effect, meta: { type: "effect", name: "B-meta" } },
+        { when: { keys: [["ui", "increment"]] }, effect, meta: { type: "effect", name: "B-meta" } },
       ],
     });
 
@@ -45,12 +45,12 @@ describe("Medium core hardening", () => {
     type S2 = { a: { x: number }; b: { y: number } };
     const aSpec: ReducerSpec<S2["a"], EM> = {
       state: { x: 1 },
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       reducer: (s) => s,
     };
     const bSpec: ReducerSpec<S2["b"], EM> = {
       state: { y: 2 },
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       reducer: (s) => s,
     };
     const store = createStore({
@@ -102,12 +102,12 @@ describe("Medium core hardening", () => {
 
     const ui: ReducerSpec<{ n: number }, UiEM> = {
       state: { n: 0 },
-      events: [["ui", "inc"]],
+      when: { keys: [["ui", "inc"]] },
       reducer: (s, e) => (e.type === "inc" ? { n: s.n + (e.payload as number) } : s),
     };
     const data: ReducerSpec<{ q: string }, DataEM> = {
       state: { q: "" },
-      events: [["data", "load"]],
+      when: { keys: [["data", "load"]] },
       reducer: (s, e) => (e.type === "load" ? { q: e.payload as string } : s),
     };
 

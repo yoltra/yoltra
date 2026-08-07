@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-protocol",
+      "comment": "HandshakeRequest carries an optional authToken, and the reconnecting client presents it on every handshake including after a reconnect. Required only by a hub that was started with one.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-protocol"
+}

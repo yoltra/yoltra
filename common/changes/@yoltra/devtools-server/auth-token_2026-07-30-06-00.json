@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-server",
+      "comment": "Adds an optional authToken the hub requires from every client's handshake, compared in constant time and checked before the client is registered or replayed any history. Binding to loopback keeps the network out, but loopback is not an authentication boundary: every other process on the machine can reach the hub, so without a token anything running locally could connect as a panel and read the application's entire state, inject events, and overwrite state through time-travel — a package install script, or another tenant on a shared CI runner. The token stays unset by default, because requiring one would break the zero-configuration local flow the tool exists for; instead the hub now says once at startup that it is running open and what that means, so the exposure is stated rather than presented as a secure default.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-server"
+}

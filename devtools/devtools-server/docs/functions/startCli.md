@@ -8,7 +8,7 @@
 
 > **startCli**(`argv`): `Promise`\<`void`\>
 
-Defined in: cli.ts:31
+Defined in: [cli.ts:31](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/cli.ts#L31)
 
 Parse CLI arguments and start the hub server.
 

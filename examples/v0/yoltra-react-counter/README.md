@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 # yoltra-react-counter
 
 > [🇲🇽 Versión en Español](./README.es.md) &nbsp;|&nbsp; 👉 🇺🇸 English Version
@@ -10,13 +12,13 @@ A minimal counter app demonstrating the core patterns of [Yoltra](https://github
 
 ## What this example shows
 
-| Concept | Where |
-|---|---|
-| One-call setup with `createYoltra` (store + typed hooks) | [src/state/yoltra.ts](./src/state/yoltra.ts) |
-| Event map (`AppEM`) for type-safe events | [src/state/yoltra.ts](./src/state/yoltra.ts) |
-| Fine-grained subscription with a typed accessor | [src/components/Counter.tsx](./src/components/Counter.tsx) |
-| Dispatching events with `useEmit` | [src/components/Counter.tsx](./src/components/Counter.tsx) |
-| No Provider needed — hooks default to the store | [src/App.tsx](./src/App.tsx) |
+| Concept                                                  | Where                                                      |
+| -------------------------------------------------------- | ---------------------------------------------------------- |
+| One-call setup with `createYoltra` (store + typed hooks) | [src/state/yoltra.ts](./src/state/yoltra.ts)               |
+| Event map (`AppEM`) for type-safe events                 | [src/state/yoltra.ts](./src/state/yoltra.ts)               |
+| Fine-grained subscription with a typed accessor          | [src/components/Counter.tsx](./src/components/Counter.tsx) |
+| Dispatching events with `useEmit`                        | [src/components/Counter.tsx](./src/components/Counter.tsx) |
+| No Provider needed — hooks default to the store          | [src/App.tsx](./src/App.tsx)                               |
 
 ---
 

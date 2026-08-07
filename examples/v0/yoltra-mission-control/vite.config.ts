@@ -1,6 +1,6 @@
 import react from "@vitejs/plugin-react-swc";
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 // Resolve a path relative to this config file. Repo root is three levels up.
 const fromHere = (p: string) => fileURLToPath(new URL(p, import.meta.url));
@@ -14,8 +14,10 @@ const fromHere = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 const yoltraDistAliases = {
   "@yoltra/core": fromHere("../../../packages/core/dist/yoltra.esm.js"),
   "@yoltra/react": fromHere("../../../packages/react/dist/index.mjs"),
-  // Design system: the `/client` subpath must be aliased before the bare
-  // specifier so the more specific match wins.
+  // Design system: the more specific subpaths must come before the bare specifier so they
+  // win. Component stylesheets are imported one at a time — the DS ships a sheet per
+  // component so an application carries styles only for what it renders.
+  "@yoltra/ds/styles": fromHere("../../../packages/ds/dist/styles"),
   "@yoltra/ds/client": fromHere("../../../packages/ds/dist/client.mjs"),
   "@yoltra/ds": fromHere("../../../packages/ds/dist/index.mjs"),
   "@yoltra/devtools-protocol": fromHere(
@@ -41,5 +43,12 @@ export default defineConfig({
   server: {
     // Allow serving the built dist that lives outside this example folder.
     fs: { allow: [fromHere("../../../")] },
+  },
+  test: {
+    // The suite exercises reducers, the middleware gate and the effects — no DOM involved,
+    // and no devtools: the tests build their own store from the same specs `store.ts` uses.
+    environment: "node",
+    globals: true,
+    include: ["tests/**/*.test.{ts,tsx}"],
   },
 });

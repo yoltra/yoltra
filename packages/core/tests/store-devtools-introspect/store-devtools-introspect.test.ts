@@ -13,7 +13,7 @@ type State = {
 
 const counterReducer: ReducerSpec<State["counter"], EM> = {
   state: { value: 0 },
-  events: [["ui", "increment"], ["ui", "decrement"]],
+  when: { keys: [["ui", "increment"], ["ui", "decrement"]] },
   reducer(state, event) {
     if (event.channel === "ui" && event.type === "increment") {
       return { value: state.value + (event.payload as number) };
@@ -44,7 +44,7 @@ describe("Store - __devtoolsIntrospect", () => {
       reducer: { counter: counterReducer },
       effects: [
         {
-          events: [["ui", "increment"]],
+          when: { keys: [["ui", "increment"]] },
           effect: vi.fn(),
           meta: { type: "effect", name: "logIncrement", description: "Logs increment events" },
         } as EffectSpec<any, EM>,
@@ -68,7 +68,7 @@ describe("Store - __devtoolsIntrospect", () => {
       reducer: { counter: counterReducer },
       effects: [
         {
-          events: [["ui", "decrement"]],
+          when: { keys: [["ui", "decrement"]] },
           effect: vi.fn(),
         } as EffectSpec<any, EM>,
       ],
@@ -240,7 +240,7 @@ describe("Store - __devtoolsIntrospect", () => {
     expect(store.__devtoolsIntrospect().effects).toEqual([]);
 
     const unsub = store.registerEffect({
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       effect: vi.fn(),
       meta: { type: "effect", name: "dynamic", description: "Added at runtime" },
     });
@@ -284,7 +284,7 @@ describe("Store - __devtoolsIntrospect", () => {
       reducer: { counter: counterReducer },
       effects: [
         {
-          events: [["ui", "increment"]],
+          when: { keys: [["ui", "increment"]] },
           effect: vi.fn(),
           meta: { type: "effect", name: "keyedEffect" },
         } as EffectSpec<any, EM>,
@@ -344,7 +344,7 @@ describe("Store - __devtoolsIntrospect", () => {
       reducer: { counter: counterReducer },
       effects: [
         {
-          events: [["ui", "increment"]],
+          when: { keys: [["ui", "increment"]] },
           effect: vi.fn(),
           meta: { type: "effect", name: "testEffect" },
         } as EffectSpec<any, EM>,

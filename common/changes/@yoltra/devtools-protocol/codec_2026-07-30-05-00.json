@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-protocol",
+      "comment": "Adds encodeState and decodeState, a lossless encoding of store state for a JSON wire. JSON.stringify does not fail on the values it cannot represent — it destroys them: a Map or Set becomes {}, a Date becomes a string, undefined disappears from objects, and a BigInt or a cycle throws. Values are now tagged rather than coerced, so Map, Set, Date, RegExp, Error, BigInt, undefined, NaN, the infinities, cycles and shared references all survive a round trip exactly. An application object that happens to carry the marker key is escaped so it decodes unchanged. Functions and symbols have no faithful representation and decode to undefined rather than a placeholder pretending otherwise, with their paths listed in the encode report. Encoding also accepts a sanitize hook, so tokens and personal data can be redacted before state crosses a socket, and a node budget that truncates visibly instead of producing a frame the hub will reject — which reads to a user as a panel that hangs.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-protocol"
+}

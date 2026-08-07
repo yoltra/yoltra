@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Add optional event metadata and finer control over event identity and deduplication, all additive. Event gains an optional meta field carried untouched through middleware, reducers, effects, event subscribers and instrumentation, so a layer above core can attach provenance without smuggling it inside payload where it would pollute reducers and join the dedup fingerprint. When no metadata is supplied the property is genuinely absent rather than undefined, keeping event objects byte-identical to before. EmitOptions gains id, to preserve the identity of an event replayed from elsewhere so one logical event keeps a single id across systems; meta, to attach that metadata; and skipDedup, to bypass deduplication entirely for callers that already guarantee distinctness, since content dedup fingerprints only channel, type and payload and would otherwise collapse distinct events sharing a payload. StoreSpec gains idFactory, which replaces the default crypto.randomUUID for runtimes lacking a secure context and for deterministic ids in tests. Existing callers are unaffected: every new field is optional and omitting it reproduces the previous behaviour exactly.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

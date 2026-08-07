@@ -58,7 +58,7 @@ describe("React medium hardening", () => {
 
     const userSpec: ReducerSpec<AppState["user"], EM> = {
       state: {},
-      events: [["ui", "setName"]],
+      when: { keys: [["ui", "setName"]] },
       reducer: (s, e) => (e.type === "setName" ? { name: e.payload as string } : s),
     };
 

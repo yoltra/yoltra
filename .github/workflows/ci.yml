@@ -39,8 +39,19 @@ jobs:
       - name: Rush lint
         run: node common/scripts/install-run-rush.js lint
 
+      # Separate from the build: the build only typechecks what ships, and for a long time
+      # nothing checked the tests at all. A test that stops matching the API it exercises is
+      # how a green suite starts proving the wrong thing.
+      - name: Rush typecheck
+        run: node common/scripts/install-run-rush.js typecheck
+
       - name: Rush test
         run: node common/scripts/install-run-rush.js test
+
+      # After the build, because it measures build output. The budgets hold the bundle-size
+      # claims the READMEs make; without this they were assertions nobody could fail.
+      - name: Rush size
+        run: node common/scripts/install-run-rush.js size
 
       # Fails if a changed project is missing a change file (keeps CHANGELOGs honest).
       - name: Verify change files

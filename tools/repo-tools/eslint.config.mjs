@@ -7,6 +7,8 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 import importPlugin from "eslint-plugin-import";
 import globals from "globals";
 
+import { yoltraPlugin } from "./eslint/no-getstate-in-render.mjs";
+
 const TYPED_FILES = ["**/src/**/*.{ts,tsx}"];
 
 const typedBlocks = tseslint.configs.recommendedTypeChecked.map((c) => ({
@@ -57,6 +59,7 @@ export default [
       "react-hooks": reactHooks,
       "jsx-a11y": jsxA11y,
       import: importPlugin,
+      yoltra: yoltraPlugin,
     },
     settings: { react: { version: "detect" } },
     rules: {
@@ -66,6 +69,10 @@ export default [
       "react-hooks/exhaustive-deps": "warn",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
+      // A store read in a render body subscribes to nothing, so the component renders once with
+      // the value and never again. An error rather than a warning: it is not a style preference,
+      // and the symptom — a screen that stops updating — appears far from the cause.
+      "yoltra/no-getstate-in-render": "error",
     },
   },
 

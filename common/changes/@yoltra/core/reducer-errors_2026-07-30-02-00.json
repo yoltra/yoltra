@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "A reducer that throws now behaves the same way whichever way its slice is targeted, and is observable. Keyed reducers ran through a bus whose handler loop caught and logged, so the event committed and its effects ran as though nothing had happened; pattern reducers were called straight from the drain, so the throw escaped, aborted the commit, and notified nobody — not even the uncommitted subscribers a middleware veto reaches. Both paths now funnel through one guarded call that isolates the failing slice: its state is unchanged, every other slice still reduces, and the event still commits if anything else changed. Isolation rather than rollback, because fine-grained subscribers are notified as each slice commits and an event that reverted afterwards would already have announced a value that no longer exists. Adds an onReducerError hook, mirroring onEffectError, receiving the error, the event and the slice name — emit() never rejects for a reducer error, so this is how a caller observes one. Event replay is guarded the same way, so one bad event in a replayed log costs that event rather than abandoning the replay midway. Separately, the development-only deep freeze now warns, once per slice and event, when a reducer stores the event payload by reference: the caller still holds that object, mutating it later throws from a stack that never mentions the store, and the same code works in production because the freeze is compiled out.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

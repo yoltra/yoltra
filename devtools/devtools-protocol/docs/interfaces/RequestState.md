@@ -6,7 +6,7 @@
 
 # Interface: RequestState
 
-Defined in: [messages.ts:186](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L186)
+Defined in: [messages.ts:199](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L199)
 
 Request a full state snapshot from a store.
 
@@ -27,7 +27,7 @@ the store supports it.
 
 > **sourceId**: `string`
 
-Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L23)
+Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L23)
 
 UUID of the sender (store wrapper ID or extension ID).
 
@@ -41,7 +41,7 @@ UUID of the sender (store wrapper ID or extension ID).
 
 > **sourceRole**: [`DevtoolsRole`](../enumerations/DevtoolsRole.md)
 
-Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L25)
+Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L25)
 
 Role of the sender.
 
@@ -55,7 +55,7 @@ Role of the sender.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:188](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L188)
+Defined in: [messages.ts:201](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L201)
 
 ***
 
@@ -63,7 +63,7 @@ Defined in: [messages.ts:188](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19
 
 > **timestamp**: `string`
 
-Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L21)
+Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L21)
 
 ISO 8601 timestamp of when the message was created.
 
@@ -77,7 +77,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"REQUEST_STATE"`
 
-Defined in: [messages.ts:187](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L187)
+Defined in: [messages.ts:200](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L200)
 
 Discriminant field identifying the message type.
 
@@ -91,6 +91,6 @@ Discriminant field identifying the message type.
 
 > `optional` **version**: `number`
 
-Defined in: [messages.ts:190](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L190)
+Defined in: [messages.ts:203](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L203)
 
 Optional: request a specific snapshot version.

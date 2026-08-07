@@ -14,8 +14,8 @@
 import { DevtoolsRole, type DevtoolsMessage } from "@yoltra/devtools-protocol";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { EventLogEntry } from "../types";
-import { applyPatches } from "../utils/apply-patch";
 import { planStep } from "./timeTravelNav";
+import { replayState, type ReplayCache } from "./stateReplay";
 import { useHubConnection } from "./useHubConnection";
 
 /**
@@ -87,7 +87,7 @@ export function useTimeTravel(
   stepForward: () => void;
   resume: () => void;
 } {
-  const { send, subscribe } = useHubConnection();
+  const { send, subscribe, extensionId } = useHubConnection();
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [isTimeTraveling, setIsTimeTraveling] = useState(false);
 
@@ -106,10 +106,23 @@ export function useTimeTravel(
   // the baseline and corrupt future reconstructions.
   const baselineRef = useRef<{ state: unknown; version: number } | null>(null);
 
+  /**
+   * The most recent reconstruction, so the next one can continue from it.
+   *
+   * @remarks
+   * `marker` is the entry object that occupied `index` when the state was computed. Comparing it
+   * on reuse is what makes the cache safe against the event log dropping its oldest entries and
+   * shifting every index underneath us.
+   */
+  const cacheRef = useRef<ReplayCache | null>(null);
+
   useEffect(() => {
     // Reset baseline whenever the target store changes so a fresh snapshot
-    // is captured for the new store.
+    // is captured for the new store. The reconstruction cache goes with it: it holds a state
+    // built from the previous store's baseline, and reusing that against a new one would
+    // silently produce a state neither store ever had.
     baselineRef.current = null;
+    cacheRef.current = null;
     setFrameCount(null);
     if (!storeId) return;
 
@@ -130,17 +143,13 @@ export function useTimeTravel(
   // waiting for the first STATE_SNAPSHOT).
   const buildStateAt = useCallback(
     (index: number): unknown => {
-      const baseline = baselineRef.current;
-      if (!baseline) return null;
-
-      let state = baseline.state;
-      for (let i = 0; i <= index; i++) {
-        const entry = entries[i];
-        if (!entry) break;
-        // Skip entries that pre-date our baseline snapshot.
-        if (entry.snapshotVersion <= baseline.version) continue;
-        state = applyPatches(state as any, entry.patches);
-      }
+      const { state, cache } = replayState({
+        baseline: baselineRef.current,
+        entries,
+        index,
+        cache: cacheRef.current,
+      });
+      cacheRef.current = cache;
       return state;
     },
     [entries],
@@ -164,11 +173,11 @@ export function useTimeTravel(
         state: buildStateAt(index),
         snapshotVersion: entry.snapshotVersion,
         timestamp: new Date().toISOString(),
-        sourceId: "",
+        sourceId: extensionId,
         sourceRole: DevtoolsRole.EXTENSION,
       });
     },
-    [storeId, entries, send, buildStateAt, canReplay],
+    [storeId, entries, send, buildStateAt, canReplay, extensionId],
   );
 
   const resume = useCallback(() => {
@@ -187,11 +196,11 @@ export function useTimeTravel(
         state: buildStateAt(latestIndex),
         snapshotVersion: latest.snapshotVersion,
         timestamp: new Date().toISOString(),
-        sourceId: "",
+        sourceId: extensionId,
         sourceRole: DevtoolsRole.EXTENSION,
       });
     }
-  }, [storeId, entries, send, buildStateAt, canReplay]);
+  }, [storeId, entries, send, buildStateAt, canReplay, extensionId]);
 
   // While traveling the timeline is measured against the frozen frame, so
   // steps and boundaries ignore events that arrive mid-session.

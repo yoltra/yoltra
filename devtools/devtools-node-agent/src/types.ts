@@ -60,6 +60,53 @@ export interface DevtoolsWrapperConfig {
    * @defaultValue `false`
    */
   allowEmit?: boolean;
+
+  /**
+   * Shared secret required by a hub that was started with one.
+   *
+   * @remarks
+   * A hub running without a token accepts any local connection, so on a shared or containerised
+   * host it should be started with one and every agent given the same value. Omit on a
+   * developer machine, where the hub warns at startup that it is open.
+   */
+  authToken?: string;
+
+  /**
+   * Byte budget for a state snapshot before parts of it are omitted.
+   *
+   * @remarks
+   * The hub refuses a frame over its cap and drops the connection, so an oversized snapshot did
+   * not surface as an error — the socket closed, the client reconnected and asked again, and the
+   * panel waited through the loop. Snapshots are bounded here instead, and a shortened one says
+   * so rather than presenting a partial tree as the state.
+   *
+   * @defaultValue 6291456 (6 MiB, under the hub's 8 MiB frame cap)
+   */
+  maxSnapshotBytes?: number;
+  /**
+   * Redacts a value before it leaves the process.
+   *
+   * @remarks
+   * Store state and event payloads frequently hold tokens, session material and personal
+   * data, and everything the agent forwards crosses a socket to another process. The hook is
+   * applied to **every value the agent encodes** — state snapshots, time-travel snapshots,
+   * event payloads and state patches — so nothing crosses unredacted. Return the replacement
+   * value, or the value itself to keep it.
+   *
+   * The `path` is the location within the structure being encoded (for a snapshot, from the
+   * state root; for a payload, from the payload root), so a recipe that matches key names
+   * covers all of them:
+   *
+   * ```ts
+   * const sanitize = (path: string, value: unknown) =>
+   *   /token|secret|password|authorization/i.test(path) ? "[redacted]" : value;
+   * withNodetools(store, { port: 9800, sanitize });
+   * ```
+   *
+   * Omitted, nothing is redacted — fine for a laptop loop, not fine for a service whose
+   * state a hub on another machine can ask for.
+   */
+  sanitize?: (path: string, value: unknown) => unknown;
   /**
    * Throttle interval for DevTools updates (milliseconds).
    *

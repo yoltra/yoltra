@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-ui",
+      "comment": "Coverage is now measured and gated. No package in the devtools suite had a threshold of any kind, so nothing stopped coverage falling; the tooling to measure it was not installed either. Thresholds are set at what is actually met so a regression fails the build, with type declarations and entry points excluded because counting files that compile to nothing measures how much of a package is types rather than how much of its logic is tested. Modules that are genuinely under-tested are left in the numbers rather than excluded — hiding one makes the figure look better and the package no safer.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-ui"
+}

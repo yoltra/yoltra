@@ -1,0 +1,24 @@
+{
+  "generatedFrom": {
+    "yoltra": "examples/v0/yoltra-in-react/public/assets/profiler/yoltra/profiling-data.yoltra.10-20-2025.22-30-26.json",
+    "rtk": "examples/v0/yoltra-in-react/public/assets/profiler/rtk/profiling-data.rtk.10-20-2025.22-32-54.json"
+  },
+  "window": {
+    "fromFrame": 8,
+    "toFrame": 19
+  },
+  "session": {
+    "commits": 19,
+    "yoltraMs": 165.3,
+    "rtkMs": 442.5
+  },
+  "toggleCommits": {
+    "commits": 12,
+    "yoltraMs": 71.8,
+    "rtkMs": 358,
+    "yoltraMeanMs": 5.98,
+    "rtkMeanMs": 29.83,
+    "yoltraFibers": 16,
+    "rtkFibers": 160
+  }
+}

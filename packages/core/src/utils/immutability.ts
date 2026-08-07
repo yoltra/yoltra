@@ -49,9 +49,18 @@ import type { DeepReadonly } from "../types";
  *
  * @public
  */
-export function freezeState<T>(obj: T, seen = new WeakSet<object>()): DeepReadonly<T> {
+export function freezeState<T>(
+  obj: T,
+  seen = new WeakSet<object>(),
+  alias?: AliasWatch,
+): DeepReadonly<T> {
   if (obj === null || typeof obj !== "object") return obj as any;
   if (seen.has(obj as any)) return obj as any;
+
+  // Reported before the early-exit on already-frozen values, so a payload stored twice is still
+  // named the second time.
+  if (alias !== undefined && obj === alias.watch) alias.onFound();
+
   if (Object.isFrozen(obj)) return obj as any;
 
   seen.add(obj as any);
@@ -60,7 +69,7 @@ export function freezeState<T>(obj: T, seen = new WeakSet<object>()): DeepReadon
   if (Array.isArray(obj)) {
     const arr = obj as unknown as any[];
     for (let i = 0; i < arr.length; i++) {
-      arr[i] = freezeState(arr[i], seen);
+      arr[i] = freezeState(arr[i], seen, alias);
     }
     return Object.freeze(arr) as any;
   }
@@ -69,13 +78,37 @@ export function freezeState<T>(obj: T, seen = new WeakSet<object>()): DeepReadon
   for (const key of Object.getOwnPropertyNames(obj)) {
     const desc = Object.getOwnPropertyDescriptor(obj, key);
     if (!desc || !("value" in desc)) continue; // skip getters/setters
-    (obj as any)[key] = freezeState((obj as any)[key], seen);
+    (obj as any)[key] = freezeState((obj as any)[key], seen, alias);
   }
   for (const sym of Object.getOwnPropertySymbols(obj)) {
     const desc = Object.getOwnPropertyDescriptor(obj, sym);
     if (!desc || !("value" in desc)) continue;
-    (obj as any)[sym as any] = freezeState((obj as any)[sym as any], seen);
+    (obj as any)[sym as any] = freezeState((obj as any)[sym as any], seen, alias);
   }
 
   return Object.freeze(obj) as any;
+}
+
+/**
+ * Watches the freeze walk for one specific reference.
+ *
+ * @remarks
+ * Exists to turn a dev-only heisenbug into a named warning. Because the freeze is deep and
+ * in place, anything a reducer stores **by reference** is frozen too — the event payload, a
+ * module-level default, a cached response. Mutating that object afterwards then throws, only in
+ * development, from a stack that has nothing to do with the store, and the same code works in
+ * production because the freeze is compiled out.
+ *
+ * Freezing it is not the mistake: an object reachable from state genuinely must not be mutated,
+ * or state changes behind the store's back. Keeping the reference is. The walk already visits
+ * every node, so recognising one of them costs an identity comparison and lets the store say so
+ * at the moment it happens.
+ *
+ * @public
+ */
+export interface AliasWatch {
+  /** The reference to look for while freezing. */
+  readonly watch: object;
+  /** Called if `watch` is reachable from the value being frozen. */
+  readonly onFound: () => void;
 }

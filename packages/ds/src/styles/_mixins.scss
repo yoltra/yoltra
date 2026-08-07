@@ -1,0 +1,52 @@
+// Shared style fragments.
+//
+// SASS is the authoring language here; it never owns a *value*. Every colour, space and
+// radius arrives as a CSS custom property, because theming is a runtime `data-theme` switch
+// on the document root and a SASS variable compiles away long before that switch happens.
+// What SASS contributes is nesting, per-component files, and the handful of repeated
+// fragments below that were previously copied between string literals.
+
+@use "sass:map";
+
+/// Breakpoints, deliberately in px.
+///
+/// `rem` inside a media query resolves against the *initial* root font size, not the 62.5%
+/// one this design system sets — so a rem breakpoint would silently be 1.6 times the number
+/// it reads as. These mirror `foundationTokens.breakpoints`.
+$breakpoints: (sm: 480px, md: 768px, lg: 1024px, xl: 1280px);
+
+@mixin media-up($name) {
+  @media (min-width: map.get($breakpoints, $name)) {
+    @content;
+  }
+}
+
+/// The one focus treatment, so a control cannot quietly disagree with its neighbours.
+@mixin focus-ring($offset: 2px) {
+  &:focus-visible {
+    outline: 2px solid var(--yl-color-border-focus);
+    outline-offset: $offset;
+  }
+}
+
+/// A softer focus for fields, which draw the ring inside their own border.
+@mixin focus-field {
+  &:focus-visible {
+    outline: none;
+    border-color: var(--yl-color-border-focus);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--yl-color-brand) 24%, transparent);
+  }
+}
+
+/// Available to assistive technology, invisible to everyone else.
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

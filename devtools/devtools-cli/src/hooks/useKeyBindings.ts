@@ -18,6 +18,10 @@ export interface KeyBindings {
   onNextStore?: () => void;
   onPrevStore?: () => void;
   onQuit?: () => void;
+  /** Left arrow: step one event backward through recorded history. */
+  onStepBack?: () => void;
+  /** Right arrow: step one event forward. */
+  onStepForward?: () => void;
   onRefresh?: () => void;
 }
 
@@ -45,6 +49,10 @@ export function useKeyBindings(bindings: KeyBindings): void {
       bindings.onQuit?.();
     } else if (input === "r") {
       bindings.onRefresh?.();
+    } else if (key.leftArrow) {
+      bindings.onStepBack?.();
+    } else if (key.rightArrow) {
+      bindings.onStepForward?.();
     }
   });
 }

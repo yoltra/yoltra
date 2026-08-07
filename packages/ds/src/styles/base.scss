@@ -1,0 +1,55 @@
+// Root, reset and layout base.
+//
+// Loaded once per application. Everything else is opt-in per component.
+
+@use "./mixins" as *;
+
+/// **1rem is 10px.**
+///
+/// `62.5%` of the browser default 16px gives a 10px root, so every length in this design
+/// system reads as its pixel value divided by ten — `1.6rem` is 16px, `0.4rem` is 4px. The
+/// tokens are authored in px and emitted in rem, so the numbers in `foundationTokens` stay
+/// legible while the output stays proportional.
+///
+/// Proportional is the point: a `rem` still scales with a reader's font-size preference,
+/// which a hard `px` would override. This is a smaller root, not a fixed one.
+///
+/// It is also a **global** declaration — it affects the whole document, not only Yoltra
+/// components. An application that cannot accept that should load `base-no-root.css`
+/// instead and set its own root, at which point every `--yl-*` length is relative to that.
+html {
+  font-size: 62.5%;
+}
+
+.yl-root {
+  font-family: var(--yl-font-sans);
+  color: var(--yl-color-fg);
+  background: var(--yl-color-bg-canvas);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.yl-visually-hidden {
+  @include visually-hidden;
+}
+
+// Layout is CSS-owned: application state lives in a Yoltra store, never layout. The
+// container centres content with fluid gutters and steps its max-width at each breakpoint.
+.yl-container {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: var(--yl-space-4);
+
+  @include media-up(sm) {
+    padding-inline: var(--yl-space-5);
+  }
+  @include media-up(md) {
+    max-width: 720px;
+  }
+  @include media-up(lg) {
+    max-width: 960px;
+  }
+  @include media-up(xl) {
+    max-width: 1180px;
+  }
+}

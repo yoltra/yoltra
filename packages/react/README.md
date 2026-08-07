@@ -1,4 +1,4 @@
-![yoltra logo](../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # @yoltra/react
 
@@ -121,8 +121,17 @@ export const AppStoreContext = createContext<StoreInstance<"counter", AppState, 
   null,
 );
 
-export const { useStore, useEmit, useSelector, useAtomicProp, useAtomicProps, useEvent, shallowEqual } =
-  createHooks(AppStoreContext);
+export const {
+  useStore,
+  useEmit,
+  useSelector,
+  useAtomicProp,
+  useAtomicProps,
+  useEvent,
+  useSuspenseAtomicProp,
+  useSuspenseAtomicProps,
+  shallowEqual,
+} = createHooks(AppStoreContext);
 ```
 
 Provide the store with `<AppStoreContext.Provider value={store}>` at your root.
@@ -248,8 +257,18 @@ Returns the store instance. Throws if called outside a provider.
 
 ```tsx
 const store = useStore();
-const state = store.getState();
+
+// ✅ In a callback or an effect: read the value at the moment it is wanted.
+const onSave = () => save(store.getState());
+
+// ❌ In the render body: this subscribes to nothing.
+const value = store.getState().counter.value;
 ```
+
+`getState()` is a read, not a subscription. Called while rendering, the component renders once
+with that value and never again — nothing told it the value moved. It looks like it works right
+up until the state changes and the screen does not. Read what you render with `useAtomicProp` or
+`useSelector`, and keep `getState()` for callbacks and effects, which is what it is for.
 
 ---
 
@@ -291,6 +310,26 @@ const stats = useSuspenseAtomicProps(
   { load: async (state) => computeDashboardStats(state) },
 );
 ```
+
+### Import them from your hook set, not the barrel
+
+`createYoltra` and `createHooks` return these two alongside the rest, bound to the same context.
+They are deliberately **not** exported from the package barrel: a package-level copy would be
+identical in shape and still throw `useStore must be used inside <StoreProvider>` at runtime
+whenever the context it reads was never filled — a mistake the types could not catch. Importing
+them from anywhere but your own `createYoltra`/`createHooks` result is now a compile error,
+which is the same warning arriving at the right time.
+
+```tsx
+// store.ts
+export const { store, useAtomicProp, useSuspenseAtomicProp } = createYoltra({ ... });
+
+// Forecast.tsx
+import { useSuspenseAtomicProp } from "./store";   // ✅ knows the store
+```
+
+Cached values are scoped per store, so two stores sharing a reducer name and path keep separate
+entries; the invalidation helpers below take a path and clear it in every store that cached it.
 
 ### Cache utilities
 
@@ -406,6 +445,25 @@ function TodoItem({ index }: { index: number }) {
 v1.0.0.
 
 ---
+
+## Normalised collections
+
+`useEntityIds`, `useEntity` and `useEntityField` pair with `createEntityAdapter` from
+`@yoltra/core`. They are thin wrappers over `useAtomicProp`; the value is that the path comes
+from the adapter rather than being typed into a component, where nothing checks it.
+
+```tsx
+function List() {
+  const ids = useEntityIds('todos', todos);
+  return <>{ids.map((id) => <Row key={id} id={id} />)}</>;
+}
+
+function Row({ id }: { id: string }) {
+  // Wakes when this title changes, and not when any other row does.
+  const title = useEntityField('todos', todos, id, 'title');
+  return <li>{title}</li>;
+}
+```
 
 ## License
 

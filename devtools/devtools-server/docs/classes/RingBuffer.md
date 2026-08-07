@@ -6,7 +6,7 @@
 
 # Class: RingBuffer\<T\>
 
-Defined in: ring-buffer.ts:20
+Defined in: [ring-buffer.ts:20](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/ring-buffer.ts#L20)
 
 Fixed-size circular buffer that overwrites the oldest entry on overflow.
 
@@ -31,7 +31,7 @@ Item type stored in the buffer.
 
 > **new RingBuffer**\<`T`\>(`capacity`): `RingBuffer`\<`T`\>
 
-Defined in: ring-buffer.ts:28
+Defined in: [ring-buffer.ts:28](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/ring-buffer.ts#L28)
 
 #### Parameters
 
@@ -51,7 +51,7 @@ Maximum number of items. Must be at least 1.
 
 > `readonly` **capacity**: `number`
 
-Defined in: ring-buffer.ts:28
+Defined in: [ring-buffer.ts:28](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/ring-buffer.ts#L28)
 
 Maximum number of items. Must be at least 1.
 
@@ -63,7 +63,7 @@ Maximum number of items. Must be at least 1.
 
 > **get** **size**(): `number`
 
-Defined in: ring-buffer.ts:72
+Defined in: [ring-buffer.ts:72](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/ring-buffer.ts#L72)
 
 Current number of items stored in the buffer.
 
@@ -79,7 +79,7 @@ A value between `0` and [capacity](#capacity) inclusive.
 
 > **clear**(): `void`
 
-Defined in: ring-buffer.ts:81
+Defined in: [ring-buffer.ts:81](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/ring-buffer.ts#L81)
 
 Remove all items.
 
@@ -93,7 +93,7 @@ Remove all items.
 
 > **push**(`item`): `void`
 
-Defined in: ring-buffer.ts:40
+Defined in: [ring-buffer.ts:40](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/ring-buffer.ts#L40)
 
 Push an item. Overwrites the oldest if at capacity.
 
@@ -115,7 +115,7 @@ Item to add.
 
 > **toArray**(): `T`[]
 
-Defined in: ring-buffer.ts:55
+Defined in: [ring-buffer.ts:55](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/ring-buffer.ts#L55)
 
 Returns all items in insertion order (oldest first).
 

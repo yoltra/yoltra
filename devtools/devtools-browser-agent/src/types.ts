@@ -70,6 +70,54 @@ export interface DevtoolsWrapperConfig {
   allowEmit?: boolean;
 
   /**
+   * Shared secret required by a hub that was started with one.
+   *
+   * @remarks
+   * A hub running without a token accepts any local connection, so on a shared or containerised
+   * host it should be started with one and every agent given the same value. Omit on a
+   * developer machine, where the hub warns at startup that it is open.
+   */
+  authToken?: string;
+
+  /**
+   * Byte budget for a state snapshot before parts of it are omitted.
+   *
+   * @remarks
+   * The hub refuses a frame over its cap and drops the connection, so an oversized snapshot did
+   * not surface as an error — the socket closed, the client reconnected and asked again, and the
+   * panel waited through the loop. Snapshots are bounded here instead, and a shortened one says
+   * so rather than presenting a partial tree as the state.
+   *
+   * @defaultValue 6291456 (6 MiB, under the hub's 8 MiB frame cap)
+   */
+  maxSnapshotBytes?: number;
+
+  /**
+   * Redacts a value before it leaves the process.
+   *
+   * @remarks
+   * Store state and event payloads frequently hold tokens, session material and personal
+   * data, and everything the agent forwards crosses a socket to another process. The hook is
+   * applied to **every value the agent encodes** — state snapshots, time-travel snapshots,
+   * event payloads and state patches — so nothing crosses unredacted. Return the replacement
+   * value, or the value itself to keep it.
+   *
+   * The `path` is the location within the structure being encoded (for a snapshot, from the
+   * state root; for a payload, from the payload root), so a recipe that matches key names
+   * covers all of them:
+   *
+   * ```ts
+   * const sanitize = (path: string, value: unknown) =>
+   *   /token|secret|password|authorization/i.test(path) ? "[redacted]" : value;
+   * withDevtools(store, { port: 9800, sanitize });
+   * ```
+   *
+   * Omitted, nothing is redacted — fine for a laptop loop, not fine for an embedded panel in
+   * production or on a shared machine.
+   */
+  sanitize?: (path: string, value: unknown) => unknown;
+
+  /**
    * Throttle interval for DevTools updates (ms). `0` disables throttling.
    * @defaultValue `0`
    */
@@ -115,4 +163,20 @@ export interface DevtoolsWrapperConfig {
    * @defaultValue the native browser WebSocket factory
    */
   socketFactory?: DevtoolsSocketFactory;
+
+  /**
+   * How the agent reaches the panel.
+   *
+   * @remarks
+   * - `"auto"` (the default) uses the `postMessage` bridge when an extension has announced
+   *   itself on the page, and a WebSocket to the hub otherwise. This is what makes attaching a
+   *   browser panel a single step — install the extension — instead of three.
+   * - `"bridge"` forces `postMessage`, for a relay that installs after the store is created.
+   * - `"websocket"` forces the hub, which is what a Node process or a remote session needs.
+   *
+   * Ignored when `socketFactory` is supplied: an explicit transport is always honoured.
+   *
+   * @defaultValue `"auto"`
+   */
+  transport?: "auto" | "bridge" | "websocket";
 }

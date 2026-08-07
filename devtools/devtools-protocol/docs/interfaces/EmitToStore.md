@@ -6,7 +6,7 @@
 
 # Interface: EmitToStore
 
-Defined in: [messages.ts:271](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L271)
+Defined in: [messages.ts:284](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L284)
 
 Emit an event to a store from an extension.
 
@@ -27,7 +27,7 @@ and [eventEmit](ExtensionCapabilities.md#eventemit) on the extension.
 
 > **event**: `object`
 
-Defined in: [messages.ts:274](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L274)
+Defined in: [messages.ts:287](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L287)
 
 #### channel
 
@@ -47,7 +47,7 @@ Defined in: [messages.ts:274](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19
 
 > **sourceId**: `string`
 
-Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L23)
+Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L23)
 
 UUID of the sender (store wrapper ID or extension ID).
 
@@ -61,7 +61,7 @@ UUID of the sender (store wrapper ID or extension ID).
 
 > **sourceRole**: [`DevtoolsRole`](../enumerations/DevtoolsRole.md)
 
-Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L25)
+Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L25)
 
 Role of the sender.
 
@@ -75,7 +75,7 @@ Role of the sender.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:273](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L273)
+Defined in: [messages.ts:286](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L286)
 
 ***
 
@@ -83,7 +83,7 @@ Defined in: [messages.ts:273](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19
 
 > **timestamp**: `string`
 
-Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L21)
+Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L21)
 
 ISO 8601 timestamp of when the message was created.
 
@@ -97,7 +97,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"EMIT_TO_STORE"`
 
-Defined in: [messages.ts:272](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L272)
+Defined in: [messages.ts:285](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L285)
 
 Discriminant field identifying the message type.
 

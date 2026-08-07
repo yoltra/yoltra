@@ -134,6 +134,16 @@ export interface EventLogEntry {
  * @public
  */
 export interface HubContextValue {
+  /**
+   * This panel's identity, as given to the hub at handshake.
+   *
+   * @remarks
+   * Stamped on every message the panel sends. It used to send an empty string, so the hub could
+   * not tell one panel's commands from another's — with several open, or an authenticated hub
+   * auditing who drove a store, there was nothing to attribute a time-travel or an injected
+   * event to.
+   */
+  extensionId: string;
   /** Current connection status. */
   status: HubConnectionStatus;
   /** Send a protocol message to the hub. */

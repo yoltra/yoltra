@@ -1,3 +1,5 @@
+import { Grid } from "@yoltra/ds";
+
 import { store } from "../state/store";
 
 import { SatelliteCard } from "./SatelliteCard";
@@ -11,11 +13,13 @@ const roster = store.getState().fleet.satellites.map((s, index) => ({
 }));
 
 export function SatelliteGrid() {
+  // `minItemWidth` rather than a column count: the grid fits as many cards as will hold that
+  // width and reflows without a single media query.
   return (
-    <div className="sat-grid">
+    <Grid minItemWidth="26rem" gap={4}>
       {roster.map((s) => (
         <SatelliteCard key={s.id} index={s.index} id={s.id} name={s.name} />
       ))}
-    </div>
+    </Grid>
   );
 }

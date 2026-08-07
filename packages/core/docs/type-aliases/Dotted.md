@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/core**](../README.md)
 
 ***
@@ -8,7 +10,7 @@
 
 > **Dotted**\<`Slice`\> = keyof `Slice` & `string` \| [`Path`](Path.md)\<`Slice`\>
 
-Defined in: [types.ts:1131](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L1131)
+Defined in: [types.ts:1221](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1221)
 
 Dotted keys of a slice: top-level keys or any nested path.
 

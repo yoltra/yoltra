@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/core**](../README.md)
 
 ***
@@ -8,7 +10,7 @@
 
 > **WithGlob**\<`T`\> = `T` \| `` `${string}*${string}` ``
 
-Defined in: [types.ts:1122](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L1122)
+Defined in: [types.ts:1212](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1212)
 
 Allow wildcard patterns like "*" and "**" anywhere in the string.
 

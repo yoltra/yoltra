@@ -24,6 +24,7 @@ export type {
   Change,
   Emit,
   EmitOptions,
+  EventMeta,
   InstrumentedEvent,
   InstrumentationObserver,
   Unsubscribe,
@@ -56,3 +57,31 @@ export type {
   EventConsumerType,
   EventConsumerMeta,
 } from "./types";
+
+export { createEntityAdapter } from "./entity/entityAdapter";
+export type {
+  EntityAdapter,
+  EntityAdapterOptions,
+  EntityId,
+  EntityState,
+  EntityUpdate,
+} from "./entity/entityAdapter";
+
+export { decodeState, encodeState, encodeStateBounded } from "./serialize/codec";
+export type {
+  BoundedEncodeResult,
+  EncodeOptions,
+  EncodeReport,
+  EncodeResult,
+} from "./serialize/codec";
+
+export { dehydrate, hydrate, persist, withHydration } from "./persistence/persist";
+export type {
+  Hydration,
+  PersistableStore,
+  PersistenceAdapter,
+  PersistencePhase,
+  PersistOptions,
+} from "./persistence/persist";
+export { createMemoryAdapter, createWebStorageAdapter } from "./persistence/adapters";
+export type { WebStorageLike } from "./persistence/adapters";

@@ -1,6 +1,7 @@
 import { useRef } from "react";
+import { Badge, Button, ButtonGroup, Card, Divider, Inline, Stack, Text } from "@yoltra/ds";
 
-import { useAtomicProp, useEmit } from "../state/store";
+import { commandKey, useAtomicProp, useEmit } from "../state/store";
 
 const STATUS_LABEL: Record<string, string> = {
   idle: "IDLE",
@@ -13,6 +14,11 @@ const STATUS_LABEL: Record<string, string> = {
  * A single satellite card. Every field is a **typed-path** subscription, so this
  * component re-renders ONLY when one of its own satellite's leaves changes —
  * never when another satellite updates. The render counter makes that visible.
+ *
+ * The chrome is `@yoltra/ds`: a `Card` for the surface, `Stack` and `Inline` for spacing from
+ * the scale, `Button` and `ButtonGroup` for the commands. What stays bespoke is the telemetry
+ * itself — the gauges and status colours — because a design system should not have opinions
+ * about what a satellite's battery looks like.
  */
 export function SatelliteCard({ index, id, name }: { index: number; id: string; name: string }) {
   const battery = useAtomicProp("fleet", (p) => p.satellites[index].battery);
@@ -29,39 +35,69 @@ export function SatelliteCard({ index, id, name }: { index: number; id: string; 
   const busy = status !== "idle";
   const low = battery < 20;
 
+  /**
+   * Commands carry a `dedupKey`, so a double-clicked button is one command rather than two.
+   * Identity dedup rather than the store-wide content window, which would also collapse
+   * telemetry that legitimately repeats.
+   */
+  const command = (type: "boost" | "deploy" | "transmit") => () =>
+    void emit("command", type, { id }, { dedupKey: commandKey(type, id) });
+
   return (
-    <div className={`sat-card${low ? " low" : ""}`}>
-      <div className="sat-head">
-        <span className="sat-name">{name}</span>
-        {/* key changes each render → the CSS pulse re-triggers */}
-        <span className="render-badge" key={renders.current} title="React renders of this card">
-          {renders.current} renders
-        </span>
-      </div>
+    <Card padding={4} elevation="sm" className={`sat-card${low ? " low" : ""}`}>
+      <Stack gap={3}>
+        <Inline justify="between">
+          <Text weight="bold">{name}</Text>
+          {/* key changes each render → the CSS pulse re-triggers */}
+          <span className="render-badge" key={renders.current} title="React renders of this card">
+            {renders.current} renders
+          </span>
+        </Inline>
 
-      <div className={`sat-status status-${status}`}>{STATUS_LABEL[status] ?? status}</div>
+        <div className={`sat-status status-${status}`}>{STATUS_LABEL[status] ?? status}</div>
 
-      <Gauge label="Battery" value={battery} tone={low ? "bad" : battery < 50 ? "warn" : "ok"} />
-      <Gauge label="Signal" value={signal} tone={signal < 40 ? "warn" : "ok"} />
+        <Stack gap={2}>
+          <Gauge label="Battery" value={battery} tone={low ? "bad" : battery < 50 ? "warn" : "ok"} />
+          <Gauge label="Signal" value={signal} tone={signal < 40 ? "warn" : "ok"} />
+        </Stack>
 
-      <div className="sat-meta">
-        <span>ALT {altitude} km</span>
-        <span>DATA {dataQueued} MB</span>
-        <span>{panelsDeployed ? "◧ panels" : "▫ stowed"}</span>
-      </div>
+        <Divider />
 
-      <div className="sat-actions">
-        <button disabled={busy} onClick={() => void emit("command", "boost", { id })}>
-          Boost
-        </button>
-        <button disabled={busy || panelsDeployed} onClick={() => void emit("command", "deploy", { id })}>
-          Deploy
-        </button>
-        <button disabled={busy || dataQueued === 0} onClick={() => void emit("command", "transmit", { id })}>
-          Transmit
-        </button>
-      </div>
-    </div>
+        <Inline gap={2} justify="between">
+          <Text size="xs" tone="muted">
+            ALT {altitude} km
+          </Text>
+          <Text size="xs" tone="muted">
+            DATA {dataQueued} MB
+          </Text>
+          <Badge variant={panelsDeployed ? "brand" : "neutral"}>
+            {panelsDeployed ? "panels out" : "stowed"}
+          </Badge>
+        </Inline>
+
+        <ButtonGroup label={`${name} commands`}>
+          <Button variant="ghost" size="sm" disabled={busy} onClick={command("boost")}>
+            Boost
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={busy || panelsDeployed}
+            onClick={command("deploy")}
+          >
+            Deploy
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={busy || dataQueued === 0}
+            onClick={command("transmit")}
+          >
+            Transmit
+          </Button>
+        </ButtonGroup>
+      </Stack>
+    </Card>
   );
 }
 

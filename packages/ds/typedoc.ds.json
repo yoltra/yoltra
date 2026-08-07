@@ -1,0 +1,23 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "@yoltra/ds",
+  "entryPoints": [
+    "src/index.ts",
+    "src/client.ts"
+  ],
+  "plugin": [
+    "typedoc-plugin-markdown"
+  ],
+  "tsconfig": "./tsconfig.docs.json",
+  "entryPointStrategy": "resolve",
+  "readme": "none",
+  "logLevel": "Verbose",
+  "categorizeByGroup": true,
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "excludeProtected": true,
+  "basePath": "src",
+  "sourceLinkTemplate": "https://github.com/yoltra/yoltra/blob/main/{path}#L{line}",
+  "out": "docs"
+}

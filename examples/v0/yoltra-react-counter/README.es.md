@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 # yoltra-react-counter
 
 > 👉 🇲🇽 Versión en Español &nbsp;|&nbsp; [🇺🇸 English Version](./README.md)
@@ -10,13 +12,13 @@ Una aplicación de contador minimalista que demuestra los patrones principales d
 
 ## Qué demuestra este ejemplo
 
-| Concepto | Ubicación |
-|---|---|
-| Configuración de una sola llamada con `createYoltra` (store + hooks tipados) | [src/state/yoltra.ts](./src/state/yoltra.ts) |
-| Mapa de eventos (`AppEM`) para eventos con tipos seguros | [src/state/yoltra.ts](./src/state/yoltra.ts) |
-| Suscripción de grano fino con un accessor tipado | [src/components/Counter.tsx](./src/components/Counter.tsx) |
-| Despacho de eventos con `useEmit` | [src/components/Counter.tsx](./src/components/Counter.tsx) |
-| Sin Provider — los hooks usan el store por defecto | [src/App.tsx](./src/App.tsx) |
+| Concepto                                                                     | Ubicación                                                  |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Configuración de una sola llamada con `createYoltra` (store + hooks tipados) | [src/state/yoltra.ts](./src/state/yoltra.ts)               |
+| Mapa de eventos (`AppEM`) para eventos con tipos seguros                     | [src/state/yoltra.ts](./src/state/yoltra.ts)               |
+| Suscripción de grano fino con un accessor tipado                             | [src/components/Counter.tsx](./src/components/Counter.tsx) |
+| Despacho de eventos con `useEmit`                                            | [src/components/Counter.tsx](./src/components/Counter.tsx) |
+| Sin Provider — los hooks usan el store por defecto                           | [src/App.tsx](./src/App.tsx)                               |
 
 ---
 

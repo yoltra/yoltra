@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Index wildcard subscriptions by their first segment, so an emit tests only the patterns that could match rather than every pattern on the channel.\\n\\nDelivery used to walk the whole pattern map and run the segment matcher against each entry — linear in the number of patterns registered rather than in the number that match — and the matcher re-split both the pattern and the subject on every test. A thousand patterns meant two thousand string splits to deliver one event.\\n\\nA subject's first segment can only be matched by a pattern whose first segment is that same literal, or is `*` or `**`. Bucketing on that turns the common shape — distinct event families like `panel.*` beside `order.**` — from a scan into a map lookup. Patterns are split once at registration; the subject once per emit.\\n\\nWith a thousand patterns registered, wildcard delivery goes from 4,290 to 2,529,253 operations per second, and stops growing with the number of patterns: 1 or 1000 now cost the same.\\n\\nThe index cannot narrow a channel whose patterns all begin with `**`, since nothing about the subject rules any of them out. That case stays linear and is roughly ten times faster than before from the split hoisting alone. A benchmark row covers it, so the headline figures are not read as an unqualified win.\\n\\n`emit` and `emitWith` now share one candidate walk instead of carrying two copies of it, and the private string-taking matcher is gone with its last caller.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

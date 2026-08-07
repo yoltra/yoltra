@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-server",
+      "comment": "Adds allowedExtensionIds, narrowing which browser extensions may open a socket. Extension origins all share one scheme, so permitting the scheme permitted every extension the user has installed — any of which, from a devtools page of its own, could connect and read whatever the attached stores hold. Naming ids restricts that to the panel actually meant to connect. Left empty by default because there is no id to assume: an unpacked build and a store install have different ones, so a hardcoded default would lock out a developer running the extension they had just built. Meant to be set alongside authToken, since an origin check constrains which page opened the socket and says nothing about which process did.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-server"
+}

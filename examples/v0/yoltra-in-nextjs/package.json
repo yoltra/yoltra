@@ -14,7 +14,7 @@
     "docs": "exit 0",
     "test": "exit 0",
     "start": "next start",
-    "lint": "exit 0"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@yoltra/core": "^0.2.0",

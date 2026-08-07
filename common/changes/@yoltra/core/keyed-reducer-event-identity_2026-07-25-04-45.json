@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Fix keyed reducers receiving a fabricated event id. Reducers that target an exact channel and type are wired through the internal reducer bus, which carried only the payload, so the bus handler rebuilt an event and minted a fresh crypto.randomUUID for it. As a result event.id inside a keyed reducer matched nothing else in the system: two keyed reducers responding to the same emit each saw a different id, none of them agreed with effects, event subscribers, instrumentation or the DevTools event log, and __replayEvents discarded the caller-supplied id the same way. EventBus.emit now takes an optional source event and forwards it to handlers as a second argument, and both store call sites pass the real event through. The change is additive and source-compatible in both directions: handlers declaring only a payload parameter keep working, and emitters that omit the event still behave exactly as before.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

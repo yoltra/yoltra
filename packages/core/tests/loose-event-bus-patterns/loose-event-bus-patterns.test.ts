@@ -123,6 +123,91 @@ describe("LooseEventBus - exact vs pattern behaviour", () => {
     expect(calls).toEqual([]);
   });
 
+  /**
+   * Delivery narrows candidates by the subject's first segment rather than testing every
+   * registered pattern. That index is derived state kept beside the handler map, and derived
+   * state that is built in one place and torn down in another is where the bugs are.
+   */
+  describe("the pattern index stays in step with the handlers", () => {
+    /**
+     * Reaching into the private index on purpose.
+     *
+     * @remarks
+     * A stale entry cannot be caught from the outside: delivery looks the pattern's handlers up
+     * by name and skips it when there are none, and duplicate entries deliver to the same handler
+     * reference, which the de-duplication then collapses. So the leak is invisible in behaviour
+     * and shows up only as unbounded growth and repeated matching work — which means the
+     * invariant has to be asserted where it lives.
+     */
+    const indexOf = (channel: string) =>
+      (bus as unknown as {
+        patternIndex: Map<string, { byHead: Map<string, unknown[]>; anyHead: unknown[] }>;
+      }).patternIndex.get(channel);
+
+    it("re-subscribes a pattern that was fully unsubscribed", () => {
+      const calls: string[] = [];
+      // A second pattern on the channel, so the channel survives the first one leaving. Without
+      // it, removing the only pattern drops the whole channel index — which cleans up correctly
+      // for the wrong reason and hides whether individual entries are ever removed.
+      bus.on("ui", "other.*", () => calls.push("other"));
+      const off = bus.on("ui", "panel.*", () => calls.push("first"));
+      off();
+      bus.on("ui", "panel.*", () => calls.push("second"));
+      bus.emit("ui", "panel.open", null);
+
+      expect(calls).toEqual(["second"]);
+      // One entry, not two: the pattern left the handler map, so it had to leave the index.
+      expect(indexOf("ui")?.byHead.get("panel")).toHaveLength(1);
+    });
+
+    it("keeps delivering to a pattern while any handler on it remains", () => {
+      const calls: string[] = [];
+      const off = bus.on("ui", "panel.*", () => calls.push("a"));
+      bus.on("ui", "panel.*", () => calls.push("b"));
+      off();
+      bus.emit("ui", "panel.open", null);
+
+      expect(calls).toEqual(["b"]);
+    });
+
+    it("still matches after clear and re-subscribe", () => {
+      const calls: string[] = [];
+      bus.on("ui", "panel.*", () => calls.push("gone"));
+      bus.clear();
+      expect(indexOf("ui")).toBeUndefined();
+
+      bus.on("ui", "panel.*", () => calls.push("fresh"));
+      bus.emit("ui", "panel.open", null);
+
+      expect(calls).toEqual(["fresh"]);
+      expect(indexOf("ui")?.byHead.get("panel")).toHaveLength(1);
+    });
+
+    it("tests patterns whose first segment is a wildcard against every subject", () => {
+      // These cannot be narrowed by the subject's first segment — nothing about the subject
+      // rules them out — so they have to be candidates for anything.
+      const calls: string[] = [];
+      bus.on("ui", "*.open", () => calls.push("star"));
+      bus.on("ui", "**.end", () => calls.push("glob"));
+
+      bus.emit("ui", "panel.open", null);
+      bus.emit("ui", "anything.deeply.nested.end", null);
+      bus.emit("ui", "unrelated.thing", null);
+
+      expect(calls).toEqual(["star", "glob"]);
+    });
+
+    it("does not let one channel's patterns match another's subjects", () => {
+      const calls: string[] = [];
+      bus.on("ui", "panel.*", () => calls.push("ui"));
+      bus.on("data", "panel.*", () => calls.push("data"));
+
+      bus.emit("data", "panel.open", null);
+
+      expect(calls).toEqual(["data"]);
+    });
+  });
+
   it("errors in handlers are logged and do not stop other handlers", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => { });
     const calls: string[] = [];

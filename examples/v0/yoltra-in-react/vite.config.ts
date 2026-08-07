@@ -1,6 +1,6 @@
 import react from "@vitejs/plugin-react-swc";
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 // Resolve a path relative to this config file (repo root is three levels up).
 const fromHere = (p: string) => fileURLToPath(new URL(p, import.meta.url));
@@ -36,4 +36,11 @@ export default defineConfig({
   // The dist bundles reference process.env.NODE_ENV for dev-only gating.
   define: { "process.env.NODE_ENV": JSON.stringify("development") },
   server: { fs: { allow: [fromHere("../../../")] } },
+  test: {
+    // The parity suite drives both state twins with no DOM and no devtools: it builds its
+    // own stores from the same reducer specs and slices the app composes.
+    environment: "node",
+    globals: true,
+    include: ["tests/**/*.test.{ts,tsx}"],
+  },
 });

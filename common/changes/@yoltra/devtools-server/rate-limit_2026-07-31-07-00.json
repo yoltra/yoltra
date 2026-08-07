@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-server",
+      "comment": "Adds a per-connection message allowance, defaulting to 200 per second. A command like REQUEST_STATE costs the store a full serialization and the hub a fan-out, so a client looping on it turned one cheap socket write into repeated work across every connected process. The excess is dropped rather than the socket closed: severing would punish a brief burst exactly like a flood, and a panel that overshoots recovers on the next window.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-server"
+}

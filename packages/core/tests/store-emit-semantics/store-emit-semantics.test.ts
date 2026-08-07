@@ -14,10 +14,10 @@ type AppState = { counter: CounterState };
 
 const counterSpec: ReducerSpec<CounterState, EmitEM> = {
   state: { value: 0 },
-  events: [
+  when: { keys: [
     ["ui", "increment"],
     ["ui", "start"],
-  ],
+  ] },
   reducer(state, event) {
     if (event.type === "increment") {
       return { value: state.value + (event.payload as number) };
@@ -60,7 +60,7 @@ describe("Store - emit semantics (C3)", () => {
     const store = createStore({ name: "PromiseEmit", reducer: { counter: counterSpec } });
 
     const effect: EffectSpec<Readonly<AppState>, EmitEM> = {
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       effect: async () => {
         await new Promise((r) => setTimeout(r, 10));
         order.push("effect-done");
@@ -79,7 +79,7 @@ describe("Store - emit semantics (C3)", () => {
     const store = createStore({ name: "Reentrant", reducer: { counter: counterSpec } });
 
     const outer: EffectSpec<Readonly<AppState>, EmitEM> = {
-      events: [["ui", "start"]],
+      when: { keys: [["ui", "start"]] },
       effect: async (_e, _getState, emit) => {
         order.push("outer:before-nested");
         await emit("ui", "increment", 1);
@@ -87,7 +87,7 @@ describe("Store - emit semantics (C3)", () => {
       },
     };
     const nested: EffectSpec<Readonly<AppState>, EmitEM> = {
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       effect: async () => {
         await new Promise((r) => setTimeout(r, 5));
         order.push("nested:effect-done");

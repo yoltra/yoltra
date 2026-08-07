@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/core**](../README.md)
 
 ***
@@ -6,9 +8,9 @@
 
 # Type Alias: DeepReadonly\<T\>
 
-> **DeepReadonly**\<`T`\> = `T` *extends* infer A[] ? `ReadonlyArray`\<`DeepReadonly`\<`A`\>\> : `T` *extends* `object` ? `{ readonly [K in keyof T]: DeepReadonly<T[K]> }` : `T`
+> **DeepReadonly**\<`T`\> = `T` *extends* (...`args`) => `unknown` ? `T` : `T` *extends* infer A[] ? `ReadonlyArray`\<`DeepReadonly`\<`A`\>\> : `T` *extends* `ReadonlyMap`\<infer K, infer V\> ? `ReadonlyMap`\<`DeepReadonly`\<`K`\>, `DeepReadonly`\<`V`\>\> : `T` *extends* `ReadonlySet`\<infer V\> ? `ReadonlySet`\<`DeepReadonly`\<`V`\>\> : `T` *extends* `Date` \| `RegExp` \| `Promise`\<`unknown`\> \| `Error` ? `T` : `T` *extends* `object` ? `{ readonly [K in keyof T]: DeepReadonly<T[K]> }` : `T`
 
-Defined in: [types.ts:1140](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L1140)
+Defined in: [types.ts:1242](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1242)
 
 Deep readonly type: recursively makes all properties readonly.
 
@@ -19,3 +21,16 @@ Deep readonly type: recursively makes all properties readonly.
 `T`
 
 Type to make readonly.
+
+## Remarks
+
+The built-in object types are handled before the general mapped-object case, because
+mapping over one destroys it. `{ readonly [K in keyof Map<K, V>]: ... }` produces an object
+carrying the *names* of a Map's methods with their signatures rewritten, so reading a Map
+out of state and calling `.get()` on it was a type error even though the value at runtime
+is an ordinary Map. The same applied to `Set`, `Date`, `RegExp` and any function stored in
+state.
+
+Collections become their `Readonly*` counterparts, which is the same treatment arrays
+already had. Functions are returned untouched: a function's properties are not state, and
+mapping over them makes it uncallable.

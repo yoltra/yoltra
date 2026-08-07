@@ -1,16 +1,19 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { themeCss } from "@yoltra/ds";
 import { ThemeProvider } from "@yoltra/ds/client";
+
+// The design system ships one stylesheet per component, so an application carries styles for
+// what it imports and nothing else. `tokens` is the custom properties both themes read from,
+// and `base` sets the 10px root every `--yl-*` length is expressed against.
+import "@yoltra/ds/styles/tokens.css";
+import "@yoltra/ds/styles/base.css";
+import "@yoltra/ds/styles/button.css";
+import "@yoltra/ds/styles/badge.css";
+import "@yoltra/ds/styles/callout.css";
+import "@yoltra/ds/styles/codeblock.css";
+
 import "./index.css";
 import App from "./App.tsx";
-
-// Inject the Yoltra design-system stylesheet once. In a Vite SPA there is no
-// server-rendered <head>, so we add the <style> before the first paint.
-const dsStyle = document.createElement("style");
-dsStyle.setAttribute("data-yoltra-ds", "");
-dsStyle.textContent = themeCss();
-document.head.appendChild(dsStyle);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

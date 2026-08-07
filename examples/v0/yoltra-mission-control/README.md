@@ -1,4 +1,8 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 # Orbital Mission Control — the flagship Yoltra + DevTools demo
+
+> 👉 English &nbsp;|&nbsp; [🇲🇽 Español](./README.es.md)
 
 A live satellite-fleet control room that puts every Yoltra feature — and the
 **DevTools panel** — on one screen. No install, no hub server, no browser
@@ -12,16 +16,20 @@ in-memory loopback transport.
 
 ## What it shows
 
-| Feature | Where to look |
-|---|---|
-| **Fine-grained reactivity** | Each satellite card shows a live **render counter**. Telemetry hits one satellite → only that card re-renders. No selectors, no memoization. |
-| **Typed path accessors** | Cards subscribe with `useAtomicProp("fleet", p => p.satellites[i].battery)`. |
-| **Wildcard subscriptions** | The header's *fleet battery* recomputes from `satellites.**`. |
-| **Multiple slices** | `fleet` (telemetry + commands) and `mission` (clock + alerts). |
-| **Event-sourcing + time-travel** | The panel's timeline fills automatically; scrub it to rewind the mission. |
-| **Effects (async)** | *Deploy* / *Transmit* / *Boost* commit instantly, then complete a moment later via effects. |
-| **Middleware (veto)** | *Boost* below 20% battery is rejected — it appears **uncommitted** in the timeline and raises an alert. |
-| **DevTools** | The embedded `<DevtoolsApp/>` is the exact extension UI, over the loopback hub. |
+| Feature                          | Where to look                                                                                                                                                                                                                           |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fine-grained reactivity**      | Each satellite card shows a live **render counter**. Telemetry hits one satellite → only that card re-renders. No selectors, no memoization.                                                                                            |
+| **Typed path accessors**         | Cards subscribe with `useAtomicProp("fleet", p => p.satellites[i].battery)`.                                                                                                                                                            |
+| **Wildcard subscriptions**       | The header's *fleet battery* recomputes from `satellites.**`.                                                                                                                                                                           |
+| **Multiple slices**              | `fleet` (telemetry + commands) and `mission` (clock + alerts).                                                                                                                                                                          |
+| **Event-sourcing + time-travel** | The panel's timeline fills automatically; scrub it to rewind the mission.                                                                                                                                                               |
+| **Effects (async)**              | *Deploy* / *Transmit* / *Boost* commit instantly, then complete a moment later via effects.                                                                                                                                             |
+| **Middleware (veto)**            | *Boost* below 20% battery is rejected — it appears **uncommitted** in the timeline and raises an alert.                                                                                                                                 |
+| **Event subscriptions**          | The **mission log** uses `useEvent` — it reads no state at all, so telemetry never wakes it. It listens in the `"all"` phase, so a *vetoed* command appears there even though it never reached a reducer.                               |
+| **Deduplication**                | Commands carry a `dedupKey`. Double-click **Boost** and the second press is collapsed rather than starting a second maneuver — watch **dedup hits** climb in the panel's metrics.                                                       |
+| **Suspense**                     | The **transfer window** panel uses `useSuspenseAtomicProp` for an async forecast, with a skeleton while it computes. It subscribes to `satellites.*.panelsDeployed`, so it recomputes when panels move and not on every telemetry tick. |
+| **Design system**                | The chrome is `@yoltra/ds` — `Card`, `Stack`, `Inline`, `Grid`, `Button`, `Switch`, `Badge`, `Skeleton`, `EmptyState`. The telemetry visuals stay bespoke, built from the same tokens.                                                  |
+| **DevTools**                     | The embedded `<DevtoolsApp/>` is the exact extension UI, over the loopback hub.                                                                                                                                                         |
 
 ## Run it
 

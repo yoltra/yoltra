@@ -6,9 +6,8 @@ import { useTodoActions } from "../../../state/redux";
 
 import "./TodoFactory.style.scss";
 
-export interface iTodoFactoryProps { }
 
-export const TodoFactory: FC<iTodoFactoryProps> = () => {
+export const TodoFactory: FC = () => {
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [newTodoCategory, setNewTodoCategory] = useState("");
   const [newTodoStatus, setNewTodoStatus] = useState<eTodoStatus>(eTodoStatus.Pending);

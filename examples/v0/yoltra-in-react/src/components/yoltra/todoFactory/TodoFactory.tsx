@@ -5,9 +5,8 @@ import { eTodoStatus } from "../../../types";
 import "./TodoFactory.style.scss";
 import { useEmit } from "../../../state/yoltra/hooks";
 
-export interface iTodoFactoryProps { }
 
-export const TodoFactory: FC<iTodoFactoryProps> = (_: iTodoFactoryProps) => {
+export const TodoFactory: FC = () => {
     const [newTodoTitle, setNewTodoTitle] = useState("");
     const [newTodoCategory, setNewTodoCategory] = useState("");
     const [newTodoStatus, setNewTodoStatus] = useState<eTodoStatus>(eTodoStatus.Pending);

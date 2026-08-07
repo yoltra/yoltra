@@ -1,0 +1,88 @@
+.yl-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &__ring {
+    display: block;
+    width: var(--yl-spinner-size, 2rem);
+    height: var(--yl-spinner-size, 2rem);
+    border: 2px solid var(--yl-color-border);
+    border-top-color: var(--yl-color-brand);
+    border-radius: var(--yl-radius-round);
+    animation: yl-spin var(--yl-motion-normal) linear infinite;
+  }
+
+  &--sm { --yl-spinner-size: 1.4rem; }
+  &--md { --yl-spinner-size: 2rem; }
+  &--lg { --yl-spinner-size: 3.2rem; }
+}
+
+@keyframes yl-spin {
+  to { transform: rotate(360deg); }
+}
+
+.yl-skeleton {
+  display: block;
+  width: 100%;
+  height: 1.2em;
+  border-radius: var(--yl-radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--yl-color-bg-subtle) 25%,
+    var(--yl-color-border) 37%,
+    var(--yl-color-bg-subtle) 63%
+  );
+  background-size: 400% 100%;
+  animation: yl-shimmer 1.4s ease infinite;
+
+  &--circle {
+    border-radius: var(--yl-radius-round);
+    aspect-ratio: 1;
+    height: auto;
+  }
+}
+
+@keyframes yl-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+// Motion is decoration here. A reader who has asked for less of it should get a still
+// placeholder and a still spinner, not a smaller amount of spinning.
+@media (prefers-reduced-motion: reduce) {
+  .yl-spinner__ring,
+  .yl-skeleton {
+    animation: none;
+  }
+}
+
+.yl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--yl-space-3);
+  padding: var(--yl-space-10) var(--yl-space-5);
+  color: var(--yl-color-fg-secondary);
+
+  &__icon {
+    font-size: 3.2rem;
+    line-height: 1;
+  }
+
+  &__title {
+    margin: 0;
+    font-family: var(--yl-font-sans);
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: var(--yl-color-fg);
+  }
+
+  &__body {
+    margin: 0;
+    max-width: 44ch;
+    font-size: 1.4rem;
+    line-height: 1.6;
+  }
+}

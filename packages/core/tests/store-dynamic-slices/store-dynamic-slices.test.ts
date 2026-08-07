@@ -16,10 +16,10 @@ type State = {
 
 const baseReducer: ReducerSpec<State["base"], EM> = {
   state: { value: 0 },
-  events: [
+  when: { keys: [
     ["ui", "setCounter"],
     ["ui", "increment"],
-  ],
+  ] },
   reducer(state, event) {
     if (event.channel === "ui" && event.type === "setCounter") {
       return { value: event.payload as number };
@@ -42,7 +42,7 @@ describe("Store - dynamic slices", () => {
 
     const dynamicSpec: ReducerSpec<{ value: number }, EM> = {
       state: { value: 10 },
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       reducer(state, event) {
         if (event.channel === "ui" && event.type === "increment") {
           return { value: state.value + (event.payload as number) };
@@ -82,7 +82,7 @@ describe("Store - dynamic slices", () => {
 
     const newReducer: ReducerSpec<State["base"], EM> = {
       state: { value: 999 },
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       reducer(state, event) {
         if (event.channel === "ui" && event.type === "increment") {
           return { value: state.value + (event.payload as number) * 2 };
@@ -116,7 +116,7 @@ describe("Store - dynamic slices", () => {
 
     const extraSpec: ReducerSpec<{ flag: boolean }, EM> = {
       state: { flag: false },
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       reducer(state, _event) {
         return { flag: !state.flag };
       },
@@ -149,7 +149,7 @@ describe("Store - dynamic slices", () => {
 
     const newReducer: ReducerSpec<State["base"], EM> = {
       state: { value: 1 },
-      events: [["ui", "increment"]],
+      when: { keys: [["ui", "increment"]] },
       reducer(s, e) {
         if (e.channel === "ui" && e.type === "increment") {
           return { value: s.value + 1 };

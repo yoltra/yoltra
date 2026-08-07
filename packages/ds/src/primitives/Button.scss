@@ -1,0 +1,87 @@
+@use "../styles/mixins" as *;
+
+.yl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--yl-space-2);
+  font-family: var(--yl-font-sans);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: var(--yl-space-3) var(--yl-space-5);
+  border-radius: var(--yl-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background var(--yl-motion-fast) var(--yl-ease),
+    border-color var(--yl-motion-fast) var(--yl-ease),
+    transform var(--yl-motion-fast) var(--yl-ease);
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  @include focus-ring;
+
+  &--primary {
+    background: var(--yl-color-btn-bg);
+    color: var(--yl-color-btn-fg);
+    border-color: var(--yl-color-btn-bg);
+
+    &:hover {
+      background: var(--yl-color-btn-bg-hover);
+      border-color: var(--yl-color-btn-bg-hover);
+    }
+    &:active {
+      background: var(--yl-color-btn-bg-active);
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--yl-color-fg);
+    border-color: var(--yl-color-ghost-border);
+
+    &:hover {
+      background: var(--yl-color-ghost-bg-hover);
+    }
+  }
+
+  &--sm {
+    padding: var(--yl-space-2) var(--yl-space-3);
+    font-size: 1.3rem;
+  }
+}
+
+.yl-icon-btn {
+  padding: var(--yl-space-2);
+  aspect-ratio: 1;
+  line-height: 1;
+
+  &.yl-btn--sm {
+    padding: var(--yl-space-1);
+  }
+}
+
+.yl-btn-group {
+  display: inline-flex;
+
+  // Joined: interior corners squared and borders collapsed, so the set reads as one control.
+  > .yl-btn:not(:first-child) {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+    margin-inline-start: -1px;
+  }
+  > .yl-btn:not(:last-child) {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  // A focused button must not be overlapped by the one after it.
+  > .yl-btn:focus-visible {
+    position: relative;
+    z-index: 1;
+  }
+}

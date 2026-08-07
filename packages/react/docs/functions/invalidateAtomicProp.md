@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -8,7 +10,7 @@
 
 > **invalidateAtomicProp**(`reducer`, `property`, `extraKey?`): `void`
 
-Defined in: [react/src/hooks/suspense.ts:418](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L418)
+Defined in: [react/src/hooks/suspense.ts:660](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L660)
 
 Invalidates the Suspense cache entry for a specific `reducer.property` path.
 

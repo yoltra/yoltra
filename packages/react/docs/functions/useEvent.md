@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -8,7 +10,7 @@
 
 > **useEvent**\<`EM`, `C`, `T`\>(`channel`, `type`, `handler`, `phase`): `void`
 
-Defined in: [react/src/hooks/hooks.ts:440](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/hooks.ts#L440)
+Defined in: [react/src/hooks/hooks.ts:470](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/hooks.ts#L470)
 
 Subscribe to store events from a React component.
 

@@ -6,7 +6,7 @@
 
 # Interface: HandshakeRequest
 
-Defined in: [handshake.ts:37](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/handshake.ts#L37)
+Defined in: [handshake.ts:37](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L37)
 
 Sent by a client immediately after WebSocket connection.
 
@@ -38,11 +38,30 @@ const req: HandshakeRequest = {
 
 ## Properties
 
+### authToken?
+
+> `optional` **authToken**: `string`
+
+Defined in: [handshake.ts:54](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L54)
+
+Shared secret proving this client is one the developer started.
+
+#### Remarks
+
+Required only when the hub was configured with a token, and then for every role. The hub
+binds to loopback, which keeps the network out but not other processes on the same machine:
+without a token anything running locally — including a package's install script — can
+connect as a panel and read the application's entire state, inject events and overwrite it
+through time-travel. Loopback is not an authentication boundary on a shared or containerised
+box.
+
+***
+
 ### extension?
 
 > `optional` **extension**: `object`
 
-Defined in: [handshake.ts:53](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/handshake.ts#L53)
+Defined in: [handshake.ts:65](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L65)
 
 Present only when `role` is `EXTENSION`.
 
@@ -70,7 +89,7 @@ Display name (e.g., "VSCode DevTools", "Browser DevTools").
 
 > **protocolVersion**: `string`
 
-Defined in: [handshake.ts:40](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/handshake.ts#L40)
+Defined in: [handshake.ts:40](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L40)
 
 Semver protocol version the client supports.
 
@@ -80,7 +99,7 @@ Semver protocol version the client supports.
 
 > **role**: [`DevtoolsRole`](../enumerations/DevtoolsRole.md)
 
-Defined in: [handshake.ts:42](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/handshake.ts#L42)
+Defined in: [handshake.ts:42](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L42)
 
 Role this client will assume.
 
@@ -90,7 +109,7 @@ Role this client will assume.
 
 > `optional` **store**: `object`
 
-Defined in: [handshake.ts:44](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/handshake.ts#L44)
+Defined in: [handshake.ts:56](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L56)
 
 Present only when `role` is `STORE`.
 
@@ -118,4 +137,4 @@ Human-readable store name from `createStore({ name })`.
 
 > **type**: `"HANDSHAKE_REQUEST"`
 
-Defined in: [handshake.ts:38](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/handshake.ts#L38)
+Defined in: [handshake.ts:38](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L38)

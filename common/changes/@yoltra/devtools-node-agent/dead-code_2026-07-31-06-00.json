@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-node-agent",
+      "comment": "Removes two recorder methods and the counters behind them. Nothing ever called them, and the figures they were meant to produce come from the store's own introspection — so they read as instrumentation that existed while measuring nothing.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-node-agent"
+}

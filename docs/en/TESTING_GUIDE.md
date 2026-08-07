@@ -1,4 +1,4 @@
-![Yoltra logo](../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Testing Guide
 
@@ -18,7 +18,7 @@ Create a fresh store per test, emit events, and assert on `getState()`.
 
 ```ts
 import { afterEach, describe, expect, it } from "vitest";
-import { createStore } from "@yoltra/core";
+import { createStore, eventKeys } from "@yoltra/core";
 
 type AppEM = { counter: { increment: number; reset: null } };
 
@@ -28,7 +28,7 @@ function makeStore() {
     reducer: {
       counter: {
         state: { value: 0 },
-        events: [["counter", "increment"], ["counter", "reset"]],
+        when: { keys: eventKeys<AppEM>()([["counter", "increment"], ["counter", "reset"]]) },
         reducer: (s, e) =>
           e.type === "increment" ? { value: s.value + e.payload }
           : e.type === "reset"   ? { value: 0 }
@@ -95,7 +95,7 @@ it("loads todos and reduces the result", async () => {
     reducer: {
       todos: {
         state: { items: [] as { id: number; title: string }[] },
-        events: [["todos", "loaded"]],
+        when: { keys: [["todos", "loaded"]] },
         reducer: (s, e) => (e.type === "loaded" ? { items: e.payload } : s),
       },
     },
@@ -131,7 +131,7 @@ it("rejects boost below the battery threshold", () => {
     reducer: {
       sat: {
         state: { battery: 10, boosting: false },
-        events: [["command", "boost"]],
+        when: { keys: [["command", "boost"]] },
         reducer: (s, e) => (e.type === "boost" ? { ...s, boosting: true } : s),
       },
     },

@@ -6,9 +6,8 @@ import { TodoList } from "./todoList/TodoList";
 import { TodoFactory } from "./todoFactory/TodoFactory";
 import { TodoFilter } from "./todoFilter/TodoFilter";
 
-export interface iReduxTodoPageProps {}
 
-export const ReduxTodoPage: React.FC<iReduxTodoPageProps> = () => {
+export const ReduxTodoPage: React.FC = () => {
   const { fetchTodos } = useTodoActions();
 
   useEffect(() => {

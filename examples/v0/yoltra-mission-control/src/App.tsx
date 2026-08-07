@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Callout } from "@yoltra/ds";
+import { Callout, Container, Inline, Kbd, Stack, Switch, Text } from "@yoltra/ds";
 
 import { DevtoolsPanel } from "./components/DevtoolsPanel";
 import { MissionHeader } from "./components/MissionHeader";
+import { MissionLog } from "./components/MissionLog";
+import { OrbitalForecast } from "./components/OrbitalForecast";
 import { SatelliteGrid } from "./components/SatelliteGrid";
 import { useMissionSimulator } from "./state/simulator";
 
@@ -14,34 +16,47 @@ export default function App() {
 
   return (
     <div className="app">
-      <section className="mission-pane">
-        <MissionHeader />
+      <Container as="section" className="mission-pane">
+        <Stack gap={5}>
+          <MissionHeader />
 
-        <div className="sim-controls">
-          <button
-            className={`sim-toggle${running ? "" : " paused"}`}
-            onClick={() => setRunning((r) => !r)}
-          >
-            {running ? "❚❚ Pause telemetry" : "▶ Resume telemetry"}
-          </button>
-          <span className={`sim-status ${running ? "live" : "paused"}`}>
-            {running ? "● LIVE" : "❚❚ PAUSED"}
-          </span>
-          <span className="sim-hint">
-            Pause before scrubbing <b>Time Travel</b> in the panel →
-          </span>
-        </div>
+          <Inline gap={4} justify="between" className="sim-controls">
+            {/* A Switch rather than a Button: this is a setting that takes effect the moment
+                it is flipped, and `role="switch"` is what makes a screen reader say so. */}
+            <Switch
+              id="telemetry"
+              label={running ? "Telemetry live" : "Telemetry paused"}
+              checked={running}
+              onChange={(e) => setRunning(e.target.checked)}
+            />
+            <Text size="xs" tone="muted">
+              Pause before scrubbing <Kbd>Time Travel</Kbd> in the panel
+            </Text>
+          </Inline>
 
-        <Callout kind="info">
-          <p>
-            Telemetry streams in on its own. Send <b>Boost</b> / <b>Deploy</b> / <b>Transmit</b>{" "}
-            commands, then scrub the timeline in the panel to rewind the mission. Watch each
-            card&rsquo;s <b>render counter</b>: only the satellite whose data changed re-renders —
-            that is fine-grained reactivity, no selectors or memoization required.
-          </p>
-        </Callout>
-        <SatelliteGrid />
-      </section>
+          <Callout kind="info">
+            <p>
+              Telemetry streams in on its own. Send <b>Boost</b> / <b>Deploy</b> /{" "}
+              <b>Transmit</b> commands, then scrub the timeline in the panel to rewind the
+              mission. Watch each card&rsquo;s <b>render counter</b>: only the satellite whose
+              data changed re-renders — that is fine-grained reactivity, no selectors or
+              memoization required.
+            </p>
+            <p>
+              Double-click a command and watch <b>dedup hits</b> climb in the panel&rsquo;s
+              metrics: the second press carries the same <code>dedupKey</code> and is collapsed
+              rather than starting a second maneuver.
+            </p>
+          </Callout>
+
+          <Inline gap={4} align="stretch" className="mission-asides">
+            <MissionLog />
+            <OrbitalForecast />
+          </Inline>
+
+          <SatelliteGrid />
+        </Stack>
+      </Container>
 
       <DevtoolsPanel />
     </div>

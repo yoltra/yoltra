@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-protocol",
+      "comment": "Tests the reconnecting WebSocket client, which every devtools agent depends on to reach the hub and which sat at 28% coverage. The socket arrives through an injected factory \u2014 that is what keeps this package free of both the browser `WebSocket` global and the `ws` package \u2014 so a driveable fake socket and a fake clock exercise the whole state machine without a network: handshake request and refusal, malformed frames, buffering and in-order flush, exponential backoff with its floor, giving up after the configured attempts, failure to construct a socket at all, and the epoch guard that stops a superseded socket's late close from tearing down its replacement.\\n\\nCoverage of the module goes from 27.9% to 94.0% and the package from 43.2% to 94.6%, so the thresholds are raised to the new measured floor rather than left at the ones re-based when the state codec moved out and took its coverage with it.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-protocol"
+}

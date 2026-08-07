@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -8,7 +10,7 @@
 
 > **invalidateAtomicPropsByReducer**(`reducer`): `void`
 
-Defined in: [react/src/hooks/suspense.ts:434](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/suspense.ts#L434)
+Defined in: [react/src/hooks/suspense.ts:676](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L676)
 
 Invalidates all Suspense cache entries for a given reducer (slice).
 

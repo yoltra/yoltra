@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -8,7 +10,7 @@
 
 > **useStore**\<`EM`, `R`, `S`\>(): `StoreInstance`\<`R`, `S`, `EM`\>
 
-Defined in: [react/src/hooks/hooks.ts:62](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/hooks.ts#L62)
+Defined in: [react/src/hooks/hooks.ts:63](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/hooks.ts#L63)
 
 Returns the current StoreInstance from [StoreContext](../variables/StoreContext.md).
 Throws if used outside of a `<StoreProvider>`.

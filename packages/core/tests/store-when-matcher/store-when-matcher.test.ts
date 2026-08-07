@@ -3,14 +3,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createStore } from "../../src/store/Store";
 import { eventKeys } from "../../src/types";
 import type {
+  DeepReadonly,
   MiddlewareFunction,
   MiddlewareSpec,
   EffectSpec,
   ReducerSpec,
 } from "../../src/types";
+import type { AppState, AppEvents } from "./support/setupStore";
 import {
-  AppState,
-  AppEvents,
   keys,
   makeStoreWithLegacyEvents,
   makeStoreWithWhenKeys,
@@ -101,7 +101,7 @@ describe("Store - when matcher", () => {
       const store = makeStoreWithLegacyEvents();
       const calls: string[] = [];
 
-      const mwSpec: MiddlewareSpec<Readonly<AppState>, AppEvents> = {
+      const mwSpec: MiddlewareSpec<DeepReadonly<AppState>, AppEvents> = {
         when: { channel: "admin" },
         middleware: (_state, event) => {
           calls.push(`${event.channel}:${event.type}`);
@@ -125,7 +125,7 @@ describe("Store - when matcher", () => {
       const store = makeStoreWithLegacyEvents();
       const calls: string[] = [];
 
-      const mwSpec: MiddlewareSpec<Readonly<AppState>, AppEvents> = {
+      const mwSpec: MiddlewareSpec<DeepReadonly<AppState>, AppEvents> = {
         when: { keys: keys([["ui", "increment"], ["ui", "reset"]]) },
         middleware: (_state, event) => {
           calls.push(`${event.channel}:${event.type}`);
@@ -147,7 +147,7 @@ describe("Store - when matcher", () => {
       const store = makeStoreWithLegacyEvents();
       const calls: string[] = [];
 
-      const mwSpec: MiddlewareSpec<Readonly<AppState>, AppEvents> = {
+      const mwSpec: MiddlewareSpec<DeepReadonly<AppState>, AppEvents> = {
         when: { any: true },
         middleware: (_state, event) => {
           calls.push(`${event.channel}:${event.type}`);
@@ -169,7 +169,7 @@ describe("Store - when matcher", () => {
       const calls: string[] = [];
 
       // Raw function (legacy) - runs for all events
-      const mwFunc: MiddlewareFunction<Readonly<AppState>, AppEvents> = (_state, event) => {
+      const mwFunc: MiddlewareFunction<DeepReadonly<AppState>, AppEvents> = (_state, event) => {
         calls.push(`${event.channel}:${event.type}`);
         return true;
       };
@@ -185,7 +185,7 @@ describe("Store - when matcher", () => {
     it("MiddlewareSpec can cancel specific events while allowing others", async () => {
       const store = makeStoreWithLegacyEvents();
 
-      const guardSpec: MiddlewareSpec<Readonly<AppState>, AppEvents> = {
+      const guardSpec: MiddlewareSpec<DeepReadonly<AppState>, AppEvents> = {
         when: { channel: "admin" },
         middleware: (_state, _event) => {
           // Cancel all admin events
@@ -212,7 +212,7 @@ describe("Store - when matcher", () => {
       const store = makeStoreWithLegacyEvents();
       const calls: string[] = [];
 
-      const effectSpec: EffectSpec<Readonly<AppState>, AppEvents> = {
+      const effectSpec: EffectSpec<DeepReadonly<AppState>, AppEvents> = {
         when: { channel: "ui" },
         effect: (event) => {
           calls.push(`${event.channel}:${event.type}`);
@@ -232,7 +232,7 @@ describe("Store - when matcher", () => {
       const store = makeStoreWithLegacyEvents();
       const calls: string[] = [];
 
-      const effectSpec: EffectSpec<Readonly<AppState>, AppEvents> = {
+      const effectSpec: EffectSpec<DeepReadonly<AppState>, AppEvents> = {
         when: { channels: ["ui", "system"] },
         effect: (event) => {
           calls.push(`${event.channel}:${event.type}`);
@@ -252,7 +252,7 @@ describe("Store - when matcher", () => {
       const store = makeStoreWithLegacyEvents();
       const calls: string[] = [];
 
-      const effectSpec: EffectSpec<Readonly<AppState>, AppEvents> = {
+      const effectSpec: EffectSpec<DeepReadonly<AppState>, AppEvents> = {
         when: { any: true },
         effect: (event) => {
           calls.push(`${event.channel}:${event.type}`);
@@ -272,7 +272,7 @@ describe("Store - when matcher", () => {
       const store = makeStoreWithLegacyEvents();
       const calls: string[] = [];
 
-      const effectSpec: EffectSpec<Readonly<AppState>, AppEvents> = {
+      const effectSpec: EffectSpec<DeepReadonly<AppState>, AppEvents> = {
         when: { keys: keys([["ui", "increment"], ["admin", "setCounter"]]) },
         effect: (event) => {
           calls.push(`${event.channel}:${event.type}`);
@@ -293,7 +293,7 @@ describe("Store - when matcher", () => {
       const store = makeStoreWithLegacyEvents();
       const calls: string[] = [];
 
-      const effectSpec: EffectSpec<Readonly<AppState>, AppEvents> = {
+      const effectSpec: EffectSpec<DeepReadonly<AppState>, AppEvents> = {
         // No when, no events = match all
         effect: (event) => {
           calls.push(`${event.channel}:${event.type}`);
@@ -312,7 +312,7 @@ describe("Store - when matcher", () => {
       const store = makeStoreWithLegacyEvents();
       const calls: string[] = [];
 
-      const effectSpec: EffectSpec<Readonly<AppState>, AppEvents> = {
+      const effectSpec: EffectSpec<DeepReadonly<AppState>, AppEvents> = {
         when: { channel: "ui" },
         effect: (event) => {
           calls.push(`${event.channel}:${event.type}`);
@@ -388,7 +388,7 @@ describe("Store - when matcher", () => {
     it("records effect metadata store-owned (not on the handler) and surfaces it via introspection", async () => {
       const store = makeStoreWithLegacyEvents();
 
-      const effectSpec: EffectSpec<Readonly<AppState>, AppEvents> = {
+      const effectSpec: EffectSpec<DeepReadonly<AppState>, AppEvents> = {
         when: { channel: "ui" },
         effect: () => {},
         meta: {
@@ -422,13 +422,17 @@ describe("Store - when matcher", () => {
       // Key-based effect
       store.registerEffect({
         when: { keys: keys([["ui", "increment"]]) },
-        effect: () => calls.push("key-based"),
+        effect: () => {
+          calls.push("key-based");
+        },
       });
 
       // Pattern-based effect
       store.registerEffect({
         when: { channel: "ui" },
-        effect: () => calls.push("pattern-based"),
+        effect: () => {
+          calls.push("pattern-based");
+        },
       });
 
       await store.emit("ui", "increment", 1);

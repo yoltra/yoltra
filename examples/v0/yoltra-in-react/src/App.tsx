@@ -21,7 +21,7 @@ function RtkRoute() {
   );
 }
 
-export const router = createBrowserRouter([
+const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [

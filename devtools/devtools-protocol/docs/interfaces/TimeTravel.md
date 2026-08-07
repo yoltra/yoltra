@@ -6,7 +6,7 @@
 
 # Interface: TimeTravel
 
-Defined in: [messages.ts:225](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L225)
+Defined in: [messages.ts:238](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L238)
 
 Time travel: jump a store to a specific state.
 
@@ -28,7 +28,7 @@ the entire state tree and notifies all subscribers. This requires
 
 > **snapshotVersion**: `number`
 
-Defined in: [messages.ts:231](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L231)
+Defined in: [messages.ts:244](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L244)
 
 Snapshot version being jumped to.
 
@@ -38,7 +38,7 @@ Snapshot version being jumped to.
 
 > **sourceId**: `string`
 
-Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L23)
+Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L23)
 
 UUID of the sender (store wrapper ID or extension ID).
 
@@ -52,7 +52,7 @@ UUID of the sender (store wrapper ID or extension ID).
 
 > **sourceRole**: [`DevtoolsRole`](../enumerations/DevtoolsRole.md)
 
-Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L25)
+Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L25)
 
 Role of the sender.
 
@@ -66,7 +66,7 @@ Role of the sender.
 
 > **state**: `unknown`
 
-Defined in: [messages.ts:229](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L229)
+Defined in: [messages.ts:242](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L242)
 
 Full state to apply via `__applyExternalState`.
 
@@ -76,7 +76,7 @@ Full state to apply via `__applyExternalState`.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:227](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L227)
+Defined in: [messages.ts:240](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L240)
 
 ***
 
@@ -84,7 +84,7 @@ Defined in: [messages.ts:227](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19
 
 > **timestamp**: `string`
 
-Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L21)
+Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L21)
 
 ISO 8601 timestamp of when the message was created.
 
@@ -98,7 +98,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"TIME_TRAVEL"`
 
-Defined in: [messages.ts:226](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L226)
+Defined in: [messages.ts:239](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L239)
 
 Discriminant field identifying the message type.
 

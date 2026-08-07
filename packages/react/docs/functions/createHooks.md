@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -8,7 +10,7 @@
 
 > **createHooks**\<`R`, `S`, `EM`\>(`StoreContext`): [`YoltraHooks`](../interfaces/YoltraHooks.md)\<`R`, `S`, `EM`\>
 
-Defined in: [react/src/hooks/createHooks.ts:240](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/hooks/createHooks.ts#L240)
+Defined in: [react/src/hooks/createHooks.ts:250](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L250)
 
 Factory that creates fully-typed React hooks bound to a specific store context.
 
@@ -40,7 +42,7 @@ Event map.
 
 ### StoreContext
 
-`Context`\<`StoreInstance`\<`R`, `S`, `EM`\>\>
+`Context`\<`null` \| `StoreInstance`\<`R`, `S`, `EM`\>\>
 
 A React context carrying a `StoreInstance<R, S, EM>`.
 
@@ -49,7 +51,8 @@ A React context carrying a `StoreInstance<R, S, EM>`.
 [`YoltraHooks`](../interfaces/YoltraHooks.md)\<`R`, `S`, `EM`\>
 
 An object with typed hooks: `useStore`, `useEmit`, `useSelector`,
-  `useAtomicProp`, `useAtomicProps`, `useEvent`, and `shallowEqual`.
+  `useAtomicProp`, `useAtomicProps`, `useEvent`, `useSuspenseAtomicProp`,
+  `useSuspenseAtomicProps`, and `shallowEqual`.
 
 ## Throws
 

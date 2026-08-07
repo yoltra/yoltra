@@ -127,8 +127,10 @@ export const todoSlice = createSlice({
     },
 
     clearFilters: (state) => {
+      // "ALL" rather than "": that is the initial state and what the Yoltra twin restores —
+      // the parity suite is what caught the drift.
       state.filter.selectedCategory = "";
-      state.filter.selectedStatus = "";
+      state.filter.selectedStatus = "ALL";
     },
   },
 

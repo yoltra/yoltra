@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "Drops react-dom from peerDependencies. No source file imports it — the hooks build on useSyncExternalStore, which lives in react itself — while the exports map advertises a react-native condition that react-dom cannot satisfy. Requiring it turned away React Native and react-test-renderer consumers for a dependency the package never used.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

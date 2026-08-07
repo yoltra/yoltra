@@ -6,9 +6,9 @@
  * Sampling configuration for event throttling/filtering.
  *
  * @remarks
- * Protocol-level design for v1. Implementation deferred to post-v1.
- * Configured in the store wrapper and communicated via handshake.
- * Each rule targets events by composite key (`[channel, type]` tuples).
+ * Configured in the store wrapper and communicated via handshake. Each rule targets events by
+ * composite key (`[channel, type]` tuples), and both agents apply them before an event is
+ * reported: an ignored route is never sent, a throttled one is sent at the configured rate.
  *
  * @public
  */
@@ -48,7 +48,7 @@ export interface StoreCapabilities {
   pipelineMeta: boolean;
   /** Whether extensions can emit events to this store. */
   emit: boolean;
-  /** Sampling configuration (protocol v1 design, implementation deferred). */
+  /** Sampling configuration; applied by the agents before an event is reported. */
   sampling?: SamplingConfig;
 }
 

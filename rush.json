@@ -26,33 +26,9 @@
   "projectFolderMaxDepth": 3,
 
   // ---------------------------------------------------------------------------
-  // PNPM options
+  // PNPM options live in common/config/rush/pnpm-config.json (that file can
+  // also carry globalOverrides, which rush.json's pnpmOptions cannot).
   // ---------------------------------------------------------------------------
-  "pnpmOptions": {
-    /**
-     * Use the global PNPM store, shared across all your repos on this machine.
-     * Change to "local" if you need an isolated store per repo.
-     */
-    "pnpmStore": "global",
-
-    /**
-     * Do NOT fail the install when a peer dependency is not satisfied.
-     * Some packages (ESLint plugins, React types) declare loose peer ranges.
-     */
-    "strictPeerDependencies": false,
-
-    /**
-     * Prevent manual edits to the Rush-managed pnpm-lock.yaml.
-     * Always run `rush update` to touch the lockfile.
-     */
-    "preventManualShrinkwrapChanges": true,
-
-    /**
-     * Opt into pnpm workspaces so the `workspace:` protocol resolves correctly
-     * and Rush produces a single lockfile for the whole monorepo.
-     */
-    "useWorkspaces": true
-  },
 
   // ---------------------------------------------------------------------------
   // Versioning behaviour

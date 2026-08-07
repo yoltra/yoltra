@@ -53,6 +53,24 @@
       "ignoreDependencyOrder": false,
       "ignoreMissingScript": true,
       "allowWarningsInSuccessfulBuild": false
+    },
+
+    // ------------------------------------------------------------------
+    // rush size
+    // Checks bundle-size budgets declared under "sizeLimit" in a package.json.
+    // Measures what a consumer ships — bundled, tree-shaken, minified, gzipped —
+    // not the size of the unminified file sitting in dist.
+    // Requires a build first, since it measures build output.
+    // ------------------------------------------------------------------
+    {
+      "commandKind": "bulk",
+      "name": "size",
+      "summary": "Check bundle-size budgets across all packages",
+      "description": "Invokes the \"size\" script in every project that declares one. Packages without a \"sizeLimit\" field are skipped; a budget is only meaningful where bundle size is something a consumer pays for.",
+      "enableParallelism": true,
+      "ignoreDependencyOrder": true,
+      "ignoreMissingScript": true,
+      "allowWarningsInSuccessfulBuild": false
     }
   ],
 

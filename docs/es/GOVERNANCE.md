@@ -1,9 +1,9 @@
-![Yoltra logo](../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Gobernanza de Yoltra!
 
-> 👉 [ 🇲🇽 Versión en Español](../es/DEVELOPER_GUIDE.md)&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](../../DEVELOPER_GUIDE.md)&nbsp;
+> 👉 [ 🇲🇽 Versión en Español](../es/GOVERNANCE.md)&nbsp; |
+> &nbsp;[ 🇺🇸 English Version](../../GOVERNANCE.md)&nbsp;
 
 Este documento explica cómo se toman las decisiones y cómo las personas colaboradoras se
 convierten en mantenedoras.

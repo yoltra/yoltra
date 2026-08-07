@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Change notifications are now built only when somebody is listening. Describing a change carries the old and new value at a path, and reading those walks the state tree twice per path — work a slice with no subscribers used to do for every path it changed. The bus gained emitWith, which performs the same matching and constructs the payload once, only after a handler has matched. Registering or unregistering a slice now produces a new root state reference instead of writing into the existing object, so consumers that bail out on reference equality — useSelector comparing with Object.is, a memo, a devtools snapshot differ — can see that the shape of the state changed; structural sharing is preserved, so untouched slices keep their identity. A middleware that returns a Promise is reported in development: a Promise is truthy, so the event is allowed without waiting and a veto inside it can never fire, and the symptom — a rule that simply does not apply — looks nothing like the cause. The middleware documentation no longer demonstrates the async form it cannot support.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

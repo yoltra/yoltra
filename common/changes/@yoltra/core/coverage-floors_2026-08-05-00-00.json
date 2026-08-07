@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Remove the unreachable pattern-matcher branches from the store's event-key normalization: both call sites intercept any/channel/channels targeting before normalizing, so only keys could ever arrive. Behaviour is unchanged; the dead branches were the reason the path could not be covered honestly. Coverage floors for branches and functions now hold 95 percent alongside lines and statements, raised after the uncovered paths gained real tests — the storage adapters, the bounded encoder's rescale and give-up paths, the batch entity variants and the sorted-ids identity contract, persistence write failures and scoped slices, the bus's throwing-handler containment, and dev-mode freezing's accessor edges.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

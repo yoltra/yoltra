@@ -81,6 +81,18 @@ export interface FoundationTokens {
   };
   elevation: Record<"none" | "xs" | "sm" | "md" | "lg" | "xl", { boxShadow: string }>;
   border: { width: { none: 0; thin: number; medium: number; thick: number } };
+  /**
+   * Stacking order for portalled surfaces.
+   *
+   * @remarks
+   * Overlays render into `document.body`, so they escape whatever stacking context they were
+   * written inside and land in the document's. Their order then depends on nothing but these
+   * numbers — which is why they are tokens rather than literals scattered across stylesheets.
+   *
+   * The order encodes containment: a popover opened inside a dialog must sit above it, and a
+   * tooltip describing that popover above them both.
+   */
+  zIndex: { base: number; sticky: number; overlay: number; popover: number; tooltip: number };
   motion: {
     duration: { fast: string; normal: string; slow: string };
     easing: { standard: string; emphasized: string; decelerated: string };
@@ -137,6 +149,8 @@ export const foundationTokens: FoundationTokens = {
   },
 
   border: { width: { none: 0, thin: 1, medium: 2, thick: 3 } },
+
+  zIndex: { base: 0, sticky: 100, overlay: 1000, popover: 1100, tooltip: 1200 },
 
   motion: {
     duration: { fast: "120ms", normal: "180ms", slow: "260ms" },

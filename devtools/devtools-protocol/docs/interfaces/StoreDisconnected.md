@@ -6,7 +6,7 @@
 
 # Interface: StoreDisconnected
 
-Defined in: [messages.ts:40](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L40)
+Defined in: [messages.ts:41](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L41)
 
 Broadcast when a store disconnects from the hub.
 
@@ -26,7 +26,7 @@ a human-readable explanation when available.
 
 > `optional` **reason**: `string`
 
-Defined in: [messages.ts:43](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L43)
+Defined in: [messages.ts:44](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L44)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [messages.ts:43](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d
 
 > **sourceId**: `string`
 
-Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L23)
+Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L23)
 
 UUID of the sender (store wrapper ID or extension ID).
 
@@ -48,7 +48,7 @@ UUID of the sender (store wrapper ID or extension ID).
 
 > **sourceRole**: [`DevtoolsRole`](../enumerations/DevtoolsRole.md)
 
-Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L25)
+Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L25)
 
 Role of the sender.
 
@@ -62,7 +62,7 @@ Role of the sender.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:42](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L42)
+Defined in: [messages.ts:43](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L43)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [messages.ts:42](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d
 
 > **timestamp**: `string`
 
-Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L21)
+Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L21)
 
 ISO 8601 timestamp of when the message was created.
 
@@ -84,7 +84,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"STORE_DISCONNECTED"`
 
-Defined in: [messages.ts:41](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L41)
+Defined in: [messages.ts:42](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L42)
 
 Discriminant field identifying the message type.
 

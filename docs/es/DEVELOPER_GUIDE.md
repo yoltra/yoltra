@@ -1,4 +1,4 @@
-![Yoltra logo](../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Guía del Desarrollador
 
@@ -51,21 +51,36 @@ compartido `common/temp/` y los enlaza mediante pnpm workspaces.
 yoltra/
 ├── packages/
 │   ├── core/                 @yoltra/core      — librería de contenedor de estado
-│   └── react/                @yoltra/react     — bindings para React
+│   ├── react/                @yoltra/react     — bindings para React
+│   └── ds/                   @yoltra/ds        — sistema de diseño para el sitio/docs/ejemplos
+│
+├── devtools/
+│   ├── devtools-protocol/    @yoltra/devtools-protocol      — tipos de mensajes + utilidades de parches
+│   ├── devtools-server/      @yoltra/devtools-server        — el hub (relay WebSocket)
+│   ├── devtools-browser-agent/ @yoltra/devtools-browser-agent — agente del lado del store (navegador)
+│   ├── devtools-node-agent/  @yoltra/devtools-node-agent    — agente del lado del store (Node)
+│   ├── devtools-ui/          @yoltra/devtools-ui            — hooks headless + hub de loopback
+│   ├── devtools-storeview/   @yoltra/devtools-storeview     — panel embebible (React)
+│   ├── devtools-ext/         @yoltra/devtools-ext           — shell de extensión MV3
+│   └── devtools-cli/         @yoltra/devtools-cli           — UI de terminal con Ink
 │
 ├── tools/
 │   ├── eslint-config-base/   @yoltra/eslint-config-base  — ESLint compartido (Node + browser TS)
 │   ├── eslint-config-react/  @yoltra/eslint-config-react — ESLint compartido (React + TS)
+│   ├── repo-tools/           @eraelco/repo-tools         — binarios de lint/commitlint a nivel repo
 │   └── registry/             Registro local Verdaccio (Docker)
 │
 ├── examples/
 │   └── v0/
-│       ├── yoltra-in-react/        App de comparación Yoltra vs Redux Toolkit
-│       ├── yoltra-in-nextjs/       Ejemplo de integración con Next.js
-│       └── yoltra-kinetic-logo/    Animación SVG — demo de suscripciones granulares
+│       ├── yoltra-mission-control/    Insignia — store + panel de DevTools embebido, sin instalar
+│       ├── yoltra-react-counter/      Ejemplo mínimo de extremo a extremo
+│       ├── yoltra-in-react/           App de comparación Yoltra vs Redux Toolkit
+│       ├── yoltra-in-nextjs/          Ejemplo de integración con Next.js
+│       └── yoltra-kinetic-logo/       Animación SVG — demo de suscripciones granulares
 │
 ├── common/
 │   ├── config/rush/          Archivos de configuración de Rush (versionados — nunca editar el lockfile manualmente)
+│   ├── changes/              Archivos de cambios de Rush (generados por `rush change`)
 │   └── scripts/              Helpers compartidos (copy-license.cjs, etc.)
 │
 └── docs/

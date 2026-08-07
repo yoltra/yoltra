@@ -1,0 +1,81 @@
+@use "../styles/mixins" as *;
+
+.yl-heading {
+  font-family: var(--yl-font-sans);
+  color: var(--yl-color-fg);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0;
+  text-wrap: balance;
+
+  // Level defaults, overridable by the size modifiers below when the outline and the
+  // appearance need to disagree.
+  &--h1 { font-size: 3.2rem; letter-spacing: -0.02em; }
+  &--h2 { font-size: 2.4rem; letter-spacing: -0.01em; }
+  &--h3 { font-size: 2rem; }
+  &--h4 { font-size: 1.7rem; }
+  &--h5 { font-size: 1.5rem; }
+  &--h6 { font-size: 1.4rem; }
+
+  &--lg { font-size: 2rem; }
+  &--md { font-size: 1.7rem; }
+  &--sm { font-size: 1.5rem; }
+  &--xs { font-size: 1.3rem; }
+}
+
+.yl-text {
+  font-family: var(--yl-font-sans);
+  color: var(--yl-color-fg);
+  line-height: 1.6;
+  margin: 0;
+
+  &--xs { font-size: 1.2rem; }
+  &--sm { font-size: 1.3rem; }
+  &--md { font-size: 1.5rem; }
+  &--lg { font-size: 1.7rem; }
+
+  &--secondary { color: var(--yl-color-fg-secondary); }
+  &--muted { color: var(--yl-color-fg-muted); }
+  &--brand { color: var(--yl-color-brand); }
+  &--danger { color: var(--yl-color-error-fg); }
+
+  &--medium { font-weight: 600; }
+  &--bold { font-weight: 700; }
+}
+
+.yl-link {
+  color: var(--yl-color-brand);
+  text-decoration: underline;
+  // Keeps descenders legible where a flat underline would cut through them.
+  text-underline-offset: 0.2em;
+  border-radius: var(--yl-radius-xs);
+
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  @include focus-ring(2px);
+}
+
+.yl-inline-code {
+  font-family: var(--yl-font-mono);
+  font-size: 0.9em;
+  padding: 0.2rem var(--yl-space-1);
+  border-radius: var(--yl-radius-xs);
+  border: 1px solid var(--yl-color-border);
+  background: var(--yl-color-bg-subtle);
+  color: var(--yl-color-fg-secondary);
+}
+
+.yl-kbd {
+  font-family: var(--yl-font-mono);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0.4rem var(--yl-space-2);
+  border-radius: var(--yl-radius-sm);
+  border: 1px solid var(--yl-color-border-strong);
+  border-bottom-width: 2px;
+  background: var(--yl-color-bg-subtle);
+  color: var(--yl-color-fg-secondary);
+  white-space: nowrap;
+}

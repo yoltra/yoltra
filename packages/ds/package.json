@@ -1,13 +1,16 @@
 {
   "name": "@yoltra/ds",
   "version": "0.1.1",
-  "description": "Yoltra Design System — tokens and primitive React components shared across the website, docs, and examples",
+  "description": "Yoltra Design System \u2014 tokens and primitive React components shared across the website, docs, and examples",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && vite build",
+    "build": "tsc -p tsconfig.build.json && vite build && node scripts/build-styles.mjs",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepublishOnly": "node ../../common/scripts/copy-license.cjs"
+    "docs": "typedoc --options ./typedoc.ds.json",
+    "test": "node ../../tools/repo-tools/bin/repo-vitest.cjs --coverage --watch=false",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
+    "prepublishOnly": "node ../../common/scripts/copy-license.cjs",
+    "size": "node ../../tools/repo-tools/bin/size-check.cjs"
   },
   "license": "MIT",
   "author": {
@@ -64,7 +67,14 @@
     "vite": "^7.1.11",
     "vite-plugin-banner": "0.8.1",
     "vite-plugin-dts": "^4.5.4",
-    "vite-tsconfig-paths": "^4.3.2"
+    "vite-tsconfig-paths": "^4.3.2",
+    "sass-embedded": "^1.93.2",
+    "typedoc": "^0.28.13",
+    "typedoc-plugin-markdown": "4.9.0",
+    "@testing-library/react": "16.3.0",
+    "@vitest/coverage-v8": "3.2.4",
+    "jsdom": "^24.0.0",
+    "vitest": "3.2.4"
   },
   "exports": {
     ".": {
@@ -79,6 +89,49 @@
       "require": "./dist/client.cjs",
       "default": "./dist/client.mjs"
     },
-    "./package.json": "./package.json"
-  }
+    "./package.json": "./package.json",
+    "./styles/*": "./dist/styles/*"
+  },
+  "sizeLimit": [
+    {
+      "name": "a typical import",
+      "import": "{ Button, Card, Stack, Text }",
+      "limitKb": 4,
+      "external": [
+        "react",
+        "react-dom",
+        "tslib"
+      ]
+    },
+    {
+      "name": "barrel",
+      "limitKb": 8,
+      "external": [
+        "react",
+        "react-dom",
+        "tslib"
+      ]
+    },
+    {
+      "name": "a dialog",
+      "entry": "dist/client.mjs",
+      "import": "{ Dialog }",
+      "limitKb": 3,
+      "external": [
+        "react",
+        "react-dom",
+        "tslib"
+      ]
+    },
+    {
+      "name": "client barrel",
+      "entry": "dist/client.mjs",
+      "limitKb": 5.5,
+      "external": [
+        "react",
+        "react-dom",
+        "tslib"
+      ]
+    }
+  ]
 }

@@ -1,0 +1,25 @@
+.yl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.4rem;
+  margin: var(--yl-space-4) 0;
+
+  th,
+  td {
+    text-align: left;
+    padding: var(--yl-space-3);
+    border-bottom: 1px solid var(--yl-color-border);
+    vertical-align: top;
+  }
+
+  th {
+    font-weight: 600;
+    color: var(--yl-color-fg-secondary);
+    font-size: 1.3rem;
+  }
+
+  code {
+    font-family: var(--yl-font-mono);
+    font-size: 1.3rem;
+  }
+}

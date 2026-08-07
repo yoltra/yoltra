@@ -16,12 +16,13 @@ export const themeReducer: ReducerSpec<ThemeState, AppEM> = {
   ])},
   state: initial,
   reducer: (state, event) => {
-    const { channel, type, payload } = event as any;
-    if (channel !== "theme") return state;
+    if (event.channel !== "theme") return state;
 
-    switch (type) {
+    // The event map declares one payload per `(channel, type)`, so each case below narrows to
+    // its own payload — no casting required.
+    switch (event.type) {
       case "set": {
-        const theme = payload.theme;
+        const theme = event.payload.theme;
         const systemPref =
           window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         const resolved = theme === "system" ? systemPref : theme;
@@ -34,7 +35,7 @@ export const themeReducer: ReducerSpec<ThemeState, AppEM> = {
       }
 
       case "resolve": {
-        const resolved = (state.theme === "system" ? payload.systemPref : state.theme) as "light" | "dark";
+        const resolved = state.theme === "system" ? event.payload.systemPref : state.theme;
 
         return {
           ...state,

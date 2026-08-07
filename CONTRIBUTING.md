@@ -1,4 +1,4 @@
-![Yoltra logo](./assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Contributing to Yoltra
 
@@ -7,9 +7,9 @@
 
 Thanks for your interest in contributing! 🎉 This project is open-source under **MIT** with a welcoming, lightweight governance model.
 
-- **Code License:** MIT  
-- **Docs License:** CC BY 4.0 (unless noted)  
-- **Code of Conduct:** Contributor Covenant v2.1  
+- **Code License:** MIT
+- **Docs License:** CC BY 4.0 (unless noted)
+- **Code of Conduct:** Contributor Covenant v2.1
 - **DCO:** Developer Certificate of Origin 1.1 (sign-off required on every commit)
 
 > For the full engineering workflow and release process, see the **Developer Guide**: [./docs/DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md). This file is a quick-start for contributors and PR authors.
@@ -50,7 +50,7 @@ Each publishable package has its own `package.json`. The root is private and **n
 1. **Branch** from `main`: `feature/<issue>-<slug>` or `fix/<issue>-<slug>`.
 2. **Code** with tests and docs.
 3. **Local gates** must pass: `rush build`, `rush test`, `rush lint`.
-4. **Change file** (if a publishable package changed):  
+4. **Change file** (if a publishable package changed):
    ```bash
    rush change
    ```

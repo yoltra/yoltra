@@ -1,8 +1,8 @@
-![Yoltra logo](../../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Yoltra: Kinetic logo animation
 
-![Yoltra dots](../../../assets/yoltra-dots.gif);
+![Yoltra dots](https://yoltra.dev/assets/yoltra-dots.gif)
 
 > [🇲🇽 Versión en Español](./README.es.md) &nbsp; | 👉 🇺🇸 English Version&nbsp;
 
@@ -74,7 +74,7 @@ for (const c of changes) {
 return nextDots ? { ...state, dots: nextDots } : state;
 ```
 
-Same frame: 1 × 1 000 (dots spread) + 1 × handful (state spread) = **~1 000 property copies**.
+Same frame: 1 × 3 000 (dots spread) + 1 × handful (state spread) = **~3 000 property copies**.
 
 ---
 

@@ -1,4 +1,4 @@
-![Yoltra logo](../../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Yoltra vs Redux Toolkit — React Profiler Comparison
 
@@ -79,8 +79,8 @@ For more stable timing, profile a **production** build:
 
 ```bash
 cd examples/v0/yoltra-in-react
-rushx build           # Vite production build
-rushx preview         # Serves the production build
+rushx build:app       # Vite production build (the plain `build` script is a no-op so
+rushx preview         # `rush build` skips examples; `build:app` is the real one)
 # default: http://localhost:4173
 ```
 

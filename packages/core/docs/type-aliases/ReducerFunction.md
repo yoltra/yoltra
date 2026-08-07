@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/core**](../README.md)
 
 ***
@@ -8,7 +10,7 @@
 
 > **ReducerFunction**\<`S`, `EM`\> = (`state`, `event`) => `S`
 
-Defined in: [types.ts:666](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L666)
+Defined in: [types.ts:763](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L763)
 
 Pure reducer function (stateful event consumer).
 

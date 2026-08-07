@@ -1,4 +1,6 @@
-![Yoltra logo](../../../assets/yoltra-logo.png)
+**@yoltra/devtools-protocol**
+
+***
 
 # @yoltra/devtools-protocol
 
@@ -6,9 +8,15 @@
 
 - [DevtoolsRole](enumerations/DevtoolsRole.md)
 
+## Classes
+
+- [ReconnectingWsClient](classes/ReconnectingWsClient.md)
+
 ## Interfaces
 
 - [BaseMessage](interfaces/BaseMessage.md)
+- [DevtoolsSocketCallbacks](interfaces/DevtoolsSocketCallbacks.md)
+- [DevtoolsSocketHandle](interfaces/DevtoolsSocketHandle.md)
 - [EmitToStore](interfaces/EmitToStore.md)
 - [EventReplay](interfaces/EventReplay.md)
 - [ExtensionCapabilities](interfaces/ExtensionCapabilities.md)
@@ -16,6 +24,7 @@
 - [HandshakeResponse](interfaces/HandshakeResponse.md)
 - [HubCapabilities](interfaces/HubCapabilities.md)
 - [JsonPatch](interfaces/JsonPatch.md)
+- [ReconnectingWsConfig](interfaces/ReconnectingWsConfig.md)
 - [RequestMetrics](interfaces/RequestMetrics.md)
 - [RequestState](interfaces/RequestState.md)
 - [RequestSubscriptions](interfaces/RequestSubscriptions.md)
@@ -32,14 +41,19 @@
 
 ## Type Aliases
 
+- [ConnectionState](type-aliases/ConnectionState.md)
 - [DevtoolsMessage](type-aliases/DevtoolsMessage.md)
+- [DevtoolsSocketFactory](type-aliases/DevtoolsSocketFactory.md)
 - [JsonPatchOp](type-aliases/JsonPatchOp.md)
 
 ## Variables
 
-- [PROTOCOL_VERSION](variables/PROTOCOL_VERSION.md)
+- [PROTOCOL\_VERSION](variables/PROTOCOL_VERSION.md)
+- [WS\_CONNECTING](variables/WS_CONNECTING.md)
+- [WS\_OPEN](variables/WS_OPEN.md)
 
 ## Functions
 
 - [computePatches](functions/computePatches.md)
 - [getAtPath](functions/getAtPath.md)
+- [patchesFromChange](functions/patchesFromChange.md)

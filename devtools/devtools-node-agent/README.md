@@ -57,8 +57,11 @@ await store.emit("counter", "increment", null);
 
 ## How It Works
 
-1. **Registers a `when: { any: true }` effect** on the store to intercept every event
-2. **Computes JSON Patch diffs** between previous and next state using `computePatches`
+1. **Attaches to the typed instrumentation seam** — `store.instrument(observer)`. The store
+   reports each event with its exact **changed leaf paths**, previous/next values, commit
+   status, and reduce timing. No interceptor effect, no re-diffing, no full-state clone —
+   when no observer is attached the seam costs nothing.
+2. **Maps the reported paths to RFC-6902 patches** with `patchesFromChange` (no state diffing)
 3. **Sends `STORE_EVENT` messages** with patches to the hub
 4. **Handles incoming commands** from extensions:
    - `REQUEST_STATE` → responds with full `STATE_SNAPSHOT`

@@ -4,6 +4,11 @@
   "entryPoints": ["src/index.ts"],
   "plugin": ["typedoc-plugin-markdown"],
   "tsconfig": "./tsconfig.json",
+  // Pinned rather than derived. TypeDoc builds "Defined in" links from the local git remote, so
+  // generating from a clone that does not point at GitHub silently emits plain text instead of
+  // links — a whole-file diff that looks like churn and is easy to commit by accident. Targeting
+  // `main` also stops the links rotting to whichever commit last regenerated them.
+  "sourceLinkTemplate": "https://github.com/yoltra/yoltra/blob/main/{path}#L{line}",
   "entryPointStrategy": "resolve",
   "readme": "none",
   "logLevel": "Verbose",

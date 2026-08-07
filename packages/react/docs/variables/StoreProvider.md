@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -8,7 +10,7 @@
 
 > `const` **StoreProvider**: `React.FC`\<\{ `children`: `ReactNode`; `store`: `StoreInstance`\<`any`, `any`, `any`\>; \}\>
 
-Defined in: [react/src/context/StoreProvider.tsx:56](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/react/src/context/StoreProvider.tsx#L56)
+Defined in: [react/src/context/StoreProvider.tsx:56](https://github.com/yoltra/yoltra/blob/main/packages/react/src/context/StoreProvider.tsx#L56)
 
 React provider that places a StoreInstance into [StoreContext](StoreContext.md).
 

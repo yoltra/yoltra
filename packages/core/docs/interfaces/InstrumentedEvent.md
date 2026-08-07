@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/core**](../README.md)
 
 ***
@@ -6,7 +8,7 @@
 
 # Interface: InstrumentedEvent\<EM\>
 
-Defined in: [types.ts:166](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L166)
+Defined in: [types.ts:235](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L235)
 
 A single observed event delivered to an [InstrumentationObserver](../type-aliases/InstrumentationObserver.md).
 
@@ -24,7 +26,7 @@ Event map.
 
 > **changedPaths**: `string`[]
 
-Defined in: [types.ts:176](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L176)
+Defined in: [types.ts:248](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L248)
 
 Dotted **leaf** paths that changed, prefixed with the slice name (e.g.
 `"todos.items.0.title"`). Empty when nothing changed. These are the exact
@@ -36,7 +38,7 @@ paths the store computed while reducing — no re-diff required.
 
 > **committed**: `boolean`
 
-Defined in: [types.ts:170](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L170)
+Defined in: [types.ts:242](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L242)
 
 `true` if the event passed middleware and ran reducers; `false` if vetoed.
 
@@ -46,9 +48,10 @@ Defined in: [types.ts:170](https://github.com/yoltra/yoltra/blob/deb942c60b290a5
 
 > **event**: `object`
 
-Defined in: [types.ts:168](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L168)
+Defined in: [types.ts:240](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L240)
 
-The processed event, including its generated `id`.
+The processed event, including its `id` and any [EventMeta](../type-aliases/EventMeta.md) the emitter attached.
+`meta` is absent unless it was supplied.
 
 #### channel
 
@@ -57,6 +60,10 @@ The processed event, including its generated `id`.
 #### id
 
 > **id**: `string`
+
+#### meta?
+
+> `optional` **meta**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
 
 #### payload
 
@@ -72,7 +79,7 @@ The processed event, including its generated `id`.
 
 > **nextValues**: `Record`\<`string`, `unknown`\>
 
-Defined in: [types.ts:180](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L180)
+Defined in: [types.ts:252](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L252)
 
 New value at each changed path, keyed by path.
 
@@ -82,7 +89,7 @@ New value at each changed path, keyed by path.
 
 > **prevValues**: `Record`\<`string`, `unknown`\>
 
-Defined in: [types.ts:178](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L178)
+Defined in: [types.ts:250](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L250)
 
 Old value at each changed path, keyed by path.
 
@@ -92,6 +99,6 @@ Old value at each changed path, keyed by path.
 
 > **reduceTimeMs**: `number`
 
-Defined in: [types.ts:182](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L182)
+Defined in: [types.ts:254](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L254)
 
 Wall-clock milliseconds spent in the synchronous reduce phase for this event.

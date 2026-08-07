@@ -6,7 +6,7 @@
 
 # Interface: StoreCapabilities
 
-Defined in: [capabilities.ts:34](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L34)
+Defined in: [capabilities.ts:34](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L34)
 
 Capabilities advertised by a store during handshake.
 
@@ -22,7 +22,7 @@ given store (e.g., disabling the time-travel UI when `replay` is `false`).
 
 > **emit**: `boolean`
 
-Defined in: [capabilities.ts:50](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L50)
+Defined in: [capabilities.ts:50](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L50)
 
 Whether extensions can emit events to this store.
 
@@ -32,7 +32,7 @@ Whether extensions can emit events to this store.
 
 > **pipelineMeta**: `boolean`
 
-Defined in: [capabilities.ts:48](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L48)
+Defined in: [capabilities.ts:48](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L48)
 
 Extension offers metadata.
 
@@ -48,7 +48,7 @@ Extension offers metadata.
 
 > **replay**: `boolean`
 
-Defined in: [capabilities.ts:36](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L36)
+Defined in: [capabilities.ts:36](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L36)
 
 Whether the store supports `__replayEvents`.
 
@@ -58,9 +58,9 @@ Whether the store supports `__replayEvents`.
 
 > `optional` **sampling**: [`SamplingConfig`](SamplingConfig.md)
 
-Defined in: [capabilities.ts:52](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L52)
+Defined in: [capabilities.ts:52](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L52)
 
-Sampling configuration (protocol v1 design, implementation deferred).
+Sampling configuration; applied by the agents before an event is reported.
 
 ***
 
@@ -68,7 +68,7 @@ Sampling configuration (protocol v1 design, implementation deferred).
 
 > **stateSnapshot**: `boolean`
 
-Defined in: [capabilities.ts:38](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L38)
+Defined in: [capabilities.ts:38](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L38)
 
 Whether the store can provide full state snapshots on demand.
 
@@ -78,6 +78,6 @@ Whether the store can provide full state snapshots on demand.
 
 > **subscriptionMeta**: `boolean`
 
-Defined in: [capabilities.ts:40](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/capabilities.ts#L40)
+Defined in: [capabilities.ts:40](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/capabilities.ts#L40)
 
 Extension shares Subscription metadata

@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 **@yoltra/react**
 
 ***
@@ -18,6 +20,8 @@
 - [UseAtomicProp](type-aliases/UseAtomicProp.md)
 - [UseAtomicProps](type-aliases/UseAtomicProps.md)
 - [UseEvent](type-aliases/UseEvent.md)
+- [UseSuspenseAtomicProp](type-aliases/UseSuspenseAtomicProp.md)
+- [UseSuspenseAtomicProps](type-aliases/UseSuspenseAtomicProps.md)
 
 ## Variables
 
@@ -33,11 +37,10 @@
 - [invalidateAtomicProp](functions/invalidateAtomicProp.md)
 - [invalidateAtomicPropsByReducer](functions/invalidateAtomicPropsByReducer.md)
 - [shallowEqual](functions/shallowEqual.md)
-- [useAtomicProp](functions/useAtomicProp.md)
-- [useAtomicProps](functions/useAtomicProps.md)
 - [useEmit](functions/useEmit.md)
+- [useEntity](functions/useEntity.md)
+- [useEntityField](functions/useEntityField.md)
+- [useEntityIds](functions/useEntityIds.md)
 - [useEvent](functions/useEvent.md)
 - [useSelector](functions/useSelector.md)
 - [useStore](functions/useStore.md)
-- [useSuspenseAtomicProp](functions/useSuspenseAtomicProp.md)
-- [useSuspenseAtomicProps](functions/useSuspenseAtomicProps.md)

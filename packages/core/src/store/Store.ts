@@ -16,6 +16,7 @@ import type {
   EffectFunction,
   EffectSpec,
   EventConsumerMeta,
+  EventMeta,
   MiddlewareFunction,
   MiddlewareInput,
   MiddlewareSpec,
@@ -36,6 +37,7 @@ import type {
   When,
 } from "../types";
 import { freezeState } from "../utils/immutability";
+import type { AliasWatch } from "../utils/immutability";
 
 /**
  * Deep-freezes a value **in development only**, returning it untouched in
@@ -50,10 +52,34 @@ import { freezeState } from "../utils/immutability";
  *
  * @internal
  */
-function freezeInDev<T>(value: T): DeepReadonly<T> {
+/**
+ * Copies a slice's initial state so the store owns it, naming the slice if it cannot.
+ *
+ * @remarks
+ * `structuredClone` refuses functions and drops class prototypes, and its `DataCloneError`
+ * says only that something was uncloneable — not which slice, and not which key. For a store
+ * built from several slices at once that leaves the developer bisecting their own
+ * configuration. The message here names the slice and points at the usual cause.
+ *
+ * @internal
+ */
+function cloneInitialState<T>(sliceName: unknown, state: T): T {
+  try {
+    return structuredClone(state);
+  } catch (err) {
+    throw new Error(
+      `[yoltra] Initial state for slice "${String(sliceName)}" could not be copied: ` +
+        `${err instanceof Error ? err.message : String(err)}. State must be structured-cloneable ` +
+        `— functions, class instances and DOM nodes are not. Keep behaviour out of state and ` +
+        `store plain data.`,
+    );
+  }
+}
+
+function freezeInDev<T>(value: T, alias?: AliasWatch): DeepReadonly<T> {
   return process.env.NODE_ENV === "production"
     ? (value as unknown as DeepReadonly<T>)
-    : freezeState(value);
+    : freezeState(value, new WeakSet<object>(), alias);
 }
 
 /**
@@ -129,7 +155,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
   /**
    * Registered effect handlers keyed by `"channel::type"` for O(1) lookup.
-   * Used for effects with explicit `keys` or legacy `events` targeting.
+   * Used for effects with explicit `keys` targeting.
    *
    * @internal
    */
@@ -205,11 +231,39 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private readonly replayEnabled: boolean;
 
   /**
+   * Produces the `id` for each emitted event. Defaults to `crypto.randomUUID()`; overridable
+   * via {@link StoreSpec.idFactory} for runtimes lacking it or for deterministic tests.
+   *
+   * @internal
+   */
+  private readonly idFactory: () => string;
+
+  /**
    * Optional hook invoked when an effect throws/rejects. See
    * {@link StoreSpec.onEffectError}. `await emit()` never rejects on effect
    * failure — this is how callers observe effect errors.
    */
   private readonly onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
+
+  /**
+   * Optional hook invoked when a reducer throws. See {@link StoreSpec.onReducerError}. The
+   * failing slice is isolated rather than the event being rolled back, so this is the only
+   * signal that a reducer misbehaved.
+   */
+  private readonly onReducerError?: (
+    error: unknown,
+    event: EventUnion<EM>,
+    slice: string,
+  ) => void;
+
+  /**
+   * `slice:channel:type` combinations already warned about for payload aliasing.
+   *
+   * @remarks
+   * Development-only diagnostics have to stay quiet enough to be read. One warning names the
+   * pattern; repeating it once per event would bury it.
+   */
+  private readonly warnedPayloadAliases = new Set<string>();
 
   /**
    * Pending events awaiting the **synchronous** reduce phase (middleware +
@@ -222,6 +276,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     type: string;
     payload: any;
     id: string;
+    meta?: EventMeta;
     resolve: () => void;
   }> = [];
 
@@ -326,7 +381,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.reducers = {} as Record<R, Reducer<S[R], EM>>;
     this.state = {} as any;
     this.replayEnabled = spec.devtools?.allowReplay ?? false;
+    this.idFactory = spec.idFactory ?? (() => crypto.randomUUID());
     this.onEffectError = spec.onEffectError;
+    this.onReducerError = spec.onReducerError;
 
     // Deduplication is OPT-IN. Content-based dedup is OFF by default because it
     // can silently drop legitimate rapid-fire identical events; enable it with
@@ -729,6 +786,45 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
+  /**
+   * Reduces one slice and contains any error it raises.
+   *
+   * @returns `true` when the slice changed.
+   *
+   * @remarks
+   * The single funnel both dispatch paths go through, which is the point. Keyed reducers run
+   * through `reducerBus`, whose handler loop caught and logged; pattern reducers were called
+   * straight from the drain, so their errors escaped to the caller instead. The same bug in the
+   * same reducer therefore produced two different outcomes depending on how the slice happened
+   * to be targeted — a keyed reducer's throw let the event commit and its effects run, while a
+   * pattern reducer's throw aborted the commit and notified nobody, not even the uncommitted
+   * subscribers a veto would have reached.
+   *
+   * The semantics are now the same either way: **the failing slice is isolated.** Its state is
+   * unchanged, every other slice still reduces, and the event still commits if anything else
+   * changed. Rolling the whole event back would be tidier in principle, but fine-grained
+   * subscribers are notified inside `forwardEvent` as each slice commits, so an event that
+   * reverted afterwards would have already told components about a value that no longer exists.
+   * Isolation keeps every notification truthful.
+   *
+   * @internal
+   */
+  private forwardEventGuarded<C extends keyof EM & string, T extends keyof EM[C] & string>(
+    rName: R,
+    event: Event<EM, C, T>,
+  ): boolean {
+    try {
+      return this.forwardEvent(rName, event);
+    } catch (err) {
+      // Reported through a hook as well as the console: a reducer throwing is a bug in
+      // application code, and until now the only trace of it was a console line in one case and
+      // an exception surfacing somewhere unrelated in the other.
+      console.error(`Reducer error in slice "${rName as string}":`, err);
+      this.onReducerError?.(err, event as EventUnion<EM>, rName as string);
+      return false;
+    }
+  }
+
   private forwardEvent<C extends keyof EM & string, T extends keyof EM[C] & string>(
     rName: R,
     event: Event<EM, C, T>,
@@ -749,7 +845,32 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // Commit the new slice under a NEW top-level state reference (shallow spread).
     // No deep clone: the reducer already returned a fresh `next` (purity contract),
     // so structural sharing is preserved and freezeInDev only touches new nodes.
-    const frozen = freezeInDev(next) as DeepReadonly<S[R]>;
+    // In development the freeze walk also watches for the event payload appearing in the new
+    // state by reference. That is the aliasing that makes a deep in-place freeze surprising:
+    // the caller still holds the object, mutating it later throws from an unrelated stack, and
+    // the same code works in production because the freeze is compiled out. Warned once per
+    // slice and event so a hot path does not become a log.
+    const payload = (event as { payload?: unknown }).payload;
+    const alias: AliasWatch | undefined =
+      process.env.NODE_ENV !== "production" && payload !== null && typeof payload === "object"
+        ? {
+            watch: payload,
+            onFound: () => {
+              const key = `${rName as string}:${event.channel}:${event.type}`;
+              if (this.warnedPayloadAliases.has(key)) return;
+              this.warnedPayloadAliases.add(key);
+              console.warn(
+                `[yoltra] Slice "${rName as string}" stored the payload of ` +
+                  `"${event.channel}/${event.type}" by reference. It is now frozen along with ` +
+                  `the rest of the state, so the emitter mutating it later will throw in ` +
+                  `development and silently corrupt state in production. Copy the payload in ` +
+                  `the reducer instead.`,
+              );
+            },
+          }
+        : undefined;
+
+    const frozen = freezeInDev(next, alias) as DeepReadonly<S[R]>;
     this.state = { ...this.state, [rName]: frozen } as DeepReadonly<S>;
 
     // Record slice-prefixed changed leaf paths for any active instrumentation
@@ -767,10 +888,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }
 
     for (const prop of toEmit) {
-      const oldValue = this.getAtPath(prev, prop);
-      const newValue = this.getAtPath(frozen, prop);
-
-      this.connectorBus.emit(rName, prop, { oldValue, newValue, path: prop });
+      // Built only if a handler matched. Reading the old and new value walks the state tree
+      // twice per path, and a slice nobody subscribes to used to pay that for every path it
+      // changed — describing the change in detail to an audience of nobody.
+      this.connectorBus.emitWith(rName, prop, () => ({
+        oldValue: this.getAtPath(prev, prop),
+        newValue: this.getAtPath(frozen, prop),
+        path: prop,
+      }));
     }
 
     return true; // slice changed
@@ -896,10 +1021,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // createStore({ devtools: { allowReplay: true } }). Enforced here at the
     // seam so a devtools agent (or a client driving it) cannot bypass it.
     if (!this.replayEnabled) {
-      console.warn(
+      // Throws, like `__replayEvents`. Both replace state wholesale on behalf of a devtools
+      // client; one refusing loudly while the other returned quietly meant a disabled seam
+      // looked like a working one that had simply found nothing to do.
+      throw new Error(
         "[yoltra] External state apply (time-travel) is disabled. Enable it with createStore({ devtools: { allowReplay: true } })",
       );
-      return;
     }
 
     const prev = this.state as any;
@@ -974,7 +1101,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   public __replayEvents(
     snapshot: any,
-    events: Array<{ channel: string; type: string; payload: any; id: string }>,
+    events: Array<{ channel: string; type: string; payload: any; id: string; meta?: EventMeta }>,
   ): void {
     if (!this.replayEnabled) {
       throw new Error(
@@ -992,13 +1119,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // Track state before reducers
       const stateBefore = this.state;
 
-      // Run key-based reducers via reducerBus
-      this.reducerBus.emit(event.channel as any, event.type as any, event.payload);
+      // Run key-based reducers via reducerBus. The event travels alongside the payload so
+      // keyed reducers observe the replayed event's real id, exactly like pattern reducers.
+      this.reducerBus.emit(event.channel as any, event.type as any, event.payload, event as any);
 
-      // Run pattern-based reducers
+      // Run pattern-based reducers. Guarded like the live path: one bad event in a replayed log
+      // should cost that event, not abandon the replay halfway through with the store left at
+      // whatever state it happened to reach.
       for (const [sliceName, when] of this.patternReducers) {
         if (this.matchesWhen(when, event)) {
-          this.forwardEvent(sliceName, event as any);
+          this.forwardEventGuarded(sliceName, event as any);
         }
       }
 
@@ -1072,7 +1202,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // active, so legitimate rapid-fire identical events are never silently dropped.
     const dedupKey = opts?.dedupKey;
     const contentWindow = this.dedupConfig.windowMs;
-    if (contentWindow > 0 || dedupKey !== undefined) {
+    // `skipDedup` wins over both the per-emit key and the store-level window: callers that
+    // already guarantee distinctness must not have events silently coalesced by payload.
+    if (opts?.skipDedup !== true && (contentWindow > 0 || dedupKey !== undefined)) {
       const windowMs =
         dedupKey !== undefined && contentWindow <= 0 ? DEFAULT_DEDUP_KEY_WINDOW_MS : contentWindow;
       const fp =
@@ -1088,7 +1220,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // effects run. Reducers run synchronously (see drainReduce), so state is
     // already updated before emit() returns; the returned promise tracks the
     // async effect phase for `await emit(...)`.
-    const id = crypto.randomUUID();
+    const id = opts?.id ?? this.idFactory();
     let resolve!: () => void;
     const done = new Promise<void>((r) => {
       resolve = r;
@@ -1099,6 +1231,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       type: type as string,
       payload,
       id,
+      meta: opts?.meta,
       resolve,
     });
 
@@ -1123,15 +1256,24 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.isReducing = true;
     try {
       while (this.reduceQueue.length > 0) {
-        const { channel, type, payload, id, resolve } = this.reduceQueue.shift()!;
-        const event = { channel, type, payload, id } as EventUnion<EM>;
+        const { channel, type, payload, id, meta, resolve } = this.reduceQueue.shift()!;
+        // Conditional spread, not `meta` unconditionally: when no metadata was supplied the
+        // event object stays byte-identical to one built before `meta` existed, so
+        // Object.keys / JSON.stringify / toStrictEqual behaviour is unchanged.
+        const event = {
+          channel,
+          type,
+          payload,
+          id,
+          ...(meta !== undefined ? { meta } : {}),
+        } as EventUnion<EM>;
 
         // Instrumentation: capture prev state, collect changed paths, and time
         // the synchronous reduce — all skipped entirely when no observers.
         const instrumenting = this.instrumentObservers.size > 0;
         const prevState = instrumenting ? this.state : undefined;
-        const sink: string[] = [];
-        if (instrumenting) this.changedPathSink = sink;
+        const sink: string[] | undefined = instrumenting ? [] : undefined;
+        if (sink !== undefined) this.changedPathSink = sink;
         const t0 = instrumenting ? now() : 0;
 
         let committed = false;
@@ -1147,7 +1289,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           this.emitInstrumentation(
             event,
             committed,
-            sink,
+            sink ?? [],
             prevState as DeepReadonly<S>,
             now() - t0,
           );
@@ -1183,6 +1325,21 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       let ok: boolean;
       try {
         ok = mw(this.state, event, this.emit);
+        if (
+          process.env.NODE_ENV !== "production" &&
+          typeof (ok as unknown as { then?: unknown })?.then === "function"
+        ) {
+          // A Promise is truthy, so an async middleware silently allows everything: the event
+          // commits while the middleware is still deciding, and the veto it was written to
+          // perform can never fire. Caught here because the symptom — a rule that simply does
+          // not apply — looks nothing like its cause.
+          console.error(
+            `[yoltra] Middleware for "${event.channel}/${event.type}" returned a Promise. ` +
+              `Middleware is synchronous: a Promise is truthy, so this event was allowed ` +
+              `without waiting and a "return false" inside it can never veto. Do the check ` +
+              `synchronously, and put anything that must await in an effect.`,
+          );
+        }
       } catch (err) {
         console.error("Middleware error:", err);
         ok = false;
@@ -1196,10 +1353,17 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     // Reducers — track whether any slice changed via reference equality.
     const stateBefore = this.state;
-    this.reducerBus.emit(event.channel as any, event.type as any, event.payload as any);
+    // Pass the event itself, not just the payload: keyed reducers are wired through
+    // `reducerBus` in `mountSlice` and would otherwise have to invent an id.
+    this.reducerBus.emit(
+      event.channel as any,
+      event.type as any,
+      event.payload as any,
+      event as any,
+    );
     for (const [sliceName, when] of this.patternReducers) {
       if (this.matchesWhen(when, event)) {
-        this.forwardEvent(sliceName, event as any);
+        this.forwardEventGuarded(sliceName, event as any);
       }
     }
     const changed = stateBefore !== this.state;
@@ -1275,6 +1439,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         channel: event.channel as string,
         type: event.type as string,
         payload: event.payload,
+        // Conditional, so an event without metadata produces an observer payload
+        // byte-identical to the pre-`meta` shape.
+        ...(event.meta !== undefined ? { meta: event.meta } : {}),
       },
       committed,
       changedPaths,
@@ -1441,13 +1608,21 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   /**
    * Registers a middleware (runs **before** reducers).
    *
-   * @param mw - Middleware `(state, event, emit) => boolean|Promise<boolean>`.
-   *        Return `false` to cancel event propagation.
+   * @param mw - Middleware `(state, event, emit) => boolean`. Return `false` to cancel event
+   *        propagation.
    * @returns Unsubscribe function that removes this middleware.
+   *
+   * @remarks
+   * **Synchronous, and that is the contract.** The reduce phase completes before `emit()`
+   * returns, so the commit decision has to be available in the same tick. An `async` middleware
+   * returns a Promise, every Promise is truthy, and the veto would therefore never fire — the
+   * event would commit while the middleware was still deciding. The type rejects it; this note
+   * exists because the examples here used to teach it. Do authorization and validation here, and
+   * anything that needs to await in an effect.
    *
    * @example Logging middleware
    * ```ts
-   * const off = store.registerMiddleware(async (state, event) => {
+   * const off = store.registerMiddleware((state, event) => {
    *   console.log('Event:', event.channel, event.type, event.payload);
    *   return true; // allow
    * });
@@ -1464,7 +1639,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public registerMiddleware(mw: MiddlewareFunction<DeepReadonly<S>, EM>): Unsubscribe {
+  public registerMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): Unsubscribe {
     this.middleware.push(mw as any);
     return () => {
       const i = this.middleware.indexOf(mw as any);
@@ -1476,7 +1651,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * Dynamically **adds** a named slice reducer at runtime.
    *
    * @param name - New slice name (must not already exist).
-   * @param spec - Reducer spec (state, events, reducer).
+   * @param spec - Reducer spec (state, when, reducer).
    * @returns Disposer function that **removes** the slice (and its state).
    *
    * @example
@@ -1515,7 +1690,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * Effects are **keyed** by `(channel, type)` for O(1) lookup (no scanning all effects).
    *
-   * @param spec - Effect specification with `events` (EventKeys) and `effect` (handler).
+   * @param spec - Effect specification with `when` targeting and `effect` (handler).
    * @returns Unsubscribe function.
    *
    * @example Logging effect
@@ -1553,7 +1728,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }
 
     // Check if this is a pattern-based effect (any, channel, channels)
-    // or a key-based effect (keys, legacy events, or no targeting = all events)
+    // or a key-based effect (keys, or no targeting = all events)
     const isPatternBased =
       when &&
       (("any" in when && when.any === true) ||
@@ -1575,7 +1750,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     // If no keys (no targeting at all), this effect matches ALL events
     // We treat it as a pattern-based effect with `any: true`
-    if (eventKeys.length === 0 && !when && !spec.events) {
+    if (eventKeys.length === 0 && !when) {
       const entry = { effect, when: { any: true } as When<EM> };
       this.patternEffects.add(entry);
 
@@ -1651,7 +1826,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     };
 
     return this.registerEffect({
-      events: [[channel, type] as EventKey<EM>],
+      when: { keys: [[channel, type] as EventKey<EM>] },
       effect,
     });
   }
@@ -1672,7 +1847,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public replaceMiddleware(next: MiddlewareFunction<DeepReadonly<S>, EM>[]): void {
+  public replaceMiddleware(next: MiddlewareInput<DeepReadonly<S>, EM>[]): void {
+    // Accepts either form. Taking only the bare function meant a hot reload silently discarded
+    // the `when` targeting and `meta` of every spec-form middleware, so after an HMR pass a
+    // middleware scoped to one channel began running on all of them.
     (this.middleware as any).length = 0;
     for (const mw of next) this.middleware.push(mw as any);
   }
@@ -1766,7 +1944,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   public hotReplace(partial: {
     reducer?: Record<R, ReducerSpec<S[R], EM>>;
-    middleware?: MiddlewareFunction<DeepReadonly<S>, EM>[];
+    middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
     effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
     preserveState?: boolean;
   }): void {
@@ -1781,7 +1959,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * and wires `(channel, type)` listeners on the reducer bus.
    *
    * @param name - Slice name.
-   * @param rSpec - Reducer spec (state, events, reducer).
+   * @param rSpec - Reducer spec (state, when, reducer).
    * @param opts - `{ preserveState: boolean }` whether to keep existing state.
    *
    * @internal
@@ -1792,16 +1970,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     opts: { preserveState: boolean },
   ): void {
     const rName = name as unknown as string;
-    const { events, reducer, state, when } = rSpec;
+    const { reducer, state, when } = rSpec;
 
     // Install reducer instance (FIXED: only pass reducer function)
     this.reducers[name] = new Reducer(reducer);
 
     // Initialize state unless preserving an existing value
     if (!opts.preserveState || (this.state as any)[rName] === undefined) {
-      // Clone the user-provided initial state once so the store owns an
-      // independent copy; freeze is dev-only.
-      (this.state as any)[rName] = freezeInDev(structuredClone(state));
+      // A NEW root, not a write into the existing one. Mounting a slice is a state change, and
+      // anything keyed on root identity — `useSelector` bailing out on `Object.is`, a memo, a
+      // devtools snapshot differ — could not see it when the root object stayed the same.
+      // Clone the caller's initial state so the store owns an independent copy; freeze is
+      // dev-only.
+      this.state = {
+        ...(this.state as object),
+        [rName]: freezeInDev(cloneInitialState(rName, state)),
+      } as DeepReadonly<S>;
     }
 
     // Check if this is a pattern-based reducer (any, channel, channels)
@@ -1819,11 +2003,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       return;
     }
 
-    // Normalize event keys from `when: { keys }` or legacy `events`
+    // Normalize event keys from `when: { keys }`
     const eventKeys = this.normalizeEventKeys(rSpec);
 
     // If no targeting at all, treat as "all events" (pattern-based)
-    if (eventKeys.length === 0 && !when && !events) {
+    if (eventKeys.length === 0 && !when) {
       this.patternReducers.set(name, { any: true });
       this.sliceUnsubs.set(rName, []);
       return;
@@ -1832,13 +2016,17 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // Wire reducerBus listeners and save disposers for HMR
     const unsubs: Array<() => void> = [];
     for (const [ch, tp] of eventKeys) {
-      const u = this.reducerBus.on(ch, tp, (payload) => {
-        const event = { channel: ch, type: tp, payload, id: crypto.randomUUID() } as Event<
-          EM,
-          typeof ch,
-          typeof tp
-        >;
-        this.forwardEvent(name, event as any);
+      const u = this.reducerBus.on(ch, tp, (payload, sourceEvent) => {
+        // Prefer the source event so keyed reducers see the same `id` (and `meta`) as
+        // pattern reducers, effects, event subscribers and instrumentation. The fallback
+        // only applies when something emits on `reducerBus` without an event.
+        const event = (sourceEvent ?? {
+          channel: ch,
+          type: tp,
+          payload,
+          id: this.idFactory(),
+        }) as Event<EM, typeof ch, typeof tp>;
+        this.forwardEventGuarded(name, event as any);
       });
 
       unsubs.push(u);
@@ -1879,13 +2067,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     delete this.reducers[name];
 
     // Optionally drop state
-    if (opts.deleteState) delete (this.state as any)[rName];
+    if (opts.deleteState) {
+      const { [rName]: _removed, ...rest } = this.state as Record<string, unknown>;
+      this.state = rest as DeepReadonly<S>;
+    }
   }
 
   /**
-   * Normalizes event targeting from `when` or legacy `events` to an array of EventKeys.
+   * Normalizes event targeting from `when` to an array of EventKeys.
    *
-   * @param spec - Object with optional `when` and/or `events` properties.
+   * @param spec - Object with an optional `when` matcher.
    * @returns Array of `[channel, type]` pairs.
    *
    * @internal
@@ -1894,36 +2085,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     when?: When<EM>;
     events?: ReadonlyArray<EventKey<EM>>;
   }): ReadonlyArray<EventKey<EM>> {
-    // Prefer `when` over legacy `events`
+
     if (spec.when) {
       const when = spec.when;
 
-      if ("any" in when && when.any === true) {
-        // Match all events - return all possible keys from EM
-        // This requires runtime knowledge; we'll handle this specially in callers
-        // For now, return empty and let caller handle "any" case
-        return [];
-      }
-
+      // Only `keys` can reach this point: both callers intercept pattern-based matchers
+      // (`any`, `channel`, `channels`) before normalizing, because those register against the
+      // emit loop rather than against per-key handler maps.
       if ("keys" in when) {
         return when.keys;
       }
-
-      if ("channel" in when) {
-        // Single channel - caller needs to handle dynamically
-        // Return empty; this will be handled by special registration
-        return [];
-      }
-
-      if ("channels" in when) {
-        // Multiple channels - caller needs to handle dynamically
-        return [];
-      }
-    }
-
-    // Fall back to legacy `events` array
-    if (spec.events) {
-      return spec.events;
     }
 
     // No targeting specified
@@ -2031,11 +2202,13 @@ export function createStore<
 >(cfg: {
   name: string;
   reducer?: { [K in keyof S]?: ReducerSpec<S[K], EM> };
-  middleware?: MiddlewareFunction<DeepReadonly<S>, EM>[];
+  middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
   effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
   dedupWindowMs?: number;
+  idFactory?: () => string;
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
+  onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
 }): StoreInstance<keyof S & string, S, EM>;
 
 /**
@@ -2069,11 +2242,20 @@ export function createStore<
 export function createStore<RM extends ReducersMapAny>(cfg: {
   name: string;
   reducer: RM;
-  middleware?: MiddlewareFunction<DeepReadonly<StateFromReducers<RM>>, EMFromReducersStrict<RM>>[];
+  middleware?: MiddlewareInput<
+    DeepReadonly<StateFromReducers<RM>>,
+    EMFromReducersStrict<RM>
+  >[];
   effects?: Array<EffectSpec<DeepReadonly<StateFromReducers<RM>>, EMFromReducersStrict<RM>>>;
   dedupWindowMs?: number;
+  idFactory?: () => string;
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EMFromReducersStrict<RM>>) => void;
+  onReducerError?: (
+    error: unknown,
+    event: EventUnion<EMFromReducersStrict<RM>>,
+    slice: string,
+  ) => void;
 }): StoreInstance<keyof RM & string, StateFromReducers<RM>, EMFromReducersStrict<RM>>;
 
 export function createStore(cfg: any) {
@@ -2088,8 +2270,10 @@ export function createStore(cfg: any) {
     middleware: (cfg.middleware ?? []) as any,
     effects: (cfg.effects ?? []) as any,
     dedupWindowMs: cfg.dedupWindowMs,
+    idFactory: cfg.idFactory,
     devtools: cfg.devtools,
     onEffectError: cfg.onEffectError,
+    onReducerError: cfg.onReducerError,
   });
 }
 

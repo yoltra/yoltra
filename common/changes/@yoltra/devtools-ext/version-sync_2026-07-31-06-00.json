@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-ext",
+      "comment": "Version brought in line with the rest of the suite, in both the package and the manifest. It sat at 0.1.0 while everything it speaks to was at 0.3.0, so anyone comparing them would reasonably conclude the panel was two minors behind the protocol it implements.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-ext"
+}

@@ -6,7 +6,7 @@
 
 # Interface: JsonPatch
 
-Defined in: [json-patch.ts:39](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/json-patch.ts#L39)
+Defined in: [json-patch.ts:39](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/json-patch.ts#L39)
 
 A single JSON Patch operation per RFC 6902.
 
@@ -35,7 +35,7 @@ const patch: JsonPatch = {
 
 > `optional` **from**: `string`
 
-Defined in: [json-patch.ts:47](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/json-patch.ts#L47)
+Defined in: [json-patch.ts:47](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/json-patch.ts#L47)
 
 Source path for `move` and `copy` operations.
 
@@ -45,7 +45,7 @@ Source path for `move` and `copy` operations.
 
 > **op**: [`JsonPatchOp`](../type-aliases/JsonPatchOp.md)
 
-Defined in: [json-patch.ts:41](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/json-patch.ts#L41)
+Defined in: [json-patch.ts:41](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/json-patch.ts#L41)
 
 The operation to perform.
 
@@ -55,7 +55,7 @@ The operation to perform.
 
 > **path**: `string`
 
-Defined in: [json-patch.ts:43](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/json-patch.ts#L43)
+Defined in: [json-patch.ts:43](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/json-patch.ts#L43)
 
 Target path in JSON Pointer format (RFC 6901).
 
@@ -65,6 +65,6 @@ Target path in JSON Pointer format (RFC 6901).
 
 > `optional` **value**: `unknown`
 
-Defined in: [json-patch.ts:45](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/json-patch.ts#L45)
+Defined in: [json-patch.ts:45](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/json-patch.ts#L45)
 
 Value for `add`, `replace`, and `test` operations.

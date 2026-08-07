@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "comment": "State, event payloads and patch values now cross the wire through the protocol codec instead of JSON.stringify. Two failures went with it. A Map in application state reached the panel as {} and time-travel sent that {} back and applied it to the running store, so a debugging tool silently emptied a live collection inside the program it was inspecting. And a BigInt or a cycle threw from inside a message handler nothing awaits, so no snapshot ever arrived and the panel retried every 1.5 seconds forever. Inbound time-travel state is decoded before it reaches the store, closing the round trip.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-browser-agent"
+}

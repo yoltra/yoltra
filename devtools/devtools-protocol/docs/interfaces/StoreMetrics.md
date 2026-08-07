@@ -6,7 +6,7 @@
 
 # Interface: StoreMetrics
 
-Defined in: [messages.ts:107](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L107)
+Defined in: [messages.ts:120](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L120)
 
 Store performance metrics.
 
@@ -27,7 +27,7 @@ to render real-time dashboards.
 
 > **metrics**: `object`
 
-Defined in: [messages.ts:110](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L110)
+Defined in: [messages.ts:123](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L123)
 
 #### avgProcessingTimeMs
 
@@ -79,7 +79,7 @@ Defined in: [messages.ts:110](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19
 
 > **sourceId**: `string`
 
-Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L23)
+Defined in: [wire.ts:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L23)
 
 UUID of the sender (store wrapper ID or extension ID).
 
@@ -93,7 +93,7 @@ UUID of the sender (store wrapper ID or extension ID).
 
 > **sourceRole**: [`DevtoolsRole`](../enumerations/DevtoolsRole.md)
 
-Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L25)
+Defined in: [wire.ts:25](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L25)
 
 Role of the sender.
 
@@ -107,7 +107,7 @@ Role of the sender.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:109](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L109)
+Defined in: [messages.ts:122](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L122)
 
 ***
 
@@ -115,7 +115,7 @@ Defined in: [messages.ts:109](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19
 
 > **timestamp**: `string`
 
-Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/wire.ts#L21)
+Defined in: [wire.ts:21](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/wire.ts#L21)
 
 ISO 8601 timestamp of when the message was created.
 
@@ -129,7 +129,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"STORE_METRICS"`
 
-Defined in: [messages.ts:108](https://github.com/yoltra/yoltra/blob/5ed5f4e4cc19d06832097c4012b16d8a869f58c3/devtools/devtools-protocol/src/messages.ts#L108)
+Defined in: [messages.ts:121](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L121)
 
 Discriminant field identifying the message type.
 

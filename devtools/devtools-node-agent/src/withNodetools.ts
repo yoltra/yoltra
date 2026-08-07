@@ -14,9 +14,20 @@ import {
   type StoreEvent,
   type StoreMetrics,
 } from "@yoltra/devtools-protocol";
+import { encodeState, encodeStateBounded, decodeState } from "@yoltra/core";
 import { MetricsCollector } from "./metrics-collector";
 import type { DevtoolsWrapperConfig } from "./types";
 import { DevtoolsWsClient } from "./ws-client";
+
+/**
+ * Byte budget for a state snapshot, under the hub's 8 MiB frame cap.
+ *
+ * @remarks
+ * Deliberately below it rather than equal to it: the snapshot travels inside an envelope with a
+ * store id, a version and the reducer names, and a frame that overshoots by those few hundred
+ * bytes is refused exactly as one that overshoots by a megabyte.
+ */
+const DEFAULT_MAX_SNAPSHOT_BYTES = 6 * 1024 * 1024;
 
 /**
  * Wraps a Yoltra store with DevTools instrumentation for Node.js environments.
@@ -80,6 +91,20 @@ export function withNodetools<
   }
 
   // Create WS client
+  const maxSnapshotBytes = config.maxSnapshotBytes ?? DEFAULT_MAX_SNAPSHOT_BYTES;
+  // One options object for every encode below: the redaction contract is that NOTHING the
+  // agent forwards — snapshot, travel snapshot, payload, patch — skips the hook.
+  const sanitize = config.sanitize;
+  const encodeOptions = sanitize === undefined ? {} : { sanitize };
+  // Patch values need their own wrapper: the codec's paths are relative to what it encodes,
+  // and a leaf patch encodes a bare scalar whose root path is "" — so the hook would never
+  // see `/vault/token`. Prefixing the op's own path restores the address a key-name recipe
+  // matches on, for the leaf and for anything nested under a subtree replacement alike.
+  const patchEncodeOptions = (opPath: string) =>
+    sanitize === undefined
+      ? {}
+      : { sanitize: (path: string, value: unknown) => sanitize(`${opPath}${path}`, value) };
+
   const wsClient = new DevtoolsWsClient(storeId, store.name, capabilities, {
     autoReconnect: config.autoReconnect ?? true,
     maxReconnectAttempts: config.maxReconnectAttempts ?? Infinity,
@@ -153,110 +178,130 @@ export function withNodetools<
     // into store.emit, so a malformed payload must not reach it).
     if (msg === null || typeof msg !== "object" || typeof msg.type !== "string") return;
 
-    switch (msg.type) {
-      case "REQUEST_STATE": {
-        const state = store.getState();
-        const response: StateSnapshot = {
-          type: "STATE_SNAPSHOT",
-          ...baseMsg(),
-          storeId,
-          state: JSON.parse(JSON.stringify(state)),
-          version: snapshotVersion,
-          reducerNames: Object.keys(state as object),
-        };
-        wsClient.send(JSON.stringify(response));
-        break;
-      }
-
-      case "REQUEST_METRICS": {
-        const introspection = store.__devtoolsIntrospect();
-        const middlewareRejections = Math.max(0, totalAttemptedCount - metrics.getEventCount());
-        const response: StoreMetrics = {
-          type: "STORE_METRICS",
-          ...baseMsg(),
-          storeId,
-          metrics: metrics.buildMetrics({
-            reducerCount: introspection.reducers.length,
-            effectCount: introspection.effects.length,
-            middlewareCount: introspection.middleware.length,
-            subscriberCount: introspection.event.length + introspection.coarse,
-            connectorCount: introspection.atomic.length,
-            dedupHits: introspection.dedupHits,
-            queueDepth: introspection.queueDepth,
-            middlewareRejections,
-          }),
-        };
-        wsClient.send(JSON.stringify(response));
-        break;
-      }
-
-      case "TIME_TRAVEL": {
-        // Time-travel replaces the entire state tree — gate on the store's
-        // replay capability (default off), same as EVENT_REPLAY. The core seam
-        // enforces this too (defense in depth).
-        if (!capabilities.replay) break;
-
-        // Guard against malformed messages — a null state would corrupt the
-        // store and cause "Cannot read property of undefined" in reducers.
-        if (msg.state == null) break;
-
-        store.__applyExternalState(msg.state);
-        snapshotVersion = msg.snapshotVersion ?? snapshotVersion;
-
-        // Notify the hub of the new state so all connected UIs re-render with
-        // the time-traveled state.
-        const traveledState = store.getState();
-        const travelSnapshot: StateSnapshot = {
-          type: "STATE_SNAPSHOT",
-          ...baseMsg(),
-          storeId,
-          state: JSON.parse(JSON.stringify(traveledState)),
-          version: snapshotVersion,
-          reducerNames: Object.keys(traveledState as object),
-        };
-        wsClient.send(JSON.stringify(travelSnapshot));
-        break;
-      }
-
-      case "EVENT_REPLAY": {
-        if (capabilities.replay) {
-          store.__replayEvents(msg.snapshot, msg.events);
+    try {
+      switch (msg.type) {
+        case "REQUEST_STATE": {
+          const state = store.getState();
+          // Bounded before it is sent. A frame over the hub's cap is rejected and the
+          // connection with it, so an oversized snapshot did not fail loudly — it dropped the
+          // socket, the client reconnected, asked again, and the panel waited through the loop
+          // with nothing on screen to explain it.
+          const bounded = encodeStateBounded(state, maxSnapshotBytes, encodeOptions);
+          const response: StateSnapshot = {
+            type: "STATE_SNAPSHOT",
+            ...baseMsg(),
+            storeId,
+            state: bounded.value,
+            version: snapshotVersion,
+            reducerNames: Object.keys(state as object),
+            ...(bounded.truncated
+              ? { truncated: true, ...(bounded.note !== undefined ? { truncationNote: bounded.note } : {}) }
+              : {}),
+          };
+          wsClient.send(JSON.stringify(response));
+          break;
         }
-        break;
-      }
 
-      case "EMIT_TO_STORE": {
-        if (capabilities.emit && msg.event) {
-          await store.emit(msg.event.channel, msg.event.type, msg.event.payload);
+        case "REQUEST_METRICS": {
+          const introspection = store.__devtoolsIntrospect();
+          const middlewareRejections = Math.max(0, totalAttemptedCount - metrics.getEventCount());
+          const response: StoreMetrics = {
+            type: "STORE_METRICS",
+            ...baseMsg(),
+            storeId,
+            metrics: metrics.buildMetrics({
+              reducerCount: introspection.reducers.length,
+              effectCount: introspection.effects.length,
+              middlewareCount: introspection.middleware.length,
+              subscriberCount: introspection.event.length + introspection.coarse,
+              connectorCount: introspection.atomic.length,
+              dedupHits: introspection.dedupHits,
+              queueDepth: introspection.queueDepth,
+              middlewareRejections,
+            }),
+          };
+          wsClient.send(JSON.stringify(response));
+          break;
         }
-        break;
-      }
 
-      case "REQUEST_SUBSCRIPTIONS": {
-        const introspection = store.__devtoolsIntrospect();
-        const response = {
-          type: "STORE_SUBSCRIPTIONS",
-          ...baseMsg(),
-          storeId,
-          atomic: introspection.atomic,
-          event: introspection.event,
-          coarse: introspection.coarse,
-          effects: introspection.effects,
-          middleware: introspection.middleware,
-          reducers: introspection.reducers,
-        };
-        wsClient.send(JSON.stringify(response));
-        break;
-      }
+        case "TIME_TRAVEL": {
+          // Time-travel replaces the entire state tree — gate on the store's
+          // replay capability (default off), same as EVENT_REPLAY. The core seam
+          // enforces this too (defense in depth).
+          if (!capabilities.replay) break;
 
-      default: {
-        // Exhaustiveness fallback (DEV-3): an unhandled command type is protocol
-        // drift — surface it in dev instead of silently dropping it.
-        if (process.env.NODE_ENV !== "production") {
-          console.warn(`[Yoltra DevTools] Ignoring unknown message type: ${String(msg.type)}`);
+          // Guard against malformed messages — a null state would corrupt the
+          // store and cause "Cannot read property of undefined" in reducers.
+          if (msg.state == null) break;
+
+          store.__applyExternalState(decodeState(msg.state) as never);
+          snapshotVersion = msg.snapshotVersion ?? snapshotVersion;
+
+          // Notify the hub of the new state so all connected UIs re-render with
+          // the time-traveled state.
+          const traveledState = store.getState();
+          const travelBounded = encodeStateBounded(traveledState, maxSnapshotBytes, encodeOptions);
+          const travelSnapshot: StateSnapshot = {
+            type: "STATE_SNAPSHOT",
+            ...baseMsg(),
+            storeId,
+            state: travelBounded.value,
+            version: snapshotVersion,
+            reducerNames: Object.keys(traveledState as object),
+          };
+          wsClient.send(JSON.stringify(travelSnapshot));
+          break;
         }
-        break;
+
+        case "EVENT_REPLAY": {
+          if (capabilities.replay) {
+            store.__replayEvents(msg.snapshot, msg.events);
+          }
+          break;
+        }
+
+        case "EMIT_TO_STORE": {
+          if (capabilities.emit && msg.event) {
+            await store.emit(msg.event.channel, msg.event.type, msg.event.payload);
+          }
+          break;
+        }
+
+        case "REQUEST_SUBSCRIPTIONS": {
+          const introspection = store.__devtoolsIntrospect();
+          const response = {
+            type: "STORE_SUBSCRIPTIONS",
+            ...baseMsg(),
+            storeId,
+            atomic: introspection.atomic,
+            event: introspection.event,
+            coarse: introspection.coarse,
+            effects: introspection.effects,
+            middleware: introspection.middleware,
+            reducers: introspection.reducers,
+          };
+          wsClient.send(JSON.stringify(response));
+          break;
+        }
+
+        default: {
+          // Exhaustiveness fallback (DEV-3): an unhandled command type is protocol
+          // drift — surface it in dev instead of silently dropping it.
+          if (process.env.NODE_ENV !== "production") {
+            console.warn(`[Yoltra DevTools] Ignoring unknown message type: ${String(msg.type)}`);
+          }
+          break;
+        }
       }
+    } catch (err) {
+      // A command handler that throws must not become an unhandled rejection: this
+      // callback is async and nothing awaits it, so the failure would surface far from
+      // here — or nowhere at all — and the panel would sit waiting for a reply that
+      // never comes. Report it and keep the connection usable.
+      console.error(
+        `[Yoltra DevTools] Command "${String(msg.type)}" failed:`,
+        err,
+      );
     }
   });
 
@@ -293,10 +338,16 @@ export function withNodetools<
         id: info.event.id,
         channel: info.event.channel,
         type: info.event.type,
-        payload: info.event.payload,
+        // Encoded like state: a payload is arbitrary application data, so it can hold the same
+        // Map, BigInt or cycle that made a bare stringify throw or quietly destroy it.
+        payload: encodeState(info.event.payload, encodeOptions).value,
       },
       patches: info.committed
-        ? patchesFromChange(info.changedPaths, info.prevValues, info.nextValues)
+        ? patchesFromChange(info.changedPaths, info.prevValues, info.nextValues).map((op) =>
+            "value" in op
+              ? { ...op, value: encodeState(op.value, patchEncodeOptions(op.path)).value }
+              : op,
+          )
         : [],
       snapshotVersion,
       committed: info.committed,

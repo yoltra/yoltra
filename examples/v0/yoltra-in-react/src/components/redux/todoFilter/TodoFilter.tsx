@@ -8,9 +8,8 @@ import { useTodoFilterActions } from "../../../state/redux";
 
 import "./TodoFilter.style.scss";
 
-export interface iTodoFilterProps { }
 
-export const TodoFilter = (_: iTodoFilterProps) => {
+export const TodoFilter = () => {
   const { setCategoryFilter, setStatusFilter } = useTodoFilterActions();
 
   const filter = useSelector((s: AppState) => s.todo.filter);
