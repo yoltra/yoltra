@@ -1,4 +1,4 @@
-![Yoltra logo](../../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Arquitectura del Pipeline de Eventos
 
@@ -242,10 +242,10 @@ La deduplicación está **desactivada por defecto** — Yoltra nunca descarta en
 idénticos legítimos y rápidos (doble-clics, un slider emitiendo el mismo valor, dos `+1`). Te
 suscribes de dos formas:
 
-| Modo | Cómo | Cuándo se dispara |
-| --- | --- | --- |
-| **Por contenido** | `createStore({ dedupWindowMs: N })` (o `createYoltra`) | Omite un evento cuya huella `channel::type::payload` se repite dentro de `N` ms |
-| **Por identidad** | `emit(c, t, p, { dedupKey })` | Omite un evento cuyo `dedupKey` explícito se repite dentro de la ventana de la clave |
+| Modo              | Cómo                                                   | Cuándo se dispara                                                                    |
+| ----------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| **Por contenido** | `createStore({ dedupWindowMs: N })` (o `createYoltra`) | Omite un evento cuya huella `channel::type::payload` se repite dentro de `N` ms      |
+| **Por identidad** | `emit(c, t, p, { dedupKey })`                          | Omite un evento cuyo `dedupKey` explícito se repite dentro de la ventana de la clave |
 
 ```typescript
 // Desactivada por defecto — ambos se despachan:
@@ -282,11 +282,11 @@ ya es visible.
 Las suscripciones de eventos observan los eventos sin afectar el flujo. Se disparan durante la fase
 **síncrona**.
 
-| Fase | Cuándo se notifica | Caso de uso |
-| --- | --- | --- |
-| `'committed'` | Tras los reducers, antes de los efectos de este evento | Reaccionar a cambios de estado exitosos |
-| `'uncommitted'` | Tras el veto del middleware | Reaccionar a eventos bloqueados (auth, validación) |
-| `'all'` | Ambas fases (el handler recibe la fase) | Logging, analíticas, depuración |
+| Fase            | Cuándo se notifica                                     | Caso de uso                                        |
+| --------------- | ------------------------------------------------------ | -------------------------------------------------- |
+| `'committed'`   | Tras los reducers, antes de los efectos de este evento | Reaccionar a cambios de estado exitosos            |
+| `'uncommitted'` | Tras el veto del middleware                            | Reaccionar a eventos bloqueados (auth, validación) |
+| `'all'`         | Ambas fases (el handler recibe la fase)                | Logging, analíticas, depuración                    |
 
 ```typescript
 // Confirmado (por defecto)
@@ -471,11 +471,11 @@ reentrantes se anexan a la cola y los drena el mismo pase.
 
 ## Historial de Revisiones
 
-| Versión | Fecha | Cambios |
-| --- | --- | --- |
-| 0.8.0 | 2026-07 | Pipeline de dos fases: reducción síncrona (middleware síncrono, reducers confirman antes de que `emit()` retorne) + efectos asíncronos independientes; promesa de finalización por-evento honesta; deduplicación opt-in (`dedupWindowMs` / `dedupKey`) |
-| 0.7.0 | 2026-01 | Suscripciones de eventos (fases confirmado/no confirmado/todos) |
-| 0.5.0 | 2026-01 | Documentación inicial del pipeline de eventos |
+| Versión | Fecha   | Cambios                                                                                                                                                                                                                                                |
+| ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0.8.0   | 2026-07 | Pipeline de dos fases: reducción síncrona (middleware síncrono, reducers confirman antes de que `emit()` retorne) + efectos asíncronos independientes; promesa de finalización por-evento honesta; deduplicación opt-in (`dedupWindowMs` / `dedupKey`) |
+| 0.7.0   | 2026-01 | Suscripciones de eventos (fases confirmado/no confirmado/todos)                                                                                                                                                                                        |
+| 0.5.0   | 2026-01 | Documentación inicial del pipeline de eventos                                                                                                                                                                                                          |
 
 ---
 

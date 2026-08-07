@@ -1,4 +1,4 @@
-![Yoltra logo](./assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Yoltra Governance
 
@@ -9,8 +9,8 @@ This document explains how decisions are made and how contributors become mainta
 
 ## Roles
 
-- **Contributors**: Anyone sending PRs, issues, or docs.  
-- **Maintainers**: Trusted contributors with merge rights to one or more packages.  
+- **Contributors**: Anyone sending PRs, issues, or docs.
+- **Maintainers**: Trusted contributors with merge rights to one or more packages.
 - **Lead Maintainer**: Coordinates roadmap and releases (initially **@pixerael / Erael Group.**).
 
 A list of current maintainers is kept in [MAINTAINERS.md](./MAINTAINERS.md) (if present) or in the GitHub org/team.

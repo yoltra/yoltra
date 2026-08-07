@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -6,7 +8,7 @@
 
 # Variable: StoreContext
 
-> `const` **StoreContext**: `Context`\<`StoreInstance`\<`any`, `any`, `any`\> \| `null`\>
+> `const` **StoreContext**: `Context`\<`null` \| `StoreInstance`\<`any`, `any`, `any`\>\>
 
 Defined in: [react/src/context/StoreContext.ts:32](https://github.com/yoltra/yoltra/blob/main/packages/react/src/context/StoreContext.ts#L32)
 

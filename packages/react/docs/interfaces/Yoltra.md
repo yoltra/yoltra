@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -84,7 +86,7 @@ The store created by this call; the hooks default to it (no Provider needed).
 
 ### StoreContext
 
-> **StoreContext**: `Context`\<`StoreInstance`\<`R`, `S`, `EM`\> \| `null`\>
+> **StoreContext**: `Context`\<`null` \| `StoreInstance`\<`R`, `S`, `EM`\>\>
 
 Defined in: [react/src/createYoltra.tsx:37](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L37)
 

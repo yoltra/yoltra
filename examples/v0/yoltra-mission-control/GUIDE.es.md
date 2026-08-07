@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 # Orbital Mission Control — recorrido guiado
 
 > [🇺🇸 English](./GUIDE.md) &nbsp;|&nbsp; 👉 Español
@@ -55,16 +57,16 @@ extensión, sin servidor de hub, sin instalar nada.
 
 ## Cómo se ve cada característica de Yoltra
 
-| Característica | Dónde mirar |
-|---|---|
-| **Reactividad de grano fino** | El **contador de renders** de cada tarjeta — solo se re-renderiza el satélite que cambió. |
+| Característica                | Dónde mirar                                                                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Reactividad de grano fino** | El **contador de renders** de cada tarjeta — solo se re-renderiza el satélite que cambió.                                      |
 | **Accesores de ruta tipados** | Las tarjetas leen `useAtomicProp("fleet", p => p.satellites[i].battery)` — totalmente tipado, con el tipo de retorno inferido. |
-| **Suscripciones con comodín** | La *batería de la flota* en la cabecera se recalcula desde `satellites.**` (cualquier hoja de batería). |
-| **Varios slices** | `fleet` (telemetría + comandos) y `mission` (reloj + alertas). |
-| **Event-sourcing** | La línea de tiempo del Inspector *es* el log de eventos; cada fila es un evento `channel.type`. |
-| **Effects (asíncrono)** | *Deploy* / *Transmit* / *Boost* se confirman al instante, y terminan un momento después vía effects. |
-| **Veto de middleware** | *Boost* por debajo del 20% de batería se veta — aparece como **uncommitted** en la línea de tiempo y levanta una alerta. |
-| **Time-travel** | La pestaña Time Travel rebobina el store a cualquier evento registrado. |
+| **Suscripciones con comodín** | La *batería de la flota* en la cabecera se recalcula desde `satellites.**` (cualquier hoja de batería).                        |
+| **Varios slices**             | `fleet` (telemetría + comandos) y `mission` (reloj + alertas).                                                                 |
+| **Event-sourcing**            | La línea de tiempo del Inspector *es* el log de eventos; cada fila es un evento `channel.type`.                                |
+| **Effects (asíncrono)**       | *Deploy* / *Transmit* / *Boost* se confirman al instante, y terminan un momento después vía effects.                           |
+| **Veto de middleware**        | *Boost* por debajo del 20% de batería se veta — aparece como **uncommitted** en la línea de tiempo y levanta una alerta.       |
+| **Time-travel**               | La pestaña Time Travel rebobina el store a cualquier evento registrado.                                                        |
 
 ---
 

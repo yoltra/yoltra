@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 # Orbital Mission Control — la demo insignia de Yoltra + DevTools
 
 > [🇺🇸 English](./README.md) &nbsp;|&nbsp; 👉 Español
@@ -15,20 +17,20 @@ un transporte loopback en memoria.
 
 ## Qué muestra
 
-| Característica | Dónde mirar |
-|---|---|
-| **Reactividad de grano fino** | Cada tarjeta de satélite muestra un **contador de renders** en vivo. La telemetría toca un satélite → solo esa tarjeta se re-renderiza. Sin selectores, sin memoización. |
-| **Accesores de ruta tipados** | Las tarjetas se suscriben con `useAtomicProp("fleet", p => p.satellites[i].battery)`. |
-| **Suscripciones con comodín** | La *batería de la flota* en la cabecera se recalcula desde `satellites.**`. |
-| **Varios slices** | `fleet` (telemetría + comandos) y `mission` (reloj + alertas). |
-| **Event-sourcing + time-travel** | La línea de tiempo del panel se llena sola; recórrela para rebobinar la misión. |
-| **Effects (asíncrono)** | *Deploy* / *Transmit* / *Boost* se confirman al instante, y un momento después se completan vía effects. |
-| **Middleware (veto)** | *Boost* por debajo del 20% de batería se rechaza — aparece como **uncommitted** en la línea de tiempo y levanta una alerta. |
-| **Suscripciones a eventos** | El **registro de misión** usa `useEvent` — no lee estado en absoluto, así que la telemetría nunca lo despierta. Escucha en la fase `"all"`, así que un comando *vetado* aparece ahí aunque nunca haya llegado a un reducer. |
-| **Deduplicación** | Los comandos llevan un `dedupKey`. Haz doble clic en **Boost** y la segunda pulsación se colapsa en vez de iniciar una segunda maniobra — observa cómo suben los **dedup hits** en las métricas del panel. |
-| **Suspense** | El panel de **ventana de transferencia** usa `useSuspenseAtomicProp` para un pronóstico asíncrono, con un esqueleto mientras calcula. Se suscribe a `satellites.*.panelsDeployed`, así que recalcula cuando se mueven los paneles y no en cada tick de telemetría. |
-| **Sistema de diseño** | El armazón es `@yoltra/ds` — `Card`, `Stack`, `Inline`, `Grid`, `Button`, `Switch`, `Badge`, `Skeleton`, `EmptyState`. Los visuales de telemetría siguen siendo a medida, construidos con los mismos tokens. |
-| **DevTools** | El `<DevtoolsApp/>` embebido es exactamente la UI de la extensión, sobre el hub loopback. |
+| Característica                   | Dónde mirar                                                                                                                                                                                                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Reactividad de grano fino**    | Cada tarjeta de satélite muestra un **contador de renders** en vivo. La telemetría toca un satélite → solo esa tarjeta se re-renderiza. Sin selectores, sin memoización.                                                                                           |
+| **Accesores de ruta tipados**    | Las tarjetas se suscriben con `useAtomicProp("fleet", p => p.satellites[i].battery)`.                                                                                                                                                                              |
+| **Suscripciones con comodín**    | La *batería de la flota* en la cabecera se recalcula desde `satellites.**`.                                                                                                                                                                                        |
+| **Varios slices**                | `fleet` (telemetría + comandos) y `mission` (reloj + alertas).                                                                                                                                                                                                     |
+| **Event-sourcing + time-travel** | La línea de tiempo del panel se llena sola; recórrela para rebobinar la misión.                                                                                                                                                                                    |
+| **Effects (asíncrono)**          | *Deploy* / *Transmit* / *Boost* se confirman al instante, y un momento después se completan vía effects.                                                                                                                                                           |
+| **Middleware (veto)**            | *Boost* por debajo del 20% de batería se rechaza — aparece como **uncommitted** en la línea de tiempo y levanta una alerta.                                                                                                                                        |
+| **Suscripciones a eventos**      | El **registro de misión** usa `useEvent` — no lee estado en absoluto, así que la telemetría nunca lo despierta. Escucha en la fase `"all"`, así que un comando *vetado* aparece ahí aunque nunca haya llegado a un reducer.                                        |
+| **Deduplicación**                | Los comandos llevan un `dedupKey`. Haz doble clic en **Boost** y la segunda pulsación se colapsa en vez de iniciar una segunda maniobra — observa cómo suben los **dedup hits** en las métricas del panel.                                                         |
+| **Suspense**                     | El panel de **ventana de transferencia** usa `useSuspenseAtomicProp` para un pronóstico asíncrono, con un esqueleto mientras calcula. Se suscribe a `satellites.*.panelsDeployed`, así que recalcula cuando se mueven los paneles y no en cada tick de telemetría. |
+| **Sistema de diseño**            | El armazón es `@yoltra/ds` — `Card`, `Stack`, `Inline`, `Grid`, `Button`, `Switch`, `Badge`, `Skeleton`, `EmptyState`. Los visuales de telemetría siguen siendo a medida, construidos con los mismos tokens.                                                       |
+| **DevTools**                     | El `<DevtoolsApp/>` embebido es exactamente la UI de la extensión, sobre el hub loopback.                                                                                                                                                                          |
 
 ## Ejecútalo
 

@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -38,7 +40,7 @@ Store state record.
 
 ### errorTtlMs?
 
-> `optional` **errorTtlMs**: `number` \| `null`
+> `optional` **errorTtlMs**: `null` \| `number`
 
 Defined in: [react/src/hooks/suspense.ts:343](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L343)
 

@@ -1,4 +1,4 @@
-![yoltra logo](../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # @yoltra/core
 
@@ -516,12 +516,12 @@ individual fields edited is better off as an array today.
 
 ## Performance
 
-| Metric             | Value                          |
-| ------------------ | ------------------------------ |
+| Metric             | Value                                     |
+| ------------------ | ----------------------------------------- |
 | **Bundle size**    | 6.7 KB for the store (minified + gzipped) |
-| **Tree-shakeable** | Yes (ES modules)               |
-| **Dependencies**   | Zero                           |
-| **TypeScript**     | Full type definitions included |
+| **Tree-shakeable** | Yes (ES modules)                          |
+| **Dependencies**   | Zero                                      |
+| **TypeScript**     | Full type definitions included            |
 
 Bundle size is checked, not asserted: `rush size` bundles the package the way a consumer
 would — tree-shaken, minified, gzipped — and fails when it exceeds the budget declared in
@@ -529,11 +529,11 @@ would — tree-shaken, minified, gzipped — and fails when it exceeds the budge
 
 The number that matters is what you import, not what the package exports:
 
-| Import | Size |
-| --- | --- |
-| `{ createStore }` | 6.7 KB |
+| Import                              | Size   |
+| ----------------------------------- | ------ |
+| `{ createStore }`                   | 6.7 KB |
 | `{ createStore, hydrate, persist }` | 8.2 KB |
-| everything | 9.5 KB |
+| everything                          | 9.5 KB |
 
 Persistence and the entity adapter cost nothing to anyone who does not import them — the
 first row has not moved as either was added, which is the tree-shaking claim being checked

@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -40,7 +42,7 @@ Event map.
 
 ### StoreContext
 
-`Context`\<`StoreInstance`\<`R`, `S`, `EM`\> \| `null`\>
+`Context`\<`null` \| `StoreInstance`\<`R`, `S`, `EM`\>\>
 
 A React context carrying a `StoreInstance<R, S, EM>`.
 

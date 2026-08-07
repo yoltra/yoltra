@@ -1,4 +1,4 @@
-![Yoltra logo](../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Migration Guide
 
@@ -29,16 +29,16 @@ library into those three moves.
 
 ## Concept map
 
-| Concept              | Redux / RTK              | Zustand              | Jotai                | Yoltra                                   |
-| -------------------- | ------------------------ | -------------------- | -------------------- | ---------------------------------------- |
-| Define state         | `createSlice`            | `create(set => …)`   | `atom(initial)`      | reducer slice in `createYoltra`          |
-| Change state         | `dispatch(action)`       | `set(...)`           | `set(atom, v)`       | `emit(channel, type, payload)`           |
-| State update logic   | reducer (switch)         | inline in `set`      | write atom           | reducer (pure `(state, event) => next`)  |
-| Read state           | `useSelector`            | `useStore(sel)`      | `useAtomVal(atom)`   | `useAtomicProp` (fine-grained)           |
-| Derived value        | `reselect`               | selector fn          | derived `atom`       | `useAtomicProps(specs, selector)`        |
-| Async / side effects | thunk / RTK Query / saga | inside actions       | `atomWith... `       | **effect** (`effects: [...]`)            |
-| Intercept / guard    | middleware               | (manual)             | (manual)             | **middleware** (sync, can reject)        |
-| Provider             | required                 | not needed           | required (`Provider`)| optional (hooks default to the store)    |
+| Concept              | Redux / RTK              | Zustand            | Jotai                 | Yoltra                                  |
+| -------------------- | ------------------------ | ------------------ | --------------------- | --------------------------------------- |
+| Define state         | `createSlice`            | `create(set => …)` | `atom(initial)`       | reducer slice in `createYoltra`         |
+| Change state         | `dispatch(action)`       | `set(...)`         | `set(atom, v)`        | `emit(channel, type, payload)`          |
+| State update logic   | reducer (switch)         | inline in `set`    | write atom            | reducer (pure `(state, event) => next`) |
+| Read state           | `useSelector`            | `useStore(sel)`    | `useAtomVal(atom)`    | `useAtomicProp` (fine-grained)          |
+| Derived value        | `reselect`               | selector fn        | derived `atom`        | `useAtomicProps(specs, selector)`       |
+| Async / side effects | thunk / RTK Query / saga | inside actions     | `atomWith... `        | **effect** (`effects: [...]`)           |
+| Intercept / guard    | middleware               | (manual)           | (manual)              | **middleware** (sync, can reject)       |
+| Provider             | required                 | not needed         | required (`Provider`) | optional (hooks default to the store)   |
 
 ---
 
@@ -368,14 +368,14 @@ const store = createStore({
 const stop = persist(store, { key: "app", adapter, version: 3, slices: ["todos"] });
 ```
 
-| redux-persist | Yoltra |
-| --- | --- |
-| `persistReducer` wraps each reducer | `withHydration` supplies initial state |
+| redux-persist                               | Yoltra                                         |
+| ------------------------------------------- | ---------------------------------------------- |
+| `persistReducer` wraps each reducer         | `withHydration` supplies initial state         |
 | `PersistGate` hides the UI until rehydrated | nothing to hide — the first render is hydrated |
-| `migrate` keyed on a version number | `migrate(persisted, fromVersion)`, same idea |
-| `whitelist` / `blacklist` | `slices: ["todos"]` |
-| `transforms` | `serialize`, plus the codec below |
-| storage engines | `PersistenceAdapter`, three shipped |
+| `migrate` keyed on a version number         | `migrate(persisted, fromVersion)`, same idea   |
+| `whitelist` / `blacklist`                   | `slices: ["todos"]`                            |
+| `transforms`                                | `serialize`, plus the codec below              |
+| storage engines                             | `PersistenceAdapter`, three shipped            |
 
 **A version mismatch is refused, not trusted.** Reducers change, and a snapshot written against
 an older shape may not be valid state for this build at all. Supply `migrate` to upgrade it, or

@@ -1,4 +1,4 @@
-![Yoltra logo](../../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Yoltra vs Redux Toolkit – Demo en React Vite
 

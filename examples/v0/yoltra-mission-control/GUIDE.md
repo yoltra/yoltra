@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 # Orbital Mission Control — a guided tour
 
 > 👉 English &nbsp;|&nbsp; [🇲🇽 Español](./GUIDE.es.md)
@@ -56,16 +58,16 @@ loopback — no extension, no hub server, no install.
 
 ## What each Yoltra feature looks like
 
-| Feature | Where to look |
-|---|---|
-| **Fine-grained reactivity** | Each card's **render counter** — only the changed satellite re-renders. |
-| **Typed path accessors** | Cards read `useAtomicProp("fleet", p => p.satellites[i].battery)` — fully typed, return type inferred. |
-| **Wildcard subscriptions** | Header's *Fleet battery* recomputes from `satellites.**` (any battery leaf). |
-| **Multiple slices** | `fleet` (telemetry + commands) and `mission` (clock + alerts). |
-| **Event-sourcing** | The Inspector timeline *is* the event log; every row is one `channel.type` event. |
-| **Effects (async)** | *Deploy* / *Transmit* / *Boost* commit instantly, then finish a moment later via effects. |
-| **Middleware veto** | *Boost* under 20% battery is vetoed — appears **uncommitted** in the timeline, raises an alert. |
-| **Time-travel** | The Time Travel tab rewinds the store to any recorded event. |
+| Feature                     | Where to look                                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Fine-grained reactivity** | Each card's **render counter** — only the changed satellite re-renders.                                |
+| **Typed path accessors**    | Cards read `useAtomicProp("fleet", p => p.satellites[i].battery)` — fully typed, return type inferred. |
+| **Wildcard subscriptions**  | Header's *Fleet battery* recomputes from `satellites.**` (any battery leaf).                           |
+| **Multiple slices**         | `fleet` (telemetry + commands) and `mission` (clock + alerts).                                         |
+| **Event-sourcing**          | The Inspector timeline *is* the event log; every row is one `channel.type` event.                      |
+| **Effects (async)**         | *Deploy* / *Transmit* / *Boost* commit instantly, then finish a moment later via effects.              |
+| **Middleware veto**         | *Boost* under 20% battery is vetoed — appears **uncommitted** in the timeline, raises an alert.        |
+| **Time-travel**             | The Time Travel tab rewinds the store to any recorded event.                                           |
 
 ---
 

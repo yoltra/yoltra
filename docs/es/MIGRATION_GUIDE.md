@@ -1,4 +1,4 @@
-![Yoltra logo](../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Guía de Migración
 
@@ -30,16 +30,16 @@ a esos tres movimientos.
 
 ## Mapa de conceptos
 
-| Concepto             | Redux / RTK              | Zustand              | Jotai                | Yoltra                                   |
-| -------------------- | ------------------------ | -------------------- | -------------------- | ---------------------------------------- |
-| Definir estado       | `createSlice`            | `create(set => …)`   | `atom(inicial)`      | slice de reducer en `createYoltra`       |
-| Cambiar estado       | `dispatch(action)`       | `set(...)`           | `set(atom, v)`       | `emit(channel, type, payload)`           |
-| Lógica de update     | reducer (switch)         | inline en `set`      | write atom           | reducer (puro `(state, event) => next`)  |
-| Leer estado          | `useSelector`            | `useStore(sel)`      | `useAtomVal(atom)`   | `useAtomicProp` (grano fino)             |
-| Valor derivado       | `reselect`               | selector fn          | `atom` derivado      | `useAtomicProps(specs, selector)`        |
-| Async / efectos      | thunk / RTK Query / saga | dentro de acciones   | `atomWith...`        | **effect** (`effects: [...]`)            |
-| Interceptar / guard  | middleware               | (manual)             | (manual)             | **middleware** (síncrono, puede rechazar)|
-| Provider             | requerido                | no necesario         | requerido            | opcional (los hooks usan el store)       |
+| Concepto            | Redux / RTK              | Zustand            | Jotai              | Yoltra                                    |
+| ------------------- | ------------------------ | ------------------ | ------------------ | ----------------------------------------- |
+| Definir estado      | `createSlice`            | `create(set => …)` | `atom(inicial)`    | slice de reducer en `createYoltra`        |
+| Cambiar estado      | `dispatch(action)`       | `set(...)`         | `set(atom, v)`     | `emit(channel, type, payload)`            |
+| Lógica de update    | reducer (switch)         | inline en `set`    | write atom         | reducer (puro `(state, event) => next`)   |
+| Leer estado         | `useSelector`            | `useStore(sel)`    | `useAtomVal(atom)` | `useAtomicProp` (grano fino)              |
+| Valor derivado      | `reselect`               | selector fn        | `atom` derivado    | `useAtomicProps(specs, selector)`         |
+| Async / efectos     | thunk / RTK Query / saga | dentro de acciones | `atomWith...`      | **effect** (`effects: [...]`)             |
+| Interceptar / guard | middleware               | (manual)           | (manual)           | **middleware** (síncrono, puede rechazar) |
+| Provider            | requerido                | no necesario       | requerido          | opcional (los hooks usan el store)        |
 
 ---
 
@@ -370,14 +370,14 @@ const store = createStore({
 const stop = persist(store, { key: "app", adapter, version: 3, slices: ["todos"] });
 ```
 
-| redux-persist | Yoltra |
-| --- | --- |
-| `persistReducer` envuelve cada reducer | `withHydration` aporta el estado inicial |
+| redux-persist                               | Yoltra                                                |
+| ------------------------------------------- | ----------------------------------------------------- |
+| `persistReducer` envuelve cada reducer      | `withHydration` aporta el estado inicial              |
 | `PersistGate` oculta la UI hasta rehidratar | nada que ocultar — el primer render ya está hidratado |
-| `migrate` por número de versión | `migrate(persisted, fromVersion)`, misma idea |
-| `whitelist` / `blacklist` | `slices: ["todos"]` |
-| `transforms` | `serialize`, más el códec de abajo |
-| motores de almacenamiento | `PersistenceAdapter`, tres incluidos |
+| `migrate` por número de versión             | `migrate(persisted, fromVersion)`, misma idea         |
+| `whitelist` / `blacklist`                   | `slices: ["todos"]`                                   |
+| `transforms`                                | `serialize`, más el códec de abajo                    |
+| motores de almacenamiento                   | `PersistenceAdapter`, tres incluidos                  |
 
 **Una versión que no coincide se rechaza, no se acepta a ciegas.** Los reducers cambian, y un
 snapshot escrito contra una forma anterior puede no ser estado válido para este build. Aporta

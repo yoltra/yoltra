@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -6,7 +8,7 @@
 
 # Function: useEntityField()
 
-> **useEntityField**\<`T`, `Id`, `R`, `K`\>(`reducer`, `adapter`, `id`, `field`): `T`\[`K`\] \| `undefined`
+> **useEntityField**\<`T`, `Id`, `R`, `K`\>(`reducer`, `adapter`, `id`, `field`): `undefined` \| `T`\[`K`\]
 
 Defined in: [react/src/entity/useEntity.ts:66](https://github.com/yoltra/yoltra/blob/main/packages/react/src/entity/useEntity.ts#L66)
 
@@ -50,7 +52,7 @@ Subscribes to one field of one entity.
 
 ## Returns
 
-`T`\[`K`\] \| `undefined`
+`undefined` \| `T`\[`K`\]
 
 ## Remarks
 

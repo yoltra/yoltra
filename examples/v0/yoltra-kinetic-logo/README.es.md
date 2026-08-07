@@ -1,8 +1,8 @@
-![Yoltra logo](../../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Yoltra: Animación cinética del logo
 
-![Yoltra dots](../../../assets/yoltra-dots.gif);
+![Yoltra dots](https://yoltra.dev/assets/yoltra-dots.gif);
 
 > 👉🇲🇽 Versión en Español &nbsp; &nbsp; | [ 🇺🇸 English Version](./README.md)&nbsp;
 

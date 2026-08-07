@@ -1,4 +1,4 @@
-![Yoltra logo](./assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # MAINTAINERS
 
@@ -16,27 +16,27 @@ This file lists active maintainers and areas of responsibility for the Yoltra mo
 
 ## Current Maintainers
 
-| GitHub Handle | Name         | Area(s)                                   | Notes                        |
-|---------------|--------------|-------------------------------------------|------------------------------|
-| @pixerael     | Manu Ramirez | Overall, releases, trademarks             | Acting owner for all packages|
+| GitHub Handle | Name         | Area(s)                       | Notes                         |
+| ------------- | ------------ | ----------------------------- | ----------------------------- |
+| @pixerael     | Manu Ramirez | Overall, releases, trademarks | Acting owner for all packages |
 
 ### Open Maintainer Seats
 
 We’re inviting community maintainers for the roles below. See **Becoming a Maintainer**.
 
-| Role ID        | Area(s)                                     | Time Expectation     | Status  |
-|----------------|---------------------------------------------|----------------------|---------|
-| @co-maintainer | yoltra core (store/reducer/bus/utils)          | ~2–4 hrs/week        | **OPEN**|
-| @react-maint   | yoltra-react (hooks, suspense, docs/examples)  | ~2–4 hrs/week        | **OPEN**|
+| Role ID        | Area(s)                                       | Time Expectation | Status   |
+| -------------- | --------------------------------------------- | ---------------- | -------- |
+| @co-maintainer | yoltra core (store/reducer/bus/utils)         | ~2–4 hrs/week    | **OPEN** |
+| @react-maint   | yoltra-react (hooks, suspense, docs/examples) | ~2–4 hrs/week    | **OPEN** |
 
 ## Package Ownership
 
-| Package / Path           | Owners                                     |
-|--------------------------|--------------------------------------------|
-| `packages/core`          | @pixerael (acting), **@co-maintainer (OPEN)** |
-| `packages/react`         | @pixerael (acting), **@react-maint (OPEN)**   |
-| `examples/*`             | @pixerael (acting), **@react-maint (OPEN)**   |
-| `docs/*`                 | @pixerael (acting), **@react-maint (OPEN)**   |
+| Package / Path   | Owners                                        |
+| ---------------- | --------------------------------------------- |
+| `packages/core`  | @pixerael (acting), **@co-maintainer (OPEN)** |
+| `packages/react` | @pixerael (acting), **@react-maint (OPEN)**   |
+| `examples/*`     | @pixerael (acting), **@react-maint (OPEN)**   |
+| `docs/*`         | @pixerael (acting), **@react-maint (OPEN)**   |
 
 > Until seats are filled, @pixerael is the acting owner and final reviewer.
 

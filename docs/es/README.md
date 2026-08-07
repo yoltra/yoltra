@@ -1,4 +1,4 @@
-![Yoltra logo](../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Yoltra
 
@@ -76,14 +76,14 @@ La suscripción _es_ la optimización.
 La mayoría de las librerías de estado te obligan a elegir dos de las siguientes. Yoltra está
 construido para darte las cuatro a la vez --- y en esa intersección es donde vive:
 
-| | Grano fino (sin memo manual) | Log de eventos + viaje en el tiempo | Setup de una llamada | Rutas tipadas / tipos de extremo a extremo |
-| --- | :---: | :---: | :---: | :---: |
-| **Redux Toolkit** | ✗ selectores + memo | ✓ (por eso muchos se quedan) | ✗ boilerplate | parcial |
-| **Zustand** | ✗ igualdad manual | ✗ | ✓ | parcial |
-| **Jotai / Recoil** | ✓ átomos | ✗ | ✓ | ✓ |
-| **Valtio / MobX** | ✓ magia de proxy | ✗ | ✓ | parcial |
-| **Signals** | ✓ | ✗ | ✓ | ✓ |
-| **Yoltra** | ✓ suscripciones por ruta | ✓ **integrado** | ✓ `createYoltra` | ✓ accessors tipados |
+|                    | Grano fino (sin memo manual) | Log de eventos + viaje en el tiempo | Setup de una llamada | Rutas tipadas / tipos de extremo a extremo |
+| ------------------ | :--------------------------: | :---------------------------------: | :------------------: | :----------------------------------------: |
+| **Redux Toolkit**  |     ✗ selectores + memo      |    ✓ (por eso muchos se quedan)     |    ✗ boilerplate     |                  parcial                   |
+| **Zustand**        |      ✗ igualdad manual       |                  ✗                  |          ✓           |                  parcial                   |
+| **Jotai / Recoil** |           ✓ átomos           |                  ✗                  |          ✓           |                     ✓                      |
+| **Valtio / MobX**  |       ✓ magia de proxy       |                  ✗                  |          ✓           |                  parcial                   |
+| **Signals**        |              ✓               |                  ✗                  |          ✓           |                     ✓                      |
+| **Yoltra**         |   ✓ suscripciones por ruta   |           ✓ **integrado**           |   ✓ `createYoltra`   |            ✓ accessors tipados             |
 
 El campo de grano fino (Jotai, Valtio, signals) tiene devtools pobres y no tiene log de eventos. El
 campo basado en eventos (Redux) tiene grandes devtools pero reactividad gruesa y boilerplate.
@@ -182,12 +182,12 @@ de bundle que el CI hace cumplir.
 
 ## Paquetes
 
-| Paquete | Descripción |
-| --- | --- |
-| **[@yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.es.md)** | Store agnóstico de framework: reducers, middleware, efectos, detección de cambios de grano fino, instrumentación tipada, entity adapter, persistencia + hidratación |
-| **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.es.md)** | Hooks de React: suscripciones de grano fino, accessors de ruta tipados, `createYoltra`, hooks de entidades, Suspense |
-| **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md)** | Sistema de diseño: primitivas de React accesibles (formularios, tablas, overlays), tokens de diseño `--yl-*`, temas claro/oscuro --- independiente, usable sin el store |
-| **@yoltra/devtools-\*** | Suite de DevTools: protocolo, servidor hub, agentes de navegador/node y la UI del panel (extensión de navegador + CLI) |
+| Paquete                                                                                     | Descripción                                                                                                                                                             |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[@yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.es.md)**   | Store agnóstico de framework: reducers, middleware, efectos, detección de cambios de grano fino, instrumentación tipada, entity adapter, persistencia + hidratación     |
+| **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.es.md)** | Hooks de React: suscripciones de grano fino, accessors de ruta tipados, `createYoltra`, hooks de entidades, Suspense                                                    |
+| **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md)**          | Sistema de diseño: primitivas de React accesibles (formularios, tablas, overlays), tokens de diseño `--yl-*`, temas claro/oscuro --- independiente, usable sin el store |
+| **@yoltra/devtools-\***                                                                     | Suite de DevTools: protocolo, servidor hub, agentes de navegador/node y la UI del panel (extensión de navegador + CLI)                                                  |
 
 ---
 
@@ -215,12 +215,12 @@ Node, y viceversa.
 > veto de middleware y viaje en el tiempo --- corriendo sobre un hub en memoria **sin instalar
 > nada**. → **[Tour guiado](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/GUIDE.es.md)** · **[▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/mission-control)**
 
-| Ejemplo | Descripción |
-| --- | --- |
-| **[Logo cinético (3000 partículas)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.es.md)** | Simulación de física con una suscripción de ruta independiente por círculo · [▶ Demo en vivo](https://yoltra.dev/es/demos/kinetic-logo) |
-| **[App de tareas con Profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.es.md)** | Comparación de flamegraph lado a lado con Redux ([resultados](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.es.md)) · [▶ Demo en vivo](https://yoltra.dev/es/demos/in-react) |
-| **[Contador](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-react-counter/README.es.md)** | El ejemplo mínimo de extremo a extremo · [▶ Demo en vivo](https://yoltra.dev/es/demos/react-counter) |
-| **[Selector de tema en Next.js](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs/README.es.md)** | Yoltra del lado del cliente dentro de una app Next.js (Pages Router) · [▶ Demo en vivo](https://yoltra.dev/es/demos/in-nextjs) |
+| Ejemplo                                                                                                                        | Descripción                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[Logo cinético (3000 partículas)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.es.md)** | Simulación de física con una suscripción de ruta independiente por círculo · [▶ Demo en vivo](https://yoltra.dev/es/demos/kinetic-logo)                                                                                     |
+| **[App de tareas con Profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.es.md)**          | Comparación de flamegraph lado a lado con Redux ([resultados](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.es.md)) · [▶ Demo en vivo](https://yoltra.dev/es/demos/in-react) |
+| **[Contador](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-react-counter/README.es.md)**                       | El ejemplo mínimo de extremo a extremo · [▶ Demo en vivo](https://yoltra.dev/es/demos/react-counter)                                                                                                                        |
+| **[Selector de tema en Next.js](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs/README.es.md)**        | Yoltra del lado del cliente dentro de una app Next.js (Pages Router) · [▶ Demo en vivo](https://yoltra.dev/es/demos/in-nextjs)                                                                                              |
 
 ---
 

@@ -1,4 +1,4 @@
-![Yoltra logo](../../assets/yoltra-logo.png)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # Developer Guide
 
@@ -212,10 +212,10 @@ Allowed `<type>` values: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `bui
 - Coverage thresholds are enforced per package and per metric, and they are set at the level
   actually met so that a regression fails the build:
 
-  | Package | Lines / statements | Branches | Functions |
-  | ------- | ------------------ | -------- | --------- |
-  | `@yoltra/core` | 95% | 92% | 90% |
-  | `@yoltra/react` | 95% | 91% | 93% |
+  | Package         | Lines / statements | Branches | Functions |
+  | --------------- | ------------------ | -------- | --------- |
+  | `@yoltra/core`  | 95%                | 92%      | 90%       |
+  | `@yoltra/react` | 95%                | 91%      | 93%       |
 
   Raising branches and functions to 95% everywhere is open work rather than a number nobody
   meets. Note that Vitest reads these as **percentages**: a threshold written `0.95` enforces

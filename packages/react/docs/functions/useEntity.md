@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 [**@yoltra/react**](../README.md)
 
 ***
@@ -6,7 +8,7 @@
 
 # Function: useEntity()
 
-> **useEntity**\<`T`, `Id`, `R`\>(`reducer`, `adapter`, `id`): `T` \| `undefined`
+> **useEntity**\<`T`, `Id`, `R`\>(`reducer`, `adapter`, `id`): `undefined` \| `T`
 
 Defined in: [react/src/entity/useEntity.ts:46](https://github.com/yoltra/yoltra/blob/main/packages/react/src/entity/useEntity.ts#L46)
 
@@ -42,7 +44,7 @@ Subscribes to one entity.
 
 ## Returns
 
-`T` \| `undefined`
+`undefined` \| `T`
 
 The entity, or `undefined` once it has been removed — a row that outlives its data
 for one render is normal, and returning `undefined` is what lets it render nothing rather
