@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { freezeState } from "../../src/utils/immutability";
 
 describe("freezeState", () => {
@@ -65,5 +65,44 @@ describe("freezeState", () => {
 
     // The object is frozen; attempting to change it should not modify getter semantics
     expect(Object.isFrozen(frozen)).toBe(true);
+  });
+});
+
+describe("freezeState alias watching", () => {
+  it("reports a watched reference reachable from the frozen value", () => {
+    const payload = { title: "A" };
+    const next = { items: [payload] };
+    const found = vi.fn();
+
+    freezeState(next, new WeakSet<object>(), { watch: payload, onFound: found });
+
+    // The mechanism behind the development warning: a reducer that stored the caller's object
+    // rather than copying it leaves that object frozen, so the emitter mutating it afterwards
+    // throws from a stack that never mentions the store — and only in development, because the
+    // freeze is compiled out of production.
+    expect(found).toHaveBeenCalledOnce();
+    expect(Object.isFrozen(payload)).toBe(true);
+  });
+
+  it("stays quiet when the reducer copied the payload", () => {
+    const payload = { title: "A" };
+    const next = { items: [{ ...payload }] };
+    const found = vi.fn();
+
+    freezeState(next, new WeakSet<object>(), { watch: payload, onFound: found });
+
+    expect(found).not.toHaveBeenCalled();
+    expect(Object.isFrozen(payload)).toBe(false);
+  });
+
+  it("reports an already-frozen watched reference", () => {
+    // Checked before the already-frozen early exit, so a payload stored on a second event is
+    // still named rather than passed over in silence.
+    const payload = Object.freeze({ title: "A" });
+    const found = vi.fn();
+
+    freezeState({ items: [payload] }, new WeakSet<object>(), { watch: payload, onFound: found });
+
+    expect(found).toHaveBeenCalledOnce();
   });
 });

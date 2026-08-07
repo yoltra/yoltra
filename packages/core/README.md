@@ -426,14 +426,119 @@ store.registerEffect({
 
 ---
 
+## Saving and restoring state
+
+Two functions, because the halves happen on opposite sides of the store's existence.
+`hydrate` produces *initial slice state*, so the store is born with it:
+
+```ts
+import { createStore, createWebStorageAdapter, hydrate, persist, withHydration } from '@yoltra/core';
+
+const adapter = createWebStorageAdapter(localStorage);
+const hydration = await hydrate({ key: 'app', adapter, version: 3 });
+
+const store = createStore({
+  name: 'App',
+  reducer: withHydration({ todos: todosSpec, ui: uiSpec }, hydration),
+});
+
+const stop = persist(store, { key: 'app', adapter, version: 3, slices: ['todos'] });
+```
+
+Restoring *after* construction is the obvious alternative and the wrong one: applying a
+snapshot to a live store emits a change across every path, which on boot is a flash, a burst
+of instrumentation entries describing changes nobody made, and effects observing a transition
+that never happened.
+
+**Nothing throws on boot.** A missing, unparseable or unmigratable payload falls back to your
+declared defaults and reports through `onError`. A store that will not start because storage
+holds stale JSON is worse than one that starts fresh — and a full disk should not take down a
+page, so write failures are reported the same way rather than raised.
+
+**Version mismatches are refused, not trusted.** Reducers change, and a snapshot written
+against an older shape may not be valid state for this build at all. Supply `migrate` to
+upgrade it, or it is discarded.
+
+Writes are driven by instrumentation, so a change confined to a slice you are not persisting
+costs nothing, and a burst is coalesced into one write. `Map`, `Set`, `Date`, `BigInt`,
+`undefined` and circular references all survive the round trip: `JSON.stringify` does not fail
+on those, it silently destroys them.
+
+For a server render, `dehydrate(store, { version })` produces the payload and
+`hydrate({ source, version })` consumes it.
+
+## Lists that reorder
+
+Path notification is positional for arrays. `items.0.title` names a *slot*, not a thing, so
+`unshift`, `splice(0, 1)` and `sort` move nearly every element into a different slot — and the
+diff correctly reports that nearly every leaf changed. Inserting one row at the front of a
+thousand wakes a thousand subscribers.
+
+That is honest rather than noisy: with positional paths the value at almost every index really
+did change. The remedy is the shape of the state, not a diff that stays quiet.
+
+```ts
+import { createEntityAdapter } from '@yoltra/core';
+
+const todos = createEntityAdapter<Todo>();
+
+// state is { ids: [...], entities: { abc: {...} } }
+todos.updateOne(state, { id: 'abc', changes: { done: true } });
+
+// and the adapter hands out the paths, so they are never typed by hand
+todos.pathTo('abc', 'title');  // "entities.abc.title"
+todos.idsPath;                 // "ids"
+```
+
+`entities.abc.title` survives insert, remove and reorder. A list container subscribes to `ids`
+and reorders its children; rows subscribe to their own entity and stay asleep through a sort.
+
+`ids` is still an array, so a reorder still reports `ids.0`, `ids.1` and so on — that cost is
+confined, not removed. What you get is cost proportional to what actually changed.
+
+For a small list that only ever grows at the end, `items.0.title` is fine and simpler. The
+adapter is for collections that reorder, or that are large enough for the difference to show.
+
+### What it costs, measured
+
+At 1000 rows, diffing after an insert at the front costs 1200 µs for an array and 371 µs
+normalised, and the array reports roughly a thousand changed paths against two. That is the
+case the adapter is for.
+
+A single-field update runs the other way: 20 µs for the array against 470 µs normalised.
+`detectChangedProps` indexes an array but enumerates an object's keys — building two key
+arrays and a `Set` per comparison — so a wide entity map is more expensive to walk even when
+almost nothing in it moved. The numbers are in `benchmarks/`, and closing that gap is tracked
+work rather than a property of normalising as such.
+
+So: normalise collections that reorder or churn. A large collection that only ever has
+individual fields edited is better off as an array today.
+
 ## Performance
 
 | Metric             | Value                          |
 | ------------------ | ------------------------------ |
-| **Bundle size**    | ~8KB (minified + gzipped)      |
+| **Bundle size**    | 6.7 KB for the store (minified + gzipped) |
 | **Tree-shakeable** | Yes (ES modules)               |
 | **Dependencies**   | Zero                           |
 | **TypeScript**     | Full type definitions included |
+
+Bundle size is checked, not asserted: `rush size` bundles the package the way a consumer
+would — tree-shaken, minified, gzipped — and fails when it exceeds the budget declared in
+`package.json`.
+
+The number that matters is what you import, not what the package exports:
+
+| Import | Size |
+| --- | --- |
+| `{ createStore }` | 6.7 KB |
+| `{ createStore, hydrate, persist }` | 8.2 KB |
+| everything | 9.5 KB |
+
+Persistence and the entity adapter cost nothing to anyone who does not import them — the
+first row has not moved as either was added, which is the tree-shaking claim being checked
+rather than repeated. The last row is a growth tripwire; `import * as all` is not something
+anybody writes.
 
 ---
 

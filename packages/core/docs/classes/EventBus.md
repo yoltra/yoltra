@@ -6,7 +6,7 @@
 
 # Class: EventBus\<EM\>
 
-Defined in: [eventBus/EventBus.ts:48](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/eventBus/EventBus.ts#L48)
+Defined in: [eventBus/EventBus.ts:48](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L48)
 
 Minimal, synchronous pub/sub event bus keyed by **channel** and **type**.
 
@@ -70,7 +70,7 @@ type EM = {
 
 > **clear**(): `void`
 
-Defined in: [eventBus/EventBus.ts:188](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/eventBus/EventBus.ts#L188)
+Defined in: [eventBus/EventBus.ts:202](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L202)
 
 Clears **all** listeners across all channels/types.
 
@@ -91,9 +91,9 @@ afterEach(() => bus.clear());
 
 ### emit()
 
-> **emit**\<`C`, `T`\>(`channel`, `type`, `payload`): `void`
+> **emit**\<`C`, `T`\>(`channel`, `type`, `payload`, `event?`): `void`
 
-Defined in: [eventBus/EventBus.ts:155](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/eventBus/EventBus.ts#L155)
+Defined in: [eventBus/EventBus.ts:168](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L168)
 
 Emits an event to all subscribers of the exact `(channel, type)`.
 
@@ -134,6 +134,14 @@ Event type to emit.
 
 Payload matching `EM[C][T]`.
 
+##### event?
+
+[`Event`](../interfaces/Event.md)\<`EM`, `C`, `T`, `EM`\[`C`\]\[`T`\]\>
+
+Optional **source event**, forwarded to handlers as a second argument.
+Supply it whenever the caller already holds the real event so subscribers observe its
+true `id` rather than reconstructing one; omitting it keeps the original behaviour.
+
 #### Returns
 
 `void`
@@ -150,7 +158,7 @@ bus.emit('ui', 'toggle', false);
 
 > **off**\<`C`, `T`\>(`channel`, `type`, `handler`): `void`
 
-Defined in: [eventBus/EventBus.ts:119](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/eventBus/EventBus.ts#L119)
+Defined in: [eventBus/EventBus.ts:129](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L129)
 
 Removes a specific handler previously added with [\`on\`](#on).
 
@@ -184,7 +192,7 @@ Event type of the subscription to remove.
 
 ##### handler
 
-(`payload`) => `void`
+(`payload`, `event?`) => `void`
 
 The same handler reference that was passed to `on`.
 
@@ -208,7 +216,7 @@ bus.off('math', 'inc', h);
 
 > **on**\<`C`, `T`\>(`channel`, `type`, `handler`): () => `void`
 
-Defined in: [eventBus/EventBus.ts:77](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/eventBus/EventBus.ts#L77)
+Defined in: [eventBus/EventBus.ts:87](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L87)
 
 Subscribes a handler to an exact `(channel, type)`.
 
@@ -242,9 +250,12 @@ Event type within the channel.
 
 ##### handler
 
-(`payload`) => `void`
+(`payload`, `event?`) => `void`
 
-Function invoked with the payload type `EM[C][T]`.
+Function invoked with the payload type `EM[C][T]`. It optionally
+receives the **source event** as a second argument when the emitter supplies one, so
+subscribers can read the true `id` (and any `meta`) instead of reconstructing an event
+from the payload alone. Handlers that declare only `payload` remain valid.
 
 #### Returns
 
@@ -256,7 +267,7 @@ An **unsubscribe** function that removes this handler.
 
 `void`
 
-#### Example
+#### Examples
 
 ```ts
 const off = bus.on('data', 'loaded', ({ items }) => {
@@ -265,4 +276,10 @@ const off = bus.on('data', 'loaded', ({ items }) => {
 
 // Later, stop listening:
 off();
+```
+
+```ts
+bus.on('data', 'loaded', (payload, event) => {
+  console.log('event id:', event?.id);
+});
 ```

@@ -2,7 +2,7 @@
  * @module @yoltra/core
  */
 
-import type { EventMapBase } from "../types";
+import type { Event, EventMapBase } from "../types";
 
 /**
  * Minimal, synchronous pub/sub event bus keyed by **channel** and **type**.
@@ -50,7 +50,7 @@ export class EventBus<EM extends EventMapBase> {
    * Internal registry: `channel → type → Set<handler>`.
    * @internal
    */
-  private handlers: Map<string, Map<string, Set<(payload: any) => void>>> = new Map();
+  private handlers: Map<string, Map<string, Set<(payload: any, event?: any) => void>>> = new Map();
 
   /**
    * Subscribes a handler to an exact `(channel, type)`.
@@ -59,7 +59,10 @@ export class EventBus<EM extends EventMapBase> {
    * @typeParam T - Type key within channel `C` (must be a string key of `EM[C]`).
    * @param channel - Channel name to subscribe to.
    * @param type - Event type within the channel.
-   * @param handler - Function invoked with the payload type `EM[C][T]`.
+   * @param handler - Function invoked with the payload type `EM[C][T]`. It optionally
+   * receives the **source event** as a second argument when the emitter supplies one, so
+   * subscribers can read the true `id` (and any `meta`) instead of reconstructing an event
+   * from the payload alone. Handlers that declare only `payload` remain valid.
    * @returns An **unsubscribe** function that removes this handler.
    *
    * @example
@@ -72,12 +75,19 @@ export class EventBus<EM extends EventMapBase> {
    * off();
    * ```
    *
+   * @example Reading the source event
+   * ```ts
+   * bus.on('data', 'loaded', (payload, event) => {
+   *   console.log('event id:', event?.id);
+   * });
+   * ```
+   *
    * @public
    */
   public on<C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
     type: T,
-    handler: (payload: EM[C][T]) => void,
+    handler: (payload: EM[C][T], event?: Event<EM, C, T>) => void,
   ): () => void {
     let byType = this.handlers.get(channel);
     if (!byType) {
@@ -119,7 +129,7 @@ export class EventBus<EM extends EventMapBase> {
   public off<C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
     type: T,
-    handler: (payload: EM[C][T]) => void,
+    handler: (payload: EM[C][T], event?: Event<EM, C, T>) => void,
   ): void {
     const byType = this.handlers.get(channel);
     if (!byType) return;
@@ -144,6 +154,9 @@ export class EventBus<EM extends EventMapBase> {
    * @param channel - Channel name to emit on.
    * @param type - Event type to emit.
    * @param payload - Payload matching `EM[C][T]`.
+   * @param event - Optional **source event**, forwarded to handlers as a second argument.
+   * Supply it whenever the caller already holds the real event so subscribers observe its
+   * true `id` rather than reconstructing one; omitting it keeps the original behaviour.
    *
    * @example
    * ```ts
@@ -156,6 +169,7 @@ export class EventBus<EM extends EventMapBase> {
     channel: C,
     type: T,
     payload: EM[C][T],
+    event?: Event<EM, C, T>,
   ): void {
     const byType = this.handlers.get(channel);
     if (!byType) return;
@@ -165,7 +179,7 @@ export class EventBus<EM extends EventMapBase> {
 
     for (const h of [...set]) {
       try {
-        (h as any)(payload);
+        (h as any)(payload, event);
       } catch (err) {
         console.error("EventBus handler error:", err);
       }

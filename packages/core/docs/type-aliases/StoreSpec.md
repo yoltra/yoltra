@@ -8,7 +8,7 @@
 
 > **StoreSpec**\<`R`, `S`, `EM`\> = `object`
 
-Defined in: [types.ts:284](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L284)
+Defined in: [types.ts:356](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L356)
 
 Store configuration object passed to the [Store](../classes/Store.md) constructor or [createStore](../functions/createStore.md).
 
@@ -59,7 +59,7 @@ Event map.
 
 > `optional` **dedupWindowMs**: `number`
 
-Defined in: [types.ts:322](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L322)
+Defined in: [types.ts:394](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L394)
 
 Time window in milliseconds for **content-based** event deduplication.
 When greater than 0, events with identical fingerprints
@@ -83,7 +83,7 @@ emit (e.g. React Strict Mode), prefer the per-emit [EmitOptions.dedupKey](../int
 
 > `optional` **devtools**: `object`
 
-Defined in: [types.ts:330](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L330)
+Defined in: [types.ts:423](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L423)
 
 DevTools configuration options.
 
@@ -110,10 +110,46 @@ These options control runtime DevTools capabilities such as event replay.
 
 > `optional` **effects**: [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:307](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L307)
+Defined in: [types.ts:379](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L379)
 
 Optional side-effect handlers registered at construction time.
 Runs after reducers for every propagated event.
+
+***
+
+### idFactory()?
+
+> `optional` **idFactory**: () => `string`
+
+Defined in: [types.ts:415](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L415)
+
+Generates the `id` for each emitted event. Defaults to `crypto.randomUUID()`.
+
+#### Returns
+
+`string`
+
+#### Remarks
+
+Two reasons to override it. First, portability: `crypto.randomUUID` requires a **secure
+context** in browsers and is absent on some runtimes (React Native / Hermes), where the
+default would throw on every emit. Second, determinism: injecting a counter makes event
+ids stable across runs, which is what allows byte-exact assertions in tests.
+
+The factory must return a string. Uniqueness is the caller's responsibility.
+
+#### Default
+
+```ts
+() => crypto.randomUUID()
+```
+
+#### Example
+
+```ts
+let n = 0;
+const store = createStore({ name: 'Test', reducer, idFactory: () => `evt-${++n}` });
+```
 
 ***
 
@@ -121,7 +157,7 @@ Runs after reducers for every propagated event.
 
 > `optional` **middleware**: [`MiddlewareInput`](MiddlewareInput.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:301](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L301)
+Defined in: [types.ts:373](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L373)
 
 Middleware chain executed before reducers/effects.
 Accepts either functions (legacy) or MiddlewareSpec objects (recommended).
@@ -133,7 +169,7 @@ If any middleware returns false (or resolves to false), the event will not propa
 
 > **name**: `string`
 
-Defined in: [types.ts:288](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L288)
+Defined in: [types.ts:360](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L360)
 
 Store name (used by DevTools to identify the instance).
 
@@ -143,7 +179,7 @@ Store name (used by DevTools to identify the instance).
 
 > `optional` **onEffectError**: (`error`, `event`) => `void`
 
-Defined in: [types.ts:353](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L353)
+Defined in: [types.ts:446](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L446)
 
 Called when an effect throws or its returned promise rejects.
 
@@ -175,11 +211,57 @@ report to a service or emit a failure event. Other effects still run.
 
 ***
 
+### onReducerError()?
+
+> `optional` **onReducerError**: (`error`, `event`, `slice`) => `void`
+
+Defined in: [types.ts:466](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L466)
+
+Invoked when a reducer throws.
+
+#### Parameters
+
+##### error
+
+`unknown`
+
+The thrown value.
+
+##### event
+
+[`EventUnion`](EventUnion.md)\<`EM`\>
+
+The event being reduced when it threw.
+
+##### slice
+
+`string`
+
+Name of the slice whose reducer threw.
+
+#### Returns
+
+`void`
+
+#### Remarks
+
+A reducer is meant to be pure and total, so a throw is a bug in application code — and it
+used to be almost invisible. Keyed reducers ran through a bus that logged and moved on,
+letting the event commit and its effects run; pattern reducers threw straight out of the
+drain, aborting the commit and notifying nobody. Both paths now isolate the failing slice
+and report here.
+
+The failing slice keeps its previous state; every other slice still reduces, and the event
+still commits if anything else changed. `emit()` never rejects because of a reducer error,
+so this hook is how a caller observes one.
+
+***
+
 ### reducer
 
 > **reducer**: `Record`\<`R`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
 
-Defined in: [types.ts:294](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L294)
+Defined in: [types.ts:366](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L366)
 
 Map of slice name → reducer spec.
 Each entry declares initial state, the reducer function, and the event targeting.

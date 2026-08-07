@@ -39,12 +39,12 @@ export const keys = eventKeys<AppEvents>();
  */
 const counterReducerLegacy: ReducerSpec<AppState["counter"], AppEvents> = {
   state: { value: 0 },
-  events: [
+  when: { keys: [
     ["ui", "increment"],
     ["ui", "decrement"],
     ["ui", "reset"],
     ["admin", "setCounter"],
-  ],
+  ] },
   reducer(state, event) {
     if (event.channel === "ui") {
       if (event.type === "increment") return { value: state.value + (event.payload as number) };
@@ -131,7 +131,7 @@ export function makeStoreWithLegacyEvents() {
     name: "LegacyEventsStore",
     reducer: {
       counter: counterReducerLegacy,
-      logger: { state: { logs: [] }, events: [], reducer: (s) => s },
+      logger: { state: { logs: [] }, when: { keys: [] }, reducer: (s) => s },
     },
   });
 }
@@ -141,7 +141,7 @@ export function makeStoreWithWhenKeys() {
     name: "WhenKeysStore",
     reducer: {
       counter: counterReducerWithWhenKeys,
-      logger: { state: { logs: [] }, events: [], reducer: (s) => s },
+      logger: { state: { logs: [] }, when: { keys: [] }, reducer: (s) => s },
     },
   });
 }
@@ -150,7 +150,7 @@ export function makeStoreWithChannelMatcher() {
   return createStore<AppState, AppEvents>({
     name: "ChannelMatcherStore",
     reducer: {
-      counter: { state: { value: 0 }, events: [], reducer: (s) => s },
+      counter: { state: { value: 0 }, when: { keys: [] }, reducer: (s) => s },
       logger: loggerReducerWithChannel,
     },
   });
@@ -160,7 +160,7 @@ export function makeStoreWithChannelsMatcher() {
   return createStore<AppState, AppEvents>({
     name: "ChannelsMatcherStore",
     reducer: {
-      counter: { state: { value: 0 }, events: [], reducer: (s) => s },
+      counter: { state: { value: 0 }, when: { keys: [] }, reducer: (s) => s },
       logger: loggerReducerWithChannels,
     },
   });
@@ -170,7 +170,7 @@ export function makeStoreWithAnyMatcher() {
   return createStore<AppState, AppEvents>({
     name: "AnyMatcherStore",
     reducer: {
-      counter: { state: { value: 0 }, events: [], reducer: (s) => s },
+      counter: { state: { value: 0 }, when: { keys: [] }, reducer: (s) => s },
       logger: loggerReducerWithAny,
     },
   });
@@ -181,7 +181,7 @@ export function makeStoreWithDedupConfig(dedupWindowMs: number) {
     name: "DedupConfigStore",
     reducer: {
       counter: counterReducerLegacy,
-      logger: { state: { logs: [] }, events: [], reducer: (s) => s },
+      logger: { state: { logs: [] }, when: { keys: [] }, reducer: (s) => s },
     },
     dedupWindowMs,
   });

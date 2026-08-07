@@ -16,7 +16,7 @@ type AppState = { counter: CounterState; todos: TodosState };
 
 const counterSpec: ReducerSpec<CounterState, EM> = {
   state: { value: 0 },
-  events: [["ui", "increment"]],
+  when: { keys: [["ui", "increment"]] },
   reducer(state, event) {
     if (event.type === "increment") return { value: state.value + (event.payload as number) };
     return state;
@@ -30,7 +30,7 @@ const todosSpec: ReducerSpec<TodosState, EM> = {
       { id: "b", title: "B" },
     ],
   },
-  events: [["ui", "rename"]],
+  when: { keys: [["ui", "rename"]] },
   reducer(state, event) {
     if (event.type === "rename") {
       const { id, title } = event.payload as { id: string; title: string };
@@ -91,12 +91,12 @@ describe("Store - instrumentation (B1)", () => {
     type MultiEM = { app: { tick: number } };
     const a: ReducerSpec<{ n: number }, MultiEM> = {
       state: { n: 0 },
-      events: [["app", "tick"]],
+      when: { keys: [["app", "tick"]] },
       reducer: (s) => ({ n: s.n + 1 }),
     };
     const b: ReducerSpec<{ m: number }, MultiEM> = {
       state: { m: 0 },
-      events: [["app", "tick"]],
+      when: { keys: [["app", "tick"]] },
       reducer: (s) => ({ m: s.m + 10 }),
     };
     const store = createStore({ name: "Multi", reducer: { a, b } });
@@ -136,8 +136,7 @@ describe("Store - instrumentation (B1)", () => {
     expect(changes).toEqual([42]);
   });
 
-  it("__applyExternalState is a no-op without devtools.allowReplay (SEC-1 gate)", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("__applyExternalState throws without devtools.allowReplay (SEC-1 gate)", () => {
     const store = createStore<{ counter: CounterState }, EM>({
       name: "ExternalGated",
       reducer: { counter: counterSpec },
@@ -145,11 +144,13 @@ describe("Store - instrumentation (B1)", () => {
     });
     const before = store.getState().counter.value;
 
-    store.__applyExternalState({ counter: { value: 999 } });
-
+    // Refused loudly, like its sibling `__replayEvents`. Both replace the state tree wholesale
+    // on behalf of a devtools client; warning in one case and throwing in the other made a
+    // disabled seam look like a working one that had simply found nothing to do.
+    expect(() => store.__applyExternalState({ counter: { value: 999 } })).toThrow(
+      /time-travel\) is disabled/,
+    );
     expect(store.getState().counter.value).toBe(before);
-    expect(warnSpy).toHaveBeenCalled();
-    warnSpy.mockRestore();
   });
 
   it("isolates a throwing observer without breaking the emit", async () => {

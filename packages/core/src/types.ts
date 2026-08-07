@@ -49,7 +49,31 @@ export type EventKey<EM extends EventMapBase> = {
 }[keyof EM & string];
 
 /**
- * A single event object: `{ channel, type, payload, id }`.
+ * Opaque, optional envelope metadata carried alongside an {@link Event}.
+ *
+ * @remarks
+ * The store never reads, validates or acts on this — it only carries it end to end, so
+ * reducers, middleware, effects, event subscribers and instrumentation all observe the same
+ * value. It is deliberately untyped at this level: consumers namespace their own keys (for
+ * example a tracing integration keeping provenance under `meta.trace`) rather than
+ * extending core with domain concepts.
+ *
+ * It is **not** part of the deduplication fingerprint, which is computed from
+ * `(channel, type, payload)` only. Two events differing solely in `meta` still dedupe.
+ *
+ * @example
+ * ```ts
+ * await store.emit('orders', 'created', payload, {
+ *   meta: { trace: { origin: 'checkout-service', hop: 1 } },
+ * });
+ * ```
+ *
+ * @public
+ */
+export type EventMeta = Readonly<Record<string, unknown>>;
+
+/**
+ * A single event object: `{ channel, type, payload, id }`, plus optional `meta`.
  *
  * @typeParam EM - Event map.
  * @typeParam C  - Channel key.
@@ -57,14 +81,16 @@ export type EventKey<EM extends EventMapBase> = {
  * @typeParam P  - Payload type (defaults to `EM[C][T]`).
  *
  * @remarks
- * - The `id` field is automatically added by the store to enable deduplication.
+ * - The `id` field is automatically added by the store to enable deduplication, unless the
+ *   emitter supplies one via {@link EmitOptions.id}.
  * - Used for preventing duplicate event processing (e.g., React Strict Mode).
+ * - `meta` is present only when {@link EmitOptions.meta} was supplied. See {@link EventMeta}.
  *
  * @example
  * ```ts
  * type EM = { ui: { toggle: boolean } };
  * type Evt = Event<EM, 'ui', 'toggle'>;
- * // { channel: 'ui'; type: 'toggle'; payload: boolean; id: string }
+ * // { channel: 'ui'; type: 'toggle'; payload: boolean; id: string; meta?: EventMeta }
  * ```
  *
  * @public
@@ -80,6 +106,11 @@ export interface Event<
   payload: P;
   /** Unique identifier for deduplication and devtools tracking (automatically added by store) */
   id: string;
+  /**
+   * Optional caller-supplied metadata, carried through the pipeline untouched.
+   * Absent entirely unless {@link EmitOptions.meta} was supplied. See {@link EventMeta}.
+   */
+  readonly meta?: EventMeta;
 }
 
 /**
@@ -137,6 +168,44 @@ export interface EmitOptions {
    * is 0, using a short default window.
    */
   dedupKey?: string;
+
+  /**
+   * Use this exact id for the event instead of generating one.
+   *
+   * @remarks
+   * Intended for **idempotent re-emission**: a caller replaying an event from elsewhere (a
+   * peer store, a durable log) can preserve the original id so the same logical event keeps
+   * one identity everywhere, which makes it traceable across systems and in DevTools.
+   *
+   * The store does **not** enforce uniqueness — supplying a duplicate id does not dedupe the
+   * event. Deduplication is a separate, opt-in concern; see {@link EmitOptions.dedupKey}.
+   */
+  id?: string;
+
+  /**
+   * Metadata to attach to this event, carried through the pipeline untouched and visible to
+   * reducers, middleware, effects, subscribers and instrumentation. See {@link EventMeta}.
+   *
+   * @remarks
+   * Omitting this leaves `event.meta` genuinely absent rather than `undefined`, so event
+   * objects are byte-identical to those produced before this option existed.
+   */
+  meta?: EventMeta;
+
+  /**
+   * Bypass deduplication for this emit entirely, even when the store was created with
+   * {@link StoreSpec.dedupWindowMs} greater than 0.
+   *
+   * @remarks
+   * Content-based dedup fingerprints `(channel, type, payload)`, so a store with a dedup
+   * window silently collapses genuinely distinct events that happen to share a payload —
+   * repeated ticks with an empty payload, or the same event legitimately arriving twice from
+   * two different sources. Set this when the caller already guarantees distinctness by other
+   * means and needs every emit to land.
+   *
+   * Takes precedence over both {@link EmitOptions.dedupKey} and the store-level window.
+   */
+  skipDedup?: boolean;
 }
 
 export type Emit<EM extends EventMapBase> = <
@@ -164,8 +233,11 @@ export type Unsubscribe = () => void;
  * @public
  */
 export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
-  /** The processed event, including its generated `id`. */
-  event: { id: string; channel: string; type: string; payload: unknown };
+  /**
+   * The processed event, including its `id` and any {@link EventMeta} the emitter attached.
+   * `meta` is absent unless it was supplied.
+   */
+  event: { id: string; channel: string; type: string; payload: unknown; meta?: EventMeta };
   /** `true` if the event passed middleware and ran reducers; `false` if vetoed. */
   committed: boolean;
   /**
@@ -322,6 +394,27 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
   dedupWindowMs?: number;
 
   /**
+   * Generates the `id` for each emitted event. Defaults to `crypto.randomUUID()`.
+   *
+   * @remarks
+   * Two reasons to override it. First, portability: `crypto.randomUUID` requires a **secure
+   * context** in browsers and is absent on some runtimes (React Native / Hermes), where the
+   * default would throw on every emit. Second, determinism: injecting a counter makes event
+   * ids stable across runs, which is what allows byte-exact assertions in tests.
+   *
+   * The factory must return a string. Uniqueness is the caller's responsibility.
+   *
+   * @default () => crypto.randomUUID()
+   *
+   * @example
+   * ```ts
+   * let n = 0;
+   * const store = createStore({ name: 'Test', reducer, idFactory: () => `evt-${++n}` });
+   * ```
+   */
+  idFactory?: () => string;
+
+  /**
    * DevTools configuration options.
    *
    * @remarks
@@ -351,6 +444,26 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * @param event - The event whose effect failed.
    */
   onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
+
+  /**
+   * Invoked when a reducer throws.
+   *
+   * @remarks
+   * A reducer is meant to be pure and total, so a throw is a bug in application code — and it
+   * used to be almost invisible. Keyed reducers ran through a bus that logged and moved on,
+   * letting the event commit and its effects run; pattern reducers threw straight out of the
+   * drain, aborting the commit and notifying nobody. Both paths now isolate the failing slice
+   * and report here.
+   *
+   * The failing slice keeps its previous state; every other slice still reduces, and the event
+   * still commits if anything else changed. `emit()` never rejects because of a reducer error,
+   * so this hook is how a caller observes one.
+   *
+   * @param error - The thrown value.
+   * @param event - The event being reduced when it threw.
+   * @param slice - Name of the slice whose reducer threw.
+   */
+  onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
 };
 
 /**
@@ -432,9 +545,9 @@ export interface StoreInstance<
   registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): Unsubscribe;
 
   /**
-   * Dynamically add middleware.
+   * Dynamically add middleware, in either the function or the spec form.
    */
-  registerMiddleware(mw: MiddlewareFunction<DeepReadonly<S>, EM>): Unsubscribe;
+  registerMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): Unsubscribe;
 
   /**
    * Dynamically add/remove a namespaced reducer slice at runtime.
@@ -527,7 +640,7 @@ export interface StoreInstance<
    */
   hotReplace(partial: {
     reducer?: Record<R, ReducerSpec<S[R], EM>>;
-    middleware?: MiddlewareFunction<DeepReadonly<S>, EM>[];
+    middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
     effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
     preserveState?: boolean;
   }): void;
@@ -546,7 +659,7 @@ export interface StoreInstance<
    */
   __replayEvents(
     snapshot: any,
-    events: Array<{ channel: string; type: string; payload: any; id: string }>,
+    events: Array<{ channel: string; type: string; payload: any; id: string; meta?: EventMeta }>,
   ): void;
 
   /**
@@ -615,15 +728,6 @@ export interface StoreInstance<
  * };
  * ```
  *
- * @example Using `events` (legacy)
- * ```ts
- * const counterSpec: ReducerSpec<{ value: number }, MyEM> = {
- *   state: { value: 0 },
- *   events: [['ui', 'increment'], ['ui', 'decrement']],
- *   reducer(s, evt) { ... },
- * };
- * ```
- *
  * @public
  */
 export interface ReducerSpec<S = any, EM extends EventMapBase = EventMapBase> {
@@ -634,15 +738,8 @@ export interface ReducerSpec<S = any, EM extends EventMapBase = EventMapBase> {
 
   /**
    * Event targeting using the unified `When` matcher.
-   * Preferred over `events` for new code.
    */
   when?: When<EM>;
-
-  /**
-   * List of EventKeys `[channel, type]` that this reducer responds to.
-   * @deprecated Use `when: { keys: [...] }` instead for better type inference.
-   */
-  events?: ReadonlyArray<EventKey<EM>>;
 
   /**
    * Pure reducer function: `(state, event) => nextState`.
@@ -706,15 +803,8 @@ export type ReducerFunction<S = any, EM extends EventMapBase = EventMapBase> = (
 export interface EffectSpec<S = any, EM extends EventMapBase = EventMapBase> {
   /**
    * Event targeting using the unified `When` matcher.
-   * Preferred over `events` for new code.
    */
   when?: When<EM>;
-
-  /**
-   * List of EventKeys `[channel, type]` that this effect responds to.
-   * @deprecated Use `when: { keys: [...] }` instead for better type inference.
-   */
-  events?: ReadonlyArray<EventKey<EM>>;
 
   /**
    * Async effect handler: `(event, getState, emit) => void | Promise<void>`.
@@ -1133,12 +1223,32 @@ export type Dotted<Slice> = (keyof Slice & string) | Path<Slice>;
 /**
  * Deep readonly type: recursively makes all properties readonly.
  *
+ * @remarks
+ * The built-in object types are handled before the general mapped-object case, because
+ * mapping over one destroys it. `{ readonly [K in keyof Map<K, V>]: ... }` produces an object
+ * carrying the *names* of a Map's methods with their signatures rewritten, so reading a Map
+ * out of state and calling `.get()` on it was a type error even though the value at runtime
+ * is an ordinary Map. The same applied to `Set`, `Date`, `RegExp` and any function stored in
+ * state.
+ *
+ * Collections become their `Readonly*` counterparts, which is the same treatment arrays
+ * already had. Functions are returned untouched: a function's properties are not state, and
+ * mapping over them makes it uncallable.
+ *
  * @typeParam T - Type to make readonly.
  *
  * @public
  */
-export type DeepReadonly<T> = T extends (infer A)[]
+export type DeepReadonly<T> = T extends (...args: never[]) => unknown
+  ? T
+  : T extends (infer A)[]
   ? ReadonlyArray<DeepReadonly<A>>
+  : T extends ReadonlyMap<infer K, infer V>
+  ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
+  : T extends ReadonlySet<infer V>
+  ? ReadonlySet<DeepReadonly<V>>
+  : T extends Date | RegExp | Promise<unknown> | Error
+  ? T
   : T extends object
   ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
   : T;

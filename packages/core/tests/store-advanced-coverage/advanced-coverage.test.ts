@@ -23,11 +23,11 @@ function makeBaseReducers(): Record<"counter", ReducerSpec<CounterState, EM>> {
   return {
     counter: {
       state: { value: 0 },
-      events: [
+      when: { keys: [
         ["ui", "inc"],
         ["ui", "noChange"],
         ["ui", "dangerous"],
-      ],
+      ] },
       reducer(state, evt) {
         if (evt.channel === "ui" && evt.type === "inc") {
           return { value: state.value + (evt.payload as number) };
@@ -148,7 +148,7 @@ describe("Store advanced coverage", () => {
       ],
       effects: [
         {
-          events: [["ui", "inc"]],
+          when: { keys: [["ui", "inc"]] },
           effect: async (evt, getState) => {
             logs.push(`eff0:${getState().counter.value}`);
           },
@@ -178,7 +178,7 @@ describe("Store advanced coverage", () => {
     store.hotReplace({
       effects: [
         {
-          events: [["ui", "inc"]],
+          when: { keys: [["ui", "inc"]] },
           effect: async (evt, getState) => {
             logs.push(`eff1:${getState().counter.value}`);
           },
@@ -190,7 +190,7 @@ describe("Store advanced coverage", () => {
     const newReducers = {
       counter: {
         state: { value: 5 },
-        events: [["ui", "inc"]],
+        when: { keys: [["ui", "inc"]] },
         reducer: (state: CounterState, evt: EventUnion<EM>): CounterState => {
           if (evt.channel === "ui" && evt.type === "inc") {
             return { value: state.value + (evt.payload as number) };
@@ -225,7 +225,7 @@ describe("Store advanced coverage", () => {
         // this slice has no events wired
         counter: {
           state: { value: 0 },
-          events: [],
+          when: { keys: [] },
           reducer: (s: CounterState) => s,
         },
       } satisfies Record<"counter", ReducerSpec<CounterState, EM>>,

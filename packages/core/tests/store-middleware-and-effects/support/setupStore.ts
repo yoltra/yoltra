@@ -14,10 +14,10 @@ export type AppEvents = {
 
 export const reducerSpec: ReducerSpec<AppState["counter"], AppEvents> = {
   state: { value: 0 },
-  events: [
+  when: { keys: [
     ["ui", "increment"],
     ["ui", "dangerous"],
-  ],
+  ] },
   reducer(state, event) {
     if (event.channel === "ui" && event.type === "increment") {
       return { value: state.value + (event.payload as number) };

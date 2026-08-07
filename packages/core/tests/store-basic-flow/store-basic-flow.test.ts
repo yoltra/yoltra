@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 
 import { createStore } from "../../src/store/Store";
-import { reducers, AppEvents, AppState } from "./support/reducers";
+import { reducers } from "./support/reducers";
+import type { AppEvents, AppState } from "./support/reducers";
 
 describe("Store - basic flow", () => {
   it("initialises state from reducer specs and deep-freezes slices", () => {

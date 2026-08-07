@@ -1,0 +1,93 @@
+{
+  "recordedAt": "2026-08-04T02:21:13.866Z",
+  "samples": {
+    "objects > wide object, 200 keys, one changed": {
+      "hz": 92792.78886851977,
+      "meanMs": 0.010776699484880478
+    },
+    "objects > deep object, 10 levels, leaf changed": {
+      "hz": 215420.352465154,
+      "meanMs": 0.004642086917770493
+    },
+    "1000 rows: positional array against normalised > array: update one": {
+      "hz": 432739.5058114747,
+      "meanMs": 0.0023108590423811582
+    },
+    "1000 rows: positional array against normalised > array: insert at front": {
+      "hz": 1349.8969569656706,
+      "meanMs": 0.7407972844444535
+    },
+    "1000 rows: positional array against normalised > normalised: update one": {
+      "hz": 14123.913844125173,
+      "meanMs": 0.07080190455961674
+    },
+    "1000 rows: positional array against normalised > normalised: insert": {
+      "hz": 13855.376674313915,
+      "meanMs": 0.07217414751732237
+    },
+    "emit, 100 state keys, one changed > no subscribers": {
+      "hz": 56912.34407843661,
+      "meanMs": 0.017570880556629326
+    },
+    "emit, 100 state keys, one changed > 50 subscribers on untouched paths": {
+      "hz": 57948.44663393868,
+      "meanMs": 0.017256717963762117
+    },
+    "emit, 100 state keys, one changed > 50 subscribers on the changed path": {
+      "hz": 54696.78332474957,
+      "meanMs": 0.018282610771875377
+    },
+    "emit, 100 state keys, one changed > 50 on the changed path, instrumented": {
+      "hz": 51330.6370689306,
+      "meanMs": 0.019481542741367607
+    },
+    "1 subscriptions > exact": {
+      "hz": 5905324.216596203,
+      "meanMs": 0.0001693387125451335
+    },
+    "1 subscriptions > wildcard": {
+      "hz": 2659906.5474416083,
+      "meanMs": 0.0003759530578101833
+    },
+    "1 subscriptions > wildcard, leading **": {
+      "hz": 2581858.742583848,
+      "meanMs": 0.00038731785883809795
+    },
+    "10 subscriptions > exact": {
+      "hz": 5488894.869283111,
+      "meanMs": 0.00018218603631783663
+    },
+    "10 subscriptions > wildcard": {
+      "hz": 2481746.2776683173,
+      "meanMs": 0.000402942077116575
+    },
+    "10 subscriptions > wildcard, leading **": {
+      "hz": 1653193.5371059778,
+      "meanMs": 0.000604889855636966
+    },
+    "100 subscriptions > exact": {
+      "hz": 5670412.865916528,
+      "meanMs": 0.00017635400166551483
+    },
+    "100 subscriptions > wildcard": {
+      "hz": 2525178.4394400963,
+      "meanMs": 0.00039601161818161586
+    },
+    "100 subscriptions > wildcard, leading **": {
+      "hz": 404281.11705037387,
+      "meanMs": 0.0024735263603108105
+    },
+    "1000 subscriptions > exact": {
+      "hz": 5870823.0254576355,
+      "meanMs": 0.00017033386897607073
+    },
+    "1000 subscriptions > wildcard": {
+      "hz": 2565999.75540226,
+      "meanMs": 0.00038971165055439946
+    },
+    "1000 subscriptions > wildcard, leading **": {
+      "hz": 40996.5979983334,
+      "meanMs": 0.024392267866730117
+    }
+  }
+}

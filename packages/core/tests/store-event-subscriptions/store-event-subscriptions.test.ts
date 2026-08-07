@@ -1,12 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 
 import type { EventSubscriptionHandler, EffectSpec } from "../../src/types";
-import {
-  makeStore,
-  makeStoreWithBlockingMiddleware,
-  AppState,
-  AppEvents,
-} from "./support/setupStore";
+import { makeStore, makeStoreWithBlockingMiddleware } from "./support/setupStore";
+import type { AppState, AppEvents } from "./support/setupStore";
 
 describe("Store - event subscriptions", () => {
   describe("committed event subscriptions", () => {
@@ -65,7 +61,7 @@ describe("Store - event subscriptions", () => {
       const order: string[] = [];
 
       const effect: EffectSpec<Readonly<AppState>, AppEvents> = {
-        events: [["ui", "increment"]],
+        when: { keys: [["ui", "increment"]] },
         effect: async () => {
           order.push("effect");
         },

@@ -8,7 +8,7 @@
 
 > **InstrumentationObserver**\<`EM`\> = (`info`) => `void`
 
-Defined in: [types.ts:193](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L193)
+Defined in: [types.ts:265](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L265)
 
 Observer for [StoreInstance.instrument](../interfaces/StoreInstance.md#instrument). Called once per emitted event
 (committed or vetoed), after the synchronous reduce phase.

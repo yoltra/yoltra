@@ -12,7 +12,7 @@ type State = {
 
 const counterReducer: ReducerSpec<State["counter"], EM> = {
   state: { value: 0 },
-  events: [["math", "add"], ["math", "multiply"]],
+  when: { keys: [["math", "add"], ["math", "multiply"]] },
   reducer(state, event) {
     if (event.channel === "math" && event.type === "add") {
       return { value: state.value + (event.payload as number) };
@@ -115,7 +115,7 @@ describe("Store - __replayEvents", () => {
       reducer: { counter: counterReducer },
       effects: [
         {
-          events: [["math", "add"]],
+          when: { keys: [["math", "add"]] },
           effect: effectFn,
         } as EffectSpec<any, EM>,
       ],

@@ -8,7 +8,7 @@
 
 > **Emit**\<`EM`\> = \<`C`, `T`\>(`channel`, `type`, `payload`, `opts?`) => `Promise`\<`void`\>
 
-Defined in: [types.ts:142](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/types.ts#L142)
+Defined in: [types.ts:211](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L211)
 
 ## Type Parameters
 

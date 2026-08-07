@@ -8,7 +8,7 @@
 
 > **detectChangedProps**(`oldState`, `newState`, `path`, `ancestors`): `string`[]
 
-Defined in: [utils/detectChangedProps.ts:71](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/utils/detectChangedProps.ts#L71)
+Defined in: [utils/detectChangedProps.ts:92](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/detectChangedProps.ts#L92)
 
 Computes the list of **dotted leaf paths** that changed between two values.
 

@@ -15,10 +15,10 @@ type State = {
 
 const reducerSpec: ReducerSpec<State["counter"], EM> = {
   state: { value: 0 },
-  events: [
+  when: { keys: [
     ["ui", "ping"],
     ["ui", "nested"],
-  ],
+  ] },
   reducer(state, event) {
     if (event.channel === "ui" && event.type === "ping") {
       return { value: state.value + (event.payload as number) };
@@ -199,11 +199,11 @@ describe("Store - deduplication is opt-in (C2)", () => {
     type FpEM = { ui: { obj: { a: number }; nul: null; bad: unknown } };
     const spec: ReducerSpec<{ n: number }, FpEM> = {
       state: { n: 0 },
-      events: [
+      when: { keys: [
         ["ui", "obj"],
         ["ui", "nul"],
         ["ui", "bad"],
-      ],
+      ] },
       reducer(state) {
         return { n: state.n + 1 };
       },

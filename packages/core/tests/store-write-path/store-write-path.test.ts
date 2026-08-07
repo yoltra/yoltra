@@ -23,7 +23,7 @@ const boardSpec: ReducerSpec<BoardState, Events> = {
     ],
     filter: { q: "" },
   },
-  events: [["board", "rename"]],
+  when: { keys: [["board", "rename"]] },
   reducer(state, event) {
     if (event.channel === "board" && event.type === "rename") {
       const { id, title } = event.payload as { id: string; title: string };

@@ -18,7 +18,7 @@ export type AppEvents = {
 
 export const counterReducerSpec: ReducerSpec<CounterState, AppEvents> = {
   state: { value: 0 },
-  events: [["ui", "increment"]],
+  when: { keys: [["ui", "increment"]] },
   reducer(state, event) {
     if (event.channel === "ui" && event.type === "increment") {
       return { value: state.value + (event.payload as number) };
@@ -29,7 +29,7 @@ export const counterReducerSpec: ReducerSpec<CounterState, AppEvents> = {
 
 export const todosReducerSpec: ReducerSpec<TodosState, AppEvents> = {
   state: { items: [{ id: "1", title: "First" }] },
-  events: [["ui", "setTitle"]],
+  when: { keys: [["ui", "setTitle"]] },
   reducer(state, event) {
     if (event.channel === "ui" && event.type === "setTitle") {
       const { id, title } = event.payload as { id: string; title: string };

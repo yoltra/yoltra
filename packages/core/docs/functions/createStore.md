@@ -10,7 +10,7 @@
 
 > **createStore**\<`S`, `EM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `S` & `string`, `S`, `EM`\>
 
-Defined in: [store/Store.ts:2028](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/store/Store.ts#L2028)
+Defined in: [store/Store.ts:2199](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2199)
 
 Creates a store with explicit State and EventMap types.
 
@@ -55,9 +55,13 @@ Configuration with `name`, optional `reducer`, optional `middleware`, optional `
 
 [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
 
+##### idFactory?
+
+() => `string`
+
 ##### middleware?
 
-[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
+[`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
 
 ##### name
 
@@ -66,6 +70,10 @@ Configuration with `name`, optional `reducer`, optional `middleware`, optional `
 ##### onEffectError?
 
 (`error`, `event`) => `void`
+
+##### onReducerError?
+
+(`error`, `event`, `slice`) => `void`
 
 ##### reducer?
 
@@ -107,7 +115,7 @@ const store = createStore<AppState, AppEM>({
 
 > **createStore**\<`RM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, `StateFromReducers`\<`RM`\>, `EMFromReducersStrict`\<`RM`\>\>
 
-Defined in: [store/Store.ts:2069](https://github.com/yoltra/yoltra/blob/deb942c60b290a53939a9e286974c0da4e3f44ce/packages/core/src/store/Store.ts#L2069)
+Defined in: [store/Store.ts:2242](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2242)
 
 Creates a store with types inferred from the reducers map.
 
@@ -144,9 +152,13 @@ Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
 
 [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`StateFromReducers`\<`RM`\>\>, `EMFromReducersStrict`\<`RM`\>\>[]
 
+##### idFactory?
+
+() => `string`
+
 ##### middleware?
 
-[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`StateFromReducers`\<`RM`\>\>, `EMFromReducersStrict`\<`RM`\>\>[]
+[`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`StateFromReducers`\<`RM`\>\>, `EMFromReducersStrict`\<`RM`\>\>[]
 
 ##### name
 
@@ -155,6 +167,10 @@ Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
 ##### onEffectError?
 
 (`error`, `event`) => `void`
+
+##### onReducerError?
+
+(`error`, `event`, `slice`) => `void`
 
 ##### reducer
 
