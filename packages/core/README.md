@@ -87,6 +87,45 @@ store.connect({ reducer: "todos", property: "items.**" }, (change) =>
 );
 ```
 
+### Slices that hold a single value
+
+A slice does not have to be an object. A primitive, a `Map`, a `Set` or a `Date` is a valid
+slice state, and it commits like any other:
+
+```typescript
+const store = createStore({
+  name: "session",
+  reducer: {
+    token: {
+      state: null as string | null,
+      when: { keys: [["auth", "login"]] },
+      reducer: (_state, event) => event.payload.token,
+    },
+  },
+});
+
+await store.emit("auth", "login", { token: "abc123" });
+store.getState().token; // "abc123"
+```
+
+Such a slice has no property beneath it, so its changes are reported at the **slice root** —
+the empty path. Subscribe to it with `property: ""`:
+
+```typescript
+store.connect({ reducer: "token", property: "" }, (change) =>
+  console.log("token:", change.oldValue, " --> ", change.newValue),
+);
+```
+
+A `**` pattern matches the root too, since it matches zero segments; a `*` does not, because it
+requires exactly one. The root path is emitted **only when the slice's whole value is
+replaced** — an object slice reports its changes at their leaves, so `property: ""` on one of
+those stays quiet. For a whole-object subscription, use `property: "**"`.
+
+`Map` and `Set` are compared by reference, not by entry: a reducer returning a new `Map` is a
+change, mutating one in place is not. That follows from the immutability contract rather than
+being a special case — build a new collection instead of mutating the stored one.
+
 ### Immutability
 
 State is deep-frozen before committing. Mutations throw in strict mode:

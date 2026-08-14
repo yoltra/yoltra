@@ -85,10 +85,12 @@ export function toDottedPath(accessor: (p: any) => unknown): string {
   if (path === "") {
     warnOnce(
       "yoltra.toDottedPath.empty",
-      "[yoltra] A typed path accessor recorded no property access, so it will subscribe to the " +
-        "entire slice. The accessor must be a plain member chain like `p => p.items[0].title` and " +
-        "cannot return a computed value or a default. For a whole-slice or dynamic subscription, " +
-        "use the `{ reducer, property }` string form instead.",
+      "[yoltra] A typed path accessor recorded no property access, so it subscribed to the " +
+        "slice root. That fires only when the slice's whole value is replaced — which for a " +
+        "slice holding an object means never, since its changes are reported at their leaves. " +
+        "The accessor must be a plain member chain like `p => p.items[0].title` and cannot " +
+        "return a computed value or a default. For a dynamic subscription, or for a slice whose " +
+        "state is a single value, use the `{ reducer, property }` string form instead.",
     );
   }
 

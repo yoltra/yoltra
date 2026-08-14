@@ -267,6 +267,40 @@ generate `CHANGELOG.md` entries.
    policy — see the [Release Guide](./RELEASE_GUIDE.md)); otherwise leave it unset for independent
    versioning.
 
+### Build output conventions
+
+Two rules that only bite consumers, so nothing in this repo catches them for you. Both are
+enforced by `node common/scripts/check-publish-metadata.mjs` — run it before publishing.
+
+**Name build outputs `.mjs` and `.cjs`, never `.esm.js` / `.cjs.js`.** Node decides a `.js`
+file's format from the nearest `package.json` `type` field, so a bare `.js` means the opposite
+thing in a `"type": "module"` package than it does elsewhere. Both directions have shipped
+broken: a `require` condition pointing at a `.js` file inside a `"type": "module"` package
+throws `ReferenceError: exports is not defined`, and an `import` condition pointing at a `.js`
+file in a package with no `type` field fails on every Node before 22.7.
+
+```jsonc
+"exports": {
+  ".": {
+    "types":   "./dist/types/index.d.ts",
+    "import":  "./dist/thing.mjs",
+    "require": "./dist/thing.cjs"
+  }
+}
+```
+
+**Add the declaration-extension step to the package's `build` script:**
+
+```jsonc
+"build": "vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types"
+```
+
+TypeScript emits declarations with whatever the source wrote, and this repo writes extensionless
+relative imports. In a `"type": "module"` package those do not resolve, and since nearly every
+consumer sets `skipLibCheck: true` the errors are suppressed while **every re-exported symbol
+degrades to `any`** — a green build with no type checking at all, which is worse than a failure
+because nothing about it looks like one.
+
 ---
 
 ## Updating dependencies

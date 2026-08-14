@@ -166,4 +166,30 @@ describe("Store - dynamic slices", () => {
     const state = store.getState();
     expect(state.base.value).toBe(1);
   });
+
+  // The registry is a plain object, so `name in this.reducers` also answers true for every key
+  // on `Object.prototype`. A slice named after one of them was refused as already existing —
+  // and the error named a reducer the store had never been given.
+  it("accepts a slice named after an Object.prototype key", async () => {
+    const store = createStore<State, EM>({
+      name: "prototype-keys",
+      reducer: { base: baseReducer },
+    });
+
+    for (const name of ["toString", "constructor", "valueOf", "hasOwnProperty"]) {
+      expect(() =>
+        store.registerReducer(name, {
+          state: { value: 0 },
+          when: { keys: [["ui", "setCounter"]] },
+          reducer: (_s, e) => ({ value: e.payload as number }),
+        }),
+      ).not.toThrow();
+    }
+
+    await store.emit("ui", "setCounter", 7);
+    expect((store.getState() as any).toString.value).toBe(7);
+
+    // The guard still does its real job.
+    expect(() => store.registerReducer("base", baseReducer)).toThrow(/already exists/);
+  });
 });

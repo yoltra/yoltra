@@ -100,12 +100,33 @@ rush version --bump
 #    @yoltra/ds (its own policy):                   bumps per its own change files
 #    → consumes ALL change files, writes every CHANGELOG (files only — no git ops)
 
+# 3. Check what the tarballs actually contain, from a built tree:
+rush build
+node common/scripts/check-publish-metadata.mjs
+#    Exits non-zero and names every offending package. Fix before tagging —
+#    after the tag there is no un-publishing.
+
 git commit -am "chore(release): v0.2.0"
 
-# 3. Push the bump + tag together — the tag is what publishes:
+# 4. Push the bump + tag together — the tag is what publishes:
 git push origin main --follow-tags
 #    (equivalently: git push origin main && git tag v0.2.0 && git push origin v0.2.0)
 ```
+
+### What the pre-publish check covers
+
+Nothing else in CI inspects build output, which is how four separate consumer-facing defects
+shipped green at 0.4.0. `check-publish-metadata.mjs` verifies, for every publishable package:
+
+| Check | What it prevents |
+| --- | --- |
+| `repository.url` matches the source repo | npm Trusted Publishing rejects a mismatch with **E422** — *after* earlier packages are already live, leaving a partial release |
+| No published `.d.ts` has an extensionless relative specifier | Under `"type": "module"` those do not resolve; nearly every consumer sets `skipLibCheck: true`, so the errors vanish and every re-exported symbol silently becomes `any` |
+| `exports.import` is ESM and `exports.require` is CJS, by extension | A `require` condition pointing at a `.js` file inside a `"type": "module"` package throws `ReferenceError: exports is not defined` on the consumer's first line |
+| Every `//# sourceMappingURL` names a file the tarball contains | Otherwise every consumer's test run prints two ENOENT lines per module |
+
+The last three read the build output, so run `rush build` first — an unbuilt package is
+reported, not skipped.
 
 Then:
 

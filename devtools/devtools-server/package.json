@@ -22,14 +22,14 @@
     "url": "https://github.com/yoltra/yoltra/issues"
   },
   "type": "module",
-  "main": "dist/devtools-server.cjs.js",
-  "module": "dist/devtools-server.esm.js",
+  "main": "dist/devtools-server.cjs",
+  "module": "dist/devtools-server.mjs",
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/devtools-server.esm.js",
-      "require": "./dist/devtools-server.cjs.js"
+      "import": "./dist/devtools-server.mjs",
+      "require": "./dist/devtools-server.cjs"
     }
   },
   "bin": {
@@ -41,7 +41,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types",
     "test": "vitest --watch=false --coverage",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",

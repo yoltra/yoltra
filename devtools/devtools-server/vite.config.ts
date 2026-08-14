@@ -27,8 +27,11 @@ export default defineConfig({
       entry: "src/index.ts",
       name: "yoltraDevtoolsServer",
       formats: ["cjs", "es"],
-      fileName: (format) =>
-        format === "cjs" ? "devtools-server.cjs.js" : "devtools-server.esm.js",
+      // `.cjs` and `.mjs`, not `.cjs.js`/`.esm.js`. This package declares `"type": "module"`,
+      // which makes every `.js` file ESM — so the `require` condition pointed at a file Node
+      // parsed as ESM and `require("@yoltra/devtools-server")` threw `ReferenceError: exports is not
+      // defined in ES module scope`. An explicit extension states the format outright.
+      fileName: (format) => (format === "cjs" ? "devtools-server.cjs" : "devtools-server.mjs"),
     },
     rollupOptions: {
       external: ["ws", "@yoltra/devtools-protocol"],

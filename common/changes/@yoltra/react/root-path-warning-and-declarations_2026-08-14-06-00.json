@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "Corrects the typed-path accessor warning, which promised that an empty path subscribes to \"the entire slice\". It subscribes to the slice root, which fires only when the slice's whole value is replaced — for an object slice, never. Adds explicit extensions to the relative specifiers of published declaration files. Extensionless relative re-exports do not resolve under `moduleResolution: nodenext`, and because nearly every project sets `skipLibCheck: true` the errors were suppressed while every re-exported symbol silently degraded to `any`.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

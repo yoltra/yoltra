@@ -470,6 +470,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.patternEffects.clear();
     this.effectMeta = new WeakMap();
 
+    // The once-per-slice-and-event latch for the payload-aliasing warning. Left populated, a
+    // disposed-and-recreated store — per-route stores, HMR, a test suite building one per case —
+    // inherits the suppression and stays quiet about aliasing in code that has never been warned
+    // about. The latch exists to stop a hot path becoming a log, not to silence the next store.
+    this.warnedPayloadAliases.clear();
+
     // Release every subscription and observer. Without this, the closures they
     // hold (React fibers, DevTools sockets, effect handlers) pin the store and
     // leak on per-route / SSR / test / HMR stores that create and dispose stores.
@@ -776,6 +782,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * For each changed **leaf path** (via {@link detectChangedProps}), emits that leaf and
    * all of its **ancestors** once (e.g., `"data"`, `"data.123"`, `"data.123.title"`).
    *
+   * A slice whose state **is** a single value — a primitive, a `Map`/`Set`, a `Date` — has no
+   * leaf below its root, and `detectChangedProps` reports its change as the empty path `""`.
+   * That path is emitted as-is, so `connect({ reducer, property: "" })` (and any `**` pattern)
+   * hears it. It has no ancestors to walk.
+   *
    * **State Immutability**: When a slice changes, a new state object is created via
    * shallow spread: `{ ...this.state, [sliceName]: newSlice }`. This ensures that
    * `this.state` reference changes, enabling efficient change detection via `===`.
@@ -836,8 +847,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // if reducer returned same ref, definitely no change
     if (prev === next) return false;
 
-    // compute precise leaf paths that changed (relative to slice root)
-    const leafPaths = detectChangedProps(prev, next).filter(Boolean);
+    // Compute precise leaf paths that changed (relative to slice root).
+    //
+    // Not filtered for truthiness. `""` is how `detectChangedProps` reports a change at the
+    // slice ROOT — a slice that *is* one value: a primitive, a `Map`/`Set`, a `Date`, or an
+    // object replaced by something of a different shape. Discarding it as falsy made the
+    // length check below read "nothing changed", so `forwardEvent` returned before assigning
+    // `this.state`: the reducer ran, its result was thrown away, and nothing said so. A store
+    // holding `state: 0` could never leave `0`.
+    const leafPaths = detectChangedProps(prev, next);
 
     // if nothing actually changed at the leaves, treat as a no-op
     if (leafPaths.length === 0) return false;
@@ -884,6 +902,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // emit deep + ancestor paths once each
     const toEmit = new Set<string>();
     for (const p of leafPaths) {
+      // The slice root has no ancestors to walk — `buildAncestorPaths("")` is `[]` by contract,
+      // which is what callers holding a real path rely on — so it is added directly. Without
+      // this a slice that is entirely one value changes and tells nobody, which is the
+      // subscription half of the same bug the missing filter caused in the commit half.
+      if (p === "") {
+        toEmit.add("");
+        continue;
+      }
       for (const a of Store.buildAncestorPaths(p)) toEmit.add(a);
     }
 
@@ -1061,13 +1087,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       newState[rName] = frozenNextSlice;
       anyChanged = true;
 
-      // full dotted leaf paths relative to the slice
-      const leafPaths = detectChangedProps(prevSlice, nextSlice).filter(Boolean);
+      // Full dotted leaf paths relative to the slice. Unfiltered, for the reason given in
+      // `forwardEvent`: `""` is a genuine root-level change, not an absent one. Time travel
+      // onto a primitive slice committed the state here but emitted nothing, so a component
+      // subscribed through `connect` kept rendering the value it had before the jump.
+      const leafPaths = detectChangedProps(prevSlice, nextSlice);
       if (leafPaths.length === 0) return;
 
       // emit every leaf AND its ancestors once
       const toEmit = new Set<string>();
-      for (const p of leafPaths) for (const a of Store.buildAncestorPaths(p)) toEmit.add(a);
+      for (const p of leafPaths) {
+        if (p === "") {
+          toEmit.add("");
+          continue;
+        }
+        for (const a of Store.buildAncestorPaths(p)) toEmit.add(a);
+      }
 
       for (const path of toEmit) {
         const oldValue = this.getAtPath(prevSlice, path);
@@ -1670,7 +1705,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public registerReducer(name: string, spec: ReducerSpec<any, EM>): () => void {
-    if (name in this.reducers) throw new Error(`Reducer ${name} already exists`);
+    // `hasOwnProperty`, not `in`: the registry is a plain object, so `in` also answers true for
+    // everything on `Object.prototype`. A slice legitimately named `toString`, `constructor` or
+    // `valueOf` was refused as already existing — with a message naming a reducer that does not
+    // exist, which is the least useful place to send someone.
+    if (Object.prototype.hasOwnProperty.call(this.reducers, name)) {
+      throw new Error(`Reducer ${name} already exists`);
+    }
 
     this.mountSlice(name as R, spec as ReducerSpec<S[R], EM>, {
       preserveState: false,

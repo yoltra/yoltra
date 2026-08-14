@@ -261,6 +261,41 @@ generar las entradas de `CHANGELOG.md`.
    política lockstep — ver la [Guía de Publicación](./RELEASE_GUIDE.md)); si no, déjalo sin definir
    para versionado independiente.
 
+### Convenciones de salida de compilación
+
+Dos reglas que solo afectan a quien consume el paquete, así que nada en este repositorio te
+avisa. Ambas las verifica `node common/scripts/check-publish-metadata.mjs` — ejecútalo antes de
+publicar.
+
+**Nombra las salidas `.mjs` y `.cjs`, nunca `.esm.js` / `.cjs.js`.** Node determina el formato
+de un archivo `.js` a partir del campo `type` del `package.json` más cercano, así que un `.js`
+significa lo contrario dentro de un paquete `"type": "module"` que fuera de él. Ambas
+direcciones ya se publicaron rotas: una condición `require` apuntando a un `.js` dentro de un
+paquete `"type": "module"` lanza `ReferenceError: exports is not defined`, y una condición
+`import` apuntando a un `.js` en un paquete sin campo `type` falla en todo Node anterior a 22.7.
+
+```jsonc
+"exports": {
+  ".": {
+    "types":   "./dist/types/index.d.ts",
+    "import":  "./dist/thing.mjs",
+    "require": "./dist/thing.cjs"
+  }
+}
+```
+
+**Añade el paso de extensiones de declaración al script `build` del paquete:**
+
+```jsonc
+"build": "vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types"
+```
+
+TypeScript emite las declaraciones tal como las escribió el código fuente, y aquí escribimos
+importaciones relativas sin extensión. En un paquete `"type": "module"` esas no resuelven, y
+como casi todo proyecto usa `skipLibCheck: true` los errores quedan suprimidos mientras **cada
+símbolo reexportado degrada a `any`** — una compilación en verde sin ninguna verificación de
+tipos, que es peor que un fallo porque nada en ella parece un fallo.
+
 ---
 
 ## Actualizar dependencias

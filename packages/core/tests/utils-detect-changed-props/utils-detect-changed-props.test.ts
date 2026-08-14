@@ -227,6 +227,33 @@ describe("detectChangedProps: values with no enumerable contents", () => {
   });
 });
 
+// `[""]` and `[]` are opposite answers that a truthiness test cannot tell apart. The store's
+// write path once filtered the root path out for falsiness and read the result as "nothing
+// changed", so a slice holding a primitive silently refused every update. These pin the
+// distinction at the source.
+describe("a change at the root", () => {
+  it("reports the empty path when the whole value changed", () => {
+    expect(detectChangedProps(0, 1)).toEqual([""]);
+    expect(detectChangedProps("a", "b")).toEqual([""]);
+    expect(detectChangedProps(false, true)).toEqual([""]);
+    expect(detectChangedProps(null, "tok")).toEqual([""]);
+    expect(detectChangedProps("tok", null)).toEqual([""]);
+  });
+
+  it("reports the empty path for a root Map, Set or Date", () => {
+    expect(detectChangedProps(new Map(), new Map([["a", 1]]))).toEqual([""]);
+    expect(detectChangedProps(new Set(), new Set([1]))).toEqual([""]);
+    expect(detectChangedProps(new Date(0), new Date(5))).toEqual([""]);
+  });
+
+  it("distinguishes a root change from no change at all", () => {
+    // The pair that matters: same length-1 shape, opposite meaning.
+    expect(detectChangedProps(0, 1)).toHaveLength(1);
+    expect(detectChangedProps(0, 0)).toHaveLength(0);
+    expect(detectChangedProps(new Date(0), new Date(0))).toHaveLength(0);
+  });
+});
+
 describe("keys that dotted paths cannot express", () => {
   it("warns when a state key contains a dot", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);

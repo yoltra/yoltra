@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "description": "React bindings for Yoltra",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && vite build",
+    "build": "tsc -p tsconfig.build.json && vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
     "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix",

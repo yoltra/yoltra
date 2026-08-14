@@ -43,8 +43,11 @@ describe("toDottedPath", () => {
   it("returns an empty string for computed (non-path) accessors and warns in dev (RX-3)", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     expect(toDottedPath(() => 5)).toBe("");
-    // An empty path silently subscribes to the whole slice — surface it in dev.
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("subscribe to the"));
+    // An empty path subscribes to the slice ROOT, which fires only when the slice's whole value
+    // is replaced — for an object slice, never, since its changes are reported at their leaves.
+    // The warning used to promise "the entire slice"; asserting the accurate wording is what
+    // keeps the promise and the behaviour from drifting apart again.
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("subscribed to the slice root"));
     warn.mockRestore();
   });
 

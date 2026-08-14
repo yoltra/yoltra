@@ -13,7 +13,10 @@ export default defineConfig({
     lib: {
       entry: "src/index.ts",
       formats: ["es"],
-      fileName: () => "devtools-cli.esm.js",
+      // `.mjs` rather than `.esm.js`. ESM-only under `"type": "module"`, so this one was never
+      // broken — it is renamed so every package in the repo states its format the same way, and
+      // so nothing here reads as the pattern that broke the dual-format packages.
+      fileName: () => "devtools-cli.mjs",
     },
     rollupOptions: {
       external: [

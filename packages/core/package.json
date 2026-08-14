@@ -7,7 +7,7 @@
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix",
     "test": "vitest --coverage --watch=false",
-    "build": "vite build",
+    "build": "vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
     "typecheck:tools": "tsc -p tsconfig.tools.json --noEmit",
     "preview": "vite preview",
@@ -41,16 +41,15 @@
   "bugs": {
     "url": "https://github.com/yoltra/yoltra/issues"
   },
-  "main": "dist/yoltra.cjs.js",
-  "module": "dist/yoltra.esm.js",
+  "main": "dist/yoltra.cjs",
+  "module": "dist/yoltra.mjs",
   "types": "dist/types/index.d.ts",
   "unpkg": "dist/yoltra.umd.js",
   "jsdelivr": "dist/yoltra.umd.js",
   "files": [
     "dist/",
     "LICENSE",
-    "README.md",
-    "!dist/**/*.map"
+    "README.md"
   ],
   "private": false,
   "sideEffects": false,
@@ -63,9 +62,9 @@
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/yoltra.esm.js",
-      "require": "./dist/yoltra.cjs.js",
-      "default": "./dist/yoltra.esm.js"
+      "import": "./dist/yoltra.mjs",
+      "require": "./dist/yoltra.cjs",
+      "default": "./dist/yoltra.mjs"
     },
     "./package.json": "./package.json"
   },
