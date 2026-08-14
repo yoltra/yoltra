@@ -12,7 +12,7 @@ const fromHere = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // enum and the store.instrument() wiring line up. Rebuild a package after
 // editing it:  rush build --only @yoltra/devtools-ui  (etc.)
 const yoltraDistAliases = {
-  "@yoltra/core": fromHere("../../../packages/core/dist/yoltra.esm.js"),
+  "@yoltra/core": fromHere("../../../packages/core/dist/yoltra.mjs"),
   "@yoltra/react": fromHere("../../../packages/react/dist/index.mjs"),
   // Design system: the more specific subpaths must come before the bare specifier so they
   // win. Component stylesheets are imported one at a time — the DS ships a sheet per

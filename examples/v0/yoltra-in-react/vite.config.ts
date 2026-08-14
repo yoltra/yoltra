@@ -11,7 +11,7 @@ const fromHere = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // across the app, the React bindings, and the devtools agent. Refresh after
 // editing a package:  rush build --only @yoltra/react   (or @yoltra/core, etc.)
 const yoltraDistAliases = {
-  "@yoltra/core": fromHere("../../../packages/core/dist/yoltra.esm.js"),
+  "@yoltra/core": fromHere("../../../packages/core/dist/yoltra.mjs"),
   "@yoltra/react": fromHere("../../../packages/react/dist/index.mjs"),
   // Design system: the `/client` subpath must be aliased before the bare
   // specifier so the more specific match wins.
