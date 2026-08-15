@@ -72,20 +72,20 @@ jobs:
       # The extension does not go to npm — it goes to a browser store, by hand, through a review
       # queue. Attaching the packaged zip to the release means the artefact that gets submitted
       # is the one this tag built, rather than whatever a maintainer had in `dist/` locally.
-      # The path is relative to `working-directory`, not the repo root. It pointed at
-      # devtools/devtools-ext/common/scripts/… — which does not exist — so this step has been
-      # failing at every release, and `continue-on-error` meant it did so without a word. The
-      # upload below warns rather than fails when it finds no zip, so a release could complete
-      # having never packaged the extension it claims to attach.
-      - name: Package the browser extension
-        run: node ../../common/scripts/install-run-rushx.js package
-        working-directory: devtools/devtools-ext
-        continue-on-error: true
-
-      - name: Attach the extension to the release
-        uses: actions/upload-artifact@v4
-        with:
-          name: yoltra-devtools-extension
-          path: devtools/devtools-ext/store/*.zip
-          if-no-files-found: warn
+      # The browser extension is deliberately NOT part of this workflow.
+      #
+      # It does not go to npm — `@yoltra/devtools-ext` is `shouldPublish: false` — it goes to a
+      # browser store by hand, through a review queue, on its own cadence and its own version
+      # line (0.3.x, outside the lockstep policy). Packaging it here bought nothing that hand
+      # delivery does not already provide, and cost a red ✗ on every release: the step's script
+      # path was wrong from the start, `continue-on-error` hid that for four releases, and the
+      # upload beneath it warned instead of failing, so the workflow reported a packaged
+      # extension it had never produced.
+      #
+      # To cut a store build, from devtools/devtools-ext:
+      #
+      #     rushx package        # → store/yoltra-devtools-<version>.zip
+      #
+      # A release that publishes twelve packages should not be able to go red over an artefact
+      # that reaches no user through this pipeline.
 
