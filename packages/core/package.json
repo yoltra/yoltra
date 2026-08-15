@@ -8,7 +8,7 @@
     "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix",
     "test": "vitest --coverage --watch=false",
     "build": "vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit && tsc -p tsconfig.tools.json --noEmit",
     "typecheck:tools": "tsc -p tsconfig.tools.json --noEmit",
     "preview": "vite preview",
     "prepublishOnly": "node ../../common/scripts/copy-license.cjs",

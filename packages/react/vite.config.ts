@@ -4,7 +4,7 @@ import banner from "vite-plugin-banner";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-import pkg from "./package.json" assert { type: "json" };
+import pkg from "./package.json";
 
 const year = new Date().getFullYear();
 const licenseText = `/*!

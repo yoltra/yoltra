@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import banner from "vite-plugin-banner";
 import dts from "vite-plugin-dts";
-import pkg from "./package.json" assert { type: "json" };
+import pkg from "./package.json";
 
 const year = new Date().getFullYear();
 const licenseText = `/*!

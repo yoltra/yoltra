@@ -16,6 +16,11 @@ export default defineConfig({
       "/.rollup.config.js",
     ],
     coverage: {
+      // Stated rather than inferred. `@vitest/coverage-v8` is the installed provider and v8 is
+      // vitest's default, so this changes nothing at runtime — but the option is a discriminated
+      // union keyed on `provider`, so leaving it out meant the rest of this block was never
+      // checked against any provider's shape.
+      provider: "v8",
       reporter: ["text", "html", "lcov"],
       // Scoped to the shipped sources. Without this, coverage measured whatever a run
       // happened to load — test support files were being excluded one path at a time, and a
