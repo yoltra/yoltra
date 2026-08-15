@@ -2,6 +2,23 @@
   "name": "@yoltra/core",
   "entries": [
     {
+      "version": "0.5.0",
+      "tag": "@yoltra/core_v0.5.0",
+      "date": "Sat, 15 Aug 2026 22:14:53 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Teaches the path types the difference between a value with an addressable interior and one without.\\n\\nA `Map` or `Set` keeps its contents outside its own enumerable keys, so walking one with `keyof` yielded the names of its *methods*: `byId.get` and `byId.size` were offered as subscribable paths, and a slice holding a plain number autocompleted `toFixed`. None of them could ever fire, because the diff reports such a value at its own path and never descends into it. The new `RootValue` type states that rule once, and `Path` and `Dotted` both defer to it.\\n\\n`Dotted` now resolves to the empty path for a slice that IS one value, so `{ reducer, property: \"\" }` type-checks where it can actually fire instead of falling through to the untyped overload. The conditional distributes, so a nullable object slice gets both `\"\"` and its keys — which is correct: it changes at its root when it becomes `null`, and at a leaf otherwise. `PathValue<T, \"\">` now resolves to `T`, matching what both path readers have always returned for an empty path; it used to say `never`.\\n\\nNo path that resolved before stops resolving. Pinned by membership assertions in the type tests, which name each path individually so a single one appearing or vanishing is a build failure."
+          }
+        ],
+        "none": [
+          {
+            "comment": "Fixes a slice whose state is a single value silently never committing. `detectChangedProps` reports a change at the slice root as the empty path, and the write path filtered that out for falsiness before the length check, which then read \"nothing changed\" and returned before assigning state. The reducer ran, returned the new value, and the store kept the old one without an error or a warning — invisible until someone noticed a screen not updating. Primitives, `null`, `Map`, `Set` and `Date` at the slice root were all affected, as was time travel onto such a slice.\\n\\nSuch a slice now commits, notifies coarse subscribers, and emits its change at the root path, so `connect({ reducer, property: '' })` and a `**` pattern both hear it. Object slices are untouched: they report at their leaves, as before.\\n\\nAlso: `dispose()` now clears the payload-aliasing warning latch, so a recreated store is not left inheriting another store's suppression; and `registerReducer` tests own properties rather than `in`, so a slice named `toString` or `constructor` is no longer refused as already existing.\\n\\nNames build outputs `.mjs` and `.cjs` instead of `.esm.js` and `.cjs.js`, and adds explicit extensions to the relative specifiers of published declaration files.\\n\\nNode infers a `.js` file's format from the nearest package.json `type` field, so the `require` condition resolved to a file parsed as ESM and threw `ReferenceError: exports is not defined in ES module scope` on a CommonJS consumer's first line. The declarations had the mirror problem: extensionless relative re-exports do not resolve under `moduleResolution: nodenext`, and because nearly every project sets `skipLibCheck: true` the errors were suppressed while every re-exported symbol silently degraded to `any` — a green build with no completions and no type checking, which is worse than a hard failure because nothing about it looks like one. The `import` condition had the same fault in the other direction: with no `type` field, `yoltra.esm.js` was CommonJS by extension and `import \"@yoltra/core\"` failed on every Node before 22.7, which `engines: \">=18.18\"` promises to support. Sourcemaps are also published now rather than referenced and withheld, which had every consumer's test run printing two ENOENT lines per module."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.4.0",
       "tag": "@yoltra/core_v0.4.0",
       "date": "Fri, 07 Aug 2026 13:15:02 GMT",

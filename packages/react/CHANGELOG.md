@@ -1,6 +1,17 @@
 # Change Log - @yoltra/react
 
-This log was last generated on Fri, 07 Aug 2026 13:15:02 GMT and should not be manually modified.
+This log was last generated on Sat, 15 Aug 2026 22:14:53 GMT and should not be manually modified.
+
+## 0.5.0
+Sat, 15 Aug 2026 22:14:53 GMT
+
+### Minor changes
+
+- Picks up the corrected `Dotted` and `PathValue` from `@yoltra/core`, so `useAtomicProp({ reducer, property: "" })` on a slice that holds a single value returns that value's type rather than `unknown` — it used to miss the typed overload and fall through to the `property: string` one.\n\nInference through an object slice is unchanged, and is now pinned: type-level tests assert the resolved type of every path form (nested leaf, array index, whole array, whole Map, and the accessor form) through `createYoltra`, the way an application actually gets its hooks.
+
+### Updates
+
+- Corrects the typed-path accessor warning, which promised that an empty path subscribes to "the entire slice". It subscribes to the slice root, which fires only when the slice's whole value is replaced — for an object slice, never. Adds explicit extensions to the relative specifiers of published declaration files. Extensionless relative re-exports do not resolve under `moduleResolution: nodenext`, and because nearly every project sets `skipLibCheck: true` the errors were suppressed while every re-exported symbol silently degraded to `any`.
 
 ## 0.4.0
 Fri, 07 Aug 2026 13:15:02 GMT

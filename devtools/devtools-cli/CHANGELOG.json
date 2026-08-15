@@ -2,6 +2,18 @@
   "name": "@yoltra/devtools-cli",
   "entries": [
     {
+      "version": "0.5.0",
+      "tag": "@yoltra/devtools-cli_v0.5.0",
+      "date": "Sat, 15 Aug 2026 22:14:53 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Renames the build output to `.mjs` for consistency with the rest of the suite — this package is ESM-only, so it was never mis-parsed. Adds explicit extensions to the relative specifiers of published declaration files. Extensionless relative re-exports do not resolve under `moduleResolution: nodenext`, and because nearly every project sets `skipLibCheck: true` the errors were suppressed while every re-exported symbol silently degraded to `any`."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.4.0",
       "tag": "@yoltra/devtools-cli_v0.4.0",
       "date": "Fri, 07 Aug 2026 13:15:02 GMT",

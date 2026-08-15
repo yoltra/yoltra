@@ -1,6 +1,13 @@
 # Change Log - @yoltra/devtools-ui
 
-This log was last generated on Fri, 07 Aug 2026 13:15:02 GMT and should not be manually modified.
+This log was last generated on Sat, 15 Aug 2026 22:14:53 GMT and should not be manually modified.
+
+## 0.5.0
+Sat, 15 Aug 2026 22:14:53 GMT
+
+### Updates
+
+- Names build outputs `.mjs` and `.cjs` instead of `.esm.js` and `.cjs.js`, and adds explicit extensions to the relative specifiers of published declaration files.\n\nNode infers a `.js` file's format from the nearest package.json `type` field, so the `require` condition resolved to a file parsed as ESM and threw `ReferenceError: exports is not defined in ES module scope` on a CommonJS consumer's first line. The declarations had the mirror problem: extensionless relative re-exports do not resolve under `moduleResolution: nodenext`, and because nearly every project sets `skipLibCheck: true` the errors were suppressed while every re-exported symbol silently degraded to `any` — a green build with no completions and no type checking, which is worse than a hard failure because nothing about it looks like one.
 
 ## 0.4.0
 Fri, 07 Aug 2026 13:15:02 GMT

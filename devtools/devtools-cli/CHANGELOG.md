@@ -1,6 +1,13 @@
 # Change Log - @yoltra/devtools-cli
 
-This log was last generated on Fri, 07 Aug 2026 13:15:02 GMT and should not be manually modified.
+This log was last generated on Sat, 15 Aug 2026 22:14:53 GMT and should not be manually modified.
+
+## 0.5.0
+Sat, 15 Aug 2026 22:14:53 GMT
+
+### Updates
+
+- Renames the build output to `.mjs` for consistency with the rest of the suite — this package is ESM-only, so it was never mis-parsed. Adds explicit extensions to the relative specifiers of published declaration files. Extensionless relative re-exports do not resolve under `moduleResolution: nodenext`, and because nearly every project sets `skipLibCheck: true` the errors were suppressed while every re-exported symbol silently degraded to `any`.
 
 ## 0.4.0
 Fri, 07 Aug 2026 13:15:02 GMT
