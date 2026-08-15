@@ -29,7 +29,6 @@ import { fileURLToPath } from "node:url";
 import { processDirs } from "../../tools/repo-tools/bin/dts-extensions.mjs";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const EXPECTED = "https://github.com/yoltra/yoltra.git";
 
 // rush.json is JSONC (comments + trailing commas). Strip both without touching
 // string literals (so the https:// $schema URL survives), then JSON.parse.
@@ -73,6 +72,20 @@ function packedFiles(folder) {
 }
 
 const rush = parseJsonc(readFileSync(join(repoRoot, "rush.json"), "utf8"));
+
+// Read from rush.json rather than keeping a second copy here. The value has to be right in both
+// places or npm rejects the publish, and two constants that must agree are a pair that will
+// eventually disagree. Absent is a hard stop: comparing every package against `undefined` would
+// report all of them as broken, or none, depending on which way the check was written.
+const EXPECTED = rush.repository?.url;
+if (!EXPECTED) {
+  console.error(
+    '✗ rush.json has no "repository.url". It is the baseline for `rush change` and the URL npm ' +
+      "Trusted Publishing matches against; this check reads it from there. Add it before publishing.",
+  );
+  process.exit(1);
+}
+
 const problems = [];
 let checkedDist = 0;
 

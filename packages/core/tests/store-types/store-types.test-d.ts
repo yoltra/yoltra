@@ -11,7 +11,13 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import { createStore } from "../../src/store/Store";
-import type { DeepReadonly, MiddlewareSpec, ReducerSpec } from "../../src/types";
+import type {
+  DeepReadonly,
+  Dotted,
+  MiddlewareSpec,
+  PathValue,
+  ReducerSpec,
+} from "../../src/types";
 
 type Doc = { id: string; title: string };
 
@@ -105,5 +111,76 @@ describe("createStore accepts both middleware forms", () => {
     store.registerMiddleware(spec);
 
     expectTypeOf(store.registerMiddleware).toBeFunction();
+  });
+});
+
+/**
+ * `Dotted` is what an editor offers when you type `property:`, so these assertions ARE the
+ * autocompletion contract. They are written as membership checks rather than one comparison
+ * against the whole union, because the failure that matters is a single path appearing or
+ * vanishing, and a union mismatch reports neither.
+ */
+type Has<U, M extends string> = M extends U ? true : false;
+
+describe("Dotted addresses only what a subscription can actually reach", () => {
+  it("offers every real path of an object slice", () => {
+    // The autocompletion fidelity guard. None of these may ever change.
+    expectTypeOf<Has<Dotted<CatalogState>, "byId">>().toEqualTypeOf<true>();
+    expectTypeOf<Has<Dotted<CatalogState>, "tags">>().toEqualTypeOf<true>();
+    expectTypeOf<Has<Dotted<CatalogState>, "updatedAt">>().toEqualTypeOf<true>();
+    expectTypeOf<Has<Dotted<CatalogState>, "items">>().toEqualTypeOf<true>();
+    expectTypeOf<Has<Dotted<CatalogState>, "nested">>().toEqualTypeOf<true>();
+    expectTypeOf<Has<Dotted<CatalogState>, "nested.count">>().toEqualTypeOf<true>();
+    expectTypeOf<Has<Dotted<CatalogState>, "items.0">>().toEqualTypeOf<true>();
+    expectTypeOf<Has<Dotted<CatalogState>, "items.0.title">>().toEqualTypeOf<true>();
+  });
+
+  it("no longer offers the methods of a Map or Set as paths", () => {
+    // `byId.get` was a subscribable path that could never fire: the diff reports a Map at its
+    // own path and never descends, so nothing beneath one ever changes. Walking `keyof Map`
+    // produced the method names, and the editor offered them.
+    expectTypeOf<Has<Dotted<CatalogState>, "byId.get">>().toEqualTypeOf<false>();
+    expectTypeOf<Has<Dotted<CatalogState>, "byId.size">>().toEqualTypeOf<false>();
+    expectTypeOf<Has<Dotted<CatalogState>, "tags.has">>().toEqualTypeOf<false>();
+    // Date was already excluded — it is in `Primitive`. Pinned so it stays that way.
+    expectTypeOf<Has<Dotted<CatalogState>, "updatedAt.getTime">>().toEqualTypeOf<false>();
+  });
+
+  it("addresses a root-value slice at the empty path, and nowhere else", () => {
+    expectTypeOf<Dotted<number>>().toEqualTypeOf<"">();
+    expectTypeOf<Dotted<string>>().toEqualTypeOf<"">();
+    expectTypeOf<Dotted<Date>>().toEqualTypeOf<"">();
+    expectTypeOf<Dotted<Map<string, Doc>>>().toEqualTypeOf<"">();
+    expectTypeOf<Dotted<Set<string>>>().toEqualTypeOf<"">();
+    // The wart this replaces: a slice holding a number autocompleted Number's methods.
+    expectTypeOf<Has<Dotted<number>, "toFixed">>().toEqualTypeOf<false>();
+  });
+
+  it("gives a nullable object slice both, because both can fire", () => {
+    // The conditional distributes over the union. This is not an accident to be simplified
+    // away: such a slice changes at its root when it becomes `null`, and at `a` otherwise.
+    expectTypeOf<Dotted<{ a: number } | null>>().toEqualTypeOf<"" | "a">();
+  });
+
+  it("does not offer the empty path for a plain object slice", () => {
+    // An object slice reports its changes at its leaves, so `""` would never fire for one.
+    expectTypeOf<Has<Dotted<CatalogState>, "">>().toEqualTypeOf<false>();
+  });
+});
+
+describe("PathValue agrees with the code that reads the path", () => {
+  it("resolves nested, indexed and built-in values unchanged", () => {
+    expectTypeOf<PathValue<CatalogState, "nested.count">>().toEqualTypeOf<number>();
+    expectTypeOf<PathValue<CatalogState, "items.0.title">>().toEqualTypeOf<string>();
+    expectTypeOf<PathValue<CatalogState, "items">>().toEqualTypeOf<Doc[]>();
+    expectTypeOf<PathValue<CatalogState, "byId">>().toEqualTypeOf<Map<string, Doc>>();
+    expectTypeOf<PathValue<CatalogState, "updatedAt">>().toEqualTypeOf<Date>();
+  });
+
+  it("resolves the empty path to the whole value", () => {
+    // Both path readers return the object itself for `""`; the type said `never`, so a
+    // subscription to a root-value slice was typed as nothing at all.
+    expectTypeOf<PathValue<number, "">>().toEqualTypeOf<number>();
+    expectTypeOf<PathValue<CatalogState, "">>().toEqualTypeOf<CatalogState>();
   });
 });

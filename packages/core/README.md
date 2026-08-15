@@ -117,14 +117,32 @@ store.connect({ reducer: "token", property: "" }, (change) =>
 );
 ```
 
-A `**` pattern matches the root too, since it matches zero segments; a `*` does not, because it
-requires exactly one. The root path is emitted **only when the slice's whole value is
-replaced** — an object slice reports its changes at their leaves, so `property: ""` on one of
-those stays quiet. For a whole-object subscription, use `property: "**"`.
+The types know the difference. `property` on a root-value slice accepts `""` and nothing else —
+there is no key to address — and the value comes back correctly typed:
+
+```typescript
+const token = useAtomicProp({ reducer: "token", property: "" }); // string | null
+```
+
+### `""` versus `"**"` — watching a whole slice
+
+Two subscriptions sound alike and are not:
+
+| Pattern | Fires when |
+|---|---|
+| `""` | the slice's **whole value** is replaced — a primitive changes, a `Map` is rebuilt, an object slice becomes `null` |
+| `"**"` | **anything** in the slice changes, at any depth. Matches the root too, since `**` matches zero segments |
+| `"*"` | one level down, exactly. Never matches the root |
+
+**`"**"` is the whole-slice subscription, and it works for every slice regardless of shape.**
+Reach for `""` only when you mean the root value itself; on an object slice it stays quiet,
+because such a slice reports its changes at their leaves.
 
 `Map` and `Set` are compared by reference, not by entry: a reducer returning a new `Map` is a
 change, mutating one in place is not. That follows from the immutability contract rather than
-being a special case — build a new collection instead of mutating the stored one.
+being a special case — build a new collection instead of mutating the stored one. It is also why
+they have no paths beneath them: `"byId"` is subscribable, `"byId.get"` is not, and the types
+say so.
 
 ### Immutability
 

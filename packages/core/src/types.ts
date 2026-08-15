@@ -1100,9 +1100,16 @@ export type EventFromWhen<EM extends EventMapBase, W extends When<EM>> = W exten
  * type T3 = PathValue<S, 'todos'>;            // Array<{ title: string; done: boolean }>
  * ```
  *
+ * @remarks
+ * The empty path resolves to `T` itself, matching what the code has always done: both the
+ * store's internal path reader and the React one return the object unchanged for `""`. The type
+ * used to say `never`, so a subscription to a root-value slice was typed as nothing at all.
+ *
  * @public
  */
-export type PathValue<T, P extends string> = P extends `${infer K}.${infer Rest}`
+export type PathValue<T, P extends string> = P extends ""
+  ? T
+  : P extends `${infer K}.${infer Rest}`
   ? K extends keyof T
     ? PathValue<T[K], Rest>
     : K extends `${number}`
@@ -1186,13 +1193,31 @@ export type Primitive =
   | RegExp;
 
 /**
+ * A value with **no addressable interior**: its changes are reported at the slice root rather
+ * than at a path beneath it.
+ *
+ * @remarks
+ * The distinction the path types were missing. `Map` and `Set` keep their contents outside own
+ * enumerable keys, so walking them with `keyof` yields the names of their *methods* — which is
+ * how `"byId.get"` and `"byId.size"` came to be offered as subscribable paths, and why a slice
+ * holding a plain number autocompleted `"toFixed"`. Neither ever notified anything, because
+ * `detectChangedProps` reports such a value at its own path and never descends into it.
+ *
+ * This is the type-level counterpart of that runtime rule: what the diff reports at the root,
+ * the types address at the root, with the empty path.
+ *
+ * @public
+ */
+export type RootValue = Primitive | ReadonlyMap<unknown, unknown> | ReadonlySet<unknown>;
+
+/**
  * Compute dotted paths of T, including nested objects and arrays.
  *
  * @typeParam T - Type to compute paths for.
  *
  * @public
  */
-export type Path<T> = T extends Primitive
+export type Path<T> = T extends RootValue
   ? never
   : T extends readonly (infer U)[]
   ? `${number}` | (Path<U> extends never ? never : `${number}.${Path<U>}`)
@@ -1216,9 +1241,21 @@ export type WithGlob<T extends string> = T | `${string}*${string}`;
  *
  * @typeParam Slice - Slice state type.
  *
+ * @remarks
+ * A slice that **is** one value — a primitive, a `Map`, a `Set`, a `Date` — has no key to
+ * address, and its only subscribable path is the empty one. Saying so is what makes
+ * `{ reducer, property: "" }` type-check where it can actually fire, instead of falling through
+ * to the untyped `property: string` overload and returning `unknown`.
+ *
+ * The conditional distributes over unions, which is why a nullable object slice gets both:
+ * `Dotted<{ a: number } | null>` is `"" | "a"`. That is exactly right — such a slice really does
+ * change at its root when it becomes `null`, and at `"a"` otherwise.
+ *
  * @public
  */
-export type Dotted<Slice> = (keyof Slice & string) | Path<Slice>;
+export type Dotted<Slice> = Slice extends RootValue
+  ? ""
+  : (keyof Slice & string) | Path<Slice>;
 
 /**
  * Deep readonly type: recursively makes all properties readonly.

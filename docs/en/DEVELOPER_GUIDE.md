@@ -254,6 +254,23 @@ generate `CHANGELOG.md` entries.
 
 > While the project is `< 1.0.0`: use `minor` for breaking changes and `patch` for fixes.
 
+### Two things `rush change -v` will not tell you
+
+Its failure message says "run `rush change`", which is no help when you already have.
+
+**A change file must be committed, not merely written or staged.** The check reads change files
+from the diff against the target branch, so an uncommitted one is invisible to it — and the
+error is word-for-word identical to having written none at all. If you are staring at a file you
+just created while Rush insists it does not exist, commit it.
+
+**The first PR after a release bump is asked for change files it did not earn.** `rush version
+--bump` rewrites dependency ranges (`"@yoltra/core": "^0.3.0"` → `"^0.4.0"`) in every package
+that depends on a lockstep sibling. Rush ignores a `package.json` diff that only touches a
+project's **own** `version` field, but treats a **dependency-range** edit as real content — so
+those packages, and only those, get flagged. Expect `@yoltra/react`,
+`@yoltra/devtools-node-agent` and `@yoltra/devtools-browser-agent`. Write them a change file
+describing your actual work; it is not a stale cache and there is nothing to purge.
+
 ---
 
 ## Adding a new publishable package
