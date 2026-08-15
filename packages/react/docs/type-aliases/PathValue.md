@@ -8,9 +8,9 @@
 
 # Type Alias: PathValue\<T, P\>
 
-> **PathValue**\<`T`, `P`\> = `P` *extends* `` `${infer K}.${infer Rest}` `` ? `K` *extends* keyof `T` ? `PathValue`\<`T`\[`K`\], `Rest`\> : `K` *extends* `` `${number}` `` ? `T` *extends* readonly infer E[] ? `PathValue`\<`E`, `Rest`\> : `never` : `never` : `P` *extends* keyof `T` ? `T`\[`P`\] : `P` *extends* `` `${number}` `` ? `T` *extends* readonly infer E[] ? `E` : `never` : `never`
+> **PathValue**\<`T`, `P`\> = `P` *extends* `""` ? `T` : `P` *extends* `` `${infer K}.${infer Rest}` `` ? `K` *extends* keyof `T` ? `PathValue`\<`T`\[`K`\], `Rest`\> : `K` *extends* `` `${number}` `` ? `T` *extends* readonly infer E[] ? `PathValue`\<`E`, `Rest`\> : `never` : `never` : `P` *extends* keyof `T` ? `T`\[`P`\] : `P` *extends* `` `${number}` `` ? `T` *extends* readonly infer E[] ? `E` : `never` : `never`
 
-Defined in: core/dist/types/types.d.ts:999
+Defined in: core/dist/types/types.d.ts:1004
 
 Resolves the value type at a dotted path `P` inside object/array `T`.
 Supports numeric segments for array indexing (e.g., `"items.0.title"`).
@@ -37,3 +37,9 @@ type T1 = PathValue<S['todos'], '0.title'>; // string
 type T2 = PathValue<S, 'todos.0'>;          // { title: string; done: boolean }
 type T3 = PathValue<S, 'todos'>;            // Array<{ title: string; done: boolean }>
 ```
+
+## Remarks
+
+The empty path resolves to `T` itself, matching what the code has always done: both the
+store's internal path reader and the React one return the object unchanged for `""`. The type
+used to say `never`, so a subscription to a root-value slice was typed as nothing at all.

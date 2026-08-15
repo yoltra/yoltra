@@ -1,3 +1,5 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 **@yoltra/devtools-server**
 
 ***
