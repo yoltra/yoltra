@@ -43,6 +43,7 @@ export type {
   DeepReadonly,
   DeepRO,
   Primitive,
+  RootValue,
   Path,
   PathValue,
   WithGlob,

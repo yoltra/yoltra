@@ -10,6 +10,11 @@
       "node"
     ],
     "verbatimModuleSyntax": true,
+    // The bin scripts are plain ESM, consumed by Node and by ESLint's flat config, so they get
+    // no build step. `allowJs` lets a test import one and pick up the types from its JSDoc,
+    // instead of the `@ts-expect-error` that would silence the import and every misuse of it.
+    // `checkJs` stays off: the scripts are inferred from, not type-checked.
+    "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true

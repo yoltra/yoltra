@@ -22,7 +22,7 @@ const fromHere = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // instead of dist — Vite compiles the TypeScript on the fly.
 // ---------------------------------------------------------------------------
 const yoltraDistAliases = {
-  "@yoltra/core": fromHere("../../../packages/core/dist/yoltra.esm.js"),
+  "@yoltra/core": fromHere("../../../packages/core/dist/yoltra.mjs"),
   "@yoltra/react": fromHere("../../../packages/react/dist/index.mjs"),
   // Design system: the `/client` subpath must be aliased before the bare
   // specifier so the more specific match wins.

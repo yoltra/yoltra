@@ -15,8 +15,11 @@ export default defineConfig({
       entry: "src/index.ts",
       name: "yoltraDevtoolsBrowserAgent",
       formats: ["cjs", "es"],
-      fileName: (format) =>
-        format === "cjs" ? "devtools-browser-agent.cjs.js" : "devtools-browser-agent.esm.js",
+      // `.cjs` and `.mjs`, not `.cjs.js`/`.esm.js`. This package declares `"type": "module"`,
+      // which makes every `.js` file ESM — so the `require` condition pointed at a file Node
+      // parsed as ESM and `require("@yoltra/devtools-browser-agent")` threw `ReferenceError: exports is not
+      // defined in ES module scope`. An explicit extension states the format outright.
+      fileName: (format) => (format === "cjs" ? "devtools-browser-agent.cjs" : "devtools-browser-agent.mjs"),
     },
     rollupOptions: {
       external: ["@yoltra/devtools-protocol", "@yoltra/core"],

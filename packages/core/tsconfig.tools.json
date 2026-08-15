@@ -2,10 +2,20 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "moduleResolution": "Node",
+    // `bundler`, matching how these files are actually consumed: Vite loads a config by
+    // bundling it with esbuild, never by handing it to Node. Under the previous `Node` setting
+    // the default import of package.json was a hard error (TS1259) that no amount of correct
+    // configuration elsewhere could satisfy, because the resolver being described was not the
+    // one doing the work.
+    "moduleResolution": "bundler",
     "lib": ["ES2020"],
     "types": ["node"],
     "skipLibCheck": true,
+    // The build banner reads name, version, author and license out of package.json. Without
+    // this the import does not resolve at all (TS2732) and the whole check fails before it
+    // looks at anything else; with it, the banner's fields stay typed instead of becoming
+    // `any` and going stale unnoticed when one is renamed.
+    "resolveJsonModule": true,
     "noEmit": true
   },
   "include": ["vite.config.ts", "vitest.config.ts"]

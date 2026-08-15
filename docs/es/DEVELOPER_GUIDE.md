@@ -229,9 +229,9 @@ Los snapshots solo están permitidos para salidas estables y deterministas.
 ## Archivos de cambio (requeridos en cada PR publicable)
 
 Cualquier PR que modifique `@yoltra/core`, `@yoltra/react` u otro paquete publicado **debe**
-incluir un archivo de cambio de Rush. (Aún no hay CI — verifícalo localmente con el comando de
-abajo; conectar `rush change --verify` al CI es la validación recomendada, ver la
-[Guía de Publicación](./RELEASE_GUIDE.md).)
+incluir un archivo de cambio de Rush. CI lo exige: `rush change --verify` corre en cada PR a
+`main` (ver `.github/workflows/ci.yml` y la [Guía de Publicación](./RELEASE_GUIDE.md)).
+Verifícalo localmente antes de hacer push con el comando de abajo.
 
 ```bash
 # Prompt interactivo — selecciona los paquetes que cambiaste y el tipo de bump
@@ -248,6 +248,24 @@ generar las entradas de `CHANGELOG.md`.
 > Mientras el proyecto esté en `< 1.0.0`: usa `minor` para cambios breaking y `patch` para
 > correcciones.
 
+### Dos cosas que `rush change -v` no te va a decir
+
+Su mensaje de error dice "corre `rush change`", lo cual no ayuda cuando ya lo hiciste.
+
+**Un archivo de cambio debe estar commiteado, no solo escrito o en el índice.** La verificación
+lee los archivos de cambio del diff contra la rama destino, así que uno sin commitear le resulta
+invisible — y el error es idéntico, palabra por palabra, al de no haber escrito ninguno. Si
+estás viendo un archivo que acabas de crear mientras Rush insiste en que no existe, commitéalo.
+
+**El primer PR después de un bump de versión recibe reclamos por archivos de cambio que no se
+ganó.** `rush version --bump` reescribe los rangos de dependencias (`"@yoltra/core": "^0.3.0"` →
+`"^0.4.0"`) en cada paquete que depende de un hermano en lockstep. Rush ignora un diff de
+`package.json` que solo toca el campo `version` **propio** del proyecto, pero trata la edición de
+un **rango de dependencia** como contenido real — así que esos paquetes, y solo esos, quedan
+marcados. Espera `@yoltra/react`, `@yoltra/devtools-node-agent` y
+`@yoltra/devtools-browser-agent`. Escríbeles un archivo de cambio que describa tu trabajo real;
+no es un caché viejo y no hay nada que purgar.
+
 ---
 
 ## Agregar un nuevo paquete publicable
@@ -260,6 +278,41 @@ generar las entradas de `CHANGELOG.md`.
 6. Si se publica junto con la suite de producto, define `"versionPolicyName": "yoltra"` (la
    política lockstep — ver la [Guía de Publicación](./RELEASE_GUIDE.md)); si no, déjalo sin definir
    para versionado independiente.
+
+### Convenciones de salida de compilación
+
+Dos reglas que solo afectan a quien consume el paquete, así que nada en este repositorio te
+avisa. Ambas las verifica `node common/scripts/check-publish-metadata.mjs` — ejecútalo antes de
+publicar.
+
+**Nombra las salidas `.mjs` y `.cjs`, nunca `.esm.js` / `.cjs.js`.** Node determina el formato
+de un archivo `.js` a partir del campo `type` del `package.json` más cercano, así que un `.js`
+significa lo contrario dentro de un paquete `"type": "module"` que fuera de él. Ambas
+direcciones ya se publicaron rotas: una condición `require` apuntando a un `.js` dentro de un
+paquete `"type": "module"` lanza `ReferenceError: exports is not defined`, y una condición
+`import` apuntando a un `.js` en un paquete sin campo `type` falla en todo Node anterior a 22.7.
+
+```jsonc
+"exports": {
+  ".": {
+    "types":   "./dist/types/index.d.ts",
+    "import":  "./dist/thing.mjs",
+    "require": "./dist/thing.cjs"
+  }
+}
+```
+
+**Añade el paso de extensiones de declaración al script `build` del paquete:**
+
+```jsonc
+"build": "vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types"
+```
+
+TypeScript emite las declaraciones tal como las escribió el código fuente, y aquí escribimos
+importaciones relativas sin extensión. En un paquete `"type": "module"` esas no resuelven, y
+como casi todo proyecto usa `skipLibCheck: true` los errores quedan suprimidos mientras **cada
+símbolo reexportado degrada a `any`** — una compilación en verde sin ninguna verificación de
+tipos, que es peor que un fallo porque nada en ella parece un fallo.
 
 ---
 

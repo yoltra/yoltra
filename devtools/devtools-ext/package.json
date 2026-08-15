@@ -25,14 +25,15 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "package": "pnpm build && node scripts/pack-extension.mjs",
+    "package": "rushx build && node scripts/pack-extension.mjs",
     "pack": "node scripts/pack-extension.mjs",
     "test": "exit 0",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "docs": "rushx docs:js && rushx docs:md",
-    "docs:md": "pnpm typedoc --options ./typedoc.json",
-    "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-ext-en.json"
+    "docs": "rushx docs:js && rushx docs:md && rushx docs:stamp",
+    "docs:stamp": "node ../../tools/repo-tools/bin/docs-stamp.mjs docs",
+    "docs:md": "typedoc --options ./typedoc.json",
+    "docs:js": "typedoc --options ./typedoc.json --json ./.typedoc/devtools-ext-en.json"
   },
   "dependencies": {
     "@yoltra/devtools-storeview": "workspace:*",

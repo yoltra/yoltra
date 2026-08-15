@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Teaches the path types the difference between a value with an addressable interior and one without.\\n\\nA `Map` or `Set` keeps its contents outside its own enumerable keys, so walking one with `keyof` yielded the names of its *methods*: `byId.get` and `byId.size` were offered as subscribable paths, and a slice holding a plain number autocompleted `toFixed`. None of them could ever fire, because the diff reports such a value at its own path and never descends into it. The new `RootValue` type states that rule once, and `Path` and `Dotted` both defer to it.\\n\\n`Dotted` now resolves to the empty path for a slice that IS one value, so `{ reducer, property: \"\" }` type-checks where it can actually fire instead of falling through to the untyped overload. The conditional distributes, so a nullable object slice gets both `\"\"` and its keys — which is correct: it changes at its root when it becomes `null`, and at a leaf otherwise. `PathValue<T, \"\">` now resolves to `T`, matching what both path readers have always returned for an empty path; it used to say `never`.\\n\\nNo path that resolved before stops resolving. Pinned by membership assertions in the type tests, which name each path individually so a single one appearing or vanishing is a build failure.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

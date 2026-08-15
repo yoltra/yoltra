@@ -1,9 +1,10 @@
 import { RuleTester } from "eslint";
 import { describe, it } from "vitest";
 
-// @ts-expect-error — a plain ESM rule module, deliberately untyped: it is consumed by ESLint's
-// flat config, which is JavaScript, and adding a build step for one rule would cost more than
-// the rule.
+// A plain ESM rule module with no build step: it is consumed by ESLint's flat config, which is
+// JavaScript. `allowJs` in this package's tsconfig lets the import be resolved and inferred
+// rather than silenced — the `@ts-expect-error` that used to sit here also hid every misuse of
+// what it imported.
 import { noGetStateInRender } from "../eslint/no-getstate-in-render.mjs";
 
 /**

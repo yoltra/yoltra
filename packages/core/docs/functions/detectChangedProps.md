@@ -10,7 +10,7 @@
 
 > **detectChangedProps**(`oldState`, `newState`, `path`, `ancestors`): `string`[]
 
-Defined in: [utils/detectChangedProps.ts:92](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/detectChangedProps.ts#L92)
+Defined in: [utils/detectChangedProps.ts:98](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/detectChangedProps.ts#L98)
 
 Computes the list of **dotted leaf paths** that changed between two values.
 
@@ -96,6 +96,12 @@ detectChangedProps(/a/i, /a/g, 'pattern');                      // => ['pattern'
 ## Remarks
 
 - If `oldState === newState` (same reference), returns `[]` immediately.
+- A change at the **root** — the values themselves differ and neither is a walkable object,
+  as for a primitive, a `Map`/`Set`, or two `Date`s — is reported at the `path` given, which
+  is `""` for the default root call. `[""]` therefore means *"the whole value changed"*, and
+  is emphatically **not** the same as `[]`. Callers must not filter it out for falsiness:
+  doing so is indistinguishable from "nothing changed", which is how a store slice holding a
+  primitive once silently refused every update it was given.
 - For objects, only **own enumerable** keys are compared (via `Object.keys`).
 - Returned paths are **leaf paths** where a primitive/terminal difference was detected; for arrays,
   a length change is treated as a leaf change at the array path.

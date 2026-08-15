@@ -102,12 +102,34 @@ rush version --bump
 #    @yoltra/ds (su propia política):                  bumpea según sus propios change files
 #    → consume TODOS los change files, escribe cada CHANGELOG (solo archivos — sin git)
 
+# 3. Revisa qué contienen realmente los tarballs, desde un árbol compilado:
+rush build
+node common/scripts/check-publish-metadata.mjs
+#    Sale con código distinto de cero y nombra cada paquete infractor. Corrige antes
+#    de taggear — después del tag no hay forma de despublicar.
+
 git commit -am "chore(release): v0.2.0"
 
-# 3. Empuja el bump + tag juntos — el tag es lo que publica:
+# 4. Empuja el bump + tag juntos — el tag es lo que publica:
 git push origin main --follow-tags
 #    (equivalente: git push origin main && git tag v0.2.0 && git push origin v0.2.0)
 ```
+
+### Qué cubre el chequeo previo a publicar
+
+Nada más en CI inspecciona la salida de compilación, y así fue como cuatro defectos distintos que
+afectan a quien consume los paquetes se publicaron en verde en 0.4.0. `check-publish-metadata.mjs`
+verifica, para cada paquete publicable:
+
+| Chequeo | Qué previene |
+| --- | --- |
+| `repository.url` coincide con el repositorio fuente | npm Trusted Publishing rechaza una discrepancia con **E422** — *después* de que paquetes anteriores ya estén publicados, dejando un release a medias |
+| Ningún `.d.ts` publicado tiene un especificador relativo sin extensión | Bajo `"type": "module"` no resuelven; casi todo proyecto usa `skipLibCheck: true`, así que los errores desaparecen y cada símbolo reexportado degrada a `any` en silencio |
+| `exports.import` es ESM y `exports.require` es CJS, según la extensión | Una condición `require` apuntando a un `.js` dentro de un paquete `"type": "module"` lanza `ReferenceError: exports is not defined` en la primera línea del consumidor |
+| Cada `//# sourceMappingURL` nombra un archivo que el tarball contiene | De lo contrario cada corrida de pruebas del consumidor imprime dos líneas ENOENT por módulo |
+
+Los últimos tres leen la salida de compilación, así que ejecuta `rush build` primero — un paquete
+sin compilar se reporta, no se omite.
 
 Luego:
 

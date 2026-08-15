@@ -9,7 +9,7 @@ const fromHere = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // the kinetic-logo example's vite.config for the full rationale. Refresh after
 // editing a package:  rush build --only @yoltra/react   (or @yoltra/core)
 const yoltraDistAliases = {
-  "@yoltra/core": fromHere("../../../packages/core/dist/yoltra.esm.js"),
+  "@yoltra/core": fromHere("../../../packages/core/dist/yoltra.mjs"),
   "@yoltra/react": fromHere("../../../packages/react/dist/index.mjs"),
   // Design system: the more specific subpaths must be aliased before the bare specifier so
   // they win. Component stylesheets are imported individually — one sheet per component, so

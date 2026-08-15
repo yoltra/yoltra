@@ -62,6 +62,7 @@
 - [PersistencePhase](type-aliases/PersistencePhase.md)
 - [Primitive](type-aliases/Primitive.md)
 - [ReducerFunction](type-aliases/ReducerFunction.md)
+- [RootValue](type-aliases/RootValue.md)
 - [StoreSpec](type-aliases/StoreSpec.md)
 - [Unsubscribe](type-aliases/Unsubscribe.md)
 - [When](type-aliases/When.md)

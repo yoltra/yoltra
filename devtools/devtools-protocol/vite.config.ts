@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import banner from "vite-plugin-banner";
 import dts from "vite-plugin-dts";
 
-import pkg from "./package.json" assert { type: "json" };
+import pkg from "./package.json";
 
 const year = new Date().getFullYear();
 const licenseText = `/*!
@@ -32,8 +32,11 @@ export default defineConfig({
       entry: "src/index.ts",
       name: "yoltraDevtoolsProtocol",
       formats: ["cjs", "es"],
-      fileName: (format) =>
-        format === "cjs" ? "devtools-protocol.cjs.js" : "devtools-protocol.esm.js",
+      // `.cjs` and `.mjs`, not `.cjs.js`/`.esm.js`. This package declares `"type": "module"`,
+      // which makes every `.js` file ESM — so the `require` condition pointed at a file Node
+      // parsed as ESM and `require("@yoltra/devtools-protocol")` threw `ReferenceError: exports is not
+      // defined in ES module scope`. An explicit extension states the format outright.
+      fileName: (format) => (format === "cjs" ? "devtools-protocol.cjs" : "devtools-protocol.mjs"),
     },
     outDir: "dist",
     sourcemap: true,

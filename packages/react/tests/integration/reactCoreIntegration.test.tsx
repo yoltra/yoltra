@@ -65,4 +65,50 @@ describe("React + @yoltra/core integration", () => {
 
     expect(screen.getByTestId("value").textContent).toBe("1");
   });
+
+  // A slice whose state IS one value has no property beneath it, so the subscription has to be
+  // the empty path — which `useAtomicProp` already documents as "the whole slice" and reads with
+  // `getAtPath(slice, "")`. Until the store emitted at the slice root, that whole path was dead:
+  // the component mounted with the right value and then never heard about another one.
+  it("re-renders on a slice whose state is a single root value", async () => {
+    const store = (createStore as any)({
+      name: "Token",
+      reducer: {
+        token: {
+          state: null as string | null,
+          when: { keys: [["auth", "set"]] },
+          reducer: (_state: string | null, event: any) => event.payload as string | null,
+        },
+      },
+    });
+
+    function Token() {
+      const token = useAtomicProp({ reducer: "token", property: "" });
+      const emit = useEmit();
+
+      return (
+        <div>
+          <span data-testid="token">{String(token)}</span>
+          <button data-testid="login" onClick={() => emit("auth", "set", "abc123")}>
+            login
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <StoreProvider store={store}>
+        <Token />
+      </StoreProvider>,
+    );
+
+    expect(screen.getByTestId("token").textContent).toBe("null");
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("login"));
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId("token").textContent).toBe("abc123");
+  });
 });

@@ -71,7 +71,25 @@ consumes the change files that check requires, so it would fail the PR.
    To hold the suite on a patch release instead, use
    `rush version --bump --override-bump patch`.
 
-3. **Review** the version changes and generated CHANGELOGs, then **commit and tag
+3. **Check what the tarballs actually contain**, from a built tree:
+
+   ```sh
+   rush build
+   node common/scripts/check-publish-metadata.mjs
+   ```
+
+   Nothing else in CI inspects build output, which is how four consumer-facing
+   defects shipped green at 0.4.0. This verifies `repository.url` (npm Trusted
+   Publishing rejects a mismatch with E422, *after* some packages are already
+   live), that no published `.d.ts` carries an extensionless relative specifier
+   (they resolve to `any` behind the consumer's `skipLibCheck`), that each
+   `import`/`require` condition points at a file Node parses the way the
+   condition promises, and that every referenced sourcemap is in the tarball.
+
+   It exits non-zero and names every offending package. Fix before tagging —
+   after the tag there is no un-publishing.
+
+4. **Review** the version changes and generated CHANGELOGs, then **commit and tag
    on `main`** — the tag (matching `v*.*.*`) triggers the workflow:
 
    ```sh
@@ -84,7 +102,7 @@ consumes the change files that check requires, so it would fail the PR.
    > protected, either push the bump via an admin-merge that skips the verify
    > check, or exempt the release commit from `rush change --verify`.
 
-4. **Watch the Release workflow.** On success, every `shouldPublish` package is
+5. **Watch the Release workflow.** On success, every `shouldPublish` package is
    live on npm at the new version. Re-run the workflow (`workflow_dispatch`) if
    a transient publish step fails.
 

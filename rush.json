@@ -19,6 +19,21 @@
   "nodeSupportedVersionRange": ">=18.18.0 <25.0.0",
 
   /**
+   * The baseline `rush change` and `rush change --verify` diff against. Without it Rush infers
+   * the remote and warns on every invocation, and the branch a change file is judged against is
+   * whatever the local checkout happens to imply rather than something the repo states.
+   *
+   * Also the single source of truth for the URL npm Trusted Publishing matches against:
+   * common/scripts/check-publish-metadata.mjs reads it from here rather than carrying its own
+   * copy, so the two cannot drift.
+   */
+  "repository": {
+    "url": "https://github.com/yoltra/yoltra.git",
+    "defaultBranch": "main",
+    "defaultRemote": "origin"
+  },
+
+  /**
    * Allow projects to reside up to 3 folders deep (e.g. examples/v0/yoltra-in-react).
    * Rush default is 2. We need 3 for the examples/v0/* structure.
    */

@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-import "../dist/devtools-cli.esm.js";
+import "../dist/devtools-cli.mjs";

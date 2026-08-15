@@ -23,14 +23,14 @@
     "url": "https://github.com/yoltra/yoltra/issues"
   },
   "type": "module",
-  "main": "dist/devtools-storeview.cjs.js",
-  "module": "dist/devtools-storeview.esm.js",
+  "main": "dist/devtools-storeview.cjs",
+  "module": "dist/devtools-storeview.mjs",
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/devtools-storeview.esm.js",
-      "require": "./dist/devtools-storeview.cjs.js"
+      "import": "./dist/devtools-storeview.mjs",
+      "require": "./dist/devtools-storeview.cjs"
     }
   },
   "files": [
@@ -38,13 +38,14 @@
   ],
   "sideEffects": true,
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "test": "vitest --watch=false",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
-    "docs": "rushx docs:js && rushx docs:md",
-    "docs:md": "pnpm typedoc --options ./typedoc.json",
-    "docs:js": "pnpm typedoc --options ./typedoc.json --json ./.typedoc/devtools-storeview-en.json",
+    "docs": "rushx docs:js && rushx docs:md && rushx docs:stamp",
+    "docs:stamp": "node ../../tools/repo-tools/bin/docs-stamp.mjs docs",
+    "docs:md": "typedoc --options ./typedoc.json",
+    "docs:js": "typedoc --options ./typedoc.json --json ./.typedoc/devtools-storeview-en.json",
     "size": "node ../../tools/repo-tools/bin/size-check.cjs"
   },
   "dependencies": {

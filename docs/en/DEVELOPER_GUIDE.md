@@ -254,6 +254,23 @@ generate `CHANGELOG.md` entries.
 
 > While the project is `< 1.0.0`: use `minor` for breaking changes and `patch` for fixes.
 
+### Two things `rush change -v` will not tell you
+
+Its failure message says "run `rush change`", which is no help when you already have.
+
+**A change file must be committed, not merely written or staged.** The check reads change files
+from the diff against the target branch, so an uncommitted one is invisible to it — and the
+error is word-for-word identical to having written none at all. If you are staring at a file you
+just created while Rush insists it does not exist, commit it.
+
+**The first PR after a release bump is asked for change files it did not earn.** `rush version
+--bump` rewrites dependency ranges (`"@yoltra/core": "^0.3.0"` → `"^0.4.0"`) in every package
+that depends on a lockstep sibling. Rush ignores a `package.json` diff that only touches a
+project's **own** `version` field, but treats a **dependency-range** edit as real content — so
+those packages, and only those, get flagged. Expect `@yoltra/react`,
+`@yoltra/devtools-node-agent` and `@yoltra/devtools-browser-agent`. Write them a change file
+describing your actual work; it is not a stale cache and there is nothing to purge.
+
 ---
 
 ## Adding a new publishable package
@@ -266,6 +283,40 @@ generate `CHANGELOG.md` entries.
 6. If it ships in sync with the product suite, set `"versionPolicyName": "yoltra"` (the lockstep
    policy — see the [Release Guide](./RELEASE_GUIDE.md)); otherwise leave it unset for independent
    versioning.
+
+### Build output conventions
+
+Two rules that only bite consumers, so nothing in this repo catches them for you. Both are
+enforced by `node common/scripts/check-publish-metadata.mjs` — run it before publishing.
+
+**Name build outputs `.mjs` and `.cjs`, never `.esm.js` / `.cjs.js`.** Node decides a `.js`
+file's format from the nearest `package.json` `type` field, so a bare `.js` means the opposite
+thing in a `"type": "module"` package than it does elsewhere. Both directions have shipped
+broken: a `require` condition pointing at a `.js` file inside a `"type": "module"` package
+throws `ReferenceError: exports is not defined`, and an `import` condition pointing at a `.js`
+file in a package with no `type` field fails on every Node before 22.7.
+
+```jsonc
+"exports": {
+  ".": {
+    "types":   "./dist/types/index.d.ts",
+    "import":  "./dist/thing.mjs",
+    "require": "./dist/thing.cjs"
+  }
+}
+```
+
+**Add the declaration-extension step to the package's `build` script:**
+
+```jsonc
+"build": "vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types"
+```
+
+TypeScript emits declarations with whatever the source wrote, and this repo writes extensionless
+relative imports. In a `"type": "module"` package those do not resolve, and since nearly every
+consumer sets `skipLibCheck: true` the errors are suppressed while **every re-exported symbol
+degrades to `any`** — a green build with no type checking at all, which is worse than a failure
+because nothing about it looks like one.
 
 ---
 

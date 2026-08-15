@@ -167,6 +167,25 @@ describe("payload stored by reference", () => {
     expect(warn).not.toHaveBeenCalled();
     expect(store.getState().copied.items[0]!.title).toBe("A");
   });
+
+  it("warns again for a store built after the first one was disposed", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const build = () =>
+      createStore<{ kept: AliasState }, AliasEvents>({ name: "Alias", reducer: { kept: keepsRef } });
+
+    const first = build();
+    await first.emit("app", "store", { title: "A" });
+    expect(warn).toHaveBeenCalledTimes(1);
+
+    first.dispose();
+
+    // The latch is per-store and has to be released with it. Left set, a per-route store, an
+    // HMR cycle or a test building one store per case inherits the suppression — and the code
+    // that never got warned is exactly the code that needed it.
+    const second = build();
+    await second.emit("app", "store", { title: "B" });
+    expect(warn).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("middleware that returns a promise", () => {
