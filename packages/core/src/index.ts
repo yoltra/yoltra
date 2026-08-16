@@ -26,6 +26,7 @@ export type {
   EmitOptions,
   EventMeta,
   InstrumentedEvent,
+  CascadeInfo,
   InstrumentationObserver,
   Unsubscribe,
   StoreSpec,

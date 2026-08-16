@@ -111,6 +111,29 @@ export interface Event<
    * Absent entirely unless {@link EmitOptions.meta} was supplied. See {@link EventMeta}.
    */
   readonly meta?: EventMeta;
+  /**
+   * The `id` of the event whose handling caused this one, when there was one.
+   *
+   * @remarks
+   * Absent on a **root** event — one emitted by application code rather than by a middleware,
+   * subscriber or effect reacting to another event. Together with {@link Event.depth} this makes
+   * a cascade legible after the fact: without it, a runaway chain is a pile of unrelated events
+   * with no way to tell which caused which.
+   */
+  readonly parentId?: string;
+  /**
+   * How many events deep in a causal chain this one is. A root event is depth `0`; an event
+   * emitted while handling it is `1`, and so on.
+   *
+   * @remarks
+   * Absent on a root event rather than present as `0`, so an event emitted by application code
+   * stays byte-identical to one built before causality tracking existed — the same treatment
+   * {@link Event.meta} gets, and for the same reason: `Object.keys` and `toStrictEqual` are load
+   * bearing in consumer tests.
+   *
+   * This is the value {@link StoreSpec.maxReduceDepth} bounds.
+   */
+  readonly depth?: number;
 }
 
 /**
@@ -464,7 +487,90 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * @param slice - Name of the slice whose reducer threw.
    */
   onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
+
+  /**
+   * Maximum causal depth of an event chain before the store refuses to extend it.
+   *
+   * @remarks
+   * An event emitted while handling another is one deeper than its cause. Two reducers wired to
+   * each other, or an effect that emits the event its own reducer answers, climb this without
+   * bound — and the reduce queue drains synchronously, so in a browser that is a frozen tab with
+   * no error and no stack, and on a server a pinned core.
+   *
+   * **On by default**, because the whole point is that the failure mode does not require
+   * configuration to avoid. The default is far past any legitimate chain: an event caused by an
+   * event caused by an event is normal, sixty-four deep is a bug. Raise it if an application
+   * genuinely nests deeper, or set `Infinity` to opt out entirely and own the consequences.
+   *
+   * Breaching does not throw — see {@link StoreSpec.onCascade}.
+   *
+   * @default 64
+   */
+  maxReduceDepth?: number;
+
+  /**
+   * Maximum number of events one synchronous drain will process before refusing more.
+   *
+   * @remarks
+   * A drain processes one root event plus every event emitted *while it runs* — so this counts a
+   * single causal burst, not application traffic. A plain loop is unaffected: `emit` drains to
+   * completion before it returns, so `for (const row of rows) store.emit(…)` is a thousand drains
+   * of one event each, never one drain of a thousand.
+   *
+   * **Off by default** because a wide burst is not by itself a bug. One `sync` event whose
+   * subscriber fans out to five hundred `upsert`s is a legitimate shape, and a default low enough
+   * to catch a runaway would refuse it. Depth is what separates a cascade from a fan-out — a
+   * fan-out is wide and shallow, a cascade is narrow and deep — which is why
+   * {@link StoreSpec.maxReduceDepth} carries the default and this does not.
+   *
+   * Set it when a store's bursts are known to be bounded and an unexpectedly wide one is itself
+   * the symptom worth catching.
+   *
+   * @default undefined (no limit)
+   */
+  maxTransitionsPerDrain?: number;
+
+  /**
+   * Called when a ceiling is breached, instead of throwing.
+   *
+   * @remarks
+   * The offending emit is refused and the chain stops there; everything already committed
+   * stands. It does not throw, because the throw would surface in whichever frame happened to be
+   * emitting — a subscriber, an effect, a middleware — which is the same species of
+   * hard-to-attribute failure the ceiling exists to prevent. A cascade is a wiring bug, and this
+   * is where the wiring gets named.
+   *
+   * @param info - Which ceiling, the event that would have extended the chain, and its causal
+   * chain of ids, newest last.
+   */
+  onCascade?: (info: CascadeInfo<EM>) => void;
 };
+
+/**
+ * What {@link StoreSpec.onCascade} receives when a ceiling is breached.
+ *
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export interface CascadeInfo<EM extends EventMapBase = EventMapBase> {
+  /** Which ceiling was hit. */
+  readonly limit: "maxReduceDepth" | "maxTransitionsPerDrain";
+  /** The configured value that was exceeded. */
+  readonly limitValue: number;
+  /** The event that was refused — the one that would have extended the chain. */
+  readonly event: EventUnion<EM>;
+  /** Causal depth the refused event would have had. */
+  readonly depth: number;
+  /**
+   * Ids from the root of the chain to the refused event's parent, newest last.
+   *
+   * @remarks
+   * Bounded to the most recent entries: a cascade is long by definition, and the useful part is
+   * the cycle at the end rather than the thousand identical hops before it.
+   */
+  readonly chain: readonly string[];
+}
 
 /**
  * Public Store surface.

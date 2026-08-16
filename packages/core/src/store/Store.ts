@@ -30,6 +30,7 @@ import type {
   Emit,
   EmitOptions,
   InstrumentationObserver,
+  CascadeInfo,
   InstrumentedEvent,
   EventPhase,
   EventSubscriptionHandler,
@@ -89,6 +90,29 @@ function freezeInDev<T>(value: T, alias?: AliasWatch): DeepReadonly<T> {
  * small enough not to swallow genuine user repeats.
  */
 const DEFAULT_DEDUP_KEY_WINDOW_MS = 100;
+
+/**
+ * Causal depth at which the store stops extending an event chain.
+ *
+ * @remarks
+ * Chosen to be uncontroversial rather than tight. An event caused by an event caused by an event
+ * is ordinary application wiring; sixty-four deep is a cycle. The cost of being wrong in the
+ * generous direction is a cascade that runs a few more hops before it is named; the cost of being
+ * wrong in the strict direction is refusing correct code, which would teach people to raise the
+ * limit reflexively and defeat it.
+ */
+const DEFAULT_MAX_REDUCE_DEPTH = 64;
+
+/**
+ * How many ancestor ids {@link CascadeInfo.chain} carries.
+ *
+ * @remarks
+ * A cascade is long by definition. The diagnostic value is in the cycle at the end — which
+ * handler emitted back into which — not in the several thousand identical hops that preceded it,
+ * and retaining all of them would make the guard against runaway memory itself retain
+ * unboundedly.
+ */
+const CASCADE_CHAIN_LIMIT = 16;
 
 /**
  * High-resolution monotonic clock in milliseconds for instrumentation timing;
@@ -278,6 +302,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     id: string;
     meta?: EventMeta;
     resolve: () => void;
+    parentId?: string;
+    depth?: number;
+    /** Ancestor ids, for {@link CascadeInfo.chain}. Never surfaced on the event itself. */
+    chain?: readonly string[];
   }> = [];
 
   /**
@@ -286,6 +314,38 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private isReducing = false;
+
+  /**
+   * The event currently being reduced, or `null` outside the drain.
+   *
+   * @remarks
+   * This is what makes causality exact rather than best-effort. The drain is synchronous — no
+   * `await` can interleave — so any `emit` that arrives while it is set is, without ambiguity, a
+   * consequence of this event. That catches the case a scoped `emit` closure cannot: a
+   * middleware or subscriber that captured the store and calls `store.emit` directly instead of
+   * using the injected one. Attribution should not depend on which reference a consumer reached
+   * for.
+   *
+   * @internal
+   */
+  private currentEvent: { id: string; depth: number; chain: readonly string[] } | null = null;
+
+  /**
+   * Events processed by the drain currently in progress. Compared against
+   * `maxTransitionsPerDrain`, which is off unless configured.
+   *
+   * @internal
+   */
+  private transitionsThisDrain = 0;
+
+  /**
+   * Ceilings that stop a cascade from becoming a hung process. See {@link StoreSpec.maxReduceDepth}.
+   *
+   * @internal
+   */
+  private readonly maxReduceDepth: number;
+  private readonly maxTransitionsPerDrain: number;
+  private readonly onCascade?: (info: CascadeInfo<EM>) => void;
 
   /**
    * Registered instrumentation observers (DevTools seam). See {@link instrument}.
@@ -384,6 +444,17 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.idFactory = spec.idFactory ?? (() => crypto.randomUUID());
     this.onEffectError = spec.onEffectError;
     this.onReducerError = spec.onReducerError;
+
+    // Depth is bounded whether or not anybody asked. The queue drains synchronously, so an
+    // unbounded cascade is a frozen tab or a pinned core with no error to point at — a failure
+    // mode a library should not require configuration to avoid.
+    //
+    // Width stays opt-in, because wide and deep mean different things: a fan-out (one event whose
+    // subscriber emits five hundred siblings) is legitimate and wide, while a cascade is narrow
+    // and deep. Depth separates them; a count cannot. See StoreSpec.maxTransitionsPerDrain.
+    this.maxReduceDepth = spec.maxReduceDepth ?? DEFAULT_MAX_REDUCE_DEPTH;
+    this.maxTransitionsPerDrain = spec.maxTransitionsPerDrain ?? Infinity;
+    this.onCascade = spec.onCascade;
 
     // Deduplication is OPT-IN. Content-based dedup is OFF by default because it
     // can silently drop legitimate rapid-fire identical events; enable it with
@@ -603,6 +674,40 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
+   * Reports a breached ceiling and refuses the emit.
+   *
+   * @remarks
+   * Console *and* hook, matching how reducer and effect errors are reported: a cascade is a
+   * wiring bug, and the console line is what a developer who has not registered a hook will
+   * actually see. Without one, refusing the emit would look exactly like the event never having
+   * been emitted at all — which is the invisibility this whole guard exists to end.
+   *
+   * @internal
+   */
+  private reportCascade(
+    limit: "maxReduceDepth" | "maxTransitionsPerDrain",
+    limitValue: number,
+    event: EventUnion<EM>,
+    depth: number,
+    chain: readonly string[],
+  ): void {
+    console.error(
+      `[yoltra] Cascade stopped: "${event.channel}/${event.type}" would exceed ${limit} ` +
+        `(${limitValue}). This event was refused and the chain ends here. A chain this long is ` +
+        `almost always two consumers emitting into each other — check what reacts to ` +
+        `"${event.channel}/${event.type}" and what that emits in turn.` +
+        (chain.length > 0 ? ` Recent causal chain: ${chain.join(" → ")} → (refused).` : ""),
+    );
+
+    try {
+      this.onCascade?.({ limit, limitValue, event, depth, chain });
+    } catch (err) {
+      // A throwing diagnostic must not become the failure it was reporting.
+      console.error("onCascade handler error:", err);
+    }
+  }
+
+  /**
    * Checks if an event matches a `When` matcher.
    *
    * @param when - The When matcher (or undefined for "all events").
@@ -692,6 +797,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private async notifyEffects(event: EventUnion<EM>) {
+    // Effects resume in their own task, after the drain that produced this event has ended, so
+    // `currentEvent` is null by the time they run and cannot speak for them. This closure is how
+    // an effect's emits stay attached to the event that triggered them — which is what bounds a
+    // cascade that crosses drains rather than staying inside one.
+    const emit = this.scopedEmit(event);
+
     // 1. Call key-based effects (O(1) lookup)
     const key = `${String(event.channel)}::${String(event.type)}`;
     const effectSet = this.effects.get(key);
@@ -699,7 +810,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (effectSet && effectSet.size > 0) {
       for (const h of [...effectSet]) {
         try {
-          await h(event, this.getState, this.emit);
+          await h(event, this.getState, emit);
         } catch (e) {
           console.error("Effect error:", e);
           this.onEffectError?.(e, event);
@@ -711,13 +822,33 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     for (const { effect, when } of this.patternEffects) {
       if (this.matchesWhen(when, event)) {
         try {
-          await effect(event, this.getState, this.emit);
+          await effect(event, this.getState, emit);
         } catch (e) {
           console.error("Effect error:", e);
           this.onEffectError?.(e, event);
         }
       }
     }
+  }
+
+  /**
+   * An `emit` that attributes whatever it sends to `cause`.
+   *
+   * @remarks
+   * Built per event rather than per effect: every effect reacting to one event shares a cause,
+   * and one closure is cheaper than one per handler on a path that runs for every committed
+   * event.
+   *
+   * @internal
+   */
+  private scopedEmit(cause: EventUnion<EM>): Emit<EM> {
+    const parent = {
+      id: cause.id,
+      depth: cause.depth ?? 0,
+      chain: [...(this.currentEvent?.chain ?? []), cause.id].slice(-CASCADE_CHAIN_LIMIT),
+    };
+    return ((channel, type, payload, opts) =>
+      this.emitCaused(parent, channel, type, payload, opts)) as Emit<EM>;
   }
 
   /**
@@ -1231,6 +1362,28 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     payload: EM[C][T],
     opts?: EmitOptions,
   ): Promise<void> {
+    return this.emitCaused(null, channel, type, payload, opts);
+  }
+
+  /**
+   * The real emit, with an explicitly supplied cause.
+   *
+   * @remarks
+   * Exists so the parent can be passed without a pseudo-private field on the public
+   * {@link EmitOptions}. Two callers supply one: the public {@link emit} passes `null` and lets
+   * `currentEvent` speak for the synchronous case, and the scoped `emit` handed to effects passes
+   * the event that triggered them — effects resume after the drain has ended, so nothing else
+   * could still know what caused them.
+   *
+   * @internal
+   */
+  private async emitCaused<C extends keyof EM & string, T extends keyof EM[C] & string>(
+    scopedParent: { id: string; depth: number; chain: readonly string[] } | null,
+    channel: C,
+    type: T,
+    payload: EM[C][T],
+    opts?: EmitOptions,
+  ): Promise<void> {
     // Deduplication is OPT-IN (see EmitOptions / StoreSpec.dedupWindowMs).
     // Content-based dedup runs only when `dedupWindowMs > 0`; identity-based
     // dedup runs when an explicit `dedupKey` is supplied. By default neither is
@@ -1256,6 +1409,36 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // already updated before emit() returns; the returned promise tracks the
     // async effect phase for `await emit(...)`.
     const id = opts?.id ?? this.idFactory();
+
+    // Causality. `currentEvent` is set only inside the synchronous drain, so if it is set this
+    // emit is a consequence of that event — no matter whether the caller used the injected
+    // `emit` or reached for `store.emit` directly. Outside the drain, an explicitly scoped
+    // parent (given to effects, which resume after the drain has ended) supplies it instead.
+    const parent = this.currentEvent ?? scopedParent;
+    const depth = parent === null ? 0 : parent.depth + 1;
+
+    if (parent !== null && depth > this.maxReduceDepth) {
+      // Refused, not thrown: the throw would land in whichever frame happened to be emitting.
+      // Guarded on `parent` as well as depth — a root is depth 0 and can only breach a ceiling
+      // set below zero, and refusing the caller's own emit is never the right answer.
+      this.reportCascade(
+        "maxReduceDepth",
+        this.maxReduceDepth,
+        {
+          channel,
+          type,
+          payload,
+          id,
+          ...(opts?.meta !== undefined ? { meta: opts.meta } : {}),
+          parentId: parent.id,
+          depth,
+        } as EventUnion<EM>,
+        depth,
+        parent.chain,
+      );
+      return;
+    }
+
     let resolve!: () => void;
     const done = new Promise<void>((r) => {
       resolve = r;
@@ -1268,6 +1451,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       id,
       meta: opts?.meta,
       resolve,
+      // Only carried for caused events, so a root event's object stays byte-identical to one
+      // built before causality existed — the same rule `meta` follows.
+      ...(parent !== null ? { parentId: parent.id, depth, chain: parent.chain } : {}),
     });
 
     // Synchronous reduce phase (drains re-entrant emits too), then async effects.
@@ -1289,19 +1475,55 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private drainReduce(): void {
     if (this.isReducing) return;
     this.isReducing = true;
+    this.transitionsThisDrain = 0;
     try {
       while (this.reduceQueue.length > 0) {
-        const { channel, type, payload, id, meta, resolve } = this.reduceQueue.shift()!;
+        const next = this.reduceQueue.shift()!;
+        const { channel, type, payload, id, meta, resolve, parentId, depth, chain } = next;
+
         // Conditional spread, not `meta` unconditionally: when no metadata was supplied the
         // event object stays byte-identical to one built before `meta` existed, so
-        // Object.keys / JSON.stringify / toStrictEqual behaviour is unchanged.
+        // Object.keys / JSON.stringify / toStrictEqual behaviour is unchanged. `parentId` and
+        // `depth` follow the same rule, and are absent on a root event.
         const event = {
           channel,
           type,
           payload,
           id,
           ...(meta !== undefined ? { meta } : {}),
+          ...(parentId !== undefined ? { parentId, depth } : {}),
         } as EventUnion<EM>;
+
+        // Width ceiling, checked as the event is dequeued rather than as it is emitted: a burst
+        // is only excessive relative to the pass draining it, and at emit time there is no pass
+        // yet. Off unless configured — see StoreSpec.maxTransitionsPerDrain.
+        //
+        // The root is never refused. It is the caller's own emit, not part of any burst, and a
+        // ceiling that rejected it would turn "this store's cascades are bounded" into "this
+        // store randomly drops the event you just sent". Only what the drain caused can be
+        // excessive, which is also why `depth` and `chain` are known to be set here.
+        if (parentId !== undefined && ++this.transitionsThisDrain > this.maxTransitionsPerDrain) {
+          this.reportCascade(
+            "maxTransitionsPerDrain",
+            this.maxTransitionsPerDrain,
+            event,
+            depth as number,
+            chain as readonly string[],
+          );
+          // Resolve rather than abandon: a caller awaiting this emit would otherwise hang, which
+          // is the failure the ceiling exists to prevent, arriving by another door.
+          resolve();
+          continue;
+        }
+
+        // Anything emitted from here until the end of this iteration is caused by this event.
+        // The drain is synchronous, so this is exact rather than a heuristic — and it holds even
+        // when a consumer calls `store.emit` directly instead of the injected `emit`.
+        this.currentEvent = {
+          id,
+          depth: depth ?? 0,
+          chain: [...(chain ?? []), id].slice(-CASCADE_CHAIN_LIMIT),
+        };
 
         // Instrumentation: capture prev state, collect changed paths, and time
         // the synchronous reduce — all skipped entirely when no observers.
@@ -1318,6 +1540,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           console.error("Emit reduce error:", err);
         } finally {
           if (instrumenting) this.changedPathSink = null;
+          // Cleared before effects are scheduled. Effects resume in a later task, when this
+          // event is no longer what the drain is processing; they carry their cause explicitly
+          // through the scoped emit instead.
+          this.currentEvent = null;
         }
 
         if (instrumenting) {
@@ -2250,6 +2476,9 @@ export function createStore<
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
   onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
+  maxReduceDepth?: number;
+  maxTransitionsPerDrain?: number;
+  onCascade?: (info: CascadeInfo<EM>) => void;
 }): StoreInstance<keyof S & string, S, EM>;
 
 /**
@@ -2297,6 +2526,9 @@ export function createStore<RM extends ReducersMapAny>(cfg: {
     event: EventUnion<EMFromReducersStrict<RM>>,
     slice: string,
   ) => void;
+  maxReduceDepth?: number;
+  maxTransitionsPerDrain?: number;
+  onCascade?: (info: CascadeInfo<EMFromReducersStrict<RM>>) => void;
 }): StoreInstance<keyof RM & string, StateFromReducers<RM>, EMFromReducersStrict<RM>>;
 
 export function createStore(cfg: any) {
@@ -2305,16 +2537,16 @@ export function createStore(cfg: any) {
   type EM = EMFromReducersStrict<RM>;
   type RN = keyof RM & string;
 
+  // Spread, then override the three fields that need a default. Copying the option list by hand
+  // meant every option added to `StoreSpec` had to be added here too, and forgetting was silent:
+  // the option type-checked at the call site, reached `createStore`, and was dropped on the
+  // floor. `maxReduceDepth` was lost exactly that way. The Store constructor reads named fields,
+  // so anything extra in `cfg` is ignored rather than harmful.
   return new Store<EM, RN, S>({
-    name: cfg.name,
+    ...cfg,
     reducer: (cfg.reducer ?? {}) as unknown as Record<RN, ReducerSpec<S[RN], EM>>,
     middleware: (cfg.middleware ?? []) as any,
     effects: (cfg.effects ?? []) as any,
-    dedupWindowMs: cfg.dedupWindowMs,
-    idFactory: cfg.idFactory,
-    devtools: cfg.devtools,
-    onEffectError: cfg.onEffectError,
-    onReducerError: cfg.onReducerError,
   });
 }
 

@@ -350,6 +350,57 @@ await store.emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page
 
 ---
 
+## Cascade protection (on by default)
+
+Two consumers wired into each other — a subscriber that emits what its own reducer answers, or
+two slices that answer each other's events — produce an event chain with no end. The reduce queue
+drains **synchronously**, so that is not a slow program: it is a frozen tab, or a pinned core,
+with no error and no stack to point at.
+
+Every event therefore carries its causal position, and the store refuses to extend a chain past a
+ceiling:
+
+```typescript
+const store = createStore({
+  name: "app",
+  reducer: { ... },
+
+  // Defaults to 64. Bounded whether or not you configure it — a failure mode this bad
+  // should not require configuration to avoid. Set Infinity to opt out and own it.
+  maxReduceDepth: 64,
+
+  onCascade: ({ event, depth, chain }) => {
+    report(`cascade at ${event.channel}/${event.type}, depth ${depth}`, chain);
+  },
+});
+```
+
+An event emitted while another is being handled is one deeper than its cause, and carries
+`parentId` and `depth` so the cycle is legible after the fact:
+
+```typescript
+store.onEvent("plan", "patch", (event) => {
+  event.depth;     // 0 for an event emitted by application code
+  event.parentId;  // undefined at depth 0; the causing event's id below it
+});
+```
+
+Both fields are **absent** on a root event rather than present as `0`/`undefined`, so events your
+application emits stay byte-identical to before this existed.
+
+Breaching does not throw. The offending emit is refused, everything already committed stands, and
+`onCascade` (plus a console error) names it — a throw would surface in whichever subscriber or
+effect happened to be emitting, which is the same unattributable failure the ceiling exists to
+prevent.
+
+**A wide burst is not a cascade.** One event whose subscriber fans out to five hundred siblings
+is a legitimate shape; depth is what separates it from a cycle, and a plain loop of `store.emit`
+never accumulates depth at all — each call drains to completion before the next, so every one is
+a root. `maxTransitionsPerDrain` bounds burst *width* and is off by default for that reason; the
+event that starts a drain is never refused by it.
+
+---
+
 ## Dynamic Reducers
 
 Add or remove reducer slices at runtime:
