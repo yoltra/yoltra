@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import type { NotifiedPhase } from "@yoltra/core";
 import { Badge, Card, EmptyState, Heading, Inline, Stack, Text } from "@yoltra/ds";
 
 import { useEvent } from "../state/store";
@@ -30,7 +31,10 @@ interface LogLine {
 export function MissionLog() {
   const [lines, setLines] = useState<LogLine[]>([]);
 
-  const record = useCallback((type: string, id: string, phase: "committed" | "uncommitted") => {
+  // `NotifiedPhase` rather than a hand-written union: the set of phases a handler can be told
+  // about is the store's to define, and spelling it out locally means every phase the store
+  // gains is a compile error here. It gained `written` exactly that way.
+  const record = useCallback((type: string, id: string, phase: NotifiedPhase) => {
     setLines((previous) =>
       [
         { key: performance.now(), type, target: id, blocked: phase === "uncommitted" },

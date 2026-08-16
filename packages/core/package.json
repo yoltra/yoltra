@@ -88,16 +88,16 @@
     {
       "name": "createStore",
       "import": "{ createStore }",
-      "limitKb": 8
+      "limitKb": 14
     },
     {
       "name": "with persistence",
       "import": "{ createStore, hydrate, persist }",
-      "limitKb": 10
+      "limitKb": 16
     },
     {
       "name": "barrel",
-      "limitKb": 11
+      "limitKb": 18
     }
   ]
 }

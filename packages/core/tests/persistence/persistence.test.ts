@@ -209,7 +209,9 @@ describe("writing", () => {
     const store = build({ counter, other });
 
     const stop = persist(store as never, { key: "app", adapter, version: 1, throttleMs: 0, onError });
-    await expect(store.emit("app", "set", 1)).resolves.toBeUndefined();
+    // Resolves rather than rejecting: an adapter that throws is the persistence layer's
+    // problem, not the emit's. The write itself still landed.
+    await expect(store.emit("app", "set", 1)).resolves.toMatchObject({ written: true });
     stop();
 
     expect(onError).toHaveBeenCalledWith(expect.any(Error), "write");

@@ -29,6 +29,7 @@ import type {
   EMFromReducersStrict,
   Emit,
   EmitOptions,
+  EmitResult,
   InstrumentationObserver,
   CascadeInfo,
   InstrumentedEvent,
@@ -38,6 +39,8 @@ import type {
   When,
 } from "../types";
 import { freezeState } from "../utils/immutability";
+import { isRejected } from "./rejection";
+import type { Rejection } from "./rejection";
 import type { AliasWatch } from "../utils/immutability";
 
 /**
@@ -113,6 +116,26 @@ const DEFAULT_MAX_REDUCE_DEPTH = 64;
  * unboundedly.
  */
 const CASCADE_CHAIN_LIMIT = 16;
+
+/**
+ * One slice's pending write: computed, frozen, and not yet visible to anybody.
+ *
+ * @remarks
+ * `prev` is retained because change notifications report old and new, and by the time they are
+ * built the slice has already been replaced in `this.state` — the whole point of staging.
+ *
+ * @internal
+ */
+const NOT_COMMITTED: EmitResult = Object.freeze({ committed: false, written: false });
+const COMMITTED_UNWRITTEN: EmitResult = Object.freeze({ committed: true, written: false });
+const WRITTEN: EmitResult = Object.freeze({ committed: true, written: true });
+
+interface StagedSlice {
+  readonly name: string;
+  readonly prev: unknown;
+  readonly frozen: unknown;
+  readonly leafPaths: string[];
+}
 
 /**
  * High-resolution monotonic clock in milliseconds for instrumentation timing;
@@ -225,6 +248,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
+  /**
+   * Subscribers to events that actually changed state, notified after the commit.
+   *
+   * @remarks
+   * Separate from `committedEventSubscribers` rather than a filter over it, because the two
+   * answer different questions and one of them is load bearing: `committed` means "not vetoed"
+   * and fires for every event a store accepts, including every event in a store with no
+   * reducers. Narrowing it would have silently stopped toasts and analytics firing.
+   *
+   * @internal
+   */
+  private readonly writtenEventSubscribers = new Map<
+    string,
+    Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
+  >();
+
   private readonly allEventSubscribers = new Map<
     string,
     Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
@@ -301,7 +340,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     payload: any;
     id: string;
     meta?: EventMeta;
-    resolve: () => void;
+    resolve: (result: EmitResult) => void;
     parentId?: string;
     depth?: number;
     /** Ancestor ids, for {@link CascadeInfo.chain}. Never surfaced on the event itself. */
@@ -346,6 +385,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private readonly maxReduceDepth: number;
   private readonly maxTransitionsPerDrain: number;
   private readonly onCascade?: (info: CascadeInfo<EM>) => void;
+  private readonly onRejected?: (
+    rejection: Rejection,
+    event: EventUnion<EM>,
+    slice: string,
+  ) => void;
 
   /**
    * Registered instrumentation observers (DevTools seam). See {@link instrument}.
@@ -357,11 +401,25 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   /**
    * Scratch array collecting slice-prefixed changed leaf paths during an
    * instrumented reduce. Set by {@link drainReduce} while observers are active;
-   * appended to by {@link forwardEvent}. `null` when not instrumenting.
+   * appended to by {@link commitStaged}. `null` when not instrumenting.
    *
    * @internal
    */
   private changedPathSink: string[] | null = null;
+
+  /**
+   * Where keyed reducers put their pending writes during a reduce, and the refusal one of them
+   * returned.
+   *
+   * @remarks
+   * Keyed reducers are invoked through `reducerBus`, which delivers to handlers and has no way
+   * to hand a value back — the same reason `changedPathSink` exists. `null` outside a reduce.
+   *
+   * @internal
+   */
+  private stagingSink: StagedSlice[] | null = null;
+  private stagedRejection: Rejection | null = null;
+  private stagedRejectedBy = "";
 
   /**
    * Count of effect tasks currently in flight; surfaced as queue depth by
@@ -455,6 +513,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.maxReduceDepth = spec.maxReduceDepth ?? DEFAULT_MAX_REDUCE_DEPTH;
     this.maxTransitionsPerDrain = spec.maxTransitionsPerDrain ?? Infinity;
     this.onCascade = spec.onCascade;
+    this.onRejected = spec.onRejected;
 
     // Deduplication is OPT-IN. Content-based dedup is OFF by default because it
     // can silently drop legitimate rapid-fire identical events; enable it with
@@ -493,7 +552,6 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.notifyEffects = this.notifyEffects.bind(this);
 
     // private API
-    this.forwardEvent = this.forwardEvent.bind(this);
     this.__applyExternalState = this.__applyExternalState.bind(this);
     this.__replayEvents = this.__replayEvents.bind(this);
     this.__devtoolsIntrospect = this.__devtoolsIntrospect.bind(this);
@@ -553,6 +611,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.listeners.clear();
     this.committedEventSubscribers.clear();
     this.uncommittedEventSubscribers.clear();
+    this.writtenEventSubscribers.clear();
     this.allEventSubscribers.clear();
     this.instrumentObservers.clear();
     this.connectorBus.clear();
@@ -863,7 +922,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private notifyEventSubscribers(
     event: EventUnion<EM>,
-    phase: "committed" | "uncommitted",
+    phase: "committed" | "uncommitted" | "written",
   ): void {
     const key = `${String(event.channel)}::${String(event.type)}`;
 
@@ -871,14 +930,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const phaseMap =
       phase === "committed"
         ? this.committedEventSubscribers
-        : this.uncommittedEventSubscribers;
+        : phase === "written"
+          ? this.writtenEventSubscribers
+          : this.uncommittedEventSubscribers;
     const phaseSet = phaseMap.get(key);
 
     if (phaseSet?.size) {
       for (const handler of [...phaseSet]) this.invokeEventSubscriber(handler, event, phase);
     }
 
-    // Notify 'all' subscribers
+    // Notify 'all' subscribers.
+    //
+    // Deliberately not reached for `written`. An event that writes is also committed, so folding
+    // it in would hand every existing 'all' subscriber a second notification for the same event
+    // and quietly double their counts — a silent change to code that never asked for the new
+    // phase. `all` means committed-or-uncommitted, as it always has.
+    if (phase === "written") return;
     const allSet = this.allEventSubscribers.get(key);
     if (allSet?.size) {
       for (const handler of [...allSet]) this.invokeEventSubscriber(handler, event, phase);
@@ -895,7 +962,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private invokeEventSubscriber(
     handler: EventSubscriptionHandler<DeepReadonly<S>, EM>,
     event: EventUnion<EM>,
-    phase: "committed" | "uncommitted",
+    phase: "committed" | "uncommitted" | "written",
   ): void {
     try {
       const result = handler(event, this.getState, this.emit, phase) as unknown;
@@ -942,58 +1009,86 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * pattern reducer's throw aborted the commit and notified nobody, not even the uncommitted
    * subscribers a veto would have reached.
    *
-   * The semantics are now the same either way: **the failing slice is isolated.** Its state is
+   * The semantics are the same either way: **the failing slice is isolated.** Its state is
    * unchanged, every other slice still reduces, and the event still commits if anything else
-   * changed. Rolling the whole event back would be tidier in principle, but fine-grained
-   * subscribers are notified inside `forwardEvent` as each slice commits, so an event that
-   * reverted afterwards would have already told components about a value that no longer exists.
-   * Isolation keeps every notification truthful.
+   * changed.
+   *
+   * That is deliberately *not* what a {@link Rejected} refusal does, which discards the whole
+   * event. A crash and a refusal are different acts: a reducer that throws has a bug and should
+   * not be able to veto its neighbours' work, while a reducer that refuses has made a decision
+   * and must be able to.
+   *
+   * This once argued that rolling back was untenable, because subscribers were notified as each
+   * slice committed and a later revert would have told them about a value that no longer
+   * existed. Staging removed that obstacle — nothing is notified until every slice is written —
+   * which is what made refusal possible at all.
    *
    * @internal
    */
-  private forwardEventGuarded<C extends keyof EM & string, T extends keyof EM[C] & string>(
+  private stageSliceGuarded<C extends keyof EM & string, T extends keyof EM[C] & string>(
     rName: R,
     event: Event<EM, C, T>,
-  ): boolean {
+    staged: StagedSlice[],
+  ): Rejection | null {
     try {
-      return this.forwardEvent(rName, event);
+      return this.stageSlice(rName, event, staged);
     } catch (err) {
       // Reported through a hook as well as the console: a reducer throwing is a bug in
       // application code, and until now the only trace of it was a console line in one case and
       // an exception surfacing somewhere unrelated in the other.
       console.error(`Reducer error in slice "${rName as string}":`, err);
       this.onReducerError?.(err, event as EventUnion<EM>, rName as string);
-      return false;
+      return null;
     }
   }
 
-  private forwardEvent<C extends keyof EM & string, T extends keyof EM[C] & string>(
+  /**
+   * Runs one slice's reducer and records what it *would* write. Writes nothing.
+   *
+   * @returns The reducer's {@link Rejection} if it refused, otherwise `null`.
+   *
+   * @remarks
+   * The staging half of the write path. Nothing here touches `this.state` or notifies anybody,
+   * which is what lets the event be refused after every reducer has had its say — a decision
+   * that has to see the whole diff cannot be made one slice at a time.
+   *
+   * Freezing happens here rather than at commit because it is where the new value is built, and
+   * the freeze is a no-op on anything already frozen; a staged slice that never commits is
+   * discarded frozen, which costs nothing and keeps the committed path free of a second walk.
+   *
+   * @internal
+   */
+  private stageSlice<C extends keyof EM & string, T extends keyof EM[C] & string>(
     rName: R,
     event: Event<EM, C, T>,
-  ): boolean {
+    staged: StagedSlice[],
+  ): Rejection | null {
     // @ts-expect-error R indexing on DeepReadonly<S> is valid at runtime
     const prev = this.state[rName] as S[R];
     const next = this.reducers[rName].reduce(prev, event as any);
 
+    // A refusal, not a value. Checked before the identity comparison below, because a rejection
+    // object is never the previous state and would otherwise be staged as one.
+    if (isRejected(next)) return next;
+
     // if reducer returned same ref, definitely no change
-    if (prev === next) return false;
+    if (prev === next) return null;
 
     // Compute precise leaf paths that changed (relative to slice root).
     //
     // Not filtered for truthiness. `""` is how `detectChangedProps` reports a change at the
     // slice ROOT — a slice that *is* one value: a primitive, a `Map`/`Set`, a `Date`, or an
     // object replaced by something of a different shape. Discarding it as falsy made the
-    // length check below read "nothing changed", so `forwardEvent` returned before assigning
+    // length check below read "nothing changed", so the write path returned before assigning
     // `this.state`: the reducer ran, its result was thrown away, and nothing said so. A store
     // holding `state: 0` could never leave `0`.
     const leafPaths = detectChangedProps(prev, next);
 
     // if nothing actually changed at the leaves, treat as a no-op
-    if (leafPaths.length === 0) return false;
+    if (leafPaths.length === 0) return null;
 
-    // Commit the new slice under a NEW top-level state reference (shallow spread).
-    // No deep clone: the reducer already returned a fresh `next` (purity contract),
-    // so structural sharing is preserved and freezeInDev only touches new nodes.
+    // No deep clone: the reducer already returned a fresh `next` (purity contract), so
+    // structural sharing is preserved and freezeInDev only touches new nodes.
     // In development the freeze walk also watches for the event payload appearing in the new
     // state by reference. That is the aliasing that makes a deep in-place freeze surprising:
     // the caller still holds the object, mutating it later throws from an unrelated stack, and
@@ -1019,43 +1114,83 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           }
         : undefined;
 
-    const frozen = freezeInDev(next, alias) as DeepReadonly<S[R]>;
-    this.state = { ...this.state, [rName]: frozen } as DeepReadonly<S>;
+    staged.push({
+      name: rName as string,
+      prev,
+      frozen: freezeInDev(next, alias),
+      leafPaths,
+    });
+
+    return null;
+  }
+
+  /**
+   * Writes every staged slice, then tells the world — in that order.
+   *
+   * @remarks
+   * The commit half. Assigning all slices under a single new root before any notification goes
+   * out is what closes the window this used to leave open: notifications fired per slice as each
+   * committed, so a subscriber to slice A that read `getState()` could observe slice B of the
+   * *same event* not yet applied. In React that window is real, because the atomic hooks use a
+   * change as a bare signal and then re-read the whole store.
+   *
+   * It is also what makes refusal possible at all. The previous code documented rollback as
+   * untenable precisely because "an event that reverted afterwards would have already told
+   * components about a value that no longer exists" — true when notification and commit were the
+   * same step, and no longer true now that they are not.
+   *
+   * @returns `true` if anything was written.
+   *
+   * @internal
+   */
+  private commitStaged(staged: StagedSlice[]): boolean {
+    if (staged.length === 0) return false;
+
+    // One new root for the whole event, not one per slice.
+    const nextState = { ...(this.state as object) } as Record<string, unknown>;
+    for (const slice of staged) nextState[slice.name] = slice.frozen;
+    this.state = nextState as DeepReadonly<S>;
 
     // Record slice-prefixed changed leaf paths for any active instrumentation
     // (lets DevTools agents build precise patches without re-diffing state).
     if (this.changedPathSink) {
-      for (const p of leafPaths) {
-        this.changedPathSink.push(p ? `${rName as string}.${p}` : (rName as string));
+      for (const slice of staged) {
+        for (const p of slice.leafPaths) {
+          this.changedPathSink.push(p ? `${slice.name}.${p}` : slice.name);
+        }
       }
     }
 
-    // emit deep + ancestor paths once each
-    const toEmit = new Set<string>();
-    for (const p of leafPaths) {
-      // The slice root has no ancestors to walk — `buildAncestorPaths("")` is `[]` by contract,
-      // which is what callers holding a real path rely on — so it is added directly. Without
-      // this a slice that is entirely one value changes and tells nobody, which is the
-      // subscription half of the same bug the missing filter caused in the commit half.
-      if (p === "") {
-        toEmit.add("");
-        continue;
+    // Every notification happens after every write, so any handler reading `getState()` sees the
+    // event applied in full.
+    for (const slice of staged) {
+      // emit deep + ancestor paths once each
+      const toEmit = new Set<string>();
+      for (const p of slice.leafPaths) {
+        // The slice root has no ancestors to walk — `buildAncestorPaths("")` is `[]` by contract,
+        // which is what callers holding a real path rely on — so it is added directly. Without
+        // this a slice that is entirely one value changes and tells nobody, which is the
+        // subscription half of the same bug the missing filter caused in the commit half.
+        if (p === "") {
+          toEmit.add("");
+          continue;
+        }
+        for (const a of Store.buildAncestorPaths(p)) toEmit.add(a);
       }
-      for (const a of Store.buildAncestorPaths(p)) toEmit.add(a);
+
+      for (const prop of toEmit) {
+        // Built only if a handler matched. Reading the old and new value walks the state tree
+        // twice per path, and a slice nobody subscribes to used to pay that for every path it
+        // changed — describing the change in detail to an audience of nobody.
+        this.connectorBus.emitWith(slice.name as R, prop, () => ({
+          oldValue: this.getAtPath(slice.prev, prop),
+          newValue: this.getAtPath(slice.frozen, prop),
+          path: prop,
+        }));
+      }
     }
 
-    for (const prop of toEmit) {
-      // Built only if a handler matched. Reading the old and new value walks the state tree
-      // twice per path, and a slice nobody subscribes to used to pay that for every path it
-      // changed — describing the change in detail to an audience of nobody.
-      this.connectorBus.emitWith(rName, prop, () => ({
-        oldValue: this.getAtPath(prev, prop),
-        newValue: this.getAtPath(frozen, prop),
-        path: prop,
-      }));
-    }
-
-    return true; // slice changed
+    return true;
   }
 
   /**
@@ -1162,7 +1297,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * fine-grained path changes for each slice.
    *
    * **State Immutability**: If any slices change, a new state object is created via
-   * shallow spread. This ensures consistent immutability with {@link forwardEvent}.
+   * shallow spread. This ensures consistent immutability with {@link commitStaged}.
    *
    * **Missing slices**: the snapshot should contain every slice. A slice absent
    * from `nextPlain` is **retained at its current value** (not blanked to
@@ -1219,7 +1354,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       anyChanged = true;
 
       // Full dotted leaf paths relative to the slice. Unfiltered, for the reason given in
-      // `forwardEvent`: `""` is a genuine root-level change, not an absent one. Time travel
+      // `stageSlice`: `""` is a genuine root-level change, not an absent one. Time travel
       // onto a primitive slice committed the state here but emitted nothing, so a component
       // subscribed through `connect` kept rendering the value it had before the jump.
       const leafPaths = detectChangedProps(prevSlice, nextSlice);
@@ -1282,30 +1417,43 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     for (const evt of events) {
       const event = evt as EventUnion<EM>;
 
-      // Track state before reducers
-      const stateBefore = this.state;
+      // Staged and committed exactly as a live event is, so a replay reproduces the same state
+      // by the same path — including a reducer that refuses, which must refuse identically or
+      // the replayed history is not the history.
+      const staged: StagedSlice[] = [];
+      this.stagingSink = staged;
+      let rejection: Rejection | null = null;
 
-      // Run key-based reducers via reducerBus. The event travels alongside the payload so
-      // keyed reducers observe the replayed event's real id, exactly like pattern reducers.
-      this.reducerBus.emit(event.channel as any, event.type as any, event.payload, event as any);
+      try {
+        // Run key-based reducers via reducerBus. The event travels alongside the payload so
+        // keyed reducers observe the replayed event's real id, exactly like pattern reducers.
+        this.reducerBus.emit(event.channel as any, event.type as any, event.payload, event as any);
+        rejection = this.stagedRejection;
 
-      // Run pattern-based reducers. Guarded like the live path: one bad event in a replayed log
-      // should cost that event, not abandon the replay halfway through with the store left at
-      // whatever state it happened to reach.
-      for (const [sliceName, when] of this.patternReducers) {
-        if (this.matchesWhen(when, event)) {
-          this.forwardEventGuarded(sliceName, event as any);
+        // Run pattern-based reducers. Guarded like the live path: one bad event in a replayed log
+        // should cost that event, not abandon the replay halfway through with the store left at
+        // whatever state it happened to reach.
+        for (const [sliceName, when] of this.patternReducers) {
+          if (rejection !== null) break;
+          if (this.matchesWhen(when, event)) {
+            const refused = this.stageSliceGuarded(sliceName, event as any, staged);
+            if (refused !== null) rejection = refused;
+          }
         }
+      } finally {
+        this.stagingSink = null;
+        this.stagedRejection = null;
+        this.stagedRejectedBy = "";
       }
 
-      const stateAfter = this.state;
-      const anySliceChanged = stateBefore !== stateAfter;
+      const anySliceChanged = rejection === null && this.commitStaged(staged);
 
       // Notify committed event subscribers (sync, fire-and-forget)
       this.notifyEventSubscribers(event, "committed");
 
       // Notify coarse subscribers if state changed
       if (anySliceChanged) {
+        this.notifyEventSubscribers(event, "written");
         this.listeners.forEach((l) => l());
       }
 
@@ -1327,7 +1475,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * 5. **Effects** (async) - side-effects keyed by `(channel, type)`; the returned promise resolves once they complete
    *
    * **Change Detection**: Uses reference equality (`===`) on `this.state` to determine
-   * if any slice changed. Works because {@link forwardEvent} creates a new state reference
+   * if any slice changed. Works because {@link commitStaged} creates a new state reference
    * via shallow spread when any slice changes.
    *
    * @typeParam C - Channel key in `EM`.
@@ -1361,7 +1509,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     type: T,
     payload: EM[C][T],
     opts?: EmitOptions,
-  ): Promise<void> {
+  ): Promise<EmitResult> {
     return this.emitCaused(null, channel, type, payload, opts);
   }
 
@@ -1383,7 +1531,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     type: T,
     payload: EM[C][T],
     opts?: EmitOptions,
-  ): Promise<void> {
+  ): Promise<EmitResult> {
     // Deduplication is OPT-IN (see EmitOptions / StoreSpec.dedupWindowMs).
     // Content-based dedup runs only when `dedupWindowMs > 0`; identity-based
     // dedup runs when an explicit `dedupKey` is supplied. By default neither is
@@ -1400,7 +1548,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           ? `${channel}::${type}::#${dedupKey}`
           : this.fingerprint(channel as string, type as string, payload);
       if (this.shouldDedupe(fp, windowMs)) {
-        return; // Skip duplicate
+        // A suppressed duplicate never reaches middleware or a reducer, so it is neither
+        // committed nor written — the same answer a vetoed event gives, which is correct: in
+        // both cases the caller's event had no effect.
+        return NOT_COMMITTED;
       }
     }
 
@@ -1436,11 +1587,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         depth,
         parent.chain,
       );
-      return;
+      return NOT_COMMITTED;
     }
 
-    let resolve!: () => void;
-    const done = new Promise<void>((r) => {
+    let resolve!: (result: EmitResult) => void;
+    const done = new Promise<EmitResult>((r) => {
       resolve = r;
     });
 
@@ -1512,7 +1663,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           );
           // Resolve rather than abandon: a caller awaiting this emit would otherwise hang, which
           // is the failure the ceiling exists to prevent, arriving by another door.
-          resolve();
+          resolve(NOT_COMMITTED);
           continue;
         }
 
@@ -1533,9 +1684,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         if (sink !== undefined) this.changedPathSink = sink;
         const t0 = instrumenting ? now() : 0;
 
-        let committed = false;
+        let result: EmitResult = NOT_COMMITTED;
         try {
-          committed = this.applyEventSync(event);
+          result = this.applyEventSync(event);
         } catch (err) {
           console.error("Emit reduce error:", err);
         } finally {
@@ -1549,7 +1700,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         if (instrumenting) {
           this.emitInstrumentation(
             event,
-            committed,
+            result,
             sink ?? [],
             prevState as DeepReadonly<S>,
             now() - t0,
@@ -1560,7 +1711,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         // completion deferred when they finish. Independent per-event tasks
         // (rather than one shared serialized loop) let an effect `await` a
         // re-entrant emit without deadlocking.
-        void this.runEventEffects(event, committed, resolve);
+        void this.runEventEffects(event, result, resolve);
       }
     } finally {
       this.isReducing = false;
@@ -1577,7 +1728,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
-  private applyEventSync(event: EventUnion<EM>): boolean {
+  private applyEventSync(event: EventUnion<EM>): EmitResult {
     // Middleware (synchronous). Return false to veto; async work belongs in effects.
     for (const mwInput of this.middleware) {
       const when = this.getMiddlewareWhen(mwInput);
@@ -1608,33 +1759,65 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       if (!ok) {
         // Rejected by middleware — notify uncommitted subscribers, do not commit.
         this.notifyEventSubscribers(event, "uncommitted");
-        return false;
+        return NOT_COMMITTED;
       }
     }
 
-    // Reducers — track whether any slice changed via reference equality.
-    const stateBefore = this.state;
-    // Pass the event itself, not just the payload: keyed reducers are wired through
-    // `reducerBus` in `mountSlice` and would otherwise have to invent an id.
-    this.reducerBus.emit(
-      event.channel as any,
-      event.type as any,
-      event.payload as any,
-      event as any,
-    );
-    for (const [sliceName, when] of this.patternReducers) {
-      if (this.matchesWhen(when, event)) {
-        this.forwardEventGuarded(sliceName, event as any);
-      }
-    }
-    const changed = stateBefore !== this.state;
+    // Reduce every matching slice into a staging list. Nothing is written yet, so a refusal
+    // arriving from the last reducer can still stop the first one's write.
+    const staged: StagedSlice[] = [];
+    this.stagingSink = staged;
+    let rejection: Rejection | null = null;
+    let rejectedBy = "";
 
-    // Committed event subscribers (fire-and-forget), then coarse listeners.
+    try {
+      // Pass the event itself, not just the payload: keyed reducers are wired through
+      // `reducerBus` in `mountSlice` and would otherwise have to invent an id.
+      this.reducerBus.emit(
+        event.channel as any,
+        event.type as any,
+        event.payload as any,
+        event as any,
+      );
+      rejection = this.stagedRejection;
+      rejectedBy = this.stagedRejectedBy;
+
+      for (const [sliceName, when] of this.patternReducers) {
+        if (rejection !== null) break;
+        if (this.matchesWhen(when, event)) {
+          const refused = this.stageSliceGuarded(sliceName, event as any, staged);
+          if (refused !== null) {
+            rejection = refused;
+            rejectedBy = sliceName as string;
+          }
+        }
+      }
+    } finally {
+      this.stagingSink = null;
+      this.stagedRejection = null;
+      this.stagedRejectedBy = "";
+    }
+
+    // A refusal discards every staged slice, not just the refusing one. Authorising a write to
+    // one slice while a sibling records it as accepted is not authorisation — and a caller told
+    // "rejected" must not find half of its event applied.
+    if (rejection !== null) {
+      this.onRejected?.(rejection, event, rejectedBy);
+      this.notifyEventSubscribers(event, "committed");
+      return { committed: true, written: false, rejected: rejection };
+    }
+
+    const written = this.commitStaged(staged);
+
+    // Committed subscribers fire whether or not anything was written — `committed` means "not
+    // vetoed", which is what a notification or analytics bus depends on. `written` is the
+    // stricter fact, and fires after the commit so a handler reading getState() sees it.
     this.notifyEventSubscribers(event, "committed");
-    if (changed) {
+    if (written) {
+      this.notifyEventSubscribers(event, "written");
       this.listeners.forEach((l) => l());
     }
-    return true;
+    return written ? WRITTEN : COMMITTED_UNWRITTEN;
   }
 
   /**
@@ -1647,17 +1830,17 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private async runEventEffects(
     event: EventUnion<EM>,
-    committed: boolean,
-    resolve: () => void,
+    result: EmitResult,
+    resolve: (result: EmitResult) => void,
   ): Promise<void> {
     this.inFlightEffects++;
     try {
-      if (committed) await this.notifyEffects(event);
+      if (result.committed) await this.notifyEffects(event);
     } catch (err) {
       console.error("Effect error:", err);
     } finally {
       this.inFlightEffects--;
-      resolve();
+      resolve(result);
     }
   }
 
@@ -1676,14 +1859,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   /**
    * Builds an {@link InstrumentedEvent} from the reduce result and notifies
    * observers. `changedPaths` are the exact slice-prefixed leaf paths recorded
-   * by {@link forwardEvent} during this reduce, so DevTools patches need no
+   * by {@link commitStaged} during this reduce, so DevTools patches need no
    * re-diff.
    *
    * @internal
    */
   private emitInstrumentation(
     event: EventUnion<EM>,
-    committed: boolean,
+    result: EmitResult,
     changedPaths: string[],
     prevState: DeepReadonly<S>,
     reduceTimeMs: number,
@@ -1704,11 +1887,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         // byte-identical to the pre-`meta` shape.
         ...(event.meta !== undefined ? { meta: event.meta } : {}),
       },
-      committed,
+      committed: result.committed,
       changedPaths,
       prevValues,
       nextValues,
       reduceTimeMs,
+      // Present only when a reducer refused, so an observer can tell a refusal from a veto —
+      // identical in state, entirely different in cause.
+      ...(result.rejected !== undefined ? { rejected: result.rejected } : {}),
     };
     for (const observer of [...this.instrumentObservers]) {
       try {
@@ -1810,7 +1996,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         ? this.committedEventSubscribers
         : phase === "uncommitted"
           ? this.uncommittedEventSubscribers
-          : this.allEventSubscribers;
+          : phase === "written"
+            ? this.writtenEventSubscribers
+            : this.allEventSubscribers;
 
     if (!targetMap.has(key)) {
       targetMap.set(key, new Set());
@@ -2293,7 +2481,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           payload,
           id: this.idFactory(),
         }) as Event<EM, typeof ch, typeof tp>;
-        this.forwardEventGuarded(name, event as any);
+        // Staged, not committed. `reducerBus` delivers to handlers and has no return channel,
+        // so a refusal is recorded on the store for `applyEventSync` to read — the same reason
+        // `changedPathSink` exists. The sink is null outside a reduce, which is the only path
+        // that can reach here.
+        if (this.stagingSink === null) return;
+        const refused = this.stageSliceGuarded(name, event as any, this.stagingSink);
+        if (refused !== null && this.stagedRejection === null) {
+          this.stagedRejection = refused;
+          this.stagedRejectedBy = name as string;
+        }
       });
 
       unsubs.push(u);

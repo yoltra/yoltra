@@ -330,7 +330,7 @@ describe("reporting", () => {
     });
 
     // A throwing diagnostic must not become the failure it was reporting.
-    await expect(store.emit("ping", "go", 1)).resolves.toBeUndefined();
+    await expect(store.emit("ping", "go", 1)).resolves.toMatchObject({ committed: true });
   });
 
   it("stops a wide burst when the width ceiling is opted into", async () => {
@@ -357,7 +357,7 @@ describe("reporting", () => {
 
     // Refused events still resolve. Abandoning them would hang any caller awaiting one, which is
     // the failure the ceiling exists to prevent arriving by another door.
-    await expect(store.emit("ping", "go", 1)).resolves.toBeUndefined();
+    await expect(store.emit("ping", "go", 1)).resolves.toMatchObject({ committed: true });
 
     // Ten, not nine: the ceiling counts what the drain *caused*, and the root `ping/go` that
     // started it is the caller's own event rather than part of the burst.

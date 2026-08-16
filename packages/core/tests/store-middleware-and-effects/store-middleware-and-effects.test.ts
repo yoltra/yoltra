@@ -133,7 +133,8 @@ describe("Store - middleware and effects", () => {
     });
 
     // await emit() must RESOLVE (never reject) even though the effect throws...
-    await expect(store.emit("ui", "increment", 1)).resolves.toBeUndefined();
+    // A failing effect never rejects the emit — the reduce already committed synchronously.
+    await expect(store.emit("ui", "increment", 1)).resolves.toMatchObject({ committed: true });
 
     // ...and the error must have been delivered to onEffectError with its event,
     // and still logged to the console (the hook augments, not replaces, logging).

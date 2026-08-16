@@ -2,6 +2,8 @@
  * @module @yoltra/core
  */
 
+import type { Rejection } from "./store/rejection";
+
 /**
  * A minimal "record of record" constraint for EventMaps.
  *
@@ -176,6 +178,37 @@ export interface Change<V = any> {
  * @public
  */
 /**
+ * What an `emit` resolves to once its effects have run.
+ *
+ * @remarks
+ * `emit` used to resolve to `void`, so a caller could not tell "the reducer applied my write"
+ * from "the reducer looked at my write and returned the state unchanged". On a single-writer
+ * store that distinction is academic; on a contended one it is a lost update the API could not
+ * report.
+ *
+ * Deliberately does **not** carry the changed paths. Building that list costs a string
+ * concatenation per changed path on every emit, and almost no caller reads it — the same reason
+ * change notifications are built lazily. Instrumentation already provides them to the observers
+ * that do want them.
+ *
+ * @public
+ */
+export interface EmitResult {
+  /**
+   * The event was not vetoed by middleware.
+   *
+   * @remarks
+   * Unchanged in meaning, and deliberately not narrowed to "state changed" — an event-only store
+   * commits every event and writes nothing, by construction.
+   */
+  readonly committed: boolean;
+  /** A reducer actually changed state. */
+  readonly written: boolean;
+  /** Present when a reducer refused the write. See {@link Rejection}. */
+  readonly rejected?: Rejection;
+}
+
+/**
  * Per-emit options.
  *
  * @public
@@ -239,7 +272,7 @@ export type Emit<EM extends EventMapBase> = <
   type: T,
   payload: EM[C][T],
   opts?: EmitOptions,
-) => Promise<void>;
+) => Promise<EmitResult>;
 
 /**
  * Basic unsubscribe handle.
@@ -275,6 +308,15 @@ export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
   nextValues: Record<string, unknown>;
   /** Wall-clock milliseconds spent in the synchronous reduce phase for this event. */
   reduceTimeMs: number;
+  /**
+   * Present when a reducer refused the write, carrying its reason.
+   *
+   * @remarks
+   * Distinct from `committed: false`, which means middleware vetoed the event before any reducer
+   * saw it. This is a reducer having considered the write and declined it — the two look
+   * identical in state and are entirely different in cause.
+   */
+  rejected?: Rejection;
 }
 
 /**
@@ -544,6 +586,25 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * chain of ids, newest last.
    */
   onCascade?: (info: CascadeInfo<EM>) => void;
+
+  /**
+   * Called when a reducer refuses a write by returning {@link Rejected}.
+   *
+   * @remarks
+   * The caller learns of its own refusal from the `emit` result; this is for everyone else —
+   * logging, metrics, alerting on a rate of rejected writes. Shaped as a callback rather than a
+   * subscription for the same reason {@link StoreSpec.onReducerError} is: it is a rare global
+   * signal, not something several independent parties register and unregister for.
+   *
+   * A refusal is a normal outcome, not an error. It means a reducer considered the write and
+   * declined it — a stale compare-and-swap, an unmet precondition — and the event is rejected
+   * whole, so no slice writes.
+   *
+   * @param rejection - The refusal and its reason.
+   * @param event - The event that was refused.
+   * @param slice - Name of the slice whose reducer refused.
+   */
+  onRejected?: (rejection: Rejection, event: EventUnion<EM>, slice: string) => void;
 };
 
 /**
@@ -869,7 +930,7 @@ export interface ReducerSpec<S = any, EM extends EventMapBase = EventMapBase> {
 export type ReducerFunction<S = any, EM extends EventMapBase = EventMapBase> = (
   state: S,
   event: EventUnion<EM>,
-) => S;
+) => S | Rejection;
 
 /**
  * Effect specification (stateless async event consumer).
@@ -1401,11 +1462,40 @@ export type DeepReadonly<T> = T extends (...args: never[]) => unknown
  *
  * - `'committed'`: Events that passed middleware and reached reducers (default)
  * - `'uncommitted'`: Events rejected by middleware
+ * - `'written'`: Events that actually changed state
  * - `'all'`: Both committed and uncommitted events
+ *
+ * @remarks
+ * `'committed'` means **not vetoed**, and always has. It fires for an event that passed
+ * middleware whether or not any reducer wrote anything — including every event in a store with
+ * no reducers at all, which is the shape a notification or analytics bus takes. Toasts,
+ * animations and tracking depend on that, so it is not narrowed.
+ *
+ * `'written'` is the stricter fact, added rather than substituted: state changed. It fires
+ * **after** the commit, so a subscriber reading `getState()` from it sees the new value — which
+ * is what people tend to assume `'committed'` does.
+ *
+ * `'all'` deliberately stays `committed | uncommitted`. Folding `'written'` into it would hand
+ * every existing `'all'` subscriber a second notification per written event and quietly double
+ * their counts.
  *
  * @public
  */
-export type EventPhase = "committed" | "uncommitted" | "all";
+export type EventPhase = "committed" | "uncommitted" | "written" | "all";
+
+/**
+ * The phases a handler is actually *told about*.
+ *
+ * @remarks
+ * `'all'` is a subscription selector, not an outcome — nothing is ever delivered "in the all
+ * phase". Naming the difference keeps the two from being conflated in a handler signature, which
+ * is where they were previously spelled out by hand and drifted: adding `'written'` to
+ * {@link EventPhase} left three copies in `@yoltra/react` still claiming a handler could only
+ * ever see two phases, and the build failed on the mismatch.
+ *
+ * @public
+ */
+export type NotifiedPhase = Exclude<EventPhase, "all">;
 
 /**
  * Handler function for event subscriptions (receives full event union).
@@ -1439,7 +1529,7 @@ export type EventSubscriptionHandler<S = any, EM extends EventMapBase = EventMap
   event: EventUnion<EM>,
   getState: () => S,
   emit: Emit<EM>,
-  phase: "committed" | "uncommitted",
+  phase: NotifiedPhase,
 ) => void | Promise<void>;
 
 /**
@@ -1475,5 +1565,5 @@ export type NarrowedEventHandler<
   event: Event<EM, C, T>,
   getState: () => S,
   emit: Emit<EM>,
-  phase: "committed" | "uncommitted",
+  phase: NotifiedPhase,
 ) => void | Promise<void>;

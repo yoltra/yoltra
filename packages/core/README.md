@@ -316,7 +316,17 @@ store.onEvent(
   "uncommitted",
 );
 
-// All events — both committed and uncommitted
+// Written events — state actually changed. Fires after the commit, so getState() is current.
+store.onEvent(
+  "plan",
+  "patch",
+  (event, getState) => {
+    console.log("applied:", getState().plan);
+  },
+  "written",
+);
+
+// All events — both committed and uncommitted (not written; see below)
 store.onEvent(
   "ui",
   "action",
@@ -326,6 +336,67 @@ store.onEvent(
   "all",
 );
 ```
+
+`committed` means **not vetoed**, and always has: it fires for every event middleware let through,
+whether or not a reducer wrote anything — including every event in a store with no reducers at
+all. `written` is the stricter fact, added rather than substituted, so toasts and analytics keep
+working unchanged. `all` stays `committed | uncommitted`; folding `written` in would hand existing
+subscribers a second notification per event.
+
+---
+
+## Commits are atomic across slices
+
+An event that touches several slices writes all of them, then notifies. Nothing observes a
+half-applied event — a subscriber to one slice reading `getState()` sees every other slice of the
+same event already applied.
+
+That matters most where a change is used as a signal to re-read, which is what the React hooks do.
+
+---
+
+## Refusing a write
+
+A reducer returns `Rejected(reason)` instead of state to decline. **The whole event is rejected**:
+no slice writes, no change notification fires, and the caller is told why.
+
+```typescript
+import { createStore, Rejected } from "@yoltra/core";
+
+const store = createStore({
+  name: "plan",
+  reducer: {
+    plan: {
+      state: { steps: [], version: 1 },
+      when: { keys: [["plan", "patch"]] },
+      reducer: (state, event) =>
+        event.payload.expectedVersion === state.version
+          ? { ...state, steps: event.payload.steps, version: state.version + 1 }
+          : Rejected(`stale write: expected v${event.payload.expectedVersion}, have v${state.version}`),
+    },
+  },
+  onRejected: (rejection, event, slice) => metrics.increment("write.refused", { slice }),
+});
+
+const result = await store.emit("plan", "patch", { steps, expectedVersion: 1 });
+
+result.committed; // true — middleware allowed it
+result.written; // false — but nothing was written
+result.rejected?.reason; // "stale write: expected v1, have v3"
+```
+
+Refusing is **not** the same as returning the state unchanged, which is indistinguishable from
+"this event did not concern me". It is also not the same as throwing: a reducer that throws has a
+bug, so its slice is isolated and every other slice still commits, while a reducer that refuses
+has made a decision and the whole event yields to it.
+
+`emit` resolves to an `EmitResult` once effects have run:
+
+| | |
+|---|---|
+| `committed` | middleware did not veto |
+| `written` | a reducer actually changed state |
+| `rejected` | present when a reducer refused, carrying `reason` |
 
 ---
 

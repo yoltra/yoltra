@@ -62,7 +62,14 @@ describe.each(["keyed", "pattern"] as const)("a %s reducer that throws", (target
 
   it("does not reject the emit", async () => {
     const store = build();
-    await expect(store.emit("app", "boom", null)).resolves.toBeUndefined();
+    // A throwing reducer isolates its slice and never rejects the emit. `written` is TRUE
+    // because the bystander slice still committed — which is the isolation contract, stated
+    // from the caller's side: one reducer's bug does not discard another's work. `rejected`
+    // stays absent, because a throw is a crash and not a refusal.
+    await expect(store.emit("app", "boom", null)).resolves.toEqual({
+      committed: true,
+      written: true,
+    });
   });
 
   it("leaves its own slice untouched", async () => {

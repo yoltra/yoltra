@@ -10,6 +10,8 @@ export { EventBus } from "./eventBus/EventBus";
 export { LooseEventBus } from "./eventBus/LooseEventBus";
 export { Reducer } from "./reducer/Reducer";
 export { Store, createStore, typedEvents } from "./store/Store";
+export { Rejected, isRejected } from "./store/rejection";
+export type { Rejection } from "./store/rejection";
 export { detectChangedProps } from "./utils/detectChangedProps";
 export { freezeState } from "./utils/immutability";
 
@@ -24,6 +26,7 @@ export type {
   Change,
   Emit,
   EmitOptions,
+  EmitResult,
   EventMeta,
   InstrumentedEvent,
   CascadeInfo,
@@ -50,6 +53,7 @@ export type {
   WithGlob,
   Dotted,
   EventPhase,
+  NotifiedPhase,
   EventSubscriptionHandler,
   NarrowedEventHandler,
   // Event targeting (When matcher)
