@@ -276,6 +276,221 @@ store.onEvent(
 
 ---
 
+## Los commits son atomicos entre slices
+
+Un evento que toca varias slices las escribe todas y despues notifica. Nadie observa un evento
+aplicado a medias: un suscriptor de una slice que lee `getState()` ve todas las demas slices del
+mismo evento ya aplicadas.
+
+Esto importa sobre todo donde un cambio se usa como senal para volver a leer, que es lo que hacen
+los hooks de React.
+
+---
+
+## Rechazar una escritura
+
+Un reducer devuelve `Rejected(reason)` en lugar de estado para declinar. **Se rechaza el evento
+completo**: ninguna slice escribe, no se emite ninguna notificacion de cambio, y quien llamo sabe
+por que.
+
+```typescript
+import { createStore, Rejected } from "@yoltra/core";
+
+const store = createStore({
+  name: "plan",
+  reducer: {
+    plan: {
+      state: { steps: [], version: 1 },
+      when: { keys: [["plan", "patch"]] },
+      reducer: (state, event) =>
+        event.payload.expectedVersion === state.version
+          ? { ...state, steps: event.payload.steps, version: state.version + 1 }
+          : Rejected(`escritura obsoleta: esperaba v${event.payload.expectedVersion}`),
+    },
+  },
+  onRejected: (rejection, event, slice) => metrics.increment("write.refused", { slice }),
+});
+
+const result = await store.emit("plan", "patch", { steps, expectedVersion: 1 });
+
+result.committed; // true — el middleware lo permitio
+result.written; // false — pero no se escribio nada
+result.rejected?.reason;
+```
+
+Rechazar **no** es lo mismo que devolver el estado sin cambios, que es indistinguible de "este
+evento no me concierne". Tampoco es lo mismo que lanzar: un reducer que lanza tiene un bug, asi
+que su slice queda aislada y las demas si escriben, mientras que un reducer que rechaza ha tomado
+una decision a la que cede el evento entero.
+
+`emit` resuelve a un `EmitResult` cuando terminan los efectos:
+
+| | |
+|---|---|
+| `committed` | el middleware no lo veto |
+| `written` | un reducer cambio el estado de verdad |
+| `rejected` | presente cuando un reducer rechazo, con su `reason` |
+
+La fase `written` de `onEvent` reporta lo mismo a los suscriptores. `committed` sigue
+significando **no vetado** y no se estrecho a proposito: se dispara para todo evento que el
+middleware permite, incluidos todos los eventos de un store sin reducers — la forma que toma un
+bus de notificaciones o de analitica.
+
+---
+
+## Peticion y respuesta — `store.call()`
+
+Todo consumidor de un bus de eventos acaba escribiendo peticion/respuesta a mano: generar un id,
+suscribirse, emparejar, expirar, desuscribirse. Son unas ochenta lineas y siempre traen los
+mismos dos bugs: la suscripcion sobrevive a la llamada, y un respondedor que olvida devolver el
+id produce un timeout sin nada a lo que apuntar.
+
+```typescript
+const res = await store.call("rpc", "ask", { q: "quien?" }, { reply: ["rpc", "answer"] });
+res.payload.text;
+```
+
+El respondedor no hace nada especial. Responde con el `emit` que recibio, y la marca causal del
+store correlaciona ambos: **no hay id que generar, devolver ni olvidar**.
+
+```typescript
+store.registerEffect({
+  when: { keys: [["rpc", "ask"]] },
+  effect: async (event, _get, emit) => {
+    await emit("rpc", "answer", await lookup(event.payload.q));
+  },
+});
+```
+
+### Una llamada resuelve al evento, no al payload
+
+Porque muchas veces quien llama no sabe *cual* respuesta va a recibir. `reply` nombra los tipos
+**terminales**, y el evento trae el discriminante:
+
+```typescript
+const res = await store.call("rpc", "ask", { q }, { reply: ["rpc", ["answer", "error"]] });
+
+switch (res.type) {
+  case "answer": return res.payload.text;
+  case "error": throw new Error(res.payload.reason);
+}
+```
+
+### El progreso se transmite, y el productor espera
+
+Cualquier evento correlacionado que **no** sea terminal es progreso. Itera la llamada para
+consumirlo:
+
+```typescript
+const call = store.call("job", "start", { id }, { reply: ["job", "done"], highWaterMark: 4 });
+
+for await (const step of call) await render(step.payload);
+const { payload } = await call;
+```
+
+La contrapresion es real, no un buffer con limite. `emit` resuelve solo cuando terminan sus
+efectos, y el colector es un efecto que no retorna hasta que el consumidor tomo el elemento — asi
+que un respondedor que escribe `await emit("job", "tick", chunk)` **va al ritmo del lector**.
+
+La contrapresion entra en juego **cuando empiezas a iterar**. Una llamada que solo se espera con
+`await` nunca extrae nada, asi que bloquear a su productor causaria un interbloqueo de la propia
+llamada: el progreso que nadie lee impediria que se enviara el evento terminal. Por eso el
+progreso no iterado se almacena hasta `highWaterMark` y despues se cuenta en `call.dropped`.
+
+### Rendirse
+
+| | |
+|---|---|
+| `timeoutMs` | **Inactividad**, no total: todo evento correlacionado lo reinicia, incluido el progreso. Por defecto 30s. |
+| `signal` | Un `AbortSignal`, para una fecha limite real o una accion cancelada. |
+| `call.cancel(reason)` | Deja de escuchar y liquida la llamada. |
+
+Termine como termine, la suscripcion se elimina y se libera cualquier productor detenido por la
+contrapresion. Un respondedor atascado es peor que el buffer sin limite que esto reemplazo.
+
+### `call` es local
+
+Una respuesta no puede llegar desde un peer federado: el sobre de federacion no lleva `meta` ni
+`parentId`, y la entrada pone el canal bajo un espacio de nombres, asi que ni la correlacion ni
+la ruta de respuesta sobreviven el salto. No es un descuido — la federacion resuelve
+peticion/respuesta entre nodos con **queries** tipadas, con una politica que puede conceder o
+denegar. Una llamada que federara en silencio convertiria esa decision de acceso en un accidente.
+
+---
+
+## Leer un valor al suscribirse
+
+`connect` empieza en "de ahora en adelante", asi que la primera lectura habia que repetirla en
+otro lado — la misma ruta en dos sitios, libres de divergir:
+
+```typescript
+store.connect({ reducer: "todos", property: "items.0.title" }, render, { immediate: true });
+```
+
+El primer cambio sintetico trae `oldValue: undefined` y **sin procedencia**, porque ningun evento
+lo causo. React no lo necesita: `useSyncExternalStore` ya lee una instantanea al montar.
+
+---
+
+## De donde vino un cambio
+
+Un `Change` nombra el evento que lo causo, asi que un suscriptor ya no tiene que duplicar la causa
+dentro del estado:
+
+```typescript
+store.connect({ reducer: "orders", property: "status" }, (change) => {
+  audit.record(change.path, change.newValue, {
+    causedBy: change.eventId,
+    via: `${change.channel}/${change.type}`,
+  });
+});
+```
+
+La procedencia esta **ausente** cuando ningun evento causo el cambio — un salto de time-travel de
+DevTools, o la entrega `immediate` de arriba. La ausencia es la senal, en vez de un id inventado.
+
+---
+
+## Proteccion contra cascadas (activada por defecto)
+
+Dos consumidores conectados entre si — un suscriptor que emite lo que su propio reducer atiende, o
+dos slices que atienden los eventos de la otra — producen una cadena de eventos sin final. La cola
+de reduccion se drena de forma **sincrona**, asi que eso no es un programa lento: es una pestana
+congelada, o un core al 100%, sin error ni stack al que apuntar.
+
+Por eso cada evento lleva su posicion causal, y el store se niega a extender una cadena mas alla
+de un tope:
+
+```typescript
+const store = createStore({
+  name: "app",
+  reducer: { ... },
+
+  // Por defecto 64. Acotado configures o no: un fallo tan grave no deberia exigir
+  // configuracion para evitarse. Usa Infinity para renunciar a el conscientemente.
+  maxReduceDepth: 64,
+
+  onCascade: ({ event, depth, chain }) => {
+    report(`cascada en ${event.channel}/${event.type}, profundidad ${depth}`, chain);
+  },
+});
+```
+
+Un evento emitido mientras se atiende otro esta un nivel mas abajo que su causa, y lleva
+`parentId` y `depth` para que el ciclo sea legible despues. Ambos campos estan **ausentes** en un
+evento raiz, asi que los eventos que emite tu aplicacion siguen siendo identicos byte a byte.
+
+Superar el tope no lanza. El emit ofensor se rechaza, lo ya confirmado se mantiene, y `onCascade`
+(mas un error en consola) lo nombra — lanzar apareceria en el suscriptor o efecto que casualmente
+estuviera emitiendo, que es justo el fallo inatribuible que el tope existe para evitar.
+
+**Una rafaga ancha no es una cascada.** Un evento cuyo suscriptor emite quinientos hermanos es una
+forma legitima; la profundidad es lo que la distingue de un ciclo, y un bucle normal de
+`store.emit` nunca acumula profundidad. `maxTransitionsPerDrain` acota el *ancho* y por eso viene
+desactivado.
+
+---
+
 ## Deduplicacion de Eventos (opt-in)
 
 La deduplicacion esta **desactivada por defecto** — yoltra nunca descarta en silencio eventos

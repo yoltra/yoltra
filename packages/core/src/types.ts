@@ -3,6 +3,7 @@
  */
 
 import type { Rejection } from "./store/rejection";
+import type { CallHandle, CallOptions } from "./store/call";
 
 /**
  * A minimal "record of record" constraint for EventMaps.
@@ -160,6 +161,20 @@ export interface Change<V = any> {
   newValue: V;
   /** Dotted path for fine-grained listeners; e.g., "data.items.0.title" */
   path?: string;
+  /**
+   * The `id` of the event that caused this change.
+   *
+   * @remarks
+   * A change used to be anonymous, so a subscriber that needed to know *why* a value moved had
+   * to mirror the cause into state and store it twice. Absent when the change did not come from
+   * an event — a DevTools time-travel snapshot, for instance — which is itself the signal that
+   * no event caused it.
+   */
+  eventId?: string;
+  /** Channel of the causing event. Absent for the same reason as {@link Change.eventId}. */
+  channel?: string;
+  /** Type of the causing event. Absent for the same reason as {@link Change.eventId}. */
+  type?: string;
 }
 
 /**
@@ -206,6 +221,29 @@ export interface EmitResult {
   readonly written: boolean;
   /** Present when a reducer refused the write. See {@link Rejection}. */
   readonly rejected?: Rejection;
+}
+
+/**
+ * Options for {@link StoreInstance.connect}.
+ *
+ * @public
+ */
+export interface ConnectOptions {
+  /**
+   * Deliver the current value once, immediately, before any change arrives.
+   *
+   * @remarks
+   * A subscription otherwise starts at "from now on", so a subscriber's first render has to read
+   * the path separately — the same path, spelled twice, which is one place for them to drift.
+   *
+   * The synthetic change has `oldValue: undefined` and no `eventId`, `channel` or `type`: no
+   * event caused it, and claiming one would be a lie a subscriber could act on.
+   *
+   * For a wildcard pattern the "current value" of a match set is not a thing, so the slice root
+   * is delivered with `path: ""`. React's hooks do not need this at all — `useSyncExternalStore`
+   * already reads a snapshot on mount — so it is aimed at imperative subscribers.
+   */
+  readonly immediate?: boolean;
 }
 
 /**
@@ -679,7 +717,26 @@ export interface StoreInstance<
    * @param spec - `{ reducer, property }` where `property` is a single dotted path string.
    * @param handler - Handler receiving a {@link Change} with `{ oldValue, newValue, path }`.
    */
-  connect(spec: { reducer: R; property: string }, handler: (change: Change) => void): Unsubscribe;
+  connect(
+    spec: { reducer: R; property: string },
+    handler: (change: Change) => void,
+    options?: ConnectOptions,
+  ): Unsubscribe;
+
+  /**
+   * Sends a request and waits for the reply, correlating the two automatically.
+   *
+   * @remarks
+   * Awaitable for the terminal reply, async-iterable for progress. See the implementation on
+   * {@link Store.call} for the full contract — correlation, backpressure, timeouts, and why it
+   * is a local primitive rather than something that federates.
+   */
+  call<C extends keyof EM & string, T extends keyof EM[C] & string>(
+    channel: C,
+    type: T,
+    payload: EM[C][T],
+    opts: CallOptions<EM>,
+  ): CallHandle<EventUnion<EM>, EventUnion<EM>>;
 
   /**
    * Convenience helper to register an **effect** filtered by a single `(channel, type)` pair.

@@ -400,6 +400,135 @@ has made a decision and the whole event yields to it.
 
 ---
 
+## Request and reply — `store.call()`
+
+Every event-bus consumer eventually writes request/reply by hand: mint an id, subscribe, match,
+time out, unsubscribe. It is about eighty lines and it has the same two bugs every time — the
+subscription outlives the call, and a responder that forgets to echo the id produces a timeout
+with nothing to point at.
+
+```typescript
+const res = await store.call("rpc", "ask", { q: "who?" }, { reply: ["rpc", "answer"] });
+res.payload.text;
+```
+
+The responder does nothing special. It replies through the `emit` it was handed, and the store's
+causal stamp correlates the two — **there is no id to mint, echo, or forget**:
+
+```typescript
+store.registerEffect({
+  when: { keys: [["rpc", "ask"]] },
+  effect: async (event, _get, emit) => {
+    await emit("rpc", "answer", await lookup(event.payload.q));
+  },
+});
+```
+
+### A call resolves to the event, not the payload
+
+Because a caller often cannot know *which* reply it will get. `reply` names the **terminal**
+types, and the event carries the discriminant:
+
+```typescript
+const res = await store.call("rpc", "ask", { q }, { reply: ["rpc", ["answer", "error"]] });
+
+switch (res.type) {
+  case "answer": return res.payload.text;
+  case "error": throw new Error(res.payload.reason);
+}
+```
+
+### Progress streams, and the producer waits
+
+Any correlated event that is **not** terminal is progress. Iterate the call to consume it:
+
+```typescript
+const call = store.call("job", "start", { id }, {
+  reply: ["job", "done"],
+  highWaterMark: 4,
+});
+
+for await (const step of call) await render(step.payload);
+const { payload } = await call;
+```
+
+The backpressure is real, not a buffer with a limit. `emit` resolves only once its effects have
+run, and the collector is an effect that does not return until the consumer has taken the item —
+so a responder writing `await emit("job", "tick", chunk)` is **paced by the reader**:
+
+```typescript
+effect: async (_event, _get, emit) => {
+  for (const chunk of chunks) {
+    await emit("job", "tick", chunk); // waits here while the consumer is behind
+  }
+  await emit("job", "done", { ok: true });
+}
+```
+
+Backpressure engages **once you begin iterating**. A call that is only awaited never pulls, so
+blocking its producer would deadlock the call itself — progress nobody reads would stop the
+terminal event from ever being sent. Un-iterated progress therefore buffers to `highWaterMark`
+and is then counted on `call.dropped` rather than blocking.
+
+### Giving up
+
+| | |
+|---|---|
+| `timeoutMs` | **Idle**, not total — every correlated event resets it, progress included. A job that streams for two minutes will not fail a thirty-second call. Default 30s. |
+| `signal` | An `AbortSignal`, for a real deadline or a cancelled action. |
+| `call.cancel(reason)` | Stops listening and settles. Safe to call twice. |
+
+However a call ends — resolved, timed out, aborted — the subscription is removed and any producer
+parked on backpressure is released. A wedged responder is worse than the unbounded buffer this
+replaced.
+
+### `call` is local
+
+A reply cannot reach a call from a federated peer: the federation envelope carries neither `meta`
+nor `parentId`, and ingress namespaces the channel, so neither the correlation nor the reply route
+survives the hop. That is not an oversight — federation answers cross-node request/reply with
+typed peer **queries**, gated by a responder policy that may concede or deny. A call that
+federated silently would turn that access decision into an accident of which channel someone
+named. Ask a peer with a query; use `call` within a process.
+
+---
+
+## Reading a value as you subscribe
+
+`connect` starts at "from now on", so a subscriber's first read had to repeat the path elsewhere —
+the same path in two places, free to drift:
+
+```typescript
+store.connect({ reducer: "todos", property: "items.0.title" }, render, { immediate: true });
+```
+
+The synthetic first change has `oldValue: undefined` and **no provenance**, because no event
+caused it. For a wildcard pattern, which has no single current value, the slice root is delivered
+with `path: ""`.
+
+React does not need this: `useSyncExternalStore` already reads a snapshot on mount.
+
+---
+
+## Where a change came from
+
+A `Change` names the event that caused it, so a subscriber no longer has to mirror the cause into
+state and keep it in two places:
+
+```typescript
+store.connect({ reducer: "orders", property: "status" }, (change) => {
+  audit.record(change.path, change.newValue, {
+    causedBy: change.eventId,
+    via: `${change.channel}/${change.type}`,
+  });
+});
+```
+
+Provenance is **absent** when no event caused the change — a DevTools time-travel jump, or the
+`immediate` delivery above. Absence is the signal, rather than a fabricated id.
+
+---
+
 ## Event Deduplication (opt-in)
 
 Deduplication is **off by default** — Yoltra never silently drops legitimate rapid-fire identical

@@ -30,6 +30,7 @@ import type {
   Emit,
   EmitOptions,
   EmitResult,
+  ConnectOptions,
   InstrumentationObserver,
   CascadeInfo,
   InstrumentedEvent,
@@ -40,6 +41,9 @@ import type {
 } from "../types";
 import { freezeState } from "../utils/immutability";
 import { isRejected } from "./rejection";
+import { CallQueue } from "./callQueue";
+import { CallAbortedError, CallTimeoutError, isReplyTo, parseReply } from "./call";
+import type { CallHandle, CallOptions } from "./call";
 import type { Rejection } from "./rejection";
 import type { AliasWatch } from "../utils/immutability";
 
@@ -116,6 +120,12 @@ const DEFAULT_MAX_REDUCE_DEPTH = 64;
  * unboundedly.
  */
 const CASCADE_CHAIN_LIMIT = 16;
+
+/** Idle time a {@link Store.call} tolerates before giving up. */
+const DEFAULT_CALL_TIMEOUT_MS = 30_000;
+
+/** Progress events a call buffers before pacing the producer. */
+const DEFAULT_CALL_WATERMARK = 16;
 
 /**
  * One slice's pending write: computed, frozen, and not yet visible to anybody.
@@ -1143,7 +1153,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
-  private commitStaged(staged: StagedSlice[]): boolean {
+  private commitStaged(staged: StagedSlice[], event: EventUnion<EM>): boolean {
     if (staged.length === 0) return false;
 
     // One new root for the whole event, not one per slice.
@@ -1186,6 +1196,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           oldValue: this.getAtPath(slice.prev, prop),
           newValue: this.getAtPath(slice.frozen, prop),
           path: prop,
+          // Provenance, built inside the same lazy factory as the values: a subscriber that
+          // needs to know why a value moved no longer has to mirror the cause into state and
+          // keep it there twice.
+          eventId: event.id,
+          channel: event.channel as string,
+          type: event.type as string,
         }));
       }
     }
@@ -1446,7 +1462,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         this.stagedRejectedBy = "";
       }
 
-      const anySliceChanged = rejection === null && this.commitStaged(staged);
+      const anySliceChanged = rejection === null && this.commitStaged(staged, event);
 
       // Notify committed event subscribers (sync, fire-and-forget)
       this.notifyEventSubscribers(event, "committed");
@@ -1807,7 +1823,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       return { committed: true, written: false, rejected: rejection };
     }
 
-    const written = this.commitStaged(staged);
+    const written = this.commitStaged(staged, event);
 
     // Committed subscribers fire whether or not anything was written — `committed` means "not
     // vetoed", which is what a notification or analytics bus depends on. `written` is the
@@ -1933,8 +1949,28 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public connect(spec: { reducer: R; property: string }, h: (chg: Change) => void): () => void {
-    return this.connectorBus.on(spec.reducer, spec.property, h);
+  public connect(
+    spec: { reducer: R; property: string },
+    h: (chg: Change) => void,
+    options?: ConnectOptions,
+  ): () => void {
+    const off = this.connectorBus.on(spec.reducer, spec.property, h);
+
+    if (options?.immediate === true) {
+      // @ts-expect-error R indexing on DeepReadonly<S> is valid at runtime
+      const slice = this.state[spec.reducer] as unknown;
+      // A pattern matches a set of paths, and a set has no single current value — so the slice
+      // root is delivered instead, at the path a whole-slice subscription would use.
+      // Same test the bus uses to tell a pattern from an exact path.
+      const path = spec.property.includes("*") ? "" : spec.property;
+
+      // No `eventId`, `channel` or `type`: nothing caused this, and inventing a cause would be
+      // a lie a subscriber could act on. `oldValue` is undefined for the same reason — there is
+      // no previous value, only a first one.
+      h({ oldValue: undefined, newValue: this.getAtPath(slice, path), path });
+    }
+
+    return off;
   }
 
   /**
@@ -2172,6 +2208,213 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
+  /**
+   * Sends a request and waits for the reply, correlating the two automatically.
+   *
+   * @typeParam C  - Request channel.
+   * @typeParam T  - Request type within `C`.
+   * @param channel - Channel to send on.
+   * @param type - Event type to send.
+   * @param payload - The **request** payload. This is what you are sending; what comes back is
+   * described by {@link CallOptions.reply}, not by this.
+   * @param opts - Which replies end the call, and how long to wait. See {@link CallOptions}.
+   * @returns A {@link CallHandle}: `await` it for the terminal reply, or `for await` it for
+   * progress events as they arrive.
+   *
+   * @remarks
+   * Every consumer of an event bus eventually writes request/reply by hand — mint an id,
+   * subscribe, match, time out, unsubscribe — and every one of them writes the same eighty lines
+   * with the same two bugs: the subscription outlives the call, and a responder that forgets to
+   * echo the id produces a timeout with nothing to point at. This is that, once.
+   *
+   * **Correlation is causal.** The store stamps `parentId` on anything emitted while an event is
+   * being handled, so a responder that replies through the `emit` it was handed is already
+   * correlated. There is no id to mint, echo, or forget:
+   *
+   * ```ts
+   * store.registerEffect({
+   *   when: { keys: [["rpc", "ask"]] },
+   *   effect: async (event, _get, emit) => {
+   *     await emit("rpc", "answer", await lookup(event.payload.q));
+   *   },
+   * });
+   * ```
+   *
+   * **The reply carries its own discriminant.** A call resolves to the *event*, not the payload,
+   * because a caller often cannot know which kind of reply it will get:
+   *
+   * ```ts
+   * const res = await store.call("rpc", "ask", { q }, { reply: ["rpc", ["answer", "error"]] });
+   * switch (res.type) {
+   *   case "answer": return res.payload;
+   *   case "error":  throw new Error(res.payload.reason);
+   * }
+   * ```
+   *
+   * **Progress streams, with backpressure.** Any correlated event that is not terminal is
+   * progress, and iterating the call consumes it. The producer genuinely waits: `emit` resolves
+   * only once its effects have run, and the collector is an effect that does not return until the
+   * consumer has taken the item. A responder writing `await emit("rpc", "progress", chunk)` is
+   * therefore paced by the reader, with nothing buffering without bound.
+   *
+   * ```ts
+   * const call = store.call("job", "start", { id }, {
+   *   reply: ["job", "done"],
+   *   highWaterMark: 4,
+   * });
+   * for await (const step of call) await render(step.payload); // producer waits on this
+   * const { payload } = await call;
+   * ```
+   *
+   * Backpressure engages **once you begin iterating**. A call that is only awaited never pulls,
+   * so blocking its producer would deadlock the call itself — progress nobody reads would stop
+   * the terminal event from ever being sent. Un-iterated progress therefore buffers to
+   * `highWaterMark` and is then counted on {@link CallHandle.dropped} rather than blocking.
+   *
+   * **This is a local primitive.** A reply cannot reach it from a federated peer: the federation
+   * envelope carries neither `meta` nor `parentId`, and ingress namespaces the channel, so
+   * neither correlation nor the reply route survives the hop. That is not an oversight to route
+   * around — federation answers cross-node request/reply with typed peer *queries*, which are
+   * gated by a responder policy that may concede or deny. A call that federated silently would
+   * turn that access decision into an accident of which channel someone named. Ask a peer with a
+   * query; use `call` within a process.
+   *
+   * @example Timeout is idle, not total
+   * ```ts
+   * // Survives a job that streams for minutes; fails a responder that goes quiet for 5s.
+   * await store.call("job", "start", { id }, { reply: ["job", "done"], timeoutMs: 5_000 });
+   * ```
+   *
+   * @example Cancelling
+   * ```ts
+   * const call = store.call("rpc", "ask", { q }, { reply: ["rpc", "answer"] });
+   * useEffect(() => () => call.cancel("unmounted"), [call]);
+   * ```
+   *
+   * @public
+   */
+  public call<C extends keyof EM & string, T extends keyof EM[C] & string>(
+    channel: C,
+    type: T,
+    payload: EM[C][T],
+    opts: CallOptions<EM>,
+  ): CallHandle<EventUnion<EM>, EventUnion<EM>> {
+    const { channel: replyChannel, isTerminal } = parseReply<EM>(opts.reply);
+    const idleMs = opts.timeoutMs ?? DEFAULT_CALL_TIMEOUT_MS;
+    const queue = new CallQueue<EventUnion<EM>>(opts.highWaterMark ?? DEFAULT_CALL_WATERMARK);
+
+    // Minted here rather than left to `emit`, because the correlation has to be known before the
+    // request goes out — a reply can arrive during the emit itself, synchronously.
+    const requestId = this.idFactory();
+
+    let settle!: (event: EventUnion<EM>) => void;
+    let fail!: (error: Error) => void;
+    let settled = false;
+    const terminal = new Promise<EventUnion<EM>>((resolve, reject) => {
+      settle = resolve;
+      fail = reject;
+    });
+    // Attached immediately so a rejection that nobody has awaited yet is not reported as
+    // unhandled; the caller's own await still sees it.
+    terminal.catch(() => undefined);
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let unregister: (() => void) | null = null;
+
+    /**
+     * Settles the call once. `graceful` distinguishes a terminal reply — after which the
+     * consumer is still owed whatever progress it has not read — from an abort, after which
+     * nothing is owed to anyone.
+     */
+    const finish = (fn: () => void, graceful = false): void => {
+      if (settled) return;
+      settled = true;
+      if (timer !== null) clearTimeout(timer);
+      timer = null;
+      unregister?.();
+      unregister = null;
+      if (graceful) queue.end();
+      else queue.close();
+      opts.signal?.removeEventListener("abort", onAbort);
+      fn();
+    };
+
+    function onAbort(): void {
+      finish(() => fail(new CallAbortedError(String(opts.signal?.reason ?? "signal aborted"))));
+    }
+
+    const arm = (): void => {
+      if (timer !== null) clearTimeout(timer);
+      // Idle: every correlated event pushes the deadline out, so a streaming responder is not
+      // punished for having a lot to say.
+      timer = setTimeout(() => {
+        finish(() => fail(new CallTimeoutError(channel, type, idleMs)));
+      }, idleMs);
+      (timer as { unref?: () => void }).unref?.();
+    };
+
+    unregister = this.registerEffect({
+      // A pattern effect on the reply channel: which types are terminal is known, which are
+      // progress is not, so the filter cannot be a key list.
+      when: { channel: replyChannel as keyof EM & string },
+      effect: async (event) => {
+        if (settled) return;
+        if (!isReplyTo<EM>(event, requestId, opts.correlationId)) return;
+
+        arm();
+
+        if (isTerminal(String(event.type))) {
+          finish(() => settle(event), true);
+          return;
+        }
+
+        // The await is the backpressure. This runs inside the store's effect phase, so the
+        // responder's own `await emit(...)` does not resolve until it returns.
+        await queue.put(event);
+      },
+    });
+
+    if (opts.signal !== undefined) {
+      if (opts.signal.aborted) onAbort();
+      else opts.signal.addEventListener("abort", onAbort, { once: true });
+    }
+
+    arm();
+
+    void this.emit(channel, type, payload, {
+      id: requestId,
+      ...(opts.correlationId !== undefined
+        ? { meta: { correlationId: opts.correlationId } }
+        : {}),
+    });
+
+    const handle = {
+      then: (onOk?: never, onErr?: never) => terminal.then(onOk, onErr),
+      catch: (onErr?: never) => terminal.catch(onErr),
+      finally: (onDone?: () => void) => terminal.finally(onDone),
+      get dropped() {
+        return queue.droppedCount;
+      },
+      cancel: (reason = "cancelled") => {
+        finish(() => fail(new CallAbortedError(reason)));
+      },
+      [Symbol.asyncIterator]: (): AsyncIterator<EventUnion<EM>> => {
+        queue.beginConsuming();
+        return {
+          next: () => queue.take(),
+          // Called by `for await` on `break`, `return` or a throw. Without it, abandoning the
+          // loop would leave the effect registered and the producer parked for good.
+          return: async () => {
+            queue.close();
+            return { value: undefined, done: true };
+          },
+        };
+      },
+    } as CallHandle<EventUnion<EM>, EventUnion<EM>>;
+
+    return handle;
+  }
+
   public registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): () => void {
     const { effect, meta, when } = spec;
     const unsubs: Array<() => void> = [];
