@@ -10,7 +10,7 @@
 
 > **Inspector**(`__namedParameters`): `Element`
 
-Defined in: [devtools-storeview/src/components/panels/Inspector.tsx:30](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/panels/Inspector.tsx#L30)
+Defined in: [devtools-storeview/src/components/panels/Inspector.tsx:41](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/panels/Inspector.tsx#L41)
 
 The Inspector — the primary DevTools view.
 
@@ -27,17 +27,7 @@ composer for dispatching ad-hoc events.
 
 ### \_\_namedParameters
 
-#### canEmit?
-
-`boolean` = `false`
-
-#### entries
-
-`EventLogEntry`[]
-
-#### onEmit?
-
-(`channel`, `type`, `payload`) => `void`
+[`InspectorProps`](../interfaces/InspectorProps.md)
 
 ## Returns
 

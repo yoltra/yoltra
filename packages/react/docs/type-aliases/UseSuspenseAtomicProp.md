@@ -10,11 +10,11 @@
 
 > **UseSuspenseAtomicProp**\<`R`, `S`\> = \{\<`R1`, `P`, `T`\>(`storeSpec`, `options`): `T`; \<`R1`, `T`\>(`storeSpec`, `options`): `T`; \}
 
-Defined in: [react/src/hooks/suspense.ts:707](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L707)
+Defined in: [react/src/hooks/suspense.ts:718](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L718)
 
 Call signature for the typed `useSuspenseAtomicProp` returned by `createHooks`.
 
-Identical in behaviour to the package-level useSuspenseAtomicProp; the reducer union
+Identical in behaviour to the package-level `useSuspenseAtomicProp`; the reducer union
 and state shape are fixed by the store the hooks were created for, so neither has to be
 supplied at the call site.
 

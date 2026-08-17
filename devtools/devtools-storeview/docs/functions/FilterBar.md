@@ -10,7 +10,7 @@
 
 > **FilterBar**(`__namedParameters`): `Element`
 
-Defined in: [devtools-storeview/src/components/shared/FilterBar.tsx:22](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/shared/FilterBar.tsx#L22)
+Defined in: [devtools-storeview/src/components/shared/FilterBar.tsx:37](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/shared/FilterBar.tsx#L37)
 
 Filter bar with text input and optional toggle buttons.
 
@@ -21,33 +21,7 @@ Committed / Bounced toggle buttons for event status filtering.
 
 ### \_\_namedParameters
 
-#### onChange
-
-(`value`) => `void`
-
-#### onToggleBounced?
-
-() => `void`
-
-#### onToggleCommitted?
-
-() => `void`
-
-#### placeholder?
-
-`string`
-
-#### showBounced?
-
-`boolean`
-
-#### showCommitted?
-
-`boolean`
-
-#### value
-
-`string`
+[`FilterBarProps`](../interfaces/FilterBarProps.md)
 
 ## Returns
 

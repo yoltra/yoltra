@@ -24,7 +24,7 @@ import { useHubConnection } from "./useHubConnection";
  *
  * @internal
  */
-type SubscriptionData = Omit<
+export type SubscriptionData = Omit<
   StoreSubscriptions,
   "type" | "timestamp" | "sourceId" | "sourceRole" | "storeId"
 >;
@@ -56,7 +56,7 @@ type SubscriptionData = Omit<
  * ```
  *
  * @param storeId - The store ID to query, or `null` to disable.
- * @returns An object with `data` ({@link SubscriptionData} or `null`),
+ * @returns An object with `data` (`SubscriptionData` or `null`),
  *   `loading`, and `refresh`.
  *
  * @public

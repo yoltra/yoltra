@@ -1,4 +1,4 @@
-![Yoltra logo](../../assets/logo.svg)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # @yoltra/devtools-browser-agent
 

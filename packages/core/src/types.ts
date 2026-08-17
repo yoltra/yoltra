@@ -938,7 +938,8 @@ export interface StoreInstance<
  * Use `when` for event targeting (preferred). The `events` property is
  * kept for backward compatibility but `when` is recommended for new code.
  *
- * @example Using `when` (recommended)
+ * @example
+ * Using `when` (recommended)
  * ```ts
  * const counterSpec: ReducerSpec<{ value: number }, MyEM> = {
  *   state: { value: 0 },
@@ -1001,7 +1002,8 @@ export type ReducerFunction<S = any, EM extends EventMapBase = EventMapBase> = (
  * - Effects are keyed by event for O(1) lookup (no scanning).
  * - Use `when` for event targeting (preferred over `events`).
  *
- * @example Using `when` (recommended)
+ * @example
+ * Using `when` (recommended)
  * ```ts
  * const logEffect: EffectSpec<AppState, MyEM> = {
  *   when: { keys: eventKeys<MyEM>()([['ui', 'increment']]) },

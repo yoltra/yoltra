@@ -8,24 +8,31 @@ import { ConnectionDot } from "../shared/ConnectionDot";
 import styles from "./BottomBar.module.css";
 
 /**
+ * Props for {@link BottomBar}.
+ *
+ * @public
+ */
+export interface BottomBarProps {
+  /** The hub connection status. */
+  status: HubConnectionStatus;
+  /** The event log (for the running count). */
+  entries: EventLogEntry[];
+  /** Whether a time-travel session is active. */
+  isTimeTraveling?: boolean;
+}
+
+/**
  * Bottom status line: hub connection, event count, a time-travel indicator,
  * and the protocol version. The time-travel controls themselves live in the
  * Time Travel view; this bar only reflects that a session is active.
  *
- * @param props.status - The hub connection status.
- * @param props.entries - The event log (for the running count).
- * @param props.isTimeTraveling - Whether a time-travel session is active.
  * @public
  */
 export function BottomBar({
   status,
   entries,
   isTimeTraveling,
-}: {
-  status: HubConnectionStatus;
-  entries: EventLogEntry[];
-  isTimeTraveling?: boolean;
-}) {
+}: BottomBarProps) {
   return (
     <footer className={styles.bottomBar}>
       <span className={styles.item}>

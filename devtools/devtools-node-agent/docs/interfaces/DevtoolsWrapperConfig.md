@@ -44,7 +44,7 @@ Allow DevTools extensions to emit events into this store.
 #### Remarks
 
 When `true`, the hub may send `EMIT_TO_STORE` commands which call
-@yoltra/core#StoreInstance.emit \| store.emit() on behalf of a
+[store.emit()](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md#emit) on behalf of a
 connected extension.
 
 #### Default Value
@@ -193,7 +193,7 @@ Hub server port number. Required -- there is no default.
 
 ### sampling?
 
-> `optional` **sampling**: `SamplingConfig`
+> `optional` **sampling**: [`SamplingConfig`](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/docs/interfaces/SamplingConfig.md)
 
 Defined in: [types.ts:127](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L127)
 
@@ -202,7 +202,7 @@ Sampling configuration defined by the DevTools protocol.
 #### Remarks
 
 Part of the protocol v1 design; actual enforcement is deferred.
-See @yoltra/devtools-protocol#SamplingConfig for shape details.
+See [@yoltra/devtools-protocol!SamplingConfig](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/docs/interfaces/SamplingConfig.md) for shape details.
 
 ***
 

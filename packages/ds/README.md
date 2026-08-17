@@ -1,4 +1,8 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 # @yoltra/ds
+
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | 👉 🇺🇸 English Version &nbsp;
 
 The **Yoltra Design System** — foundation tokens, semantic light/dark themes, a
 CSS-variable stylesheet generator, and primitive React components shared across

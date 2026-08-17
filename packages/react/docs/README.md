@@ -10,6 +10,7 @@
 
 - [SuspenseAtomicPropOptions](interfaces/SuspenseAtomicPropOptions.md)
 - [SuspenseAtomicPropsOptions](interfaces/SuspenseAtomicPropsOptions.md)
+- [SuspenseCache](interfaces/SuspenseCache.md)
 - [Yoltra](interfaces/Yoltra.md)
 - [YoltraHooks](interfaces/YoltraHooks.md)
 

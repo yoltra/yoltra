@@ -76,7 +76,7 @@ Shallow object equality using `Object.is` per-key.
 
 ### store
 
-> **store**: `StoreInstance`\<`R`, `S`, `EM`\>
+> **store**: [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>
 
 Defined in: [react/src/createYoltra.tsx:35](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L35)
 
@@ -86,7 +86,7 @@ The store created by this call; the hooks default to it (no Provider needed).
 
 ### StoreContext
 
-> **StoreContext**: `Context`\<`null` \| `StoreInstance`\<`R`, `S`, `EM`\>\>
+> **StoreContext**: `Context`\<`null` \| [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>\>
 
 Defined in: [react/src/createYoltra.tsx:37](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L37)
 
@@ -96,7 +96,7 @@ Raw context carrying the store — usually you only need `StoreProvider`.
 
 ### StoreProvider
 
-> **StoreProvider**: `FC`\<\{ `children`: `ReactNode`; `store?`: `StoreInstance`\<`R`, `S`, `EM`\>; \}\>
+> **StoreProvider**: `FC`\<\{ `children`: `ReactNode`; `store?`: [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>; \}\>
 
 Defined in: [react/src/createYoltra.tsx:39](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L39)
 
@@ -200,7 +200,7 @@ Subscribes to a derived value with an optional equality comparator.
 
 ### useStore()
 
-> **useStore**: () => `StoreInstance`\<`R`, `S`, `EM`\>
+> **useStore**: () => [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>
 
 Defined in: [react/src/hooks/createHooks.ts:184](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L184)
 
@@ -208,7 +208,7 @@ Reads the current store from context (falling back to the default store).
 
 #### Returns
 
-`StoreInstance`\<`R`, `S`, `EM`\>
+[`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>
 
 #### Inherited from
 

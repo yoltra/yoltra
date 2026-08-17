@@ -26,7 +26,7 @@ The store ID to query, or `null` to disable.
 
 `object`
 
-An object with `data` (SubscriptionData or `null`),
+An object with `data` (`SubscriptionData` or `null`),
   `loading`, and `refresh`.
 
 ### data

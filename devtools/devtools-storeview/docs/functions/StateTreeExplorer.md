@@ -10,7 +10,7 @@
 
 > **StateTreeExplorer**(`__namedParameters`): `Element`
 
-Defined in: [devtools-storeview/src/components/panels/StateTreeExplorer.tsx:21](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/panels/StateTreeExplorer.tsx#L21)
+Defined in: [devtools-storeview/src/components/panels/StateTreeExplorer.tsx:32](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/panels/StateTreeExplorer.tsx#L32)
 
 Lazy-loaded, searchable state tree explorer.
 
@@ -22,17 +22,7 @@ indicator while state is being fetched.
 
 ### \_\_namedParameters
 
-#### loading
-
-`boolean`
-
-#### onRefresh?
-
-() => `void`
-
-#### state
-
-`unknown`
+[`StateTreeExplorerProps`](../interfaces/StateTreeExplorerProps.md)
 
 ## Returns
 

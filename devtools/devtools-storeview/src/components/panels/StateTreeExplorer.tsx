@@ -7,26 +7,33 @@ import styles from "../../styles/panels/StateTree.module.css";
 import { JsonTree } from "../shared/JsonTree";
 
 /**
+ * Props for {@link StateTreeExplorer}.
+ *
+ * @public
+ */
+export interface StateTreeExplorerProps {
+  /** The current store state snapshot. */
+  state: unknown;
+  /** Whether a state fetch is in progress. */
+  loading: boolean;
+  /** Optional callback to manually refresh state. */
+  onRefresh?: () => void;
+}
+
+/**
  * Lazy-loaded, searchable state tree explorer.
  *
  * Displays the current store state through a {@link JsonTree} with a
  * search bar that recursively filters keys and values. Shows a loading
  * indicator while state is being fetched.
  *
- * @param props.state - The current store state snapshot.
- * @param props.loading - Whether a state fetch is in progress.
- * @param props.onRefresh - Optional callback to manually refresh state.
  * @public
  */
 export function StateTreeExplorer({
   state,
   loading,
   onRefresh,
-}: {
-  state: unknown;
-  loading: boolean;
-  onRefresh?: () => void;
-}) {
+}: StateTreeExplorerProps) {
   const [search, setSearch] = useState("");
 
   if (loading && state == null) {

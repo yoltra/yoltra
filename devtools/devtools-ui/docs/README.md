@@ -11,6 +11,7 @@
 - [EventLogEntry](interfaces/EventLogEntry.md)
 - [HubConnectionConfig](interfaces/HubConnectionConfig.md)
 - [HubContextValue](interfaces/HubContextValue.md)
+- [HubProviderProps](interfaces/HubProviderProps.md)
 - [LoopbackHub](interfaces/LoopbackHub.md)
 - [RegisteredStore](interfaces/RegisteredStore.md)
 - [UseEventLogOptions](interfaces/UseEventLogOptions.md)

@@ -42,7 +42,7 @@ Event map.
 
 ### StoreContext
 
-`Context`\<`null` \| `StoreInstance`\<`R`, `S`, `EM`\>\>
+`Context`\<`null` \| [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>\>
 
 A React context carrying a `StoreInstance<R, S, EM>`.
 

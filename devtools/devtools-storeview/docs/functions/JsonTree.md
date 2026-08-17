@@ -10,7 +10,7 @@
 
 > **JsonTree**(`__namedParameters`): `Element`
 
-Defined in: [devtools-storeview/src/components/shared/JsonTree.tsx:20](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/shared/JsonTree.tsx#L20)
+Defined in: [devtools-storeview/src/components/shared/JsonTree.tsx:31](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/shared/JsonTree.tsx#L31)
 
 Recursive JSON tree viewer with expand/collapse.
 
@@ -22,17 +22,7 @@ when `defaultExpanded` is set.
 
 ### \_\_namedParameters
 
-#### data
-
-`unknown`
-
-#### defaultExpanded?
-
-`boolean` = `false`
-
-#### name?
-
-`string`
+[`JsonTreeProps`](../interfaces/JsonTreeProps.md)
 
 ## Returns
 

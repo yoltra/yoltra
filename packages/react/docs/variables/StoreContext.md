@@ -8,11 +8,11 @@
 
 # Variable: StoreContext
 
-> `const` **StoreContext**: `Context`\<`null` \| `StoreInstance`\<`any`, `any`, `any`\>\>
+> `const` **StoreContext**: `Context`\<`null` \| [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`any`, `any`, `any`\>\>
 
 Defined in: [react/src/context/StoreContext.ts:32](https://github.com/yoltra/yoltra/blob/main/packages/react/src/context/StoreContext.ts#L32)
 
-React Context carrying a StoreInstance for yoltra React bindings.
+React Context carrying a [StoreInstance](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md) for yoltra React bindings.
 
 ## Remarks
 

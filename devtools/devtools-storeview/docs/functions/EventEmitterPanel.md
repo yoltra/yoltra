@@ -10,7 +10,7 @@
 
 > **EventEmitterPanel**(`__namedParameters`): `Element`
 
-Defined in: [devtools-storeview/src/components/panels/EventEmitter.tsx:72](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/panels/EventEmitter.tsx#L72)
+Defined in: [devtools-storeview/src/components/panels/EventEmitter.tsx:81](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/panels/EventEmitter.tsx#L81)
 
 Form to emit events to a store.
 
@@ -22,9 +22,7 @@ before invoking the `onEmit` callback.
 
 ### \_\_namedParameters
 
-#### onEmit
-
-(`channel`, `type`, `payload`) => `void`
+[`EventEmitterPanelProps`](../interfaces/EventEmitterPanelProps.md)
 
 ## Returns
 

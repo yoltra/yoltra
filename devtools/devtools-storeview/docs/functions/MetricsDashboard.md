@@ -10,7 +10,7 @@
 
 > **MetricsDashboard**(`__namedParameters`): `Element`
 
-Defined in: [devtools-storeview/src/components/panels/MetricsDashboard.tsx:35](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/panels/MetricsDashboard.tsx#L35)
+Defined in: [devtools-storeview/src/components/panels/MetricsDashboard.tsx:46](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/panels/MetricsDashboard.tsx#L46)
 
 Dashboard of store performance metrics and architecture.
 
@@ -28,17 +28,7 @@ Dashboard of store performance metrics and architecture.
 
 ### \_\_namedParameters
 
-#### loading
-
-`boolean`
-
-#### metrics
-
-`null` \| \{ `avgProcessingTimeMs`: `number`; `connectorCount`: `number`; `dedupHits`: `number`; `effectCount`: `number`; `eventCount`: `number`; `eventsPerSecond`: `number`; `middlewareCount`: `number`; `middlewareRejections`: `number`; `queueDepth`: `number`; `reducerCount`: `number`; `subscriberCount`: `number`; \}
-
-#### subscriptions?
-
-`null` \| `SubscriptionData`
+[`MetricsDashboardProps`](../interfaces/MetricsDashboardProps.md)
 
 ## Returns
 

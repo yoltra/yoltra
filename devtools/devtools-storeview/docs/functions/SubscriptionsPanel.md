@@ -10,7 +10,7 @@
 
 > **SubscriptionsPanel**(`__namedParameters`): `Element`
 
-Defined in: [devtools-storeview/src/components/panels/SubscriptionsPanel.tsx:60](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/panels/SubscriptionsPanel.tsx#L60)
+Defined in: [devtools-storeview/src/components/panels/SubscriptionsPanel.tsx:65](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/panels/SubscriptionsPanel.tsx#L65)
 
 Displays subscription, effect, middleware, and reducer info for a store.
 
@@ -22,13 +22,7 @@ the selected store.
 
 ### \_\_namedParameters
 
-#### data
-
-`null` \| `SubscriptionData`
-
-#### loading
-
-`boolean`
+[`SubscriptionsPanelProps`](../interfaces/SubscriptionsPanelProps.md)
 
 ## Returns
 

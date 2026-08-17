@@ -10,7 +10,7 @@
 
 > **invalidateAtomicProp**(`reducer`, `property`, `extraKey?`): `void`
 
-Defined in: [react/src/hooks/suspense.ts:660](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L660)
+Defined in: [react/src/hooks/suspense.ts:671](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L671)
 
 Invalidates the Suspense cache entry for a specific `reducer.property` path.
 

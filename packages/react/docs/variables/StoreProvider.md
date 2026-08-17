@@ -8,11 +8,11 @@
 
 # Variable: StoreProvider
 
-> `const` **StoreProvider**: `React.FC`\<\{ `children`: `ReactNode`; `store`: `StoreInstance`\<`any`, `any`, `any`\>; \}\>
+> `const` **StoreProvider**: `React.FC`\<\{ `children`: `ReactNode`; `store`: [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`any`, `any`, `any`\>; \}\>
 
 Defined in: [react/src/context/StoreProvider.tsx:56](https://github.com/yoltra/yoltra/blob/main/packages/react/src/context/StoreProvider.tsx#L56)
 
-React provider that places a StoreInstance into [StoreContext](StoreContext.md).
+React provider that places a [StoreInstance](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md) into [StoreContext](StoreContext.md).
 
 ## Param
 

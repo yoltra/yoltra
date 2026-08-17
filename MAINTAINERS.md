@@ -2,8 +2,8 @@
 
 # MAINTAINERS
 
-> [ 🇲🇽 Versión en Español](../es/MAINTAINERS.md)&nbsp; |
-> &nbsp; 👉 [ 🇺🇸 English Version](../../MAINTAINERS.md)&nbsp; |
+> [ 🇲🇽 Versión en Español](./docs/es/MAINTAINERS.md)&nbsp; |
+> &nbsp; 👉 [ 🇺🇸 English Version](./MAINTAINERS.md)&nbsp; |
 
 This file lists active maintainers and areas of responsibility for the Yoltra monorepo.
 

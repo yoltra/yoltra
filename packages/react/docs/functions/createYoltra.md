@@ -26,7 +26,7 @@ Reducers map; state shape and event map are inferred from it.
 
 ### cfg
 
-The same configuration accepted by createStore.
+The same configuration accepted by [createStore](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/functions/createStore.md).
 
 #### dedupWindowMs?
 

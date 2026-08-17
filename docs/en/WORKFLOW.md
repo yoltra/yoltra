@@ -121,15 +121,15 @@ A hotfix is a critical fix that must ship without waiting for the next planned r
 
 ```
 main
-  └─ hotfix/v0.8.1-critical-bug
+  └─ hotfix/v0.6.1-critical-bug
          │  minimal fix + rush change (patch)
          │  rush version --bump --override-bump patch
          └─► PR → main  (reviewed and merged directly)
-               └─► push tag v0.8.1 → CI publishes
+               └─► push tag v0.6.1 → CI publishes
 ```
 
 After the hotfix PR lands on `main`, tag the merge commit
-(`git tag v0.8.1 && git push origin v0.8.1`) — the tag triggers CI, which publishes via OIDC (see
+(`git tag v0.6.1 && git push origin v0.6.1`) — the tag triggers CI, which publishes via OIDC (see
 RELEASE_GUIDE.md).
 
 ---

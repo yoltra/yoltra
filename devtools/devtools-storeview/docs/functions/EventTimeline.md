@@ -10,7 +10,7 @@
 
 > **EventTimeline**(`__namedParameters`): `Element`
 
-Defined in: [devtools-storeview/src/components/panels/EventTimeline.tsx:36](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/panels/EventTimeline.tsx#L36)
+Defined in: [devtools-storeview/src/components/panels/EventTimeline.tsx:46](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/panels/EventTimeline.tsx#L46)
 
 Scrollable event timeline with filtering and detail inspection.
 
@@ -24,13 +24,7 @@ the embedded [FilterBar](FilterBar.md). Selecting a row expands a
 
 ### \_\_namedParameters
 
-#### entries
-
-`EventLogEntry`[]
-
-#### onSelectEntry?
-
-(`entry`, `index`) => `void`
+[`EventTimelineProps`](../interfaces/EventTimelineProps.md)
 
 ## Returns
 

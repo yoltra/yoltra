@@ -10,7 +10,7 @@
 
 > **HubProvider**(`__namedParameters`): `Element`
 
-Defined in: [devtools-ui/src/context/HubProvider.tsx:67](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/context/HubProvider.tsx#L67)
+Defined in: [devtools-ui/src/context/HubProvider.tsx:77](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/context/HubProvider.tsx#L77)
 
 Provides hub connection context to all child hooks and components.
 
@@ -18,19 +18,13 @@ Provides hub connection context to all child hooks and components.
 
 ### \_\_namedParameters
 
-#### children
-
-`ReactNode`
-
-#### config
-
-[`HubConnectionConfig`](../interfaces/HubConnectionConfig.md)
+[`HubProviderProps`](../interfaces/HubProviderProps.md)
 
 ## Returns
 
 `Element`
 
-A React element wrapping children in HubContext.Provider.
+A React element wrapping children in `HubContext.Provider`.
 
 ## Remarks
 

@@ -6,26 +6,33 @@ import { useState, type ReactNode } from "react";
 import styles from "../../styles/panels/StateTree.module.css";
 
 /**
+ * Props for {@link JsonTree}.
+ *
+ * @public
+ */
+export interface JsonTreeProps {
+  /** The value to visualize. */
+  data: unknown;
+  /** Optional root key label. */
+  name?: string;
+  /** Whether shallow nodes start expanded. */
+  defaultExpanded?: boolean;
+}
+
+/**
  * Recursive JSON tree viewer with expand/collapse.
  *
  * Renders any JavaScript value as a navigable tree with collapsible
  * object and array nodes. Nodes at depth < 2 are expanded by default
  * when `defaultExpanded` is set.
  *
- * @param props.data - The value to visualize.
- * @param props.name - Optional root key label.
- * @param props.defaultExpanded - Whether shallow nodes start expanded.
  * @public
  */
 export function JsonTree({
   data,
   name,
   defaultExpanded = false,
-}: {
-  data: unknown;
-  name?: string;
-  defaultExpanded?: boolean;
-}) {
+}: JsonTreeProps) {
   return (
     <div className={styles.tree}>
       <JsonNode value={data} keyName={name} depth={0} defaultExpanded={defaultExpanded} />

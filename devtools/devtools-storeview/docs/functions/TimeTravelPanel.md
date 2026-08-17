@@ -16,7 +16,7 @@ Defined in: [devtools-storeview/src/components/panels/TimeTravelPanel.tsx:53](ht
 
 ### \_\_namedParameters
 
-`TimeTravelPanelProps`
+[`TimeTravelPanelProps`](../interfaces/TimeTravelPanelProps.md)
 
 ## Returns
 

@@ -17,6 +17,7 @@
 
 ## Interfaces
 
+- [AliasWatch](interfaces/AliasWatch.md)
 - [BoundedEncodeResult](interfaces/BoundedEncodeResult.md)
 - [CallHandle](interfaces/CallHandle.md)
 - [CallOptions](interfaces/CallOptions.md)

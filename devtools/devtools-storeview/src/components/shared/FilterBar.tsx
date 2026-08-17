@@ -5,18 +5,33 @@
 import styles from "../../styles/panels/EventTimeline.module.css";
 
 /**
+ * Props for {@link FilterBar}.
+ *
+ * @public
+ */
+export interface FilterBarProps {
+  /** Current filter text. */
+  value: string;
+  /** Callback when the filter text changes. */
+  onChange: (value: string) => void;
+  /** Placeholder string for the text input. */
+  placeholder?: string;
+  /** Whether the Committed toggle is active. */
+  showCommitted?: boolean;
+  /** Whether the Bounced toggle is active. */
+  showBounced?: boolean;
+  /** Callback to toggle committed visibility. */
+  onToggleCommitted?: () => void;
+  /** Callback to toggle bounced visibility. */
+  onToggleBounced?: () => void;
+}
+
+/**
  * Filter bar with text input and optional toggle buttons.
  *
  * Provides a text field for `channel::type` filtering and optional
  * Committed / Bounced toggle buttons for event status filtering.
  *
- * @param props.value - Current filter text.
- * @param props.onChange - Callback when the filter text changes.
- * @param props.placeholder - Placeholder string for the text input.
- * @param props.showCommitted - Whether the Committed toggle is active.
- * @param props.showBounced - Whether the Bounced toggle is active.
- * @param props.onToggleCommitted - Callback to toggle committed visibility.
- * @param props.onToggleBounced - Callback to toggle bounced visibility.
  * @public
  */
 export function FilterBar({
@@ -27,15 +42,7 @@ export function FilterBar({
   showBounced,
   onToggleCommitted,
   onToggleBounced,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  showCommitted?: boolean;
-  showBounced?: boolean;
-  onToggleCommitted?: () => void;
-  onToggleBounced?: () => void;
-}) {
+}: FilterBarProps) {
   return (
     <div className={styles.filterBar}>
       <input

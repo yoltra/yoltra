@@ -1,16 +1,15 @@
-![Yoltra logo](../../assets/logo.svg)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # @yoltra/devtools-storeview
 
-> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
-> | 👉
-> [ 🇺🇸 English Version](./README.md)&nbsp;
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | 👉 🇺🇸 English Version &nbsp;
 
 **React DOM UI for Yoltra DevTools — the visual store inspector.**
 
 `@yoltra/devtools-storeview` provides a full-featured React application for inspecting Yoltra
 stores in real time. It renders event timelines, state trees, subscription graphs, performance
-metrics, time-travel controls, and an event emitter. Used by both the browser extension panel..
+metrics, time-travel controls, and an event emitter. Used by both the browser extension panel and
+the VSCode webview.
 
 ---
 
@@ -65,7 +64,6 @@ The app provides four tabs, each backed by hooks from `@yoltra/devtools-ui`:
 | **State**       | Interactive JSON tree explorer with live state updates and manual refresh                                                            |
 | **Time Travel** | Step through event history, jump to any index, resume live mode                                                                      |
 | **Metrics**     | Store metrics dashboard (reduce timing, dedup hits, queue depth) plus the reducer/effect/middleware **subscriptions** inventory       |
-| **Metrics**       | Real-time dashboard of event rate, processing time, queue depth, and more             |
 
 ---
 

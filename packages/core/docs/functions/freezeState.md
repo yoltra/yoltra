@@ -38,7 +38,7 @@ Any value; objects and arrays are frozen recursively.
 
 ### alias?
 
-`AliasWatch`
+[`AliasWatch`](../interfaces/AliasWatch.md)
 
 ## Returns
 

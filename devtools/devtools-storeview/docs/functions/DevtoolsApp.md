@@ -12,7 +12,7 @@
 
 Defined in: [devtools-storeview/src/App.tsx:47](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/App.tsx#L47)
 
-Root DevTools app component. Wrap with HubProvider externally
+Root DevTools app component. Wrap with [HubProvider](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/docs/functions/HubProvider.md) externally
 or use DevtoolsApp which includes the provider.
 
 ## Parameters

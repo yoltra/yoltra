@@ -8,11 +8,11 @@
 
 # Function: useStore()
 
-> **useStore**\<`EM`, `R`, `S`\>(): `StoreInstance`\<`R`, `S`, `EM`\>
+> **useStore**\<`EM`, `R`, `S`\>(): [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>
 
 Defined in: [react/src/hooks/hooks.ts:64](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/hooks.ts#L64)
 
-Returns the current StoreInstance from [StoreContext](../variables/StoreContext.md).
+Returns the current [StoreInstance](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md) from [StoreContext](../variables/StoreContext.md).
 Throws if used outside of a `<StoreProvider>`.
 
 ## Type Parameters
@@ -37,7 +37,7 @@ State record keyed by `R`.
 
 ## Returns
 
-`StoreInstance`\<`R`, `S`, `EM`\>
+[`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>
 
 ## Example
 

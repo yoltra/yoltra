@@ -2,12 +2,7 @@
  * @module @yoltra/devtools-storeview
  */
 
-import type { StoreSubscriptions } from "@yoltra/devtools-protocol";
-
-type SubscriptionData = Omit<
-  StoreSubscriptions,
-  "type" | "timestamp" | "sourceId" | "sourceRole" | "storeId"
->;
+import type { SubscriptionData } from "@yoltra/devtools-ui";
 
 const sectionStyle: React.CSSProperties = {
   padding: "var(--devtools-spacing-md)",
@@ -47,23 +42,30 @@ function formatWhen(when: unknown): string {
 }
 
 /**
+ * Props for {@link SubscriptionsPanel}.
+ *
+ * @public
+ */
+export interface SubscriptionsPanelProps {
+  /** Subscription data for the store, or `null` when unavailable. */
+  data: SubscriptionData | null;
+  /** Whether subscription data is being fetched. */
+  loading: boolean;
+}
+
+/**
  * Displays subscription, effect, middleware, and reducer info for a store.
  *
  * Renders sectioned lists of atomic subscriptions, event subscriptions,
  * coarse subscribers, reducers, effects, and middleware registered in
  * the selected store.
  *
- * @param props.data - Subscription data for the store, or `null` when unavailable.
- * @param props.loading - Whether subscription data is being fetched.
  * @public
  */
 export function SubscriptionsPanel({
   data,
   loading,
-}: {
-  data: SubscriptionData | null;
-  loading: boolean;
-}) {
+}: SubscriptionsPanelProps) {
   if (loading && !data) {
     return (
       <div style={{ padding: "var(--devtools-spacing-lg)", color: "var(--devtools-fg-muted)" }}>

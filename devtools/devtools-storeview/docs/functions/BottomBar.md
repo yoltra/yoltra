@@ -10,7 +10,7 @@
 
 > **BottomBar**(`__namedParameters`): `Element`
 
-Defined in: [devtools-storeview/src/components/layout/BottomBar.tsx:20](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/layout/BottomBar.tsx#L20)
+Defined in: [devtools-storeview/src/components/layout/BottomBar.tsx:31](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/layout/BottomBar.tsx#L31)
 
 Bottom status line: hub connection, event count, a time-travel indicator,
 and the protocol version. The time-travel controls themselves live in the
@@ -20,17 +20,7 @@ Time Travel view; this bar only reflects that a session is active.
 
 ### \_\_namedParameters
 
-#### entries
-
-`EventLogEntry`[]
-
-#### isTimeTraveling?
-
-`boolean`
-
-#### status
-
-`HubConnectionStatus`
+[`BottomBarProps`](../interfaces/BottomBarProps.md)
 
 ## Returns
 

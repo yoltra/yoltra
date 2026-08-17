@@ -16,6 +16,7 @@ export type { CallHandle, CallOptions, ReplySpec } from "./store/call";
 export type { Rejection } from "./store/rejection";
 export { detectChangedProps } from "./utils/detectChangedProps";
 export { freezeState } from "./utils/immutability";
+export type { AliasWatch } from "./utils/immutability";
 
 // Export the eventKeys helper function
 export { eventKeys } from "./types";

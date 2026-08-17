@@ -11,6 +11,20 @@ import { JsonTree } from "../shared/JsonTree";
 import styles from "./Inspector.module.css";
 
 /**
+ * Props for {@link Inspector}.
+ *
+ * @public
+ */
+export interface InspectorProps {
+  /** Event log entries to display (newest last). */
+  entries: EventLogEntry[];
+  /** Whether the store accepts emitted events. */
+  canEmit?: boolean;
+  /** Callback to dispatch an event to the store. */
+  onEmit?: (channel: string, type: string, payload: unknown) => void;
+}
+
+/**
  * The Inspector — the primary DevTools view.
  *
  * A scrollable, filterable event timeline paired with a detail pane for the
@@ -22,20 +36,13 @@ import styles from "./Inspector.module.css";
  * When the selected store allows it, an **Emit** action reveals an inline
  * composer for dispatching ad-hoc events.
  *
- * @param props.entries - Event log entries to display (newest last).
- * @param props.canEmit - Whether the store accepts emitted events.
- * @param props.onEmit - Callback to dispatch an event to the store.
  * @public
  */
 export function Inspector({
   entries,
   canEmit = false,
   onEmit,
-}: {
-  entries: EventLogEntry[];
-  canEmit?: boolean;
-  onEmit?: (channel: string, type: string, payload: unknown) => void;
-}) {
+}: InspectorProps) {
   const [filter, setFilter] = useState("");
   const [showCommitted, setShowCommitted] = useState(true);
   const [showBounced, setShowBounced] = useState(true);

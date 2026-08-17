@@ -5,14 +5,28 @@
 import type { StoreMetrics, StoreSubscriptions } from "@yoltra/devtools-protocol";
 import styles from "./MetricsDashboard.module.css";
 
-type MetricsData = StoreMetrics["metrics"];
+export type MetricsData = StoreMetrics["metrics"];
 
-type SubscriptionData = Pick<
+export type SubscriptionData = Pick<
   StoreSubscriptions,
   "atomic" | "event" | "coarse" | "effects" | "middleware" | "reducers"
 >;
 
 // ─── Component ───────────────────────────────────────────────────────────────
+
+/**
+ * Props for {@link MetricsDashboard}.
+ *
+ * @public
+ */
+export interface MetricsDashboardProps {
+  /** The metrics payload, or `null` when unavailable. */
+  metrics: MetricsData | null;
+  /** Whether metrics are being fetched. */
+  loading: boolean;
+  /** Subscription/consumer inventory, or `null`. */
+  subscriptions?: SubscriptionData | null;
+}
 
 /**
  * Dashboard of store performance metrics and architecture.
@@ -27,20 +41,13 @@ type SubscriptionData = Pick<
  *   live fine-grained (atomic) subscriptions, folded in from the former
  *   Subscriptions view.
  *
- * @param props.metrics - The metrics payload, or `null` when unavailable.
- * @param props.loading - Whether metrics are being fetched.
- * @param props.subscriptions - Subscription/consumer inventory, or `null`.
  * @public
  */
 export function MetricsDashboard({
   metrics,
   loading,
   subscriptions,
-}: {
-  metrics: MetricsData | null;
-  loading: boolean;
-  subscriptions?: SubscriptionData | null;
-}) {
+}: MetricsDashboardProps) {
   if (loading && !metrics) {
     return <div className={styles.loading}>Loading metrics…</div>;
   }

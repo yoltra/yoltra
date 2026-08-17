@@ -8,7 +8,7 @@
 
 # Interface: MiddlewareSpec\<S, EM\>
 
-Defined in: [types.ts:1113](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1113)
+Defined in: [types.ts:1115](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1115)
 
 Middleware specification with optional event targeting and metadata.
 
@@ -61,7 +61,7 @@ Event map.
 
 > `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"middleware"`\>
 
-Defined in: [types.ts:1128](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1128)
+Defined in: [types.ts:1130](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1130)
 
 Optional metadata for debugging tools and DevTools integration.
 
@@ -71,7 +71,7 @@ Optional metadata for debugging tools and DevTools integration.
 
 > **middleware**: [`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:1123](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1123)
+Defined in: [types.ts:1125](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1125)
 
 Middleware function: `(state, event, emit) => boolean` (synchronous).
 Return `false` to cancel event propagation.
@@ -82,6 +82,6 @@ Return `false` to cancel event propagation.
 
 > `optional` **when**: [`When`](../type-aliases/When.md)\<`EM`\>
 
-Defined in: [types.ts:1117](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1117)
+Defined in: [types.ts:1119](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1119)
 
 Event targeting (optional). If omitted, middleware receives ALL events.

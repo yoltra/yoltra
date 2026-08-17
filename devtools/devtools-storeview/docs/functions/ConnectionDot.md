@@ -10,7 +10,7 @@
 
 > **ConnectionDot**(`__namedParameters`): `Element`
 
-Defined in: [devtools-storeview/src/components/shared/ConnectionDot.tsx:18](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/shared/ConnectionDot.tsx#L18)
+Defined in: [devtools-storeview/src/components/shared/ConnectionDot.tsx:27](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/shared/ConnectionDot.tsx#L27)
 
 Colored dot indicating connection status.
 
@@ -22,9 +22,7 @@ disconnected. Unknown states fall back to a muted grey.
 
 ### \_\_namedParameters
 
-#### status
-
-`string`
+[`ConnectionDotProps`](../interfaces/ConnectionDotProps.md)
 
 ## Returns
 

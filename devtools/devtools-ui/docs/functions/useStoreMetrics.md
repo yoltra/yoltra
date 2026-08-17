@@ -33,7 +33,7 @@ Optional configuration (see [UseStoreMetricsOptions](../interfaces/UseStoreMetri
 
 `object`
 
-An object with `metrics` (MetricsData or `null`),
+An object with `metrics` (`MetricsData` or `null`),
   `loading`, and `refresh`.
 
 ### loading

@@ -6,9 +6,26 @@
 
 # @yoltra/devtools-storeview
 
+## Interfaces
+
+- [BottomBarProps](interfaces/BottomBarProps.md)
+- [ConnectionDotProps](interfaces/ConnectionDotProps.md)
+- [EventEmitterPanelProps](interfaces/EventEmitterPanelProps.md)
+- [EventTimelineProps](interfaces/EventTimelineProps.md)
+- [FilterBarProps](interfaces/FilterBarProps.md)
+- [InspectorProps](interfaces/InspectorProps.md)
+- [JsonTreeProps](interfaces/JsonTreeProps.md)
+- [MetricsDashboardProps](interfaces/MetricsDashboardProps.md)
+- [StateTreeExplorerProps](interfaces/StateTreeExplorerProps.md)
+- [SubscriptionsPanelProps](interfaces/SubscriptionsPanelProps.md)
+- [TimeTravelPanelProps](interfaces/TimeTravelPanelProps.md)
+- [TopBarProps](interfaces/TopBarProps.md)
+
 ## Type Aliases
 
 - [DevtoolsAppConfig](type-aliases/DevtoolsAppConfig.md)
+- [MetricsData](type-aliases/MetricsData.md)
+- [SubscriptionData](type-aliases/SubscriptionData.md)
 
 ## Functions
 

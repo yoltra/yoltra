@@ -10,7 +10,7 @@
 
 > **clearSuspenseCache**(): `void`
 
-Defined in: [react/src/hooks/suspense.ts:691](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L691)
+Defined in: [react/src/hooks/suspense.ts:702](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L702)
 
 Clears the entire Suspense cache, forcing all `useSuspense*` hooks to re-load.
 

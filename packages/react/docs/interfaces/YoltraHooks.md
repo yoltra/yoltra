@@ -150,7 +150,7 @@ Subscribes to a derived value with an optional equality comparator.
 
 ### useStore()
 
-> **useStore**: () => `StoreInstance`\<`R`, `S`, `EM`\>
+> **useStore**: () => [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>
 
 Defined in: [react/src/hooks/createHooks.ts:184](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L184)
 
@@ -158,7 +158,7 @@ Reads the current store from context (falling back to the default store).
 
 #### Returns
 
-`StoreInstance`\<`R`, `S`, `EM`\>
+[`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>
 
 ***
 

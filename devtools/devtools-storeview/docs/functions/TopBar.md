@@ -10,7 +10,7 @@
 
 > **TopBar**(`__namedParameters`): `Element`
 
-Defined in: [devtools-storeview/src/components/layout/TopBar.tsx:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/layout/TopBar.tsx#L23)
+Defined in: [devtools-storeview/src/components/layout/TopBar.tsx:34](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/layout/TopBar.tsx#L34)
 
 Top bar with the Yoltra brand and a store selector.
 
@@ -22,17 +22,7 @@ its live connection status.
 
 ### \_\_namedParameters
 
-#### onSelectStore
-
-(`id`) => `void`
-
-#### selectedStoreId
-
-`null` \| `string`
-
-#### stores
-
-`RegisteredStore`[]
+[`TopBarProps`](../interfaces/TopBarProps.md)
 
 ## Returns
 

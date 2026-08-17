@@ -1,14 +1,8 @@
-![Yoltra logo](../../assets/logo.svg)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # @yoltra/devtools-node-agent
 
-> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
-> |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp;
-> | &nbsp; 👉
-> [ 🇺🇸 English Version](./README.md)&nbsp;
-> |
-> &nbsp;[ 🇫🇷 Version française](./README.fr.md)
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | 👉 🇺🇸 English Version &nbsp;
 
 **Node.js DevTools agent — connect a Yoltra store to the DevTools hub from a Node.js process.**
 
