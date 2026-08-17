@@ -1486,13 +1486,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * phase* (step 5) runs afterwards, asynchronously.
    * 1. **Deduplication** (opt-in) - Skip when content-dedup is enabled (`dedupWindowMs > 0`) or a matching `dedupKey` recurs; off by default
    * 2. **Middleware** (sync) - Pre-reducer hooks; may cancel by returning `false`
-   * 3. **Reducers** (sync) - state updates + fine-grained path notifications
-   * 4. **Subscribers + coarse** (sync) - event subscribers (fire-and-forget) then coarse listeners (only if state changed)
+   * 3. **Reducers** (sync) - every matching slice is *staged*; nothing is written yet, so a refusal from the last reducer still stops the first one's write
+   * 4. **Commit + subscribers** (sync) - all staged slices are assigned under one new root, then event subscribers (`committed`, then `written` when state actually changed), then coarse listeners
    * 5. **Effects** (async) - side-effects keyed by `(channel, type)`; the returned promise resolves once they complete
    *
    * **Change Detection**: Uses reference equality (`===`) on `this.state` to determine
-   * if any slice changed. Works because {@link commitStaged} creates a new state reference
-   * via shallow spread when any slice changes.
+   * if any slice changed. Works because the commit builds a new state reference via
+   * shallow spread when any slice changes.
    *
    * @typeParam C - Channel key in `EM`.
    * @typeParam T - Type key within channel `C`.

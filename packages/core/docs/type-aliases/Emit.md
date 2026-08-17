@@ -8,9 +8,9 @@
 
 # Type Alias: Emit()\<EM\>
 
-> **Emit**\<`EM`\> = \<`C`, `T`\>(`channel`, `type`, `payload`, `opts?`) => `Promise`\<`void`\>
+> **Emit**\<`EM`\> = \<`C`, `T`\>(`channel`, `type`, `payload`, `opts?`) => `Promise`\<[`EmitResult`](../interfaces/EmitResult.md)\>
 
-Defined in: [types.ts:211](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L211)
+Defined in: [types.ts:305](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L305)
 
 ## Type Parameters
 
@@ -48,4 +48,4 @@ Defined in: [types.ts:211](https://github.com/yoltra/yoltra/blob/main/packages/c
 
 ## Returns
 
-`Promise`\<`void`\>
+`Promise`\<[`EmitResult`](../interfaces/EmitResult.md)\>

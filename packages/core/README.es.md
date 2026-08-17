@@ -651,7 +651,7 @@ store.registerEffect({
 
 | Metrica               | Valor                                     |
 | --------------------- | ----------------------------------------- |
-| **Tamano del bundle** | ~8KB (minificado + gzipped)               |
+| **Tamano del bundle** | 9.2 KB para el store (minificado + gzipped) |
 | **Tree-shakeable**    | Si (modulos ES)                           |
 | **Dependencias**      | Cero                                      |
 | **TypeScript**        | Definiciones de tipos completas incluidas |

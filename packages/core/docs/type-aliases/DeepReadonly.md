@@ -10,7 +10,7 @@
 
 > **DeepReadonly**\<`T`\> = `T` *extends* (...`args`) => `unknown` ? `T` : `T` *extends* infer A[] ? `ReadonlyArray`\<`DeepReadonly`\<`A`\>\> : `T` *extends* `ReadonlyMap`\<infer K, infer V\> ? `ReadonlyMap`\<`DeepReadonly`\<`K`\>, `DeepReadonly`\<`V`\>\> : `T` *extends* `ReadonlySet`\<infer V\> ? `ReadonlySet`\<`DeepReadonly`\<`V`\>\> : `T` *extends* `Date` \| `RegExp` \| `Promise`\<`unknown`\> \| `Error` ? `T` : `T` *extends* `object` ? `{ readonly [K in keyof T]: DeepReadonly<T[K]> }` : `T`
 
-Defined in: [types.ts:1279](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1279)
+Defined in: [types.ts:1503](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1503)
 
 Deep readonly type: recursively makes all properties readonly.
 

@@ -12,7 +12,7 @@
 
 > **createStore**\<`S`, `EM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `S` & `string`, `S`, `EM`\>
 
-Defined in: [store/Store.ts:2240](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2240)
+Defined in: [store/Store.ts:2906](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2906)
 
 Creates a store with explicit State and EventMap types.
 
@@ -61,6 +61,14 @@ Configuration with `name`, optional `reducer`, optional `middleware`, optional `
 
 () => `string`
 
+##### maxReduceDepth?
+
+`number`
+
+##### maxTransitionsPerDrain?
+
+`number`
+
 ##### middleware?
 
 [`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
@@ -69,6 +77,10 @@ Configuration with `name`, optional `reducer`, optional `middleware`, optional `
 
 `string`
 
+##### onCascade?
+
+(`info`) => `void`
+
 ##### onEffectError?
 
 (`error`, `event`) => `void`
@@ -76,6 +88,10 @@ Configuration with `name`, optional `reducer`, optional `middleware`, optional `
 ##### onReducerError?
 
 (`error`, `event`, `slice`) => `void`
+
+##### onRejected?
+
+(`rejection`, `event`, `slice`) => `void`
 
 ##### reducer?
 
@@ -117,7 +133,7 @@ const store = createStore<AppState, AppEM>({
 
 > **createStore**\<`RM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, `StateFromReducers`\<`RM`\>, `EMFromReducersStrict`\<`RM`\>\>
 
-Defined in: [store/Store.ts:2283](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2283)
+Defined in: [store/Store.ts:2953](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2953)
 
 Creates a store with types inferred from the reducers map.
 
@@ -158,6 +174,14 @@ Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
 
 () => `string`
 
+##### maxReduceDepth?
+
+`number`
+
+##### maxTransitionsPerDrain?
+
+`number`
+
 ##### middleware?
 
 [`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`StateFromReducers`\<`RM`\>\>, `EMFromReducersStrict`\<`RM`\>\>[]
@@ -166,6 +190,10 @@ Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
 
 `string`
 
+##### onCascade?
+
+(`info`) => `void`
+
 ##### onEffectError?
 
 (`error`, `event`) => `void`
@@ -173,6 +201,10 @@ Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
 ##### onReducerError?
 
 (`error`, `event`, `slice`) => `void`
+
+##### onRejected?
+
+(`rejection`, `event`, `slice`) => `void`
 
 ##### reducer
 

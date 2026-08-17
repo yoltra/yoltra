@@ -8,6 +8,8 @@
 
 ## Classes
 
+- [CallAbortedError](classes/CallAbortedError.md)
+- [CallTimeoutError](classes/CallTimeoutError.md)
 - [EventBus](classes/EventBus.md)
 - [LooseEventBus](classes/LooseEventBus.md)
 - [Reducer](classes/Reducer.md)
@@ -16,9 +18,14 @@
 ## Interfaces
 
 - [BoundedEncodeResult](interfaces/BoundedEncodeResult.md)
+- [CallHandle](interfaces/CallHandle.md)
+- [CallOptions](interfaces/CallOptions.md)
+- [CascadeInfo](interfaces/CascadeInfo.md)
 - [Change](interfaces/Change.md)
+- [ConnectOptions](interfaces/ConnectOptions.md)
 - [EffectSpec](interfaces/EffectSpec.md)
 - [EmitOptions](interfaces/EmitOptions.md)
+- [EmitResult](interfaces/EmitResult.md)
 - [EncodeOptions](interfaces/EncodeOptions.md)
 - [EncodeReport](interfaces/EncodeReport.md)
 - [EncodeResult](interfaces/EncodeResult.md)
@@ -35,6 +42,7 @@
 - [PersistenceAdapter](interfaces/PersistenceAdapter.md)
 - [PersistOptions](interfaces/PersistOptions.md)
 - [ReducerSpec](interfaces/ReducerSpec.md)
+- [Rejection](interfaces/Rejection.md)
 - [StoreInstance](interfaces/StoreInstance.md)
 - [WebStorageLike](interfaces/WebStorageLike.md)
 
@@ -57,11 +65,13 @@
 - [MiddlewareFunction](type-aliases/MiddlewareFunction.md)
 - [MiddlewareInput](type-aliases/MiddlewareInput.md)
 - [NarrowedEventHandler](type-aliases/NarrowedEventHandler.md)
+- [NotifiedPhase](type-aliases/NotifiedPhase.md)
 - [Path](type-aliases/Path.md)
 - [PathValue](type-aliases/PathValue.md)
 - [PersistencePhase](type-aliases/PersistencePhase.md)
 - [Primitive](type-aliases/Primitive.md)
 - [ReducerFunction](type-aliases/ReducerFunction.md)
+- [ReplySpec](type-aliases/ReplySpec.md)
 - [RootValue](type-aliases/RootValue.md)
 - [StoreSpec](type-aliases/StoreSpec.md)
 - [Unsubscribe](type-aliases/Unsubscribe.md)
@@ -82,6 +92,8 @@
 - [eventKeys](functions/eventKeys.md)
 - [freezeState](functions/freezeState.md)
 - [hydrate](functions/hydrate.md)
+- [isRejected](functions/isRejected.md)
 - [persist](functions/persist.md)
+- [Rejected](functions/Rejected.md)
 - [typedEvents](functions/typedEvents.md)
 - [withHydration](functions/withHydration.md)

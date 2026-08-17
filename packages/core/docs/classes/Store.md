@@ -8,7 +8,7 @@
 
 # Class: Store\<EM, R, S\>
 
-Defined in: [store/Store.ts:102](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L102)
+Defined in: [store/Store.ts:159](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L159)
 
 Public Store surface.
 
@@ -46,7 +46,7 @@ Event map.
 
 > **new Store**\<`EM`, `R`, `S`\>(`spec`): `Store`\<`EM`, `R`, `S`\>
 
-Defined in: [store/Store.ts:376](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L376)
+Defined in: [store/Store.ts:504](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L504)
 
 Creates a store from a [StoreSpec](../type-aliases/StoreSpec.md).
 
@@ -68,7 +68,7 @@ Store configuration (name, reducers, middleware, optional effects).
 
 > **name**: `string`
 
-Defined in: [store/Store.ts:109](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L109)
+Defined in: [store/Store.ts:166](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L166)
 
 Store name (used by DevTools & diagnostics).
 
@@ -82,7 +82,7 @@ Store name (used by DevTools & diagnostics).
 
 > **\_\_devtoolsIntrospect**(): `object`
 
-Defined in: [store/Store.ts:940](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L940)
+Defined in: [store/Store.ts:1222](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1222)
 
 Returns a structured introspection snapshot for DevTools UIs.
 
@@ -134,11 +134,144 @@ registries and returns a plain-object summary matching the
 
 ***
 
+### call()
+
+> **call**\<`C`, `T`\>(`channel`, `type`, `payload`, `opts`): [`CallHandle`](../interfaces/CallHandle.md)\<[`EventUnion`](../type-aliases/EventUnion.md)\<`EM`\>, [`EventUnion`](../type-aliases/EventUnion.md)\<`EM`\>\>
+
+Defined in: [store/Store.ts:2296](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2296)
+
+Sends a request and waits for the reply, correlating the two automatically.
+
+#### Type Parameters
+
+##### C
+
+`C` *extends* `string`
+
+Request channel.
+
+##### T
+
+`T` *extends* `string`
+
+Request type within `C`.
+
+#### Parameters
+
+##### channel
+
+`C`
+
+Channel to send on.
+
+##### type
+
+`T`
+
+Event type to send.
+
+##### payload
+
+`EM`\[`C`\]\[`T`\]
+
+The **request** payload. This is what you are sending; what comes back is
+described by [CallOptions.reply](../interfaces/CallOptions.md#reply), not by this.
+
+##### opts
+
+[`CallOptions`](../interfaces/CallOptions.md)\<`EM`\>
+
+Which replies end the call, and how long to wait. See [CallOptions](../interfaces/CallOptions.md).
+
+#### Returns
+
+[`CallHandle`](../interfaces/CallHandle.md)\<[`EventUnion`](../type-aliases/EventUnion.md)\<`EM`\>, [`EventUnion`](../type-aliases/EventUnion.md)\<`EM`\>\>
+
+A [CallHandle](../interfaces/CallHandle.md): `await` it for the terminal reply, or `for await` it for
+progress events as they arrive.
+
+#### Remarks
+
+Every consumer of an event bus eventually writes request/reply by hand — mint an id,
+subscribe, match, time out, unsubscribe — and every one of them writes the same eighty lines
+with the same two bugs: the subscription outlives the call, and a responder that forgets to
+echo the id produces a timeout with nothing to point at. This is that, once.
+
+**Correlation is causal.** The store stamps `parentId` on anything emitted while an event is
+being handled, so a responder that replies through the `emit` it was handed is already
+correlated. There is no id to mint, echo, or forget:
+
+```ts
+store.registerEffect({
+  when: { keys: [["rpc", "ask"]] },
+  effect: async (event, _get, emit) => {
+    await emit("rpc", "answer", await lookup(event.payload.q));
+  },
+});
+```
+
+**The reply carries its own discriminant.** A call resolves to the *event*, not the payload,
+because a caller often cannot know which kind of reply it will get:
+
+```ts
+const res = await store.call("rpc", "ask", { q }, { reply: ["rpc", ["answer", "error"]] });
+switch (res.type) {
+  case "answer": return res.payload;
+  case "error":  throw new Error(res.payload.reason);
+}
+```
+
+**Progress streams, with backpressure.** Any correlated event that is not terminal is
+progress, and iterating the call consumes it. The producer genuinely waits: `emit` resolves
+only once its effects have run, and the collector is an effect that does not return until the
+consumer has taken the item. A responder writing `await emit("rpc", "progress", chunk)` is
+therefore paced by the reader, with nothing buffering without bound.
+
+```ts
+const call = store.call("job", "start", { id }, {
+  reply: ["job", "done"],
+  highWaterMark: 4,
+});
+for await (const step of call) await render(step.payload); // producer waits on this
+const { payload } = await call;
+```
+
+Backpressure engages **once you begin iterating**. A call that is only awaited never pulls,
+so blocking its producer would deadlock the call itself — progress nobody reads would stop
+the terminal event from ever being sent. Un-iterated progress therefore buffers to
+`highWaterMark` and is then counted on [CallHandle.dropped](../interfaces/CallHandle.md#dropped) rather than blocking.
+
+**This is a local primitive.** A reply cannot reach it from a federated peer: the federation
+envelope carries neither `meta` nor `parentId`, and ingress namespaces the channel, so
+neither correlation nor the reply route survives the hop. That is not an oversight to route
+around — federation answers cross-node request/reply with typed peer *queries*, which are
+gated by a responder policy that may concede or deny. A call that federated silently would
+turn that access decision into an accident of which channel someone named. Ask a peer with a
+query; use `call` within a process.
+
+#### Examples
+
+```ts
+// Survives a job that streams for minutes; fails a responder that goes quiet for 5s.
+await store.call("job", "start", { id }, { reply: ["job", "done"], timeoutMs: 5_000 });
+```
+
+```ts
+const call = store.call("rpc", "ask", { q }, { reply: ["rpc", "answer"] });
+useEffect(() => () => call.cancel("unmounted"), [call]);
+```
+
+#### Implementation of
+
+[`StoreInstance`](../interfaces/StoreInstance.md).[`call`](../interfaces/StoreInstance.md#call)
+
+***
+
 ### connect()
 
-> **connect**(`spec`, `h`): () => `void`
+> **connect**(`spec`, `h`, `options?`): () => `void`
 
-Defined in: [store/Store.ts:1524](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1524)
+Defined in: [store/Store.ts:1952](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1952)
 
 Connects a **fine-grained** listener to a dotted path under a slice.
 
@@ -162,6 +295,10 @@ Connects a **fine-grained** listener to a dotted path under a slice.
 (`chg`) => `void`
 
 Handler receiving a [Change](../interfaces/Change.md) with `{ oldValue, newValue, path }`.
+
+##### options?
+
+[`ConnectOptions`](../interfaces/ConnectOptions.md)
 
 #### Returns
 
@@ -201,7 +338,7 @@ const off = store.connect(
 
 > **dispose**(): `void`
 
-Defined in: [store/Store.ts:462](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L462)
+Defined in: [store/Store.ts:601](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L601)
 
 Cleanup resources (timers, etc.) when disposing the store.
 Call this if you're dynamically creating/destroying stores.
@@ -226,9 +363,9 @@ store.dispose();
 
 ### emit()
 
-> **emit**\<`C`, `T`\>(`channel`, `type`, `payload`, `opts?`): `Promise`\<`void`\>
+> **emit**\<`C`, `T`\>(`channel`, `type`, `payload`, `opts?`): `Promise`\<[`EmitResult`](../interfaces/EmitResult.md)\>
 
-Defined in: [store/Store.ts:1228](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1228)
+Defined in: [store/Store.ts:1523](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1523)
 
 Emits a typed event `(channel, type, payload)`.
 Events are queued and processed **sequentially** (FIFO).
@@ -238,13 +375,13 @@ so `getState()` reflects the change as soon as `emit()` returns; the *effect
 phase* (step 5) runs afterwards, asynchronously.
 1. **Deduplication** (opt-in) - Skip when content-dedup is enabled (`dedupWindowMs > 0`) or a matching `dedupKey` recurs; off by default
 2. **Middleware** (sync) - Pre-reducer hooks; may cancel by returning `false`
-3. **Reducers** (sync) - state updates + fine-grained path notifications
-4. **Subscribers + coarse** (sync) - event subscribers (fire-and-forget) then coarse listeners (only if state changed)
+3. **Reducers** (sync) - every matching slice is *staged*; nothing is written yet, so a refusal from the last reducer still stops the first one's write
+4. **Commit + subscribers** (sync) - all staged slices are assigned under one new root, then event subscribers (`committed`, then `written` when state actually changed), then coarse listeners
 5. **Effects** (async) - side-effects keyed by `(channel, type)`; the returned promise resolves once they complete
 
 **Change Detection**: Uses reference equality (`===`) on `this.state` to determine
-if any slice changed. Works because forwardEvent creates a new state reference
-via shallow spread when any slice changes.
+if any slice changed. Works because the commit builds a new state reference via
+shallow spread when any slice changes.
 
 #### Type Parameters
 
@@ -288,7 +425,7 @@ Optional per-emit options (e.g. `dedupKey` for identity-based dedup).
 
 #### Returns
 
-`Promise`\<`void`\>
+`Promise`\<[`EmitResult`](../interfaces/EmitResult.md)\>
 
 A promise that resolves once this event's effects have finished.
 State is already updated synchronously before `emit()` returns.
@@ -318,7 +455,7 @@ await store.emit('ui', 'dangerous', null); // cancelled, no state change
 
 > **getState**(): [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>
 
-Defined in: [store/Store.ts:1639](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1639)
+Defined in: [store/Store.ts:2089](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2089)
 
 Returns the current immutable state snapshot.
 
@@ -345,7 +482,7 @@ console.log(state.counter.value);
 
 > **hotReplace**(`partial`): `void`
 
-Defined in: [store/Store.ts:1986](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1986)
+Defined in: [store/Store.ts:2643](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2643)
 
 Convenience API to replace **any subset** of store parts (HMR patterns).
 
@@ -396,7 +533,7 @@ store.hotReplace({
 
 > **instrument**(`observer`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [store/Store.ts:1443](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1443)
+Defined in: [store/Store.ts:1868](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1868)
 
 Registers an instrumentation observer. See [StoreInstance.instrument](../interfaces/StoreInstance.md#instrument).
 
@@ -420,7 +557,7 @@ Registers an instrumentation observer. See [StoreInstance.instrument](../interfa
 
 > **onEffect**\<`C`, `T`\>(`channel`, `type`, `handler`): () => `void`
 
-Defined in: [store/Store.ts:1849](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1849)
+Defined in: [store/Store.ts:2506](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2506)
 
 Convenience helper to register an **effect** filtered by a single `(channel, type)` pair.
 
@@ -488,7 +625,7 @@ off();
 
 > **onEvent**\<`C`, `T`\>(`channel`, `type`, `handler`, `phase`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [store/Store.ts:1574](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1574)
+Defined in: [store/Store.ts:2022](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2022)
 
 Subscribe to events by channel and type.
 
@@ -580,11 +717,9 @@ store.onEvent('ui', 'action', (event, getState, emit, phase) => {
 
 > **registerEffect**(`spec`): () => `void`
 
-Defined in: [store/Store.ts:1761](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1761)
+Defined in: [store/Store.ts:2418](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2418)
 
-Registers an **effect** (stateless async event consumer) that runs after reducers.
-
-Effects are **keyed** by `(channel, type)` for O(1) lookup (no scanning all effects).
+Register a post-reducer effect (sees final state). Returns an unsubscribe.
 
 #### Parameters
 
@@ -592,39 +727,13 @@ Effects are **keyed** by `(channel, type)` for O(1) lookup (no scanning all effe
 
 [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>
 
-Effect specification with `when` targeting and `effect` (handler).
-
 #### Returns
-
-Unsubscribe function.
 
 > (): `void`
 
 ##### Returns
 
 `void`
-
-#### Examples
-
-```ts
-const off = store.registerEffect({
-  events: [['ui', 'increment']],
-  effect: async (evt, getState, emit) => {
-    console.log('increment', evt.payload, getState().counter.value);
-  }
-});
-off();
-```
-
-```ts
-store.registerEffect({
-  events: [['ui', 'increment'], ['ui', 'decrement']],
-  effect: async (evt, getState, emit) => {
-    // Runs for both increment and decrement
-    await saveToServer(getState());
-  }
-});
-```
 
 #### Implementation of
 
@@ -636,7 +745,7 @@ store.registerEffect({
 
 > **registerMiddleware**(`mw`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [store/Store.ts:1677](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1677)
+Defined in: [store/Store.ts:2127](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2127)
 
 Registers a middleware (runs **before** reducers).
 
@@ -691,7 +800,7 @@ store.registerMiddleware((state, event) => {
 
 > **registerReducer**(`name`, `spec`): () => `void`
 
-Defined in: [store/Store.ts:1707](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1707)
+Defined in: [store/Store.ts:2157](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2157)
 
 Dynamically **adds** a named slice reducer at runtime.
 
@@ -743,7 +852,7 @@ dispose();
 
 > **replaceEffects**(`next`): `void`
 
-Defined in: [store/Store.ts:1915](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1915)
+Defined in: [store/Store.ts:2572](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2572)
 
 Replaces all registered **effects** (HMR-friendly).
 
@@ -779,7 +888,7 @@ if (import.meta.hot) {
 
 > **replaceMiddleware**(`next`): `void`
 
-Defined in: [store/Store.ts:1891](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1891)
+Defined in: [store/Store.ts:2548](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2548)
 
 Replaces the **entire** middleware pipeline (HMR-friendly).
 
@@ -815,7 +924,7 @@ if (import.meta.hot) {
 
 > **replaceReducers**(`next`, `opts`): `void`
 
-Defined in: [store/Store.ts:1940](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1940)
+Defined in: [store/Store.ts:2597](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2597)
 
 Replaces the entire **reducer set** (HMR-friendly).
 
@@ -859,7 +968,7 @@ if (import.meta.hot) {
 
 > **subscribe**(`fn`): () => `void`
 
-Defined in: [store/Store.ts:1621](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1621)
+Defined in: [store/Store.ts:2071](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2071)
 
 Subscribes to **coarse-grained** commits (called once per successful event, only if state changed).
 
@@ -901,7 +1010,7 @@ off();
 
 > `static` **buildAncestorPaths**(`path`): `string`[]
 
-Defined in: [store/Store.ts:2184](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2184)
+Defined in: [store/Store.ts:2850](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2850)
 
 Builds ancestor paths for a dotted path.
 

@@ -10,7 +10,7 @@
 
 > **useSelector**\<`S`, `T`\>(`selector`, `isEqual`): `T`
 
-Defined in: [react/src/hooks/hooks.ts:113](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/hooks.ts#L113)
+Defined in: [react/src/hooks/hooks.ts:114](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/hooks.ts#L114)
 
 Selects a derived value from the store using an external-store subscription.
 Re-renders when the selected value changes per `isEqual`.

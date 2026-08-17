@@ -826,7 +826,7 @@ individual fields edited is better off as an array today.
 
 | Metric             | Value                                     |
 | ------------------ | ----------------------------------------- |
-| **Bundle size**    | 6.7 KB for the store (minified + gzipped) |
+| **Bundle size**    | 9.2 KB for the store (minified + gzipped) |
 | **Tree-shakeable** | Yes (ES modules)                          |
 | **Dependencies**   | Zero                                      |
 | **TypeScript**     | Full type definitions included            |
@@ -837,16 +837,21 @@ would — tree-shaken, minified, gzipped — and fails when it exceeds the budge
 
 The number that matters is what you import, not what the package exports:
 
-| Import                              | Size   |
-| ----------------------------------- | ------ |
-| `{ createStore }`                   | 6.7 KB |
-| `{ createStore, hydrate, persist }` | 8.2 KB |
-| everything                          | 9.5 KB |
+| Import                              | Size    | Budget |
+| ----------------------------------- | ------- | ------ |
+| `{ createStore }`                   | 9.2 KB  | 14 KB  |
+| `{ createStore, hydrate, persist }` | 10.7 KB | 16 KB  |
+| everything                          | 12.1 KB | 18 KB  |
 
-Persistence and the entity adapter cost nothing to anyone who does not import them — the
-first row has not moved as either was added, which is the tree-shaking claim being checked
-rather than repeated. The last row is a growth tripwire; `import * as all` is not something
-anybody writes.
+The **gap between rows** is the tree-shaking claim, and it is what to watch: persistence adds
+1.5 KB to the people who import it and nothing to anyone else, and the whole barrel is 2.9 KB
+past the store. The last row is a growth tripwire; `import * as all` is not something anybody
+writes.
+
+The first row moves only when the store itself grows, and it has: bounding cascades, staging
+commits so they apply atomically, and `store.call()` are all store machinery rather than
+opt-in modules, so they are paid by everyone. That is the honest trade for a default that
+stops a runaway from hanging the tab.
 
 ---
 

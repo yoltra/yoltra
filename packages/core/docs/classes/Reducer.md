@@ -8,7 +8,7 @@
 
 # Class: Reducer\<S, EM\>
 
-Defined in: [reducer/Reducer.ts:49](https://github.com/yoltra/yoltra/blob/main/packages/core/src/reducer/Reducer.ts#L49)
+Defined in: [reducer/Reducer.ts:50](https://github.com/yoltra/yoltra/blob/main/packages/core/src/reducer/Reducer.ts#L50)
 
 Thin wrapper around a pure reducer function (stateful event consumer):
 given a state `S` and an event (from [\`EventUnion\<EM\>\`](../type-aliases/EventUnion.md)),
@@ -68,7 +68,7 @@ Event map describing the valid event keys and payload types.
 
 > **new Reducer**\<`S`, `EM`\>(`reduce`): `Reducer`\<`S`, `EM`\>
 
-Defined in: [reducer/Reducer.ts:71](https://github.com/yoltra/yoltra/blob/main/packages/core/src/reducer/Reducer.ts#L71)
+Defined in: [reducer/Reducer.ts:72](https://github.com/yoltra/yoltra/blob/main/packages/core/src/reducer/Reducer.ts#L72)
 
 Creates a new Reducer from a pure reducer function.
 
@@ -97,9 +97,9 @@ const reducer = new Reducer<MyState, MyEM>((state, event) => {
 
 ### reduce()
 
-> **reduce**(`state`, `event`): `S`
+> **reduce**(`state`, `event`): [`Rejection`](../interfaces/Rejection.md) \| `S`
 
-Defined in: [reducer/Reducer.ts:89](https://github.com/yoltra/yoltra/blob/main/packages/core/src/reducer/Reducer.ts#L89)
+Defined in: [reducer/Reducer.ts:90](https://github.com/yoltra/yoltra/blob/main/packages/core/src/reducer/Reducer.ts#L90)
 
 Applies the reducer to produce the next state.
 
@@ -119,9 +119,9 @@ An event drawn from [\`EventUnion\<EM\>\`](../type-aliases/EventUnion.md).
 
 #### Returns
 
-`S`
+[`Rejection`](../interfaces/Rejection.md) \| `S`
 
-The next state produced by the underlying reducer function.
+The next state, or a [Rejection](../interfaces/Rejection.md) if the reducer refused the write.
 
 #### Example
 

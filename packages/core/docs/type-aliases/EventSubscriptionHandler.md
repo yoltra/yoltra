@@ -10,7 +10,7 @@
 
 > **EventSubscriptionHandler**\<`S`, `EM`\> = (`event`, `getState`, `emit`, `phase`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [types.ts:1332](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1332)
+Defined in: [types.ts:1585](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1585)
 
 Handler function for event subscriptions (receives full event union).
 
@@ -54,9 +54,9 @@ Function to emit new events
 
 ### phase
 
-The phase ('committed' or 'uncommitted') indicating how the event was processed
+[`NotifiedPhase`](NotifiedPhase.md)
 
-`"committed"` | `"uncommitted"`
+The phase ('committed' or 'uncommitted') indicating how the event was processed
 
 ## Returns
 

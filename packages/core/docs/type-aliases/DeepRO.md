@@ -10,7 +10,7 @@
 
 > **DeepRO**\<`T`\> = [`DeepReadonly`](DeepReadonly.md)\<`T`\>
 
-Defined in: [types.ts:1177](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1177)
+Defined in: [types.ts:1401](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1401)
 
 Alias for DeepReadonly.
 

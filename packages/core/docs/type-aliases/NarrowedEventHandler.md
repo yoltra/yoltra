@@ -10,7 +10,7 @@
 
 > **NarrowedEventHandler**\<`S`, `EM`, `C`, `T`\> = (`event`, `getState`, `emit`, `phase`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [types.ts:1363](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1363)
+Defined in: [types.ts:1616](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1616)
 
 Narrowed event subscription handler for specific `(channel, type)` pairs.
 Provides better type inference when subscribing to a single event type.
@@ -57,7 +57,7 @@ Event type key within channel `C`.
 
 ### phase
 
-`"committed"` | `"uncommitted"`
+[`NotifiedPhase`](NotifiedPhase.md)
 
 ## Returns
 

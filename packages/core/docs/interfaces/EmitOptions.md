@@ -8,7 +8,7 @@
 
 # Interface: EmitOptions
 
-Defined in: [types.ts:160](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L160)
+Defined in: [types.ts:254](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L254)
 
 Per-emit options.
 
@@ -18,7 +18,7 @@ Per-emit options.
 
 > `optional` **dedupKey**: `string`
 
-Defined in: [types.ts:170](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L170)
+Defined in: [types.ts:264](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L264)
 
 Opt this specific emit into **identity-based** deduplication: if another
 event with the same `(channel, type, dedupKey)` was emitted within the dedup
@@ -34,7 +34,7 @@ is 0, using a short default window.
 
 > `optional` **id**: `string`
 
-Defined in: [types.ts:183](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L183)
+Defined in: [types.ts:277](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L277)
 
 Use this exact id for the event instead of generating one.
 
@@ -53,7 +53,7 @@ event. Deduplication is a separate, opt-in concern; see [EmitOptions.dedupKey](#
 
 > `optional` **meta**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
 
-Defined in: [types.ts:193](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L193)
+Defined in: [types.ts:287](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L287)
 
 Metadata to attach to this event, carried through the pipeline untouched and visible to
 reducers, middleware, effects, subscribers and instrumentation. See [EventMeta](../type-aliases/EventMeta.md).
@@ -69,7 +69,7 @@ objects are byte-identical to those produced before this option existed.
 
 > `optional` **skipDedup**: `boolean`
 
-Defined in: [types.ts:208](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L208)
+Defined in: [types.ts:302](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L302)
 
 Bypass deduplication for this emit entirely, even when the store was created with
 [StoreSpec.dedupWindowMs](../type-aliases/StoreSpec.md#dedupwindowms) greater than 0.

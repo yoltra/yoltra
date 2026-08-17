@@ -4,18 +4,19 @@
 
 > [🇺🇸 English](../../en/design/event-queue-architecture.md) &nbsp;|&nbsp; 👉 Español
 
-**Versión:** 0.8.0
-**Última actualización:** Julio 2026
+**Aplica a:** `@yoltra/core` 0.6.0
+**Última actualización:** Agosto 2026
 **Estado:** Estable
 
 ## Descripción General
 
 Yoltra procesa cada evento en **dos fases**:
 
-1. **Una fase de reducción síncrona** — el middleware, los reducers, los suscriptores de eventos
-   confirmados/no confirmados y los oyentes gruesos se ejecutan todos **en el mismo tick, antes de
-   que `emit()` retorne**. Así, `getState()` es correcto en el instante en que `emit()` retorna —
-   con o sin middleware.
+1. **Una fase de reducción síncrona** — el middleware, los reducers, los suscriptores de eventos y
+   los oyentes gruesos se ejecutan todos **en el mismo tick, antes de que `emit()` retorne**. Así,
+   `getState()` es correcto en el instante en que `emit()` retorna — con o sin middleware. Los
+   reducers **preparan** su resultado; todas las slices se escriben bajo una sola raíz nueva antes
+   de notificar nada, así que ningún suscriptor puede observar un evento a medio aplicar.
 2. **Una fase de efectos asíncrona** — los efectos de cada evento confirmado se ejecutan después,
    como una **tarea independiente**. La promesa que devuelve `emit()` se resuelve cuando los
    efectos de _ese evento_ terminan.
@@ -25,7 +26,7 @@ Esta división es el núcleo del diseño: **las transiciones de estado son sínc
 thunk/saga), sin una capa de orquestación aparte. Los reducers se mantienen puros y síncronos;
 cualquier cosa asíncrona pertenece a un efecto.
 
-> Esto reemplaza la anterior cola serializada totalmente asíncrona (≤ v0.7). Ahora el middleware es
+> Esto reemplaza la anterior cola serializada totalmente asíncrona (antes de 0.2.0). Ahora el middleware es
 > síncrono, los reducers confirman antes de que `emit()` retorne, y la promesa de finalización es
 > por-evento y honesta.
 
@@ -40,7 +41,9 @@ private readonly reduceQueue: Array<{
   type: string;
   payload: unknown;
   id: string;
-  resolve: () => void; // deferred de finalización para este evento en concreto
+  resolve: (result: EmitResult) => void; // deferred de finalización para este evento
+  parentId?: string;   // presente solo en un evento causado
+  depth?: number;      // 0 para un emit raiz, uno mas que su causa por debajo
 }> = [];
 
 private isReducing = false;   // guardia de reentrada para el drenado síncrono
@@ -62,7 +65,7 @@ private inFlightEffects = 0;   // numero de tareas de efectos en ejecucion
 ### El punto de entrada `emit()`
 
 ```typescript
-public async emit<C, T>(channel: C, type: T, payload: EM[C][T], opts?: EmitOptions): Promise<void>
+public async emit<C, T>(channel: C, type: T, payload: EM[C][T], opts?: EmitOptions): Promise<EmitResult>
 ```
 
 **Pasos:**
@@ -99,24 +102,30 @@ emit(channel, type, payload)
               │   mientras reduceQueue no este vacia:               │
               ▼                                                     │
      ┌────────────────────────────┐   veto    ┌───────────────────┐│
-     │ middleware (sinc, veta)     │ ────────► │ suscriptores de   ││
-     └────────────┬───────────────┘           │ evento no confirm.││
-                  │ confirmado                 └───────────────────┘│
-                  ▼                                                 │
+     │ middleware (sinc, veta)    │ ────────► │ suscriptores de   ││
+     └────────────┬───────────────┘           │ evento no conf.   ││
+                  │ confirmado                └───────────────────┘│
+                  ▼                                                │
+     ┌────────────────────────────┐  rechazo  ┌───────────────────┐│
+     │ PREPARAR reducers — aun    │ ────────► │ nada se escribe   ││
+     │ no se escribe nada         │           │ onRejected avisa  ││
+     └────────────┬───────────────┘           └───────────────────┘│
+                  │ sin rechazo                                    │
+                  ▼                                                │
      ┌────────────────────────────┐                                │
-     │ reducers (clave + patron)   │                                │
+     │ CONFIRMAR todo, 1 raiz     │                                │
      └────────────┬───────────────┘                                │
-                  ▼                                                 │
+                  ▼                                                │
      ┌────────────────────────────┐                                │
-     │ suscriptores confirmados    │  (fire-and-forget)             │
+     │ suscriptores confirmados   │  (fire-and-forget)             │
      └────────────┬───────────────┘                                │
-                  ▼                                                 │
+                  ▼                                                │
      ┌────────────────────────────┐                                │
-     │ oyentes gruesos (si el      │                                │
-     │ estado cambio) + instrum.   │                                │
+     │ subs written + oyentes     │  (solo si el estado cambio)    │
+     │ gruesos + instrumentacion  │                                │
      └────────────┬───────────────┘                                │
-                  ▼                                                 │
-     void runEventEffects(event) ── async, tarea independiente ─────┘
+                  ▼                                                │
+     void runEventEffects(event) ── async, tarea independiente ────┘
                   │
                   ▼
   return promesa `done`  ── se resuelve cuando terminan los efectos de ESTE evento
@@ -139,10 +148,11 @@ private drainReduce(): void {
       // (la instrumentacion captura estado previo, rutas cambiadas y tiempos aqui —
       //  se omite por completo cuando no hay observadores adjuntos)
 
-      const committed = this.applyEventSync(event);   // ← sincrono
+      this.currentEvent = event;                      // para que un emit re-entrante conozca su causa
+      const result = this.applyEventSync(event);      // ← sincrono
 
       // Los efectos corren como tarea independiente; el bucle NO los espera.
-      void this.runEventEffects(event, committed, resolve);
+      void this.runEventEffects(event, result, resolve);
     }
   } finally {
     this.isReducing = false;
@@ -150,10 +160,12 @@ private drainReduce(): void {
 }
 ```
 
-`applyEventSync()` es el núcleo síncrono — middleware, reducers, suscriptores, oyentes gruesos:
+`applyEventSync()` es el núcleo síncrono — middleware, reducers, suscriptores, oyentes gruesos.
+Prepara todas las slices que aplican antes de escribir cualquiera, así que un rechazo que llega del
+último reducer todavía puede impedir la escritura del primero:
 
 ```typescript
-private applyEventSync(event): boolean {
+private applyEventSync(event): EmitResult {
   // Middleware (sincrono). Devolver false para vetar; el trabajo async va en efectos.
   for (const mw of this.matchingMiddleware(event)) {
     let ok: boolean;
@@ -164,23 +176,37 @@ private applyEventSync(event): boolean {
       ok = false;
     }
     if (!ok) {
-      this.notifyEventSubscribers(event, "uncommitted"); // rechazado → subs no confirmados
-      return false;                                       // no confirmar
+      this.notifyEventSubscribers(event, "uncommitted"); // vetado → subs no confirmados
+      return NOT_COMMITTED;                              // no confirmar
     }
   }
 
-  // Reducers — por clave + por patron; rastrea cambio de slice por igualdad de referencia.
-  const stateBefore = this.state;
-  this.reducerBus.emit(event.channel, event.type, event.payload);
-  for (const [slice, when] of this.patternReducers) {
-    if (this.matchesWhen(when, event)) this.forwardEvent(slice, event);
+  // PREPARAR — los reducers por clave y por patron calculan su siguiente slice. No se escribe nada.
+  const staged = [];
+  let rejection = null;
+  for (const [slice, when] of this.matchingReducers(event)) {
+    const refused = this.stageSlice(slice, event, staged);
+    if (refused) { rejection = refused; break; }   // un rechazo detiene la preparacion
   }
-  const changed = stateBefore !== this.state;
 
-  // Suscriptores confirmados (fire-and-forget), luego oyentes gruesos si el estado cambio.
+  // Un rechazo descarta TODAS las slices preparadas, no solo la que rechazo: autorizar la escritura
+  // de una slice mientras una hermana la registra como aceptada no es autorizar.
+  if (rejection) {
+    this.onRejected?.(rejection, event, rejectedBy);
+    this.notifyEventSubscribers(event, "committed");   // no fue vetado — llego a los reducers
+    return { committed: true, written: false, rejected: rejection };
+  }
+
+  // CONFIRMAR — una sola raiz nueva para todo el evento, y despues notificar. Cada notificacion
+  // ocurre despues de cada escritura, asi que un handler que lea getState() ve el evento completo.
+  const written = this.commitStaged(staged, event);
+
   this.notifyEventSubscribers(event, "committed");
-  if (changed) this.listeners.forEach((l) => l());
-  return true;
+  if (written) {
+    this.notifyEventSubscribers(event, "written");
+    this.listeners.forEach((l) => l());
+  }
+  return written ? WRITTEN : COMMITTED_UNWRITTEN;
 }
 ```
 
@@ -197,7 +223,7 @@ Los efectos de cada evento confirmado corren en su **propia tarea asíncrona**, 
 serializado compartido:
 
 ```typescript
-private async runEventEffects(event, committed, resolve): Promise<void> {
+private async runEventEffects(event, result, resolve): Promise<void> {
   this.inFlightEffects++;
   try {
     if (committed) await this.notifyEffects(event);
@@ -264,13 +290,24 @@ del usuario no.
 
 ## El contrato de la promesa de `emit()`
 
-`emit()` devuelve una `Promise<void>` que se resuelve **cuando los efectos de ese evento en
+`emit()` devuelve una `Promise<EmitResult>` que se resuelve **cuando los efectos de ese evento en
 concreto terminan**:
 
 ```typescript
-await emit("api", "save", payload);
+const { committed, written, rejected } = await emit("api", "save", payload);
 // ← se resuelve tras terminar los efectos de save (el estado ya se actualizo sincronamente)
 ```
+
+| Campo       | Significado                                                                  |
+| ----------- | ---------------------------------------------------------------------------- |
+| `committed` | El middleware lo permitió — llegó a los reducers                             |
+| `written`   | El estado cambió de verdad. Es `false` para un evento que ningún reducer atendió, y para un store sin reducers |
+| `rejected`  | El `Rejection` que devolvió un reducer, cuando alguno rechazó                 |
+
+Los dos son distintos a propósito. `committed` es `true` para todo evento que el middleware
+permite, que es de lo que depende un bus de notificaciones o de analíticas; `written` es el hecho
+más estricto que necesita quien llama cuando una actualización perdida importa. Ampliar el antiguo
+`Promise<void>` es compatible en fuente — nada podía depender de la ausencia de un valor.
 
 Esto es honesto bajo concurrencia: cada evento tiene su propio deferred de finalización, así que
 `await emit(b)` nunca se resuelve antes de tiempo porque otro evento `a` estuviera en vuelo. Si solo
@@ -284,9 +321,13 @@ Las suscripciones de eventos observan los eventos sin afectar el flujo. Se dispa
 
 | Fase            | Cuándo se notifica                                     | Caso de uso                                        |
 | --------------- | ------------------------------------------------------ | -------------------------------------------------- |
-| `'committed'`   | Tras los reducers, antes de los efectos de este evento | Reaccionar a cambios de estado exitosos            |
+| `'committed'`   | Tras los reducers, antes de los efectos de este evento — se haya escrito algo o no | Toasts, analíticas, cualquier señal de "esto ocurrió" |
+| `'written'`     | Tras la confirmación, solo si el estado cambió de verdad | Reaccionar a un cambio real; `getState()` ya lo muestra |
 | `'uncommitted'` | Tras el veto del middleware                            | Reaccionar a eventos bloqueados (auth, validación) |
-| `'all'`         | Ambas fases (el handler recibe la fase)                | Logging, analíticas, depuración                    |
+| `'all'`         | `committed` **y** `uncommitted` (el handler recibe la fase) | Logging, analíticas, depuración               |
+
+`'all'` deliberadamente **no** incluye `'written'`. Si lo hiciera, cada suscriptor `all` existente
+recibiría una segunda notificación por evento escrito y contaría doble; `written` es solo opt-in.
 
 ```typescript
 // Confirmado (por defecto)
@@ -342,10 +383,43 @@ Los reducers corren en el hilo principal durante la fase síncrona. Un reducer c
 ese tick y la UI. Manten los reducers rápidos y puros; mueve el trabajo pesado o asíncrono a los
 efectos (o a un Web Worker).
 
+### Rechazo de un reducer
+
+Un reducer puede devolver `Rejected(reason)` en lugar de estado. **El evento entero** cede: no se
+escribe ninguna slice, no se dispara ninguna notificación de cambio, y a quien llamó se le dice por
+qué mediante `EmitResult.rejected`. Esto es deliberadamente distinto de las dos cosas entre las que
+se sitúa — devolver el estado sin cambios, que es indistinguible de "este evento no me concernía", y
+lanzar, que es un bug. Un reducer que lanza queda aislado y sus hermanos igual confirman; un reducer
+que rechaza ha tomado una decisión que el evento entero respeta. Los rechazos también llegan a
+`onRejected` para logging y a `InstrumentedEvent.rejected` para las DevTools.
+
 ### Re-emisión descontrolada
 
-Un efecto que re-emite incondicionalmente su propio disparador recurre sin límite. Yoltra no vigila
-esto — protege las cadenas de emit recursivas en el código de la aplicación.
+Dos consumidores conectados entre sí — un suscriptor que emite lo que su propio reducer contesta, o
+dos slices que se contestan mutuamente — producen una cadena sin fin. Como la cola de reducción se
+drena de forma síncrona, eso no es un programa lento sino una pestaña congelada o un núcleo
+clavado, sin error y sin stack al que atribuirlo.
+
+Por eso cada evento lleva su posición causal: `parentId` nombra la causa y `depth` es uno más que
+ella, o ambos están ausentes en un evento emitido por el código de la aplicación. **`maxReduceDepth`
+vale 64 por defecto** y se niega a extender una cadena más allá — un modo de fallo así de grave no
+debería requerir configuración para evitarse. Superarlo se reporta por `onCascade` y por consola en
+vez de lanzar, porque el throw aterrizaría en cualquier suscriptor o efecto que estuviera emitiendo.
+
+La causalidad se rastrea de dos maneras, porque el drenaje es síncrono y los efectos no: dentro de
+un drenaje el store sabe qué evento está procesando, así que incluso un emit hecho a través de una
+referencia capturada a `store` se atribuye correctamente; entre drenajes, el `emit` que reciben los
+efectos lleva la causa a través del `await`. Un efecto que recurre a `store.emit` *después* de un
+await inicia una cadena nueva — un límite documentado, no disimulado.
+
+`maxTransitionsPerDrain` acota el ancho de una ráfaga y sigue siendo **opt-in**: un fan-out es
+legítimamente ancho donde una cascada es estrecha y profunda, así que la profundidad los separa y un
+conteo no puede. Nunca rechaza el evento que inicia un drenaje — ese es el emit de quien llamó, y
+rechazarlo sería una falla en vez de una protección.
+
+> Nota que un bucle síncrono de emits **no** es un solo drenaje. `emit()` drena por completo antes
+> de retornar, así que `for (const x of xs) store.emit(...)` son N drenajes de un evento, todos raíz
+> a profundidad 0. La cola solo se acumula con emits re-entrantes.
 
 ## Comparación con otras librerías
 
@@ -413,22 +487,31 @@ origen.
 El drenado síncrono y la tarea de efectos asíncrona, condensados:
 
 ```typescript
-public async emit(channel, type, payload, opts?): Promise<void> {
+public async emit(channel, type, payload, opts?): Promise<EmitResult> {
   // 1. Dedup opt-in (ventana de contenido o dedupKey explicito); desactivada por defecto.
   if (this.dedupConfig.windowMs > 0 || opts?.dedupKey !== undefined) {
-    if (this.shouldDedupe(/* fingerprint o #dedupKey */)) return;
+    if (this.shouldDedupe(/* fingerprint o #dedupKey */)) return NOT_COMMITTED;
   }
 
-  // 2. id + deferred de finalizacion por-evento.
-  const id = crypto.randomUUID();
-  let resolve!: () => void;
-  const done = new Promise<void>((r) => (resolve = r));
+  // 2. Posicion causal. Un evento raiz no lleva ninguno de los dos campos, asi que queda
+  //    byte-identico a uno construido antes de que existieran — el precedente que sento `meta`.
+  const cause = this.currentEvent;               // no-nulo mientras hay un drenaje en curso
+  const depth = cause ? cause.depth + 1 : 0;
+  if (cause && depth > this.maxReduceDepth) {
+    this.reportCascade("maxReduceDepth", /* … */);  // veta este emit; no lanza
+    return NOT_COMMITTED;
+  }
 
-  // 3. Encolar, luego 4. drenar sincronamente.
-  this.reduceQueue.push({ channel, type, payload, id, resolve });
+  // 3. id + deferred de finalizacion por-evento.
+  const id = crypto.randomUUID();
+  let resolve!: (r: EmitResult) => void;
+  const done = new Promise<EmitResult>((r) => (resolve = r));
+
+  // 4. Encolar, luego 5. drenar sincronamente.
+  this.reduceQueue.push({ channel, type, payload, id, resolve, ...(cause && { parentId: cause.id, depth }) });
   this.drainReduce();
 
-  // 5. Se resuelve cuando terminan los efectos de ESTE evento.
+  // 6. Se resuelve cuando terminan los efectos de ESTE evento.
   return done;
 }
 
@@ -438,8 +521,9 @@ private drainReduce(): void {
   try {
     while (this.reduceQueue.length > 0) {
       const { resolve, ...ev } = this.reduceQueue.shift()!;
-      const committed = this.applyEventSync(ev);   // sinc: middleware → reducers → subs → gruesos
-      void this.runEventEffects(ev, committed, resolve); // async, tarea independiente por-evento
+      this.currentEvent = ev;                      // para que un emit re-entrante conozca su causa
+      const result = this.applyEventSync(ev);      // sinc: middleware → preparar → confirmar → subs
+      void this.runEventEffects(ev, result, resolve); // async, tarea independiente por-evento
     }
   } finally {
     this.isReducing = false;
@@ -467,15 +551,31 @@ reentrantes se anexan a la cola y los drena el mismo pase.
 
 **Veto** — un middleware que devuelve `false`, produciendo un evento no confirmado.
 
+**Preparación (staging)** — calcular el siguiente valor de una slice sin escribirlo. Todas las
+slices que aplican se preparan primero y luego se asignan bajo una sola raíz nueva, así que ningún
+suscriptor observa un evento parcial.
+
+**Rechazo** — un reducer que devuelve `Rejected(reason)`. Distinto de un veto (middleware, antes de
+los reducers) y de un throw (un bug, aislado a su slice).
+
+**Profundidad causal** — el `depth` de un evento: 0 para uno emitido por el código de la aplicación,
+uno más que su causa por debajo, con `parentId` nombrando la causa. Ambos están ausentes en un
+evento raíz. Acotarla es lo que impide que una cascada se convierta en un proceso colgado.
+
 ---
 
 ## Historial de Revisiones
 
-| Versión | Fecha   | Cambios                                                                                                                                                                                                                                                |
+| `@yoltra/core` | Fecha   | Cambios                                                                                                                                                                                                                                                |
 | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0.8.0   | 2026-07 | Pipeline de dos fases: reducción síncrona (middleware síncrono, reducers confirman antes de que `emit()` retorne) + efectos asíncronos independientes; promesa de finalización por-evento honesta; deduplicación opt-in (`dedupWindowMs` / `dedupKey`) |
-| 0.7.0   | 2026-01 | Suscripciones de eventos (fases confirmado/no confirmado/todos)                                                                                                                                                                                        |
-| 0.5.0   | 2026-01 | Documentación inicial del pipeline de eventos                                                                                                                                                                                                          |
+| 0.6.0   | 2026-08 | Cascadas acotadas por profundidad causal (`maxReduceDepth`, activo por defecto; `parentId`/`depth` en cada evento causado); confirmaciones preparadas y aplicadas atómicamente entre slices; `Rejected(reason)` desde un reducer; `emit()` resuelve a un `EmitResult`; nueva fase de evento `written` |
+| 0.2.0   | 2026-07 | Pipeline de dos fases: reducción síncrona (middleware síncrono, reducers confirman antes de que `emit()` retorne) + efectos asíncronos independientes; promesa de finalización por-evento honesta; deduplicación opt-in (`dedupWindowMs` / `dedupKey`) |
+| previo al cambio de nombre | 2026-01 | Suscripciones de eventos (fases confirmado/no confirmado/todos)                                                                                                                                                                                        |
+| previo al cambio de nombre | 2026-01 | Documentación inicial del pipeline de eventos                                                                                                                                                |
+
+Las últimas dos filas son anteriores a febrero de 2026, cuando este proyecto se renombró de
+`@quojs/*` (entonces en 0.8.0) y reinició en `@yoltra/*` 0.1.0. Aquella secuencia no continúa
+aquí; esta tabla usa la versión que puedes instalar.
 
 ---
 
