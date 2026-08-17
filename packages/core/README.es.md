@@ -36,7 +36,7 @@ emit(channel, type, payload)
   │
   │  ══ fase de reduccion SINCRONA — corre antes de que emit() retorne ══
   ├─ 1. Middleware ─── Hooks pre-reducer sincronos (devolver false para rechazar → evento "no confirmado")
-  ├─ 2. Reducers ─── Actualizaciones de estado sincronas, deteccion de cambios de grano fino por ruta
+  ├─ 2. Reducers ─── Cada slice que aplica se prepara, y todas se confirman bajo una sola raiz
   ├─ 3. Suscriptores de eventos ─── Notificaciones de eventos confirmados/no confirmados
   ├─ 4. Suscriptores gruesos ─── Listeners externos del store (useSyncExternalStore, etc.), si el estado cambio
   │

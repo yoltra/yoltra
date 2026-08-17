@@ -53,6 +53,15 @@ jobs:
       - name: Rush size
         run: node common/scripts/install-run-rush.js size
 
+      # The committed API reference must carry the logo on every page. TypeDoc rewrites the whole
+      # tree on each run, so a regeneration that skipped the stamping step would silently strip it
+      # from hundreds of files — and a docs diff that large is exactly the kind nobody reads line
+      # by line before approving.
+      - name: Verify docs are stamped
+        run: |
+          node tools/repo-tools/bin/docs-stamp.mjs --check \
+            packages/*/docs devtools/*/docs
+
       # Fails if a changed project is missing a change file (keeps CHANGELOGs honest).
       - name: Verify change files
         run: node common/scripts/install-run-rush.js change --verify

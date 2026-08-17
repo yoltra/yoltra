@@ -2919,6 +2919,7 @@ export function createStore<
   maxReduceDepth?: number;
   maxTransitionsPerDrain?: number;
   onCascade?: (info: CascadeInfo<EM>) => void;
+  onRejected?: (rejection: Rejection, event: EventUnion<EM>, slice: string) => void;
 }): StoreInstance<keyof S & string, S, EM>;
 
 /**
@@ -2969,6 +2970,11 @@ export function createStore<RM extends ReducersMapAny>(cfg: {
   maxReduceDepth?: number;
   maxTransitionsPerDrain?: number;
   onCascade?: (info: CascadeInfo<EMFromReducersStrict<RM>>) => void;
+  onRejected?: (
+    rejection: Rejection,
+    event: EventUnion<EMFromReducersStrict<RM>>,
+    slice: string,
+  ) => void;
 }): StoreInstance<keyof RM & string, StateFromReducers<RM>, EMFromReducersStrict<RM>>;
 
 export function createStore(cfg: any) {

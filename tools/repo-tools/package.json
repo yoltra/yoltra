@@ -12,7 +12,7 @@
     "commitlint": "commitlint",
     "test": "node ./bin/repo-vitest.cjs --watch=false",
     "build": "exit 0",
-    "lint": "exit 0",
+    "lint": "node ./bin/check-example-aliases.mjs ../../examples/v0",
     "docs": "exit 0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "profiler-report": "node ./bin/profiler-report.cjs"

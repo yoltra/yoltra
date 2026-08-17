@@ -115,6 +115,41 @@ describe("createStore accepts both middleware forms", () => {
 });
 
 /**
+ * Every `StoreSpec` option must be reachable through `createStore`.
+ *
+ * @remarks
+ * `createStore`'s two overloads declare their config inline rather than deriving it from
+ * `StoreSpec`, so an option added to the spec is not automatically accepted by the factory. That
+ * has now bitten twice: `maxReduceDepth` was silently discarded at runtime, and `onRejected` was
+ * unreachable for a typed caller for an entire release — masked in its own test by an `as never`.
+ *
+ * This fails to compile the moment a new option is added to `StoreSpec` and not to the overloads,
+ * which is cheaper than finding out from a consumer.
+ */
+describe("createStore accepts every documented option", () => {
+  it("compiles with all of them at once", () => {
+    const store = createStore({
+      name: "Everything",
+      reducer: { catalog: { state: { count: 0 }, when: { any: true }, reducer: (s) => s } },
+      middleware: [() => true],
+      effects: [],
+      dedupWindowMs: 50,
+      idFactory: () => "id",
+      devtools: { allowReplay: true },
+      onEffectError: () => undefined,
+      onReducerError: () => undefined,
+      onRejected: () => undefined,
+      onCascade: () => undefined,
+      maxReduceDepth: 32,
+      maxTransitionsPerDrain: 500,
+    });
+
+    expectTypeOf(store.emit).toBeFunction();
+    expectTypeOf(store.call).toBeFunction();
+  });
+});
+
+/**
  * `Dotted` is what an editor offers when you type `property:`, so these assertions ARE the
  * autocompletion contract. They are written as membership checks rather than one comparison
  * against the whole union, because the failure that matters is a single path appearing or

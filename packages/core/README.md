@@ -36,7 +36,7 @@ emit(channel, type, payload)
   │
   │  ══ SYNCHRONOUS reduce phase — runs before emit() returns ══
   ├─ 1. Middleware ─── Synchronous pre-reducer hooks (return false to reject → "uncommitted" event)
-  ├─ 2. Reducers ─── Synchronous state updates, fine-grained path change detection
+  ├─ 2. Reducers ─── Every matching slice staged, then all committed under one root
   ├─ 3. Event subscribers ─── Committed/uncommitted event notifications
   ├─ 4. Coarse subscribers ─── External store listeners (useSyncExternalStore, etc.), if state changed
   │

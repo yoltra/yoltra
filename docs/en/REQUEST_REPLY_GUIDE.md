@@ -201,6 +201,27 @@ call.cancel("user navigated away");
 However a call ends — resolved, timed out, aborted, cancelled — the subscription is removed and
 any producer parked on backpressure is released. A wedged responder would be worse than the
 unbounded buffer this replaced.
+
+---
+
+## `call` is local
+
+A reply cannot reach a call from a federated peer. Three reasons, each sufficient on its own:
+
+1. The federation envelope has no `meta` field, and ingress *replaces* metadata with a
+   `federation` block — so an explicit correlation id is gone before the remote store sees the
+   event.
+2. `parentId` is not on the envelope either, so causality does not survive the return leg.
+3. Ingress namespaces the channel (`orders` → `peer::orders`), so the reply route would not match
+   even if correlation did.
+
+None of that is an oversight to work around. **Federation answers cross-node request/reply with
+typed peer queries**, gated by a responder policy that may concede or deny. A `call` that
+federated silently would turn that access-control decision into an accident of which channel
+someone happened to name.
+
+> Ask a peer with a query. Use `call` within a process.
+
 ---
 
 ## Testing a call
