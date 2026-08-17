@@ -398,7 +398,26 @@ function TodoItem({ index }: { index: number }) {
 
 [See the full flamegraph comparison.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
 
----
+----
+
+## Normalised collections
+
+`useEntityIds`, `useEntity` and `useEntityField` pair with `createEntityAdapter` from
+`@yoltra/core`. They are thin wrappers over `useAtomicProp`; the value is that the path comes
+from the adapter rather than being typed into a component, where nothing checks it.
+
+```tsx
+function List() {
+  const ids = useEntityIds('todos', todos);
+  return <>{ids.map((id) => <Row key={id} id={id} />)}</>;
+}
+
+function Row({ id }: { id: string }) {
+  // Wakes when this title changes, and not when any other row does.
+  const title = useEntityField('todos', todos, id, 'title');
+  return <li>{title}</li>;
+}
+```
 
 ## React 18+ Compatibility
 
@@ -445,25 +464,6 @@ function TodoItem({ index }: { index: number }) {
 v1.0.0.
 
 ---
-
-## Normalised collections
-
-`useEntityIds`, `useEntity` and `useEntityField` pair with `createEntityAdapter` from
-`@yoltra/core`. They are thin wrappers over `useAtomicProp`; the value is that the path comes
-from the adapter rather than being typed into a component, where nothing checks it.
-
-```tsx
-function List() {
-  const ids = useEntityIds('todos', todos);
-  return <>{ids.map((id) => <Row key={id} id={id} />)}</>;
-}
-
-function Row({ id }: { id: string }) {
-  // Wakes when this title changes, and not when any other row does.
-  const title = useEntityField('todos', todos, id, 'title');
-  return <li>{title}</li>;
-}
-```
 
 ## License
 

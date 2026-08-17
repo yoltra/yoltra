@@ -482,17 +482,6 @@ However a call ends — resolved, timed out, aborted — the subscription is rem
 parked on backpressure is released. A wedged responder is worse than the unbounded buffer this
 replaced.
 
-### `call` is local
-
-A reply cannot reach a call from a federated peer: the federation envelope carries neither `meta`
-nor `parentId`, and ingress namespaces the channel, so neither the correlation nor the reply route
-survives the hop. That is not an oversight — federation answers cross-node request/reply with
-typed peer **queries**, gated by a responder policy that may concede or deny. A call that
-federated silently would turn that access decision into an accident of which channel someone
-named. Ask a peer with a query; use `call` within a process.
-
----
-
 ## Reading a value as you subscribe
 
 `connect` starts at "from now on", so a subscriber's first read had to repeat the path elsewhere —

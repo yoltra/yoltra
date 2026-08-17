@@ -5,8 +5,8 @@
 > 👉 🇲🇽 Versión en Español&nbsp; | &nbsp;[ 🇺🇸 English Version](../en/REQUEST_REPLY_GUIDE.md)
 
 Un bus de eventos es unidireccional por diseno: emites, y quien le interese reacciona. Pero
-algunas interacciones son genuinamente una pregunta y una respuesta — trae esto, valida aquello,
-ejecuta este trabajo y dime como fue — y expresarlas sobre un bus unidireccional significa
+algunas interacciones son genuinamente una pregunta y una respuesta - trae esto, valida aquello,
+ejecuta este trabajo y dime como fue - y expresarlas sobre un bus unidireccional significa
 correlacionar la respuesta con la peticion a mano.
 
 `store.call()` es esa correlacion, hecha una sola vez.
@@ -44,7 +44,7 @@ quitar la suscripcion. Y trae dos bugs casi siempre:
 
 - **La suscripcion sobrevive a la llamada.** Se te escapa un `off()` en una ruta de error y el
   store acumula un listener por peticion, para siempre.
-- **El respondedor debe devolver el id, y algun dia no lo hara.** El sintoma es un timeout: una
+- **`Quien Responde` debe devolver el id, y algun dia no lo hara.** El sintoma es un timeout: una
   respuesta que en el log se ve perfectamente normal, sin emparejar.
 
 ---
@@ -56,7 +56,7 @@ const res = await store.call("rpc", "ask", { q: "quien?" }, { reply: ["rpc", "an
 res.payload.text;
 ```
 
-El respondedor no hace nada especial. Responde con el `emit` que recibio:
+`Quien Responde` no hace nada especial. Responde con el `emit` que recibio:
 
 ```typescript
 store.registerEffect({
@@ -80,7 +80,7 @@ regresa lo describe `reply`.
 
 ## No saber que va a regresar
 
-Muchas veces quien llama no puede saber que *tipo* de respuesta recibira — una respuesta, un
+Muchas veces quien llama no puede saber que *tipo* de respuesta recibira - una respuesta, un
 rechazo, un resultado parcial. Por eso una llamada resuelve al **evento**, no al payload: el
 evento trae el discriminante.
 
@@ -123,7 +123,7 @@ for await (const step of call) {
 const { payload } = await call; // la respuesta terminal
 ```
 
-El respondedor transmite emitiendo eventos no terminales, y despues uno terminal:
+La respuesta se transmite emitiendo eventos no terminales, y despues uno terminal:
 
 ```typescript
 store.registerEffect({
@@ -139,17 +139,17 @@ store.registerEffect({
 
 ### La contrapresion es real
 
-Ese `await emit(...)` bloquea de verdad. No es una cola con limite que empieza a descartar — el
+Ese `await emit(...)` bloquea de verdad. No es una cola con limite que empieza a descartar - el
 productor va al ritmo del lector, de punta a punta:
 
 ```
-respondedor                  store                     consumidor
-    │                          │                            │
-    ├─ await emit("tick") ────►│                            │
-    │                          ├─ efecto: queue.put(item) ──┤ (buffer lleno)
-    │       (detenido)         │              ▲             │
-    │                          │              └─────────────┤ for await … next()
-    ◄──────── resuelve ────────┤◄──────── item tomado ──────┤
+  `Quien responde`                store                    Quien Pregunta
+       │                          │                            │
+       ├─ await emit("tick") ────►│                            │
+       │                          ├─ efecto: queue.put(item) ──┤ (buffer lleno)
+       │       (detenido)         │              ▲             │
+       │                          │              └─────────────┤ for await … next()
+       ◄──────── resuelve ────────┤◄──────── item tomado ──────┤
 ```
 
 Funciona por dos cosas que ya existian: `emit` resuelve solo cuando terminan sus efectos, y el
@@ -189,46 +189,25 @@ const call = store.call("job", "start", { id }, {
 
 **`timeoutMs` es de inactividad, no total.** Todo evento correlacionado lo reinicia, incluido el
 progreso. Un trabajo que transmite durante dos minutos no hara fallar una llamada de cinco
-segundos — el timeout pregunta "sigue vivo el respondedor?", no "ya termino?".
+segundos - el timeout pregunta "sigue vivo `Quien Responde`?", no "ya termino?".
 
-Para una fecha limite real — *esto tiene que estar listo para entonces, por muy activo que este* —
-usa `signal`. Ambos se componen: arriba, el respondedor puede callar como maximo cinco segundos, y
+Para una fecha limite real - *esto tiene que estar listo para entonces, por muy activo que este* -
+usa `signal`. Ambos se componen: arriba, `Quien Responde` puede callar como maximo cinco segundos, y
 el total no puede pasar de sesenta.
 
 ```typescript
 call.cancel("el usuario navego a otro lado");
 ```
 
-Termine como termine — resuelta, expirada, abortada, cancelada — la suscripcion se elimina y se
-libera cualquier productor detenido por la contrapresion. Un respondedor atascado seria peor que
+Termine como termine - resuelta, expirada, abortada, cancelada - la suscripcion se elimina y se
+libera cualquier productor detenido por la contrapresion. Si `Quien Responde` queda atascado seria peor que
 el buffer sin limite que esto reemplazo.
-
----
-
-## `call` es local
-
-Una respuesta no puede llegar a una llamada desde un peer federado. Tres razones, cada una
-suficiente:
-
-1. El sobre de federacion no tiene campo `meta`, y la entrada *reemplaza* los metadatos con un
-   bloque `federation` — asi que un id de correlacion explicito desaparece antes de que el store
-   remoto vea el evento.
-2. `parentId` tampoco viaja en el sobre, asi que la causalidad no sobrevive el salto de regreso.
-3. La entrada pone el canal bajo un espacio de nombres (`orders` → `peer::orders`), asi que la
-   ruta de respuesta no coincidiria aunque la correlacion si lo hiciera.
-
-Nada de eso es un descuido que haya que rodear. **La federacion resuelve peticion/respuesta entre
-nodos con queries tipadas**, con una politica del respondedor que puede conceder o denegar. Una
-`call` que federara en silencio convertiria esa decision de control de acceso en un accidente de
-que canal nombro alguien.
-
-> Pregunta a un peer con una query. Usa `call` dentro de un proceso.
 
 ---
 
 ## Probar una llamada
 
-No hace falta nada especial — un respondedor es un efecto normal:
+No hace falta nada especial - `Quien Responde` es un efecto normal:
 
 ```typescript
 it("responde", async () => {
@@ -260,6 +239,6 @@ for await (const step of call) {
 
 ## Ver tambien
 
-- [README de `@yoltra/core`](../../packages/core/README.es.md) — la API completa del store
-- [Arquitectura del Pipeline de Eventos](./design/event-queue-architecture.md) — por que se
+- [README de `@yoltra/core`](../../packages/core/README.es.md) - la API completa del store
+- [Arquitectura del Pipeline de Eventos](./design/event-queue-architecture.md) - por que se
   esperan los efectos, que es lo que hace posible la contrapresion

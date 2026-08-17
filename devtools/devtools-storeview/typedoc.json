@@ -1,7 +1,7 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "name": "@yoltra/devtools-storeview",
-  "entryPoints": ["src/index.ts"],
+  "entryPoints": ["src/index.tsx"],
   "plugin": ["typedoc-plugin-markdown"],
   "tsconfig": "./tsconfig.docs.json",
   // Pinned rather than derived. TypeDoc builds "Defined in" links from the local git remote, so

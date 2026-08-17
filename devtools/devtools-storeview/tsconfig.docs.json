@@ -3,7 +3,9 @@
     "./tsconfig.json"
   ],
   "compilerOptions": {
-    "types": ["node"]
+    // See devtools-ui: naming a @types package the project does not depend on makes TypeDoc fail
+    // outright. This package has no node globals either; DOM comes from `lib`.
+    "types": []
   },
   "include": [
     "src"

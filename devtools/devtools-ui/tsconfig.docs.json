@@ -3,7 +3,12 @@
     "./tsconfig.json"
   ],
   "compilerOptions": {
-    "types": ["node"]
+    // Empty rather than ["node"]. This package has no @types/node dependency and no node globals
+    // in its source — the two mentions of Buffer and process are both inside comments — so naming
+    // it here made TypeDoc fail with TS2688, and because four DevTools packages depend on this
+    // one, Rush blocked their documentation too. DOM comes from `lib`, and React's types are
+    // imported rather than ambient, so nothing needs listing.
+    "types": []
   },
   "include": [
     "src"

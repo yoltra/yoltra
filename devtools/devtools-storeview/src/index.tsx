@@ -1,7 +1,7 @@
 /**
  * @module @yoltra/devtools-storeview
  *
- * React DOM UI for Quo.js DevTools.
+ * React DOM UI for Yoltra DevTools.
  * Used by both the browser extension panel and the VSCode webview.
  * Provides a mountable React app and individual panel components.
  */

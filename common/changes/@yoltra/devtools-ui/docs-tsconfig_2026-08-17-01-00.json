@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-ui",
+      "comment": "Fixes the documentation build. `tsconfig.docs.json` named `@types/node` in `compilerOptions.types`, which this package does not depend on and does not need — its only mentions of Buffer and process are inside comments — so TypeDoc failed with TS2688. Because four DevTools packages depend on this one, Rush blocked their documentation too, and the whole suite silently produced no API reference. No published code changes.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-ui"
+}

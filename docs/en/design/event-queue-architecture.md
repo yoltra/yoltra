@@ -12,12 +12,12 @@
 
 Yoltra processes every event in **two phases**:
 
-1. **A synchronous reduce phase** — middleware, reducers, event subscribers, and coarse listeners
+1. **A synchronous reduce phase** - middleware, reducers, event subscribers, and coarse listeners
    all run **in the same tick, before `emit()` returns**. So `getState()` is correct the instant
-   `emit()` returns — with or without middleware. Reducers **stage** their results; every slice is
+   `emit()` returns - with or without middleware. Reducers **stage** their results; every slice is
    written under one new root before anything is notified, so no subscriber can observe an event
    half-applied.
-2. **An asynchronous effect phase** — each committed event's effects run afterward as an
+2. **An asynchronous effect phase** - each committed event's effects run afterward as an
    **independent task**. The promise returned by `emit()` resolves when _that event's_ effects
    finish.
 
@@ -51,12 +51,12 @@ private inFlightEffects = 0;   // number of effect tasks currently running
 
 **Properties:**
 
-- **FIFO reduce queue** — events reduced in the order emitted; re-entrant emits preserve order.
-- **`isReducing` guard** — ensures one synchronous drain is in flight; re-entrant emits append to
+- **FIFO reduce queue** - events reduced in the order emitted; re-entrant emits preserve order.
+- **`isReducing` guard** - ensures one synchronous drain is in flight; re-entrant emits append to
   the queue and are drained by the same pass (no reducer interleaving).
-- **Per-event completion deferred** — each event carries its own `resolve`, so `await emit(...)`
-  settles when that event's effects complete — not before, and not for an unrelated event.
-- **Opt-in deduplication** — off by default; enabled per-store (`dedupWindowMs`) or per-emit
+- **Per-event completion deferred** - each event carries its own `resolve`, so `await emit(...)`
+  settles when that event's effects complete - not before, and not for an unrelated event.
+- **Opt-in deduplication** - off by default; enabled per-store (`dedupWindowMs`) or per-emit
   (`dedupKey`). See [Deduplication](#deduplication-opt-in).
 
 ### The `emit()` entry point
@@ -67,13 +67,13 @@ public async emit<C, T>(channel: C, type: T, payload: EM[C][T], opts?: EmitOptio
 
 **Steps:**
 
-1. **Deduplication (opt-in)** — if content dedup is enabled (`dedupWindowMs > 0`) or an explicit
+1. **Deduplication (opt-in)** - if content dedup is enabled (`dedupWindowMs > 0`) or an explicit
    `dedupKey` is supplied, skip the event when it matches a recent one. Off by default.
-2. **Assign id + completion deferred** — a unique id and a `Promise` whose `resolve` fires after
+2. **Assign id + completion deferred** - a unique id and a `Promise` whose `resolve` fires after
    this event's effects run.
-3. **Enqueue** — push the event onto `reduceQueue`.
-4. **Drain synchronously** — call `drainReduce()`, which reduces every queued event in this tick.
-5. **Return the completion promise** — resolves once this event's effects settle.
+3. **Enqueue** - push the event onto `reduceQueue`.
+4. **Drain synchronously** - call `drainReduce()`, which reduces every queued event in this tick.
+5. **Return the completion promise** - resolves once this event's effects settle.
 
 ### Processing flow
 
@@ -82,7 +82,7 @@ emit(channel, type, payload)
         │
         ▼
   ┌───────────────────────┐   duplicate
-  │ opt-in dedup check?    │ ───────────► return (skipped)
+  │ opt-in dedup check?   │ ───────────► return (skipped)
   └───────────┬───────────┘
               │ not a duplicate
               ▼
@@ -93,15 +93,15 @@ emit(channel, type, payload)
               │
               ▼
   drainReduce()  ── SYNCHRONOUS, in this tick ─────────────────────┐
-              │   while reduceQueue is non-empty:                   │
-              ▼                                                     │
+              │   while reduceQueue is non-empty:                  │
+              ▼                                                    │
      ┌────────────────────────────┐   veto    ┌───────────────────┐│
      │ middleware (sync, vetoes)  │ ────────► │ uncommitted event ││
      └────────────┬───────────────┘           │ subscribers       ││
                   │ committed                 └───────────────────┘│
                   ▼                                                │
      ┌────────────────────────────┐  refusal  ┌───────────────────┐│
-     │ STAGE reducers — nothing   │ ────────► │ nothing written;  ││
+     │ STAGE reducers - nothing   │ ────────► │ nothing written;  ││
      │ is written yet             │           │ onRejected fires  ││
      └────────────┬───────────────┘           └───────────────────┘│
                   │ no refusal                                     │
@@ -125,7 +125,7 @@ emit(channel, type, payload)
   return `done` promise  ── resolves when THIS event's effects finish
 ```
 
-## Phase 1 — Synchronous reduce
+## Phase 1 - Synchronous reduce
 
 `drainReduce()` runs the whole reduce phase for every queued event in one synchronous pass, guarded
 by `isReducing`:
@@ -154,7 +154,7 @@ private drainReduce(): void {
 }
 ```
 
-`applyEventSync()` is the synchronous core — middleware, reducers, subscribers, coarse listeners.
+`applyEventSync()` is the synchronous core - middleware, reducers, subscribers, coarse listeners.
 It stages every matching slice before writing any of them, so a refusal arriving from the last
 reducer can still stop the first one's write:
 
@@ -175,7 +175,7 @@ private applyEventSync(event): EmitResult {
     }
   }
 
-  // STAGE — key-based + pattern-based reducers compute their next slice. Nothing is written.
+  // STAGE - key-based + pattern-based reducers compute their next slice. Nothing is written.
   const staged = [];
   let rejection = null;
   for (const [slice, when] of this.matchingReducers(event)) {
@@ -187,11 +187,11 @@ private applyEventSync(event): EmitResult {
   // slice while a sibling records it as accepted is not authorisation.
   if (rejection) {
     this.onRejected?.(rejection, event, rejectedBy);
-    this.notifyEventSubscribers(event, "committed");   // not vetoed — it reached reducers
+    this.notifyEventSubscribers(event, "committed");   // not vetoed - it reached reducers
     return { committed: true, written: false, rejected: rejection };
   }
 
-  // COMMIT — one new root for the whole event, then notify. Every notification happens after
+  // COMMIT - one new root for the whole event, then notify. Every notification happens after
   // every write, so a handler reading getState() sees the event complete.
   const written = this.commitStaged(staged, event);
 
@@ -211,7 +211,7 @@ store.emit("counter", "increment", 1);
 store.getState().counter.value; // ← already updated, even with middleware present
 ```
 
-## Phase 2 — Asynchronous effects
+## Phase 2 - Asynchronous effects
 
 Each committed event's effects run in their **own async task**, not in a shared serialized loop:
 
@@ -230,7 +230,7 @@ private async runEventEffects(event, result, resolve): Promise<void> {
 ```
 
 Independent per-event tasks (rather than one shared serialized loop) let an effect `await` a
-re-entrant `emit()` **without deadlocking** — the re-entrant event reduces synchronously on its own
+re-entrant `emit()` **without deadlocking** - the re-entrant event reduces synchronously on its own
 and its effects schedule independently.
 
 ## Re-entrancy and ordering
@@ -239,7 +239,7 @@ Nested emits are safe and ordered:
 
 - **A `emit()` inside middleware or a subscriber** (i.e. during the synchronous reduce) appends to
   `reduceQueue`; the active `drainReduce()` pass picks it up and reduces it after the current event
-  — FIFO, with no reducer interleaving.
+  - FIFO, with no reducer interleaving.
 - **A `emit()` inside an effect** (async) enqueues and calls `drainReduce()` again, which starts a
   fresh synchronous pass (the previous one already finished).
 
@@ -256,7 +256,7 @@ await emit("ui", "event2", p2); // reduced after event1
 
 ## Deduplication (opt-in)
 
-Deduplication is **off by default** — Yoltra never silently drops legitimate rapid-fire identical
+Deduplication is **off by default** - Yoltra never silently drops legitimate rapid-fire identical
 events (double-clicks, a slider emitting the same value, two `+1`s). You opt in two ways:
 
 | Mode               | How                                                     | When it fires                                                                  |
@@ -265,7 +265,7 @@ events (double-clicks, a slider emitting the same value, two `+1`s). You opt in 
 | **Identity-based** | `emit(c, t, p, { dedupKey })`                           | Skips an event whose explicit `dedupKey` recurs within the key window          |
 
 ```typescript
-// Off by default — both of these dispatch:
+// Off by default - both of these dispatch:
 await emit("counter", "increment", 1);
 await emit("counter", "increment", 1);
 
@@ -290,18 +290,18 @@ const { committed, written, rejected } = await emit("api", "save", payload);
 
 | Field      | Meaning                                                                     |
 | ---------- | --------------------------------------------------------------------------- |
-| `committed`| Middleware allowed it — it reached the reducers                              |
+| `committed`| Middleware allowed it - it reached the reducers                              |
 | `written`  | State actually changed. `false` for an event no reducer answered, and for a store with no reducers at all |
 | `rejected` | The `Rejection` a reducer returned, when one refused                         |
 
 The two are distinct on purpose. `committed` is `true` for every event middleware allows, which is
 what a notification or analytics bus depends on; `written` is the stricter fact a caller needs when
-a lost update matters. Widening the old `Promise<void>` is source-compatible — nothing could depend
+a lost update matters. Widening the old `Promise<void>` is source-compatible - nothing could depend
 on the absence of a value.
 
 This is honest under concurrency: each event has its own completion deferred, so `await emit(b)`
 never resolves early because some other event `a` happened to be mid-flight. If you only care about
-the state change (not the effects), you don't need to await at all — the change is already visible.
+the state change (not the effects), you don't need to await at all - the change is already visible.
 
 ## Event subscriptions
 
@@ -310,7 +310,7 @@ phase.
 
 | Phase           | When notified                                        | Use case                                   |
 | --------------- | ---------------------------------------------------- | ------------------------------------------ |
-| `'committed'`   | After reducers, before this event's effects — whether or not anything was written | Toasts, analytics, any "this happened" signal |
+| `'committed'`   | After reducers, before this event's effects - whether or not anything was written | Toasts, analytics, any "this happened" signal |
 | `'written'`     | After the commit, only when state actually changed   | Reacting to a real state change; `getState()` already shows it |
 | `'uncommitted'` | After middleware vetoes                              | React to blocked events (auth, validation) |
 | `'all'`         | `committed` **and** `uncommitted` (handler receives the phase) | Logging, analytics, debugging     |
@@ -324,10 +324,10 @@ store.onEvent("ui", "save", (event, getState) => {
   console.log("Save committed, new state:", getState());
 });
 
-// Uncommitted — middleware blocked it
+// Uncommitted - middleware blocked it
 store.onEvent("ui", "delete", () => console.log("Delete blocked by middleware"), "uncommitted");
 
-// All — with the phase parameter
+// All - with the phase parameter
 store.onEvent("ui", "action", (event, _get, _emit, phase) => {
   analytics.track(`event_${phase}`, { type: event.type });
 }, "all");
@@ -340,7 +340,7 @@ Subscriber errors are caught and logged so one throwing subscriber never stops t
 ### Middleware veto
 
 A middleware returning `false` vetoes the event: reducers and effects never see it, uncommitted
-subscribers fire, and the event does not commit. Middleware is synchronous — do authorization and
+subscribers fire, and the event does not commit. Middleware is synchronous - do authorization and
 validation here, not I/O.
 
 ```typescript
@@ -374,7 +374,7 @@ and the UI. Keep reducers fast and pure; move heavy or async work to effects (or
 
 A reducer may return `Rejected(reason)` instead of state. The **whole event** yields: no slice is
 written, no change notification fires, and the caller is told why through `EmitResult.rejected`.
-This is deliberately distinct from the two things it sits between — returning state unchanged,
+This is deliberately distinct from the two things it sits between - returning state unchanged,
 which is indistinguishable from "this event did not concern me", and throwing, which is a bug.
 A reducer that throws is isolated and its siblings still commit; a reducer that refuses has made a
 decision the event as a whole respects. Refusals also reach `onRejected` for logging and
@@ -382,14 +382,14 @@ decision the event as a whole respects. Refusals also reach `onRejected` for log
 
 ### Runaway re-emission
 
-Two consumers wired into each other — a subscriber emitting what its own reducer answers, or two
-slices answering each other's events — produce a chain with no end. Because the reduce queue drains
+Two consumers wired into each other - a subscriber emitting what its own reducer answers, or two
+slices answering each other's events - produce a chain with no end. Because the reduce queue drains
 synchronously, that is not a slow program but a frozen tab or a pinned core, with no error and no
 stack to attribute it to.
 
 Every event therefore carries its causal position: `parentId` names the cause and `depth` is one
 greater than it, or absent entirely on an event emitted by application code. **`maxReduceDepth`
-defaults to 64** and refuses to extend a chain past it — a failure mode this severe should not
+defaults to 64** and refuses to extend a chain past it - a failure mode this severe should not
 require configuration to avoid. Breaching reports through `onCascade` and the console rather than
 throwing, because the throw would land in whichever subscriber or effect happened to be emitting.
 
@@ -401,7 +401,7 @@ a documented limit rather than a papered-over one.
 
 `maxTransitionsPerDrain` bounds burst width and stays **opt-in**: a fan-out is legitimately wide
 where a cascade is narrow and deep, so depth separates them and a count cannot. It never refuses
-the event that starts a drain — that is the caller's own emit, and refusing it would be a fault
+the event that starts a drain - that is the caller's own emit, and refusing it would be a fault
 rather than a protection.
 
 > Note that a synchronous loop of emits is **not** one drain. `emit()` drains to completion before
@@ -478,7 +478,7 @@ public async emit(channel, type, payload, opts?): Promise<EmitResult> {
   }
 
   // 2. Causal position. A root event has neither field, so it stays byte-identical to one
-  //    built before they existed — the same precedent `meta` set.
+  //    built before they existed - the same precedent `meta` set.
   const cause = this.currentEvent;               // non-null while a drain is in progress
   const depth = cause ? cause.depth + 1 : 0;
   if (cause && depth > this.maxReduceDepth) {
@@ -519,29 +519,29 @@ private drainReduce(): void {
 
 ## Glossary
 
-**Reduce phase** — the synchronous part of `emit()`: middleware, reducers, subscribers, coarse
+**Reduce phase** - the synchronous part of `emit()`: middleware, reducers, subscribers, coarse
 listeners. Completes before `emit()` returns.
 
-**Effect phase** — the asynchronous part: each committed event's effects, run as an independent
+**Effect phase** - the asynchronous part: each committed event's effects, run as an independent
 task.
 
-**Completion deferred** — the per-event `resolve` that settles the promise `emit()` returns, once
+**Completion deferred** - the per-event `resolve` that settles the promise `emit()` returns, once
 that event's effects finish.
 
-**`isReducing`** — re-entrancy guard ensuring a single synchronous drain; re-entrant emits append to
+**`isReducing`** - re-entrancy guard ensuring a single synchronous drain; re-entrant emits append to
 the queue and are drained by the same pass.
 
-**FIFO** — First-In-First-Out; reducers run in emit order.
+**FIFO** - First-In-First-Out; reducers run in emit order.
 
-**Veto** — a middleware returning `false`, producing an uncommitted event.
+**Veto** - a middleware returning `false`, producing an uncommitted event.
 
-**Staging** — computing a slice's next value without writing it. Every matching slice is staged
+**Staging** - computing a slice's next value without writing it. Every matching slice is staged
 first, then all of them are assigned under one new root, so no subscriber observes a partial event.
 
-**Refusal** — a reducer returning `Rejected(reason)`. Distinct from a veto (middleware, before
+**Refusal** - a reducer returning `Rejected(reason)`. Distinct from a veto (middleware, before
 reducers) and from a throw (a bug, isolated to its slice).
 
-**Causal depth** — `depth` on an event: 0 for one emitted by application code, one greater than its
+**Causal depth** - `depth` on an event: 0 for one emitted by application code, one greater than its
 cause below that, with `parentId` naming the cause. Both are absent on a root event. Bounding it is
 what stops a cascade from becoming a hung process.
 

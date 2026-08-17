@@ -342,7 +342,7 @@ bus de notificaciones o de analitica.
 
 Todo consumidor de un bus de eventos acaba escribiendo peticion/respuesta a mano: generar un id,
 suscribirse, emparejar, expirar, desuscribirse. Son unas ochenta lineas y siempre traen los
-mismos dos bugs: la suscripcion sobrevive a la llamada, y un respondedor que olvida devolver el
+mismos dos bugs: la suscripcion sobrevive a la llamada, y `Quien Responde` que olvida devolver el
 id produce un timeout sin nada a lo que apuntar.
 
 ```typescript
@@ -350,7 +350,7 @@ const res = await store.call("rpc", "ask", { q: "quien?" }, { reply: ["rpc", "an
 res.payload.text;
 ```
 
-El respondedor no hace nada especial. Responde con el `emit` que recibio, y la marca causal del
+`Quien Responde` no hace nada especial. Responde con el `emit` que recibio, y la marca causal del
 store correlaciona ambos: **no hay id que generar, devolver ni olvidar**.
 
 ```typescript
@@ -390,14 +390,14 @@ const { payload } = await call;
 
 La contrapresion es real, no un buffer con limite. `emit` resuelve solo cuando terminan sus
 efectos, y el colector es un efecto que no retorna hasta que el consumidor tomo el elemento — asi
-que un respondedor que escribe `await emit("job", "tick", chunk)` **va al ritmo del lector**.
+que un `Quien Responde` que escribe `await emit("job", "tick", chunk)` **va al ritmo del lector**.
 
 La contrapresion entra en juego **cuando empiezas a iterar**. Una llamada que solo se espera con
 `await` nunca extrae nada, asi que bloquear a su productor causaria un interbloqueo de la propia
 llamada: el progreso que nadie lee impediria que se enviara el evento terminal. Por eso el
 progreso no iterado se almacena hasta `highWaterMark` y despues se cuenta en `call.dropped`.
 
-### Rendirse
+### Retroceso
 
 | | |
 |---|---|
@@ -406,15 +406,7 @@ progreso no iterado se almacena hasta `highWaterMark` y despues se cuenta en `ca
 | `call.cancel(reason)` | Deja de escuchar y liquida la llamada. |
 
 Termine como termine, la suscripcion se elimina y se libera cualquier productor detenido por la
-contrapresion. Un respondedor atascado es peor que el buffer sin limite que esto reemplazo.
-
-### `call` es local
-
-Una respuesta no puede llegar desde un peer federado: el sobre de federacion no lleva `meta` ni
-`parentId`, y la entrada pone el canal bajo un espacio de nombres, asi que ni la correlacion ni
-la ruta de respuesta sobreviven el salto. No es un descuido — la federacion resuelve
-peticion/respuesta entre nodos con **queries** tipadas, con una politica que puede conceder o
-denegar. Una llamada que federara en silencio convertiria esa decision de acceso en un accidente.
+contrapresion. Un `Quien Responde` atascado es peor que el buffer sin limite que esto reemplazo.
 
 ---
 
@@ -649,12 +641,12 @@ store.registerEffect({
 
 ## Rendimiento
 
-| Metrica               | Valor                                     |
-| --------------------- | ----------------------------------------- |
+| Metrica               | Valor                                       |
+| --------------------- | ------------------------------------------- |
 | **Tamano del bundle** | 9.2 KB para el store (minificado + gzipped) |
-| **Tree-shakeable**    | Si (modulos ES)                           |
-| **Dependencias**      | Cero                                      |
-| **TypeScript**        | Definiciones de tipos completas incluidas |
+| **Tree-shakeable**    | Si (modulos ES)                             |
+| **Dependencias**      | Cero                                        |
+| **TypeScript**        | Definiciones de tipos completas incluidas   |
 
 ---
 
