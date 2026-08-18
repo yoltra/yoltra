@@ -2,6 +2,18 @@
   "name": "@yoltra/devtools-browser-agent",
   "entries": [
     {
+      "version": "0.6.0",
+      "tag": "@yoltra/devtools-browser-agent_v0.6.0",
+      "date": "Tue, 18 Aug 2026 01:10:17 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Development dependencies only: vite 7.1.11 to 7.3.6 and vitest 3.2.4 to 3.2.7 (with @vitest/coverage-v8 where it is used), closing advisories for arbitrary file read through the dev server websocket, a `server.fs.deny` bypass via queries, path traversal in optimized-deps map handling, and a critical vitest advisory. Neither package appears in published output, so nothing this package ships changes."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.5.0",
       "tag": "@yoltra/devtools-browser-agent_v0.5.0",
       "date": "Sat, 15 Aug 2026 22:14:53 GMT",

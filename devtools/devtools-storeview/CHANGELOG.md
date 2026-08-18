@@ -1,6 +1,21 @@
 # Change Log - @yoltra/devtools-storeview
 
-This log was last generated on Sat, 15 Aug 2026 22:14:53 GMT and should not be manually modified.
+This log was last generated on Tue, 18 Aug 2026 01:10:17 GMT and should not be manually modified.
+
+## 0.6.0
+Tue, 18 Aug 2026 01:10:17 GMT
+
+### Minor changes
+
+- Exports a named props interface for every published component - `TopBarProps`, `BottomBarProps`, `EventTimelineProps`, `InspectorProps`, `JsonTreeProps`, `FilterBarProps`, `ConnectionDotProps`, `MetricsDashboardProps`, `StateTreeExplorerProps`, `SubscriptionsPanelProps`, `EventEmitterPanelProps` and `TimeTravelPanelProps` - plus the `MetricsData` shape.
+
+Each component took an inline anonymous object and documented it with `@param props.x` tags. TypeDoc cannot match those to a destructured parameter, so roughly thirty of them produced warnings and no rendered documentation: the props were described in the source and invisible in the reference. Naming the interfaces fixes both, and lets a consumer wrapping a component declare its own signature instead of restating the shape.
+
+`SubscriptionData` was defined twice here and once more in @yoltra/devtools-ui. It is now imported from there, so the three copies cannot drift.
+
+### Updates
+
+- Fixes the documentation build: the TypeDoc entry point pointed at `src/index.ts` where the file is `src/index.tsx`, and `tsconfig.docs.json` named a `@types/node` dependency this package does not have. Also corrects the module description, which still described the package as UI for Quo.js — the name this project was renamed from in February 2026. No published code changes.
 
 ## 0.5.0
 Sat, 15 Aug 2026 22:14:53 GMT

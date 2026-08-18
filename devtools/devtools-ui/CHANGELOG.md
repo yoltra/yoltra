@@ -1,6 +1,19 @@
 # Change Log - @yoltra/devtools-ui
 
-This log was last generated on Sat, 15 Aug 2026 22:14:53 GMT and should not be manually modified.
+This log was last generated on Tue, 18 Aug 2026 01:10:17 GMT and should not be manually modified.
+
+## 0.6.0
+Tue, 18 Aug 2026 01:10:17 GMT
+
+### Minor changes
+
+- Exports `HubProviderProps`, `MetricsData` and `SubscriptionData`.
+
+`HubProvider` documented its props with `@param props.config` and `@param props.children` against a destructured anonymous object, which TypeDoc cannot match to anything - the tags produced warnings and no documentation. The props are now a named interface with per-property docs. `MetricsData` and `SubscriptionData` were local aliases returned by two published hooks, so a caller could receive the shape but never name it.
+
+### Updates
+
+- Fixes the documentation build. `tsconfig.docs.json` named `@types/node` in `compilerOptions.types`, which this package does not depend on and does not need — its only mentions of Buffer and process are inside comments — so TypeDoc failed with TS2688. Because four DevTools packages depend on this one, Rush blocked their documentation too, and the whole suite silently produced no API reference. No published code changes.
 
 ## 0.5.0
 Sat, 15 Aug 2026 22:14:53 GMT

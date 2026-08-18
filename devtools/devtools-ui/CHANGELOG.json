@@ -2,6 +2,23 @@
   "name": "@yoltra/devtools-ui",
   "entries": [
     {
+      "version": "0.6.0",
+      "tag": "@yoltra/devtools-ui_v0.6.0",
+      "date": "Tue, 18 Aug 2026 01:10:17 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Fixes the documentation build. `tsconfig.docs.json` named `@types/node` in `compilerOptions.types`, which this package does not depend on and does not need — its only mentions of Buffer and process are inside comments — so TypeDoc failed with TS2688. Because four DevTools packages depend on this one, Rush blocked their documentation too, and the whole suite silently produced no API reference. No published code changes."
+          }
+        ],
+        "minor": [
+          {
+            "comment": "Exports `HubProviderProps`, `MetricsData` and `SubscriptionData`.\n\n`HubProvider` documented its props with `@param props.config` and `@param props.children` against a destructured anonymous object, which TypeDoc cannot match to anything - the tags produced warnings and no documentation. The props are now a named interface with per-property docs. `MetricsData` and `SubscriptionData` were local aliases returned by two published hooks, so a caller could receive the shape but never name it."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.5.0",
       "tag": "@yoltra/devtools-ui_v0.5.0",
       "date": "Sat, 15 Aug 2026 22:14:53 GMT",

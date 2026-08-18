@@ -1,6 +1,18 @@
 # Change Log - @yoltra/react
 
-This log was last generated on Sat, 15 Aug 2026 22:14:53 GMT and should not be manually modified.
+This log was last generated on Tue, 18 Aug 2026 01:10:17 GMT and should not be manually modified.
+
+## 0.6.0
+Tue, 18 Aug 2026 01:10:17 GMT
+
+### Minor changes
+
+- Uses the NotifiedPhase type exported by @yoltra/core rather than restating the set of phases a handler can be told about.
+
+Three handler signatures here spelled out "committed" | "uncommitted" by hand. When core gained a "written" phase those copies were left claiming a handler could only ever see two, and the build failed on the mismatch. NotifiedPhase is EventPhase minus "all" - which selects a subscription but is never delivered - so the set stays core's to define and a phase added later cannot leave stale copies behind.
+
+Consumers who annotated a phase parameter with the literal union will hit the same compile error and want the same fix.
+- Exports the `SuspenseCache` type. `suspenseCache` publishes an instance of it, so the type was reachable through a published value while being marked internal — a shape consumers could hold but not name. The class itself is still not constructible from outside; only its type is exported, and its internals stay private.
 
 ## 0.5.0
 Sat, 15 Aug 2026 22:14:53 GMT

@@ -1,6 +1,13 @@
 # Change Log - @yoltra/devtools-node-agent
 
-This log was last generated on Sat, 15 Aug 2026 22:14:53 GMT and should not be manually modified.
+This log was last generated on Tue, 18 Aug 2026 01:10:17 GMT and should not be manually modified.
+
+## 0.6.0
+Tue, 18 Aug 2026 01:10:17 GMT
+
+### Updates
+
+- Development dependencies only: vite 7.1.11 to 7.3.6 and vitest 3.2.4 to 3.2.7 (with @vitest/coverage-v8 where it is used), closing advisories for arbitrary file read through the dev server websocket, a `server.fs.deny` bypass via queries, path traversal in optimized-deps map handling, and a critical vitest advisory. Neither package appears in published output, so nothing this package ships changes.
 
 ## 0.5.0
 Sat, 15 Aug 2026 22:14:53 GMT

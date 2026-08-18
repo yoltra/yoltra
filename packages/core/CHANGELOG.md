@@ -1,6 +1,42 @@
 # Change Log - @yoltra/core
 
-This log was last generated on Sat, 15 Aug 2026 22:14:53 GMT and should not be manually modified.
+This log was last generated on Tue, 18 Aug 2026 01:10:17 GMT and should not be manually modified.
+
+## 0.6.0
+Tue, 18 Aug 2026 01:10:17 GMT
+
+### Minor changes
+
+- Exports the `AliasWatch` type. `freezeState` takes it as a parameter and was already public, but the type itself was never re-exported, so a caller could not name the argument it was expected to pass — and the generated reference could not document the parameter at all.
+- Adds store.call(): request/reply over the event bus, awaitable for the reply and async-iterable for progress.
+
+Every consumer of an event bus eventually writes this by hand - mint an id, subscribe, match, time out, unsubscribe - and every one of them writes the same two bugs: the subscription outlives the call, and a responder that forgets to echo the id produces a timeout with nothing to point at.
+
+Correlation is causal, so neither bug is reachable. The store already stamps parentId on anything emitted while an event is being handled, so a responder replying through the emit it was handed is correlated with no id anywhere. An explicit correlationId remains for replies that crossed a boundary causality cannot follow.
+
+A call resolves to the event rather than the payload, because a caller often cannot know which kind of reply it will get; reply names the terminal types and the event carries the discriminant. Anything correlated and non-terminal is progress.
+
+Progress has real backpressure rather than a buffer with a limit. emit resolves only once its effects have run, and the call's collector is an effect that does not return until the consumer has taken the item, so a responder writing `await emit(...)` is paced by the reader end to end. It engages once iteration begins: a call that is only awaited never pulls, so blocking its producer would deadlock the call itself - progress nobody reads would stop the terminal event ever being sent. Un-iterated progress therefore buffers to highWaterMark and is counted on handle.dropped.
+
+The timeout is idle rather than total, so a job that streams for minutes does not fail a thirty-second call; an AbortSignal covers a real deadline. However a call ends - resolved, timed out, aborted, cancelled - the subscription is removed and any producer parked on backpressure is released, because a wedged responder is worse than the unbounded buffer this replaced.
+
+call is deliberately local. A reply cannot reach one from a federated peer: the envelope carries neither meta nor parentId and ingress namespaces the channel, and federation answers cross-node request/reply with typed peer queries that a responder policy may concede or deny. A call that federated silently would turn that access decision into an accident of which channel someone named.
+
+Also: connect accepts { immediate: true } to deliver the current value once before any change, closing a gap where a subscriber had to repeat the path elsewhere to read it; and Change now names the event that caused it (eventId, channel, type), so a subscriber no longer has to mirror the cause into state and keep it in two places. Both are absent where no event applies - a time-travel snapshot, or the immediate delivery itself - because absence is the honest signal.
+- Bounds event cascades, on by default.\n\nTwo consumers wired into each other — a subscriber emitting what its own reducer answers, or two slices answering each other's events — produced a chain with no end. The reduce queue drains synchronously, so that was not a slow program: it was a frozen tab or a pinned core, with no error and no stack to attribute it to. Deduplication is opt-in and middleware cannot see inside the drain loop, so nothing a consumer could add from outside the store bounded it.\n\nEvery event now carries its causal position. `depth` is 0 for an event emitted by application code and one greater than its cause below that, with `parentId` naming the cause; both are absent on a root event, so events an application emits stay byte-identical to before. `maxReduceDepth` defaults to 64 and refuses to extend a chain past it — a failure mode this severe should not require configuration to avoid. Breaching reports through `onCascade` and the console rather than throwing, because the throw would land in whichever subscriber or effect happened to be emitting.\n\nCausality is tracked two ways because the drain is synchronous and effects are not: within a drain the store knows which event it is processing, so even an emit made through a captured `store` reference rather than the injected one is attributed correctly; across drains the `emit` handed to effects carries the cause through the await.\n\n`maxTransitionsPerDrain` bounds burst width and stays opt-in: a fan-out is legitimately wide where a cascade is narrow and deep, and the event that starts a drain is never refused by it.\n\nAlso fixes `createStore` dropping options it did not name explicitly — every option added to `StoreSpec` had to be repeated in the factory, and forgetting was silent, since the option type-checked at the call site and was discarded on the way through.
+- Commits are now atomic across slices, and a reducer can refuse a write.
+
+The write path assigned each slice and fired its change notifications as it went, so an event touching several slices notified subscribers of the first while the rest had not yet reduced. A handler reading getState() from one of those notifications observed the event half applied - a real window wherever a change is used as a signal to re-read, which is what the React hooks do. Every staged slice is now written under one new root before anything is notified.
+
+That also removes what made refusal impossible. A reducer can return Rejected(reason) instead of state, and the whole event yields: no slice writes, no change notification fires, and the caller is told why. Refusing is distinct from returning state unchanged, which is indistinguishable from "this event did not concern me", and distinct from throwing - a reducer that throws has a bug, so its slice is isolated and its siblings still commit, while a reducer that refuses has made a decision the event as a whole respects.
+
+emit resolves to an EmitResult (committed, written, and rejected when refused) rather than void. Widening a void return is source-compatible: nothing could depend on the absence of a value.
+
+A new written event phase reports that state actually changed, and fires after the commit so a subscriber reading getState() sees it. committed keeps meaning "not vetoed" and is deliberately not narrowed - it fires for every event middleware allows, including every event in a store with no reducers, which is the shape a notification or analytics bus takes; narrowing it would have silently stopped those subscribers firing. all stays committed|uncommitted for the same reason.
+
+Refusals are reported to onRejected for logging and metrics, and on InstrumentedEvent.rejected for DevTools, which could otherwise not tell a refusal from a veto - identical in state, entirely different in cause.
+
+Note for consumers: adding a phase widens EventPhase, so any code that annotated a handler parameter as the literal "committed" | "uncommitted" now fails to compile. Use the exported NotifiedPhase (EventPhase minus "all", which selects a subscription but is never delivered) so the set stays the store's to define. Three copies inside this repo and one in an example broke exactly that way and now use it.
 
 ## 0.5.0
 Sat, 15 Aug 2026 22:14:53 GMT

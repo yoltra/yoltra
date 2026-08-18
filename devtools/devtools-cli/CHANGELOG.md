@@ -1,6 +1,15 @@
 # Change Log - @yoltra/devtools-cli
 
-This log was last generated on Sat, 15 Aug 2026 22:14:53 GMT and should not be manually modified.
+This log was last generated on Tue, 18 Aug 2026 01:10:17 GMT and should not be manually modified.
+
+## 0.6.0
+Tue, 18 Aug 2026 01:10:17 GMT
+
+### Minor changes
+
+- Exports the command-line argument surface — `parseArgs`, `CliArgs`, `CliArgsError`, `DEFAULT_PORT` and `DEFAULT_HISTORY_SIZE` — from the package entry point.
+
+The package already advertised `exports["."].types`, but the entry module exported nothing, so the published declaration file was empty and the generated API reference was a title with no body. These are the same symbols the binary parses its own arguments with, and the same ones the test suite already covers, so publishing them costs nothing and lets a caller embedding the hub reuse the argument contract rather than re-deriving it.
 
 ## 0.5.0
 Sat, 15 Aug 2026 22:14:53 GMT

@@ -2,6 +2,21 @@
   "name": "@yoltra/react",
   "entries": [
     {
+      "version": "0.6.0",
+      "tag": "@yoltra/react_v0.6.0",
+      "date": "Tue, 18 Aug 2026 01:10:17 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Uses the NotifiedPhase type exported by @yoltra/core rather than restating the set of phases a handler can be told about.\n\nThree handler signatures here spelled out \"committed\" | \"uncommitted\" by hand. When core gained a \"written\" phase those copies were left claiming a handler could only ever see two, and the build failed on the mismatch. NotifiedPhase is EventPhase minus \"all\" - which selects a subscription but is never delivered - so the set stays core's to define and a phase added later cannot leave stale copies behind.\n\nConsumers who annotated a phase parameter with the literal union will hit the same compile error and want the same fix."
+          },
+          {
+            "comment": "Exports the `SuspenseCache` type. `suspenseCache` publishes an instance of it, so the type was reachable through a published value while being marked internal — a shape consumers could hold but not name. The class itself is still not constructible from outside; only its type is exported, and its internals stay private."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.5.0",
       "tag": "@yoltra/react_v0.5.0",
       "date": "Sat, 15 Aug 2026 22:14:53 GMT",
