@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Moves the six functions that never touched an instance field out of `Store.ts` and into `store/matching.ts` and `store/paths.ts`. `matchesWhen`, `getMiddlewareFunction`, `getMiddlewareWhen` and `normalizeEventKeys` become free functions and their call sites lose the `this.`; `getAtPath` and `buildAncestorPaths` keep their members, because `Store.buildAncestorPaths` is public API in the committed reference and a test replaces `getAtPath` on the instance to count the walks a change description costs, which only works while the callers reach it through `this`. Pure moves: no signature, visibility or behaviour changed. The proof is that regenerating the API reference produced only `Defined in:` line-number links and not one other difference, with no page added or removed. `Store.ts` drops from 3,018 lines to 2,902.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

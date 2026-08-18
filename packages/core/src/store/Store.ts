@@ -46,6 +46,16 @@ import { CallAbortedError, CallTimeoutError, isReplyTo, parseReply } from "./cal
 import type { CallHandle, CallOptions } from "./call";
 import type { Rejection } from "./rejection";
 import type { AliasWatch } from "../utils/immutability";
+import {
+  buildAncestorPaths as ancestorPaths,
+  getAtPath as readAtPath,
+} from "./paths";
+import {
+  getMiddlewareFunction,
+  getMiddlewareWhen,
+  matchesWhen,
+  normalizeEventKeys,
+} from "./matching";
 
 /**
  * Deep-freezes a value **in development only**, returning it untouched in
@@ -777,87 +787,6 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
-   * Checks if an event matches a `When` matcher.
-   *
-   * @param when - The When matcher (or undefined for "all events").
-   * @param event - The event to check.
-   * @returns `true` if the event matches, `false` otherwise.
-   *
-   * @remarks
-   * - `undefined` or missing `when` matches ALL events.
-   * - `{ any: true }` matches ALL events.
-   * - `{ keys: [...] }` matches if event's `[channel, type]` is in the array.
-   * - `{ channel: 'x' }` matches if event's channel equals 'x'.
-   * - `{ channels: ['x', 'y'] }` matches if event's channel is in the array.
-   *
-   * @internal
-   */
-  private matchesWhen(when: When<EM> | undefined, event: EventUnion<EM>): boolean {
-    // No targeting = match all events
-    if (!when) return true;
-
-    // Match all events
-    if ("any" in when && when.any === true) {
-      return true;
-    }
-
-    // Match specific event keys
-    if ("keys" in when) {
-      return when.keys.some(
-        ([channel, type]) => event.channel === channel && event.type === type,
-      );
-    }
-
-    // Match single channel (all types within that channel)
-    if ("channel" in when) {
-      return event.channel === when.channel;
-    }
-
-    // Match multiple channels
-    if ("channels" in when) {
-      return when.channels.includes(event.channel as keyof EM & string);
-    }
-
-    return false;
-  }
-
-  /**
-   * Extracts the middleware function from a MiddlewareInput.
-   * Handles both raw functions (legacy) and MiddlewareSpec objects.
-   *
-   * @param input - MiddlewareInput (function or spec).
-   * @returns The middleware function.
-   *
-   * @internal
-   */
-  private getMiddlewareFunction(
-    input: MiddlewareInput<DeepReadonly<S>, EM>,
-  ): MiddlewareFunction<DeepReadonly<S>, EM> {
-    if (typeof input === "function") {
-      return input;
-    }
-    return input.middleware;
-  }
-
-  /**
-   * Gets the `when` matcher from a MiddlewareInput.
-   *
-   * @param input - MiddlewareInput (function or spec).
-   * @returns The `when` matcher, or `undefined` for raw functions (match all).
-   *
-   * @internal
-   */
-  private getMiddlewareWhen(
-    input: MiddlewareInput<DeepReadonly<S>, EM>,
-  ): When<EM> | undefined {
-    if (typeof input === "function") {
-      // Raw functions match all events
-      return undefined;
-    }
-    return input.when;
-  }
-
-  /**
    * Invokes all registered **effects** for a given event.
    * Handles both key-based effects (O(1) lookup) and pattern-based effects (runtime matching).
    * Errors are caught and logged.
@@ -889,7 +818,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     // 2. Call pattern-based effects (runtime matching)
     for (const { effect, when } of this.patternEffects) {
-      if (this.matchesWhen(when, event)) {
+      if (matchesWhen(when, event)) {
         try {
           await effect(event, this.getState, emit);
         } catch (e) {
@@ -1451,7 +1380,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         // whatever state it happened to reach.
         for (const [sliceName, when] of this.patternReducers) {
           if (rejection !== null) break;
-          if (this.matchesWhen(when, event)) {
+          if (matchesWhen(when, event)) {
             const refused = this.stageSliceGuarded(sliceName, event as any, staged);
             if (refused !== null) rejection = refused;
           }
@@ -1747,9 +1676,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private applyEventSync(event: EventUnion<EM>): EmitResult {
     // Middleware (synchronous). Return false to veto; async work belongs in effects.
     for (const mwInput of this.middleware) {
-      const when = this.getMiddlewareWhen(mwInput);
-      if (!this.matchesWhen(when, event)) continue;
-      const mw = this.getMiddlewareFunction(mwInput);
+      const when = getMiddlewareWhen(mwInput);
+      if (!matchesWhen(when, event)) continue;
+      const mw = getMiddlewareFunction(mwInput);
       let ok: boolean;
       try {
         ok = mw(this.state, event, this.emit);
@@ -1800,7 +1729,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
       for (const [sliceName, when] of this.patternReducers) {
         if (rejection !== null) break;
-        if (this.matchesWhen(when, event)) {
+        if (matchesWhen(when, event)) {
           const refused = this.stageSliceGuarded(sliceName, event as any, staged);
           if (refused !== null) {
             rejection = refused;
@@ -2444,7 +2373,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }
 
     // Key-based effect: normalize to event keys
-    const eventKeys = this.normalizeEventKeys(spec);
+    const eventKeys = normalizeEventKeys(spec);
 
     // If no keys (no targeting at all), this effect matches ALL events
     // We treat it as a pattern-based effect with `any: true`
@@ -2702,7 +2631,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }
 
     // Normalize event keys from `when: { keys }`
-    const eventKeys = this.normalizeEventKeys(rSpec);
+    const eventKeys = normalizeEventKeys(rSpec);
 
     // If no targeting at all, treat as "all events" (pattern-based)
     if (eventKeys.length === 0 && !when) {
@@ -2781,55 +2710,20 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
-   * Normalizes event targeting from `when` to an array of EventKeys.
-   *
-   * @param spec - Object with an optional `when` matcher.
-   * @returns Array of `[channel, type]` pairs.
-   *
-   * @internal
-   */
-  private normalizeEventKeys(spec: {
-    when?: When<EM>;
-    events?: ReadonlyArray<EventKey<EM>>;
-  }): ReadonlyArray<EventKey<EM>> {
-
-    if (spec.when) {
-      const when = spec.when;
-
-      // Only `keys` can reach this point: both callers intercept pattern-based matchers
-      // (`any`, `channel`, `channels`) before normalizing, because those register against the
-      // emit loop rather than against per-key handler maps.
-      if ("keys" in when) {
-        return when.keys;
-      }
-    }
-
-    // No targeting specified
-    return [];
-  }
-
-  /**
    * Reads a dotted path from an object (supports numeric array indices via string keys).
    *
    * @param obj - Root object (slice or value).
    * @param path - Dotted path; leading dot is ignored.
    * @returns The value at the path, or `undefined`.
    *
+   * @remarks
+   * A member rather than a bare import: a test replaces this on the instance to count how many
+   * walks describing a change costs, which only works while the callers go through `this`.
+   *
    * @internal
    */
   private getAtPath(obj: any, path: string): any {
-    if (!path) return obj;
-
-    // Normalize any accidental leading dots
-    const clean = path[0] === "." ? path.slice(1) : path;
-    const parts = clean.split(".");
-
-    let cur = obj;
-    for (const seg of parts) {
-      if (cur == null) return undefined;
-      cur = cur[seg as any];
-    }
-    return cur;
+    return readAtPath(obj, path);
   }
 
   /**
@@ -2848,17 +2742,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   static buildAncestorPaths(path: string): string[] {
-    if (!path) return [];
-
-    const clean = path[0] === "." ? path.slice(1) : path;
-    const parts = clean.split(".");
-    const out: string[] = [];
-
-    for (let i = 0; i < parts.length; i++) {
-      out.push(parts.slice(0, i + 1).join("."));
-    }
-
-    return out;
+    return ancestorPaths(path);
   }
 }
 
