@@ -16,7 +16,8 @@
     "docs:stamp": "node ../../tools/repo-tools/bin/docs-stamp.mjs docs",
     "docs:md": "typedoc --options ./typedoc.core.json",
     "docs:js": "typedoc --options ./typedoc.core.json --json ./.typedoc/core-en.json",
-    "size": "node ../../tools/repo-tools/bin/size-check.cjs",
+    "size": "node ../../tools/repo-tools/bin/size-check.cjs --check-readme",
+    "size:write": "node ../../tools/repo-tools/bin/size-check.cjs --write-readme",
     "bench": "vitest bench --run",
     "bench:check": "node ../../tools/repo-tools/bin/bench-check.cjs",
     "bench:record": "node ../../tools/repo-tools/bin/bench-check.cjs --record"

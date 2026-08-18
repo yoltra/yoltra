@@ -641,12 +641,39 @@ store.registerEffect({
 
 ## Rendimiento
 
-| Metrica               | Valor                                       |
-| --------------------- | ------------------------------------------- |
-| **Tamano del bundle** | 9.2 KB para el store (minificado + gzipped) |
-| **Tree-shakeable**    | Si (modulos ES)                             |
-| **Dependencias**      | Cero                                        |
-| **TypeScript**        | Definiciones de tipos completas incluidas   |
+| Metrica               | Valor                                     |
+| --------------------- | ----------------------------------------- |
+| **Tamano del bundle** | Medido en cada build — ver la tabla abajo |
+| **Tree-shakeable**    | Si (modulos ES)                           |
+| **Dependencias**      | Cero                                      |
+| **TypeScript**        | Definiciones de tipos completas incluidas |
+
+El tamaño del bundle se verifica, no se afirma: `rush size` empaqueta el paquete como lo haría
+un consumidor — sacudido, minificado, comprimido con gzip — y falla cuando excede el
+presupuesto declarado en `package.json`. La tabla de abajo la escribe esa misma verificación,
+así que no puede desviarse de lo que se midió; editarla a mano hace fallar el CI.
+
+La cifra que importa es lo que importas, no lo que el paquete exporta:
+
+<!-- size-table:start -->
+| Import | Tamaño | Presupuesto |
+| --- | --- | --- |
+| `{ createStore }` | 8.3 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 9.8 KB | 16 KB |
+| todo | 11.2 KB | 18 KB |
+<!-- size-table:end -->
+
+Estas son cifras de **producción** — lo que publicas una vez que tu empaquetador define
+`NODE_ENV=production` y las guardas exclusivas de desarrollo desaparecen. La columna de
+presupuesto es el techo que `rush size` impone, y se verifica contra un build de desarrollo,
+que es el mayor de los dos: el código exclusivo de desarrollo no puede crecer sin que nadie lo
+note solo porque nunca llega a un usuario. Por eso el margen que se infiere aquí es
+deliberadamente conservador.
+
+La **distancia entre filas** es la afirmación de tree-shaking, y es lo que hay que vigilar: la
+persistencia añade 1.5 KB a quienes la importan y nada a los demás, y el barrel completo está
+2.9 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
+es algo que nadie escriba.
 
 ---
 
