@@ -201,12 +201,14 @@ arithmetic — the usual source of "correct everywhere except inside that one sc
 Measured the way a consumer ships it — bundled, tree-shaken, minified, gzipped — and checked by
 `rush size` on every build.
 
-| Import | Size |
-| --- | --- |
-| `{ Button, Card, Stack, Text }` | 2.4 KB |
-| everything | 5.4 KB |
-| `{ Dialog }` from `/client` | 1.9 KB |
-| all of `/client` | 4.5 KB |
+<!-- size-table:start -->
+| Import | Size | Budget |
+| --- | --- | --- |
+| `{ Button, Card, Stack, Text }` | 2.3 KB | 4 KB |
+| everything | 5.3 KB | 8 KB |
+| `{ Dialog }` from `/client` | 1.8 KB | 3 KB |
+| all of `/client` | 4.3 KB | 5.5 KB |
+<!-- size-table:end -->
 
 The gap between the barrel rows and the named-import rows is tree-shaking working — `{ Dialog }`
 did not move when the anchored tier landed, though the client barrel grew by two thirds. The barrel figure is a growth tripwire,

@@ -4,6 +4,7 @@ import {
   EN_LABELS,
   ES_LABELS,
   entrySource,
+  entrySubpath,
   evaluate,
   formatMarkdownTable,
   formatResults,
@@ -159,5 +160,41 @@ describe("marker replacement", () => {
   it("refuses markers that are inverted", () => {
     const bad = "<!-- size-table:end -->\n<!-- size-table:start -->";
     expect(() => replaceMarkedBlock(bad, "size-table", "x")).toThrow(/before/);
+  });
+});
+
+describe("secondary entry points", () => {
+  it("turns the measured file into the subpath somebody would import", () => {
+    expect(entrySubpath("dist/client.mjs")).toBe("/client");
+    expect(entrySubpath("dist/index.mjs")).toBeUndefined();
+    expect(entrySubpath(undefined)).toBeUndefined();
+  });
+
+  it("keeps two barrels from both reading as the same row", () => {
+    // @yoltra/ds measures its main barrel and its /client barrel separately. Without the
+    // qualifier both rows said "everything" and the reader could not tell them apart.
+    const table = formatMarkdownTable(
+      [
+        evaluate({ name: "barrel", limitKb: 8 }, 5.3 * 1024, 5.3 * 1024),
+        evaluate({ name: "client barrel", entry: "dist/client.mjs", limitKb: 5.5 }, 4.3 * 1024, 4.3 * 1024),
+      ],
+      EN_LABELS,
+    );
+    expect(table).toContain("| everything |");
+    expect(table).toContain("| all of `/client` |");
+  });
+
+  it("qualifies a named import with the subpath it came from", () => {
+    const results = [
+      evaluate({ name: "a dialog", entry: "dist/client.mjs", import: "{ Dialog }", limitKb: 3 }, 1.8 * 1024, 1.8 * 1024),
+    ];
+    expect(formatMarkdownTable(results, EN_LABELS)).toContain("`{ Dialog }` from `/client`");
+    expect(formatMarkdownTable(results, ES_LABELS)).toContain("`{ Dialog }` desde `/client`");
+  });
+
+  it("leaves a main-entry import unqualified", () => {
+    const results = [evaluate({ import: "{ createStore }", limitKb: 14 }, 9 * 1024, 8.3 * 1024)];
+    expect(formatMarkdownTable(results, EN_LABELS)).toContain("| `{ createStore }` |");
+    expect(formatMarkdownTable(results, EN_LABELS)).not.toContain("from");
   });
 });

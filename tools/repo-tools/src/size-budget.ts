@@ -66,6 +66,14 @@ export interface BudgetResult {
    * A published table wants the expression, because it is code the reader can paste.
    */
   readonly importExpr?: string;
+  /**
+   * The subpath this entry was measured from, e.g. `/client`, when it is not the main entry.
+   *
+   * @remarks
+   * Needed because a package can declare a budget per entry point, and two barrels measured
+   * from different entries are two different numbers that would otherwise read identically.
+   */
+  readonly subpath?: string;
   readonly withinBudget: boolean;
   /** Headroom in kilobytes; negative when over. */
   readonly headroomKb: number;
@@ -117,6 +125,7 @@ export function evaluate(entry: BudgetEntry, bytes: number, prodBytes: number = 
     actualKb,
     shippedKb: toKb(prodBytes),
     importExpr: entry.import,
+    subpath: entrySubpath(entry.entry),
     withinBudget: actualKb <= entry.limitKb,
     headroomKb: Math.round((entry.limitKb - actualKb) * 10) / 10,
   };
@@ -140,13 +149,17 @@ export function formatResults(pkg: string, results: readonly BudgetResult[]): st
     .concat(results.length > 0 ? "" : `  ${pkg}: no budgets declared`);
 }
 
-/** Column headings and the barrel row's label, so the table can be emitted in either language. */
+/** Column headings and the words a row label needs, so the table can be emitted in either language. */
 export interface TableLabels {
   readonly importCol: string;
   readonly sizeCol: string;
   readonly budgetCol: string;
   /** What to call the row that imports the whole barrel. */
   readonly everything: string;
+  /** Joins an import to the subpath it came from, as in ``{ Dialog }` from `/client``. */
+  readonly from: string;
+  /** Names the whole of a secondary entry, as in ``all of `/client```. */
+  readonly allOf: string;
 }
 
 /** English column headings. */
@@ -155,6 +168,8 @@ export const EN_LABELS: TableLabels = {
   sizeCol: "Size",
   budgetCol: "Budget",
   everything: "everything",
+  from: "from",
+  allOf: "all of",
 };
 
 /** Spanish column headings. */
@@ -163,7 +178,22 @@ export const ES_LABELS: TableLabels = {
   sizeCol: "Tamaño",
   budgetCol: "Presupuesto",
   everything: "todo",
+  from: "desde",
+  allOf: "todo",
 };
+
+/**
+ * Turns a measured entry file into the subpath a consumer would import.
+ *
+ * @remarks
+ * `dist/client.mjs` is where the file lives; `/client` is what somebody writes. Returns
+ * `undefined` for the package's main entry, which needs no qualifier.
+ */
+export function entrySubpath(entry: string | undefined): string | undefined {
+  if (entry === undefined) return undefined;
+  const base = entry.replace(/^.*\//, "").replace(/\.[^.]+$/, "");
+  return base === "index" ? undefined : `/${base}`;
+}
 
 /**
  * Renders the published size table.
@@ -185,7 +215,18 @@ export function formatMarkdownTable(
     // Prefer the import expression: it is the line a reader would actually write, and it is
     // identical in every language. An entry that names no import is measuring the whole
     // barrel, which is the one row that needs a translated word.
-    const label = r.importExpr ? `\`${r.importExpr}\`` : labels.everything;
+    //
+    // The subpath has to appear or a multi-entry package produces two rows both called
+    // "everything": `@yoltra/ds` measures its barrel and its `/client` barrel separately, and
+    // without the qualifier the reader cannot tell which number belongs to which import.
+    const sub = r.subpath;
+    const label = r.importExpr
+      ? sub
+        ? `\`${r.importExpr}\` ${labels.from} \`${sub}\``
+        : `\`${r.importExpr}\``
+      : sub
+        ? `${labels.allOf} \`${sub}\``
+        : labels.everything;
     return `| ${label} | ${r.shippedKb.toFixed(1)} KB | ${r.limitKb} KB |`;
   });
   return [
