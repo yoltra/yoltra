@@ -48,7 +48,12 @@ export default defineConfig({
     rollupOptions: {},
     outDir: "dist",
     sourcemap: true,
-    target: "es2020",
+    // es2022 rather than es2020 so class fields emit natively. Downlevelling them costs a
+    // helper preamble plus one `__publicField(this, ...)` call per field — 55 of them across
+    // `Store`, which every consumer pays for on every import. The floor this sets (Chrome 94,
+    // Safari 15.4, Firefox 93, all shipped by early 2022) is already well below the `engines`
+    // range, and Node 18 supports es2022 in full.
+    target: "es2022",
     minify: true,
     emptyOutDir: true,
   },

@@ -40,7 +40,10 @@ export default defineConfig({
     },
     outDir: "dist",
     sourcemap: true,
-    target: "es2020",
+    // Aligned with `@yoltra/core`, which sets the suite's floor at es2022 (see the reasoning
+    // in packages/core/vite.config.ts). A lower target here would advertise support the suite
+    // cannot deliver anyway: anything depending on core already requires es2022.
+    target: "es2022",
     minify: true,
     emptyOutDir: true,
   },
