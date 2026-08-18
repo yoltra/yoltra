@@ -7,7 +7,7 @@
   "type": "module",
   "author": {
     "name": "Manu Ramirez",
-    "email": "manu@yoltra.dev"
+    "email": "opensource@yoltra.dev"
   },
   "scripts": {
     "dev": "vite",
@@ -42,7 +42,7 @@
     "jsdom": "^24.0.0",
     "typescript": "5.9.3",
     "typescript-eslint": "^8.35.1",
-    "vite": "^7.1.11",
-    "vitest": "3.2.4"
+    "vite": "^7.3.6",
+    "vitest": "3.2.7"
   }
 }

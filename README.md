@@ -267,8 +267,7 @@ Feedback and PRs are welcome.
 package ships under the same MIT license.
 See [LICENSE](https://github.com/yoltra/yoltra/blob/main/LICENSE) for details.
 
-**Trademarks:** “Yoltra” and the Yoltra logo are trademarks of Manuel Ramirez and Erael
-Group. The MIT license covers the code, not the marks — see
+**Trademarks:** “Yoltra” and the Yoltra logo are trademarks. The MIT license covers the code, not the marks — see
 [TRADEMARKS.md](https://github.com/yoltra/yoltra/blob/main/TRADEMARKS.md).
 
 ---

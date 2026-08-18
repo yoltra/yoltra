@@ -283,8 +283,7 @@ Los comentarios y PRs son bienvenidos.
 licencia MIT. Consulta [LICENSE](https://github.com/yoltra/yoltra/blob/main/LICENSE) para más
 detalles.
 
-**Marcas registradas:** «Yoltra» y el logo de Yoltra son marcas de Manuel Ramirez y Erael
-Group. La licencia MIT cubre el código, no las marcas --- consulta
+**Marcas registradas:** «Yoltra» y el logo de Yoltra son marcas. La licencia MIT cubre el código, no las marcas --- consulta
 [TRADEMARKS](https://github.com/yoltra/yoltra/blob/main/docs/es/TRADEMARKS.md).
 
 ---

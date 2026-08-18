@@ -9,7 +9,7 @@
   },
   "author": {
     "name": "Manu Ramirez <@pixerael>",
-    "email": "manu@yoltra.dev"
+    "email": "opensource@yoltra.dev"
   },
   "type": "module",
   "main": "index.js",
