@@ -3,6 +3,7 @@
  */
 
 import type { EventMapBase, EventUnion, ReducerFunction } from "../types";
+import type { Rejection } from "../store/rejection";
 
 /**
  * Thin wrapper around a pure reducer function (stateful event consumer):
@@ -77,7 +78,7 @@ export class Reducer<S, EM extends EventMapBase = EventMapBase> {
    *
    * @param state  - Current state.
    * @param event - An event drawn from {@link EventUnion | `EventUnion<EM>`}.
-   * @returns The next state produced by the underlying reducer function.
+   * @returns The next state, or a {@link Rejection} if the reducer refused the write.
    *
    * @example
    * ```ts
@@ -86,7 +87,7 @@ export class Reducer<S, EM extends EventMapBase = EventMapBase> {
    *
    * @public
    */
-  reduce(state: S, event: EventUnion<EM>): S {
+  reduce(state: S, event: EventUnion<EM>): S | Rejection {
     return this._reduce(state, event);
   }
 }

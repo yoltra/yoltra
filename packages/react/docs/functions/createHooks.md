@@ -10,7 +10,7 @@
 
 > **createHooks**\<`R`, `S`, `EM`\>(`StoreContext`): [`YoltraHooks`](../interfaces/YoltraHooks.md)\<`R`, `S`, `EM`\>
 
-Defined in: [react/src/hooks/createHooks.ts:250](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L250)
+Defined in: [react/src/hooks/createHooks.ts:251](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L251)
 
 Factory that creates fully-typed React hooks bound to a specific store context.
 
@@ -42,7 +42,7 @@ Event map.
 
 ### StoreContext
 
-`Context`\<`null` \| `StoreInstance`\<`R`, `S`, `EM`\>\>
+`Context`\<`null` \| [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>\>
 
 A React context carrying a `StoreInstance<R, S, EM>`.
 

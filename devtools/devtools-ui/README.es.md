@@ -2,30 +2,30 @@
 
 # @yoltra/devtools-ui
 
-> 👉 🇲🇽 Versión en Español | [🇺🇸 English Version](./README.md)&nbsp;
+> 👉 🇲🇽 Versión en Español&nbsp; | &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp;
 
-**Shared React hooks and business logic for Yoltra DevTools UIs.**
+**Hooks de React y lógica de negocio compartidos por las UIs de Yoltra DevTools.**
 
-`@yoltra/devtools-ui` is a headless logic layer that provides React hooks for connecting to the
-DevTools hub, tracking store state, browsing events, and controlling time travel. It contains
-**no UI components** — rendering is handled by downstream packages like
-`@yoltra/devtools-storeview` (React DOM) and `@yoltra/devtools-cli` (Ink).
+`@yoltra/devtools-ui` es una capa de lógica sin interfaz que ofrece hooks de React para conectarse
+al hub de DevTools, seguir el estado de un store, explorar eventos y controlar el viaje en el
+tiempo. **No contiene componentes de UI**: el renderizado corre a cargo de paquetes posteriores
+como `@yoltra/devtools-storeview` (React DOM) y `@yoltra/devtools-cli` (Ink).
 
 ---
 
-## Installation
+## Instalación
 
 ```bash
 npm install @yoltra/devtools-ui
 ```
 
-**Peer dependency:** `react` ^18
+**Dependencia peer:** `react` ^18
 
 ---
 
-## Quick Start
+## Inicio rápido
 
-Wrap your DevTools UI in a `HubProvider` and use the hooks:
+Envuelve tu UI de DevTools en un `HubProvider` y usa los hooks:
 
 ```tsx
 import {
@@ -52,14 +52,14 @@ function Dashboard() {
   const { entries } = useEventLog(storeId);
   const { state, loading, refresh } = useStoreState(storeId);
 
-  if (status !== "connected") return <p>Connecting...</p>;
-  if (!storeId) return <p>Waiting for stores...</p>;
+  if (status !== "connected") return <p>Conectando...</p>;
+  if (!storeId) return <p>Esperando stores...</p>;
 
   return (
     <div>
-      <h2>Events: {entries.length}</h2>
+      <h2>Eventos: {entries.length}</h2>
       <pre>{JSON.stringify(state, null, 2)}</pre>
-      <button onClick={refresh}>Refresh State</button>
+      <button onClick={refresh}>Refrescar estado</button>
     </div>
   );
 }
@@ -69,37 +69,37 @@ function Dashboard() {
 
 ## Hooks
 
-### Connection & Registry
+### Conexión y registro
 
-| Hook                 | Description                                                               |
+| Hook                 | Descripción                                                               |
 | -------------------- | ------------------------------------------------------------------------- |
-| `useHubConnection()` | Connection status, `send()`, `subscribe()`, `disconnect()`, `reconnect()` |
-| `useStoreRegistry()` | Live list of connected stores with capabilities                           |
+| `useHubConnection()` | Estado de conexión, `send()`, `subscribe()`, `disconnect()`, `reconnect()` |
+| `useStoreRegistry()` | Lista en vivo de los stores conectados, con sus capacidades                |
 
-### Data
+### Datos
 
-| Hook                             | Description                                                     |
-| -------------------------------- | --------------------------------------------------------------- |
-| `useEventLog(storeId)`           | Chronological event log with `clear()`                          |
-| `useStoreState(storeId)`         | Live state tree, incrementally patched via JSON Patches         |
-| `useStoreSubscriptions(storeId)` | Reducer/effect/middleware inventory                             |
-| `useStoreMetrics(storeId)`       | Performance counters (event rate, processing time, queue depth) |
+| Hook                             | Descripción                                                            |
+| -------------------------------- | ---------------------------------------------------------------------- |
+| `useEventLog(storeId)`           | Registro cronológico de eventos, con `clear()`                         |
+| `useStoreState(storeId)`         | Árbol de estado en vivo, parcheado de forma incremental con JSON Patch |
+| `useStoreSubscriptions(storeId)` | Inventario de reducers, efectos y middleware                           |
+| `useStoreMetrics(storeId)`       | Contadores de rendimiento (tasa de eventos, tiempo de proceso, cola)   |
 
-### Actions
+### Acciones
 
-| Hook                              | Description                                         |
-| --------------------------------- | --------------------------------------------------- |
-| `useTimeTravel(storeId, entries)` | Jump to any event index, step forward/back, resume  |
-| `useEventReplay(storeId)`         | Replay events through reducers without side effects |
-| `useEventEmitter(storeId)`        | Emit synthetic events to a store                    |
+| Hook                              | Descripción                                                       |
+| --------------------------------- | ----------------------------------------------------------------- |
+| `useTimeTravel(storeId, entries)` | Salta a cualquier índice de evento, avanza o retrocede, y reanuda  |
+| `useEventReplay(storeId)`         | Reproduce eventos por los reducers, sin efectos secundarios        |
+| `useEventEmitter(storeId)`        | Emite eventos sintéticos a un store                                |
 
 ---
 
-## Context
+## Contexto
 
 ### `HubProvider`
 
-Wraps child components in a WebSocket connection context:
+Envuelve los componentes hijos en un contexto de conexión WebSocket:
 
 ```tsx
 <HubProvider
@@ -120,29 +120,30 @@ Wraps child components in a WebSocket connection context:
 ```typescript
 interface HubConnectionConfig {
   port: number;
-  host?: string; // default: "localhost"
-  extensionName?: string; // display name for this extension
-  autoReconnect?: boolean; // default: true
-  maxReconnectAttempts?: number; // default: Infinity
+  host?: string; // por defecto: "localhost"
+  extensionName?: string; // nombre visible de esta extensión
+  autoReconnect?: boolean; // por defecto: true
+  maxReconnectAttempts?: number; // por defecto: Infinity
 }
 ```
 
 ---
 
-## State Synchronization
+## Sincronización del estado
 
-`useStoreState` uses an efficient incremental patching strategy:
+`useStoreState` usa una estrategia de parcheo incremental eficiente:
 
-1. Requests a full `STATE_SNAPSHOT` on mount
-2. Buffers any `STORE_EVENT` patches that arrive before the snapshot
-3. Replays buffered patches in version order once the snapshot lands
-4. Applies subsequent patches incrementally via `applyPatches`
+1. Pide un `STATE_SNAPSHOT` completo al montarse
+2. Guarda en un búfer los parches `STORE_EVENT` que lleguen antes de la instantánea
+3. Reproduce los parches del búfer por orden de versión en cuanto llega la instantánea
+4. Aplica los parches posteriores de forma incremental con `applyPatches`
 
-This means the UI always reflects the latest store state without repeated full snapshots.
+Así la UI siempre refleja el estado más reciente del store sin pedir instantáneas completas una y
+otra vez.
 
 ---
 
-## Time Travel
+## Viaje en el tiempo
 
 ```tsx
 function TimeTravelControls({ storeId, entries }) {
@@ -152,15 +153,15 @@ function TimeTravelControls({ storeId, entries }) {
   return (
     <div>
       <button onClick={stepBack} disabled={currentIndex <= 0}>
-        Back
+        Atrás
       </button>
       <span>
         {currentIndex + 1} / {entries.length}
       </span>
       <button onClick={stepForward} disabled={currentIndex >= entries.length - 1}>
-        Forward
+        Adelante
       </button>
-      {isTimeTraveling && <button onClick={resume}>Resume</button>}
+      {isTimeTraveling && <button onClick={resume}>Reanudar</button>}
     </div>
   );
 }
@@ -168,18 +169,18 @@ function TimeTravelControls({ storeId, entries }) {
 
 ---
 
-## API Reference
+## Referencia de la API
 
-### Context
+### Contexto
 
-| Export        | Description                                      |
-| ------------- | ------------------------------------------------ |
-| `HubProvider` | React context provider wrapping a hub connection |
-| `HubContext`  | The raw React context (for advanced use)         |
+| Export        | Descripción                                                  |
+| ------------- | ------------------------------------------------------------ |
+| `HubProvider` | Provider de contexto de React que envuelve una conexión al hub |
+| `HubContext`  | El contexto de React en crudo (para uso avanzado)            |
 
 ### Hooks
 
-| Export                            | Returns                                                                    |
+| Export                            | Devuelve                                                                   |
 | --------------------------------- | -------------------------------------------------------------------------- |
 | `useHubConnection()`              | `{ status, send, subscribe, disconnect, reconnect }`                       |
 | `useStoreRegistry()`              | `RegisteredStore[]`                                                        |
@@ -191,34 +192,35 @@ function TimeTravelControls({ storeId, entries }) {
 | `useEventReplay(storeId)`         | `{ replay }`                                                               |
 | `useEventEmitter(storeId)`        | `{ emit }`                                                                 |
 
-### Utilities
+### Utilidades
 
-| Export                         | Description                                 |
-| ------------------------------ | ------------------------------------------- |
-| `applyPatches(state, patches)` | Apply RFC 6902 JSON Patches to a state tree |
+| Export                         | Descripción                                              |
+| ------------------------------ | -------------------------------------------------------- |
+| `applyPatches(state, patches)` | Aplica JSON Patches RFC 6902 a un árbol de estado         |
 
-### Types
+### Tipos
 
-| Export                | Description                                     |
+| Export                | Descripción                                     |
 | --------------------- | ----------------------------------------------- |
-| `HubConnectionConfig` | Provider configuration                          |
+| `HubConnectionConfig` | Configuración del provider                      |
 | `HubConnectionStatus` | `"disconnected" \| "connecting" \| "connected"` |
-| `HubContextValue`     | Full context value shape                        |
-| `RegisteredStore`     | Store entry from the registry                   |
-| `EventLogEntry`       | Single event in the log                         |
+| `HubContextValue`     | Forma completa del valor de contexto            |
+| `RegisteredStore`     | Entrada de store en el registro                 |
+| `EventLogEntry`       | Un único evento del registro                    |
 
 ---
 
-## Related Packages
+## Paquetes relacionados
 
-- **[@yoltra/devtools-protocol](../devtools-protocol/README.md)** — Wire format consumed by
-  these hooks
-- **[@yoltra/devtools-storeview](../devtools-storeview/README.md)** — React DOM UI built on
-  these hooks
-- **[@yoltra/devtools-server](../devtools-server/README.md)** — The hub these hooks connect to
+- **[@yoltra/devtools-protocol](../devtools-protocol/README.md)** — Formato de cable que consumen
+  estos hooks
+- **[@yoltra/devtools-storeview](../devtools-storeview/README.md)** — UI de React DOM construida
+  sobre estos hooks
+- **[@yoltra/devtools-server](../devtools-server/README.md)** — El hub al que se conectan estos
+  hooks
 
 ---
 
-## License
+## Licencia
 
-**MIT** — Free to use in commercial and open-source projects.
+**MIT** — De uso libre en proyectos comerciales y de código abierto.

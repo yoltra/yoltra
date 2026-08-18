@@ -12,7 +12,7 @@ Thanks for your interest in contributing! 🎉 This project is open-source under
 - **Code of Conduct:** Contributor Covenant v2.1
 - **DCO:** Developer Certificate of Origin 1.1 (sign-off required on every commit)
 
-> For the full engineering workflow and release process, see the **Developer Guide**: [./docs/DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md). This file is a quick-start for contributors and PR authors.
+> For the full engineering workflow and release process, see the **Developer Guide**: [./docs/en/DEVELOPER_GUIDE.md](./docs/en/DEVELOPER_GUIDE.md). This file is a quick-start for contributors and PR authors.
 
 ## Quickstart (Rush monorepo)
 

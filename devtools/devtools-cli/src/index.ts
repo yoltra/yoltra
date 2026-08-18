@@ -12,6 +12,19 @@ import { WebSocket } from "ws";
 import { App } from "./app";
 import { CliArgsError, parseArgs } from "./args";
 
+/**
+ * The command-line surface, re-exported so the package's declared types entry point resolves to
+ * something.
+ *
+ * `package.json` advertises `exports["."].types`, but this module exported nothing, so the
+ * published `.d.ts` was empty and the generated API reference was a title with no body. These are
+ * the same symbols the binary itself parses its arguments with, and the same ones the test suite
+ * already covers — publishing them costs nothing and lets a caller embedding the hub reuse the
+ * argument contract instead of re-deriving it.
+ */
+export { CliArgsError, DEFAULT_HISTORY_SIZE, DEFAULT_PORT, parseArgs } from "./args";
+export type { CliArgs } from "./args";
+
 async function main() {
   const { port, historySize } = parseArgs(process.argv.slice(2));
 

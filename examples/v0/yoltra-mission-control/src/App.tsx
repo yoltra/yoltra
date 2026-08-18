@@ -3,6 +3,7 @@ import { Callout, Container, Inline, Kbd, Stack, Switch, Text } from "@yoltra/ds
 
 import { DevtoolsPanel } from "./components/DevtoolsPanel";
 import { MissionHeader } from "./components/MissionHeader";
+import { DiagnosticsPanel } from "./components/DiagnosticsPanel";
 import { MissionLog } from "./components/MissionLog";
 import { OrbitalForecast } from "./components/OrbitalForecast";
 import { SatelliteGrid } from "./components/SatelliteGrid";
@@ -43,6 +44,12 @@ export default function App() {
               memoization required.
             </p>
             <p>
+              <b>Run scan</b> in Diagnostics is a <code>store.call()</code> — one request, many
+              replies. The panel iterates the call for each subsystem step and awaits it for the
+              final report. Tick <b>slow render</b> and the responder slows down with it: its
+              <code>await emit(...)</code> does not resolve until the UI has taken the step.
+            </p>
+            <p>
               Double-click a command and watch <b>dedup hits</b> climb in the panel&rsquo;s
               metrics: the second press carries the same <code>dedupKey</code> and is collapsed
               rather than starting a second maneuver.
@@ -53,6 +60,8 @@ export default function App() {
             <MissionLog />
             <OrbitalForecast />
           </Inline>
+
+          <DiagnosticsPanel satelliteId="sat-1" />
 
           <SatelliteGrid />
         </Stack>

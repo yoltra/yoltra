@@ -5,7 +5,7 @@
   "license": "MIT",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
-    "email": "manu@yoltra.dev"
+    "email": "opensource@yoltra.dev"
   },
   "maintainers": [],
   "homepage": "https://yoltra.dev",
@@ -27,13 +27,9 @@
     "build": "vite build",
     "package": "npm run build && node scripts/pack-extension.mjs",
     "pack": "node scripts/pack-extension.mjs",
-    "test": "exit 0",
+    "test": "vitest --watch=false",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "docs": "rushx docs:js && rushx docs:md && rushx docs:stamp",
-    "docs:stamp": "node ../../tools/repo-tools/bin/docs-stamp.mjs docs",
-    "docs:md": "typedoc --options ./typedoc.json",
-    "docs:js": "typedoc --options ./typedoc.json --json ./.typedoc/devtools-ext-en.json"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@yoltra/devtools-storeview": "workspace:*",
@@ -50,10 +46,10 @@
     "typedoc-plugin-markdown": "4.9.0",
     "typedoc-plugin-localization": "3.0.6",
     "typescript": "5.9.3",
-    "vite": "^7.1.11",
+    "vite": "^7.3.6",
     "vite-plugin-dts": "^4.5.4",
     "vite-plugin-banner": "0.8.1",
-    "vitest": "3.2.4"
+    "vitest": "3.2.7"
   },
   "engines": {
     "node": ">=18.18"

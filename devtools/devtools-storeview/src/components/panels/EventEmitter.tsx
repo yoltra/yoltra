@@ -60,20 +60,27 @@ const errorStyle: React.CSSProperties = {
 };
 
 /**
+ * Props for {@link EventEmitterPanel}.
+ *
+ * @public
+ */
+export interface EventEmitterPanelProps {
+  /** Callback invoked with the channel, type, and parsed payload. */
+  onEmit: (channel: string, type: string, payload: unknown) => void;
+}
+
+/**
  * Form to emit events to a store.
  *
  * Provides channel, type, and JSON payload fields. Validates that
  * channel and type are non-empty and that the payload is valid JSON
  * before invoking the `onEmit` callback.
  *
- * @param props.onEmit - Callback invoked with the channel, type, and parsed payload.
  * @public
  */
 export function EventEmitterPanel({
   onEmit,
-}: {
-  onEmit: (channel: string, type: string, payload: unknown) => void;
-}) {
+}: EventEmitterPanelProps) {
   const [channel, setChannel] = useState("");
   const [type, setType] = useState("");
   const [payloadJson, setPayloadJson] = useState("{}");

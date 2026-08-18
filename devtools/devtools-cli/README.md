@@ -1,14 +1,8 @@
-![Yoltra logo](../../assets/logo.svg)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # @yoltra/devtools-cli
 
-> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
-> |
-> &nbsp;[ 🇵🇹 Versão Portuguesa](./README.pt.md)&nbsp;
-> | &nbsp; 👉
-> [ 🇺🇸 English Version](./README.md)&nbsp;
-> |
-> &nbsp;[ 🇫🇷 Version française](./README.fr.md)
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | 👉 🇺🇸 English Version &nbsp;
 
 **Terminal UI for Yoltra DevTools — inspect stores from the command line.**
 
@@ -134,7 +128,6 @@ The CLI will display connected stores and live event data.
   Node.js stores
 - **[@yoltra/devtools-browser-agent](../devtools-browser-agent/README.md)** — Agent for
   connecting browser stores
-- **[@yoltra/devtools-vscode](../devtools-vscode/README.md)** — Alternative: VS Code integration
 - **[@yoltra/devtools-ext](../devtools-ext/README.md)** — Alternative: Browser extension
 
 ---

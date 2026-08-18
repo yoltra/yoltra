@@ -213,6 +213,7 @@ pulls in a Node-only WebSocket, and vice versa.
 
 - **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)** — 3 steps to a working app
 - **[Migration Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/MIGRATION_GUIDE.md)** — coming from Redux, Zustand, or Jotai
+- **[Request & Reply Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/REQUEST_REPLY_GUIDE.md)** — `store.call()`: correlation without ids, streaming progress with real backpressure
 - **[Testing Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/TESTING_GUIDE.md)** — unit-test stores, effects, middleware, and components
 - **[Next.js Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/NEXTJS_GUIDE.md)** — client-side usage in the Pages and App Router
 - **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** — store, middleware, effects, `When` matchers, instrumentation
@@ -249,7 +250,7 @@ more details.
 
 ## Status
 
-Yoltra is in **Release Candidate** stage (v0.3.0):
+Yoltra is in **Release Candidate** stage (v0.6.0):
 
 - The core and React APIs are stable and used in production applications.
 - TypeScript types are strict and comprehensive; coverage, bundle-size, and benchmark gates run in CI.
@@ -266,8 +267,7 @@ Feedback and PRs are welcome.
 package ships under the same MIT license.
 See [LICENSE](https://github.com/yoltra/yoltra/blob/main/LICENSE) for details.
 
-**Trademarks:** “Yoltra” and the Yoltra logo are trademarks of Manuel Ramirez and Erael
-Group. The MIT license covers the code, not the marks — see
+**Trademarks:** “Yoltra” and the Yoltra logo are trademarks. The MIT license covers the code, not the marks — see
 [TRADEMARKS.md](https://github.com/yoltra/yoltra/blob/main/TRADEMARKS.md).
 
 ---

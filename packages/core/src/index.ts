@@ -10,8 +10,13 @@ export { EventBus } from "./eventBus/EventBus";
 export { LooseEventBus } from "./eventBus/LooseEventBus";
 export { Reducer } from "./reducer/Reducer";
 export { Store, createStore, typedEvents } from "./store/Store";
+export { Rejected, isRejected } from "./store/rejection";
+export { CallAbortedError, CallTimeoutError } from "./store/call";
+export type { CallHandle, CallOptions, ReplySpec } from "./store/call";
+export type { Rejection } from "./store/rejection";
 export { detectChangedProps } from "./utils/detectChangedProps";
 export { freezeState } from "./utils/immutability";
+export type { AliasWatch } from "./utils/immutability";
 
 // Export the eventKeys helper function
 export { eventKeys } from "./types";
@@ -24,8 +29,11 @@ export type {
   Change,
   Emit,
   EmitOptions,
+  EmitResult,
+  ConnectOptions,
   EventMeta,
   InstrumentedEvent,
+  CascadeInfo,
   InstrumentationObserver,
   Unsubscribe,
   StoreSpec,
@@ -49,6 +57,7 @@ export type {
   WithGlob,
   Dotted,
   EventPhase,
+  NotifiedPhase,
   EventSubscriptionHandler,
   NarrowedEventHandler,
   // Event targeting (When matcher)

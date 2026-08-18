@@ -122,7 +122,9 @@ describe("slices whose state is a single root value", () => {
 
       await store.emit("x", "set", 1);
 
-      expect(seen).toEqual([{ oldValue: 0, newValue: 1, path: "" }]);
+      // toMatchObject, not toEqual: a Change also carries provenance now, and this test is
+      // about the root path being emitted at all.
+      expect(seen).toMatchObject([{ oldValue: 0, newValue: 1, path: "" }]);
     });
 
     it("reaches a `**` pattern, which matches zero segments", async () => {
@@ -132,7 +134,7 @@ describe("slices whose state is a single root value", () => {
 
       await store.emit("x", "set", "b");
 
-      expect(seen).toEqual([{ oldValue: "a", newValue: "b", path: "" }]);
+      expect(seen).toMatchObject([{ oldValue: "a", newValue: "b", path: "" }]);
     });
 
     it("does NOT reach a `*` pattern, which demands exactly one segment", async () => {
@@ -200,7 +202,7 @@ describe("slices whose state is a single root value", () => {
       store.__applyExternalState({ value: 42 });
 
       expect(store.getState().value).toBe(42);
-      expect(seen).toEqual([{ oldValue: 0, newValue: 42, path: "" }]);
+      expect(seen).toMatchObject([{ oldValue: 0, newValue: 42, path: "" }]);
     });
   });
 });

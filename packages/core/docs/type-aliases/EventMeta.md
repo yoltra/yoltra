@@ -10,7 +10,7 @@
 
 > **EventMeta** = `Readonly`\<`Record`\<`string`, `unknown`\>\>
 
-Defined in: [types.ts:73](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L73)
+Defined in: [types.ts:76](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L76)
 
 Opaque, optional envelope metadata carried alongside an [Event](../interfaces/Event.md).
 

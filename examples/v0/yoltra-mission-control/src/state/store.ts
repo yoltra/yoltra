@@ -2,7 +2,7 @@ import { withDevtools } from "@yoltra/devtools-browser-agent";
 import { createLoopbackHub } from "@yoltra/devtools-ui";
 import { createYoltra } from "@yoltra/react";
 
-import { boostEffect, deployEffect, transmitEffect } from "./effects";
+import { boostEffect, deployEffect, diagnosticsEffect, transmitEffect } from "./effects";
 import { boostGuard } from "./middleware";
 import { fleetReducer, missionReducer } from "./reducers";
 
@@ -27,7 +27,7 @@ export const {
   name: "Orbital Mission Control",
   reducer: { fleet: fleetReducer, mission: missionReducer },
   middleware: [boostGuard],
-  effects: [deployEffect, transmitEffect, boostEffect],
+  effects: [deployEffect, transmitEffect, boostEffect, diagnosticsEffect],
   devtools: { allowReplay: true },
 });
 

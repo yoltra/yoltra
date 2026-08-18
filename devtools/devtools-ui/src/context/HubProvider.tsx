@@ -37,6 +37,18 @@ const RECONNECT_BASE_MS = 750;
 const RECONNECT_MAX_MS = 30_000;
 
 /**
+ * Props for {@link HubProvider}.
+ *
+ * @public
+ */
+export interface HubProviderProps {
+  /** Connection configuration (see {@link HubConnectionConfig}). */
+  config: HubConnectionConfig;
+  /** React children that will have access to the hub context. */
+  children: ReactNode;
+}
+
+/**
  * Provides hub connection context to all child hooks and components.
  *
  * @remarks
@@ -58,19 +70,14 @@ const RECONNECT_MAX_MS = 30_000;
  * }
  * ```
  *
- * @param props.config - Connection configuration (see {@link HubConnectionConfig}).
- * @param props.children - React children that will have access to the hub context.
- * @returns A React element wrapping children in {@link HubContext.Provider}.
+ * @returns A React element wrapping children in `HubContext.Provider`.
  *
  * @public
  */
 export function HubProvider({
   config,
   children,
-}: {
-  config: HubConnectionConfig;
-  children: ReactNode;
-}) {
+}: HubProviderProps) {
   const [status, setStatus] = useState<HubConnectionStatus>("disconnected");
   const wsRef = useRef<WebSocket | null>(null);
   const subscribersRef = useRef<Set<(msg: DevtoolsMessage) => void>>(new Set());

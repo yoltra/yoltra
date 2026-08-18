@@ -9,6 +9,7 @@ import type {
   Event,
   EventMapBase,
   EventPhase,
+  NotifiedPhase,
   PathValue,
   StoreInstance,
   WithGlob,
@@ -154,7 +155,7 @@ export type UseEvent<EM extends EventMapBase, S> = <
     event: Event<EM, C, T>,
     getState: () => DeepReadonly<S>,
     emit: Emit<EM>,
-    phase: "committed" | "uncommitted",
+    phase: NotifiedPhase,
   ) => void | Promise<void>,
   phase?: EventPhase,
 ) => void;
@@ -412,7 +413,7 @@ export function createHooks<
       event: Event<EM, C, T>,
       getState: () => DeepReadonly<S>,
       emit: Emit<EM>,
-      phase: "committed" | "uncommitted",
+      phase: NotifiedPhase,
     ) => void | Promise<void>,
     phase: EventPhase = "committed",
   ): void => {

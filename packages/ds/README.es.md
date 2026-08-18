@@ -1,4 +1,8 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
 # @yoltra/ds
+
+> 👉 🇲🇽 Versión en Español&nbsp; | &nbsp;[ 🇺🇸 English Version](./README.md)
 
 El **Sistema de Diseño de Yoltra** — tokens de fundación, temas semánticos
 claro/oscuro, un generador de hoja de estilos basada en variables CSS y

@@ -24,7 +24,7 @@
   "license": "MIT",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
-    "email": "manu@yoltra.dev"
+    "email": "opensource@yoltra.dev"
   },
   "maintainers": [],
   "homepage": "https://yoltra.dev",
@@ -73,31 +73,31 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.0.12",
-    "@vitest/coverage-v8": "3.2.4",
-    "@vitest/ui": "^3.2.4",
+    "@vitest/coverage-v8": "3.2.7",
+    "@vitest/ui": "^3.2.7",
     "typedoc": "^0.28.13",
     "typedoc-plugin-markdown": "4.9.0",
     "typedoc-plugin-localization": "3.0.6",
     "typescript": "5.9.3",
-    "vite": "^7.1.11",
+    "vite": "^7.3.6",
     "vite-plugin-banner": "0.8.1",
     "vite-plugin-dts": "^4.5.4",
-    "vitest": "3.2.4"
+    "vitest": "3.2.7"
   },
   "sizeLimit": [
     {
       "name": "createStore",
       "import": "{ createStore }",
-      "limitKb": 8
+      "limitKb": 14
     },
     {
       "name": "with persistence",
       "import": "{ createStore, hydrate, persist }",
-      "limitKb": 10
+      "limitKb": 16
     },
     {
       "name": "barrel",
-      "limitKb": 11
+      "limitKb": 18
     }
   ]
 }

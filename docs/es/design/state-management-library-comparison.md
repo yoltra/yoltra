@@ -6,7 +6,7 @@
 > | &nbsp; 👉
 > [ 🇺🇸 English Version](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)&nbsp;
 
-**Version:** 0.8.0 **Ultima actualizacion:** Julio 2026
+**Aplica a:** `@yoltra/core` 0.6.0 **Ultima actualizacion:** Agosto 2026
 
 ## Introduccion
 

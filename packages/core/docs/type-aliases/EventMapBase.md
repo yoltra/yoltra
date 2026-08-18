@@ -10,7 +10,7 @@
 
 > **EventMapBase** = `{ [C in string]: { [T in string]: unknown } }`
 
-Defined in: [types.ts:18](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L18)
+Defined in: [types.ts:21](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L21)
 
 A minimal "record of record" constraint for EventMaps.
 

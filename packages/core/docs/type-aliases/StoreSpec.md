@@ -10,7 +10,7 @@
 
 > **StoreSpec**\<`R`, `S`, `EM`\> = `object`
 
-Defined in: [types.ts:356](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L356)
+Defined in: [types.ts:459](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L459)
 
 Store configuration object passed to the [Store](../classes/Store.md) constructor or [createStore](../functions/createStore.md).
 
@@ -61,7 +61,7 @@ Event map.
 
 > `optional` **dedupWindowMs**: `number`
 
-Defined in: [types.ts:394](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L394)
+Defined in: [types.ts:497](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L497)
 
 Time window in milliseconds for **content-based** event deduplication.
 When greater than 0, events with identical fingerprints
@@ -85,7 +85,7 @@ emit (e.g. React Strict Mode), prefer the per-emit [EmitOptions.dedupKey](../int
 
 > `optional` **devtools**: `object`
 
-Defined in: [types.ts:423](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L423)
+Defined in: [types.ts:526](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L526)
 
 DevTools configuration options.
 
@@ -112,7 +112,7 @@ These options control runtime DevTools capabilities such as event replay.
 
 > `optional` **effects**: [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:379](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L379)
+Defined in: [types.ts:482](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L482)
 
 Optional side-effect handlers registered at construction time.
 Runs after reducers for every propagated event.
@@ -123,7 +123,7 @@ Runs after reducers for every propagated event.
 
 > `optional` **idFactory**: () => `string`
 
-Defined in: [types.ts:415](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L415)
+Defined in: [types.ts:518](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L518)
 
 Generates the `id` for each emitted event. Defaults to `crypto.randomUUID()`.
 
@@ -155,11 +155,73 @@ const store = createStore({ name: 'Test', reducer, idFactory: () => `evt-${++n}`
 
 ***
 
+### maxReduceDepth?
+
+> `optional` **maxReduceDepth**: `number`
+
+Defined in: [types.ts:589](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L589)
+
+Maximum causal depth of an event chain before the store refuses to extend it.
+
+#### Remarks
+
+An event emitted while handling another is one deeper than its cause. Two reducers wired to
+each other, or an effect that emits the event its own reducer answers, climb this without
+bound — and the reduce queue drains synchronously, so in a browser that is a frozen tab with
+no error and no stack, and on a server a pinned core.
+
+**On by default**, because the whole point is that the failure mode does not require
+configuration to avoid. The default is far past any legitimate chain: an event caused by an
+event caused by an event is normal, sixty-four deep is a bug. Raise it if an application
+genuinely nests deeper, or set `Infinity` to opt out entirely and own the consequences.
+
+Breaching does not throw — see [StoreSpec.onCascade](#oncascade).
+
+#### Default
+
+```ts
+64
+```
+
+***
+
+### maxTransitionsPerDrain?
+
+> `optional` **maxTransitionsPerDrain**: `number`
+
+Defined in: [types.ts:611](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L611)
+
+Maximum number of events one synchronous drain will process before refusing more.
+
+#### Remarks
+
+A drain processes one root event plus every event emitted *while it runs* — so this counts a
+single causal burst, not application traffic. A plain loop is unaffected: `emit` drains to
+completion before it returns, so `for (const row of rows) store.emit(…)` is a thousand drains
+of one event each, never one drain of a thousand.
+
+**Off by default** because a wide burst is not by itself a bug. One `sync` event whose
+subscriber fans out to five hundred `upsert`s is a legitimate shape, and a default low enough
+to catch a runaway would refuse it. Depth is what separates a cascade from a fan-out — a
+fan-out is wide and shallow, a cascade is narrow and deep — which is why
+[StoreSpec.maxReduceDepth](#maxreducedepth) carries the default and this does not.
+
+Set it when a store's bursts are known to be bounded and an unexpectedly wide one is itself
+the symptom worth catching.
+
+#### Default
+
+```ts
+undefined (no limit)
+```
+
+***
+
 ### middleware?
 
 > `optional` **middleware**: [`MiddlewareInput`](MiddlewareInput.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:373](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L373)
+Defined in: [types.ts:476](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L476)
 
 Middleware chain executed before reducers/effects.
 Accepts either functions (legacy) or MiddlewareSpec objects (recommended).
@@ -171,9 +233,40 @@ If any middleware returns false (or resolves to false), the event will not propa
 
 > **name**: `string`
 
-Defined in: [types.ts:360](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L360)
+Defined in: [types.ts:463](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L463)
 
 Store name (used by DevTools to identify the instance).
+
+***
+
+### onCascade()?
+
+> `optional` **onCascade**: (`info`) => `void`
+
+Defined in: [types.ts:626](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L626)
+
+Called when a ceiling is breached, instead of throwing.
+
+#### Parameters
+
+##### info
+
+[`CascadeInfo`](../interfaces/CascadeInfo.md)\<`EM`\>
+
+Which ceiling, the event that would have extended the chain, and its causal
+chain of ids, newest last.
+
+#### Returns
+
+`void`
+
+#### Remarks
+
+The offending emit is refused and the chain stops there; everything already committed
+stands. It does not throw, because the throw would surface in whichever frame happened to be
+emitting — a subscriber, an effect, a middleware — which is the same species of
+hard-to-attribute failure the ceiling exists to prevent. A cascade is a wiring bug, and this
+is where the wiring gets named.
 
 ***
 
@@ -181,7 +274,7 @@ Store name (used by DevTools to identify the instance).
 
 > `optional` **onEffectError**: (`error`, `event`) => `void`
 
-Defined in: [types.ts:446](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L446)
+Defined in: [types.ts:549](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L549)
 
 Called when an effect throws or its returned promise rejects.
 
@@ -217,7 +310,7 @@ report to a service or emit a failure event. Other effects still run.
 
 > `optional` **onReducerError**: (`error`, `event`, `slice`) => `void`
 
-Defined in: [types.ts:466](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L466)
+Defined in: [types.ts:569](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L569)
 
 Invoked when a reducer throws.
 
@@ -259,11 +352,56 @@ so this hook is how a caller observes one.
 
 ***
 
+### onRejected()?
+
+> `optional` **onRejected**: (`rejection`, `event`, `slice`) => `void`
+
+Defined in: [types.ts:645](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L645)
+
+Called when a reducer refuses a write by returning [Rejected](../functions/Rejected.md).
+
+#### Parameters
+
+##### rejection
+
+[`Rejection`](../interfaces/Rejection.md)
+
+The refusal and its reason.
+
+##### event
+
+[`EventUnion`](EventUnion.md)\<`EM`\>
+
+The event that was refused.
+
+##### slice
+
+`string`
+
+Name of the slice whose reducer refused.
+
+#### Returns
+
+`void`
+
+#### Remarks
+
+The caller learns of its own refusal from the `emit` result; this is for everyone else —
+logging, metrics, alerting on a rate of rejected writes. Shaped as a callback rather than a
+subscription for the same reason [StoreSpec.onReducerError](#onreducererror) is: it is a rare global
+signal, not something several independent parties register and unregister for.
+
+A refusal is a normal outcome, not an error. It means a reducer considered the write and
+declined it — a stale compare-and-swap, an unmet precondition — and the event is rejected
+whole, so no slice writes.
+
+***
+
 ### reducer
 
 > **reducer**: `Record`\<`R`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
 
-Defined in: [types.ts:366](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L366)
+Defined in: [types.ts:469](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L469)
 
 Map of slice name → reducer spec.
 Each entry declares initial state, the reducer function, and the event targeting.

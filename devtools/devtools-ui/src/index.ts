@@ -9,6 +9,7 @@
 // Context
 export { HubContext } from "./context/HubContext";
 export { HubProvider } from "./context/HubProvider";
+export type { HubProviderProps } from "./context/HubProvider";
 
 // Hooks
 export { useEventEmitter } from "./hooks/useEventEmitter";
@@ -38,4 +39,5 @@ export type {
 } from "./types";
 
 export type { UseEventLogOptions } from "./hooks/useEventLog";
-export type { UseStoreMetricsOptions } from "./hooks/useStoreMetrics";
+export type { UseStoreMetricsOptions, MetricsData } from "./hooks/useStoreMetrics";
+export type { SubscriptionData } from "./hooks/useStoreSubscriptions";

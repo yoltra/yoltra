@@ -123,15 +123,15 @@ planificado.
 
 ```
 main
-  └─ hotfix/v0.8.1-bug-critico
+  └─ hotfix/v0.6.1-bug-critico
          │  corrección mínima + rush change (patch)
          │  rush version --bump --override-bump patch
          └─► PR → main  (revisado y fusionado directamente)
-               └─► push del tag v0.8.1 → CI publica
+               └─► push del tag v0.6.1 → CI publica
 ```
 
 Después de que el PR del hotfix llegue a `main`, etiqueta el commit de merge
-(`git tag v0.8.1 && git push origin v0.8.1`) — el tag dispara CI, que publica vía OIDC (consulta
+(`git tag v0.6.1 && git push origin v0.6.1`) — el tag dispara CI, que publica vía OIDC (consulta
 RELEASE_GUIDE.md).
 
 ---

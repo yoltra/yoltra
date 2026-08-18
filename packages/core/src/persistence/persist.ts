@@ -150,11 +150,6 @@ export async function hydrate(
   return { slices: envelope.slices ?? {}, restored: true };
 }
 
-/** A reducer spec, as far as hydration cares: something carrying an initial `state`. */
-interface HasState {
-  state: unknown;
-}
-
 /**
  * Replaces each reducer's initial state with what was restored for it.
  *
@@ -164,13 +159,13 @@ interface HasState {
  *
  * @public
  */
-export function withHydration<R extends Record<string, HasState>>(
+export function withHydration<R extends Record<string, { state: unknown }>>(
   reducers: R,
   hydration: Hydration,
 ): R {
   if (!hydration.restored) return reducers;
 
-  const next = {} as Record<string, HasState>;
+  const next = {} as Record<string, { state: unknown }>;
   for (const [name, spec] of Object.entries(reducers)) {
     const restored = hydration.slices[name];
     next[name] = restored === undefined ? spec : { ...spec, state: restored };

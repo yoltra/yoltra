@@ -10,7 +10,7 @@
 
 > **OneOrMany**\<`T`\> = `T` \| readonly `T`[]
 
-Defined in: [react/src/hooks/hooks.ts:45](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/hooks.ts#L45)
+Defined in: [react/src/hooks/hooks.ts:46](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/hooks.ts#L46)
 
 Accepts either a single value or a readonly array of that value.
 Useful for APIs that take one-or-many keys.

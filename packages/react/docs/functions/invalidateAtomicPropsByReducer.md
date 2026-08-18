@@ -10,7 +10,7 @@
 
 > **invalidateAtomicPropsByReducer**(`reducer`): `void`
 
-Defined in: [react/src/hooks/suspense.ts:676](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L676)
+Defined in: [react/src/hooks/suspense.ts:687](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L687)
 
 Invalidates all Suspense cache entries for a given reducer (slice).
 

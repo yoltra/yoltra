@@ -22,7 +22,7 @@ import { useHubConnection } from "./useHubConnection";
  *
  * @internal
  */
-type MetricsData = StoreMetrics["metrics"];
+export type MetricsData = StoreMetrics["metrics"];
 
 /**
  * Options for the {@link useStoreMetrics} hook.
@@ -63,7 +63,7 @@ export interface UseStoreMetricsOptions {
  *
  * @param storeId - The store ID to query, or `null` to disable.
  * @param options - Optional configuration (see {@link UseStoreMetricsOptions}).
- * @returns An object with `metrics` ({@link MetricsData} or `null`),
+ * @returns An object with `metrics` (`MetricsData` or `null`),
  *   `loading`, and `refresh`.
  *
  * @public

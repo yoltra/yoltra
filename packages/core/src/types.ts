@@ -2,6 +2,9 @@
  * @module @yoltra/core
  */
 
+import type { Rejection } from "./store/rejection";
+import type { CallHandle, CallOptions } from "./store/call";
+
 /**
  * A minimal "record of record" constraint for EventMaps.
  *
@@ -111,6 +114,29 @@ export interface Event<
    * Absent entirely unless {@link EmitOptions.meta} was supplied. See {@link EventMeta}.
    */
   readonly meta?: EventMeta;
+  /**
+   * The `id` of the event whose handling caused this one, when there was one.
+   *
+   * @remarks
+   * Absent on a **root** event — one emitted by application code rather than by a middleware,
+   * subscriber or effect reacting to another event. Together with {@link Event.depth} this makes
+   * a cascade legible after the fact: without it, a runaway chain is a pile of unrelated events
+   * with no way to tell which caused which.
+   */
+  readonly parentId?: string;
+  /**
+   * How many events deep in a causal chain this one is. A root event is depth `0`; an event
+   * emitted while handling it is `1`, and so on.
+   *
+   * @remarks
+   * Absent on a root event rather than present as `0`, so an event emitted by application code
+   * stays byte-identical to one built before causality tracking existed — the same treatment
+   * {@link Event.meta} gets, and for the same reason: `Object.keys` and `toStrictEqual` are load
+   * bearing in consumer tests.
+   *
+   * This is the value {@link StoreSpec.maxReduceDepth} bounds.
+   */
+  readonly depth?: number;
 }
 
 /**
@@ -135,6 +161,20 @@ export interface Change<V = any> {
   newValue: V;
   /** Dotted path for fine-grained listeners; e.g., "data.items.0.title" */
   path?: string;
+  /**
+   * The `id` of the event that caused this change.
+   *
+   * @remarks
+   * A change used to be anonymous, so a subscriber that needed to know *why* a value moved had
+   * to mirror the cause into state and store it twice. Absent when the change did not come from
+   * an event — a DevTools time-travel snapshot, for instance — which is itself the signal that
+   * no event caused it.
+   */
+  eventId?: string;
+  /** Channel of the causing event. Absent for the same reason as {@link Change.eventId}. */
+  channel?: string;
+  /** Type of the causing event. Absent for the same reason as {@link Change.eventId}. */
+  type?: string;
 }
 
 /**
@@ -152,6 +192,60 @@ export interface Change<V = any> {
  *
  * @public
  */
+/**
+ * What an `emit` resolves to once its effects have run.
+ *
+ * @remarks
+ * `emit` used to resolve to `void`, so a caller could not tell "the reducer applied my write"
+ * from "the reducer looked at my write and returned the state unchanged". On a single-writer
+ * store that distinction is academic; on a contended one it is a lost update the API could not
+ * report.
+ *
+ * Deliberately does **not** carry the changed paths. Building that list costs a string
+ * concatenation per changed path on every emit, and almost no caller reads it — the same reason
+ * change notifications are built lazily. Instrumentation already provides them to the observers
+ * that do want them.
+ *
+ * @public
+ */
+export interface EmitResult {
+  /**
+   * The event was not vetoed by middleware.
+   *
+   * @remarks
+   * Unchanged in meaning, and deliberately not narrowed to "state changed" — an event-only store
+   * commits every event and writes nothing, by construction.
+   */
+  readonly committed: boolean;
+  /** A reducer actually changed state. */
+  readonly written: boolean;
+  /** Present when a reducer refused the write. See {@link Rejection}. */
+  readonly rejected?: Rejection;
+}
+
+/**
+ * Options for {@link StoreInstance.connect}.
+ *
+ * @public
+ */
+export interface ConnectOptions {
+  /**
+   * Deliver the current value once, immediately, before any change arrives.
+   *
+   * @remarks
+   * A subscription otherwise starts at "from now on", so a subscriber's first render has to read
+   * the path separately — the same path, spelled twice, which is one place for them to drift.
+   *
+   * The synthetic change has `oldValue: undefined` and no `eventId`, `channel` or `type`: no
+   * event caused it, and claiming one would be a lie a subscriber could act on.
+   *
+   * For a wildcard pattern the "current value" of a match set is not a thing, so the slice root
+   * is delivered with `path: ""`. React's hooks do not need this at all — `useSyncExternalStore`
+   * already reads a snapshot on mount — so it is aimed at imperative subscribers.
+   */
+  readonly immediate?: boolean;
+}
+
 /**
  * Per-emit options.
  *
@@ -216,7 +310,7 @@ export type Emit<EM extends EventMapBase> = <
   type: T,
   payload: EM[C][T],
   opts?: EmitOptions,
-) => Promise<void>;
+) => Promise<EmitResult>;
 
 /**
  * Basic unsubscribe handle.
@@ -252,6 +346,15 @@ export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
   nextValues: Record<string, unknown>;
   /** Wall-clock milliseconds spent in the synchronous reduce phase for this event. */
   reduceTimeMs: number;
+  /**
+   * Present when a reducer refused the write, carrying its reason.
+   *
+   * @remarks
+   * Distinct from `committed: false`, which means middleware vetoed the event before any reducer
+   * saw it. This is a reducer having considered the write and declined it — the two look
+   * identical in state and are entirely different in cause.
+   */
+  rejected?: Rejection;
 }
 
 /**
@@ -464,7 +567,109 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * @param slice - Name of the slice whose reducer threw.
    */
   onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
+
+  /**
+   * Maximum causal depth of an event chain before the store refuses to extend it.
+   *
+   * @remarks
+   * An event emitted while handling another is one deeper than its cause. Two reducers wired to
+   * each other, or an effect that emits the event its own reducer answers, climb this without
+   * bound — and the reduce queue drains synchronously, so in a browser that is a frozen tab with
+   * no error and no stack, and on a server a pinned core.
+   *
+   * **On by default**, because the whole point is that the failure mode does not require
+   * configuration to avoid. The default is far past any legitimate chain: an event caused by an
+   * event caused by an event is normal, sixty-four deep is a bug. Raise it if an application
+   * genuinely nests deeper, or set `Infinity` to opt out entirely and own the consequences.
+   *
+   * Breaching does not throw — see {@link StoreSpec.onCascade}.
+   *
+   * @default 64
+   */
+  maxReduceDepth?: number;
+
+  /**
+   * Maximum number of events one synchronous drain will process before refusing more.
+   *
+   * @remarks
+   * A drain processes one root event plus every event emitted *while it runs* — so this counts a
+   * single causal burst, not application traffic. A plain loop is unaffected: `emit` drains to
+   * completion before it returns, so `for (const row of rows) store.emit(…)` is a thousand drains
+   * of one event each, never one drain of a thousand.
+   *
+   * **Off by default** because a wide burst is not by itself a bug. One `sync` event whose
+   * subscriber fans out to five hundred `upsert`s is a legitimate shape, and a default low enough
+   * to catch a runaway would refuse it. Depth is what separates a cascade from a fan-out — a
+   * fan-out is wide and shallow, a cascade is narrow and deep — which is why
+   * {@link StoreSpec.maxReduceDepth} carries the default and this does not.
+   *
+   * Set it when a store's bursts are known to be bounded and an unexpectedly wide one is itself
+   * the symptom worth catching.
+   *
+   * @default undefined (no limit)
+   */
+  maxTransitionsPerDrain?: number;
+
+  /**
+   * Called when a ceiling is breached, instead of throwing.
+   *
+   * @remarks
+   * The offending emit is refused and the chain stops there; everything already committed
+   * stands. It does not throw, because the throw would surface in whichever frame happened to be
+   * emitting — a subscriber, an effect, a middleware — which is the same species of
+   * hard-to-attribute failure the ceiling exists to prevent. A cascade is a wiring bug, and this
+   * is where the wiring gets named.
+   *
+   * @param info - Which ceiling, the event that would have extended the chain, and its causal
+   * chain of ids, newest last.
+   */
+  onCascade?: (info: CascadeInfo<EM>) => void;
+
+  /**
+   * Called when a reducer refuses a write by returning {@link Rejected}.
+   *
+   * @remarks
+   * The caller learns of its own refusal from the `emit` result; this is for everyone else —
+   * logging, metrics, alerting on a rate of rejected writes. Shaped as a callback rather than a
+   * subscription for the same reason {@link StoreSpec.onReducerError} is: it is a rare global
+   * signal, not something several independent parties register and unregister for.
+   *
+   * A refusal is a normal outcome, not an error. It means a reducer considered the write and
+   * declined it — a stale compare-and-swap, an unmet precondition — and the event is rejected
+   * whole, so no slice writes.
+   *
+   * @param rejection - The refusal and its reason.
+   * @param event - The event that was refused.
+   * @param slice - Name of the slice whose reducer refused.
+   */
+  onRejected?: (rejection: Rejection, event: EventUnion<EM>, slice: string) => void;
 };
+
+/**
+ * What {@link StoreSpec.onCascade} receives when a ceiling is breached.
+ *
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export interface CascadeInfo<EM extends EventMapBase = EventMapBase> {
+  /** Which ceiling was hit. */
+  readonly limit: "maxReduceDepth" | "maxTransitionsPerDrain";
+  /** The configured value that was exceeded. */
+  readonly limitValue: number;
+  /** The event that was refused — the one that would have extended the chain. */
+  readonly event: EventUnion<EM>;
+  /** Causal depth the refused event would have had. */
+  readonly depth: number;
+  /**
+   * Ids from the root of the chain to the refused event's parent, newest last.
+   *
+   * @remarks
+   * Bounded to the most recent entries: a cascade is long by definition, and the useful part is
+   * the cycle at the end rather than the thousand identical hops before it.
+   */
+  readonly chain: readonly string[];
+}
 
 /**
  * Public Store surface.
@@ -512,7 +717,26 @@ export interface StoreInstance<
    * @param spec - `{ reducer, property }` where `property` is a single dotted path string.
    * @param handler - Handler receiving a {@link Change} with `{ oldValue, newValue, path }`.
    */
-  connect(spec: { reducer: R; property: string }, handler: (change: Change) => void): Unsubscribe;
+  connect(
+    spec: { reducer: R; property: string },
+    handler: (change: Change) => void,
+    options?: ConnectOptions,
+  ): Unsubscribe;
+
+  /**
+   * Sends a request and waits for the reply, correlating the two automatically.
+   *
+   * @remarks
+   * Awaitable for the terminal reply, async-iterable for progress. See the implementation on
+   * {@link Store.call} for the full contract — correlation, backpressure, timeouts, and why it
+   * is a local primitive rather than something that federates.
+   */
+  call<C extends keyof EM & string, T extends keyof EM[C] & string>(
+    channel: C,
+    type: T,
+    payload: EM[C][T],
+    opts: CallOptions<EM>,
+  ): CallHandle<EventUnion<EM>, EventUnion<EM>>;
 
   /**
    * Convenience helper to register an **effect** filtered by a single `(channel, type)` pair.
@@ -714,7 +938,8 @@ export interface StoreInstance<
  * Use `when` for event targeting (preferred). The `events` property is
  * kept for backward compatibility but `when` is recommended for new code.
  *
- * @example Using `when` (recommended)
+ * @example
+ * Using `when` (recommended)
  * ```ts
  * const counterSpec: ReducerSpec<{ value: number }, MyEM> = {
  *   state: { value: 0 },
@@ -763,7 +988,7 @@ export interface ReducerSpec<S = any, EM extends EventMapBase = EventMapBase> {
 export type ReducerFunction<S = any, EM extends EventMapBase = EventMapBase> = (
   state: S,
   event: EventUnion<EM>,
-) => S;
+) => S | Rejection;
 
 /**
  * Effect specification (stateless async event consumer).
@@ -777,7 +1002,8 @@ export type ReducerFunction<S = any, EM extends EventMapBase = EventMapBase> = (
  * - Effects are keyed by event for O(1) lookup (no scanning).
  * - Use `when` for event targeting (preferred over `events`).
  *
- * @example Using `when` (recommended)
+ * @example
+ * Using `when` (recommended)
  * ```ts
  * const logEffect: EffectSpec<AppState, MyEM> = {
  *   when: { keys: eventKeys<MyEM>()([['ui', 'increment']]) },
@@ -1295,11 +1521,40 @@ export type DeepReadonly<T> = T extends (...args: never[]) => unknown
  *
  * - `'committed'`: Events that passed middleware and reached reducers (default)
  * - `'uncommitted'`: Events rejected by middleware
+ * - `'written'`: Events that actually changed state
  * - `'all'`: Both committed and uncommitted events
+ *
+ * @remarks
+ * `'committed'` means **not vetoed**, and always has. It fires for an event that passed
+ * middleware whether or not any reducer wrote anything — including every event in a store with
+ * no reducers at all, which is the shape a notification or analytics bus takes. Toasts,
+ * animations and tracking depend on that, so it is not narrowed.
+ *
+ * `'written'` is the stricter fact, added rather than substituted: state changed. It fires
+ * **after** the commit, so a subscriber reading `getState()` from it sees the new value — which
+ * is what people tend to assume `'committed'` does.
+ *
+ * `'all'` deliberately stays `committed | uncommitted`. Folding `'written'` into it would hand
+ * every existing `'all'` subscriber a second notification per written event and quietly double
+ * their counts.
  *
  * @public
  */
-export type EventPhase = "committed" | "uncommitted" | "all";
+export type EventPhase = "committed" | "uncommitted" | "written" | "all";
+
+/**
+ * The phases a handler is actually *told about*.
+ *
+ * @remarks
+ * `'all'` is a subscription selector, not an outcome — nothing is ever delivered "in the all
+ * phase". Naming the difference keeps the two from being conflated in a handler signature, which
+ * is where they were previously spelled out by hand and drifted: adding `'written'` to
+ * {@link EventPhase} left three copies in `@yoltra/react` still claiming a handler could only
+ * ever see two phases, and the build failed on the mismatch.
+ *
+ * @public
+ */
+export type NotifiedPhase = Exclude<EventPhase, "all">;
 
 /**
  * Handler function for event subscriptions (receives full event union).
@@ -1333,7 +1588,7 @@ export type EventSubscriptionHandler<S = any, EM extends EventMapBase = EventMap
   event: EventUnion<EM>,
   getState: () => S,
   emit: Emit<EM>,
-  phase: "committed" | "uncommitted",
+  phase: NotifiedPhase,
 ) => void | Promise<void>;
 
 /**
@@ -1369,5 +1624,5 @@ export type NarrowedEventHandler<
   event: Event<EM, C, T>,
   getState: () => S,
   emit: Emit<EM>,
-  phase: "committed" | "uncommitted",
+  phase: NotifiedPhase,
 ) => void | Promise<void>;

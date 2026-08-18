@@ -54,7 +54,7 @@ export interface DevtoolsWrapperConfig {
    *
    * @remarks
    * When `true`, the hub may send `EMIT_TO_STORE` commands which call
-   * {@link @yoltra/core#StoreInstance.emit | store.emit()} on behalf of a
+   * {@link @yoltra/core!StoreInstance.emit | store.emit()} on behalf of a
    * connected extension.
    *
    * @defaultValue `false`
@@ -122,7 +122,7 @@ export interface DevtoolsWrapperConfig {
    *
    * @remarks
    * Part of the protocol v1 design; actual enforcement is deferred.
-   * See {@link @yoltra/devtools-protocol#SamplingConfig} for shape details.
+   * See {@link @yoltra/devtools-protocol!SamplingConfig} for shape details.
    */
   sampling?: SamplingConfig;
   /** Whether to automatically reconnect after an unexpected disconnect. @defaultValue `true` */

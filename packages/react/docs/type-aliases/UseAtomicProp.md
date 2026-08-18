@@ -10,7 +10,7 @@
 
 > **UseAtomicProp**\<`R`, `S`\> = \{\<`R1`, `V`\>(`reducer`, `accessor`, `isEqual?`): `V`; \<`R1`, `P`\>(`spec`): [`PathValue`](PathValue.md)\<`S`\[`R1`\], `P`\>; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`, `P`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \<`R1`\>(`spec`): `unknown`; \<`R1`, `T`\>(`spec`, `map`, `isEqual?`): `T`; \}
 
-Defined in: [react/src/hooks/createHooks.ts:52](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L52)
+Defined in: [react/src/hooks/createHooks.ts:53](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L53)
 
 Call signature for the typed `useAtomicProp` hook returned by [createHooks](../functions/createHooks.md).
 

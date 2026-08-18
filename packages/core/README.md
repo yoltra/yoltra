@@ -36,7 +36,7 @@ emit(channel, type, payload)
   │
   │  ══ SYNCHRONOUS reduce phase — runs before emit() returns ══
   ├─ 1. Middleware ─── Synchronous pre-reducer hooks (return false to reject → "uncommitted" event)
-  ├─ 2. Reducers ─── Synchronous state updates, fine-grained path change detection
+  ├─ 2. Reducers ─── Every matching slice staged, then all committed under one root
   ├─ 3. Event subscribers ─── Committed/uncommitted event notifications
   ├─ 4. Coarse subscribers ─── External store listeners (useSyncExternalStore, etc.), if state changed
   │
@@ -316,7 +316,17 @@ store.onEvent(
   "uncommitted",
 );
 
-// All events — both committed and uncommitted
+// Written events — state actually changed. Fires after the commit, so getState() is current.
+store.onEvent(
+  "plan",
+  "patch",
+  (event, getState) => {
+    console.log("applied:", getState().plan);
+  },
+  "written",
+);
+
+// All events — both committed and uncommitted (not written; see below)
 store.onEvent(
   "ui",
   "action",
@@ -326,6 +336,185 @@ store.onEvent(
   "all",
 );
 ```
+
+`committed` means **not vetoed**, and always has: it fires for every event middleware let through,
+whether or not a reducer wrote anything — including every event in a store with no reducers at
+all. `written` is the stricter fact, added rather than substituted, so toasts and analytics keep
+working unchanged. `all` stays `committed | uncommitted`; folding `written` in would hand existing
+subscribers a second notification per event.
+
+---
+
+## Commits are atomic across slices
+
+An event that touches several slices writes all of them, then notifies. Nothing observes a
+half-applied event — a subscriber to one slice reading `getState()` sees every other slice of the
+same event already applied.
+
+That matters most where a change is used as a signal to re-read, which is what the React hooks do.
+
+---
+
+## Refusing a write
+
+A reducer returns `Rejected(reason)` instead of state to decline. **The whole event is rejected**:
+no slice writes, no change notification fires, and the caller is told why.
+
+```typescript
+import { createStore, Rejected } from "@yoltra/core";
+
+const store = createStore({
+  name: "plan",
+  reducer: {
+    plan: {
+      state: { steps: [], version: 1 },
+      when: { keys: [["plan", "patch"]] },
+      reducer: (state, event) =>
+        event.payload.expectedVersion === state.version
+          ? { ...state, steps: event.payload.steps, version: state.version + 1 }
+          : Rejected(`stale write: expected v${event.payload.expectedVersion}, have v${state.version}`),
+    },
+  },
+  onRejected: (rejection, event, slice) => metrics.increment("write.refused", { slice }),
+});
+
+const result = await store.emit("plan", "patch", { steps, expectedVersion: 1 });
+
+result.committed; // true — middleware allowed it
+result.written; // false — but nothing was written
+result.rejected?.reason; // "stale write: expected v1, have v3"
+```
+
+Refusing is **not** the same as returning the state unchanged, which is indistinguishable from
+"this event did not concern me". It is also not the same as throwing: a reducer that throws has a
+bug, so its slice is isolated and every other slice still commits, while a reducer that refuses
+has made a decision and the whole event yields to it.
+
+`emit` resolves to an `EmitResult` once effects have run:
+
+| | |
+|---|---|
+| `committed` | middleware did not veto |
+| `written` | a reducer actually changed state |
+| `rejected` | present when a reducer refused, carrying `reason` |
+
+---
+
+## Request and reply — `store.call()`
+
+Every event-bus consumer eventually writes request/reply by hand: mint an id, subscribe, match,
+time out, unsubscribe. It is about eighty lines and it has the same two bugs every time — the
+subscription outlives the call, and a responder that forgets to echo the id produces a timeout
+with nothing to point at.
+
+```typescript
+const res = await store.call("rpc", "ask", { q: "who?" }, { reply: ["rpc", "answer"] });
+res.payload.text;
+```
+
+The responder does nothing special. It replies through the `emit` it was handed, and the store's
+causal stamp correlates the two — **there is no id to mint, echo, or forget**:
+
+```typescript
+store.registerEffect({
+  when: { keys: [["rpc", "ask"]] },
+  effect: async (event, _get, emit) => {
+    await emit("rpc", "answer", await lookup(event.payload.q));
+  },
+});
+```
+
+### A call resolves to the event, not the payload
+
+Because a caller often cannot know *which* reply it will get. `reply` names the **terminal**
+types, and the event carries the discriminant:
+
+```typescript
+const res = await store.call("rpc", "ask", { q }, { reply: ["rpc", ["answer", "error"]] });
+
+switch (res.type) {
+  case "answer": return res.payload.text;
+  case "error": throw new Error(res.payload.reason);
+}
+```
+
+### Progress streams, and the producer waits
+
+Any correlated event that is **not** terminal is progress. Iterate the call to consume it:
+
+```typescript
+const call = store.call("job", "start", { id }, {
+  reply: ["job", "done"],
+  highWaterMark: 4,
+});
+
+for await (const step of call) await render(step.payload);
+const { payload } = await call;
+```
+
+The backpressure is real, not a buffer with a limit. `emit` resolves only once its effects have
+run, and the collector is an effect that does not return until the consumer has taken the item —
+so a responder writing `await emit("job", "tick", chunk)` is **paced by the reader**:
+
+```typescript
+effect: async (_event, _get, emit) => {
+  for (const chunk of chunks) {
+    await emit("job", "tick", chunk); // waits here while the consumer is behind
+  }
+  await emit("job", "done", { ok: true });
+}
+```
+
+Backpressure engages **once you begin iterating**. A call that is only awaited never pulls, so
+blocking its producer would deadlock the call itself — progress nobody reads would stop the
+terminal event from ever being sent. Un-iterated progress therefore buffers to `highWaterMark`
+and is then counted on `call.dropped` rather than blocking.
+
+### Giving up
+
+| | |
+|---|---|
+| `timeoutMs` | **Idle**, not total — every correlated event resets it, progress included. A job that streams for two minutes will not fail a thirty-second call. Default 30s. |
+| `signal` | An `AbortSignal`, for a real deadline or a cancelled action. |
+| `call.cancel(reason)` | Stops listening and settles. Safe to call twice. |
+
+However a call ends — resolved, timed out, aborted — the subscription is removed and any producer
+parked on backpressure is released. A wedged responder is worse than the unbounded buffer this
+replaced.
+
+## Reading a value as you subscribe
+
+`connect` starts at "from now on", so a subscriber's first read had to repeat the path elsewhere —
+the same path in two places, free to drift:
+
+```typescript
+store.connect({ reducer: "todos", property: "items.0.title" }, render, { immediate: true });
+```
+
+The synthetic first change has `oldValue: undefined` and **no provenance**, because no event
+caused it. For a wildcard pattern, which has no single current value, the slice root is delivered
+with `path: ""`.
+
+React does not need this: `useSyncExternalStore` already reads a snapshot on mount.
+
+---
+
+## Where a change came from
+
+A `Change` names the event that caused it, so a subscriber no longer has to mirror the cause into
+state and keep it in two places:
+
+```typescript
+store.connect({ reducer: "orders", property: "status" }, (change) => {
+  audit.record(change.path, change.newValue, {
+    causedBy: change.eventId,
+    via: `${change.channel}/${change.type}`,
+  });
+});
+```
+
+Provenance is **absent** when no event caused the change — a DevTools time-travel jump, or the
+`immediate` delivery above. Absence is the signal, rather than a fabricated id.
 
 ---
 
@@ -347,6 +536,57 @@ const store = createStore({
 // Identity-based: dedupe by an explicit key — e.g. a React Strict Mode double-invoke in an effect.
 await store.emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page}` });
 ```
+
+---
+
+## Cascade protection (on by default)
+
+Two consumers wired into each other — a subscriber that emits what its own reducer answers, or
+two slices that answer each other's events — produce an event chain with no end. The reduce queue
+drains **synchronously**, so that is not a slow program: it is a frozen tab, or a pinned core,
+with no error and no stack to point at.
+
+Every event therefore carries its causal position, and the store refuses to extend a chain past a
+ceiling:
+
+```typescript
+const store = createStore({
+  name: "app",
+  reducer: { ... },
+
+  // Defaults to 64. Bounded whether or not you configure it — a failure mode this bad
+  // should not require configuration to avoid. Set Infinity to opt out and own it.
+  maxReduceDepth: 64,
+
+  onCascade: ({ event, depth, chain }) => {
+    report(`cascade at ${event.channel}/${event.type}, depth ${depth}`, chain);
+  },
+});
+```
+
+An event emitted while another is being handled is one deeper than its cause, and carries
+`parentId` and `depth` so the cycle is legible after the fact:
+
+```typescript
+store.onEvent("plan", "patch", (event) => {
+  event.depth;     // 0 for an event emitted by application code
+  event.parentId;  // undefined at depth 0; the causing event's id below it
+});
+```
+
+Both fields are **absent** on a root event rather than present as `0`/`undefined`, so events your
+application emits stay byte-identical to before this existed.
+
+Breaching does not throw. The offending emit is refused, everything already committed stands, and
+`onCascade` (plus a console error) names it — a throw would surface in whichever subscriber or
+effect happened to be emitting, which is the same unattributable failure the ceiling exists to
+prevent.
+
+**A wide burst is not a cascade.** One event whose subscriber fans out to five hundred siblings
+is a legitimate shape; depth is what separates it from a cycle, and a plain loop of `store.emit`
+never accumulates depth at all — each call drains to completion before the next, so every one is
+a root. `maxTransitionsPerDrain` bounds burst *width* and is off by default for that reason; the
+event that starts a drain is never refused by it.
 
 ---
 
@@ -575,7 +815,7 @@ individual fields edited is better off as an array today.
 
 | Metric             | Value                                     |
 | ------------------ | ----------------------------------------- |
-| **Bundle size**    | 6.7 KB for the store (minified + gzipped) |
+| **Bundle size**    | 9.2 KB for the store (minified + gzipped) |
 | **Tree-shakeable** | Yes (ES modules)                          |
 | **Dependencies**   | Zero                                      |
 | **TypeScript**     | Full type definitions included            |
@@ -586,16 +826,21 @@ would — tree-shaken, minified, gzipped — and fails when it exceeds the budge
 
 The number that matters is what you import, not what the package exports:
 
-| Import                              | Size   |
-| ----------------------------------- | ------ |
-| `{ createStore }`                   | 6.7 KB |
-| `{ createStore, hydrate, persist }` | 8.2 KB |
-| everything                          | 9.5 KB |
+| Import                              | Size    | Budget |
+| ----------------------------------- | ------- | ------ |
+| `{ createStore }`                   | 9.2 KB  | 14 KB  |
+| `{ createStore, hydrate, persist }` | 10.7 KB | 16 KB  |
+| everything                          | 12.1 KB | 18 KB  |
 
-Persistence and the entity adapter cost nothing to anyone who does not import them — the
-first row has not moved as either was added, which is the tree-shaking claim being checked
-rather than repeated. The last row is a growth tripwire; `import * as all` is not something
-anybody writes.
+The **gap between rows** is the tree-shaking claim, and it is what to watch: persistence adds
+1.5 KB to the people who import it and nothing to anyone else, and the whole barrel is 2.9 KB
+past the store. The last row is a growth tripwire; `import * as all` is not something anybody
+writes.
+
+The first row moves only when the store itself grows, and it has: bounding cascades, staging
+commits so they apply atomically, and `store.call()` are all store machinery rather than
+opt-in modules, so they are paid by everyone. That is the honest trade for a default that
+stops a runaway from hanging the tab.
 
 ---
 

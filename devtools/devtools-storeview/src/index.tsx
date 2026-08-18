@@ -1,7 +1,7 @@
 /**
  * @module @yoltra/devtools-storeview
  *
- * React DOM UI for Quo.js DevTools.
+ * React DOM UI for Yoltra DevTools.
  * Used by both the browser extension panel and the VSCode webview.
  * Provides a mountable React app and individual panel components.
  */
@@ -41,18 +41,30 @@ export type { DevtoolsAppConfig } from "./App";
 
 // Layout
 export { BottomBar } from "./components/layout/BottomBar";
+export type { BottomBarProps } from "./components/layout/BottomBar";
 export { TopBar } from "./components/layout/TopBar";
+export type { TopBarProps } from "./components/layout/TopBar";
 
 // Panels
 export { EventEmitterPanel } from "./components/panels/EventEmitter";
+export type { EventEmitterPanelProps } from "./components/panels/EventEmitter";
 export { EventTimeline } from "./components/panels/EventTimeline";
+export type { EventTimelineProps } from "./components/panels/EventTimeline";
 export { Inspector } from "./components/panels/Inspector";
+export type { InspectorProps } from "./components/panels/Inspector";
 export { MetricsDashboard } from "./components/panels/MetricsDashboard";
+export type { MetricsDashboardProps, MetricsData, SubscriptionData } from "./components/panels/MetricsDashboard";
 export { StateTreeExplorer } from "./components/panels/StateTreeExplorer";
+export type { StateTreeExplorerProps } from "./components/panels/StateTreeExplorer";
 export { SubscriptionsPanel } from "./components/panels/SubscriptionsPanel";
+export type { SubscriptionsPanelProps } from "./components/panels/SubscriptionsPanel";
 export { TimeTravelPanel } from "./components/panels/TimeTravelPanel";
+export type { TimeTravelPanelProps } from "./components/panels/TimeTravelPanel";
 
 // Shared
 export { ConnectionDot } from "./components/shared/ConnectionDot";
+export type { ConnectionDotProps } from "./components/shared/ConnectionDot";
 export { FilterBar } from "./components/shared/FilterBar";
+export type { FilterBarProps } from "./components/shared/FilterBar";
 export { JsonTree } from "./components/shared/JsonTree";
+export type { JsonTreeProps } from "./components/shared/JsonTree";

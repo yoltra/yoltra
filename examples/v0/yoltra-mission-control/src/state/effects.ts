@@ -38,3 +38,58 @@ export const boostEffect: EffectSpec<DeepReadonly<AppState>, AppEM> = {
     await emit("command", "boosted", { id: event.payload.id });
   },
 };
+
+/**
+ * The responder half of a `store.call()`.
+ *
+ * @remarks
+ * An ordinary effect — which is the point. It answers by emitting through the `emit` it was
+ * handed, so the store's causal stamp correlates the reply to the request and there is no
+ * correlation id anywhere in this file.
+ *
+ * Each `await emit(...)` for a progress step is genuinely paced by whoever is iterating the
+ * call: `emit` resolves only once its effects have run, and the call's collector is an effect
+ * that does not return until the consumer has taken the step. Slow the UI down and this loop
+ * slows with it, rather than filling a buffer.
+ */
+export const diagnosticsEffect: EffectSpec<DeepReadonly<AppState>, AppEM> = {
+  when: { keys: eventKeys<AppEM>()([["diagnostics", "scan"]]) },
+  meta: {
+    type: "effect",
+    name: "runDiagnostics",
+    description: "Streams one scanStep per subsystem, then a terminal scanReport",
+  },
+  effect: async (event, getState, emit) => {
+    if (event.channel !== "diagnostics" || event.type !== "scan") return;
+
+    const { id } = event.payload;
+    const sat = getState().fleet.satellites.find((s) => s.id === id);
+    const subsystems = ["power", "antenna", "thermal", "attitude", "storage"] as const;
+    const faults: string[] = [];
+
+    for (const [index, subsystem] of subsystems.entries()) {
+      await delay(220);
+
+      // Faults are derived from real telemetry so the report is not theatre.
+      const ok =
+        subsystem === "power"
+          ? (sat?.battery ?? 100) > 25
+          : subsystem === "antenna"
+            ? (sat?.signal ?? 100) > 30
+            : subsystem === "storage"
+              ? (sat?.dataQueued ?? 0) < 80
+              : true;
+
+      if (!ok) faults.push(subsystem);
+
+      await emit("diagnostics", "scanStep", {
+        subsystem,
+        ok,
+        index: index + 1,
+        of: subsystems.length,
+      });
+    }
+
+    await emit("diagnostics", "scanReport", { id, faults, checked: subsystems.length });
+  },
+};

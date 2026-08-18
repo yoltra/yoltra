@@ -8,7 +8,7 @@
 
 # Interface: Event\<EM, C, T, P\>
 
-Defined in: [types.ts:98](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L98)
+Defined in: [types.ts:101](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L101)
 
 A single event object: `{ channel, type, payload, id }`, plus optional `meta`.
 
@@ -59,7 +59,27 @@ Payload type (defaults to `EM[C][T]`).
 
 > **channel**: `C`
 
-Defined in: [types.ts:104](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L104)
+Defined in: [types.ts:107](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L107)
+
+***
+
+### depth?
+
+> `readonly` `optional` **depth**: `number`
+
+Defined in: [types.ts:139](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L139)
+
+How many events deep in a causal chain this one is. A root event is depth `0`; an event
+emitted while handling it is `1`, and so on.
+
+#### Remarks
+
+Absent on a root event rather than present as `0`, so an event emitted by application code
+stays byte-identical to one built before causality tracking existed — the same treatment
+[Event.meta](#meta) gets, and for the same reason: `Object.keys` and `toStrictEqual` are load
+bearing in consumer tests.
+
+This is the value [StoreSpec.maxReduceDepth](../type-aliases/StoreSpec.md#maxreducedepth) bounds.
 
 ***
 
@@ -67,7 +87,7 @@ Defined in: [types.ts:104](https://github.com/yoltra/yoltra/blob/main/packages/c
 
 > **id**: `string`
 
-Defined in: [types.ts:108](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L108)
+Defined in: [types.ts:111](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L111)
 
 Unique identifier for deduplication and devtools tracking (automatically added by store)
 
@@ -77,10 +97,27 @@ Unique identifier for deduplication and devtools tracking (automatically added b
 
 > `readonly` `optional` **meta**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
 
-Defined in: [types.ts:113](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L113)
+Defined in: [types.ts:116](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L116)
 
 Optional caller-supplied metadata, carried through the pipeline untouched.
 Absent entirely unless [EmitOptions.meta](EmitOptions.md#meta) was supplied. See [EventMeta](../type-aliases/EventMeta.md).
+
+***
+
+### parentId?
+
+> `readonly` `optional` **parentId**: `string`
+
+Defined in: [types.ts:126](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L126)
+
+The `id` of the event whose handling caused this one, when there was one.
+
+#### Remarks
+
+Absent on a **root** event — one emitted by application code rather than by a middleware,
+subscriber or effect reacting to another event. Together with [Event.depth](#depth) this makes
+a cascade legible after the fact: without it, a runaway chain is a pile of unrelated events
+with no way to tell which caused which.
 
 ***
 
@@ -88,7 +125,7 @@ Absent entirely unless [EmitOptions.meta](EmitOptions.md#meta) was supplied. See
 
 > **payload**: `P`
 
-Defined in: [types.ts:106](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L106)
+Defined in: [types.ts:109](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L109)
 
 ***
 
@@ -96,4 +133,4 @@ Defined in: [types.ts:106](https://github.com/yoltra/yoltra/blob/main/packages/c
 
 > **type**: `T`
 
-Defined in: [types.ts:105](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L105)
+Defined in: [types.ts:108](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L108)

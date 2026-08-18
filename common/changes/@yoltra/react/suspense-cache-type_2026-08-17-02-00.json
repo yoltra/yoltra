@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "Exports the `SuspenseCache` type. `suspenseCache` publishes an instance of it, so the type was reachable through a published value while being marked internal — a shape consumers could hold but not name. The class itself is still not constructible from outside; only its type is exported, and its internals stay private.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

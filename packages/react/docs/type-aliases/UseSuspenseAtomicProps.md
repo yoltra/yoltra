@@ -10,7 +10,7 @@
 
 > **UseSuspenseAtomicProps**\<`R`, `S`\> = \{\<`R1`, `T`\>(`specs`, `options`): `T`; \<`R1`, `T`\>(`specs`, `options`): `T`; \}
 
-Defined in: [react/src/hooks/suspense.ts:726](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L726)
+Defined in: [react/src/hooks/suspense.ts:737](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L737)
 
 Call signature for the typed `useSuspenseAtomicProps` returned by `createHooks`.
 

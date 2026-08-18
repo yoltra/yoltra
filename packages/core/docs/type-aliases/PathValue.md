@@ -10,7 +10,7 @@
 
 > **PathValue**\<`T`, `P`\> = `P` *extends* `""` ? `T` : `P` *extends* `` `${infer K}.${infer Rest}` `` ? `K` *extends* keyof `T` ? `PathValue`\<`T`\[`K`\], `Rest`\> : `K` *extends* `` `${number}` `` ? `T` *extends* readonly infer E[] ? `PathValue`\<`E`, `Rest`\> : `never` : `never` : `P` *extends* keyof `T` ? `T`\[`P`\] : `P` *extends* `` `${number}` `` ? `T` *extends* readonly infer E[] ? `E` : `never` : `never`
 
-Defined in: [types.ts:1110](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1110)
+Defined in: [types.ts:1336](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1336)
 
 Resolves the value type at a dotted path `P` inside object/array `T`.
 Supports numeric segments for array indexing (e.g., `"items.0.title"`).

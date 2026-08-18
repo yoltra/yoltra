@@ -16,6 +16,7 @@ export {
   invalidateAtomicPropsByReducer,
   suspenseCache,
 } from "./hooks/suspense";
+export type { SuspenseCache } from "./hooks/suspense";
 
 export { createHooks } from "./hooks/createHooks";
 export type { UseAtomicProp, UseAtomicProps, UseEvent, YoltraHooks } from "./hooks/createHooks";

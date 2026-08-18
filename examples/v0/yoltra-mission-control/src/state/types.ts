@@ -66,4 +66,18 @@ export type AppEM = {
     tick: null;
     alert: { message: string };
   };
+  /**
+   * A request/reply channel, used with `store.call()`.
+   *
+   * @remarks
+   * `scan` is the request. `scanStep` is progress — one per subsystem checked — and `scanReport`
+   * is the terminal reply that ends the call. Nothing here carries a correlation id: the store
+   * stamps `parentId` on whatever an effect emits, so a reply is correlated by having been
+   * *caused by* the request.
+   */
+  diagnostics: {
+    scan: { id: string };
+    scanStep: { subsystem: string; ok: boolean; index: number; of: number };
+    scanReport: { id: string; faults: string[]; checked: number };
+  };
 }

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "Uses the NotifiedPhase type exported by @yoltra/core rather than restating the set of phases a handler can be told about.\n\nThree handler signatures here spelled out \"committed\" | \"uncommitted\" by hand. When core gained a \"written\" phase those copies were left claiming a handler could only ever see two, and the build failed on the mismatch. NotifiedPhase is EventPhase minus \"all\" - which selects a subscription but is never delivered - so the set stays core's to define and a phase added later cannot leave stale copies behind.\n\nConsumers who annotated a phase parameter with the literal union will hit the same compile error and want the same fix.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

@@ -8,9 +8,9 @@
 
 # Type Alias: ReducerFunction()\<S, EM\>
 
-> **ReducerFunction**\<`S`, `EM`\> = (`state`, `event`) => `S`
+> **ReducerFunction**\<`S`, `EM`\> = (`state`, `event`) => `S` \| [`Rejection`](../interfaces/Rejection.md)
 
-Defined in: [types.ts:763](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L763)
+Defined in: [types.ts:988](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L988)
 
 Pure reducer function (stateful event consumer).
 
@@ -40,4 +40,4 @@ Event map.
 
 ## Returns
 
-`S`
+`S` \| [`Rejection`](../interfaces/Rejection.md)

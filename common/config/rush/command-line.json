@@ -71,6 +71,24 @@
       "ignoreDependencyOrder": true,
       "ignoreMissingScript": true,
       "allowWarningsInSuccessfulBuild": false
+    },
+
+    // ------------------------------------------------------------------
+    // rush docs
+    // Regenerates the committed API reference: TypeDoc to markdown, then the logo stamp.
+    // Requires a build first, since TypeDoc resolves types across package boundaries.
+    // The output is committed, so CI regenerates and fails on any difference — see
+    // tools/repo-tools/bin/check-docs-current.mjs for why that check exists.
+    // ------------------------------------------------------------------
+    {
+      "commandKind": "bulk",
+      "name": "docs",
+      "summary": "Regenerate the API reference across all packages",
+      "description": "Invokes the \"docs\" script in every project that defines one. The generated markdown is committed, which gives it the authority of a reviewed file and none of the guarantees of a build artefact — so it is regenerated and diffed in CI rather than trusted.",
+      "enableParallelism": true,
+      "ignoreDependencyOrder": false,
+      "ignoreMissingScript": true,
+      "allowWarningsInSuccessfulBuild": false
     }
   ],
 

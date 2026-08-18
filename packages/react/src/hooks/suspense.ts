@@ -101,7 +101,16 @@ function computeErrorExpiry(errorTtlMs: number | null | undefined): number | nul
  */
 const MAX_ENTRIES = 2000;
 
-/** @internal */
+/**
+ * Backing store for the `useSuspense*` hooks.
+ *
+ * @remarks
+ * Documented because {@link suspenseCache} exports an instance of it: a type reachable
+ * through a published value is part of the surface whether or not it was meant to be.
+ * Its internals stay private; what is documented is what a consumer can actually call.
+ *
+ * @public
+ */
 class SuspenseCache {
   private store = new Map<CacheKey, CacheEntry<any>>();
 
@@ -251,6 +260,8 @@ class SuspenseCache {
  *
  * @public
  */
+export type { SuspenseCache };
+
 export const suspenseCache = new SuspenseCache();
 
 /**
@@ -302,7 +313,7 @@ function buildKey(reducer: string, props: string[] | string, extraKey?: string):
 }
 
 /**
- * Options for {@link useSuspenseAtomicProp}.
+ * Options for `useSuspenseAtomicProp`.
  *
  * @typeParam T - The resolved value type after loading.
  * @typeParam S - Store state record.
@@ -466,7 +477,7 @@ function useSuspenseAtomicPropImpl<
 }
 
 /**
- * Options for {@link useSuspenseAtomicProps}.
+ * Options for `useSuspenseAtomicProps`.
  *
  * @typeParam T - The resolved value type after loading.
  * @typeParam S - Store state record.
@@ -695,7 +706,7 @@ export function clearSuspenseCache() {
 /**
  * Call signature for the typed `useSuspenseAtomicProp` returned by `createHooks`.
  *
- * Identical in behaviour to the package-level {@link useSuspenseAtomicProp}; the reducer union
+ * Identical in behaviour to the package-level `useSuspenseAtomicProp`; the reducer union
  * and state shape are fixed by the store the hooks were created for, so neither has to be
  * supplied at the call site.
  *

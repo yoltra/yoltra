@@ -29,10 +29,10 @@ const yoltraDistAliases = {
   "@yoltra/ds/client": fromHere("../../../packages/ds/dist/client.mjs"),
   "@yoltra/ds": fromHere("../../../packages/ds/dist/index.mjs"),
   "@yoltra/devtools-browser-agent": fromHere(
-    "../../../devtools/devtools-browser-agent/dist/devtools-browser-agent.esm.js",
+    "../../../devtools/devtools-browser-agent/dist/devtools-browser-agent.mjs",
   ),
   "@yoltra/devtools-protocol": fromHere(
-    "../../../devtools/devtools-protocol/dist/devtools-protocol.esm.js",
+    "../../../devtools/devtools-protocol/dist/devtools-protocol.mjs",
   ),
 };
 

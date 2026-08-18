@@ -8,7 +8,7 @@
 
 # Interface: PersistableStore
 
-Defined in: [persistence/persist.ts:182](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L182)
+Defined in: [persistence/persist.ts:177](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L177)
 
 The store surface persistence needs, which is two methods wide.
 
@@ -18,7 +18,7 @@ The store surface persistence needs, which is two methods wide.
 
 > **getState**(): `unknown`
 
-Defined in: [persistence/persist.ts:183](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L183)
+Defined in: [persistence/persist.ts:178](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L178)
 
 #### Returns
 
@@ -30,7 +30,7 @@ Defined in: [persistence/persist.ts:183](https://github.com/yoltra/yoltra/blob/m
 
 > **instrument**(`observer`): () => `void`
 
-Defined in: [persistence/persist.ts:184](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L184)
+Defined in: [persistence/persist.ts:179](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L179)
 
 #### Parameters
 

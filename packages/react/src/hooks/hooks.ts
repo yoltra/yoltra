@@ -9,6 +9,7 @@ import type {
   Event,
   EventMapBase,
   EventPhase,
+  NotifiedPhase,
   PathValue,
   StoreInstance,
   WithGlob,
@@ -478,7 +479,7 @@ export function useEvent<
     event: Event<EM, C, T>,
     getState: () => DeepReadonly<any>,
     emit: Emit<EM>,
-    phase: "committed" | "uncommitted",
+    phase: NotifiedPhase,
   ) => void | Promise<void>,
   phase: EventPhase = "committed",
 ): void {

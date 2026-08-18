@@ -1,10 +1,8 @@
-![Yoltra logo](../../assets/logo.svg)
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
 
 # @yoltra/devtools-ext
 
-> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
-> | &nbsp; 👉
-> [ 🇺🇸 English Version](./README.md)&nbsp;
+> [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | 👉 🇺🇸 English Version &nbsp;
 
 **Browser extension for Yoltra DevTools — Chrome and Firefox (Manifest V3).**
 
@@ -19,7 +17,8 @@ DevTools hub running on localhost. A popup allows configuring the hub host and p
 - Adds a "Yoltra" tab in browser DevTools
 - Full store inspector: events, state tree, subscriptions, time travel, emit, metrics
 - Configurable hub connection via popup settings
-- No content scripts or background service workers
+- Inspects a page **without a hub**: a content script relays protocol frames and a service worker
+  pairs each page with the panel inspecting its tab
 - MV3 compatible (Chrome + Firefox)
 
 ---
@@ -63,6 +62,11 @@ pnpm build
 2. The extension panel mounts `@yoltra/devtools-storeview` — connects to the same hub
 3. Events and commands flow through the hub between store and panel
 
+A hub is not required. When the page is relayed by this extension, the content script announces
+the bridge and the service worker joins that page to the panel inspecting its tab, so frames cross
+directly. Connecting to a hub over a socket remains the fallback for pages no extension is
+relaying, and for Node and remote sessions.
+
 ---
 
 ## Configuration
@@ -86,6 +90,8 @@ Settings are persisted in `chrome.storage.local`.
 | `devtools.html` / `devtools.ts` | Registers the DevTools panel                        |
 | `panel.html` / `panel.ts`       | Mounts `@yoltra/devtools-storeview` in the panel    |
 | `popup.html` / `popup.ts`       | Hub connection settings UI                          |
+| `content-script.ts`             | Page ↔ extension relay; announces the bridge        |
+| `background.ts`                 | Service worker joining a page to its panel by tab   |
 
 ---
 
@@ -97,10 +103,7 @@ The extension connects to a **running DevTools hub**. Start one using any of:
 # Standalone server
 npx @yoltra/devtools-server --port 9800
 
-# Embedded in VS Code (auto-starts)
-# Just install @yoltra/devtools-vscode
-
-# Embedded in CLI
+# Embedded in the terminal UI
 npx @yoltra/devtools-cli --port 9800
 ```
 

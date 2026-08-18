@@ -21,6 +21,18 @@ function formatPatchValue(value: unknown): string {
 }
 
 /**
+ * Props for {@link EventTimeline}.
+ *
+ * @public
+ */
+export interface EventTimelineProps {
+  /** Array of event log entries to display. */
+  entries: EventLogEntry[];
+  /** Optional callback when an entry row is clicked. */
+  onSelectEntry?: (entry: EventLogEntry, index: number) => void;
+}
+
+/**
  * Scrollable event timeline with filtering and detail inspection.
  *
  * Lists all event log entries with committed/bounced status indicators,
@@ -29,17 +41,12 @@ function formatPatchValue(value: unknown): string {
  * the embedded {@link FilterBar}. Selecting a row expands a
  * {@link JsonTree} detail view of the full entry.
  *
- * @param props.entries - Array of event log entries to display.
- * @param props.onSelectEntry - Optional callback when an entry row is clicked.
  * @public
  */
 export function EventTimeline({
   entries,
   onSelectEntry,
-}: {
-  entries: EventLogEntry[];
-  onSelectEntry?: (entry: EventLogEntry, index: number) => void;
-}) {
+}: EventTimelineProps) {
   const [filter, setFilter] = useState("");
   const [showCommitted, setShowCommitted] = useState(true);
   const [showBounced, setShowBounced] = useState(true);
