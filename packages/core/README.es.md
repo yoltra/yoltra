@@ -34,7 +34,7 @@ emit(channel, type, payload)
   │
   ├─ 0. Dedup (opt-in) ─── Omite un duplicado solo si dedupWindowMs > 0 o se pasa un dedupKey
   │
-  │  ══ fase de reduccion SINCRONA — corre antes de que emit() retorne ══
+  │  ══ fase de reduccion SINCRONA: corre antes de que emit() retorne ══
   ├─ 1. Middleware ─── Hooks pre-reducer sincronos (devolver false para rechazar → evento "no confirmado")
   ├─ 2. Reducers ─── Cada slice que aplica se prepara, y todas se confirman bajo una sola raiz
   ├─ 3. Suscriptores de eventos ─── Notificaciones de eventos confirmados/no confirmados
@@ -44,10 +44,10 @@ emit(channel, type, payload)
 ```
 
 La fase de reducción (1–4) es **síncrona**, así que `getState()` es correcto en el instante en que
-`emit()` retorna — incluso con middleware. Los efectos (5) corren después como una tarea async
+`emit()` retorna, incluso con middleware. Los efectos (5) corren después como una tarea async
 independiente; la promesa de `emit()` se resuelve cuando terminan los efectos de ese evento. Cada
-etapa es interceptable, y `store.instrument()` expone todo el flujo — rutas hoja cambiadas, tiempos
-de reducción, fase confirmado/rechazado — a las DevTools sin ningún `as any`. Ver la
+etapa es interceptable, y `store.instrument()` expone todo el flujo (rutas hoja cambiadas, tiempos
+de reducción, fase confirmado/rechazado) a las DevTools sin ningún `as any`. Ver la
 [Arquitectura del Pipeline de Eventos](../../docs/es/design/event-queue-architecture.md) para el
 modelo completo.
 
@@ -72,17 +72,17 @@ Suscríbete a rutas de estado exactas usando notación de puntos. Soporta wildca
 segmento) y `**` (cero o más segmentos):
 
 ```typescript
-// Ruta exacta — se dispara cuando items[0].title cambia
+// Ruta exacta: se dispara cuando items[0].title cambia
 store.connect({ reducer: "todos", property: "items.0.title" }, (change) =>
   console.log("title:", change.oldValue, "→", change.newValue),
 );
 
-// Wildcard de un segmento — se dispara cuando el titulo de CUALQUIER item cambia
+// Wildcard de un segmento: se dispara cuando el titulo de CUALQUIER item cambia
 store.connect({ reducer: "todos", property: "items.*.title" }, (change) =>
   console.log("some title changed at", change.path),
 );
 
-// Wildcard profundo — se dispara cuando algo bajo items cambia
+// Wildcard profundo: se dispara cuando algo bajo items cambia
 store.connect({ reducer: "todos", property: "items.**" }, (change) =>
   console.log("items tree changed at", change.path),
 );
@@ -171,7 +171,7 @@ type AppEM = {
   system: { init: void; shutdown: void };
 };
 
-// Coincidir con claves de evento especificas (recomendado — preserva la correlacion de tipos)
+// Coincidir con claves de evento especificas (recomendado: preserva la correlacion de tipos)
 const counterReducer = {
   state: { value: 0 },
   when: {
@@ -221,7 +221,7 @@ efectos, no en el middleware. Soporta tanto funciones directas (legacy) como obj
 ```typescript
 import type { MiddlewareSpec } from "@yoltra/core";
 
-// Middleware con target — solo se ejecuta para eventos del canal admin
+// Middleware con target: solo se ejecuta para eventos del canal admin
 const adminGuard: MiddlewareSpec<AppState, AppEM> = {
   when: { channel: "admin" },
   middleware: (state, event) => {
@@ -231,7 +231,7 @@ const adminGuard: MiddlewareSpec<AppState, AppEM> = {
   meta: { type: "middleware", name: "adminGuard" },
 };
 
-// Middleware global — se ejecuta para todos los eventos (sincrono: devuelve un boolean, nunca una Promise)
+// Middleware global: se ejecuta para todos los eventos (sincrono: devuelve un boolean, nunca una Promise)
 const logger = (state, event) => {
   console.log("Event:", event.channel, event.type);
   return true;
@@ -305,12 +305,12 @@ Suscríbete a eventos (no al estado) desde la capa de vista. Útil para notifica
 animaciones y reaccionar a eventos rechazados:
 
 ```typescript
-// Eventos confirmados (por defecto) — eventos que pasaron el middleware
+// Eventos confirmados (por defecto): eventos que pasaron el middleware
 const off = store.onEvent("ui", "save", (event, getState, emit, phase) => {
   console.log("Save committed:", event.payload);
 });
 
-// Eventos no confirmados — eventos rechazados por el middleware
+// Eventos no confirmados: eventos rechazados por el middleware
 store.onEvent(
   "ui",
   "delete",
@@ -320,7 +320,7 @@ store.onEvent(
   "uncommitted",
 );
 
-// Todos los eventos — tanto confirmados como no confirmados
+// Todos los eventos: tanto confirmados como no confirmados
 store.onEvent(
   "ui",
   "action",
@@ -370,8 +370,8 @@ const store = createStore({
 
 const result = await store.emit("plan", "patch", { steps, expectedVersion: 1 });
 
-result.committed; // true — el middleware lo permitio
-result.written; // false — pero no se escribio nada
+result.committed; // true: el middleware lo permitio
+result.written; // false: no se escribio nada
 result.rejected?.reason;
 ```
 
@@ -390,12 +390,12 @@ una decisión a la que cede el evento entero.
 
 La fase `written` de `onEvent` reporta lo mismo a los suscriptores. `committed` sigue
 significando **no vetado** y no se estrecho a proposito: se dispara para todo evento que el
-middleware permite, incluidos todos los eventos de un store sin reducers — la forma que toma un
+middleware permite, incluidos todos los eventos de un store sin reducers, la forma que toma un
 bus de notificaciones o de analítica.
 
 ---
 
-## Petición y respuesta — `store.call()`
+## Petición y respuesta: `store.call()`
 
 Todo consumidor de un bus de eventos acaba escribiendo petición/respuesta a mano: generar un id,
 suscribirse, emparejar, expirar, desuscribirse. Son unas ochenta líneas y siempre traen los
@@ -446,7 +446,7 @@ const { payload } = await call;
 ```
 
 La contrapresión es real, no un buffer con límite. `emit` resuelve solo cuando terminan sus
-efectos, y el colector es un efecto que no retorna hasta que el consumidor tomo el elemento — así
+efectos, y el colector es un efecto que no retorna hasta que el consumidor tomo el elemento, así
 que un `Quien Responde` que escribe `await emit("job", "tick", chunk)` **va al ritmo del lector**.
 
 La contrapresión entra en juego **cuando empiezas a iterar**. Una llamada que solo se espera con
@@ -470,7 +470,7 @@ contrapresión. Un `Quien Responde` atascado es peor que el buffer sin límite q
 ## Leer un valor al suscribirse
 
 `connect` empieza en "de ahora en adelante", así que la primera lectura había que repetirla en
-otro lado — la misma ruta en dos sitios, libres de divergir:
+otro lado: la misma ruta en dos sitios, libres de divergir:
 
 ```typescript
 store.connect({ reducer: "todos", property: "items.0.title" }, render, { immediate: true });
@@ -495,14 +495,14 @@ store.connect({ reducer: "orders", property: "status" }, (change) => {
 });
 ```
 
-La procedencia está **ausente** cuando ningún evento causó el cambio — un salto de time-travel de
+La procedencia está **ausente** cuando ningún evento causó el cambio: un salto de time-travel de
 DevTools, o la entrega `immediate` de arriba. La ausencia es la señal, en vez de un id inventado.
 
 ---
 
 ## Deduplicación de Eventos (opt-in)
 
-La deduplicación está **desactivada por defecto** — yoltra nunca descarta en silencio eventos
+La deduplicación está **desactivada por defecto**. Yoltra nunca descarta en silencio eventos
 idénticos legítimos y rápidos (doble-clics, `+1` repetidos). Actívala solo cuando de verdad quieras
 coalescer:
 
@@ -516,7 +516,7 @@ const store = createStore({
   dedupWindowMs: 100, // default: 0 (desactivado)
 });
 
-// Por identidad: dedup por una clave explicita — p. ej. un doble-invoke de React Strict Mode en un efecto.
+// Por identidad: dedup por una clave explicita, p. ej. un doble-invoke de React Strict Mode en un efecto.
 await store.emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page}` });
 ```
 
@@ -524,8 +524,8 @@ await store.emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page
 
 ## Protección contra cascadas (activada por defecto)
 
-Dos consumidores conectados entre sí — un suscriptor que emite lo que su propio reducer atiende, o
-dos slices que atienden los eventos de la otra — producen una cadena de eventos sin final. La cola
+Dos consumidores conectados entre sí, ya sea un suscriptor que emite lo que su propio reducer atiende o
+dos slices que atienden los eventos de la otra, producen una cadena de eventos sin final. La cola
 de reducción se drena de forma **síncrona**, así que eso no es un programa lento: es una pestana
 congelada, o un core al 100%, sin error ni stack al que apuntar.
 
@@ -552,7 +552,7 @@ Un evento emitido mientras se atiende otro está un nivel más abajo que su caus
 evento raíz, así que los eventos que emite tu aplicación siguen siendo idénticos byte a byte.
 
 Superar el tope no lanza. El emit ofensor se rechaza, lo ya confirmado se mantiene, y `onCascade`
-(más un error en consola) lo nombra — lanzar aparecería en el suscriptor o efecto que casualmente
+(más un error en consola) lo nombra. Lanzar aparecería en el suscriptor o efecto que casualmente
 estuviera emitiendo, que es justo el fallo inatribuible que el tope existe para evitar.
 
 **Una rafaga ancha no es una cascada.** Un evento cuyo suscriptor emite quinientos hermanos es una
@@ -612,12 +612,12 @@ if (import.meta.hot) {
 ### El estado es síncrono; haz `await` solo por los efectos
 
 La fase de reducción es síncrona, así que el estado refleja tu evento en el instante en que `emit()`
-retorna — sin `await` para leerlo. Haz `await` de `emit()` cuando además quieras que los efectos de
+retorna, sin `await` para leerlo. Haz `await` de `emit()` cuando además quieras que los efectos de
 _ese evento_ hayan terminado:
 
 ```typescript
 emit("todo", "add", todo);
-store.getState(); // Ya refleja la nueva tarea — sin await
+store.getState(); // Ya refleja la nueva tarea. Sin await
 
 await emit("todo", "save", todo); // se resuelve cuando terminan los efectos de save
 ```
@@ -795,13 +795,13 @@ que solo se le editan campos individuales está mejor como array hoy.
 
 | Métrica               | Valor                                     |
 | --------------------- | ----------------------------------------- |
-| **Tamaño del bundle** | Medido en cada build — ver la tabla abajo |
+| **Tamaño del bundle** | Medido en cada build, ver la tabla abajo |
 | **Tree-shakeable**    | Sí (módulos ES)                           |
 | **Dependencias**      | Cero                                      |
 | **TypeScript**        | Definiciones de tipos completas incluidas |
 
 El tamaño del bundle se verifica, no se afirma: `rush size` empaqueta el paquete como lo haría
-un consumidor — sacudido, minificado, comprimido con gzip — y falla cuando excede el
+un consumidor (sacudido, minificado, comprimido con gzip) y falla cuando excede el
 presupuesto declarado en `package.json`. La tabla de abajo la escribe esa misma verificación,
 así que no puede desviarse de lo que se midió; editarla a mano hace fallar el CI.
 
@@ -815,7 +815,7 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 | todo | 11.2 KB | 18 KB |
 <!-- size-table:end -->
 
-Estas son cifras de **producción** — lo que públicas una vez que tu empaquetador define
+Estas son cifras de **producción**: lo que públicas una vez que tu empaquetador define
 `NODE_ENV=production` y las guardas exclusivas de desarrollo desaparecen. La columna de
 presupuesto es el techo que `rush size` impone, y se verifica contra un build de desarrollo,
 que es el mayor de los dos: el código exclusivo de desarrollo no puede crecer sin que nadie lo
@@ -831,27 +831,27 @@ es algo que nadie escriba.
 
 ## Documentación
 
-- **[README raíz de yoltra](../../README.md)** --
+- **[README raíz de yoltra](../../README.md)**:
   Descripción general y configuración rápida
-- **[@yoltra/react](../react/README.md)** --
+- **[@yoltra/react](../react/README.md)**:
   Hooks de React y Suspense
-- **[Guia de Inicio Rápido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**
-  -- Cinco pasos hacia una app funcional
-- **[Arquitectura de Cola de Eventos](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)**
-  -- Inmersión técnica profunda
-- **[Comparación de Bibliotecas](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**
-  -- Comparación arquitectónica
+- **[Guia de Inicio Rápido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**:
+  Cinco pasos hacia una app funcional
+- **[Arquitectura de Cola de Eventos](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)**:
+  Inmersión técnica profunda
+- **[Comparación de Bibliotecas](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**:
+  Comparación arquitectónica
 
 ---
 
 ## Ejemplos
 
-- **[App de Tareas](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react)** --
+- **[App de Tareas](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react)**:
   CRUD completo con perfilado de rendimiento · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-react)
-- **[Logo Cinético](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo)**
-  -- 3000 círculos con simulación física. · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/kinetic-logo)
-- **[Integración con Next.js](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs)**
-  -- Pages Router, estado de cliente + cambio de tema · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)
+- **[Logo Cinético](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo)**:
+  3000 círculos con simulación física. · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/kinetic-logo)
+- **[Integración con Next.js](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs)**:
+  Pages Router, estado de cliente + cambio de tema · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)
 
 ---
 
@@ -864,11 +864,11 @@ es algo que nadie escriba.
 
 ## Estado
 
-**Release Candidate** -- Las APIs son estables, usadas en producción, cambios menores posibles
+**Release Candidate**. Las APIs son estables, usadas en producción, cambios menores posibles
 antes de v1.0.0.
 
 ---
 
 ## Licencia
 
-**MIT** -- Libre para usar en proyectos comerciales y de código abierto.
+**MIT**. Libre para usar en proyectos comerciales y de código abierto.
