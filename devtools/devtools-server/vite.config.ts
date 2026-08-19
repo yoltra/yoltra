@@ -4,13 +4,14 @@ import dts from "vite-plugin-dts";
 
 import pkg from "./package.json";
 
-const year = new Date().getFullYear();
+// Fixed rather than computed. Deriving it from the clock means the first build after New Year
+// rewrites every dist file in the suite, so a release diff would carry churn nobody authored.
+// Bumping it is a deliberate edit, like the version.
+const year = 2026;
 const licenseText = `/*!
  * ${pkg.name} v${pkg.version}
  * (c) ${year} ${pkg.author.name}
- * License: ${pkg.license}
- * Homepage: ${pkg.homepage || ""}
- */`;
+ * License: ${pkg.license} */`;
 
 export default defineConfig({
   plugins: [
@@ -38,8 +39,8 @@ export default defineConfig({
     },
     outDir: "dist",
     sourcemap: true,
-    // Aligned with `@yoltra/core` on es2022 (see packages/core/vite.config.ts). This package is
-    // Node-only, and the `engines` floor of Node 18 supports es2022 in full.
+    // Aligned with `@yoltra/core` on es2022 (see packages/core/vite.config.ts). This package
+    // runs server-side only, where es2022 is supported throughout the supported range.
     target: "es2022",
     minify: true,
     emptyOutDir: true,

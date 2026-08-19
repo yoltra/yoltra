@@ -3,7 +3,10 @@ import banner from "vite-plugin-banner";
 import dts from "vite-plugin-dts";
 import pkg from "./package.json";
 
-const year = new Date().getFullYear();
+// Fixed rather than computed. Deriving it from the clock means the first build after New Year
+// rewrites every dist file in the suite, so a release diff would carry churn nobody authored.
+// Bumping it is a deliberate edit, like the version.
+const year = 2026;
 const licenseText = `/*!
  * ${pkg.name} v${pkg.version}
  * (c) ${year} ${pkg.author.name}
@@ -46,8 +49,8 @@ export default defineConfig({
     // es2022 rather than es2020 so class fields emit natively. Downlevelling them costs a
     // helper preamble plus one `__publicField(this, ...)` call per field — 55 of them across
     // `Store`, which every consumer pays for on every import. The floor this sets (Chrome 94,
-    // Safari 15.4, Firefox 93, all shipped by early 2022) is already well below the `engines`
-    // range, and Node 18 supports es2022 in full.
+    // Safari 15.4, Firefox 93, all shipped by early 2022) is already well below what the
+    // package supports.
     target: "es2022",
     minify: true,
     emptyOutDir: true,

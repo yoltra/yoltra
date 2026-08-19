@@ -26,8 +26,8 @@ export default defineConfig({
     },
     outDir: "dist",
     sourcemap: true,
-    // Aligned with `@yoltra/core` on es2022 (see packages/core/vite.config.ts). This package is
-    // Node-only, and the `engines` floor of Node 18 supports es2022 in full.
+    // Aligned with `@yoltra/core` on es2022 (see packages/core/vite.config.ts). This package
+    // runs server-side only, where es2022 is supported throughout the supported range.
     target: "es2022",
     minify: true,
     emptyOutDir: true,
