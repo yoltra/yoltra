@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Trims the licence banner to package, version, copyright holder and licence. It previously restated the MIT terms in prose and pointed at the LICENSE file, which every tarball already ships through `prepublishOnly`, and core, react and ds carried two more lines than devtools-protocol and devtools-server did. `@yoltra/core`'s `{ createStore }` goes from 9.1 KB to 9.0 KB gated, `@yoltra/react`'s barrel from 5.6 KB to 5.5 KB and 3.4 KB to 3.3 KB shipped, and `@yoltra/ds`'s barrel from 5.4 KB to 5.3 KB. Generates the published size table in this package's README instead of maintaining it by hand. `rushx size:write` rewrites it in both languages and `rushx size` fails when the committed table stops matching the measurement, which previously only `@yoltra/core` did. A row measured from a secondary entry point now names it, so `@yoltra/ds` no longer produces two different rows both labelled \"everything\": its `/client` barrel and its main barrel are separate numbers and now read that way.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

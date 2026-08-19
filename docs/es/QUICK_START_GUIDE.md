@@ -5,7 +5,7 @@
 > [🇺🇸 English](../en/QUICK_START_GUIDE.md) &nbsp;|&nbsp; 👉 Español
 
 Tres pasos desde la instalación hasta una app funcional y totalmente tipada. Si prefieres, visita
-[la app de ejemplo](../../examples/v0/yoltra-react-counter/README.es.md) — [▶ ábrela en vivo](https://yoltra.dev/es/demos/react-counter).
+[la app de ejemplo](../../examples/v0/yoltra-react-counter/README.es.md) · [▶ ábrela en vivo](https://yoltra.dev/es/demos/react-counter).
 
 ---
 
@@ -38,7 +38,7 @@ type AppEM = {
   };
 };
 
-// Una llamada — store + todos los hooks tipados. Sin archivo de context, sin createHooks, sin Provider.
+// Una llamada: store + todos los hooks tipados. Sin archivo de context, sin createHooks, sin Provider.
 export const { store, useAtomicProp, useEmit } = createYoltra({
   name: "App",
   reducer: {
@@ -51,7 +51,7 @@ export const { store, useAtomicProp, useEmit } = createYoltra({
           ["counter", "reset"],
         ]),
       },
-      // `event.payload` se estrecha a `number` / `null` según `event.type` — sin casts.
+      // `event.payload` se estrecha a `number` / `null` según `event.type`. Sin casts.
       reducer: (state, event) => {
         switch (event.type) {
           case "increment":
@@ -74,7 +74,7 @@ export const { store, useAtomicProp, useEmit } = createYoltra({
 ## 3. Usa los hooks en los componentes
 
 Los hooks usan por defecto el store que acabas de crear, así que **no se requiere ningún
-`<Provider>`**. Suscríbete a una hoja con un accessor tipado — el componente se re-renderiza solo
+`<Provider>`**. Suscríbete a una hoja con un accessor tipado. El componente se re-renderiza solo
 cuando esa hoja exacta cambia.
 
 ```tsx
@@ -83,7 +83,7 @@ import { useAtomicProp, useEmit } from "./yoltra";
 
 export function Counter() {
   // Forma objeto: suscríbete a la hoja exacta `counter.value`.
-  // Se re-renderiza SOLO cuando counter.value cambia — sin selectores, sin memo.
+  // Se re-renderiza SOLO cuando counter.value cambia. Sin selectores, sin memo.
   const value = useAtomicProp({ reducer: "counter", property: "value" });
   const emit = useEmit();
 
@@ -99,14 +99,14 @@ export function Counter() {
 ```
 
 Eso es una app completa y con tipado seguro. `emit("counter", "increment", 1)` se verifica contra
-tu mapa de eventos — un canal, tipo o payload incorrecto es un error de compilación.
+tu mapa de eventos. Un canal, tipo o payload incorrecto es un error de compilación.
 
 ---
 
 ## (Opcional) Acota un store con `StoreProvider`
 
 Solo necesitas un provider para entregar una instancia **diferente** del store a una parte del
-árbol — por ejemplo, un store nuevo por test, o dos instancias independientes de la misma app.
+árbol, por ejemplo un store nuevo por test, o dos instancias independientes de la misma app.
 `createYoltra` también devuelve un `StoreProvider` para exactamente eso:
 
 ```tsx
@@ -120,21 +120,21 @@ const { store, StoreProvider, useAtomicProp } = createYoltra({ name: "App", redu
 </StoreProvider>;
 ```
 
-Para casos avanzados — compartir un mismo conjunto de hooks entre varios stores cableados a tu
-propio context de React — la API de nivel más bajo `createHooks(context)` sigue disponible.
+Para casos avanzados, como compartir un mismo conjunto de hooks entre varios stores cableados a
+tu propio context de React, la API de nivel más bajo `createHooks(context)` sigue disponible.
 
 ---
 
 ## ¿Qué sigue?
 
-- **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)**
-  — Middleware, efectos, matchers `When`, suscripciones a eventos, instrumentación
-- **[API de @yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)**
-  — `useAtomicProps`, accessors tipados, wildcards, hooks con Suspense
-- **[Arquitectura del Pipeline de Eventos](./design/event-queue-architecture.md)** — cómo funciona
+- **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)**:
+  Middleware, efectos, matchers `When`, suscripciones a eventos, instrumentación
+- **[API de @yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)**:
+  `useAtomicProps`, accessors tipados, wildcards, hooks con Suspense
+- **[Arquitectura del Pipeline de Eventos](./design/event-queue-architecture.md)**: cómo funciona
   el pipeline de reducción síncrona / efectos asíncronos internamente
-- **[Comparación de Librerías](./design/state-management-library-comparison.md)** — comparación
+- **[Comparación de Librerías](./design/state-management-library-comparison.md)**: comparación
   arquitectónica honesta con Redux, Zustand, Jotai y otras
-- **[Ejemplos](https://github.com/yoltra/yoltra/blob/main/README.md#live-examples)** — app de
+- **[Ejemplos](https://github.com/yoltra/yoltra/blob/main/README.md#live-examples)**: app de
   tareas, logo cinético, contador
-- **[Guía del Desarrollador](./DEVELOPER_GUIDE.md)** — configurar el monorepo y contribuir
+- **[Guía del Desarrollador](./DEVELOPER_GUIDE.md)**: configurar el monorepo y contribuir

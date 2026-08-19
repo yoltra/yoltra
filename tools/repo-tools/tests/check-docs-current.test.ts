@@ -21,8 +21,10 @@ describe("committedDocsDirs", () => {
   });
 
   it("ignores a package that generates docs but does not commit them", () => {
-    // Six packages have a `docs` script and no committed output. Running `rush docs` creates it,
-    // and the check must not fail on directories nobody chose to track.
+    // Every package with a `docs` script now commits its output, so this case is currently
+    // hypothetical. It is kept because the guard has to stay correct for a package that adds
+    // the script before it decides to track the result: `rush docs` would create the directory,
+    // and failing on output nobody chose to commit would report drift that does not exist.
     expect(committedDocsDirs("packages/core/src/index.ts\ndevtools/devtools-ui/src/App.tsx")).toEqual(
       [],
     );

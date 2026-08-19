@@ -11,7 +11,7 @@
 **React hooks for [yoltra](../../README.md) with
 fine-grained path subscriptions.**
 
-Subscribe to `"items.0.title"` or `"items.*.done"` — the component re-renders only when that
+Subscribe to `"items.0.title"` or `"items.*.done"`. The component re-renders only when that
 exact path changes. No selectors, no memoization, no manual optimization.
 
 [See the flamegraph comparison (Redux vs yoltra).](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
@@ -30,7 +30,7 @@ npm install @yoltra/core @yoltra/react
 
 ## Setup with `createYoltra` (recommended)
 
-`createYoltra` creates the store **and** every fully-typed hook in one call — no separate context
+`createYoltra` creates the store **and** every fully-typed hook in one call, with no separate context
 file, no `createHooks` wiring, no required provider. All type parameters are inferred from your
 reducer, so components need no explicit generics.
 
@@ -74,7 +74,7 @@ export const { store, useAtomicProp, useEmit, StoreProvider } = createYoltra({
 });
 ```
 
-### 2. Use the hooks — no provider required
+### 2. Use the hooks, no provider required
 
 The hooks default to the store above, so you can render components directly. Subscribe with a
 **`{ reducer, property }`** spec: the dotted `property` names the exact path to read.
@@ -84,7 +84,7 @@ The hooks default to the store above, so you can render components directly. Sub
 import { useAtomicProp, useEmit } from "./yoltra";
 
 export function Counter() {
-  // Object form — re-renders only when counter.value changes. No selectors, no memo.
+  // Object form: re-renders only when counter.value changes. No selectors, no memo.
   const value = useAtomicProp({ reducer: "counter", property: "value" });
   const emit = useEmit();
 
@@ -100,7 +100,7 @@ export function Counter() {
 ```
 
 A `<StoreProvider>` is only needed to scope a **different** store instance to a subtree (e.g. a
-fresh store per test) — `createYoltra` returns one for exactly that.
+fresh store per test). `createYoltra` returns one for exactly that.
 
 ---
 
@@ -143,19 +143,19 @@ Provide the store with `<AppStoreContext.Provider value={store}>` at your root.
 ### `useAtomicProp({ reducer, property }, map?, isEqual?)`
 
 Fine-grained single-path selector. Re-renders only when the specified leaf changes. The dotted
-`property` names the exact path — including dynamic (`` `items.${id}.title` ``) and wildcard paths.
+`property` names the exact path, including dynamic (`` `items.${id}.title` ``) and wildcard paths.
 
 ```tsx
-// Object form (recommended) — subscribe to the exact path
+// Object form (recommended): subscribe to the exact path
 const title = useAtomicProp({ reducer: "todos", property: "items.0.title" });
 
-// Dynamic path — interpolate the key
+// Dynamic path: interpolate the key
 const byId = useAtomicProp({ reducer: "todos", property: `items.${id}.title` });
 
-// With mapper — derive a value from the path
+// With mapper: derive a value from the path
 const count = useAtomicProp({ reducer: "todos", property: "items" }, (items) => items.length);
 
-// Wildcard pattern — re-renders when any item changes
+// Wildcard pattern: re-renders when any item changes
 const allTitles = useAtomicProp(
   { reducer: "todos", property: "items.**" },
   (state) => state.items.map((t) => t.title),
@@ -163,14 +163,14 @@ const allTitles = useAtomicProp(
 );
 ```
 
-> A typed-accessor overload — `useAtomicProp("todos", (s) => s.items[0].title)` — is also available
+> A typed-accessor overload, `useAtomicProp("todos", (s) => s.items[0].title)`, is also available
 > for static paths; it autocompletes the state shape and infers the return type.
 
 **Supported patterns:**
 
-- `"items.0.title"` — exact path (including numeric array indices)
-- `"items.*.title"` — `*` matches one segment
-- `"items.**"` — `**` matches zero or more segments
+- `"items.0.title"`: exact path (including numeric array indices)
+- `"items.*.title"`: `*` matches one segment
+- `"items.**"`: `**` matches zero or more segments
 
 ---
 
@@ -193,15 +193,15 @@ const filtered = useAtomicProps(
 
 ### `useEvent(channel, type, handler, phase?)`
 
-Subscribe to store events from a component. Does not affect event flow — fire-and-forget.
+Subscribe to store events from a component. Does not affect event flow. Fire-and-forget.
 
 ```tsx
-// Committed events (default) — events that passed middleware
+// Committed events (default): events that passed middleware
 useEvent("ui", "save", (event) => {
   showToast("Saved!");
 });
 
-// Uncommitted events — events rejected by middleware
+// Uncommitted events: events rejected by middleware
 useEvent(
   "ui",
   "delete",
@@ -211,7 +211,7 @@ useEvent(
   "uncommitted",
 );
 
-// All events — distinguish by phase
+// All events: distinguish by phase
 useEvent(
   "ui",
   "action",
@@ -224,9 +224,9 @@ useEvent(
 
 **Phases:**
 
-- `'committed'` (default) — events that passed middleware and reached reducers
-- `'uncommitted'` — events rejected by middleware
-- `'all'` — both, with `phase` parameter to distinguish
+- `'committed'` (default): events that passed middleware and reached reducers
+- `'uncommitted'`: events rejected by middleware
+- `'all'`: both, with `phase` parameter to distinguish
 
 ---
 
@@ -266,7 +266,7 @@ const value = store.getState().counter.value;
 ```
 
 `getState()` is a read, not a subscription. Called while rendering, the component renders once
-with that value and never again — nothing told it the value moved. It looks like it works right
+with that value and never again, because nothing told it the value moved. It looks like it works right
 up until the state changes and the screen does not. Read what you render with `useAtomicProp` or
 `useSelector`, and keep `getState()` for callbacks and effects, which is what it is for.
 
@@ -316,7 +316,7 @@ const stats = useSuspenseAtomicProps(
 `createYoltra` and `createHooks` return these two alongside the rest, bound to the same context.
 They are deliberately **not** exported from the package barrel: a package-level copy would be
 identical in shape and still throw `useStore must be used inside <StoreProvider>` at runtime
-whenever the context it reads was never filled — a mistake the types could not catch. Importing
+whenever the context it reads was never filled, a mistake the types could not catch. Importing
 them from anywhere but your own `createYoltra`/`createHooks` result is now a compile error,
 which is the same warning arriving at the right time.
 
@@ -430,24 +430,24 @@ function Row({ id }: { id: string }) {
 
 ## Examples
 
-- **[Todo App with Profiler](../../examples/v0/yoltra-in-react)** — Full CRUD with flamegraph
+- **[Todo App with Profiler](../../examples/v0/yoltra-in-react)**: Full CRUD with flamegraph
   comparison · [▶ Open the live demo](https://yoltra.dev/en/demos/in-react)
-- **[Kinetic Logo (3000 particles)](../../examples/v0/yoltra-kinetic-logo)** — Independent
+- **[Kinetic Logo (3000 particles)](../../examples/v0/yoltra-kinetic-logo)**: Independent
   subscriptions per circle · [▶ Open the live demo](https://yoltra.dev/en/demos/kinetic-logo)
-- **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)** — client-side state + theme switcher · [▶ Open the live demo](https://yoltra.dev/en/demos/in-nextjs)
+- **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)**: client-side state + theme switcher · [▶ Open the live demo](https://yoltra.dev/en/demos/in-nextjs)
 
 ---
 
 ## Documentation
 
-- **[yoltra Root README](../../README.md)** — Overview and
+- **[yoltra Root README](../../README.md)**: Overview and
   quick start
-- **[@yoltra/core API](../core/README.md)** —
+- **[@yoltra/core API](../core/README.md)**:
   Store, middleware, effects, `When` matchers
-- **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**
-  — Five steps to a working app
-- **[Library Comparison](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**
-  — Architectural comparison
+- **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**:
+  Five steps to a working app
+- **[Library Comparison](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**:
+  Architectural comparison
 
 ---
 
@@ -460,11 +460,11 @@ function Row({ id }: { id: string }) {
 
 ## Status
 
-**Release Candidate** — APIs are stable, used in production, minor changes possible before
+**Release Candidate**. APIs are stable, used in production, minor changes possible before
 v1.0.0.
 
 ---
 
 ## License
 
-**MIT** — Free to use in commercial and open-source projects.
+**MIT**. Free to use in commercial and open-source projects.

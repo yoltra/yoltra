@@ -1,7 +1,7 @@
 {
   "name": "@yoltra/devtools-server",
   "version": "0.6.0",
-  "description": "Hub WebSocket server for Yoltra DevTools \u2014 standalone CLI and embeddable library",
+  "description": "Hub WebSocket server for Yoltra DevTools — standalone CLI and embeddable library",
   "license": "MIT",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
@@ -69,7 +69,7 @@
     "vitest": "3.2.7"
   },
   "engines": {
-    "node": ">=18.18"
+    "node": ">=18"
   },
   "publishConfig": {
     "access": "public"

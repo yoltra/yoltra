@@ -40,7 +40,7 @@
   "scripts": {
     "build": "vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
-    "test": "vitest --watch=false",
+    "test": "vitest --coverage --watch=false",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
     "docs": "rushx docs:js && rushx docs:md && rushx docs:stamp",
     "docs:stamp": "node ../../tools/repo-tools/bin/docs-stamp.mjs docs",
@@ -62,6 +62,7 @@
     "@testing-library/react": "16.3.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@vitest/coverage-v8": "3.2.7",
     "jsdom": "^24.0.0",
     "react": "19.1.1",
     "react-dom": "19.1.1",
@@ -75,7 +76,7 @@
     "vitest": "3.2.7"
   },
   "engines": {
-    "node": ">=18.18"
+    "node": ">=18"
   },
   "publishConfig": {
     "access": "public"

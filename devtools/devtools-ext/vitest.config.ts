@@ -16,7 +16,9 @@ export default defineConfig({
       // without a browser: `panel.ts` mounts the store-view UI and talks to `chrome.devtools`,
       // and `devtools.ts` / `popup.ts` are a `createPanel` call and a link handler respectively.
       exclude: ["src/panel.ts", "src/devtools.ts", "src/popup.ts"],
-      thresholds: { lines: 90, statements: 90, branches: 85, functions: 90 },
+      // The tests already cover this package completely; the gate records that rather than
+      // inviting it to slip.
+      thresholds: { lines: 100, statements: 100, branches: 94, functions: 100 },
     },
   },
 });

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "Removes the em-dash from the documents a first-time reader meets. Readers increasingly treat a high em-dash density as a marker of machine-generated text and disengage before judging the content, which for an open-source project is a cost paid before anyone has read a line of the code. The replacements are ordinary punctuation chosen per instance: a full stop where the dash joined two independent clauses, a colon where it introduced a definition or a list, parentheses where a pair of them wrapped an aside. No claim, number or code sample changed. The Spanish files used a spaced double hyphen where the English used an em-dash, which is the same construction in different clothing and is gone too.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

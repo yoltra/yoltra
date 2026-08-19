@@ -6,16 +6,14 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 import pkg from "./package.json";
 
-const year = new Date().getFullYear();
+// Fixed rather than computed. Deriving it from the clock means the first build after New Year
+// rewrites every dist file in the suite, so a release diff would carry churn nobody authored.
+// Bumping it is a deliberate edit, like the version.
+const year = 2026;
 const licenseText = `/*!
  * ${pkg.name} v${pkg.version}
  * (c) ${year} ${pkg.author.name}
- * License: ${pkg.license}
- * Homepage: ${pkg.homepage || ""}
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree
- */`;
+ * License: ${pkg.license} */`;
 
 export default defineConfig({
   plugins: [
@@ -42,7 +40,10 @@ export default defineConfig({
     },
     outDir: "dist",
     sourcemap: true,
-    target: "es2019",
+    // Aligned with `@yoltra/core`, which sets the suite's floor at es2022 (see the reasoning
+    // in packages/core/vite.config.ts). A lower target here would advertise support the suite
+    // cannot deliver anyway: anything depending on core already requires es2022.
+    target: "es2022",
     minify: true,
     emptyOutDir: true,
     rollupOptions: {

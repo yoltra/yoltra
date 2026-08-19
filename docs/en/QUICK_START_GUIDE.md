@@ -5,7 +5,7 @@
 > 👉 English &nbsp;|&nbsp; [🇲🇽 Español](../es/QUICK_START_GUIDE.md)
 
 Three steps from install to a working, fully-typed app. Or jump straight to
-[the example app](../../examples/v0/yoltra-react-counter/README.md) — [▶ open the live demo](https://yoltra.dev/en/demos/react-counter).
+[the example app](../../examples/v0/yoltra-react-counter/README.md) · [▶ open the live demo](https://yoltra.dev/en/demos/react-counter).
 
 ---
 
@@ -38,7 +38,7 @@ type AppEM = {
   };
 };
 
-// One call — store + every typed hook. No context file, no createHooks, no Provider.
+// One call: store + every typed hook. No context file, no createHooks, no Provider.
 export const { store, useAtomicProp, useEmit } = createYoltra({
   name: "App",
   reducer: {
@@ -51,7 +51,7 @@ export const { store, useAtomicProp, useEmit } = createYoltra({
           ["counter", "reset"],
         ]),
       },
-      // `event.payload` narrows to `number` / `null` on `event.type` — no casts.
+      // `event.payload` narrows to `number` / `null` on `event.type`. No casts.
       reducer: (state, event) => {
         switch (event.type) {
           case "increment":
@@ -74,7 +74,7 @@ export const { store, useAtomicProp, useEmit } = createYoltra({
 ## 3. Use the hooks in components
 
 The hooks default to the store you just created, so **no `<Provider>` is required**. Subscribe to
-a leaf with a typed accessor — the component re-renders only when that exact leaf changes.
+a leaf with a typed accessor. The component re-renders only when that exact leaf changes.
 
 ```tsx
 // Counter.tsx
@@ -82,7 +82,7 @@ import { useAtomicProp, useEmit } from "./yoltra";
 
 export function Counter() {
   // Object form: subscribe to the exact leaf `counter.value`.
-  // Re-renders ONLY when counter.value changes — no selectors, no memo.
+  // Re-renders ONLY when counter.value changes. No selectors, no memo.
   const value = useAtomicProp({ reducer: "counter", property: "value" });
   const emit = useEmit();
 
@@ -98,13 +98,13 @@ export function Counter() {
 ```
 
 That's a complete, type-safe app. `emit("counter", "increment", 1)` is checked against your event
-map — a wrong channel, type, or payload is a compile error.
+map. A wrong channel, type, or payload is a compile error.
 
 ---
 
 ## (Optional) Scope a store with `StoreProvider`
 
-You only need a provider to hand a **different** store instance to part of the tree — for example a
+You only need a provider to hand a **different** store instance to part of the tree, for example a
 fresh store per test, or two independent instances of the same app. `createYoltra` also returns a
 `StoreProvider` for exactly that:
 
@@ -119,21 +119,21 @@ const { store, StoreProvider, useAtomicProp } = createYoltra({ name: "App", redu
 </StoreProvider>;
 ```
 
-For advanced cases — sharing one set of hooks across several stores wired through your own React
-context — the lower-level `createHooks(context)` API is still available.
+For advanced cases, such as sharing one set of hooks across several stores wired through your own
+React context, the lower-level `createHooks(context)` API is still available.
 
 ---
 
 ## What's next?
 
-- **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** —
+- **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)**:
   Middleware, effects, `When` matchers, event subscriptions, instrumentation
-- **[@yoltra/react API](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** —
+- **[@yoltra/react API](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)**:
   `useAtomicProps`, typed accessors, wildcards, Suspense hooks
-- **[Event Pipeline Architecture](./design/event-queue-architecture.md)** — how the synchronous
+- **[Event Pipeline Architecture](./design/event-queue-architecture.md)**: how the synchronous
   reduce / async effect pipeline works under the hood
-- **[Library Comparison](./design/state-management-library-comparison.md)** — honest architectural
+- **[Library Comparison](./design/state-management-library-comparison.md)**: honest architectural
   comparison with Redux, Zustand, Jotai, and others
-- **[Examples](https://github.com/yoltra/yoltra/blob/main/README.md#live-examples)** — todo app,
+- **[Examples](https://github.com/yoltra/yoltra/blob/main/README.md#live-examples)**: todo app,
   kinetic logo, counter
-- **[Developer Guide](./DEVELOPER_GUIDE.md)** — setting up the monorepo and contributing
+- **[Developer Guide](./DEVELOPER_GUIDE.md)**: setting up the monorepo and contributing

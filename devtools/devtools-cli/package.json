@@ -29,7 +29,7 @@
   ],
   "scripts": {
     "build": "vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types",
-    "test": "vitest --watch=false",
+    "test": "vitest --coverage --watch=false",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
     "docs": "rushx docs:js && rushx docs:md && rushx docs:stamp",
@@ -50,6 +50,7 @@
     "@types/node": "^24.0.12",
     "@types/react": "^19.1.8",
     "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "3.2.7",
     "ink-testing-library": "4.0.0",
     "typedoc": "^0.28.13",
     "typedoc-plugin-localization": "3.0.6",
@@ -60,7 +61,7 @@
     "vitest": "3.2.7"
   },
   "engines": {
-    "node": ">=18.18"
+    "node": ">=18"
   },
   "publishConfig": {
     "access": "public"
