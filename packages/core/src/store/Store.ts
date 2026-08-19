@@ -41,11 +41,20 @@ import type {
 } from "../types";
 import { freezeState } from "../utils/immutability";
 import { isRejected } from "./rejection";
-import { CallQueue } from "./callQueue";
-import { CallAbortedError, CallTimeoutError, isReplyTo, parseReply } from "./call";
 import type { CallHandle, CallOptions } from "./call";
+import { performCall } from "./performCall";
 import type { Rejection } from "./rejection";
 import type { AliasWatch } from "../utils/immutability";
+import {
+  buildAncestorPaths as ancestorPaths,
+  getAtPath as readAtPath,
+} from "./paths";
+import {
+  getMiddlewareFunction,
+  getMiddlewareWhen,
+  matchesWhen,
+  normalizeEventKeys,
+} from "./matching";
 
 /**
  * Deep-freezes a value **in development only**, returning it untouched in
@@ -120,12 +129,6 @@ const DEFAULT_MAX_REDUCE_DEPTH = 64;
  * unboundedly.
  */
 const CASCADE_CHAIN_LIMIT = 16;
-
-/** Idle time a {@link Store.call} tolerates before giving up. */
-const DEFAULT_CALL_TIMEOUT_MS = 30_000;
-
-/** Progress events a call buffers before pacing the producer. */
-const DEFAULT_CALL_WATERMARK = 16;
 
 /**
  * One slice's pending write: computed, frozen, and not yet visible to anybody.
@@ -777,87 +780,6 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
-   * Checks if an event matches a `When` matcher.
-   *
-   * @param when - The When matcher (or undefined for "all events").
-   * @param event - The event to check.
-   * @returns `true` if the event matches, `false` otherwise.
-   *
-   * @remarks
-   * - `undefined` or missing `when` matches ALL events.
-   * - `{ any: true }` matches ALL events.
-   * - `{ keys: [...] }` matches if event's `[channel, type]` is in the array.
-   * - `{ channel: 'x' }` matches if event's channel equals 'x'.
-   * - `{ channels: ['x', 'y'] }` matches if event's channel is in the array.
-   *
-   * @internal
-   */
-  private matchesWhen(when: When<EM> | undefined, event: EventUnion<EM>): boolean {
-    // No targeting = match all events
-    if (!when) return true;
-
-    // Match all events
-    if ("any" in when && when.any === true) {
-      return true;
-    }
-
-    // Match specific event keys
-    if ("keys" in when) {
-      return when.keys.some(
-        ([channel, type]) => event.channel === channel && event.type === type,
-      );
-    }
-
-    // Match single channel (all types within that channel)
-    if ("channel" in when) {
-      return event.channel === when.channel;
-    }
-
-    // Match multiple channels
-    if ("channels" in when) {
-      return when.channels.includes(event.channel as keyof EM & string);
-    }
-
-    return false;
-  }
-
-  /**
-   * Extracts the middleware function from a MiddlewareInput.
-   * Handles both raw functions (legacy) and MiddlewareSpec objects.
-   *
-   * @param input - MiddlewareInput (function or spec).
-   * @returns The middleware function.
-   *
-   * @internal
-   */
-  private getMiddlewareFunction(
-    input: MiddlewareInput<DeepReadonly<S>, EM>,
-  ): MiddlewareFunction<DeepReadonly<S>, EM> {
-    if (typeof input === "function") {
-      return input;
-    }
-    return input.middleware;
-  }
-
-  /**
-   * Gets the `when` matcher from a MiddlewareInput.
-   *
-   * @param input - MiddlewareInput (function or spec).
-   * @returns The `when` matcher, or `undefined` for raw functions (match all).
-   *
-   * @internal
-   */
-  private getMiddlewareWhen(
-    input: MiddlewareInput<DeepReadonly<S>, EM>,
-  ): When<EM> | undefined {
-    if (typeof input === "function") {
-      // Raw functions match all events
-      return undefined;
-    }
-    return input.when;
-  }
-
-  /**
    * Invokes all registered **effects** for a given event.
    * Handles both key-based effects (O(1) lookup) and pattern-based effects (runtime matching).
    * Errors are caught and logged.
@@ -889,7 +811,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     // 2. Call pattern-based effects (runtime matching)
     for (const { effect, when } of this.patternEffects) {
-      if (this.matchesWhen(when, event)) {
+      if (matchesWhen(when, event)) {
         try {
           await effect(event, this.getState, emit);
         } catch (e) {
@@ -1451,7 +1373,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         // whatever state it happened to reach.
         for (const [sliceName, when] of this.patternReducers) {
           if (rejection !== null) break;
-          if (this.matchesWhen(when, event)) {
+          if (matchesWhen(when, event)) {
             const refused = this.stageSliceGuarded(sliceName, event as any, staged);
             if (refused !== null) rejection = refused;
           }
@@ -1747,9 +1669,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private applyEventSync(event: EventUnion<EM>): EmitResult {
     // Middleware (synchronous). Return false to veto; async work belongs in effects.
     for (const mwInput of this.middleware) {
-      const when = this.getMiddlewareWhen(mwInput);
-      if (!this.matchesWhen(when, event)) continue;
-      const mw = this.getMiddlewareFunction(mwInput);
+      const when = getMiddlewareWhen(mwInput);
+      if (!matchesWhen(when, event)) continue;
+      const mw = getMiddlewareFunction(mwInput);
       let ok: boolean;
       try {
         ok = mw(this.state, event, this.emit);
@@ -1800,7 +1722,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
       for (const [sliceName, when] of this.patternReducers) {
         if (rejection !== null) break;
-        if (this.matchesWhen(when, event)) {
+        if (matchesWhen(when, event)) {
           const refused = this.stageSliceGuarded(sliceName, event as any, staged);
           if (refused !== null) {
             rejection = refused;
@@ -2271,13 +2193,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * the terminal event from ever being sent. Un-iterated progress therefore buffers to
    * `highWaterMark` and is then counted on {@link CallHandle.dropped} rather than blocking.
    *
-   * **This is a local primitive.** A reply cannot reach it from a federated peer: the federation
-   * envelope carries neither `meta` nor `parentId`, and ingress namespaces the channel, so
-   * neither correlation nor the reply route survives the hop. That is not an oversight to route
-   * around — federation answers cross-node request/reply with typed peer *queries*, which are
-   * gated by a responder policy that may concede or deny. A call that federated silently would
-   * turn that access decision into an accident of which channel someone named. Ask a peer with a
-   * query; use `call` within a process.
+   * **This is a local primitive.**
    *
    * @example Timeout is idle, not total
    * ```ts
@@ -2299,120 +2215,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     payload: EM[C][T],
     opts: CallOptions<EM>,
   ): CallHandle<EventUnion<EM>, EventUnion<EM>> {
-    const { channel: replyChannel, isTerminal } = parseReply<EM>(opts.reply);
-    const idleMs = opts.timeoutMs ?? DEFAULT_CALL_TIMEOUT_MS;
-    const queue = new CallQueue<EventUnion<EM>>(opts.highWaterMark ?? DEFAULT_CALL_WATERMARK);
-
-    // Minted here rather than left to `emit`, because the correlation has to be known before the
-    // request goes out — a reply can arrive during the emit itself, synchronously.
-    const requestId = this.idFactory();
-
-    let settle!: (event: EventUnion<EM>) => void;
-    let fail!: (error: Error) => void;
-    let settled = false;
-    const terminal = new Promise<EventUnion<EM>>((resolve, reject) => {
-      settle = resolve;
-      fail = reject;
-    });
-    // Attached immediately so a rejection that nobody has awaited yet is not reported as
-    // unhandled; the caller's own await still sees it.
-    terminal.catch(() => undefined);
-
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    let unregister: (() => void) | null = null;
-
-    /**
-     * Settles the call once. `graceful` distinguishes a terminal reply — after which the
-     * consumer is still owed whatever progress it has not read — from an abort, after which
-     * nothing is owed to anyone.
-     */
-    const finish = (fn: () => void, graceful = false): void => {
-      if (settled) return;
-      settled = true;
-      if (timer !== null) clearTimeout(timer);
-      timer = null;
-      unregister?.();
-      unregister = null;
-      if (graceful) queue.end();
-      else queue.close();
-      opts.signal?.removeEventListener("abort", onAbort);
-      fn();
-    };
-
-    function onAbort(): void {
-      finish(() => fail(new CallAbortedError(String(opts.signal?.reason ?? "signal aborted"))));
-    }
-
-    const arm = (): void => {
-      if (timer !== null) clearTimeout(timer);
-      // Idle: every correlated event pushes the deadline out, so a streaming responder is not
-      // punished for having a lot to say.
-      timer = setTimeout(() => {
-        finish(() => fail(new CallTimeoutError(channel, type, idleMs)));
-      }, idleMs);
-      (timer as { unref?: () => void }).unref?.();
-    };
-
-    unregister = this.registerEffect({
-      // A pattern effect on the reply channel: which types are terminal is known, which are
-      // progress is not, so the filter cannot be a key list.
-      when: { channel: replyChannel as keyof EM & string },
-      effect: async (event) => {
-        if (settled) return;
-        if (!isReplyTo<EM>(event, requestId, opts.correlationId)) return;
-
-        arm();
-
-        if (isTerminal(String(event.type))) {
-          finish(() => settle(event), true);
-          return;
-        }
-
-        // The await is the backpressure. This runs inside the store's effect phase, so the
-        // responder's own `await emit(...)` does not resolve until it returns.
-        await queue.put(event);
-      },
-    });
-
-    if (opts.signal !== undefined) {
-      if (opts.signal.aborted) onAbort();
-      else opts.signal.addEventListener("abort", onAbort, { once: true });
-    }
-
-    arm();
-
-    void this.emit(channel, type, payload, {
-      id: requestId,
-      ...(opts.correlationId !== undefined
-        ? { meta: { correlationId: opts.correlationId } }
-        : {}),
-    });
-
-    const handle = {
-      then: (onOk?: never, onErr?: never) => terminal.then(onOk, onErr),
-      catch: (onErr?: never) => terminal.catch(onErr),
-      finally: (onDone?: () => void) => terminal.finally(onDone),
-      get dropped() {
-        return queue.droppedCount;
-      },
-      cancel: (reason = "cancelled") => {
-        finish(() => fail(new CallAbortedError(reason)));
-      },
-      [Symbol.asyncIterator]: (): AsyncIterator<EventUnion<EM>> => {
-        queue.beginConsuming();
-        return {
-          next: () => queue.take(),
-          // Called by `for await` on `break`, `return` or a throw. Without it, abandoning the
-          // loop would leave the effect registered and the producer parked for good.
-          return: async () => {
-            queue.close();
-            return { value: undefined, done: true };
-          },
-        };
-      },
-    } as CallHandle<EventUnion<EM>, EventUnion<EM>>;
-
-    return handle;
+    return performCall<S, EM, C, T>(
+      { idFactory: this.idFactory, registerEffect: this.registerEffect, emit: this.emit },
+      channel,
+      type,
+      payload,
+      opts,
+    );
   }
 
   public registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): () => void {
@@ -2444,7 +2253,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }
 
     // Key-based effect: normalize to event keys
-    const eventKeys = this.normalizeEventKeys(spec);
+    const eventKeys = normalizeEventKeys(spec);
 
     // If no keys (no targeting at all), this effect matches ALL events
     // We treat it as a pattern-based effect with `any: true`
@@ -2702,7 +2511,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }
 
     // Normalize event keys from `when: { keys }`
-    const eventKeys = this.normalizeEventKeys(rSpec);
+    const eventKeys = normalizeEventKeys(rSpec);
 
     // If no targeting at all, treat as "all events" (pattern-based)
     if (eventKeys.length === 0 && !when) {
@@ -2781,55 +2590,20 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
-   * Normalizes event targeting from `when` to an array of EventKeys.
-   *
-   * @param spec - Object with an optional `when` matcher.
-   * @returns Array of `[channel, type]` pairs.
-   *
-   * @internal
-   */
-  private normalizeEventKeys(spec: {
-    when?: When<EM>;
-    events?: ReadonlyArray<EventKey<EM>>;
-  }): ReadonlyArray<EventKey<EM>> {
-
-    if (spec.when) {
-      const when = spec.when;
-
-      // Only `keys` can reach this point: both callers intercept pattern-based matchers
-      // (`any`, `channel`, `channels`) before normalizing, because those register against the
-      // emit loop rather than against per-key handler maps.
-      if ("keys" in when) {
-        return when.keys;
-      }
-    }
-
-    // No targeting specified
-    return [];
-  }
-
-  /**
    * Reads a dotted path from an object (supports numeric array indices via string keys).
    *
    * @param obj - Root object (slice or value).
    * @param path - Dotted path; leading dot is ignored.
    * @returns The value at the path, or `undefined`.
    *
+   * @remarks
+   * A member rather than a bare import: a test replaces this on the instance to count how many
+   * walks describing a change costs, which only works while the callers go through `this`.
+   *
    * @internal
    */
   private getAtPath(obj: any, path: string): any {
-    if (!path) return obj;
-
-    // Normalize any accidental leading dots
-    const clean = path[0] === "." ? path.slice(1) : path;
-    const parts = clean.split(".");
-
-    let cur = obj;
-    for (const seg of parts) {
-      if (cur == null) return undefined;
-      cur = cur[seg as any];
-    }
-    return cur;
+    return readAtPath(obj, path);
   }
 
   /**
@@ -2848,17 +2622,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   static buildAncestorPaths(path: string): string[] {
-    if (!path) return [];
-
-    const clean = path[0] === "." ? path.slice(1) : path;
-    const parts = clean.split(".");
-    const out: string[] = [];
-
-    for (let i = 0; i < parts.length; i++) {
-      out.push(parts.slice(0, i + 1).join("."));
-    }
-
-    return out;
+    return ancestorPaths(path);
   }
 }
 

@@ -3,7 +3,7 @@
 # @yoltra/react
 
 > 👉 🇲🇽 Versión en Español&nbsp; |
-> &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp;
+> &nbsp;[ 🇺🇸 English Versión](./README.md)&nbsp;
 
 ![npm downloads](https://badgen.net/npm/dm/@yoltra/react)
 ![License](https://badgen.net/npm/license/@yoltra/react)
@@ -11,14 +11,14 @@
 **Hooks de React para [yoltra](../../README.md) con
 suscripciones de grano fino por ruta.**
 
-Suscribete a `"items.0.title"` o `"items.*.done"` -- el componente se re-renderiza solo cuando
-esa ruta exacta cambia. Sin selectores, sin memoizacion, sin optimizacion manual.
+Suscríbete a `"items.0.title"` o `"items.*.done"` -- el componente se re-renderiza solo cuando
+esa ruta exacta cambia. Sin selectores, sin memoización, sin optimización manual.
 
-[Ver la comparacion de flamegraph (Redux vs yoltra).](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
+[Ver la comparación de flamegraph (Redux vs yoltra).](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
 
 ---
 
-## Instalacion
+## Instalación
 
 ```bash
 npm install @yoltra/core @yoltra/react
@@ -28,11 +28,11 @@ npm install @yoltra/core @yoltra/react
 
 ---
 
-## Configuracion con `createYoltra` (recomendado)
+## Configuración con `createYoltra` (recomendado)
 
 `createYoltra` crea el store **y** todos los hooks tipados en una sola llamada — sin archivo de
-context aparte, sin cableado de `createHooks`, sin provider obligatorio. Todos los parametros de
-tipo se infieren de tu reducer, asi que los componentes no necesitan generics explicitos.
+context aparte, sin cableado de `createHooks`, sin provider obligatorio. Todos los parámetros de
+tipo se infieren de tu reducer, así que los componentes no necesitan generics explícitos.
 
 ### 1. Crea el store y los hooks
 
@@ -76,8 +76,8 @@ export const { store, useAtomicProp, useEmit, StoreProvider } = createYoltra({
 
 ### 2. Usa los hooks — sin provider
 
-Los hooks usan por defecto el store de arriba, asi que puedes renderizar componentes directamente.
-Suscribete con una spec **`{ reducer, property }`**: el `property` con puntos nombra la ruta exacta
+Los hooks usan por defecto el store de arriba, así que puedes renderizar componentes directamente.
+Suscríbete con una spec **`{ reducer, property }`**: el `property` con puntos nombra la ruta exacta
 a leer.
 
 ```tsx
@@ -107,7 +107,7 @@ subarbol (p. ej. un store nuevo por test) — `createYoltra` devuelve uno justo 
 
 ## Avanzado: cableado manual con `createHooks`
 
-Cuando necesites un mismo conjunto de hooks compartido entre varias instancias de store a traves
+Cuando necesites un mismo conjunto de hooks compartido entre varias instancias de store a través
 de tu propio context de React, vinculalos tu mismo con `createHooks(context)`. `createYoltra` es
 este mismo cableado colapsado en una sola llamada.
 
@@ -135,7 +135,7 @@ export const {
 } = createHooks(AppStoreContext);
 ```
 
-Provee el store con `<AppStoreContext.Provider value={store}>` en tu raiz.
+Provee el store con `<AppStoreContext.Provider value={store}>` en tu raíz.
 
 ---
 
@@ -143,8 +143,8 @@ Provee el store con `<AppStoreContext.Provider value={store}>` en tu raiz.
 
 ### `useAtomicProp({ reducer, property }, map?, isEqual?)`
 
-Selector de ruta unica con grano fino. Se re-renderiza solo cuando la hoja especificada cambia. El
-`property` con puntos nombra la ruta exacta — incluyendo rutas dinamicas
+Selector de ruta única con grano fino. Se re-renderiza solo cuando la hoja especificada cambia. El
+`property` con puntos nombra la ruta exacta — incluyendo rutas dinámicas
 (`` `items.${id}.title` ``) y con comodines.
 
 ```tsx
@@ -165,20 +165,20 @@ const allTitles = useAtomicProp(
 );
 ```
 
-> Tambien existe una sobrecarga con accessor tipado — `useAtomicProp("todos", (s) => s.items[0].title)`
-> — para rutas estaticas; autocompleta la forma del estado e infiere el tipo de retorno.
+> También existe una sobrecarga con accessor tipado — `useAtomicProp("todos", (s) => s.items[0].title)`
+> — para rutas estáticas; autocompleta la forma del estado e infiere el tipo de retorno.
 
 **Patrones soportados:**
 
-- `"items.0.title"` -- ruta exacta (incluyendo indices numericos de array)
+- `"items.0.title"` -- ruta exacta (incluyendo índices numéricos de array)
 - `"items.*.title"` -- `*` coincide con un segmento
-- `"items.**"` -- `**` coincide con cero o mas segmentos
+- `"items.**"` -- `**` coincide con cero o más segmentos
 
 ---
 
 ### `useAtomicProps(specs, selector, isEqual?)`
 
-Selector de multiples rutas. Se suscribe a varias rutas y recalcula cuando alguna cambia.
+Selector de múltiples rutas. Se suscribe a varias rutas y recalcula cuando alguna cambia.
 
 ```tsx
 const filtered = useAtomicProps(
@@ -195,7 +195,7 @@ const filtered = useAtomicProps(
 
 ### `useEvent(channel, type, handler, phase?)`
 
-Suscribete a eventos del store desde un componente. No afecta el flujo de eventos --
+Suscríbete a eventos del store desde un componente. No afecta el flujo de eventos --
 fire-and-forget.
 
 ```tsx
@@ -229,13 +229,13 @@ useEvent(
 
 - `'committed'` (por defecto) -- eventos que pasaron el middleware y llegaron a los reducers
 - `'uncommitted'` -- eventos rechazados por el middleware
-- `'all'` -- ambos, con parametro `phase` para distinguir
+- `'all'` -- ambos, con parámetro `phase` para distinguir
 
 ---
 
 ### `useEmit()`
 
-Retorna la funcion `emit` tipada del store (referencia estable).
+Retorna la función `emit` tipada del store (referencia estable).
 
 ```tsx
 const emit = useEmit();
@@ -246,7 +246,7 @@ await emit("counter", "increment", 1);
 
 ### `useSelector(selector, isEqual?)`
 
-Selector de grano grueso via `useSyncExternalStore`. Se re-renderiza cuando el valor
+Selector de grano grueso vía `useSyncExternalStore`. Se re-renderiza cuando el valor
 seleccionado cambia.
 
 ```tsx
@@ -280,8 +280,8 @@ que vayas a renderizar, y deja `getState()` para callbacks y efectos, que es par
 
 ### `useSuspenseAtomicProp(spec, options)`
 
-Version compatible con Suspense de `useAtomicProp`. Lanza una promesa mientras carga, capturada
-por el boundary `<Suspense>` mas cercano.
+Versión compatible con Suspense de `useAtomicProp`. Lanza una promesa mientras carga, capturada
+por el boundary `<Suspense>` más cercano.
 
 ```tsx
 function UserName({ userId }: { userId: string }) {
@@ -303,7 +303,7 @@ function UserName({ userId }: { userId: string }) {
 
 ### `useSuspenseAtomicProps(specs, options)`
 
-Selector Suspense de multiples rutas.
+Selector Suspense de múltiples rutas.
 
 ```tsx
 const stats = useSuspenseAtomicProps(
@@ -318,11 +318,11 @@ const stats = useSuspenseAtomicProps(
 ### Importalos de tu conjunto de hooks, no del barrel
 
 `createYoltra` y `createHooks` devuelven estos dos junto con el resto, ligados al mismo contexto.
-Deliberadamente **no** se exportan desde el barrel del paquete: una copia a nivel de paquete seria
-identica en forma y aun asi lanzaria `useStore must be used inside <StoreProvider>` en tiempo de
-ejecucion cuando el contexto que lee nunca se lleno — un error que los tipos no podian atrapar.
+Deliberadamente **no** se exportan desde el barrel del paquete: una copia a nivel de paquete sería
+idéntica en forma y aun así lanzaría `useStore must be used inside <StoreProvider>` en tiempo de
+ejecución cuando el contexto que lee nunca se lleno — un error que los tipos no podian atrapar.
 Importarlos desde cualquier sitio que no sea el resultado de tu propio `createYoltra`/`createHooks`
-es ahora un error de compilacion, que es el mismo aviso llegando en el momento correcto.
+es ahora un error de compilación, que es el mismo aviso llegando en el momento correcto.
 
 ```tsx
 // store.ts
@@ -332,8 +332,8 @@ export const { store, useAtomicProp, useSuspenseAtomicProp } = createYoltra({ ..
 import { useSuspenseAtomicProp } from "./store";   // ✅ conoce el store
 ```
 
-Los valores en cache tienen alcance por store, asi que dos stores que compartan nombre de reducer
-y ruta mantienen entradas separadas; las utilidades de invalidacion de abajo reciben una ruta y la
+Los valores en cache tienen alcance por store, así que dos stores que compartan nombre de reducer
+y ruta mantienen entradas separadas; las utilidades de invalidación de abajo reciben una ruta y la
 limpian en todos los stores que la hayan cacheado.
 
 ### Utilidades de cache
@@ -359,7 +359,7 @@ clearSuspenseCache();
 
 ## `shallowEqual`
 
-Comparador de igualdad superficial de objetos. Usalo como argumento `isEqual` cuando tu valor
+Comparador de igualdad superficial de objetos. Úsalo como argumento `isEqual` cuando tu valor
 derivado es un objeto plano:
 
 ```tsx
@@ -372,7 +372,7 @@ const todos = useAtomicProp(
 
 ---
 
-## Rendimiento: Antes y Despues
+## Rendimiento: Antes y Después
 
 ### Antes (grano grueso)
 
@@ -384,7 +384,7 @@ function TodoList() {
 }
 ```
 
-### Despues (grano fino con yoltra)
+### Después (grano fino con yoltra)
 
 ```tsx
 // Cada TodoItem se re-renderiza SOLO cuando sus propios datos cambian
@@ -401,14 +401,14 @@ function TodoItem({ index }: { index: number }) {
 }
 ```
 
-[Ver la comparacion completa de flamegraph.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
+[Ver la comparación completa de flamegraph.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
 
 ---
 
 ## Compatibilidad con React 18+
 
 - **Concurrent Mode:** Totalmente compatible. Todos los hooks usan `useSyncExternalStore`.
-- **Strict Mode:** La deduplicacion de eventos previene el doble procesamiento.
+- **Strict Mode:** La deduplicación de eventos previene el doble procesamiento.
 - **Suspense:** `useSuspenseAtomicProp` y `useSuspenseAtomicProps` lanzan promesas para
   boundaries `<Suspense>`.
 
@@ -417,36 +417,36 @@ function TodoItem({ index }: { index: number }) {
 ## Ejemplos
 
 - **[App de Tareas con Profiler](../../examples/v0/yoltra-in-react)** -- CRUD completo con
-  comparacion de flamegraph · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-react)
-- **[Logo Cinetico (3000 particulas)](../../examples/v0/yoltra-kinetic-logo)** -- Suscripciones
+  comparación de flamegraph · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-react)
+- **[Logo Cinético (3000 particulas)](../../examples/v0/yoltra-kinetic-logo)** -- Suscripciones
   independientes por circulo SVG · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/kinetic-logo)
 - **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)** -- estado de cliente + cambio de tema · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)
 
 ---
 
-## Documentacion
+## Documentación
 
-- **[README raiz de yoltra](../../README.md)** --
-  Descripcion general y configuracion rapida
+- **[README raíz de yoltra](../../README.md)** --
+  Descripción general y configuración rápida
 - **[API de @yoltra/core](../core/README.md)**
   -- Store, middleware, efectos, matchers `When`
-- **[Guia de Inicio Rapido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**
+- **[Guia de Inicio Rápido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**
   -- Cinco pasos hacia una app funcional
-- **[Comparacion de Bibliotecas](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**
-  -- Comparacion arquitectonica
+- **[Comparación de Bibliotecas](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**
+  -- Comparación arquitectónica
 
 ---
 
 ## Contribuir
 
-- [Raiz del Monorepo](../../)
-- [Guia de Contribucion](../../CONTRIBUTING.md)
+- [Raíz del Monorepo](../../)
+- [Guia de Contribución](../../CONTRIBUTING.md)
 
 ---
 
 ## Estado
 
-**Release Candidate** -- Las APIs son estables, usadas en produccion, cambios menores posibles
+**Release Candidate** -- Las APIs son estables, usadas en producción, cambios menores posibles
 antes de v1.0.0.
 
 ---
@@ -454,7 +454,7 @@ antes de v1.0.0.
 ## Colecciones normalizadas
 
 `useEntityIds`, `useEntity` y `useEntityField` se emparejan con `createEntityAdapter` de
-`@yoltra/core`. Son envoltorios delgados sobre `useAtomicProp`; el valor esta en que la ruta viene
+`@yoltra/core`. Son envoltorios delgados sobre `useAtomicProp`; el valor está en que la ruta viene
 del adapter en vez de escribirse a mano en un componente, donde nada la verifica.
 
 ```tsx
@@ -472,4 +472,4 @@ function Row({ id }: { id: string }) {
 
 ## Licencia
 
-**MIT** -- Libre para usar en proyectos comerciales y de codigo abierto.
+**MIT** -- Libre para usar en proyectos comerciales y de código abierto.

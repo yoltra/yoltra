@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Translates the five sections the Spanish README was missing: slices that hold a single value, `\"\"` against `\"**\"` for watching a whole slice, saving and restoring state, lists that reorder, and what that costs when measured. The English README carried 44 headings and the Spanish 39, so a reader in Spanish had no documentation at all for root-value slices, for persistence and hydration, or for the entity adapter, which is the answer to the reordering cost the English text spends two sections on. The deduplication and cascade-protection sections were also in the opposite order from the English and now follow it. Heading count, nesting level and order are identical between the two languages.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

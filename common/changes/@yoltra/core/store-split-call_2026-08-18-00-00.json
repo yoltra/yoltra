@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Moves the body of `store.call()` into `store/performCall.ts`, beside the types and the queue it already used. The seam is three members wide, which is what made it extractable: the orchestration mints an id, registers a collector effect, and emits the request, and reaches nothing else on the store. Those three arrive as a named `CallDeps` parameter rather than as the whole instance. `registerEffect` and `emit` are passed as bound references, which is safe because the constructor binds both. `Store.call` keeps its signature and its explicit return type, so nothing about the public surface moves. Pure move: no behaviour, signature or visibility changed, and no test was touched. `Store.ts` drops from 2,902 lines to 2,788.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

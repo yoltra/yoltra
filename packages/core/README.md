@@ -813,24 +813,33 @@ individual fields edited is better off as an array today.
 
 ## Performance
 
-| Metric             | Value                                     |
-| ------------------ | ----------------------------------------- |
-| **Bundle size**    | 9.2 KB for the store (minified + gzipped) |
-| **Tree-shakeable** | Yes (ES modules)                          |
-| **Dependencies**   | Zero                                      |
-| **TypeScript**     | Full type definitions included            |
+| Metric             | Value                                  |
+| ------------------ | -------------------------------------- |
+| **Bundle size**    | Measured every build — see table below |
+| **Tree-shakeable** | Yes (ES modules)                       |
+| **Dependencies**   | Zero                                   |
+| **TypeScript**     | Full type definitions included         |
 
 Bundle size is checked, not asserted: `rush size` bundles the package the way a consumer
 would — tree-shaken, minified, gzipped — and fails when it exceeds the budget declared in
-`package.json`.
+`package.json`. The table below is written by that same check, so it cannot drift from what
+was measured; editing it by hand fails CI.
 
 The number that matters is what you import, not what the package exports:
 
-| Import                              | Size    | Budget |
-| ----------------------------------- | ------- | ------ |
-| `{ createStore }`                   | 9.2 KB  | 14 KB  |
-| `{ createStore, hydrate, persist }` | 10.7 KB | 16 KB  |
-| everything                          | 12.1 KB | 18 KB  |
+<!-- size-table:start -->
+| Import | Size | Budget |
+| --- | --- | --- |
+| `{ createStore }` | 8.3 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 9.7 KB | 16 KB |
+| everything | 11.2 KB | 18 KB |
+<!-- size-table:end -->
+
+These are **production** figures — what you ship once your bundler defines
+`NODE_ENV=production` and the development-only guards drop out. The budget column is the
+ceiling `rush size` enforces, and it is checked against a development build instead, which is
+the larger of the two: dev-only code cannot grow unnoticed just because it never reaches a
+user. So the headroom implied here is deliberately conservative.
 
 The **gap between rows** is the tree-shaking claim, and it is what to watch: persistence adds
 1.5 KB to the people who import it and nothing to anyone else, and the whole barrel is 2.9 KB

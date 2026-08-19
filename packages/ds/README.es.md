@@ -203,12 +203,14 @@ de `document.body`, con lo que en la práctica eso significa un transform sobre 
 Medido como lo publica un consumidor — empaquetado, sacudido, minificado, comprimido con gzip — y
 verificado por `rush size` en cada build.
 
-| Import | Tamaño |
-| --- | --- |
-| `{ Button, Card, Stack, Text }` | 2.4 KB |
-| todo | 5.4 KB |
-| `{ Dialog }` desde `/client` | 1.9 KB |
-| todo `/client` | 4.5 KB |
+<!-- size-table:start -->
+| Import | Tamaño | Presupuesto |
+| --- | --- | --- |
+| `{ Button, Card, Stack, Text }` | 2.3 KB | 4 KB |
+| todo | 5.3 KB | 8 KB |
+| `{ Dialog }` desde `/client` | 1.8 KB | 3 KB |
+| todo `/client` | 4.3 KB | 5.5 KB |
+<!-- size-table:end -->
 
 La distancia entre las filas de barrel y las de import nombrado es el tree-shaking funcionando —
 `{ Dialog }` no se movió cuando aterrizó el nivel anclado, aunque el barrel de cliente creció dos
