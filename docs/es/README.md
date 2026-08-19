@@ -7,9 +7,8 @@
 ![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
 ![License](https://img.shields.io/npm/l/@yoltra/core)
 
-**Estado reactivo de grano fino, basado en eventos (event-sourced), con devtools de viaje en el
-tiempo — y federación tipada entre stores a través de pestañas, micro-frontends y servicios
-Node. Para aplicaciones complejas e interactivas.**
+**Estado reactivo de grano fino, basado en eventos (event-sourced), con devtools que incluyen viaje en el
+tiempo. Para aplicaciones complejas e interactivas.**
 
 ![Kinetic Logo Demo](../../assets/yoltra-dots.gif)
 
@@ -66,8 +65,7 @@ La suscripción _es_ la optimización.
 > **Yoltra** es un **ecosistema de estado basado en eventos** que entrega re-renders de grano
 > fino _y_ un log de eventos totalmente observable y reproducible.
 > **A diferencia de** Redux (observable, pero grueso y verboso) **o** Jotai, Valtio y signals
-> (de grano fino, pero opacos), Yoltra rechaza ese intercambio — y además extiende el mismo
-> modelo de eventos a pestañas, micro-frontends y servicios Node con **Federación**.
+> (de grano fino, pero opacos), Yoltra rechaza ese intercambio.
 
 ---
 
@@ -88,9 +86,7 @@ construido para darte las cuatro a la vez --- y en esa intersección es donde vi
 El campo de grano fino (Jotai, Valtio, signals) tiene devtools pobres y no tiene log de eventos. El
 campo basado en eventos (Redux) tiene grandes devtools pero reactividad gruesa y boilerplate.
 **Yoltra es el único lugar donde obtienes reactividad de grano fino, un log de eventos con viaje en
-el tiempo real, setup de una llamada y tipado completo --- juntos.** Y solo Yoltra continúa más
-allá del árbol de componentes: los mismos eventos tipados se federan entre pestañas,
-micro-frontends y servicios Node. Una comparación más profunda y honesta está en la
+el tiempo real, setup de una llamada y tipado completo --- juntos.** Una comparación más profunda y honesta está en la
 [comparación de librerías](./design/state-management-library-comparison.md).
 
 ---
@@ -268,8 +264,7 @@ Yoltra está en etapa de **Release Candidate** (v0.3.0):
 
 - Las APIs de core y React son estables y se usan en aplicaciones en producción.
 - Los tipos de TypeScript son estrictos y completos; el CI hace cumplir umbrales de cobertura, presupuestos de tamaño de bundle y benchmarks.
-- La suite de DevTools se conecta sin configuración en el navegador, y además ofrece un panel embebible y una UI de terminal para Node.
-- **La Federación está en acceso temprano** _(v0.1, MIT, versionada de forma independiente)_: se publica en npm con el tren de releases regular; el protocolo de cable y las APIs pueden evolucionar antes de 1.0.
+- La suite de DevTools se conecta sin configuración en el navegador, y además ofrece un panel embebible y una UI de terminal.
 - Las APIs menores aún pueden evolucionar antes de v1.0.
 
 Los comentarios y PRs son bienvenidos.
@@ -278,9 +273,8 @@ Los comentarios y PRs son bienvenidos.
 
 ## Licencia
 
-**MIT** --- libre para usar en proyectos comerciales y de código abierto. Cada paquete
-`@yoltra/*` publicado --- incluida la suite de federación --- se distribuye bajo la misma
-licencia MIT. Consulta [LICENSE](https://github.com/yoltra/yoltra/blob/main/LICENSE) para más
+**MIT**: libre para usar en proyectos comerciales y de código abierto. Cada paquete
+`@yoltra/*` publicado se distribuye bajo la misma licencia MIT. Consulta [LICENSE](https://github.com/yoltra/yoltra/blob/main/LICENSE) para más
 detalles.
 
 **Marcas registradas:** «Yoltra» y el logo de Yoltra son marcas. La licencia MIT cubre el código, no las marcas --- consulta

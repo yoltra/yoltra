@@ -11,7 +11,7 @@
 **Hooks de React para [yoltra](../../README.md) con
 suscripciones de grano fino por ruta.**
 
-Suscribete a `"items.0.title"` o `"items.*.done"` -- el componente se re-renderiza solo cuando
+Suscríbete a `"items.0.title"` o `"items.*.done"` -- el componente se re-renderiza solo cuando
 esa ruta exacta cambia. Sin selectores, sin memoización, sin optimización manual.
 
 [Ver la comparación de flamegraph (Redux vs yoltra).](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
@@ -77,7 +77,7 @@ export const { store, useAtomicProp, useEmit, StoreProvider } = createYoltra({
 ### 2. Usa los hooks — sin provider
 
 Los hooks usan por defecto el store de arriba, así que puedes renderizar componentes directamente.
-Suscribete con una spec **`{ reducer, property }`**: el `property` con puntos nombra la ruta exacta
+Suscríbete con una spec **`{ reducer, property }`**: el `property` con puntos nombra la ruta exacta
 a leer.
 
 ```tsx
@@ -195,7 +195,7 @@ const filtered = useAtomicProps(
 
 ### `useEvent(channel, type, handler, phase?)`
 
-Suscribete a eventos del store desde un componente. No afecta el flujo de eventos --
+Suscríbete a eventos del store desde un componente. No afecta el flujo de eventos --
 fire-and-forget.
 
 ```tsx

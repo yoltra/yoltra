@@ -68,7 +68,7 @@ await store.emit("ui", "toast", { message: "Saved!" });
 
 ### Suscripciones de grano fino vía `connect()`
 
-Suscribete a rutas de estado exactas usando notación de puntos. Soporta wildcards `*` (un
+Suscríbete a rutas de estado exactas usando notación de puntos. Soporta wildcards `*` (un
 segmento) y `**` (cero o más segmentos):
 
 ```typescript
@@ -87,6 +87,63 @@ store.connect({ reducer: "todos", property: "items.**" }, (change) =>
   console.log("items tree changed at", change.path),
 );
 ```
+
+### Slices que contienen un solo valor
+
+Una slice no tiene por qué ser un objeto. Un primitivo, un `Map`, un `Set` o una `Date` es un
+estado de slice válido, y se confirma igual que cualquier otro:
+
+```typescript
+const store = createStore({
+  name: "session",
+  reducer: {
+    token: {
+      state: null as string | null,
+      when: { keys: [["auth", "login"]] },
+      reducer: (_state, event) => event.payload.token,
+    },
+  },
+});
+
+await store.emit("auth", "login", { token: "abc123" });
+store.getState().token; // "abc123"
+```
+
+Una slice así no tiene ninguna propiedad debajo, así que sus cambios se reportan en la **raíz de
+la slice**, la ruta vacía. Suscríbete a ella con `property: ""`:
+
+```typescript
+store.connect({ reducer: "token", property: "" }, (change) =>
+  console.log("token:", change.oldValue, " --> ", change.newValue),
+);
+```
+
+Los tipos conocen la diferencia. `property` en una slice de valor raíz acepta `""` y nada más,
+porque no hay ninguna clave que direccionar, y el valor vuelve correctamente tipado:
+
+```typescript
+const token = useAtomicProp({ reducer: "token", property: "" }); // string | null
+```
+
+### `""` frente a `"**"`: observar una slice completa
+
+Dos suscripciones que suenan iguales y no lo son:
+
+| Patrón | Se dispara cuando |
+|---|---|
+| `""` | el **valor completo** de la slice se reemplaza: cambia un primitivo, se reconstruye un `Map`, una slice de objeto pasa a `null` |
+| `"**"` | cambia **cualquier cosa** dentro de la slice, a cualquier profundidad. También coincide con la raíz, porque `**` coincide con cero segmentos |
+| `"*"` | exactamente un nivel más abajo. Nunca coincide con la raíz |
+
+**`"**"` es la suscripción a la slice completa, y funciona para toda slice sin importar su forma.**
+Recurre a `""` solo cuando te refieras al valor raíz en sí; en una slice de objeto se queda
+callada, porque una slice así reporta sus cambios en las hojas.
+
+`Map` y `Set` se comparan por referencia, no por entrada: un reducer que devuelve un `Map` nuevo
+es un cambio, mutar uno en el sitio no lo es. Eso se desprende del contrato de inmutabilidad en
+vez de ser un caso especial. Construye una colección nueva en lugar de mutar la almacenada. Es
+también la razón de que no tengan rutas debajo: `"byId"` es suscribible, `"byId.get"` no, y los
+tipos lo dicen.
 
 ### Inmutabilidad
 
@@ -244,7 +301,7 @@ const off2 = store.onEffect("ui", "save", async (payload, getState, emit) => {
 
 ## Suscripciones a Eventos
 
-Suscribete a eventos (no al estado) desde la capa de vista. Útil para notificaciones,
+Suscríbete a eventos (no al estado) desde la capa de vista. Útil para notificaciones,
 animaciones y reaccionar a eventos rechazados:
 
 ```typescript
@@ -320,7 +377,7 @@ result.rejected?.reason;
 
 Rechazar **no** es lo mismo que devolver el estado sin cambios, que es indistinguible de "este
 evento no me concierne". Tampoco es lo mismo que lanzar: un reducer que lanza tiene un bug, así
-que su slice queda aislada y las demás si escriben, mientras que un reducer que rechaza ha tomado
+que su slice queda aislada y las demás sí escriben, mientras que un reducer que rechaza ha tomado
 una decisión a la que cede el evento entero.
 
 `emit` resuelve a un `EmitResult` cuando terminan los efectos:
@@ -443,9 +500,31 @@ DevTools, o la entrega `immediate` de arriba. La ausencia es la señal, en vez d
 
 ---
 
+## Deduplicación de Eventos (opt-in)
+
+La deduplicación está **desactivada por defecto** — yoltra nunca descarta en silencio eventos
+idénticos legítimos y rápidos (doble-clics, `+1` repetidos). Actívala solo cuando de verdad quieras
+coalescer:
+
+```typescript
+// Por contenido: coalescer (channel, type, payload) identicos dentro de una ventana.
+const store = createStore({
+  name: "App",
+  reducer: {
+    /* ... */
+  },
+  dedupWindowMs: 100, // default: 0 (desactivado)
+});
+
+// Por identidad: dedup por una clave explicita — p. ej. un doble-invoke de React Strict Mode en un efecto.
+await store.emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page}` });
+```
+
+---
+
 ## Protección contra cascadas (activada por defecto)
 
-Dos consumidores conectados entre si — un suscriptor que emite lo que su propio reducer atiende, o
+Dos consumidores conectados entre sí — un suscriptor que emite lo que su propio reducer atiende, o
 dos slices que atienden los eventos de la otra — producen una cadena de eventos sin final. La cola
 de reducción se drena de forma **síncrona**, así que eso no es un programa lento: es una pestana
 congelada, o un core al 100%, sin error ni stack al que apuntar.
@@ -480,28 +559,6 @@ estuviera emitiendo, que es justo el fallo inatribuible que el tope existe para 
 forma legítima; la profundidad es lo que la distingue de un ciclo, y un bucle normal de
 `store.emit` nunca acumula profundidad. `maxTransitionsPerDrain` acota el *ancho* y por eso viene
 desactivado.
-
----
-
-## Deduplicación de Eventos (opt-in)
-
-La deduplicación esta **desactivada por defecto** — yoltra nunca descarta en silencio eventos
-idénticos legitimos y rápidos (doble-clics, `+1` repetidos). Actívala solo cuando de verdad quieras
-coalescer:
-
-```typescript
-// Por contenido: coalescer (channel, type, payload) identicos dentro de una ventana.
-const store = createStore({
-  name: "App",
-  reducer: {
-    /* ... */
-  },
-  dedupWindowMs: 100, // default: 0 (desactivado)
-});
-
-// Por identidad: dedup por una clave explicita — p. ej. un doble-invoke de React Strict Mode en un efecto.
-await store.emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page}` });
-```
 
 ---
 
@@ -639,12 +696,107 @@ store.registerEffect({
 
 ---
 
+## Guardar y restaurar estado
+
+Dos funciones, porque las dos mitades ocurren en lados opuestos de la existencia del store.
+`hydrate` produce el *estado inicial de las slices*, así que el store nace con él:
+
+```ts
+import { createStore, createWebStorageAdapter, hydrate, persist, withHydration } from '@yoltra/core';
+
+const adapter = createWebStorageAdapter(localStorage);
+const hydration = await hydrate({ key: 'app', adapter, version: 3 });
+
+const store = createStore({
+  name: 'App',
+  reducer: withHydration({ todos: todosSpec, ui: uiSpec }, hydration),
+});
+
+const stop = persist(store, { key: 'app', adapter, version: 3, slices: ['todos'] });
+```
+
+Restaurar *después* de construir es la alternativa obvia y la equivocada: aplicar una
+instantánea a un store vivo emite un cambio en todas las rutas, lo que en el arranque es un
+parpadeo, una ráfaga de entradas de instrumentación que describen cambios que nadie hizo, y
+efectos observando una transición que nunca ocurrió.
+
+**Nada lanza en el arranque.** Un payload ausente, ilegible o no migrable recae en los valores
+por defecto que declaraste y se reporta por `onError`. Un store que no arranca porque el
+almacenamiento guarda JSON obsoleto es peor que uno que arranca de cero, y un disco lleno no
+debería tumbar una página, así que los fallos de escritura se reportan igual en vez de lanzarse.
+
+**Las versiones que no coinciden se rechazan, no se asumen.** Los reducers cambian, y una
+instantánea escrita contra una forma anterior puede no ser estado válido para este build en
+absoluto. Aporta `migrate` para actualizarla, o se descarta.
+
+Las escrituras las dirige la instrumentación, así que un cambio confinado a una slice que no
+estás persistiendo no cuesta nada, y una ráfaga se agrupa en una sola escritura. `Map`, `Set`,
+`Date`, `BigInt`, `undefined` y las referencias circulares sobreviven al viaje de ida y vuelta:
+`JSON.stringify` no falla con eso, los destruye en silencio.
+
+Para un render en servidor, `dehydrate(store, { version })` produce el payload y
+`hydrate({ source, version })` lo consume.
+
+---
+
+## Listas que se reordenan
+
+La notificación por ruta es posicional para los arrays. `items.0.title` nombra un *hueco*, no
+una cosa, así que `unshift`, `splice(0, 1)` y `sort` mueven casi todos los elementos a un hueco
+distinto, y el diff reporta correctamente que casi todas las hojas cambiaron. Insertar una fila
+al principio de mil despierta a mil suscriptores.
+
+Eso es honesto en vez de ruidoso: con rutas posicionales el valor de casi cada índice cambió de
+verdad. El remedio es la forma del estado, no un diff que se calle.
+
+```ts
+import { createEntityAdapter } from '@yoltra/core';
+
+const todos = createEntityAdapter<Todo>();
+
+// state is { ids: [...], entities: { abc: {...} } }
+todos.updateOne(state, { id: 'abc', changes: { done: true } });
+
+// and the adapter hands out the paths, so they are never typed by hand
+todos.pathTo('abc', 'title');  // "entities.abc.title"
+todos.idsPath;                 // "ids"
+```
+
+`entities.abc.title` sobrevive a insertar, eliminar y reordenar. Un contenedor de lista se
+suscribe a `ids` y reordena sus hijos; las filas se suscriben a su propia entidad y siguen
+dormidas durante un `sort`.
+
+`ids` sigue siendo un array, así que un reordenamiento todavía reporta `ids.0`, `ids.1` y así
+sucesivamente. Ese costo queda confinado, no eliminado. Lo que ganas es un costo proporcional a
+lo que realmente cambió.
+
+Para una lista pequeña que solo crece por el final, `items.0.title` está bien y es más simple.
+El adapter es para colecciones que se reordenan, o que son lo bastante grandes como para que la
+diferencia se note.
+
+### Lo que cuesta, medido
+
+Con 1000 filas, hacer el diff después de una inserción al principio cuesta 1200 µs para un array
+y 371 µs normalizado, y el array reporta alrededor de mil rutas cambiadas frente a dos. Ese es
+el caso para el que existe el adapter.
+
+Una actualización de un solo campo va al revés: 20 µs para el array frente a 470 µs normalizado.
+`detectChangedProps` indexa un array pero enumera las claves de un objeto, construyendo dos
+arrays de claves y un `Set` por comparación, así que un mapa de entidades ancho es más caro de
+recorrer aunque casi nada dentro se haya movido. Los números están en `benchmarks/`, y cerrar
+esa brecha es trabajo con seguimiento, no una propiedad de normalizar como tal.
+
+Así que: normaliza las colecciones que se reordenan o que rotan mucho. Una colección grande a la
+que solo se le editan campos individuales está mejor como array hoy.
+
+---
+
 ## Rendimiento
 
 | Métrica               | Valor                                     |
 | --------------------- | ----------------------------------------- |
 | **Tamaño del bundle** | Medido en cada build — ver la tabla abajo |
-| **Tree-shakeable**    | Si (módulos ES)                           |
+| **Tree-shakeable**    | Sí (módulos ES)                           |
 | **Dependencias**      | Cero                                      |
 | **TypeScript**        | Definiciones de tipos completas incluidas |
 

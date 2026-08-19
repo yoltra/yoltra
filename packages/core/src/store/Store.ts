@@ -2193,13 +2193,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * the terminal event from ever being sent. Un-iterated progress therefore buffers to
    * `highWaterMark` and is then counted on {@link CallHandle.dropped} rather than blocking.
    *
-   * **This is a local primitive.** A reply cannot reach it from a federated peer: the federation
-   * envelope carries neither `meta` nor `parentId`, and ingress namespaces the channel, so
-   * neither correlation nor the reply route survives the hop. That is not an oversight to route
-   * around — federation answers cross-node request/reply with typed peer *queries*, which are
-   * gated by a responder policy that may concede or deny. A call that federated silently would
-   * turn that access decision into an accident of which channel someone named. Ask a peer with a
-   * query; use `call` within a process.
+   * **This is a local primitive.**
    *
    * @example Timeout is idle, not total
    * ```ts
