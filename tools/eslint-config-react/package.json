@@ -23,6 +23,7 @@
   ],
   "scripts": {
     "build": "exit 0",
+    "test": "node ./smoke.test.mjs",
     "lint": "exit 0",
     "prepublishOnly": "node ../../common/scripts/copy-license.cjs"
   },

@@ -27,7 +27,7 @@
     "build": "vite build",
     "package": "npm run build && node scripts/pack-extension.mjs",
     "pack": "node scripts/pack-extension.mjs",
-    "test": "vitest --watch=false",
+    "test": "vitest --coverage --watch=false",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

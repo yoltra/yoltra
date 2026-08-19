@@ -29,7 +29,7 @@
   ],
   "scripts": {
     "build": "vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types",
-    "test": "vitest --watch=false",
+    "test": "vitest --coverage --watch=false",
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
     "docs": "rushx docs:js && rushx docs:md && rushx docs:stamp",
