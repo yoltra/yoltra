@@ -1,6 +1,17 @@
 # Change Log - @yoltra/devtools-browser-agent
 
-This log was last generated on Tue, 18 Aug 2026 01:10:17 GMT and should not be manually modified.
+This log was last generated on Wed, 19 Aug 2026 05:30:50 GMT and should not be manually modified.
+
+## 0.7.0
+Wed, 19 Aug 2026 05:30:50 GMT
+
+### Minor changes
+
+- Builds every published bundle for es2022 instead of es2019 or es2020. Class fields now emit natively rather than through a downlevel helper: `@yoltra/core` alone carried 55 `__publicField` calls plus a helper preamble that every consumer paid for on every import. `{ createStore }` drops from 9.3 KB to 9.1 KB minified and gzipped, the persistence and barrel imports and `@yoltra/react` each drop 0.1 KB, and `@yoltra/ds`'s client barrel drops 0.1 KB. No source changed and the emitted declaration files are byte-identical, so behaviour, design and type inference are untouched. The floor this sets (Chrome 94, Safari 15.4, Firefox 93, all shipped by early 2022) is one the suite already required in practice: anything depending on core inherits core's target, so the lower numbers elsewhere advertised support the suite could not deliver.
+
+### Patches
+
+- Turns on coverage measurement and a threshold. The package ran its tests but never measured what they reached, so nothing could tell whether a change left code unexercised. Thresholds are set at the measured floor per metric, which is the convention the rest of the repository already uses: a gate that fails on the day it lands is one people learn to bypass, while a gate at today's number still catches tomorrow's regression. Where the figure is low it is left low and commented rather than raised by narrowing what gets measured, because a threshold over a hand-picked subset reports on the subset and not on the package.
 
 ## 0.6.0
 Tue, 18 Aug 2026 01:10:17 GMT

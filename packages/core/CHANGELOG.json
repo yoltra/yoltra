@@ -2,6 +2,41 @@
   "name": "@yoltra/core",
   "entries": [
     {
+      "version": "0.7.0",
+      "tag": "@yoltra/core_v0.7.0",
+      "date": "Wed, 19 Aug 2026 05:30:50 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Trims the licence banner to package, version, copyright holder and licence. It previously restated the MIT terms in prose and pointed at the LICENSE file, which every tarball already ships through `prepublishOnly`, and core, react and ds carried two more lines than devtools-protocol and devtools-server did. `@yoltra/core`'s `{ createStore }` goes from 9.1 KB to 9.0 KB gated, `@yoltra/react`'s barrel from 5.6 KB to 5.5 KB and 3.4 KB to 3.3 KB shipped, and `@yoltra/ds`'s barrel from 5.4 KB to 5.3 KB."
+          },
+          {
+            "comment": "Corrects the accentuation of the Spanish documentation. Four documents had been written almost entirely without accents: the request/reply guide, the library comparison, and the core and react READMEs carried between 0 and 5 accented characters per thousand words, against the 34 to 103 every other Spanish document in the repository carries. Unaccented `peticion`, `funcion`, `codigo`, `tamano` and `arquitectonica` are misspellings in Spanish, not a house style, and they read as machine translation to the people the translation exists for. Roughly 400 corrections. Words whose accent depends on meaning were resolved one at a time rather than by pattern: `esta` takes the accent as a verb and not as a demonstrative, `como` only when it introduces an indirect question, `cambio` and `llamo` only as preterites, and `aun asi`, `solo` and `porque` correctly keep none. Code spans, link targets and URLs are byte-identical, so no identifier moved."
+          },
+          {
+            "comment": "Translates the five sections the Spanish README was missing: slices that hold a single value, `\"\"` against `\"**\"` for watching a whole slice, saving and restoring state, lists that reorder, and what that costs when measured. The English README carried 44 headings and the Spanish 39, so a reader in Spanish had no documentation at all for root-value slices, for persistence and hydration, or for the entity adapter, which is the answer to the reordering cost the English text spends two sections on. The deduplication and cascade-protection sections were also in the opposite order from the English and now follow it. Heading count, nesting level and order are identical between the two languages."
+          },
+          {
+            "comment": "Removes the em-dash from the documents a first-time reader meets. Readers increasingly treat a high em-dash density as a marker of machine-generated text and disengage before judging the content, which for an open-source project is a cost paid before anyone has read a line of the code. The replacements are ordinary punctuation chosen per instance: a full stop where the dash joined two independent clauses, a colon where it introduced a definition or a list, parentheses where a pair of them wrapped an aside. No claim, number or code sample changed. The Spanish files used a spaced double hyphen where the English used an em-dash, which is the same construction in different clothing and is gone too."
+          },
+          {
+            "comment": "Publishes the size a consumer actually ships, and makes the README table generated rather than hand-written. `rush size` now measures every entry twice — once plainly, once with `NODE_ENV` defined as `\"production\"` — and writes the second figure into the table between the `<!-- size-table:start -->` markers in README.md and README.es.md. The budget stays pinned to the first, larger measurement, so dev-only code still cannot grow unnoticed. `{ createStore }` is 8.3 KB rather than the 9.2 KB previously published: roughly 9% of that gap was development-only guards a production build drops, and the rest the es2022 target. `rushx size` fails when the committed table does not match the measurement, which is the guard the budget alone could never give — the budget answers \"has this exploded?\", never \"is what we tell people true?\". The Spanish README gained the per-import table it never had; it previously carried a headline figure with nothing behind it."
+          },
+          {
+            "comment": "Moves the body of `store.call()` into `store/performCall.ts`, beside the types and the queue it already used. The seam is three members wide, which is what made it extractable: the orchestration mints an id, registers a collector effect, and emits the request, and reaches nothing else on the store. Those three arrive as a named `CallDeps` parameter rather than as the whole instance. `registerEffect` and `emit` are passed as bound references, which is safe because the constructor binds both. `Store.call` keeps its signature and its explicit return type, so nothing about the public surface moves. Pure move: no behaviour, signature or visibility changed, and no test was touched. `Store.ts` drops from 2,902 lines to 2,788."
+          },
+          {
+            "comment": "Moves the six functions that never touched an instance field out of `Store.ts` and into `store/matching.ts` and `store/paths.ts`. `matchesWhen`, `getMiddlewareFunction`, `getMiddlewareWhen` and `normalizeEventKeys` become free functions and their call sites lose the `this.`; `getAtPath` and `buildAncestorPaths` keep their members, because `Store.buildAncestorPaths` is public API in the committed reference and a test replaces `getAtPath` on the instance to count the walks a change description costs, which only works while the callers reach it through `this`. Pure moves: no signature, visibility or behaviour changed. The proof is that regenerating the API reference produced only `Defined in:` line-number links and not one other difference, with no page added or removed. `Store.ts` drops from 3,018 lines to 2,902."
+          }
+        ],
+        "minor": [
+          {
+            "comment": "Builds every published bundle for es2022 instead of es2019 or es2020. Class fields now emit natively rather than through a downlevel helper: `@yoltra/core` alone carried 55 `__publicField` calls plus a helper preamble that every consumer paid for on every import. `{ createStore }` drops from 9.3 KB to 9.1 KB minified and gzipped, the persistence and barrel imports and `@yoltra/react` each drop 0.1 KB, and `@yoltra/ds`'s client barrel drops 0.1 KB. No source changed and the emitted declaration files are byte-identical, so behaviour, design and type inference are untouched. The floor this sets (Chrome 94, Safari 15.4, Firefox 93, all shipped by early 2022) is one the suite already required in practice: anything depending on core inherits core's target, so the lower numbers elsewhere advertised support the suite could not deliver."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.6.0",
       "tag": "@yoltra/core_v0.6.0",
       "date": "Tue, 18 Aug 2026 01:10:17 GMT",

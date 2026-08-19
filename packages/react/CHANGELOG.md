@@ -1,6 +1,19 @@
 # Change Log - @yoltra/react
 
-This log was last generated on Tue, 18 Aug 2026 01:10:17 GMT and should not be manually modified.
+This log was last generated on Wed, 19 Aug 2026 05:30:50 GMT and should not be manually modified.
+
+## 0.7.0
+Wed, 19 Aug 2026 05:30:50 GMT
+
+### Minor changes
+
+- Builds every published bundle for es2022 instead of es2019 or es2020. Class fields now emit natively rather than through a downlevel helper: `@yoltra/core` alone carried 55 `__publicField` calls plus a helper preamble that every consumer paid for on every import. `{ createStore }` drops from 9.3 KB to 9.1 KB minified and gzipped, the persistence and barrel imports and `@yoltra/react` each drop 0.1 KB, and `@yoltra/ds`'s client barrel drops 0.1 KB. No source changed and the emitted declaration files are byte-identical, so behaviour, design and type inference are untouched. The floor this sets (Chrome 94, Safari 15.4, Firefox 93, all shipped by early 2022) is one the suite already required in practice: anything depending on core inherits core's target, so the lower numbers elsewhere advertised support the suite could not deliver.
+
+### Patches
+
+- Trims the licence banner to package, version, copyright holder and licence. It previously restated the MIT terms in prose and pointed at the LICENSE file, which every tarball already ships through `prepublishOnly`, and core, react and ds carried two more lines than devtools-protocol and devtools-server did. `@yoltra/core`'s `{ createStore }` goes from 9.1 KB to 9.0 KB gated, `@yoltra/react`'s barrel from 5.6 KB to 5.5 KB and 3.4 KB to 3.3 KB shipped, and `@yoltra/ds`'s barrel from 5.4 KB to 5.3 KB. Also adds `size:write`, so the script exists in every package that declares a budget rather than only in core.
+- Corrects the accentuation of the Spanish documentation. Four documents had been written almost entirely without accents: the request/reply guide, the library comparison, and the core and react READMEs carried between 0 and 5 accented characters per thousand words, against the 34 to 103 every other Spanish document in the repository carries. Unaccented `peticion`, `funcion`, `codigo`, `tamano` and `arquitectonica` are misspellings in Spanish, not a house style, and they read as machine translation to the people the translation exists for. Roughly 400 corrections. Words whose accent depends on meaning were resolved one at a time rather than by pattern: `esta` takes the accent as a verb and not as a demonstrative, `como` only when it introduces an indirect question, `cambio` and `llamo` only as preterites, and `aun asi`, `solo` and `porque` correctly keep none. Code spans, link targets and URLs are byte-identical, so no identifier moved.
+- Removes the em-dash from the documents a first-time reader meets. Readers increasingly treat a high em-dash density as a marker of machine-generated text and disengage before judging the content, which for an open-source project is a cost paid before anyone has read a line of the code. The replacements are ordinary punctuation chosen per instance: a full stop where the dash joined two independent clauses, a colon where it introduced a definition or a list, parentheses where a pair of them wrapped an aside. No claim, number or code sample changed. The Spanish files used a spaced double hyphen where the English used an em-dash, which is the same construction in different clothing and is gone too.
 
 ## 0.6.0
 Tue, 18 Aug 2026 01:10:17 GMT

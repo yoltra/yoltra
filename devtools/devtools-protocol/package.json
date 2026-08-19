@@ -1,6 +1,6 @@
 {
   "name": "@yoltra/devtools-protocol",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Protocol types, message definitions, and utilities for Yoltra DevTools",
   "license": "MIT",
   "author": {

@@ -1,6 +1,13 @@
 # Change Log - @yoltra/devtools-cli
 
-This log was last generated on Tue, 18 Aug 2026 01:10:17 GMT and should not be manually modified.
+This log was last generated on Wed, 19 Aug 2026 05:30:50 GMT and should not be manually modified.
+
+## 0.7.0
+Wed, 19 Aug 2026 05:30:50 GMT
+
+### Patches
+
+- Turns on coverage measurement and a threshold. The package ran its tests but never measured what they reached, so nothing could tell whether a change left code unexercised. Thresholds are set at the measured floor per metric, which is the convention the rest of the repository already uses: a gate that fails on the day it lands is one people learn to bypass, while a gate at today's number still catches tomorrow's regression. Where the figure is low it is left low and commented rather than raised by narrowing what gets measured, because a threshold over a hand-picked subset reports on the subset and not on the package.
 
 ## 0.6.0
 Tue, 18 Aug 2026 01:10:17 GMT
