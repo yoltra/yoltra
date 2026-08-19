@@ -267,8 +267,8 @@ export interface EmitOptions {
    * Use this exact id for the event instead of generating one.
    *
    * @remarks
-   * Intended for **idempotent re-emission**: a caller replaying an event from elsewhere (a
-   * peer store, a durable log) can preserve the original id so the same logical event keeps
+   * Intended for **idempotent re-emission**: a caller replaying an event from elsewhere (another
+   * store, a durable log) can preserve the original id so the same logical event keeps
    * one identity everywhere, which makes it traceable across systems and in DevTools.
    *
    * The store does **not** enforce uniqueness — supplying a duplicate id does not dedupe the
@@ -728,8 +728,8 @@ export interface StoreInstance<
    *
    * @remarks
    * Awaitable for the terminal reply, async-iterable for progress. See the implementation on
-   * {@link Store.call} for the full contract — correlation, backpressure, timeouts, and why it
-   * is a local primitive rather than something that federates.
+   * {@link Store.call} for the full contract: correlation, backpressure, timeouts, and why it
+   * is a local primitive.
    */
   call<C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,

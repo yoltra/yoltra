@@ -102,8 +102,8 @@ Sends a request and waits for the reply, correlating the two automatically.
 #### Remarks
 
 Awaitable for the terminal reply, async-iterable for progress. See the implementation on
-[Store.call](../classes/Store.md#call) for the full contract — correlation, backpressure, timeouts, and why it
-is a local primitive rather than something that federates.
+[Store.call](../classes/Store.md#call) for the full contract: correlation, backpressure, timeouts, and why it
+is a local primitive.
 
 ***
 

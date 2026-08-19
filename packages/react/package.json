@@ -55,7 +55,7 @@
     "README.md"
   ],
   "engines": {
-    "node": ">=18.18"
+    "node": ">=18"
   },
   "peerDependencies": {
     "@yoltra/core": "^0.6.0",

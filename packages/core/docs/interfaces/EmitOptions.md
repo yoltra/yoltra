@@ -40,8 +40,8 @@ Use this exact id for the event instead of generating one.
 
 #### Remarks
 
-Intended for **idempotent re-emission**: a caller replaying an event from elsewhere (a
-peer store, a durable log) can preserve the original id so the same logical event keeps
+Intended for **idempotent re-emission**: a caller replaying an event from elsewhere (another
+store, a durable log) can preserve the original id so the same logical event keeps
 one identity everywhere, which makes it traceable across systems and in DevTools.
 
 The store does **not** enforce uniqueness — supplying a duplicate id does not dedupe the

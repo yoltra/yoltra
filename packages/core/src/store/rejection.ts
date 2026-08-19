@@ -7,8 +7,8 @@
  *
  * @remarks
  * `Symbol.for` rather than `Symbol()`, so the brand survives two copies of this package meeting
- * at runtime — a duplicated dependency, a federated bundle, a consumer that pinned an older
- * minor. With a unique symbol the check would silently answer `false` across that boundary and a
+ * at runtime — a duplicated dependency, a bundle that inlined a second copy, a consumer that
+ * pinned an older minor. With a unique symbol the check would silently answer `false` across that boundary and a
  * refusal would read as ordinary state, which is the failure this whole feature exists to end.
  *
  * @internal

@@ -251,9 +251,9 @@ describe("the Rejection sentinel", () => {
   });
 
   it("is branded so a second copy of the package still recognises it", () => {
-    // `Symbol.for`, not `Symbol()`. A duplicated dependency or a federated bundle can put two
-    // copies of this module in one process; with a unique symbol the check would answer false
-    // across that boundary and a refusal would read as ordinary state.
+    // `Symbol.for`, not `Symbol()`. A duplicated dependency or a bundle that inlined a second
+    // copy can put two copies of this module in one process; with a unique symbol the check
+    // would answer false across that boundary and a refusal would read as ordinary state.
     const foreign = { [Symbol.for("yoltra.rejected")]: true, reason: "from elsewhere" };
     expect(isRejected(foreign)).toBe(true);
   });
