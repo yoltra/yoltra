@@ -10,7 +10,7 @@
 
 > **When**\<`EM`\> = \{ `any`: `true`; \} \| \{ `keys`: `ReadonlyArray`\<[`EventKey`](EventKey.md)\<`EM`\>\>; \} \| \{ `channel`: keyof `EM` & `string`; \} \| \{ `channels`: `ReadonlyArray`\<keyof `EM` & `string`\>; \}
 
-Defined in: [types.ts:1309](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1309)
+Defined in: [types.ts:1349](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1349)
 
 Matcher for event targeting across reducers, effects, middleware, and subscriptions.
 

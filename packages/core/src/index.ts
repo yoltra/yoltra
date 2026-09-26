@@ -36,6 +36,8 @@ export type {
   Decorated,
   StoreDecorator,
   Origin,
+  RegistrationChange,
+  RegistrationObserver,
   ReplaceScope,
   EmptyEventMap,
   StateOfSpec,

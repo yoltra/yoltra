@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "A slice registered with a pattern matcher (`{ any: true }`, `{ channel }`, `{ channels }`) is now reported to registration observers. `mountSlice` returns early for a pattern slice, so a notification placed at the end of its body fired only for key-dispatched slices. Found by a test written for the new seam rather than by review.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

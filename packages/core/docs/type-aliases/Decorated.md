@@ -10,7 +10,7 @@
 
 > **Decorated**\<`R`, `S`, `EM`, `D`\> = `D` *extends* [`Decoration`](../interfaces/Decoration.md)\<infer AddS, infer AddEM\> ? [`StoreInstance`](../interfaces/StoreInstance.md)\<[`WidenNames`](WidenNames.md)\<`R`, keyof `AddS` & `string`\>, [`SatisfiesSlices`](SatisfiesSlices.md)\<[`Prettify`](Prettify.md)\<`S` & `AddS`\>, [`WidenNames`](WidenNames.md)\<`R`, keyof `AddS` & `string`\>\>, [`Merge`](Merge.md)\<`EM`, `AddEM`\>\> : `never`
 
-Defined in: [types.ts:1882](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1882)
+Defined in: [types.ts:1972](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1972)
 
 The store type that results from applying a [Decoration](../interfaces/Decoration.md).
 

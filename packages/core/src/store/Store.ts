@@ -37,6 +37,8 @@ import type {
   EventPhase,
   EventSubscriberEntry,
   Origin,
+  RegistrationChange,
+  RegistrationObserver,
   ReplaceScope,
   EventSubscriptionHandler,
   NarrowedEventHandler,
@@ -110,6 +112,15 @@ function freezeInDev<T>(value: T, alias?: AliasWatch): DeepReadonly<T> {
  * small enough not to swallow genuine user repeats.
  */
 const DEFAULT_DEDUP_KEY_WINDOW_MS = 100;
+
+/**
+ * Ceiling on rounds of registration notification triggered by observers registering.
+ *
+ * @remarks
+ * Mirrors {@link DEFAULT_MAX_REDUCE_DEPTH} and exists for the same reason: a legitimate
+ * reaction chain is bounded, a cycle is not.
+ */
+const MAX_REGISTRATION_CASCADE = 64;
 
 /**
  * Causal depth at which the store stops extending an event chain.
@@ -363,6 +374,34 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
   /** Owner names for {@link disposedSlices}, so the error can say who. @internal */
   private readonly disposedSliceOwners = new Map<string, string>();
+
+  /** @internal */
+  private readonly registrationObservers = new Set<RegistrationObserver<EM>>();
+
+  /**
+   * Changes accumulated inside the current public call, flushed once at its end.
+   *
+   * @internal
+   */
+  private pendingRegistrationChanges: RegistrationChange<EM>[] | null = null;
+
+  /**
+   * Depth of nested registration transactions.
+   *
+   * @remarks
+   * `hotReplace` calls three `replace*` methods, and each of those registers repeatedly.
+   * Only the outermost public entry point flushes, so one `hotReplace` produces one batch
+   * spanning all three kinds rather than three batches of intermediate topology.
+   *
+   * @internal
+   */
+  private registrationDepth = 0;
+
+  /** True while observers are being notified, so a re-entrant change is queued. @internal */
+  private notifyingRegistrations = false;
+
+  /** Batches produced by an observer's own registrations, drained after the current one. @internal */
+  private readonly queuedRegistrationBatches: Array<readonly RegistrationChange<EM>[]> = [];
 
   /**
    * Whether `__replayEvents()` is allowed.
@@ -712,6 +751,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.sliceOwner.clear();
     this.disposedSlices.clear();
     this.disposedSliceOwners.clear();
+    // Terminal and silent. `dispose()` means the store is gone, not that its slices were
+    // individually unmounted, and firing N changes would invite teardown against a store
+    // already tearing down, in an order nobody controls, while these very observers are
+    // being cleared. Consistent with `dispose()` not firing `listeners` either.
+    this.registrationObservers.clear();
+    this.pendingRegistrationChanges = null;
+    this.queuedRegistrationBatches.length = 0;
     (this.middleware as unknown as unknown[]).length = 0;
     this.changedPathSink = null;
   }
@@ -2115,6 +2161,196 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
+  public onRegistrationChange(
+    observer: RegistrationObserver<EM>,
+    options?: { emitCurrent?: boolean },
+  ): Unsubscribe {
+    this.registrationObservers.add(observer);
+
+    if (options?.emitCurrent === true) {
+      const current = this.describeCurrentRegistrations();
+      // Synchronously, before returning. Pull-then-subscribe would be two shapes and a race
+      // to reason about; this is one shape and no race by construction.
+      if (current.length > 0) this.invokeRegistrationObserver(observer, current);
+    }
+
+    return () => {
+      this.registrationObservers.delete(observer);
+    };
+  }
+
+  /**
+   * Everything currently installed, as `"mounted"` changes.
+   *
+   * @internal
+   */
+  private describeCurrentRegistrations(): RegistrationChange<EM>[] {
+    const out: RegistrationChange<EM>[] = [];
+
+    for (const name of Object.keys(this.reducers)) {
+      out.push({
+        kind: "reducer",
+        op: "mounted",
+        name,
+        // The real origin, never a synthetic "existing" marker. Filtering on provenance is
+        // the main thing an observer does, and a snapshot that lied about it would break
+        // exactly the registrations that were already there.
+        origin: this.sliceOrigin.get(name) ?? "spec",
+        owner: this.sliceOwner.get(name),
+        when: this.patternReducers.get(name as R),
+        // From this observer's point of view the state exists; it never saw a prior value.
+        state: "initialized",
+        dispatch: this.patternReducers.has(name as R) ? "pattern" : "keyed",
+      });
+    }
+    for (const entry of this.middleware) {
+      const meta = typeof entry.input === "function" ? undefined : entry.input.meta;
+      out.push({
+        kind: "middleware",
+        op: "mounted",
+        name: meta?.name ?? (typeof entry.input === "function" ? entry.input.name : undefined),
+        description: meta?.description,
+        origin: entry.origin,
+        when: getMiddlewareWhen(entry.input),
+        dispatch: "pattern",
+      });
+    }
+    for (const [key, set] of this.effects) {
+      const [channel, type] = key.split("::");
+      for (const entry of set) {
+        out.push({
+          kind: "effect",
+          op: "mounted",
+          name: this.effectMeta.get(entry.effect)?.name,
+          description: this.effectMeta.get(entry.effect)?.description,
+          origin: entry.origin,
+          when: { keys: [[channel, type]] } as When<EM>,
+          dispatch: "keyed",
+        });
+      }
+    }
+    for (const entry of this.patternEffects) {
+      out.push({
+        kind: "effect",
+        op: "mounted",
+        name: this.effectMeta.get(entry.effect)?.name,
+        description: this.effectMeta.get(entry.effect)?.description,
+        origin: entry.origin,
+        when: entry.when,
+        dispatch: "pattern",
+      });
+    }
+    return out;
+  }
+
+  /**
+   * Runs `fn` as one registration transaction, flushing a single batch at the outermost end.
+   *
+   * @internal
+   */
+  private inRegistrationTransaction<T>(fn: () => T): T {
+    this.registrationDepth += 1;
+    try {
+      return fn();
+    } finally {
+      this.registrationDepth -= 1;
+      if (this.registrationDepth === 0) this.flushRegistrationChanges();
+    }
+  }
+
+  /**
+   * Records a change, to be delivered when the current transaction ends.
+   *
+   * @remarks
+   * Guarded on observer count **before** anything is allocated. These call sites run inside
+   * `createStore`, so a twenty-slice store with nobody listening must build no objects and
+   * no arrays at all - the same discipline `emitInstrumentation` already follows.
+   *
+   * @internal
+   */
+  private recordRegistrationChange(make: () => RegistrationChange<EM>): void {
+    if (this.registrationObservers.size === 0) return;
+    (this.pendingRegistrationChanges ??= []).push(make());
+    if (this.registrationDepth === 0) this.flushRegistrationChanges();
+  }
+
+  /** @internal */
+  private flushRegistrationChanges(): void {
+    const batch = this.pendingRegistrationChanges;
+    this.pendingRegistrationChanges = null;
+    if (batch === null || batch.length === 0) return;
+
+    if (this.notifyingRegistrations) {
+      // An observer registered something of its own. That is the legitimate
+      // ordering-dependency case, so it is neither forbidden nor delivered re-entrantly:
+      // queued, and drained once the current notification finishes.
+      this.queuedRegistrationBatches.push(batch);
+      return;
+    }
+
+    this.notifyingRegistrations = true;
+    try {
+      this.deliverRegistrationBatch(batch);
+
+      // Bounded like the reduce depth, and for the same reason: two observers registering in
+      // response to each other would otherwise loop forever. Logged rather than thrown - the
+      // topology is correct at this point, and throwing would truncate the stream *and*
+      // unwind a caller that did nothing wrong.
+      let drained = 0;
+      while (this.queuedRegistrationBatches.length > 0) {
+        if (drained >= MAX_REGISTRATION_CASCADE) {
+          console.error(
+            `[yoltra] Registration notifications exceeded ${MAX_REGISTRATION_CASCADE} rounds; ` +
+              `dropping the rest. Two observers are most likely registering in response to ` +
+              `each other.`,
+          );
+          this.queuedRegistrationBatches.length = 0;
+          break;
+        }
+        drained += 1;
+        this.deliverRegistrationBatch(this.queuedRegistrationBatches.shift()!);
+      }
+    } finally {
+      this.notifyingRegistrations = false;
+    }
+  }
+
+  /** @internal */
+  private deliverRegistrationBatch(batch: readonly RegistrationChange<EM>[]): void {
+    // Snapshot before iterating, like every other observer seam here: an observer added
+    // during a notification does not receive the batch it was added in.
+    for (const observer of [...this.registrationObservers]) {
+      this.invokeRegistrationObserver(observer, batch);
+    }
+  }
+
+  /** @internal */
+  private invokeRegistrationObserver(
+    observer: RegistrationObserver<EM>,
+    batch: readonly RegistrationChange<EM>[],
+  ): void {
+    try {
+      const result = observer(batch) as unknown;
+      if (
+        process.env.NODE_ENV !== "production" &&
+        typeof (result as Promise<unknown>)?.then === "function"
+      ) {
+        // Deliberately not awaited, and deliberately not `.catch`ed either: we are not
+        // adopting this promise. Registration notification is synchronous, so by the time it
+        // resolves the store has moved on and anything it does lands at an unpredictable
+        // point relative to everything else.
+        console.error(
+          "[yoltra] A registration observer returned a Promise. Registration notifications " +
+            "are synchronous: the store has already moved on by the time it resolves. Do the " +
+            "work synchronously, or schedule it yourself and accept that the topology may " +
+            "have changed again.",
+        );
+      }
+    } catch (e) {
+      console.error("Registration observer error:", e);
+    }
+  }
+
   public get isReplaying(): boolean {
     return this.replaying;
   }
@@ -2234,7 +2470,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   public registerMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): any {
     const entry = { input: mw, origin: "dynamic" as Origin };
     this.middleware.push(entry);
+    this.recordMiddlewareChange(entry, "mounted");
     return this.asRegistration(() => {
+      this.recordMiddlewareChange(entry, "unmounted");
+      void 0;
       // Spliced by entry identity. `indexOf` on the function meant registering the same
       // middleware twice and disposing once removed the first registration rather than the
       // one being disposed.
@@ -2258,6 +2497,44 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
+  private recordMiddlewareChange(
+    entry: { input: MiddlewareInput<DeepReadonly<S>, EM>; origin: Origin },
+    op: "mounted" | "unmounted",
+  ): void {
+    this.recordRegistrationChange(() => {
+      const meta = typeof entry.input === "function" ? undefined : entry.input.meta;
+      return {
+        kind: "middleware",
+        op,
+        name: meta?.name ?? (typeof entry.input === "function" ? entry.input.name : undefined),
+        description: meta?.description,
+        origin: entry.origin,
+        when: getMiddlewareWhen(entry.input),
+        dispatch: "pattern",
+      };
+    });
+  }
+
+  /** @internal */
+  private recordEffectChange(
+    effect: EffectFunction<DeepReadonly<S>, EM>,
+    when: When<EM> | undefined,
+    origin: Origin,
+    op: "mounted" | "unmounted",
+    dispatch: "keyed" | "pattern",
+  ): void {
+    this.recordRegistrationChange(() => ({
+      kind: "effect",
+      op,
+      name: this.effectMeta.get(effect)?.name,
+      description: this.effectMeta.get(effect)?.description,
+      origin,
+      when,
+      dispatch,
+    }));
+  }
+
+  /** @internal */
   private asRegistration(dispose: () => void): any {
     return Object.assign(dispose, { store: this, dispose });
   }
@@ -2313,6 +2590,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public registerSlice(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
+    // One transaction, so observers are notified *after* the state broadcast below rather
+    // than from inside `mountSlice`. The view layer should learn a fact before a library
+    // gets to react to it; reversed, a library's own registration would publish before the
+    // originating one had reached the UI.
+    return this.inRegistrationTransaction(() => this.registerSliceInner(name, spec, options));
+  }
+
+  /** @internal */
+  private registerSliceInner(
+    name: string,
+    spec: ReducerSpec<any, EM>,
+    options?: { owner?: string },
+  ): any {
     // `hasOwnProperty`, not `in`: the registry is a plain object, so `in` also answers true for
     // everything on `Object.prototype`. A slice legitimately named `toString`, `constructor` or
     // `valueOf` was refused as already existing — with a message naming a reducer that does not
@@ -2333,8 +2623,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     return this.asRegistration(() => {
       // disposer
-      this.unmountSlice(name as R, { deleteState: true });
-      this.listeners.forEach((l) => l());
+      this.inRegistrationTransaction(() => {
+        this.unmountSlice(name as R, { deleteState: true });
+        this.listeners.forEach((l) => l());
+      });
     });
   }
 
@@ -2547,8 +2839,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // Store as pattern-based effect for runtime matching
       const entry = { effect, when: when!, origin };
       this.patternEffects.add(entry);
+      this.recordEffectChange(effect, when!, origin, "mounted", "pattern");
 
       return () => {
+        this.recordEffectChange(effect, when!, origin, "unmounted", "pattern");
         this.patternEffects.delete(entry);
         this.effectMeta.delete(effect);
       };
@@ -2560,10 +2854,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // If no keys (no targeting at all), this effect matches ALL events
     // We treat it as a pattern-based effect with `any: true`
     if (eventKeys.length === 0 && !when) {
-      const entry = { effect, when: { any: true } as When<EM>, origin };
+      // Normalized, not raw: no targeting at all means "every event", and an observer told
+      // `undefined` would have to re-derive that for itself.
+      const normalized = { any: true } as When<EM>;
+      const entry = { effect, when: normalized, origin };
       this.patternEffects.add(entry);
+      this.recordEffectChange(effect, normalized, origin, "mounted", "pattern");
 
       return () => {
+        this.recordEffectChange(effect, normalized, origin, "unmounted", "pattern");
         this.patternEffects.delete(entry);
         this.effectMeta.delete(effect);
       };
@@ -2577,9 +2876,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       }
       const entry = { effect, origin };
       this.effects.get(key)!.add(entry);
+      const keyedWhen = { keys: [[channel, type]] } as When<EM>;
+      this.recordEffectChange(effect, keyedWhen, origin, "mounted", "keyed");
 
       // Create disposer
       unsubs.push(() => {
+        this.recordEffectChange(effect, keyedWhen, origin, "unmounted", "keyed");
         const set = this.effects.get(key);
         if (set) {
           set.delete(entry);
@@ -2663,6 +2965,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     next: MiddlewareInput<DeepReadonly<S>, EM>[],
     opts: { scope?: ReplaceScope } = {},
   ): void {
+    this.inRegistrationTransaction(() => this.replaceMiddlewareInner(next, opts));
+  }
+
+  /** @internal */
+  private replaceMiddlewareInner(
+    next: MiddlewareInput<DeepReadonly<S>, EM>[],
+    opts: { scope?: ReplaceScope } = {},
+  ): void {
     // Accepts either form. Taking only the bare function meant a hot reload silently discarded
     // the `when` targeting and `meta` of every spec-form middleware, so after an HMR pass a
     // middleware scoped to one channel began running on all of them.
@@ -2670,12 +2980,21 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const retained = this.middleware.filter((e) =>
       scope === "all" ? e.origin === "internal" : e.origin !== "spec",
     );
+    // Recorded explicitly: this truncates the array rather than going through
+    // `registerMiddleware`, so nothing else would notice the entries leaving.
+    for (const entry of this.middleware) {
+      if (!retained.includes(entry)) this.recordMiddlewareChange(entry, "unmounted");
+    }
     (this.middleware as any).length = 0;
     // Order matters and is reproduced rather than incidental: spec middleware exists at
     // construction and dynamic middleware is appended after it, so new spec entries go first
     // and retained ones follow. A dynamic auth guard silently moving from first to last
     // changes which events get vetoed, and nothing about the symptom would point here.
-    for (const mw of next) this.middleware.push({ input: mw, origin: "spec" });
+    for (const mw of next) {
+      const entry = { input: mw, origin: "spec" as Origin };
+      this.middleware.push(entry);
+      this.recordMiddlewareChange(entry, "mounted");
+    }
     for (const entry of retained) this.middleware.push(entry);
     this.reportPreserved("replaceMiddleware", retained.length, scope);
   }
@@ -2700,6 +3019,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     next: Array<EffectSpec<DeepReadonly<S>, EM>>,
     opts: { scope?: ReplaceScope } = {},
   ): void {
+    this.inRegistrationTransaction(() => this.replaceEffectsInner(next, opts));
+  }
+
+  /** @internal */
+  private replaceEffectsInner(
+    next: Array<EffectSpec<DeepReadonly<S>, EM>>,
+    opts: { scope?: ReplaceScope } = {},
+  ): void {
     const scope = opts.scope ?? "spec";
     const keeps = (origin: Origin): boolean =>
       scope === "all" ? origin === "internal" : origin !== "spec";
@@ -2711,6 +3038,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           preserved += 1;
           continue;
         }
+        this.recordEffectChange(
+          entry.effect,
+          { keys: [key.split("::") as [string, string]] } as When<EM>,
+          entry.origin,
+          "unmounted",
+          "keyed",
+        );
         set.delete(entry);
         // Pruned per dropped function rather than wholesale. `effectMeta` was never cleared
         // here at all, so it grew stale entries forever; clearing all of it would instead
@@ -2724,6 +3058,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         preserved += 1;
         continue;
       }
+      this.recordEffectChange(entry.effect, entry.when, entry.origin, "unmounted", "pattern");
       this.patternEffects.delete(entry);
       this.effectMeta.delete(entry.effect);
     }
@@ -2752,6 +3087,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public replaceReducers(
+    next: Record<R, ReducerSpec<S[R], EM>>,
+    opts: { preserveState?: boolean; scope?: ReplaceScope } = {},
+  ): void {
+    this.inRegistrationTransaction(() => this.replaceReducersInner(next, opts));
+  }
+
+  /** @internal */
+  private replaceReducersInner(
     next: Record<R, ReducerSpec<S[R], EM>>,
     opts: { preserveState?: boolean; scope?: ReplaceScope } = {},
   ): void {
@@ -2872,10 +3215,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // is the documented HMR entry point, and a harness that wants the old wholesale
     // semantics should need one flag, not three.
     const scope = partial.scope;
-    if (partial.middleware) this.replaceMiddleware(partial.middleware, { scope });
-    if (partial.effects) this.replaceEffects(partial.effects, { scope });
-    if (partial.reducer)
-      this.replaceReducers(partial.reducer, { preserveState: partial.preserveState, scope });
+    // One transaction across all three, so a hot reload produces a single batch rather than
+    // three snapshots of a topology mid-rebuild.
+    this.inRegistrationTransaction(() => {
+      if (partial.middleware) this.replaceMiddleware(partial.middleware, { scope });
+      if (partial.effects) this.replaceEffects(partial.effects, { scope });
+      if (partial.reducer)
+        this.replaceReducers(partial.reducer, { preserveState: partial.preserveState, scope });
+    });
   }
 
   /**
@@ -2889,6 +3236,23 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private mountSlice(
+    name: R,
+    rSpec: ReducerSpec<S[R], EM>,
+    opts: { preserveState: boolean; origin?: Origin; owner?: string },
+  ): void {
+    this.mountSliceInner(name, rSpec, opts);
+    // Recorded here, not inside the body. The body returns early for a pattern-based slice,
+    // so a record placed at its end fired only for keyed slices and `{ any: true }` slices
+    // were never reported at all.
+    this.recordSliceChange(
+      name as unknown as string,
+      "mounted",
+      opts.preserveState ? "preserved" : "initialized",
+    );
+  }
+
+  /** @internal */
+  private mountSliceInner(
     name: R,
     rSpec: ReducerSpec<S[R], EM>,
     opts: { preserveState: boolean; origin?: Origin; owner?: string },
@@ -2974,6 +3338,28 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
+   * Records a slice mount or unmount for {@link onRegistrationChange}.
+   *
+   * @internal
+   */
+  private recordSliceChange(
+    rName: string,
+    op: "mounted" | "unmounted",
+    state: "initialized" | "preserved" | "deleted" | "retained",
+  ): void {
+    this.recordRegistrationChange(() => ({
+      kind: "reducer",
+      op,
+      name: rName,
+      origin: this.sliceOrigin.get(rName) ?? "spec",
+      owner: this.sliceOwner.get(rName),
+      when: this.patternReducers.get(rName as R),
+      state,
+      dispatch: this.patternReducers.has(rName as R) ? "pattern" : "keyed",
+    }));
+  }
+
+  /**
    * Announces a newly mounted slice on the connector bus.
    *
    * @remarks
@@ -3025,6 +3411,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private unmountSlice(name: R, opts: { deleteState: boolean }): void {
     const rName = name as unknown as string;
+    // Recorded before the registries are torn down, while origin and owner are still known.
+    // `retained` rather than `deleted` when the state survives: `replaceReducers` updates a
+    // slice by unmounting and remounting it, and an observer that treated every unmount as
+    // destruction would tear down a subscription it is about to need.
+    this.recordSliceChange(rName, "unmounted", opts.deleteState ? "deleted" : "retained");
 
     // Remove from pattern reducers if present
     this.patternReducers.delete(name);

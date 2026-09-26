@@ -856,6 +856,46 @@ export interface StoreInstance<
   ): Unsubscribe;
 
   /**
+   * Called when the store gains or loses a reducer, middleware or effect.
+   *
+   * @remarks
+   * A push seam, because `__devtoolsIntrospect()` is pull-only: a devtools panel's
+   * subscription list goes stale the moment a decoration mounts anything, and a library that
+   * needs to react to another library has nothing to wait on.
+   *
+   * Delivered as an **array, one batch per public call**. `replaceReducers` unmounts and then
+   * remounts, so between those steps a slice that is merely being updated does not exist; a
+   * per-change observer would see a spurious unmount. `hotReplace` delivers a single batch
+   * spanning all three kinds.
+   *
+   * Observers run **after** the state broadcast, so the view layer has already been told a
+   * fact before a library gets to react to it. A registration made *by* an observer is
+   * legitimate and is queued rather than delivered re-entrantly: depth-first work,
+   * breadth-first notification, so no observer ever sees a half-built topology.
+   *
+   * Synchronous. A `Promise` returned from an observer is not awaited, and is reported in
+   * development, because the store has already moved on by the time it would resolve.
+   *
+   * **Replay never produces a change.** `__replayEvents` and `__applyExternalState` alter
+   * state and never topology, so there is no `duringReplay` option here and none is needed.
+   *
+   * `dispose()` fires nothing: the store is going away, not being dismantled slice by slice.
+   *
+   * @param observer - Receives one batch per registration change.
+   * @param options - `emitCurrent` synthesizes a `"mounted"` batch for everything already
+   * installed, delivered synchronously before this call returns. Spec-time registrations
+   * happen inside `createStore`, so a decorator applied afterwards never saw them arrive;
+   * this closes that gap without a separate pull API to race against. The synthesized
+   * changes carry their **real** origins, never a synthetic marker, because filtering on
+   * provenance is the main thing an observer does.
+   * @returns Unsubscribe function.
+   */
+  onRegistrationChange(
+    observer: RegistrationObserver<EM>,
+    options?: { emitCurrent?: boolean },
+  ): Unsubscribe;
+
+  /**
    * `true` while devtools is applying a snapshot or replaying events.
    *
    * @remarks
@@ -1655,6 +1695,56 @@ export type EventSubscriptionHandler<S = any, EM extends EventMapBase = EventMap
   emit: Emit<EM>,
   phase: NotifiedPhase,
 ) => void | Promise<void>;
+
+/**
+ * One change to a store's registrations.
+ *
+ * @remarks
+ * Self-sufficient on purpose: an observer should never need a follow-up
+ * `__devtoolsIntrospect()` call to act on what it was told.
+ *
+ * @public
+ */
+export interface RegistrationChange<EM extends EventMapBase = EventMapBase> {
+  readonly kind: "reducer" | "middleware" | "effect";
+  readonly op: "mounted" | "unmounted";
+  /** Slice name for a reducer; `meta.name` for middleware and effects; absent when unnamed. */
+  readonly name?: string;
+  readonly origin: Origin;
+  /** Introspection only, and only ever what a library passed. */
+  readonly owner?: string;
+  readonly description?: string;
+  /**
+   * The **normalized** matcher, as `matchesWhen` will actually use it.
+   *
+   * @remarks
+   * Not the raw spec's `when`. `registerEffect` normalizes three ways, including turning no
+   * targeting at all into `{ any: true }`, so handing back the raw form would describe
+   * something other than what will fire.
+   */
+  readonly when?: When<EM>;
+  /**
+   * Reducers only: what happened to the slice's state.
+   *
+   * @remarks
+   * Four values, and the fourth is the one that matters. `replaceReducers` updates an
+   * existing slice by unmounting it with its state intact and remounting, so an observer
+   * treating every `"unmounted"` as destruction would tear down a subscription it is about
+   * to need. `"retained"` says the state survived; `"deleted"` says it did not.
+   */
+  readonly state?: "initialized" | "preserved" | "deleted" | "retained";
+  /** Whether this registration is dispatched by key (O(1)) or by runtime matching. */
+  readonly dispatch?: "keyed" | "pattern";
+}
+
+/**
+ * Observer for {@link StoreInstance.onRegistrationChange}.
+ *
+ * @public
+ */
+export type RegistrationObserver<EM extends EventMapBase = EventMapBase> = (
+  changes: readonly RegistrationChange<EM>[],
+) => void;
 
 /**
  * Where a registration came from.
