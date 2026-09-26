@@ -49,6 +49,7 @@ import {
   buildAncestorPaths as ancestorPaths,
   getAtPath as readAtPath,
 } from "./paths";
+import { fingerprint as fingerprintOf } from "./fingerprint";
 import {
   getMiddlewareFunction,
   getMiddlewareWhen,
@@ -448,13 +449,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * Tracks processed events by fingerprint with timestamps for TTL-based deduplication.
    *
    * **Deduplication Behavior:**
-   * - Events are fingerprinted using `channel::type::JSON(payload)`
+   * - Events are fingerprinted through the codec, so `Map`, `Set`, `Date`, `BigInt`, binary
+   *   and cyclic payloads all compare by content rather than collapsing to `{}`
+   * - Plain-object keys are sorted, so key order is not content; array and `Map` order is
    * - If an identical fingerprint is seen within the dedup window, it's skipped
-   * - The window is 50ms in development, 100ms in production
+   * - The window is `dedupWindowMs`, which defaults to `0` (dedup off)
    *
    * **Limitations:**
-   * - Non-serializable payloads (functions, symbols, circular refs) get unique
-   *   fingerprints and won't be deduplicated
+   * - A payload larger than the fingerprint node budget is never deduplicated, which is the
+   *   safe direction: a missed dedup costs a duplicate, a false one drops a real event
    * - Legitimate rapid-fire identical events may be incorrectly deduplicated
    * - The cache is bounded to 1000 entries with lazy pruning
    *
@@ -648,25 +651,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private fingerprint(channel: string, type: string, payload: unknown): string {
-    const base = `${channel}::${type}`;
-
-    try {
-      // Fast path for primitives
-      if (payload === null || payload === undefined) {
-        return `${base}::null`;
-      }
-      if (typeof payload !== "object") {
-        return `${base}::${String(payload)}`;
-      }
-
-      // Attempt JSON serialization (handles most cases)
-      const json = JSON.stringify(payload);
-      return `${base}::${json}`;
-    } catch {
-      // Non-serializable payload - use timestamp to avoid false positives
-      // This means non-serializable payloads won't be deduplicated
-      return `${base}::${Date.now()}::${Math.random()}`;
-    }
+    return fingerprintOf(channel, type, payload);
   }
 
   /**
