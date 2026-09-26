@@ -8,7 +8,7 @@
 
 # Class: Store\<EM, R, S\>
 
-Defined in: [store/Store.ts:162](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L162)
+Defined in: [store/Store.ts:163](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L163)
 
 Public Store surface.
 
@@ -46,7 +46,7 @@ Event map.
 
 > **new Store**\<`EM`, `R`, `S`\>(`spec`): `Store`\<`EM`, `R`, `S`\>
 
-Defined in: [store/Store.ts:507](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L507)
+Defined in: [store/Store.ts:512](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L512)
 
 Creates a store from a [StoreSpec](../type-aliases/StoreSpec.md).
 
@@ -68,7 +68,7 @@ Store configuration (name, reducers, middleware, optional effects).
 
 > **name**: `string`
 
-Defined in: [store/Store.ts:169](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L169)
+Defined in: [store/Store.ts:170](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L170)
 
 Store name (used by DevTools & diagnostics).
 
@@ -82,7 +82,7 @@ Store name (used by DevTools & diagnostics).
 
 > **\_\_devtoolsIntrospect**(): `object`
 
-Defined in: [store/Store.ts:1144](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1144)
+Defined in: [store/Store.ts:1131](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1131)
 
 Returns a structured introspection snapshot for DevTools UIs.
 
@@ -332,7 +332,7 @@ const off = store.connect(
 
 > **dispose**(): `void`
 
-Defined in: [store/Store.ts:604](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L604)
+Defined in: [store/Store.ts:609](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L609)
 
 Cleanup resources (timers, etc.) when disposing the store.
 Call this if you're dynamically creating/destroying stores.
@@ -359,7 +359,7 @@ store.dispose();
 
 > **emit**\<`C`, `T`\>(`channel`, `type`, `payload`, `opts?`): `Promise`\<[`EmitResult`](../interfaces/EmitResult.md)\>
 
-Defined in: [store/Store.ts:1445](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1445)
+Defined in: [store/Store.ts:1432](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1432)
 
 Emits a typed event `(channel, type, payload)`.
 Events are queued and processed **sequentially** (FIFO).

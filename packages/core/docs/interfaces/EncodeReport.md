@@ -8,7 +8,7 @@
 
 # Interface: EncodeReport
 
-Defined in: [serialize/codec.ts:62](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L62)
+Defined in: [serialize/codec.ts:173](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L173)
 
 Reports what an encode had to compromise. Empty when nothing was lost.
 
@@ -18,7 +18,7 @@ Reports what an encode had to compromise. Empty when nothing was lost.
 
 > `readonly` **truncated**: `boolean`
 
-Defined in: [serialize/codec.ts:64](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L64)
+Defined in: [serialize/codec.ts:175](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L175)
 
 Node budget was exhausted and some subtrees were replaced by markers.
 
@@ -28,6 +28,6 @@ Node budget was exhausted and some subtrees were replaced by markers.
 
 > `readonly` **unsupported**: readonly `string`[]
 
-Defined in: [serialize/codec.ts:66](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L66)
+Defined in: [serialize/codec.ts:177](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L177)
 
 Values no JSON representation exists for, by path — functions, symbols, DOM nodes.

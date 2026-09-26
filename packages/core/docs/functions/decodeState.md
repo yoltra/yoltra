@@ -10,7 +10,7 @@
 
 > **decodeState**(`input`): `unknown`
 
-Defined in: [serialize/codec.ts:197](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L197)
+Defined in: [serialize/codec.ts:354](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L354)
 
 Reverses [encodeState](encodeState.md).
 

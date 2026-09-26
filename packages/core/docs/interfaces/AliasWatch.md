@@ -8,7 +8,7 @@
 
 # Interface: AliasWatch
 
-Defined in: [utils/immutability.ts:109](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L109)
+Defined in: [utils/immutability.ts:117](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L117)
 
 Watches the freeze walk for one specific reference.
 
@@ -31,7 +31,7 @@ at the moment it happens.
 
 > `readonly` **onFound**: () => `void`
 
-Defined in: [utils/immutability.ts:113](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L113)
+Defined in: [utils/immutability.ts:121](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L121)
 
 Called if `watch` is reachable from the value being frozen.
 
@@ -45,6 +45,6 @@ Called if `watch` is reachable from the value being frozen.
 
 > `readonly` **watch**: `object`
 
-Defined in: [utils/immutability.ts:111](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L111)
+Defined in: [utils/immutability.ts:119](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L119)
 
 The reference to look for while freezing.

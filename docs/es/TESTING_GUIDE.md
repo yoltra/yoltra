@@ -120,9 +120,13 @@ Prueba la ruta de **fallo** igual — haz que el effect emita un evento
 
 ## Probar middleware (rechazo)
 
-El middleware es síncrono y devuelve un booleano. Un `false` rechaza el evento
+El middleware es síncrono. **Solo un `false` explícito rechaza** el evento
 (el estado no cambia) y produce un evento **uncommitted**, que puedes observar
-con `onEvent(..., "uncommitted")`.
+con `onEvent(..., "uncommitted")`. Devolver `true`, o no devolver nada, lo
+permite, así que un middleware que solo registra o mide no necesita `return`.
+
+Prueba también el camino que permite, no solo el veto. Un guard que deja de
+rechazar es un fallo silencioso, y uno que lo rechaza todo también.
 
 ```ts
 it("rechaza boost por debajo del umbral de batería", () => {

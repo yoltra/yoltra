@@ -8,7 +8,7 @@
 
 # Interface: Yoltra\<R, S, EM\>
 
-Defined in: [react/src/createYoltra.tsx:32](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L32)
+Defined in: [react/src/createYoltra.tsx:40](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L40)
 
 The value returned by [createYoltra](../functions/createYoltra.md): the created `store`, an optional
 `StoreProvider` (plus its raw `StoreContext`), and the full set of typed hooks
@@ -78,7 +78,7 @@ Shallow object equality using `Object.is` per-key.
 
 > **store**: [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>
 
-Defined in: [react/src/createYoltra.tsx:35](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L35)
+Defined in: [react/src/createYoltra.tsx:43](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L43)
 
 The store created by this call; the hooks default to it (no Provider needed).
 
@@ -88,7 +88,7 @@ The store created by this call; the hooks default to it (no Provider needed).
 
 > **StoreContext**: `Context`\<`null` \| [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>\>
 
-Defined in: [react/src/createYoltra.tsx:37](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L37)
+Defined in: [react/src/createYoltra.tsx:45](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L45)
 
 Raw context carrying the store — usually you only need `StoreProvider`.
 
@@ -98,7 +98,7 @@ Raw context carrying the store — usually you only need `StoreProvider`.
 
 > **StoreProvider**: `FC`\<\{ `children`: `ReactNode`; `store?`: [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>; \}\>
 
-Defined in: [react/src/createYoltra.tsx:39](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L39)
+Defined in: [react/src/createYoltra.tsx:47](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L47)
 
 Optional provider to scope a different store instance to a subtree.
 

@@ -231,7 +231,8 @@ const adminGuard: MiddlewareSpec<AppState, AppEM> = {
   meta: { type: "middleware", name: "adminGuard" },
 };
 
-// Middleware global: se ejecuta para todos los eventos (sincrono: devuelve un boolean, nunca una Promise)
+// Middleware global: se ejecuta para todos los eventos. Sincrono, nunca una Promise: solo un
+// `false` explicito veta, asi que un middleware que solo observa puede no devolver nada.
 const logger = (state, event) => {
   console.log("Event:", event.channel, event.type);
   return true;
