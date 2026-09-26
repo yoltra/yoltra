@@ -88,6 +88,85 @@ comparison lives in the
 
 ---
 
+## How a store works
+
+One event, end to end. The reduce phase is synchronous, so `getState()` is correct the moment
+`emit()` returns; effects run afterwards as an independent task.
+
+```mermaid
+flowchart TD
+    emit["emit channel, type, payload"] --> dedup{"dedup enabled?"}
+    dedup -->|"off by default"| queue
+    dedup -->|"on"| fp["fingerprint through the codec:<br/>Map, Set, Date, BigInt, binary and<br/>cycles all compare by content"]
+    fp -->|"seen inside the window"| swallowed(["skipped"])
+    fp -->|"new"| queue["FIFO reduce queue"]
+    queue --> drain["drainReduce<br/>synchronous, re-entrancy guarded"]
+
+    subgraph sync ["Synchronous reduce phase"]
+    direction TB
+        drain --> mw["middleware<br/>matched by when"]
+        mw -->|"returns false, or throws"| veto["vetoed"]
+        mw -->|"true, or nothing at all"| red["reducers<br/>matched by when"]
+        red --> stage["stage every matching slice<br/>nothing written yet"]
+        stage -->|"any slice returns Rejected"| reject["discard every staged write"]
+        stage -->|"all accepted"| commit["commit one new state root<br/>frozen in development"]
+    end
+
+    veto --> nUncommitted["onEvent uncommitted"]
+    reject --> nCommitted["onEvent committed"]
+    commit --> nCommitted
+    commit --> paths["connectorBus<br/>exact changed leaf paths"]
+    nCommitted --> nWritten["onEvent written<br/>only when state changed"]
+    nWritten --> listeners["subscribe listeners"]
+
+    paths --> atomic(["useAtomicProp and the Suspense hooks"])
+    listeners --> selector(["useSelector"])
+    nCommitted --> useEvent(["useEvent"])
+
+    commit --> instr["instrument observers<br/>changed paths, old and new values, timing"]
+    instr --> persistOut(["persist: throttled write, codec encoded"])
+    instr --> agent(["devtools agent"])
+
+    commit --> fx["effects, matched by when<br/>async, awaited one after another"]
+    fx --> call(["store.call rides an internal reply effect"])
+```
+
+### `when`: one matcher, two dispatch routes
+
+Reducers, middleware and effects all target events the same way, and the shape you choose
+decides how the store finds them.
+
+```mermaid
+flowchart LR
+    when["when"] --> keys["keys<br/>exact channel and type pairs"]
+    when --> any["any"]
+    when --> chan["channel"]
+    when --> chans["channels"]
+
+    keys --> keyed["keyed dispatch<br/>O(1) map lookup"]
+    any --> scan["pattern dispatch<br/>matched on every event"]
+    chan --> scan
+    chans --> scan
+
+    keyed --> run(["handler runs"])
+    scan --> run
+```
+
+`keys` is exact and typed against your event map, so a typo is a compile error. The other three
+are matched at runtime, which is what lets one handler cover a whole channel.
+
+### The niceties, and where they plug in
+
+| Piece | Where it sits |
+| --- | --- |
+| **codec** | Content dedup, persistence on both read and write, devtools snapshots and event payloads. Round-trips `Map`, `Set`, `Date`, `RegExp`, `Error`, `BigInt`, typed arrays, cycles and shared references, and reports what it cannot represent instead of dropping it |
+| **persistence** | `hydrate()` seeds initial state before the store exists, so there is no boot flash; `persist()` rides the instrumentation seam |
+| **devtools** | `instrument()` streams events and patches; time travel applies state back through `__applyExternalState`. Replay does not re-run your `onEvent` handlers unless they opt in |
+| **registration** | `registerSlice`, `registerMiddleware` and `registerEffect` add to a live store and widen its types. `replace*` replaces only what the application authored, so a hot reload leaves a library's slice alone |
+| **cascade guard** | An event emitted from a handler carries its cause and its depth, so a cycle is stopped and named rather than hanging the tab |
+
+---
+
 ## What you stop doing: the pains Yoltra removes
 
 ### Manual render optimization: delete your `useMemo`s
