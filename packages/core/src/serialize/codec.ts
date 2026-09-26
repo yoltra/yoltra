@@ -104,6 +104,37 @@ const BINARY_CONSTRUCTORS = Object.freeze(
 ) as Readonly<Record<string, { new (buffer: ArrayBufferLike): ArrayBufferView } | undefined>>;
 
 /**
+ * The supported kind a view should round-trip as, or `undefined` if there is none.
+ *
+ * @remarks
+ * Resolved by `instanceof`, not by `constructor.name`. Node's `Buffer` is a `Uint8Array`
+ * subclass and is everywhere, and its name is not in the allow-list, so a name lookup tagged
+ * it `kind: "Buffer"`, reported nothing, and the decoder returned `undefined` for it - a
+ * silent total loss of the value, through `persist` as much as through time travel. The same
+ * applied to `Float16Array` and to any user subclass.
+ *
+ * A subclass therefore comes back as its base. That is lossy, and the caller is told: the
+ * path is added to {@link EncodeReport.unsupported} whenever the resolved kind is not the
+ * constructor's own name.
+ *
+ * @internal
+ */
+function resolveBinaryKind(view: ArrayBufferView): BinaryKind | undefined {
+  const own = view.constructor?.name;
+  if (own !== undefined && Object.prototype.hasOwnProperty.call(BINARY_CONSTRUCTORS, own)) {
+    return own as BinaryKind;
+  }
+  if (view instanceof DataView) return "DataView";
+  for (const name of Object.keys(BINARY_CONSTRUCTORS)) {
+    const Ctor = BINARY_CONSTRUCTORS[name] as unknown as
+      | (abstract new (...args: never[]) => ArrayBufferView)
+      | undefined;
+    if (Ctor !== undefined && view instanceof Ctor) return name as BinaryKind;
+  }
+  return undefined;
+}
+
+/**
  * Bytes to base64.
  *
  * @remarks
@@ -279,10 +310,15 @@ export function encodeState(input: unknown, options: EncodeOptions = {}): Encode
     }
 
     if (value instanceof ArrayBuffer) {
-      // Charged by size so `encodeStateBounded`'s shrink loop has a handle on it. Left at
-      // one node, a state dominated by a single large buffer would burn every attempt
-      // reducing a budget that was never the reason it overflowed.
+      // Charged by size, and charged *before* encoding, so `encodeStateBounded`'s shrink
+      // loop stops an oversized buffer on the next attempt rather than base64-encoding it
+      // again first. Left at one node, a state dominated by a single large buffer would
+      // burn every attempt reducing a budget that was never the reason it overflowed.
       nodes += Math.ceil(value.byteLength / 64);
+      if (nodes > maxNodes) {
+        truncated = true;
+        return { [TAG]: "unsupported", kind: "truncated" } satisfies Tagged;
+      }
       return {
         [TAG]: "binary",
         kind: "ArrayBuffer",
@@ -291,16 +327,32 @@ export function encodeState(input: unknown, options: EncodeOptions = {}): Encode
     }
     if (ArrayBuffer.isView(value)) {
       const view = value as ArrayBufferView;
+      // Charged *before* encoding, not after. Charging afterwards meant a 10 MB buffer was
+      // fully base64-encoded on every one of the shrink loop's attempts before the budget
+      // it had just blown was noticed.
       nodes += Math.ceil(view.byteLength / 64);
+
+      const kind = resolveBinaryKind(view);
+      if (kind === undefined) {
+        // An exotic view with no supported base. Reported, and its bytes kept, rather than
+        // tagged with a kind the decoder will reject.
+        unsupported.push(path);
+        return {
+          [TAG]: "unsupported",
+          kind: view.constructor?.name ?? "ArrayBufferView",
+        } satisfies Tagged;
+      }
+
       // Only the view's own window, not the whole backing buffer. A decoded view therefore
       // does not share a buffer with its former siblings - a real fidelity loss, and much
       // cheaper than carrying the buffer plus every offset.
       const bytes = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
-      return {
-        [TAG]: "binary",
-        kind: view.constructor.name as BinaryKind,
-        b64: bytesToBase64(bytes),
-      } satisfies Tagged;
+      const out: Tagged = { [TAG]: "binary", kind, b64: bytesToBase64(bytes) };
+      // A subclass round-trips as its base, which keeps the bytes but loses the subclass.
+      // Reported, because `Buffer` coming back a `Uint8Array` changes what `.toString()`
+      // and `.equals()` do, and silence about that is what this module exists to prevent.
+      if (view.constructor?.name !== kind) unsupported.push(path);
+      return out;
     }
 
     // Everything past here is walked with `Object.entries`, which is only faithful for a

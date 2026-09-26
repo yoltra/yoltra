@@ -202,3 +202,47 @@ describe("encode losses are reported, not swallowed", () => {
     expect(Array.from(bytes)).toEqual([1, 2, 3]);
   });
 });
+
+describe("an encode that is both truncated and lossy", () => {
+  it("reports the paths as well as the truncation", async () => {
+    // A ternary reported only the truncation and threw the paths away, which are the
+    // actionable half: "too large" says retry with less, a named path says which value to
+    // change.
+    class Money {
+      constructor(public amount: number) {}
+    }
+    const written: string[] = [];
+    const adapter: PersistenceAdapter = {
+      read: () => null,
+      write: (_k, v) => {
+        written.push(v);
+      },
+      remove: () => {},
+    };
+    const onError = vi.fn();
+
+    const store = createStore({
+      name: "BothLossesStore",
+      reducer: {
+        big: {
+          state: { price: null as Money | null, rows: [] as number[] },
+          when: { any: true },
+          reducer: (s: { price: Money | null; rows: number[] }) => ({
+            price: new Money(1),
+            rows: Array.from({ length: 50_000 }, (_, i) => i),
+          }),
+        } satisfies ReducerSpec<{ price: Money | null; rows: number[] }, EM>,
+      },
+    });
+
+    const stop = persist(store, { key: "k", adapter, version: 1, throttleMs: 0, onError });
+    await store.emit("ui", "poke", null);
+    await stop();
+
+    const encodeErrors = onError.mock.calls
+      .filter(([, phase]) => phase === "encode")
+      .map(([e]) => String(e));
+    expect(encodeErrors.length).toBeGreaterThan(0);
+    expect(encodeErrors[0]).toContain("/slices/big/price");
+  });
+});

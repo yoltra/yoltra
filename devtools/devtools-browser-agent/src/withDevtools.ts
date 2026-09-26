@@ -434,7 +434,12 @@ export function withDevtools<
   // The transport buffers while disconnected, so this needs no connection check. Each frame
   // is a full snapshot, so if several are buffered only the last one carries anything the
   // earlier ones did not.
-  const registrationUnsub = store.onRegistrationChange(() => {
+  const registrationUnsub = store.onRegistrationChange((changes) => {
+    // `internal` registrations are the store's own machinery, and `store.call()` mounts and
+    // unmounts a reply listener per call. Forwarding those turned ordinary request/response
+    // traffic into two whole-store snapshots per call, which is a lot of hub bandwidth to
+    // describe something a panel does not display.
+    if (changes.every((c) => c.origin === "internal")) return;
     wsClient.send(JSON.stringify(subscriptionsFrame()));
   });
 

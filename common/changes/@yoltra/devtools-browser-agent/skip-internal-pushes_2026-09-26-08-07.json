@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "comment": "The agent no longer pushes a whole-store snapshot for the store's own internal registrations. `store.call()` mounts and unmounts a reply listener per call, so ordinary request/response traffic produced two `STORE_SUBSCRIPTIONS` frames per call - a lot of hub bandwidth to describe something the panel does not display.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-browser-agent"
+}

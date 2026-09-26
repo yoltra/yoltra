@@ -2178,7 +2178,21 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       const current = this.describeCurrentRegistrations();
       // Synchronously, before returning. Pull-then-subscribe would be two shapes and a race
       // to reason about; this is one shape and no race by construction.
-      if (current.length > 0) this.invokeRegistrationObserver(observer, current);
+      //
+      // Flagged while delivering, so a registration made from inside this very snapshot is
+      // queued like any other rather than re-entering the notifier. Without the flag an
+      // observer that registers on first sight of the store broke the documented contract
+      // on the one call most likely to do it.
+      if (current.length > 0) {
+        const wasNotifying = this.notifyingRegistrations;
+        this.notifyingRegistrations = true;
+        try {
+          this.invokeRegistrationObserver(observer, current);
+        } finally {
+          this.notifyingRegistrations = wasNotifying;
+        }
+        if (!wasNotifying) this.drainQueuedRegistrationBatches();
+      }
     }
 
     return () => {
@@ -2298,27 +2312,37 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.notifyingRegistrations = true;
     try {
       this.deliverRegistrationBatch(batch);
-
-      // Bounded like the reduce depth, and for the same reason: two observers registering in
-      // response to each other would otherwise loop forever. Logged rather than thrown - the
-      // topology is correct at this point, and throwing would truncate the stream *and*
-      // unwind a caller that did nothing wrong.
-      let drained = 0;
-      while (this.queuedRegistrationBatches.length > 0) {
-        if (drained >= MAX_REGISTRATION_CASCADE) {
-          console.error(
-            `[yoltra] Registration notifications exceeded ${MAX_REGISTRATION_CASCADE} rounds; ` +
-              `dropping the rest. Two observers are most likely registering in response to ` +
-              `each other.`,
-          );
-          this.queuedRegistrationBatches.length = 0;
-          break;
-        }
-        drained += 1;
-        this.deliverRegistrationBatch(this.queuedRegistrationBatches.shift()!);
-      }
+      this.drainQueuedRegistrationBatches();
     } finally {
       this.notifyingRegistrations = false;
+    }
+  }
+
+  /**
+   * Delivers batches an observer produced while being notified.
+   *
+   * @remarks
+   * Bounded like the reduce depth, and for the same reason: two observers registering in
+   * response to each other would otherwise loop forever. Logged rather than thrown - the
+   * topology is correct at that point, and throwing would truncate the stream *and* unwind a
+   * caller that did nothing wrong.
+   *
+   * @internal
+   */
+  private drainQueuedRegistrationBatches(): void {
+    let drained = 0;
+    while (this.queuedRegistrationBatches.length > 0) {
+      if (drained >= MAX_REGISTRATION_CASCADE) {
+        console.error(
+          `[yoltra] Registration notifications exceeded ${MAX_REGISTRATION_CASCADE} rounds; ` +
+            `dropping the rest. Two observers are most likely registering in response to ` +
+            `each other.`,
+        );
+        this.queuedRegistrationBatches.length = 0;
+        break;
+      }
+      drained += 1;
+      this.deliverRegistrationBatch(this.queuedRegistrationBatches.shift()!);
     }
   }
 
@@ -2479,13 +2503,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.middleware.push(entry);
     this.recordMiddlewareChange(entry, "mounted");
     return this.asRegistration(() => {
-      this.recordMiddlewareChange(entry, "unmounted");
-      void 0;
       // Spliced by entry identity. `indexOf` on the function meant registering the same
       // middleware twice and disposing once removed the first registration rather than the
       // one being disposed.
       const i = this.middleware.indexOf(entry);
-      if (i !== -1) this.middleware.splice(i, 1);
+      // Idempotent: a second call must not re-announce a removal that already happened.
+      if (i === -1) return;
+      this.middleware.splice(i, 1);
+      // Announced *after* the splice, so an observer that reads the store sees it gone.
+      this.recordMiddlewareChange(entry, "unmounted");
     });
   }
 
@@ -2520,6 +2546,24 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         dispatch: "pattern",
       };
     });
+  }
+
+  /**
+   * Drops an effect's metadata only once nothing is still registered with it.
+   *
+   * @remarks
+   * `effectMeta` is keyed by the effect *function*, and the same function can legitimately
+   * back several registrations. Deleting on the first disposal stripped the name and
+   * description of the ones still live, which a devtools panel then showed as unnamed.
+   *
+   * @internal
+   */
+  private releaseEffectMeta(effect: EffectFunction<DeepReadonly<S>, EM>): void {
+    for (const set of this.effects.values()) {
+      for (const entry of set) if (entry.effect === effect) return;
+    }
+    for (const entry of this.patternEffects) if (entry.effect === effect) return;
+    this.effectMeta.delete(effect);
   }
 
   /** @internal */
@@ -2629,7 +2673,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.announceMountedSlice(name, (this.state as any)[name]);
 
     return this.asRegistration(() => {
-      // disposer
+      // Idempotent. A second call used to re-announce the unmount and re-broadcast to every
+      // listener, for a slice that had already gone.
+      if (!Object.prototype.hasOwnProperty.call(this.reducers, name)) return;
       this.inRegistrationTransaction(() => {
         this.unmountSlice(name as R, { deleteState: true });
         this.listeners.forEach((l) => l());
@@ -2851,7 +2897,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       return () => {
         this.recordEffectChange(effect, when!, origin, "unmounted", "pattern");
         this.patternEffects.delete(entry);
-        this.effectMeta.delete(effect);
+        this.releaseEffectMeta(effect);
       };
     }
 
@@ -2871,7 +2917,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       return () => {
         this.recordEffectChange(effect, normalized, origin, "unmounted", "pattern");
         this.patternEffects.delete(entry);
-        this.effectMeta.delete(effect);
+        this.releaseEffectMeta(effect);
       };
     }
 
@@ -2899,7 +2945,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     return () => {
       for (const u of unsubs) u();
-      this.effectMeta.delete(effect);
+      this.releaseEffectMeta(effect);
     };
   }
 
@@ -3056,7 +3102,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         // Pruned per dropped function rather than wholesale. `effectMeta` was never cleared
         // here at all, so it grew stale entries forever; clearing all of it would instead
         // strip the metadata of every effect being preserved.
-        this.effectMeta.delete(entry.effect);
+        this.releaseEffectMeta(entry.effect);
       }
       if (set.size === 0) this.effects.delete(key);
     }
@@ -3067,7 +3113,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       }
       this.recordEffectChange(entry.effect, entry.when, entry.origin, "unmounted", "pattern");
       this.patternEffects.delete(entry);
-      this.effectMeta.delete(entry.effect);
+      this.releaseEffectMeta(entry.effect);
     }
 
     for (const spec of next) {
@@ -3120,28 +3166,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const nextEntries = Object.entries(next);
     const nextKeys = new Set(nextEntries.map(([k]) => k));
 
-    // Pre-flight, before anything is mutated. An application authoring a slice a library
-    // owns is a real mistake, and a silent takeover is the worst available outcome: the
-    // library keeps a disposer for a slice that is no longer its own. Throwing after a
-    // partial apply would be worse still, so the whole set is checked first.
-    if (scope === "spec") {
-      const collisions = nextEntries
-        .map(([k]) => k)
-        .filter((k) => this.sliceOrigin.get(k) === "dynamic");
-      if (collisions.length > 0) {
-        const named = collisions
-          .map((k) => {
-            const owner = this.sliceOwner.get(k);
-            return owner === undefined ? `"${k}"` : `"${k}" (owner: ${owner})`;
-          })
-          .join(", ");
-        throw new Error(
-          `[yoltra] replaceReducers would take over ${collisions.length === 1 ? "a slice" : "slices"} ` +
-            `mounted at runtime: ${named}. Rename the slice, or pass { scope: "all" } to replace ` +
-            `it deliberately.`,
-        );
-      }
-    }
+    this.assertNoSliceCollision(next, scope);
 
     const rootBefore = this.state;
 
@@ -3180,6 +3205,40 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (this.state !== rootBefore) this.listeners.forEach((l) => l());
 
     this.reportPreserved("replaceReducers", preserved, scope);
+  }
+
+  /**
+   * Refuses, before anything is mutated, to take over a slice mounted at runtime.
+   *
+   * @remarks
+   * An application authoring a slice a library owns is a real mistake, and a silent takeover
+   * is the worst available outcome: the library keeps a disposer for a slice that is no
+   * longer its own. Throwing part-way through would be worse still, which is why this runs
+   * as a pre-flight and why `hotReplace` calls it before swapping anything at all.
+   *
+   * @internal
+   */
+  private assertNoSliceCollision(
+    next: Record<string, unknown>,
+    scope: ReplaceScope,
+  ): void {
+    if (scope !== "spec") return;
+    const collisions = Object.keys(next).filter(
+      (k) => this.sliceOrigin.get(k) === "dynamic",
+    );
+    if (collisions.length === 0) return;
+
+    const named = collisions
+      .map((k) => {
+        const owner = this.sliceOwner.get(k);
+        return owner === undefined ? `"${k}"` : `"${k}" (owner: ${owner})`;
+      })
+      .join(", ");
+    throw new Error(
+      `[yoltra] replaceReducers would take over ${collisions.length === 1 ? "a slice" : "slices"} ` +
+        `mounted at runtime: ${named}. Rename the slice, or pass { scope: "all" } to replace ` +
+        `it deliberately.`,
+    );
   }
 
   /**
@@ -3230,6 +3289,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // is the documented HMR entry point, and a harness that wants the old wholesale
     // semantics should need one flag, not three.
     const scope = partial.scope;
+
+    // Checked up front, across the whole call. `replaceReducers` refuses to take over a
+    // slice a library owns, and that refusal used to fire *after* middleware and effects had
+    // already been swapped - leaving the new module's middleware running against the old
+    // reducers, which is a worse state than either before or after. A partial hot reload is
+    // harder to diagnose than a refused one.
+    if (partial.reducer) this.assertNoSliceCollision(partial.reducer, scope ?? "spec");
+
     // One transaction across all three, so a hot reload produces a single batch rather than
     // three snapshots of a topology mid-rebuild.
     this.inRegistrationTransaction(() => {
@@ -3384,6 +3451,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * mounted after creation: a component subscribed to a path inside it simply never
    * re-rendered. That makes the decoration story ship a documented-as-working path that does
    * not work, which is why this is here rather than filed as a follow-up.
+   *
+   * Scope, stated precisely because it is narrower than it looks: this emits the slice root
+   * and its **top-level** keys, which is exactly what an ordinary commit emits when a
+   * subtree first appears - `detectChangedProps` reports a newly-appearing branch at its
+   * root, not leaf by leaf. So a `connect` on `"deep.n"` does not fire here, and does not
+   * fire on a normal commit that first creates `deep` either. Consistent, not complete.
    *
    * Skipped when nothing is subscribed, and skipped entirely during construction, where no
    * subscriber can exist yet.

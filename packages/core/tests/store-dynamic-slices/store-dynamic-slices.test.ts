@@ -546,3 +546,95 @@ describe("typed growth at runtime", () => {
     ).not.toThrow();
   });
 });
+
+describe("failures found in review", () => {
+  it("hotReplace refuses before swapping anything, not half-way through", async () => {
+    // replaceReducers throws rather than take over a slice a library owns, and hotReplace
+    // ran middleware and effects first - so the refusal left the new module's middleware
+    // running against the old reducers. A partial hot reload is harder to diagnose than a
+    // refused one.
+    const calls: string[] = [];
+    const store = createStore({
+      name: "HalfAppliedStore",
+      reducer: { base: baseReducer },
+      middleware: [
+        (() => {
+          calls.push("original");
+          return true;
+        }) as any,
+      ],
+    });
+    store.registerSlice("owned", {
+      state: { n: 0 },
+      when: { keys: [["ui", "increment"]] },
+      reducer: (s: { n: number }) => s,
+    } as ReducerSpec<any, EM>);
+
+    expect(() =>
+      store.hotReplace({
+        reducer: { base: baseReducer, owned: baseReducer } as any,
+        middleware: [
+          (() => {
+            calls.push("replacement");
+            return true;
+          }) as any,
+        ],
+      }),
+    ).toThrow(/owned/);
+
+    calls.length = 0;
+    await store.emit("ui", "increment", 1);
+
+    // The original pipeline, untouched. Nothing was swapped.
+    expect(calls).toEqual(["original"]);
+  });
+
+  it("keeps effect metadata that another live registration still shares", () => {
+    // effectMeta is keyed by the effect *function*, and one function can back several
+    // registrations. Deleting on the first disposal stripped the name and description of
+    // the ones still live, which a panel then showed as unnamed.
+    const store = createStore({ name: "SharedMetaStore", reducer: { base: baseReducer } });
+
+    const shared = async () => {};
+    const first = store.registerEffect({
+      when: { keys: [["ui", "increment"]] },
+      effect: shared,
+      meta: { type: "effect", name: "shared" },
+    });
+    store.registerEffect({
+      when: { keys: [["ui", "other"]] },
+      effect: shared,
+      meta: { type: "effect", name: "shared" },
+    });
+
+    first();
+
+    const remaining = store.__devtoolsIntrospect().effects;
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]?.name).toBe("shared");
+  });
+
+  it("makes both disposers idempotent", () => {
+    const store = createStore({ name: "IdempotentStore", reducer: { base: baseReducer } });
+    const listener = vi.fn();
+    store.subscribe(listener);
+
+    const sliceOff = store.registerSlice("tmp", {
+      state: { n: 0 },
+      when: { keys: [["ui", "increment"]] },
+      reducer: (s: { n: number }) => s,
+    } as ReducerSpec<any, EM>);
+    const mwOff = store.registerMiddleware(() => true);
+
+    sliceOff();
+    mwOff();
+    const afterFirst = listener.mock.calls.length;
+
+    // A second call used to re-announce the removal and re-broadcast to every listener,
+    // for things that had already gone.
+    sliceOff();
+    mwOff();
+
+    expect(listener.mock.calls.length).toBe(afterFirst);
+  });
+});

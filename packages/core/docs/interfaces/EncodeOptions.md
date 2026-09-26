@@ -8,7 +8,7 @@
 
 # Interface: EncodeOptions
 
-Defined in: [serialize/codec.ts:151](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L151)
+Defined in: [serialize/codec.ts:182](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L182)
 
 Options for [encodeState](../functions/encodeState.md).
 
@@ -18,7 +18,7 @@ Options for [encodeState](../functions/encodeState.md).
 
 > `readonly` `optional` **maxNodes**: `number`
 
-Defined in: [serialize/codec.ts:169](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L169)
+Defined in: [serialize/codec.ts:200](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L200)
 
 Maximum number of nodes to encode. Beyond it, subtrees are replaced by a truncation marker.
 
@@ -34,7 +34,7 @@ where it stopped. Defaults to 100000.
 
 > `readonly` `optional` **sanitize**: (`path`, `value`) => `unknown`
 
-Defined in: [serialize/codec.ts:160](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L160)
+Defined in: [serialize/codec.ts:191](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L191)
 
 Redacts a value before it leaves the process.
 

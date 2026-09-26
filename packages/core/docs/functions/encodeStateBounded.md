@@ -10,7 +10,7 @@
 
 > **encodeStateBounded**(`input`, `maxBytes`, `options`): [`BoundedEncodeResult`](../interfaces/BoundedEncodeResult.md)
 
-Defined in: [serialize/codec.ts:540](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L540)
+Defined in: [serialize/codec.ts:592](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L592)
 
 Encodes a value, shrinking it until its serialized form fits within `maxBytes`.
 

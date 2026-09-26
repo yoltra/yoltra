@@ -425,3 +425,41 @@ describe("base64 without Buffer (the browser path)", () => {
     expect(viaBtoa).toBe(viaBuffer);
   });
 });
+
+describe("binary subclasses and exotic views", () => {
+  // `Buffer` is a `Uint8Array` subclass and is everywhere in Node. Resolving the tag by
+  // `constructor.name` gave it `kind: "Buffer"`, which is not in the decoder's allow-list,
+  // so it decoded to `undefined` - reported nowhere, through `persist` as much as through
+  // time travel. A silent total loss, which is the failure this module exists to prevent.
+
+  it("round-trips a Buffer's bytes, as its base type", () => {
+    const original = Buffer.from([1, 2, 250]);
+    const restored = decodeState(encodeState(original).value) as Uint8Array;
+
+    expect(restored).toBeInstanceOf(Uint8Array);
+    expect(Array.from(restored)).toEqual([1, 2, 250]);
+  });
+
+  it("reports the subclass as lossy, because it is", () => {
+    // The bytes survive; the subclass does not. `Buffer.toString()` and `Buffer.equals()`
+    // are not `Uint8Array`'s, so silence here would be its own kind of lie.
+    const { report } = encodeState({ b: Buffer.from([1]) });
+    expect(report.unsupported).toEqual(["/b"]);
+  });
+
+  it("says nothing when the view is exactly its declared kind", () => {
+    const { report } = encodeState({ b: new Uint8Array([1]) });
+    expect(report.unsupported).toEqual([]);
+  });
+
+  it("resolves a DataView subclass to its base rather than a kind the decoder rejects", () => {
+    // `DataView` is generic in the current lib, so subclass it through a helper rather than
+    // `class X extends DataView {}`, which does not typecheck here.
+    const OddView = class extends DataView<ArrayBuffer> {};
+    const { value, report } = encodeState({ v: new OddView(new ArrayBuffer(4)) });
+
+    expect((value as any).v.$yoltra).toBe("binary");
+    expect((value as any).v.kind).toBe("DataView");
+    expect(report.unsupported).toEqual(["/v"]);
+  });
+});

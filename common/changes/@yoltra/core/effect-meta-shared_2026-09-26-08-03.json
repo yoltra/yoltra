@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Disposing one effect registration no longer strips the metadata of others sharing the same function. `effectMeta` is keyed by the effect function, and one function can legitimately back several registrations; the metadata is now released only once nothing is still registered with it.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

@@ -8,7 +8,7 @@
 
 # Interface: EncodeResult
 
-Defined in: [serialize/codec.ts:181](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L181)
+Defined in: [serialize/codec.ts:212](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L212)
 
 Result of [encodeState](../functions/encodeState.md).
 
@@ -18,7 +18,7 @@ Result of [encodeState](../functions/encodeState.md).
 
 > `readonly` **report**: [`EncodeReport`](EncodeReport.md)
 
-Defined in: [serialize/codec.ts:183](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L183)
+Defined in: [serialize/codec.ts:214](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L214)
 
 ***
 
@@ -26,4 +26,4 @@ Defined in: [serialize/codec.ts:183](https://github.com/yoltra/yoltra/blob/main/
 
 > `readonly` **value**: `unknown`
 
-Defined in: [serialize/codec.ts:182](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L182)
+Defined in: [serialize/codec.ts:213](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L213)

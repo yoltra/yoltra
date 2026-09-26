@@ -934,9 +934,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 11.2 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 12.5 KB | 16 KB |
-| everything | 13.9 KB | 18 KB |
+| `{ createStore }` | 11.4 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 12.7 KB | 16 KB |
+| everything | 14.1 KB | 18 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines

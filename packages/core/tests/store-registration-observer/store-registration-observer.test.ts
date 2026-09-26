@@ -469,3 +469,49 @@ describe("a slice that is one value", () => {
     expect(seen).toEqual(["abc"]);
   });
 });
+
+describe("failures found in review", () => {
+  it("announces a middleware unmount only after it has actually gone", () => {
+    // The disposer announced first and spliced second, so an observer that looked at the
+    // store was told a middleware had been removed while it was still installed and would
+    // still run for the next event.
+    const store = makeStore();
+    let installedWhenTold: number | undefined;
+
+    const off = store.registerMiddleware(() => true);
+    store.onRegistrationChange((changes) => {
+      if (changes.some((c) => c.kind === "middleware" && c.op === "unmounted")) {
+        installedWhenTold = store.__devtoolsIntrospect().middleware.length;
+      }
+    });
+
+    off();
+
+    expect(installedWhenTold).toBe(0);
+  });
+
+  it("queues a registration made from inside the emitCurrent snapshot", () => {
+    // `emitCurrent` delivered outside the notifying flag, so an observer that registered on
+    // first sight of the store was re-entered instead of queued - breaking the documented
+    // contract on the one call most likely to trigger it.
+    const store = makeStore();
+    const batches: Array<readonly RegistrationChange<EM>[]> = [];
+    let reacted = false;
+
+    store.onRegistrationChange(
+      (changes) => {
+        batches.push(changes);
+        if (!reacted) {
+          reacted = true;
+          store.registerSlice("reaction", slice());
+        }
+      },
+      { emitCurrent: true },
+    );
+
+    // Two separate batches, never one nested inside the other.
+    expect(batches).toHaveLength(2);
+    expect(batches[0]?.some((c) => c.name === "counter")).toBe(true);
+    expect(batches[1]?.[0]?.name).toBe("reaction");
+  });
+});

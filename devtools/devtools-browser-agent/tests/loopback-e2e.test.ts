@@ -364,4 +364,71 @@ describe("the panel's subscription list stays current", () => {
     expect(late).toBeDefined();
     expect(late?.origin).toBe("dynamic");
   });
+
+  it("does not push a snapshot for the store's own internal registrations", async () => {
+    // `store.call()` mounts and unmounts a reply listener per call. Forwarding those turned
+    // ordinary request/response traffic into two whole-store snapshots per call, which is a
+    // lot of hub bandwidth to describe something the panel does not display.
+    const hub = createLoopbackHub();
+    const store = createStore({
+      name: "internal-quiet",
+      reducer: { counter: counterSpec },
+    });
+    withDevtools(store as never, {
+      port: 0,
+      storeId: "s-quiet",
+      socketFactory: hub.agentSocketFactory,
+    });
+    cleanups.push(() => store.dispose());
+
+    const panel = new hub.WebSocket("ws://loopback");
+    const msgs: AnyMsg[] = [];
+    panel.onmessage = (ev) => msgs.push(JSON.parse(ev.data as string));
+    cleanups.push(() => panel.close());
+    await tick();
+    panel.send(
+      JSON.stringify({
+        type: "HANDSHAKE_REQUEST",
+        protocolVersion: PROTOCOL_VERSION,
+        role: DevtoolsRole.EXTENSION,
+        extension: { id: "panel-quiet", name: "Embedded Panel", capabilities: {} },
+      }),
+    );
+    await waitFor(
+      () =>
+        msgs.some(
+          (m) =>
+            (m.type === "STORE_CONNECTED" && m.store?.id === "s-quiet") ||
+            (m.type === "STORE_REGISTRY" && m.stores?.some((st: AnyMsg) => st.id === "s-quiet")),
+        ),
+      { label: "store visible to panel" },
+    );
+
+    const before = msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS").length;
+
+    (store as never as { registerEffect: (s: unknown) => void }).registerEffect({
+      when: { keys: [["rpc", "ask"]] },
+      effect: async (_e: unknown, _g: unknown, emit: any) => {
+        await emit("rpc", "answer", { ok: true });
+      },
+    });
+    // One push for the effect above, which is a `dynamic` registration and should be seen.
+    await waitFor(
+      () => msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS").length > before,
+      { label: "push for the dynamic effect" },
+    );
+    const afterDynamic = msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS").length;
+
+    await (store as never as { call: (...a: unknown[]) => Promise<unknown> }).call(
+      "rpc",
+      "ask",
+      {},
+      { reply: ["rpc", "answer"] },
+    );
+    await tick();
+    await tick();
+
+    // The call mounted and unmounted a reply listener. Neither should have reached the hub.
+    expect(msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS").length).toBe(afterDynamic);
+  });
 });

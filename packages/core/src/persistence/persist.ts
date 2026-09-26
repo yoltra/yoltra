@@ -210,9 +210,15 @@ function encodeEnvelope(
   const { value, report: encodeReport } = encodeState({ version: options.version, slices });
 
   if (encodeReport.truncated || encodeReport.unsupported.length > 0) {
-    const detail = encodeReport.truncated
-      ? "state was too large to encode in full"
-      : `values with no JSON representation at: ${encodeReport.unsupported.join(", ")}`;
+    // Both, when both. A ternary reported only the truncation and threw away the paths,
+    // which are the actionable half: "too large" says retry with less, a named path says
+    // which value to change.
+    const parts: string[] = [];
+    if (encodeReport.truncated) parts.push("state was too large to encode in full");
+    if (encodeReport.unsupported.length > 0) {
+      parts.push(`values with no faithful representation at: ${encodeReport.unsupported.join(", ")}`);
+    }
+    const detail = parts.join("; ");
     report(
       options,
       new Error(`[yoltra] Persisted state is incomplete - ${detail}.`),

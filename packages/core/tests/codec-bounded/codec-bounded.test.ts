@@ -84,3 +84,19 @@ describe("binary and the node budget", () => {
     expect(Array.from(restored.blob)).toEqual([1, 2, 3]);
   });
 });
+
+describe("a buffer is charged before it is encoded", () => {
+  it("gives up on an oversized buffer without base64-encoding it repeatedly", () => {
+    // The node charge used to be applied *after* `bytesToBase64`, so each of the shrink
+    // loop's attempts fully encoded a buffer it was about to discard. Charging first means
+    // the budget is blown before the work is done.
+    const big = new Uint8Array(400_000);
+    const started = Date.now();
+
+    const result = encodeStateBounded({ blob: big }, 1_024);
+
+    expect(result.truncated).toBe(true);
+    // Not a benchmark, just a ceiling: repeated full encodes of 400 KB would blow past this.
+    expect(Date.now() - started).toBeLessThan(2_000);
+  });
+});
