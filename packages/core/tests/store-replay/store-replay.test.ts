@@ -306,12 +306,17 @@ describe("Store - __replayEvents", () => {
         devtools: { allowReplay: true },
       });
 
+      // The reducer error is reported through core's own error path, which writes to
+      // stderr. Silenced so an intentional failure does not read as a broken suite.
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       try {
         store.__replayEvents({ counter: { value: 0 } }, [
           { channel: "math", type: "add", payload: 7, id: "r1" },
         ]);
       } catch {
         // whether it propagates is not what this test is about
+      } finally {
+        errorSpy.mockRestore();
       }
 
       expect(store.isReplaying).toBe(false);
