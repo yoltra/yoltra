@@ -36,6 +36,8 @@ import type {
   InstrumentedEvent,
   EventPhase,
   EventSubscriberEntry,
+  Origin,
+  ReplaceScope,
   EventSubscriptionHandler,
   NarrowedEventHandler,
   When,
@@ -179,7 +181,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
-  private readonly middleware: MiddlewareInput<DeepReadonly<S>, EM>[];
+  private readonly middleware: Array<{
+    input: MiddlewareInput<DeepReadonly<S>, EM>;
+    origin: Origin;
+  }>;
 
   /**
    * Installed slice reducers keyed by slice name.
@@ -223,7 +228,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
-  private readonly effects = new Map<string, Set<EffectFunction<DeepReadonly<S>, EM>>>();
+  private readonly effects = new Map<
+    string,
+    Set<{ effect: EffectFunction<DeepReadonly<S>, EM>; origin: Origin }>
+  >();
 
   /**
    * Pattern-based effects that need runtime matching.
@@ -235,6 +243,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private readonly patternEffects = new Set<{
     effect: EffectFunction<DeepReadonly<S>, EM>;
     when: When<EM>;
+    origin: Origin;
   }>();
 
   /**
@@ -313,6 +322,30 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private readonly patternReducers = new Map<R, When<EM>>();
+
+  /**
+   * Where each mounted slice came from. See {@link Origin}.
+   *
+   * @remarks
+   * This is what makes `replace*` mean "replace mine" rather than "replace everything". It
+   * is written by `mountSlice` and never by a caller.
+   *
+   * @internal
+   */
+  private readonly sliceOrigin = new Map<string, Origin>();
+
+  /**
+   * Who claims each dynamically mounted slice, for introspection only.
+   *
+   * @remarks
+   * Surfaced in `__devtoolsIntrospect()` and named in the collision error. **Never read by
+   * `replace*`.** Correctness comes from {@link Origin}, which nobody has to remember to
+   * pass; if preservation depended on this string, forgetting it would silently delete a
+   * library's state.
+   *
+   * @internal
+   */
+  private readonly sliceOwner = new Map<string, string>();
 
   /**
    * Whether `__replayEvents()` is allowed.
@@ -526,7 +559,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.name = spec.name ?? "yoltra Store";
     this.reducerBus = new EventBus<EM>();
     this.connectorBus = new LooseEventBus();
-    this.middleware = [...(spec.middleware ?? [])];
+    // Tagged `spec`, not left bare. If this tag is missing, `replaceMiddleware` silently
+    // becomes a no-op: it would find nothing of `spec` provenance to remove and preserve
+    // everything instead. No test notices unless one asserts that spec registrations ARE
+    // still replaced, which is why that test exists.
+    this.middleware = (spec.middleware ?? []).map((input) => ({
+      input: input as MiddlewareInput<DeepReadonly<S>, EM>,
+      origin: "spec" as Origin,
+    }));
     this.reducers = {} as Record<R, Reducer<S[R], EM>>;
     this.state = {} as any;
     this.replayEnabled = spec.devtools?.allowReplay ?? false;
@@ -566,7 +606,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
      */
     if (spec.effects?.length) {
       for (const effSpec of spec.effects) {
-        this.registerEffect(effSpec);
+        // `spec`, not the public `registerEffect`'s `dynamic`. Same hazard as the middleware
+        // tag above: get this wrong and `replaceEffects` stops replacing anything.
+        this.registerEffectWithOrigin(effSpec, "spec");
       }
     }
 
@@ -649,6 +691,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.reducerBus.clear();
     this.patternReducers.clear();
     this.sliceUnsubs.clear();
+    this.sliceOrigin.clear();
+    this.sliceOwner.clear();
+    (this.middleware as unknown as unknown[]).length = 0;
     this.changedPathSink = null;
   }
 
@@ -801,7 +846,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (effectSet && effectSet.size > 0) {
       for (const h of [...effectSet]) {
         try {
-          await h(event, this.getState, emit);
+          await h.effect(event, this.getState, emit);
         } catch (e) {
           console.error("Effect error:", e);
           this.onEffectError?.(e, event);
@@ -1151,17 +1196,34 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // Reducers
     const reducers = (Object.keys(this.reducers) as Array<R>).map((name) => {
       const when = this.patternReducers.get(name);
-      return { name: name as string, when };
+      return {
+        name: name as string,
+        when,
+        origin: this.sliceOrigin.get(name as string) ?? "spec",
+        owner: this.sliceOwner.get(name as string),
+      };
     });
 
     // Effects (keyed) — metadata looked up from the store-owned effectMeta map
-    const effects: Array<{ channel: string; type: string; name?: string; description?: string }> = [];
+    const effects: Array<{
+      channel: string;
+      type: string;
+      name?: string;
+      description?: string;
+      origin: Origin;
+    }> = [];
     for (const [key, set] of this.effects) {
       if (set.size === 0) continue;
       const [channel, type] = key.split("::");
-      for (const fn of set) {
-        const meta = this.effectMeta.get(fn);
-        effects.push({ channel, type, name: meta?.name, description: meta?.description });
+      for (const entry of set) {
+        const meta = this.effectMeta.get(entry.effect);
+        effects.push({
+          channel,
+          type,
+          name: meta?.name,
+          description: meta?.description,
+          origin: entry.origin,
+        });
       }
     }
     // Effects (pattern-based) — entry is { effect, when }; metadata in effectMeta
@@ -1172,19 +1234,26 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         type: "*",
         name: meta?.name,
         description: meta?.description,
+        origin: entry.origin,
       });
     }
 
     // Middleware
-    const middleware: Array<{ name?: string; description?: string; when?: unknown }> = [];
-    for (const mwInput of this.middleware) {
+    const middleware: Array<{
+      name?: string;
+      description?: string;
+      when?: unknown;
+      origin: Origin;
+    }> = [];
+    for (const { input: mwInput, origin } of this.middleware) {
       if (typeof mwInput === "function") {
-        middleware.push({ name: mwInput.name || undefined });
+        middleware.push({ name: mwInput.name || undefined, origin });
       } else {
         middleware.push({
           name: (mwInput as any).meta?.name,
           description: (mwInput as any).meta?.description,
           when: (mwInput as any).when,
+          origin,
         });
       }
     }
@@ -1297,7 +1366,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // A snapshot missing this slice must not blank it out — retain the current
       // slice (storing `undefined` would make getState().<slice>.x throw later).
       if (nextSlice === undefined) {
-        if (process.env.NODE_ENV !== "production") {
+        // Only warn for slices the snapshot should have carried. A snapshot taken before a
+        // decoration mounted legitimately lacks its slice, so warning would fire on every
+        // step of every scrub and point at nothing actionable.
+        if (
+          process.env.NODE_ENV !== "production" &&
+          (this.sliceOrigin.get(rName) ?? "spec") === "spec"
+        ) {
           console.warn(
             `[yoltra] External state is missing slice "${String(
               rName,
@@ -1719,7 +1794,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private applyEventSync(event: EventUnion<EM>): EmitResult {
     // Middleware (synchronous). Return `false` to veto; async work belongs in effects.
-    for (const mwInput of this.middleware) {
+    for (const { input: mwInput } of this.middleware) {
       const when = getMiddlewareWhen(mwInput);
       if (!matchesWhen(when, event)) continue;
       const mw = getMiddlewareFunction(mwInput);
@@ -2122,9 +2197,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public registerMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): Unsubscribe {
-    this.middleware.push(mw as any);
+    const entry = { input: mw, origin: "dynamic" as Origin };
+    this.middleware.push(entry);
     return () => {
-      const i = this.middleware.indexOf(mw as any);
+      // Spliced by entry identity. `indexOf` on the function meant registering the same
+      // middleware twice and disposing once removed the first registration rather than the
+      // one being disposed.
+      const i = this.middleware.indexOf(entry);
       if (i !== -1) this.middleware.splice(i, 1);
     };
   }
@@ -2162,6 +2241,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     this.mountSlice(name as R, spec as ReducerSpec<S[R], EM>, {
       preserveState: false,
+      origin: "dynamic",
     });
 
     this.listeners.forEach((l) => l()); // broadcast new slice
@@ -2291,7 +2371,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     opts: CallOptions<EM>,
   ): CallHandle<EventUnion<EM>, EventUnion<EM>> {
     return performCall<S, EM, C, T>(
-      { idFactory: this.idFactory, registerEffect: this.registerEffect, emit: this.emit },
+      {
+        idFactory: this.idFactory,
+        // `internal`, so an in-flight call survives even `replaceEffects(next, { scope: "all" })`.
+        // A test harness resetting a store between cases never means "and abandon the call
+        // that is currently awaiting a reply", and the symptom would be a hang to the idle
+        // timeout with nothing pointing at the reset.
+        registerEffect: (effSpec) => this.registerEffectWithOrigin(effSpec, "internal"),
+        emit: this.emit,
+      },
       channel,
       type,
       payload,
@@ -2300,6 +2388,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   public registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): () => void {
+    return this.registerEffectWithOrigin(spec, "dynamic");
+  }
+
+  /**
+   * {@link registerEffect}, with the provenance the caller cannot set.
+   *
+   * @remarks
+   * Kept private so no origin parameter leaks into `StoreInstance`. Three callers: the
+   * constructor (`spec`), the public method (`dynamic`), and `store.call()` (`internal`).
+   *
+   * @internal
+   */
+  private registerEffectWithOrigin(
+    spec: EffectSpec<DeepReadonly<S>, EM>,
+    origin: Origin,
+  ): () => void {
     const { effect, meta, when } = spec;
     const unsubs: Array<() => void> = [];
 
@@ -2319,11 +2423,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     if (isPatternBased) {
       // Store as pattern-based effect for runtime matching
-      const entry = { effect, when: when! };
+      const entry = { effect, when: when!, origin };
       this.patternEffects.add(entry);
 
       return () => {
         this.patternEffects.delete(entry);
+        this.effectMeta.delete(effect);
       };
     }
 
@@ -2333,11 +2438,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // If no keys (no targeting at all), this effect matches ALL events
     // We treat it as a pattern-based effect with `any: true`
     if (eventKeys.length === 0 && !when) {
-      const entry = { effect, when: { any: true } as When<EM> };
+      const entry = { effect, when: { any: true } as When<EM>, origin };
       this.patternEffects.add(entry);
 
       return () => {
         this.patternEffects.delete(entry);
+        this.effectMeta.delete(effect);
       };
     }
 
@@ -2347,13 +2453,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       if (!this.effects.has(key)) {
         this.effects.set(key, new Set());
       }
-      this.effects.get(key)!.add(effect);
+      const entry = { effect, origin };
+      this.effects.get(key)!.add(entry);
 
       // Create disposer
       unsubs.push(() => {
         const set = this.effects.get(key);
         if (set) {
-          set.delete(effect);
+          set.delete(entry);
           if (set.size === 0) this.effects.delete(key);
         }
       });
@@ -2361,6 +2468,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     return () => {
       for (const u of unsubs) u();
+      this.effectMeta.delete(effect);
     };
   }
 
@@ -2429,12 +2537,25 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public replaceMiddleware(next: MiddlewareInput<DeepReadonly<S>, EM>[]): void {
+  public replaceMiddleware(
+    next: MiddlewareInput<DeepReadonly<S>, EM>[],
+    opts: { scope?: ReplaceScope } = {},
+  ): void {
     // Accepts either form. Taking only the bare function meant a hot reload silently discarded
     // the `when` targeting and `meta` of every spec-form middleware, so after an HMR pass a
     // middleware scoped to one channel began running on all of them.
+    const scope = opts.scope ?? "spec";
+    const retained = this.middleware.filter((e) =>
+      scope === "all" ? e.origin === "internal" : e.origin !== "spec",
+    );
     (this.middleware as any).length = 0;
-    for (const mw of next) this.middleware.push(mw as any);
+    // Order matters and is reproduced rather than incidental: spec middleware exists at
+    // construction and dynamic middleware is appended after it, so new spec entries go first
+    // and retained ones follow. A dynamic auth guard silently moving from first to last
+    // changes which events get vetoed, and nothing about the symptom would point here.
+    for (const mw of next) this.middleware.push({ input: mw, origin: "spec" });
+    for (const entry of retained) this.middleware.push(entry);
+    this.reportPreserved("replaceMiddleware", retained.length, scope);
   }
 
   /**
@@ -2453,12 +2574,42 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public replaceEffects(next: Array<EffectSpec<DeepReadonly<S>, EM>>): void {
-    this.effects.clear();
-    this.patternEffects.clear();
-    for (const spec of next) {
-      this.registerEffect(spec);
+  public replaceEffects(
+    next: Array<EffectSpec<DeepReadonly<S>, EM>>,
+    opts: { scope?: ReplaceScope } = {},
+  ): void {
+    const scope = opts.scope ?? "spec";
+    const keeps = (origin: Origin): boolean =>
+      scope === "all" ? origin === "internal" : origin !== "spec";
+
+    let preserved = 0;
+    for (const [key, set] of this.effects) {
+      for (const entry of [...set]) {
+        if (keeps(entry.origin)) {
+          preserved += 1;
+          continue;
+        }
+        set.delete(entry);
+        // Pruned per dropped function rather than wholesale. `effectMeta` was never cleared
+        // here at all, so it grew stale entries forever; clearing all of it would instead
+        // strip the metadata of every effect being preserved.
+        this.effectMeta.delete(entry.effect);
+      }
+      if (set.size === 0) this.effects.delete(key);
     }
+    for (const entry of [...this.patternEffects]) {
+      if (keeps(entry.origin)) {
+        preserved += 1;
+        continue;
+      }
+      this.patternEffects.delete(entry);
+      this.effectMeta.delete(entry.effect);
+    }
+
+    for (const spec of next) {
+      this.registerEffectWithOrigin(spec, "spec");
+    }
+    this.reportPreserved("replaceEffects", preserved, scope);
   }
 
   /**
@@ -2480,17 +2631,54 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   public replaceReducers(
     next: Record<R, ReducerSpec<S[R], EM>>,
-    opts: { preserveState?: boolean } = {},
+    opts: { preserveState?: boolean; scope?: ReplaceScope } = {},
   ): void {
     const preserveState = opts.preserveState !== false; // default true
+    const scope = opts.scope ?? "spec";
 
     const currentKeys = new Set(Object.keys(this.reducers as any));
     const nextEntries = Object.entries(next);
     const nextKeys = new Set(nextEntries.map(([k]) => k));
 
-    // Remove slices that no longer exist
+    // Pre-flight, before anything is mutated. An application authoring a slice a library
+    // owns is a real mistake, and a silent takeover is the worst available outcome: the
+    // library keeps a disposer for a slice that is no longer its own. Throwing after a
+    // partial apply would be worse still, so the whole set is checked first.
+    if (scope === "spec") {
+      const collisions = nextEntries
+        .map(([k]) => k)
+        .filter((k) => this.sliceOrigin.get(k) === "dynamic");
+      if (collisions.length > 0) {
+        const named = collisions
+          .map((k) => {
+            const owner = this.sliceOwner.get(k);
+            return owner === undefined ? `"${k}"` : `"${k}" (owner: ${owner})`;
+          })
+          .join(", ");
+        throw new Error(
+          `[yoltra] replaceReducers would take over ${collisions.length === 1 ? "a slice" : "slices"} ` +
+            `mounted at runtime: ${named}. Rename the slice, or pass { scope: "all" } to replace ` +
+            `it deliberately.`,
+        );
+      }
+    }
+
+    const rootBefore = this.state;
+
+    // Remove slices that no longer exist - but only the ones this call owns. A slice a
+    // library mounted with `registerReducer` was never in the set `replaceReducers` is
+    // replacing, and no caller of `replaceReducers(myReducers)` means "and also delete the
+    // slice devtools or a decoration mounted, along with its state".
+    let preserved = 0;
     for (const k of currentKeys) {
-      if (!nextKeys.has(k)) this.unmountSlice(k as R, { deleteState: true });
+      if (nextKeys.has(k)) continue;
+      const origin = this.sliceOrigin.get(k) ?? "spec";
+      const removable = scope === "all" ? origin !== "internal" : origin === "spec";
+      if (!removable) {
+        preserved += 1;
+        continue;
+      }
+      this.unmountSlice(k as R, { deleteState: true });
     }
 
     // Add or update slices
@@ -2498,13 +2686,40 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       if (currentKeys.has(k)) {
         // Update reducer impl + event wiring; preserve current state
         this.unmountSlice(k as R, { deleteState: false });
-        this.mountSlice(k as R, rSpec as any, { preserveState });
+        this.mountSlice(k as R, rSpec as any, { preserveState, origin: "spec" });
       } else {
         // New slice
-        this.mountSlice(k as R, rSpec as any, { preserveState: false });
+        this.mountSlice(k as R, rSpec as any, { preserveState: false, origin: "spec" });
       }
     }
 
+    // `registerReducer` has always broadcast after mounting and this never did, so a React
+    // tree went on rendering the pre-reload state after an HMR pass until something else
+    // happened to wake it. Gated on root identity, so an all-preserving replace costs
+    // nothing.
+    if (this.state !== rootBefore) this.listeners.forEach((l) => l());
+
+    this.reportPreserved("replaceReducers", preserved, scope);
+  }
+
+  /**
+   * Says what a `replace*` call left alone, when it left anything alone.
+   *
+   * @remarks
+   * Development only, and silent unless something was actually preserved, so the normal HMR
+   * path stays quiet. `console.debug` rather than `warn`: this is correct operation, and
+   * every existing `warn` in this file marks a genuine problem. It exists so "why is that
+   * effect still firing after a reload" has an answer that does not require reading core.
+   *
+   * @internal
+   */
+  private reportPreserved(method: string, count: number, scope: ReplaceScope): void {
+    if (count === 0) return;
+    if (process.env.NODE_ENV === "production") return;
+    console.debug(
+      `[yoltra] ${method} preserved ${count} registration${count === 1 ? "" : "s"} made after ` +
+        `construction.${scope === "spec" ? ' Pass { scope: "all" } to replace them too.' : ""}`,
+    );
   }
 
   /**
@@ -2529,11 +2744,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
     effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
     preserveState?: boolean;
+    scope?: ReplaceScope;
   }): void {
-    if (partial.middleware) this.replaceMiddleware(partial.middleware);
-    if (partial.effects) this.replaceEffects(partial.effects);
+    // `scope` is forwarded to all three rather than living on `replaceReducers` alone: this
+    // is the documented HMR entry point, and a harness that wants the old wholesale
+    // semantics should need one flag, not three.
+    const scope = partial.scope;
+    if (partial.middleware) this.replaceMiddleware(partial.middleware, { scope });
+    if (partial.effects) this.replaceEffects(partial.effects, { scope });
     if (partial.reducer)
-      this.replaceReducers(partial.reducer, { preserveState: partial.preserveState });
+      this.replaceReducers(partial.reducer, { preserveState: partial.preserveState, scope });
   }
 
   /**
@@ -2549,9 +2769,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private mountSlice(
     name: R,
     rSpec: ReducerSpec<S[R], EM>,
-    opts: { preserveState: boolean },
+    opts: { preserveState: boolean; origin?: Origin; owner?: string },
   ): void {
     const rName = name as unknown as string;
+    this.sliceOrigin.set(rName, opts.origin ?? "spec");
+    if (opts.owner !== undefined) this.sliceOwner.set(rName, opts.owner);
     const { reducer, state, when } = rSpec;
 
     // Install reducer instance (FIXED: only pass reducer function)
@@ -2640,6 +2862,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     // Remove from pattern reducers if present
     this.patternReducers.delete(name);
+    this.sliceOrigin.delete(rName);
+    this.sliceOwner.delete(rName);
 
     // Dispose reducerBus listeners
     const unsubs = this.sliceUnsubs.get(rName);

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "`replace*` now replaces what the application authored and leaves registrations made after construction alone. A reducer, middleware or effect installed with `registerReducer`, `registerMiddleware` or `registerEffect` was never part of the set being replaced, and no caller of `replaceReducers(myReducers)` means \"and also delete the slice devtools mounted, along with its state\". The old reading made the HMR line core's own docstring recommends delete a library's slice and its state on the first file save, with no error and no warning, and it silently turned the disposers `registerMiddleware` handed back into no-ops. Provenance is recorded internally on every registration; no public signature takes it and no library declares it, because correctness must not depend on anyone remembering to pass a string. `replaceReducers`, `replaceMiddleware`, `replaceEffects` and `hotReplace` accept `{ scope: \"all\" }` to restore the previous wholesale behaviour exactly, which a test harness resetting a store between cases may genuinely want; `hotReplace` forwards it to all three, since it is the documented HMR entry point and one flag should be enough. An application that authors a slice a library already mounted now gets an error naming the slice, thrown before anything is mutated, rather than a silent takeover. In development, a `replace*` that preserved something says so at debug level. `__devtoolsIntrospect()` reports `origin` on reducers, effects and middleware, and `owner` on reducers; `owner` is a label for a panel and is never read when deciding what to preserve.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

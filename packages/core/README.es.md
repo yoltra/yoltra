@@ -625,6 +625,32 @@ if (import.meta.hot) {
 }
 ```
 
+### `replace*` reemplaza lo que tú escribiste, no lo que agregó una librería
+
+Un reducer, middleware o efecto registrado **después** de la construcción, con
+`registerReducer`, `registerMiddleware` o `registerEffect`, sobrevive a una llamada a
+`replace*`. Esos registros nunca formaron parte del conjunto que estás reemplazando: nadie que
+escribe `replaceReducers(myReducers)` quiere decir "y ademas borra la slice que montó devtools,
+junto con su estado".
+
+Antes ocurría lo contrario, lo que hacía que la línea de HMR de arriba borrara la slice de una
+librería y su estado al primer guardado de archivo, sin error y sin advertencia. Es también la
+razón por la que una llamada `store.call()` en vuelo ya no muere a mitad de recarga: su
+listener de respuesta pertenece al propio store.
+
+Pasa `{ scope: "all" }` para el comportamiento anterior, que un arnés de pruebas que reinicia un
+store entre casos sí puede querer:
+
+```typescript
+store.replaceReducers(nextReducers, { scope: "all" });
+store.hotReplace({ reducer: nextReducers, scope: "all" }); // se reenvía a los tres
+```
+
+Una aplicación que declara una slice que una librería ya montó recibe un error que nombra la
+slice, en lugar de una apropiación silenciosa que deja a la librería con un disposer de algo que
+ya no es suyo. En desarrollo, `replace*` registra en nivel debug cuando preservó algo, así que
+"por qué sigue disparándose ese efecto tras la recarga" tiene respuesta.
+
 ---
 
 ## Mejores Prácticas
@@ -703,10 +729,10 @@ store.registerEffect({
 
 | API                                     | Descripción                                 |
 | --------------------------------------- | ------------------------------------------- |
-| `store.replaceReducers(reducers, opts)` | Reemplazar todos los reducers               |
-| `store.replaceMiddleware(middleware)`   | Reemplazar todos los middleware             |
-| `store.replaceEffects(effects)`         | Reemplazar todos los efectos                |
-| `store.hotReplace(partial)`             | Reemplazar cualquier subconjunto de una vez |
+| `store.replaceReducers(reducers, opts)`     | Reemplaza los reducers del spec; los de runtime sobreviven salvo `{ scope: "all" }` |
+| `store.replaceMiddleware(middleware, opts)` | Reemplaza el middleware del spec; misma regla |
+| `store.replaceEffects(effects, opts)`       | Reemplaza los efectos del spec; misma regla   |
+| `store.hotReplace(partial)`                 | Reemplaza cualquier subconjunto; reenvía `scope` |
 
 ### Helpers
 
@@ -830,9 +856,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 9.5 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 10.7 KB | 16 KB |
-| todo | 12.1 KB | 18 KB |
+| `{ createStore }` | 10.0 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 11.2 KB | 16 KB |
+| todo | 12.7 KB | 18 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que públicas una vez que tu empaquetador define

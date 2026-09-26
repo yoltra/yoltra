@@ -391,3 +391,66 @@ describe("cleanup", () => {
     expect(a).toBe(b);
   });
 });
+
+describe("an in-flight call survives a hot reload", () => {
+  // The in-repo victim of the old `replace*` semantics, and the reason this item is a defect
+  // in shipped code rather than a request on behalf of some future library. `store.call()`
+  // registers a pattern effect on the reply channel for the lifetime of the call; the old
+  // `replaceEffects` cleared both effect registries wholesale, so an HMR pass while a call
+  // was in flight destroyed its reply listener. The call did not fail: it hung to its idle
+  // timeout, with nothing pointing at the file save that caused it.
+  //
+  // The responder must reply *late*. A responder that answers within the same turn settles
+  // the call before any `replace*` could run, which makes the test pass whatever the
+  // provenance rules are - it has to be genuinely in flight to prove anything.
+
+  function deferredResponder(store: ReturnType<typeof bus>) {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    store.registerEffect({
+      when: { keys: [["rpc", "ask"]] },
+      effect: async (event, _get, emit) => {
+        if (event.channel !== "rpc" || event.type !== "ask") return;
+        await gate;
+        await emit("rpc", "answer", { text: `re: ${event.payload.q}` });
+      },
+    });
+    return release;
+  }
+
+  it("settles after replaceEffects([]) mid-call", async () => {
+    const store = bus();
+    const release = deferredResponder(store);
+
+    const pending = store.call("rpc", "ask", { q: "hello" }, { reply: ["rpc", "answer"] });
+
+    // Let the request reach the responder, which is now parked on the gate.
+    await Promise.resolve();
+
+    // The hot reload, with the call genuinely in flight.
+    store.replaceEffects([]);
+
+    release();
+    const res = await pending;
+    expect((res.payload as { text: string }).text).toBe("re: hello");
+  });
+
+  it("settles even under { scope: \"all\" }", async () => {
+    // `internal` outranks the escape hatch. A harness resetting a store between cases never
+    // means "and abandon the call that is currently awaiting a reply", so the store's own
+    // registrations are the one thing no scope removes.
+    const store = bus();
+    const release = deferredResponder(store);
+
+    const pending = store.call("rpc", "ask", { q: "x" }, { reply: ["rpc", "answer"] });
+    await Promise.resolve();
+
+    store.replaceEffects([], { scope: "all" });
+
+    release();
+    const res = await pending;
+    expect((res.payload as { text: string }).text).toBe("re: x");
+  });
+});

@@ -147,31 +147,122 @@ describe("Store - middleware and effects", () => {
     errorSpy.mockRestore();
   });
 
-  it("replaceMiddleware swaps out the entire pipeline", async () => {
+  it("replaceMiddleware replaces spec middleware and preserves runtime middleware", async () => {
+    // This asserted that `replaceMiddleware` removed everything. A middleware registered at
+    // runtime was never part of what the caller is replacing, and the disposer it handed
+    // back silently became a no-op afterwards.
     const store = makeStore();
-
     const logs: string[] = [];
 
-    const mwOld: MiddlewareFunction<AppState, AppEvents> = () => {
-      logs.push("old");
+    const mwDynamic: MiddlewareFunction<DeepReadonly<AppState>, AppEvents> = () => {
+      logs.push("dynamic");
       return true;
     };
-
-    store.registerMiddleware(mwOld);
+    store.registerMiddleware(mwDynamic);
 
     await store.emit("ui", "increment", 1);
-    expect(logs).toEqual(["old"]);
+    expect(logs).toEqual(["dynamic"]);
 
-    const mwNew: MiddlewareFunction<AppState, AppEvents> = () => {
-      logs.push("new");
+    const mwSpec: MiddlewareFunction<DeepReadonly<AppState>, AppEvents> = () => {
+      logs.push("spec");
       return true;
     };
+    store.replaceMiddleware([mwSpec]);
 
-    store.replaceMiddleware([mwNew]);
-
-    // Use different payload to avoid deduplication
+    logs.length = 0;
     await store.emit("ui", "increment", 2);
-    expect(logs).toEqual(["old", "new"]);
+
+    // Both run, and the order is reproduced rather than incidental: spec middleware exists
+    // at construction and dynamic middleware is appended after it, so a preserving replace
+    // must put the new spec entries first. A dynamic auth guard moving from first to last
+    // changes which events get vetoed.
+    expect(logs).toEqual(["spec", "dynamic"]);
+  });
+
+  it("replaceMiddleware removes runtime middleware under { scope: \"all\" }", async () => {
+    const store = makeStore();
+    const logs: string[] = [];
+
+    store.registerMiddleware((() => {
+      logs.push("dynamic");
+      return true;
+    }) as MiddlewareFunction<DeepReadonly<AppState>, AppEvents>);
+
+    store.replaceMiddleware([], { scope: "all" });
+
+    await store.emit("ui", "increment", 1);
+    expect(logs).toEqual([]);
+  });
+
+  it("still replaces spec middleware, which is what replaceMiddleware is for", async () => {
+    // The regression guard for the constructor's `spec` tag. Miss that tag and
+    // `replaceMiddleware` finds nothing of spec provenance and quietly becomes a no-op,
+    // which every other test here would happily pass.
+    const logs: string[] = [];
+    const store = createStore({
+      name: "SpecMiddlewareStore",
+      reducer: { counter: reducerSpec },
+      middleware: [
+        (() => {
+          logs.push("original");
+          return true;
+        }) as MiddlewareFunction<any, AppEvents>,
+      ],
+    });
+
+    await store.emit("ui", "increment", 1);
+    expect(logs).toEqual(["original"]);
+
+    store.replaceMiddleware([]);
+
+    logs.length = 0;
+    await store.emit("ui", "increment", 2);
+    expect(logs).toEqual([]);
+  });
+
+  it("preserves a runtime effect across replaceEffects, and drops spec ones", async () => {
+    const calls: string[] = [];
+    const store = createStore({
+      name: "EffectProvenanceStore",
+      reducer: { counter: reducerSpec },
+      effects: [
+        {
+          when: { keys: [["ui", "increment"]] },
+          effect: async () => {
+            calls.push("spec");
+          },
+        },
+      ] satisfies Array<EffectSpec<any, AppEvents>>,
+    });
+
+    store.registerEffect({
+      when: { keys: [["ui", "increment"]] },
+      effect: async () => {
+        calls.push("dynamic");
+      },
+    });
+    // A pattern effect too: the two live in different registries and both must be honoured.
+    store.registerEffect({
+      when: { any: true },
+      effect: async () => {
+        calls.push("dynamic-pattern");
+      },
+    });
+
+    await store.emit("ui", "increment", 1);
+    expect(calls.sort()).toEqual(["dynamic", "dynamic-pattern", "spec"]);
+
+    store.replaceEffects([]);
+
+    calls.length = 0;
+    await store.emit("ui", "increment", 2);
+    expect(calls.sort()).toEqual(["dynamic", "dynamic-pattern"]);
+
+    store.replaceEffects([], { scope: "all" });
+
+    calls.length = 0;
+    await store.emit("ui", "increment", 3);
+    expect(calls).toEqual([]);
   });
 
   it("replaceEffects swaps out all registered effects", async () => {

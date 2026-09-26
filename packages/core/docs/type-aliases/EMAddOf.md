@@ -10,7 +10,7 @@
 
 > **EMAddOf**\<`X`\> = `X` *extends* `object` ? `E` *extends* [`EventMapBase`](EventMapBase.md) ? `E` : [`EmptyEventMap`](EmptyEventMap.md) : [`EmptyEventMap`](EmptyEventMap.md)
 
-Defined in: [types.ts:1767](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1767)
+Defined in: [types.ts:1822](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1822)
 
 Reads the event map a spec contributes, or `{}` when it declares none.
 

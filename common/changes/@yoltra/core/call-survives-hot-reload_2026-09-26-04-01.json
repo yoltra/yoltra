@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "An in-flight `store.call()` now survives a hot reload. The call registers a pattern effect on its reply channel for its lifetime, and `replaceEffects` cleared both effect registries wholesale, so saving a file mid-call destroyed the reply listener. The call did not fail: it hung to its idle timeout, with nothing connecting the hang to the file save. The reply listener is now the store's own registration and is preserved even under `{ scope: \"all\" }`, because a harness resetting a store never means \"and abandon the call that is currently awaiting a reply\".",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

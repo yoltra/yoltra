@@ -863,14 +863,20 @@ export interface StoreInstance<
    *
    * @param next - New middleware array.
    */
-  replaceMiddleware(next: MiddlewareFunction<DeepReadonly<S>, EM>[]): void;
+  replaceMiddleware(
+    next: MiddlewareInput<DeepReadonly<S>, EM>[],
+    opts?: { scope?: ReplaceScope },
+  ): void;
 
   /**
    * Replaces all registered effects (HMR-friendly).
    *
    * @param next - New effects array (as EffectSpecs).
    */
-  replaceEffects(next: Array<EffectSpec<DeepReadonly<S>, EM>>): void;
+  replaceEffects(
+    next: Array<EffectSpec<DeepReadonly<S>, EM>>,
+    opts?: { scope?: ReplaceScope },
+  ): void;
 
   /**
    * Replaces the entire reducer set (HMR-friendly).
@@ -880,7 +886,7 @@ export interface StoreInstance<
    */
   replaceReducers(
     next: Record<R, ReducerSpec<S[R], EM>>,
-    opts?: { preserveState?: boolean },
+    opts?: { preserveState?: boolean; scope?: ReplaceScope },
   ): void;
 
   /**
@@ -893,6 +899,7 @@ export interface StoreInstance<
     middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
     effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
     preserveState?: boolean;
+    scope?: ReplaceScope;
   }): void;
 
   /**
@@ -921,11 +928,23 @@ export interface StoreInstance<
    * @internal
    */
   __devtoolsIntrospect(): {
-    reducers: Array<{ name: string; when?: unknown }>;
-    effects: Array<{ channel: string; type: string; name?: string; description?: string }>;
-    middleware: Array<{ name?: string; description?: string; when?: unknown }>;
+    reducers: Array<{ name: string; when?: unknown; origin: Origin; owner?: string }>;
+    effects: Array<{
+      channel: string;
+      type: string;
+      name?: string;
+      description?: string;
+      origin: Origin;
+    }>;
+    middleware: Array<{
+      name?: string;
+      description?: string;
+      when?: unknown;
+      origin: Origin;
+    }>;
     atomic: Array<{ reducer: string; property: string }>;
-    event: Array<{ channel: string; type: string; phase: string }>;
+    /** `duringReplay` says whether a subscription hears replayed events. */
+    event: Array<{ channel: string; type: string; phase: string; duringReplay: boolean }>;
     coarse: number;
     dedupHits: number;
     queueDepth: number;
@@ -1628,6 +1647,42 @@ export type EventSubscriptionHandler<S = any, EM extends EventMapBase = EventMap
   emit: Emit<EM>,
   phase: NotifiedPhase,
 ) => void | Promise<void>;
+
+/**
+ * Where a registration came from.
+ *
+ * @remarks
+ * The distinction already existed in the API surface and simply was not honoured. `replace*`
+ * exists to replace *what the application authored*; a registration a library made through
+ * `registerReducer` / `registerMiddleware` / `registerEffect` after construction was never in
+ * that set, and no caller of `replaceReducers(myReducers)` means "and also delete the slice
+ * devtools or a decoration mounted".
+ *
+ * - `spec` - supplied to `createStore`, or installed by a `replace*` call.
+ * - `dynamic` - registered after construction, which is the only way to decorate a store
+ *   that already exists.
+ * - `internal` - the store's own machinery, currently the reply listener behind
+ *   `store.call()`. Preserved even under `{ scope: "all" }`, because a test harness resetting
+ *   a store between cases never means "and abandon the call that is in flight".
+ *
+ * Recorded internally. No public signature takes it, and **no library declares it**: getting
+ * this right must not depend on anyone remembering to pass a string.
+ *
+ * @public
+ */
+export type Origin = "spec" | "dynamic" | "internal";
+
+/**
+ * Which registrations a `replace*` call is allowed to remove.
+ *
+ * @remarks
+ * `"spec"` is the default and replaces only what the application authored. `"all"` restores
+ * the pre-0.8.0 behaviour exactly, for a caller that genuinely wants it, such as a test
+ * harness resetting a store between cases. `internal` registrations survive both.
+ *
+ * @public
+ */
+export type ReplaceScope = "spec" | "all";
 
 /**
  * One `onEvent` subscription: the handler plus whether it asked to hear replayed events.

@@ -197,7 +197,7 @@ Read the full state (already readonly).
 
 > **hotReplace**(`partial`): `void`
 
-Defined in: [types.ts:891](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L891)
+Defined in: [types.ts:897](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L897)
 
 Convenience API to replace any subset of store parts (HMR patterns).
 
@@ -223,6 +223,10 @@ Partial replacement set.
 
 `Record`\<`R`, [`ReducerSpec`](ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
 
+###### scope?
+
+[`ReplaceScope`](../type-aliases/ReplaceScope.md)
+
 #### Returns
 
 `void`
@@ -233,7 +237,7 @@ Partial replacement set.
 
 > **instrument**(`observer`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:943](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L943)
+Defined in: [types.ts:962](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L962)
 
 Registers an instrumentation observer, called once per emitted event
 (committed or vetoed) after the synchronous reduce phase, with the exact
@@ -472,9 +476,9 @@ Dynamically add/remove a namespaced reducer slice at runtime.
 
 ### replaceEffects()
 
-> **replaceEffects**(`next`): `void`
+> **replaceEffects**(`next`, `opts?`): `void`
 
-Defined in: [types.ts:873](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L873)
+Defined in: [types.ts:876](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L876)
 
 Replaces all registered effects (HMR-friendly).
 
@@ -486,6 +490,12 @@ Replaces all registered effects (HMR-friendly).
 
 New effects array (as EffectSpecs).
 
+##### opts?
+
+###### scope?
+
+[`ReplaceScope`](../type-aliases/ReplaceScope.md)
+
 #### Returns
 
 `void`
@@ -494,7 +504,7 @@ New effects array (as EffectSpecs).
 
 ### replaceMiddleware()
 
-> **replaceMiddleware**(`next`): `void`
+> **replaceMiddleware**(`next`, `opts?`): `void`
 
 Defined in: [types.ts:866](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L866)
 
@@ -504,9 +514,15 @@ Replaces the entire middleware pipeline (HMR-friendly).
 
 ##### next
 
-[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
+[`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
 
 New middleware array.
+
+##### opts?
+
+###### scope?
+
+[`ReplaceScope`](../type-aliases/ReplaceScope.md)
 
 #### Returns
 
@@ -518,7 +534,7 @@ New middleware array.
 
 > **replaceReducers**(`next`, `opts?`): `void`
 
-Defined in: [types.ts:881](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L881)
+Defined in: [types.ts:887](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L887)
 
 Replaces the entire reducer set (HMR-friendly).
 
@@ -537,6 +553,10 @@ Map of slice specs keyed by slice name.
 ###### preserveState?
 
 `boolean`
+
+###### scope?
+
+[`ReplaceScope`](../type-aliases/ReplaceScope.md)
 
 #### Returns
 

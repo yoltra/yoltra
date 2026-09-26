@@ -32,6 +32,8 @@ export type {
   WidenState,
   EventMapCarrier,
   EMAddOf,
+  Origin,
+  ReplaceScope,
   EmptyEventMap,
   StateOfSpec,
   SatisfiesSlices,

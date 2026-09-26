@@ -10,7 +10,7 @@
 
 > **EffectFunction**\<`S`, `EM`\> = (`event`, `getState`, `emit`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [types.ts:1179](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1179)
+Defined in: [types.ts:1198](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1198)
 
 Effect handler: runs AFTER reducers, sees the final state.
 

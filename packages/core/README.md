@@ -652,6 +652,30 @@ if (import.meta.hot) {
 }
 ```
 
+### `replace*` replaces what you authored, not what a library added
+
+A reducer, middleware or effect registered **after** construction, with `registerReducer`,
+`registerMiddleware` or `registerEffect`, survives a `replace*` call. Those registrations were
+never part of the set you are replacing: nobody writing `replaceReducers(myReducers)` means "and
+also delete the slice devtools mounted, along with its state".
+
+This used to go the other way, which made the HMR line above delete a library's slice and its
+state on the first file save, with no error and no warning. It is also why an in-flight
+`store.call()` no longer dies mid-reload: its reply listener belongs to the store itself.
+
+Pass `{ scope: "all" }` for the old wholesale behaviour, which a test harness resetting a store
+between cases may genuinely want:
+
+```typescript
+store.replaceReducers(nextReducers, { scope: "all" });
+store.hotReplace({ reducer: nextReducers, scope: "all" }); // forwards to all three
+```
+
+An application that authors a slice a library already mounted gets an error naming the slice,
+rather than a silent takeover that leaves the library holding a disposer for something no longer
+its own. In development, `replace*` logs at debug level when it preserved anything, so "why is
+that effect still firing after a reload" has an answer.
+
 ---
 
 ## Best Practices
@@ -729,10 +753,10 @@ store.registerEffect({
 
 | API                                     | Description                |
 | --------------------------------------- | -------------------------- |
-| `store.replaceReducers(reducers, opts)` | Replace all reducers       |
-| `store.replaceMiddleware(middleware)`   | Replace all middleware     |
-| `store.replaceEffects(effects)`         | Replace all effects        |
-| `store.hotReplace(partial)`             | Replace any subset at once |
+| `store.replaceReducers(reducers, opts)`   | Replace spec reducers; runtime ones survive unless `{ scope: "all" }` |
+| `store.replaceMiddleware(middleware, opts)` | Replace spec middleware; same rule |
+| `store.replaceEffects(effects, opts)`       | Replace spec effects; same rule    |
+| `store.hotReplace(partial)`                 | Replace any subset at once; forwards `scope` |
 
 ### Helpers
 
@@ -849,9 +873,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 9.5 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 10.7 KB | 16 KB |
-| everything | 12.1 KB | 18 KB |
+| `{ createStore }` | 10.0 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 11.2 KB | 16 KB |
+| everything | 12.7 KB | 18 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines

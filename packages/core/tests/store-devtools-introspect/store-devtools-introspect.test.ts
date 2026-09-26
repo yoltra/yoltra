@@ -33,8 +33,10 @@ describe("Store - __devtoolsIntrospect", () => {
     });
 
     const info = store.__devtoolsIntrospect();
+    // `origin` is what makes `replace*` mean "replace mine"; `owner` is introspection only
+    // and stays undefined unless a library named itself.
     expect(info.reducers).toEqual([
-      { name: "counter", when: undefined },
+      { name: "counter", when: undefined, origin: "spec", owner: undefined },
     ]);
   });
 
@@ -58,6 +60,7 @@ describe("Store - __devtoolsIntrospect", () => {
         type: "increment",
         name: "logIncrement",
         description: "Logs increment events",
+      origin: "spec",
       },
     ]);
   });
@@ -81,6 +84,7 @@ describe("Store - __devtoolsIntrospect", () => {
         type: "decrement",
         name: undefined,
         description: undefined,
+      origin: "spec",
       },
     ]);
   });
@@ -105,6 +109,7 @@ describe("Store - __devtoolsIntrospect", () => {
         type: "*",
         name: "globalLogger",
         description: "Logs all events",
+      origin: "spec",
       },
     ]);
   });
@@ -128,6 +133,7 @@ describe("Store - __devtoolsIntrospect", () => {
         type: "*",
         name: undefined,
         description: undefined,
+      origin: "spec",
       },
     ]);
   });
@@ -151,6 +157,7 @@ describe("Store - __devtoolsIntrospect", () => {
         name: "authGuard",
         description: "Guards admin events",
         when: { channel: "admin" },
+        origin: "spec",
       },
     ]);
   });
@@ -166,7 +173,7 @@ describe("Store - __devtoolsIntrospect", () => {
 
     const info = store.__devtoolsIntrospect();
     expect(info.middleware).toEqual([
-      { name: "myMiddleware" },
+      { name: "myMiddleware", origin: "spec" },
     ]);
   });
 
@@ -182,7 +189,7 @@ describe("Store - __devtoolsIntrospect", () => {
     const info = store.__devtoolsIntrospect();
     // Anonymous arrow functions have empty string names
     expect(info.middleware).toEqual([
-      { name: undefined },
+      { name: undefined, origin: "spec" },
     ]);
   });
 
@@ -269,6 +276,7 @@ describe("Store - __devtoolsIntrospect", () => {
         type: "increment",
         name: "dynamic",
         description: "Added at runtime",
+        origin: "dynamic",
       },
     ]);
 
@@ -288,7 +296,7 @@ describe("Store - __devtoolsIntrospect", () => {
 
     const info = store.__devtoolsIntrospect();
     expect(info.middleware).toEqual([
-      { name: "logger" },
+      { name: "logger", origin: "dynamic" },
     ]);
 
     unsub();
