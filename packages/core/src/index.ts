@@ -32,6 +32,7 @@ export type {
   WidenState,
   EventMapCarrier,
   EMAddOf,
+  EmptyEventMap,
   StateOfSpec,
   SatisfiesSlices,
   DecoratableStore,

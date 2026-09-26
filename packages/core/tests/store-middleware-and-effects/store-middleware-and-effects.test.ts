@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 import { createStore } from "../../src/store/Store";
-import type { MiddlewareFunction, EffectSpec } from "../../src/types";
+import type { DeepReadonly, MiddlewareFunction, EffectSpec } from "../../src/types";
 import { makeStore, reducerSpec } from "./support/setupStore";
 import type { AppState, AppEvents } from "./support/setupStore";
 
@@ -202,5 +202,121 @@ describe("Store - middleware and effects", () => {
     // Use different payload to avoid deduplication
     await store.emit("ui", "increment", 2);
     expect(calls).toEqual(["old", "new"]);
+  });
+});
+
+describe("Store - middleware veto semantics", () => {
+  // The old test was `!result`, so every falsy return vetoed. A middleware that did its work
+  // and fell off the end silently swallowed every event it matched, and the symptom -
+  // reducers stopping for one channel - looks like a routing, `when` or registration-order
+  // problem. Nothing about it pointed at the missing `return`.
+
+  /** Emits once and reports whether the reducer actually saw the event. */
+  async function committedWith(
+    mw: (...args: never[]) => unknown,
+  ): Promise<{ committed: boolean; value: number }> {
+    const store = makeStore();
+    store.registerMiddleware(mw as unknown as MiddlewareFunction<DeepReadonly<AppState>, AppEvents>);
+    const result = await store.emit("ui", "increment", 5);
+    return { committed: result.committed, value: store.getState().counter.value };
+  }
+
+  it("allows the event when middleware returns nothing", async () => {
+    // The reported symptom, and the reason this change exists.
+    const { committed, value } = await committedWith(() => {
+      /* does its work, returns nothing */
+    });
+    expect(committed).toBe(true);
+    expect(value).toBe(5);
+  });
+
+  it("allows the event for every other falsy return", async () => {
+    // `0` is the one most likely to be written by accident - a counter, a length, an index.
+    for (const falsy of [0, "", null, Number.NaN] as const) {
+      const { committed, value } = await committedWith(() => falsy);
+      expect(committed).toBe(true);
+      expect(value).toBe(5);
+    }
+  });
+
+  it("allows the event when middleware returns true", async () => {
+    const { committed, value } = await committedWith(() => true);
+    expect(committed).toBe(true);
+    expect(value).toBe(5);
+  });
+
+  it("vetoes only on an explicit false, and notifies uncommitted subscribers", async () => {
+    const store = makeStore();
+    const seen: string[] = [];
+    store.onEvent(
+      "ui",
+      "increment",
+      () => {
+        seen.push("uncommitted");
+      },
+      "uncommitted",
+    );
+    store.onEvent(
+      "ui",
+      "increment",
+      () => {
+        seen.push("committed");
+      },
+      "committed",
+    );
+
+    store.registerMiddleware((() => false) as unknown as MiddlewareFunction<DeepReadonly<AppState>, AppEvents>);
+
+    const result = await store.emit("ui", "increment", 5);
+
+    expect(result.committed).toBe(false);
+    expect(store.getState().counter.value).toBe(0);
+    expect(seen).toEqual(["uncommitted"]);
+  });
+
+  it("still vetoes when middleware throws, and names the event", async () => {
+    // Kept deliberately: a guard that crashed has not decided the event is safe. But the
+    // log has to say so, because "the event vanished" and "the middleware threw" look
+    // nothing alike from the outside.
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const store = makeStore();
+      store.registerMiddleware(
+        (() => {
+          throw new Error("guard exploded");
+        }) as unknown as MiddlewareFunction<DeepReadonly<AppState>, AppEvents>,
+      );
+
+      const result = await store.emit("ui", "increment", 5);
+
+      expect(result.committed).toBe(false);
+      expect(store.getState().counter.value).toBe(0);
+
+      const logged = errorSpy.mock.calls.map((c) => String(c[0])).join("\n");
+      expect(logged).toContain("ui/increment");
+      expect(logged).toContain("vetoed");
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+
+  it("lets a later middleware veto what an earlier one had no opinion on", async () => {
+    // Order still matters; "no opinion" must not short-circuit the rest of the chain.
+    const store = makeStore();
+    const order: string[] = [];
+
+    store.registerMiddleware(((): void => {
+      order.push("silent");
+    }) as unknown as MiddlewareFunction<DeepReadonly<AppState>, AppEvents>);
+    store.registerMiddleware((() => {
+      order.push("veto");
+      return false;
+    }) as unknown as MiddlewareFunction<DeepReadonly<AppState>, AppEvents>);
+
+    const result = await store.emit("ui", "increment", 5);
+
+    expect(order).toEqual(["silent", "veto"]);
+    expect(result.committed).toBe(false);
+    expect(store.getState().counter.value).toBe(0);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { Store, typedEvents } from "../../src/store/Store";
-import { defineEffect, defineMiddleware, defineSlice } from "../../src/types";
+import { Store, createStore, typedEvents } from "../../src/store/Store";
+import { defineEffect, defineMiddleware, defineSlice, eventKeys } from "../../src/types";
 import type { EventKey } from "../../src/types";
 
 describe("Store.buildAncestorPaths", () => {
@@ -49,7 +49,7 @@ describe("spec builders (defineSlice / defineMiddleware / defineEffect)", () => 
   it("returns the very same spec object, not a copy", () => {
     const spec = {
       state: { granted: [] as string[] },
-      when: { keys: [["lib.transfer", "granted"]] } as const,
+      when: { keys: eventKeys<LibEM>()([["lib.transfer", "granted"]]) },
       reducer: (s: { granted: string[] }) => s,
     };
 
@@ -61,7 +61,7 @@ describe("spec builders (defineSlice / defineMiddleware / defineEffect)", () => 
     // `Object.keys`, in a devtools snapshot, and in anything that serializes a spec.
     const before = {
       state: { n: 0 },
-      when: { any: true } as const,
+      when: { any: true as const },
       reducer: (s: { n: number }) => s,
     };
     const after = defineSlice<LibEM>()(before);
@@ -71,8 +71,8 @@ describe("spec builders (defineSlice / defineMiddleware / defineEffect)", () => 
   });
 
   it("is identity for middleware and effect specs too", () => {
-    const mw = { when: { any: true } as const, middleware: () => true };
-    const fx = { when: { any: true } as const, effect: async () => {} };
+    const mw = { when: { any: true as const }, middleware: () => true };
+    const fx = { when: { any: true as const }, effect: async () => {} };
 
     expect(defineMiddleware<LibEM>()(mw)).toBe(mw);
     expect(defineEffect<LibEM>()(fx)).toBe(fx);
@@ -89,7 +89,7 @@ describe("spec builders (defineSlice / defineMiddleware / defineEffect)", () => 
         e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s,
     });
 
-    const store = new Store<"transfers", { transfers: { granted: string[] } }, LibEM>({
+    const store = createStore({
       name: "BuilderStore",
       reducer: { transfers: slice },
     });

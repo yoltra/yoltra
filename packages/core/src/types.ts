@@ -471,7 +471,10 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
   /**
    * Middleware chain executed before reducers/effects.
    * Accepts either functions (legacy) or MiddlewareSpec objects (recommended).
-   * If any middleware returns false (or resolves to false), the event will not propagate.
+   *
+   * An event stops propagating only when a middleware returns an explicit `false`, or
+   * throws. Returning nothing allows it. Middleware is synchronous: a `Promise` is not
+   * `false`, so it cannot veto.
    */
   middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
 
@@ -1058,12 +1061,24 @@ export type EventUnion<EM extends EventMapBase> = {
 
 /**
  * Middleware function: log, guard, or veto an event **synchronously**.
- * Return `true` to continue, `false` to swallow / cancel propagation.
  *
  * @remarks
+ * **Only an explicit `false` vetoes.** Returning `true`, or returning nothing at all, allows
+ * the event, so middleware that only logs or measures can simply fall off the end.
+ *
+ * The return type is `boolean | void` rather than `boolean` for that reason: under these
+ * semantics an omitted `return` is correct, so making the compiler demand one would be
+ * wrong. It was `boolean` while any falsy value vetoed, which made a missing `return`
+ * silently swallow every event the middleware matched.
+ *
  * Middleware runs in the synchronous reduce phase (so `getState()` is correct
  * immediately after `emit()`), and therefore must be synchronous. Perform async
- * work in effects instead.
+ * work in effects instead - a `Promise` is not `false`, so an async middleware allows the
+ * event while it is still deciding, and the store logs an error in development when it sees
+ * one returned.
+ *
+ * A middleware that **throws** vetoes the event and logs, naming the event: a guard that
+ * crashed has not decided the event is safe.
  *
  * @typeParam S  - Store state (readonly).
  * @typeParam EM - Event map.
@@ -1074,7 +1089,7 @@ export type MiddlewareFunction<S = any, EM extends EventMapBase = EventMapBase> 
   state: S,
   event: EventUnion<EM>,
   emit: Emit<EM>,
-) => boolean;
+) => boolean | void;
 
 /**
  * Middleware specification with optional event targeting and metadata.
@@ -1714,8 +1729,20 @@ export interface EventMapCarrier<EMAdd extends EventMapBase> {
 export type EMAddOf<X> = X extends { readonly "~yoltraEventMap": (em: infer E) => unknown }
   ? E extends EventMapBase
     ? E
-    : {}
-  : {};
+    : EmptyEventMap
+  : EmptyEventMap;
+
+/**
+ * The event map a spec contributes when it declares none.
+ *
+ * @remarks
+ * `Record<never, never>` rather than `{}`: the bare empty-object type accepts any non-nullish
+ * value, including `0` and `""`, so it would let nonsense through {@link Merge}. This has no
+ * keys, which is the actual claim being made, and {@link Merge} short-circuits on it.
+ *
+ * @public
+ */
+export type EmptyEventMap = Record<never, never>;
 
 /**
  * Reads a reducer spec's state type.

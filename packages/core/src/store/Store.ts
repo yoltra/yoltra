@@ -171,7 +171,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   /**
    * Registered middleware pipeline (run **before** reducers).
    * Stores either raw functions (legacy) or MiddlewareSpec objects.
-   * Return `false` from the middleware function to stop propagation.
+   *
+   * Only an explicit `false` stops propagation. Returning nothing allows the event, so
+   * middleware that only logs or measures needs no `return` at all.
    *
    * @internal
    */
@@ -1667,12 +1669,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private applyEventSync(event: EventUnion<EM>): EmitResult {
-    // Middleware (synchronous). Return false to veto; async work belongs in effects.
+    // Middleware (synchronous). Return `false` to veto; async work belongs in effects.
     for (const mwInput of this.middleware) {
       const when = getMiddlewareWhen(mwInput);
       if (!matchesWhen(when, event)) continue;
       const mw = getMiddlewareFunction(mwInput);
-      let ok: boolean;
+      let ok: boolean | void;
       try {
         ok = mw(this.state, event, this.emit);
         if (
@@ -1691,11 +1693,24 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           );
         }
       } catch (err) {
-        console.error("Middleware error:", err);
+        // A throw is still a veto: middleware guards things, and a guard that crashed has
+        // not decided the event is safe. But say so, because "the event vanished" and "the
+        // middleware threw" look nothing alike from the outside.
+        console.error(
+          `[yoltra] Middleware threw for "${event.channel}/${event.type}"; the event was ` +
+            `vetoed and did not reach any reducer.`,
+          err,
+        );
         ok = false;
       }
-      if (!ok) {
-        // Rejected by middleware — notify uncommitted subscribers, do not commit.
+      // Only an explicit `false` vetoes. Middleware that does its work and falls off the end
+      // has an opinion about nothing, and the safe reading of "no opinion" is "allow" - the
+      // previous `!ok` test made a missing `return` swallow every event the middleware
+      // matched, which surfaces as reducers quietly stopping for one channel and looks like
+      // a routing, `when` or registration-order problem. Nothing about it points at the
+      // middleware.
+      if (ok === false) {
+        // Rejected by middleware - notify uncommitted subscribers, do not commit.
         this.notifyEventSubscribers(event, "uncommitted");
         return NOT_COMMITTED;
       }
