@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Persistence reports what it could not serialize. `encodeEnvelope` discarded the encode report, so a value the codec could not represent was written as a lossy stand-in and nothing anywhere said so - the loss surfaced later, as a slice that came back wrong. Losses now reach `PersistOptions.onError` under a new `\"encode\"` phase, which is its own phase rather than `\"write\"` because a serialization loss and a full disk need different responses, and telling them apart is what `onError` is for. Reporting never blocks the write: partial state beats none, and the caller decides what a loss means. `dehydrate` accepts `onError` too, since a server-render handoff has the same exposure. Adding a `PersistencePhase` member is a narrow break for an exhaustive `switch` over it.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

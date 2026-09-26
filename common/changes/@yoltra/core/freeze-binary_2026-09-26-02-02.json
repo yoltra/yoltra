@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "`freezeState` passes binary views through untouched instead of throwing. `Object.freeze` on a `TypedArray` or `DataView` that has elements is a `TypeError` by language rule, because indexed properties on a view cannot be made non-configurable - so the development-mode freeze threw at store construction and it was impossible to keep bytes in slice state at all. There is nothing to deep-freeze in any case: the contents are numbers, not a reachable object graph. Immutability for a view is therefore reference-level, the same treatment `Map` and `Set` already get.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

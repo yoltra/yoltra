@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "FORWARD COMPATIBILITY: state persisted by this version containing a typed array, `DataView` or `ArrayBuffer` carries a `{\"$yoltra\":\"binary\"}` tag that 0.7.x's `decodeState` does not recognise. Its tag switch returns `undefined` for an unknown tag, so downgrading silently loses that slice rather than failing loudly. `PersistOptions.version` is the escape hatch, but nobody will think to bump it for a patch that only made serialization more faithful, so it is called out here instead. Rolling back a deployment that has already written binary state to storage needs a version bump or a storage clear.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}
