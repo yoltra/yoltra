@@ -27,6 +27,7 @@ describe("useEvent", () => {
       "click",
       expect.any(Function),
       "committed", // default phase
+      { duringReplay: false }, // replay opt-in, off unless asked for
     );
   });
 
@@ -98,6 +99,7 @@ describe("useEvent", () => {
       "delete",
       expect.any(Function),
       "uncommitted",
+      { duringReplay: false },
     );
   });
 
@@ -121,6 +123,7 @@ describe("useEvent", () => {
       "action",
       expect.any(Function),
       "all",
+      { duringReplay: false },
     );
 
     // Should receive both committed and uncommitted events
@@ -162,7 +165,13 @@ describe("useEvent", () => {
     );
 
     expect(store.onEvent).toHaveBeenCalledTimes(1);
-    expect(store.onEvent).toHaveBeenLastCalledWith("ui", "click", expect.any(Function), "committed");
+    expect(store.onEvent).toHaveBeenLastCalledWith(
+      "ui",
+      "click",
+      expect.any(Function),
+      "committed",
+      { duringReplay: false },
+    );
 
     rerender(
       <StoreProvider store={store}>
@@ -173,7 +182,13 @@ describe("useEvent", () => {
     // Should unsubscribe from old and subscribe to new
     expect(unsubscribe).toHaveBeenCalledTimes(1);
     expect(store.onEvent).toHaveBeenCalledTimes(2);
-    expect(store.onEvent).toHaveBeenLastCalledWith("data", "click", expect.any(Function), "committed");
+    expect(store.onEvent).toHaveBeenLastCalledWith(
+      "data",
+      "click",
+      expect.any(Function),
+      "committed",
+      { duringReplay: false },
+    );
   });
 
   it("re-subscribes when type changes", () => {
@@ -192,7 +207,13 @@ describe("useEvent", () => {
       </StoreProvider>,
     );
 
-    expect(store.onEvent).toHaveBeenLastCalledWith("ui", "click", expect.any(Function), "committed");
+    expect(store.onEvent).toHaveBeenLastCalledWith(
+      "ui",
+      "click",
+      expect.any(Function),
+      "committed",
+      { duringReplay: false },
+    );
 
     rerender(
       <StoreProvider store={store}>
@@ -201,7 +222,13 @@ describe("useEvent", () => {
     );
 
     expect(unsubscribe).toHaveBeenCalledTimes(1);
-    expect(store.onEvent).toHaveBeenLastCalledWith("ui", "hover", expect.any(Function), "committed");
+    expect(store.onEvent).toHaveBeenLastCalledWith(
+      "ui",
+      "hover",
+      expect.any(Function),
+      "committed",
+      { duringReplay: false },
+    );
   });
 
   it("re-subscribes when phase changes", () => {
@@ -220,7 +247,13 @@ describe("useEvent", () => {
       </StoreProvider>,
     );
 
-    expect(store.onEvent).toHaveBeenLastCalledWith("ui", "click", expect.any(Function), "committed");
+    expect(store.onEvent).toHaveBeenLastCalledWith(
+      "ui",
+      "click",
+      expect.any(Function),
+      "committed",
+      { duringReplay: false },
+    );
 
     rerender(
       <StoreProvider store={store}>
@@ -229,7 +262,13 @@ describe("useEvent", () => {
     );
 
     expect(unsubscribe).toHaveBeenCalledTimes(1);
-    expect(store.onEvent).toHaveBeenLastCalledWith("ui", "click", expect.any(Function), "uncommitted");
+    expect(store.onEvent).toHaveBeenLastCalledWith(
+      "ui",
+      "click",
+      expect.any(Function),
+      "uncommitted",
+      { duringReplay: false },
+    );
   });
 
   it("does not re-subscribe when handler changes (uses ref)", () => {
@@ -362,5 +401,72 @@ describe("useEvent", () => {
     });
 
     expect(store.emit).toHaveBeenCalledWith("ui", "triggered", { from: "handler" });
+  });
+});
+
+describe("useEvent forwards the replay opt-in", () => {
+  // The mock can show that the hook *forwards* the flag. Only a real store can show that
+  // forwarding it changes anything, which is what
+  // `tests/integration/replay-useEvent.test.tsx` is for.
+
+  it("records duringReplay: false by default", () => {
+    const { store } = createMockStore({ counter: { value: 0 } });
+
+    function Probe() {
+      useEvent("ui", "ping", () => {});
+      return null;
+    }
+    render(
+      <StoreProvider store={store}>
+        <Probe />
+      </StoreProvider>,
+    );
+
+    expect(store.getEventSubscriptions()[0]?.duringReplay).toBe(false);
+  });
+
+  it("records duringReplay: true when asked", () => {
+    const { store } = createMockStore({ counter: { value: 0 } });
+
+    function Probe() {
+      useEvent("ui", "ping", () => {}, "committed", { duringReplay: true });
+      return null;
+    }
+    render(
+      <StoreProvider store={store}>
+        <Probe />
+      </StoreProvider>,
+    );
+
+    expect(store.getEventSubscriptions()[0]?.duringReplay).toBe(true);
+  });
+
+  it("is skipped on a replayed notification unless it opted in", () => {
+    const { store } = createMockStore({ counter: { value: 0 } });
+    const optedIn = vi.fn();
+    const defaulted = vi.fn();
+
+    function Probe() {
+      useEvent("ui", "ping", optedIn, "committed", { duringReplay: true });
+      useEvent("ui", "ping", defaulted);
+      return null;
+    }
+    render(
+      <StoreProvider store={store}>
+        <Probe />
+      </StoreProvider>,
+    );
+
+    act(() => {
+      store.notifyEvent("ui", "ping", 1, "committed", { replaying: true });
+    });
+    expect(optedIn).toHaveBeenCalledTimes(1);
+    expect(defaulted).not.toHaveBeenCalled();
+
+    act(() => {
+      store.notifyEvent("ui", "ping", 1, "committed");
+    });
+    expect(optedIn).toHaveBeenCalledTimes(2);
+    expect(defaulted).toHaveBeenCalledTimes(1);
   });
 });

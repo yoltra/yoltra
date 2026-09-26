@@ -44,7 +44,7 @@ Event map.
 
 > **shallowEqual**: \<`T`\>(`a`, `b`) => `boolean`
 
-Defined in: [react/src/hooks/createHooks.ts:200](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L200)
+Defined in: [react/src/hooks/createHooks.ts:211](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L211)
 
 Shallow object equality using `Object.is` per-key.
 
@@ -108,7 +108,7 @@ Optional provider to scope a different store instance to a subtree.
 
 > **useAtomicProp**: [`UseAtomicProp`](../type-aliases/UseAtomicProp.md)\<`R`, `S`\>
 
-Defined in: [react/src/hooks/createHooks.ts:190](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L190)
+Defined in: [react/src/hooks/createHooks.ts:201](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L201)
 
 Subscribes to a single dotted path (or typed accessor).
 
@@ -122,7 +122,7 @@ Subscribes to a single dotted path (or typed accessor).
 
 > **useAtomicProps**: [`UseAtomicProps`](../type-aliases/UseAtomicProps.md)\<`R`, `S`\>
 
-Defined in: [react/src/hooks/createHooks.ts:192](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L192)
+Defined in: [react/src/hooks/createHooks.ts:203](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L203)
 
 Subscribes to several paths and derives a value from the full state.
 
@@ -136,7 +136,7 @@ Subscribes to several paths and derives a value from the full state.
 
 > **useEmit**: () => `Emit`\<`EM`\>
 
-Defined in: [react/src/hooks/createHooks.ts:186](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L186)
+Defined in: [react/src/hooks/createHooks.ts:197](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L197)
 
 Returns the store's typed `emit`.
 
@@ -154,7 +154,7 @@ Returns the store's typed `emit`.
 
 > **useEvent**: [`UseEvent`](../type-aliases/UseEvent.md)\<`EM`, `S`\>
 
-Defined in: [react/src/hooks/createHooks.ts:194](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L194)
+Defined in: [react/src/hooks/createHooks.ts:205](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L205)
 
 Runs a handler for a specific `(channel, type)` event.
 
@@ -168,7 +168,7 @@ Runs a handler for a specific `(channel, type)` event.
 
 > **useSelector**: \<`T`\>(`selector`, `isEqual?`) => `T`
 
-Defined in: [react/src/hooks/createHooks.ts:188](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L188)
+Defined in: [react/src/hooks/createHooks.ts:199](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L199)
 
 Subscribes to a derived value with an optional equality comparator.
 
@@ -202,7 +202,7 @@ Subscribes to a derived value with an optional equality comparator.
 
 > **useStore**: () => [`StoreInstance`](https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>
 
-Defined in: [react/src/hooks/createHooks.ts:184](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L184)
+Defined in: [react/src/hooks/createHooks.ts:195](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L195)
 
 Reads the current store from context (falling back to the default store).
 
@@ -220,7 +220,7 @@ Reads the current store from context (falling back to the default store).
 
 > **useSuspenseAtomicProp**: [`UseSuspenseAtomicProp`](../type-aliases/UseSuspenseAtomicProp.md)\<`R`, `S`\>
 
-Defined in: [react/src/hooks/createHooks.ts:196](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L196)
+Defined in: [react/src/hooks/createHooks.ts:207](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L207)
 
 Suspense-loading variant of `useAtomicProp`, bound to the same context.
 
@@ -234,7 +234,7 @@ Suspense-loading variant of `useAtomicProp`, bound to the same context.
 
 > **useSuspenseAtomicProps**: [`UseSuspenseAtomicProps`](../type-aliases/UseSuspenseAtomicProps.md)\<`R`, `S`\>
 
-Defined in: [react/src/hooks/createHooks.ts:198](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L198)
+Defined in: [react/src/hooks/createHooks.ts:209](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L209)
 
 Suspense-loading variant of `useAtomicProps`, bound to the same context.
 

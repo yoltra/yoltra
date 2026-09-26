@@ -158,6 +158,17 @@ export type UseEvent<EM extends EventMapBase, S> = <
     phase: NotifiedPhase,
   ) => void | Promise<void>,
   phase?: EventPhase,
+  options?: {
+    /**
+     * Also run this handler while devtools is replaying, which it does not by default.
+     *
+     * @remarks
+     * Opt in only for a handler that derives view state purely from the event stream. A
+     * handler that publishes, writes or notifies must stay out: scrubbing a timeline is a
+     * debugging operation and should not reach a peer, a socket or an analytics endpoint.
+     */
+    duringReplay?: boolean;
+  },
 ) => void;
 
 /**
@@ -416,10 +427,13 @@ export function createHooks<
       phase: NotifiedPhase,
     ) => void | Promise<void>,
     phase: EventPhase = "committed",
+    options?: { duringReplay?: boolean },
   ): void => {
     const store = useStore();
     const handlerRef = useRef(handler);
     handlerRef.current = handler; // Always keep latest handler (solves stale closures)
+
+    const duringReplay = options?.duringReplay === true;
 
     useEffect(() => {
       return store.onEvent(
@@ -434,8 +448,12 @@ export function createHooks<
           );
         },
         phase,
+        { duringReplay },
       );
-    }, [store, channel, type, phase]);
+      // The primitive, never `options`. An object literal is a new reference on every render,
+      // so depending on it would unsubscribe and resubscribe on each one - a loop no existing
+      // test would catch, because the subscription would still look correct at every point.
+    }, [store, channel, type, phase, duringReplay]);
   };
 
   // Bound to the context above, not the package-level one, so the returned set is complete:

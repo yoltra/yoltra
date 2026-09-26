@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "`useEvent` forwards the replay opt-in: `useEvent(channel, type, handler, phase, { duringReplay: true })`. Without it a component had no way to ask for replayed events, since `onEvent` grew the option and the hook did not pass it. The effect's dependency array takes `options?.duringReplay` rather than `options`, because an object literal is a new reference on every render and depending on it would unsubscribe and resubscribe on each one - a loop that leaves the subscription looking correct at every point you might inspect it, so it has its own regression test.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

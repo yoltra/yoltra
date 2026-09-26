@@ -11,12 +11,23 @@ export interface MockStoreExtras<S extends AnyState> {
   notifyAll(): void;
   /** Notify subscribers and only connections for the given reducer/property. */
   notifyPath(reducer: string, property: string): void;
-  /** Notify event subscribers for a given channel/type/phase. */
+  /**
+   * Notify event subscribers for a given channel/type/phase.
+   *
+   * @remarks
+   * `replaying` reproduces core's rule that a replayed event reaches only the subscribers
+   * that opted in. This mock reimplements phase matching locally, which means a change to
+   * core's real notification logic is invisible here - so the rule is mirrored deliberately,
+   * and the behaviour itself is pinned against a real store in
+   * `tests/integration/replay-useEvent.test.tsx`. The mock can show that `useEvent` forwards
+   * the flag; only a real store can show that forwarding it works.
+   */
   notifyEvent(
     channel: string,
     type: string,
     payload: any,
     phase: "committed" | "uncommitted",
+    options?: { replaying?: boolean },
   ): void;
   /** Introspection helpers for assertions. */
   getSubscribersCount(): number;
@@ -25,6 +36,7 @@ export interface MockStoreExtras<S extends AnyState> {
     channel: string;
     type: string;
     phase: EventPhase;
+    duringReplay: boolean;
   }>;
 }
 
@@ -54,6 +66,7 @@ export function createMockStore<S extends AnyState = AnyState>(
     channel: string;
     type: string;
     phase: EventPhase;
+    duringReplay: boolean;
     cb: (
       event: any,
       getState: () => S,
@@ -93,8 +106,9 @@ export function createMockStore<S extends AnyState = AnyState>(
         phase: "committed" | "uncommitted",
       ) => void,
       phase: EventPhase = "committed",
+      options?: { duringReplay?: boolean },
     ) => {
-      const entry = { channel, type, phase, cb };
+      const entry = { channel, type, phase, cb, duringReplay: options?.duringReplay === true };
       eventSubscriptions.push(entry);
       return () => {
         const idx = eventSubscriptions.indexOf(entry);
@@ -109,6 +123,9 @@ export function createMockStore<S extends AnyState = AnyState>(
     connect,
     emit,
     onEvent,
+    // A structural cast hides a missing member until something reads it at runtime, so the
+    // flag core added is mirrored here rather than left undefined.
+    isReplaying: false,
   };
 
   const extras: MockStoreExtras<S> = {
@@ -125,13 +142,15 @@ export function createMockStore<S extends AnyState = AnyState>(
         if (c.reducer === reducer && c.property === property) c.cb();
       });
     },
-    notifyEvent(channel, type, payload, phase) {
+    notifyEvent(channel, type, payload, phase, options) {
+      const replaying = options?.replaying === true;
       const event = { channel, type, payload, id: Symbol("mock-event") };
       eventSubscriptions.forEach((sub) => {
         const matchChannel = sub.channel === channel;
         const matchType = sub.type === type;
         const matchPhase =
           sub.phase === "all" || sub.phase === phase;
+        if (replaying && !sub.duringReplay) return;
         if (matchChannel && matchType && matchPhase) {
           sub.cb(event, () => state, emit, phase);
         }
@@ -144,9 +163,10 @@ export function createMockStore<S extends AnyState = AnyState>(
       return connections.map(({ reducer, property }) => ({ reducer, property }));
     },
     getEventSubscriptions() {
-      return eventSubscriptions.map(({ channel, type, phase }) => ({
+      return eventSubscriptions.map(({ channel, type, phase, duringReplay }) => ({
         channel,
         type,
+        duringReplay,
         phase,
       }));
     },

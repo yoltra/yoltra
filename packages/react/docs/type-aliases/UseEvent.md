@@ -8,7 +8,7 @@
 
 # Type Alias: UseEvent()\<EM, S\>
 
-> **UseEvent**\<`EM`, `S`\> = \<`C`, `T`\>(`channel`, `type`, `handler`, `phase?`) => `void`
+> **UseEvent**\<`EM`, `S`\> = \<`C`, `T`\>(`channel`, `type`, `handler`, `phase?`, `options?`) => `void`
 
 Defined in: [react/src/hooks/createHooks.ts:148](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/createHooks.ts#L148)
 
@@ -58,6 +58,20 @@ Store state type.
 ### phase?
 
 `EventPhase`
+
+### options?
+
+#### duringReplay?
+
+`boolean`
+
+Also run this handler while devtools is replaying, which it does not by default.
+
+**Remarks**
+
+Opt in only for a handler that derives view state purely from the event stream. A
+handler that publishes, writes or notifies must stay out: scrubbing a timeline is a
+debugging operation and should not reach a peer, a socket or an analytics endpoint.
 
 ## Returns
 
