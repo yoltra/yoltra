@@ -41,6 +41,25 @@ commits every event and writes nothing, by construction.
 
 ***
 
+### reason?
+
+> `readonly` `optional` **reason**: [`NotCommittedReason`](../type-aliases/NotCommittedReason.md)
+
+Defined in: [types.ts:235](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L235)
+
+Why the event did not commit. Absent when it did.
+
+#### Remarks
+
+`committed: false` used to arrive from three unrelated causes through one shared frozen
+object, so a caller could not tell a guard refusing an action from a double-click being
+deduplicated - which want opposite responses. A submit button should show the refusal and
+say nothing about the duplicate.
+
+See [EmitResult.vetoedBy](#vetoedby) for which middleware refused it.
+
+***
+
 ### rejected?
 
 > `readonly` `optional` **rejected**: [`Rejection`](Rejection.md)
@@ -48,6 +67,23 @@ commits every event and writes nothing, by construction.
 Defined in: [types.ts:223](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L223)
 
 Present when a reducer refused the write. See [Rejection](Rejection.md).
+
+***
+
+### vetoedBy?
+
+> `readonly` `optional` **vetoedBy**: `string`
+
+Defined in: [types.ts:245](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L245)
+
+The name of the middleware that vetoed, when it declared one through `meta.name`.
+
+#### Remarks
+
+A reducer refusal has always named its slice, through `rejectedBy` and `onRejected`. A
+middleware veto named nobody, so "the event vanished" had no attribution at all. A bare
+middleware function contributes its own function name; an anonymous one leaves this
+absent.
 
 ***
 

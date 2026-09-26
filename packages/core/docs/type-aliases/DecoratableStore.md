@@ -10,7 +10,7 @@
 
 > **DecoratableStore**\<`R`, `S`, `EM`\> = [`StoreInstance`](../interfaces/StoreInstance.md)\<`R`, `S`, `EM`\>
 
-Defined in: [types.ts:2032](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2032)
+Defined in: [types.ts:2084](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2084)
 
 A store that can be decorated, and whose type grows as it is.
 

@@ -41,6 +41,7 @@ import type {
   RegistrationObserver,
   ReplaceScope,
   EventSubscriptionHandler,
+  NotifiedPhase,
   NarrowedEventHandler,
   When,
 } from "../types";
@@ -164,6 +165,25 @@ const CASCADE_CHAIN_LIMIT = 16;
  * @internal
  */
 const NOT_COMMITTED: EmitResult = Object.freeze({ committed: false, written: false });
+
+/**
+ * Distinct results for the three ways an event fails to commit.
+ *
+ * @remarks
+ * These were one shared frozen object, so `committed: false` reached the caller with no way
+ * to tell a guard refusing an action from a double-click being deduplicated. Those want
+ * opposite responses: show the refusal, say nothing about the duplicate.
+ */
+const DEDUPED: EmitResult = Object.freeze({
+  committed: false,
+  written: false,
+  reason: "deduped" as const,
+});
+const CASCADE_REFUSED: EmitResult = Object.freeze({
+  committed: false,
+  written: false,
+  reason: "cascade" as const,
+});
 const COMMITTED_UNWRITTEN: EmitResult = Object.freeze({ committed: true, written: false });
 const WRITTEN: EmitResult = Object.freeze({ committed: true, written: true });
 
@@ -449,6 +469,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     slice: string,
   ) => void;
 
+  /** @internal */
+  private readonly onSubscriberError?: (
+    error: unknown,
+    event: EventUnion<EM>,
+    phase: NotifiedPhase,
+  ) => void;
+
   /**
    * `slice:channel:type` combinations already warned about for payload aliasing.
    *
@@ -641,6 +668,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.idFactory = spec.idFactory ?? (() => crypto.randomUUID());
     this.onEffectError = spec.onEffectError;
     this.onReducerError = spec.onReducerError;
+    this.onSubscriberError = spec.onSubscriberError;
 
     // Depth is bounded whether or not anybody asked. The queue drains synchronously, so an
     // unbounded cascade is a frozen tab or a pinned core with no error to point at — a failure
@@ -1023,13 +1051,20 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     event: EventUnion<EM>,
     phase: "committed" | "uncommitted" | "written",
   ): void {
+    const report = (e: unknown): void => {
+      console.error("Event subscription error:", e);
+      // Reported as well as logged, so an application can route this to whatever it uses for
+      // errors. Reducers, effects, rejections and cascades all had a hook; subscribers had
+      // the console and nothing else.
+      this.onSubscriberError?.(e, event, phase);
+    };
     try {
       const result = handler(event, this.getState, this.emit, phase) as unknown;
       if (result && typeof (result as Promise<unknown>).then === "function") {
-        (result as Promise<unknown>).catch((e) => console.error("Event subscription error:", e));
+        (result as Promise<unknown>).catch(report);
       }
     } catch (e) {
-      console.error("Event subscription error:", e);
+      report(e);
     }
   }
 
@@ -1689,9 +1724,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           : this.fingerprint(channel as string, type as string, payload);
       if (this.shouldDedupe(fp, windowMs)) {
         // A suppressed duplicate never reaches middleware or a reducer, so it is neither
-        // committed nor written — the same answer a vetoed event gives, which is correct: in
-        // both cases the caller's event had no effect.
-        return NOT_COMMITTED;
+        // committed nor written. It carries `reason: "deduped"` to say so: a caller handling
+        // `committed: false` needs to tell a guard refusing the action from a double-click
+        // being collapsed, and those want opposite responses.
+        return DEDUPED;
       }
     }
 
@@ -1727,7 +1763,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         depth,
         parent.chain,
       );
-      return NOT_COMMITTED;
+      return CASCADE_REFUSED;
     }
 
     let resolve!: (result: EmitResult) => void;
@@ -1803,7 +1839,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           );
           // Resolve rather than abandon: a caller awaiting this emit would otherwise hang, which
           // is the failure the ceiling exists to prevent, arriving by another door.
-          resolve(NOT_COMMITTED);
+          resolve(CASCADE_REFUSED);
           continue;
         }
 
@@ -1912,7 +1948,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       if (ok === false) {
         // Rejected by middleware - notify uncommitted subscribers, do not commit.
         this.notifyEventSubscribers(event, "uncommitted");
-        return NOT_COMMITTED;
+        // Named, so "the event vanished" has an author. A reducer refusal has always named
+        // its slice; a veto named nobody.
+        const vetoedBy =
+          typeof mwInput === "function" ? mwInput.name || undefined : mwInput.meta?.name;
+        return Object.freeze({
+          committed: false,
+          written: false,
+          reason: "vetoed" as const,
+          ...(vetoedBy !== undefined && vetoedBy !== "" ? { vetoedBy } : {}),
+        });
       }
     }
 
@@ -3644,6 +3689,7 @@ export function createStore<
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
   onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
+  onSubscriberError?: (error: unknown, event: EventUnion<EM>, phase: NotifiedPhase) => void;
   maxReduceDepth?: number;
   maxTransitionsPerDrain?: number;
   onCascade?: (info: CascadeInfo<EM>) => void;
@@ -3694,6 +3740,11 @@ export function createStore<RM extends ReducersMapAny>(cfg: {
     error: unknown,
     event: EventUnion<EMFromReducersStrict<RM>>,
     slice: string,
+  ) => void;
+  onSubscriberError?: (
+    error: unknown,
+    event: EventUnion<EMFromReducersStrict<RM>>,
+    phase: NotifiedPhase,
   ) => void;
   maxReduceDepth?: number;
   maxTransitionsPerDrain?: number;

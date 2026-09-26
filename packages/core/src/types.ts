@@ -221,7 +221,42 @@ export interface EmitResult {
   readonly written: boolean;
   /** Present when a reducer refused the write. See {@link Rejection}. */
   readonly rejected?: Rejection;
+  /**
+   * Why the event did not commit. Absent when it did.
+   *
+   * @remarks
+   * `committed: false` used to arrive from three unrelated causes through one shared frozen
+   * object, so a caller could not tell a guard refusing an action from a double-click being
+   * deduplicated - which want opposite responses. A submit button should show the refusal and
+   * say nothing about the duplicate.
+   *
+   * See {@link EmitResult.vetoedBy} for which middleware refused it.
+   */
+  readonly reason?: NotCommittedReason;
+  /**
+   * The name of the middleware that vetoed, when it declared one through `meta.name`.
+   *
+   * @remarks
+   * A reducer refusal has always named its slice, through `rejectedBy` and `onRejected`. A
+   * middleware veto named nobody, so "the event vanished" had no attribution at all. A bare
+   * middleware function contributes its own function name; an anonymous one leaves this
+   * absent.
+   */
+  readonly vetoedBy?: string;
 }
+
+/**
+ * Why an event did not commit.
+ *
+ * @remarks
+ * - `vetoed` - middleware returned `false`, or threw.
+ * - `deduped` - an identical event was seen inside the dedup window.
+ * - `cascade` - the event exceeded `maxReduceDepth` or the per-drain transition ceiling, so
+ *   the store refused it rather than letting a cycle run away.
+ *
+ * @public
+ */
+export type NotCommittedReason = "vetoed" | "deduped" | "cascade";
 
 /**
  * Options for {@link StoreInstance.connect}.
@@ -570,6 +605,23 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * @param slice - Name of the slice whose reducer threw.
    */
   onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
+
+  /**
+   * Called when an `onEvent` subscriber throws, or rejects.
+   *
+   * @remarks
+   * The fourth of a set: reducers, effects, rejections and cascades all had a hook, and event
+   * subscribers had `console.error` and nothing else - so an application could not route a
+   * failing subscriber to its own error reporting. Subscribers are the seam a decoration is
+   * told to use, which makes the gap more visible than it was.
+   *
+   * A throwing subscriber never stops the others, with or without this hook.
+   */
+  onSubscriberError?: (
+    error: unknown,
+    event: EventUnion<EM>,
+    phase: NotifiedPhase,
+  ) => void;
 
   /**
    * Maximum causal depth of an event chain before the store refuses to extend it.

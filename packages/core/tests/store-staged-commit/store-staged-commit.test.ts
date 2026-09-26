@@ -166,9 +166,13 @@ describe("the emit result tells a caller what happened to its write", () => {
       middleware: [() => false],
     });
 
+    // `reason` now says *why*. A caller handling `committed: false` has to tell a guard
+    // refusing the action from a duplicate being collapsed, and the two want opposite
+    // responses.
     expect(await store.emit("plan", "patch", { steps: 1 })).toEqual({
       committed: false,
       written: false,
+      reason: "vetoed",
     });
   });
 });

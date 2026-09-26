@@ -75,6 +75,7 @@
 - [MiddlewareFunction](type-aliases/MiddlewareFunction.md)
 - [MiddlewareInput](type-aliases/MiddlewareInput.md)
 - [NarrowedEventHandler](type-aliases/NarrowedEventHandler.md)
+- [NotCommittedReason](type-aliases/NotCommittedReason.md)
 - [NotifiedPhase](type-aliases/NotifiedPhase.md)
 - [Origin](type-aliases/Origin.md)
 - [Path](type-aliases/Path.md)

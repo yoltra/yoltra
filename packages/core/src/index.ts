@@ -40,6 +40,7 @@ export type {
   RegistrationObserver,
   ReplaceScope,
   EmptyEventMap,
+  NotCommittedReason,
   StateOfSpec,
   SatisfiesSlices,
   DecoratableStore,

@@ -8,7 +8,7 @@
 
 # Class: Store\<EM, R, S\>
 
-Defined in: [store/Store.ts:186](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L186)
+Defined in: [store/Store.ts:206](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L206)
 
 Public Store surface.
 
@@ -46,7 +46,7 @@ Event map.
 
 > **new Store**\<`EM`, `R`, `S`\>(`spec`): `Store`\<`EM`, `R`, `S`\>
 
-Defined in: [store/Store.ts:626](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L626)
+Defined in: [store/Store.ts:653](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L653)
 
 Creates a store from a [StoreSpec](../type-aliases/StoreSpec.md).
 
@@ -68,7 +68,7 @@ Store configuration (name, reducers, middleware, optional effects).
 
 > **name**: `string`
 
-Defined in: [store/Store.ts:193](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L193)
+Defined in: [store/Store.ts:213](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L213)
 
 Store name (used by DevTools & diagnostics).
 
@@ -84,7 +84,7 @@ Store name (used by DevTools & diagnostics).
 
 > **get** **isReplaying**(): `boolean`
 
-Defined in: [store/Store.ts:2396](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2396)
+Defined in: [store/Store.ts:2441](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2441)
 
 `true` while devtools is applying a snapshot or replaying events.
 
@@ -118,7 +118,7 @@ A getter, so destructuring it takes a snapshot rather than a live view.
 
 > **\_\_devtoolsIntrospect**(): `object`
 
-Defined in: [store/Store.ts:1271](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1271)
+Defined in: [store/Store.ts:1306](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1306)
 
 Returns a structured introspection snapshot for DevTools UIs.
 
@@ -174,7 +174,7 @@ registries and returns a plain-object summary matching the
 
 > **call**\<`C`, `T`\>(`channel`, `type`, `payload`, `opts`): [`CallHandle`](../interfaces/CallHandle.md)\<[`EventUnion`](../type-aliases/EventUnion.md)\<`EM`\>, [`EventUnion`](../type-aliases/EventUnion.md)\<`EM`\>\>
 
-Defined in: [store/Store.ts:2845](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2845)
+Defined in: [store/Store.ts:2890](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2890)
 
 Sends a request and waits for the reply, correlating the two automatically.
 
@@ -301,7 +301,7 @@ useEffect(() => () => call.cancel("unmounted"), [call]);
 
 > **connect**(`spec`, `h`, `options?`): () => `void`
 
-Defined in: [store/Store.ts:2089](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2089)
+Defined in: [store/Store.ts:2134](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2134)
 
 Connects a **fine-grained** listener to a dotted path under a slice.
 
@@ -368,7 +368,7 @@ const off = store.connect(
 
 > **dispose**(): `void`
 
-Defined in: [store/Store.ts:732](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L732)
+Defined in: [store/Store.ts:760](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L760)
 
 Cleanup resources (timers, etc.) when disposing the store.
 Call this if you're dynamically creating/destroying stores.
@@ -395,7 +395,7 @@ store.dispose();
 
 > **emit**\<`C`, `T`\>(`channel`, `type`, `payload`, `opts?`): `Promise`\<[`EmitResult`](../interfaces/EmitResult.md)\>
 
-Defined in: [store/Store.ts:1647](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1647)
+Defined in: [store/Store.ts:1682](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L1682)
 
 Emits a typed event `(channel, type, payload)`.
 Events are queued and processed **sequentially** (FIFO).
@@ -485,7 +485,7 @@ await store.emit('ui', 'dangerous', null); // cancelled, no state change
 
 > **getState**(): [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>
 
-Defined in: [store/Store.ts:2474](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2474)
+Defined in: [store/Store.ts:2519](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2519)
 
 Returns the current immutable state snapshot.
 
@@ -512,7 +512,7 @@ console.log(state.counter.value);
 
 > **hotReplace**(`partial`): `void`
 
-Defined in: [store/Store.ts:3292](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3292)
+Defined in: [store/Store.ts:3337](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3337)
 
 Convenience API to replace **any subset** of store parts (HMR patterns).
 
@@ -567,7 +567,7 @@ store.hotReplace({
 
 > **instrument**(`observer`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [store/Store.ts:2005](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2005)
+Defined in: [store/Store.ts:2050](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2050)
 
 Registers an instrumentation observer. See [StoreInstance.instrument](../interfaces/StoreInstance.md#instrument).
 
@@ -591,7 +591,7 @@ Registers an instrumentation observer. See [StoreInstance.instrument](../interfa
 
 > **onEffect**\<`C`, `T`\>(`channel`, `type`, `handler`): () => `void`
 
-Defined in: [store/Store.ts:2986](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2986)
+Defined in: [store/Store.ts:3031](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3031)
 
 Convenience helper to register an **effect** filtered by a single `(channel, type)` pair.
 
@@ -659,7 +659,7 @@ off();
 
 > **onEvent**\<`C`, `T`\>(`channel`, `type`, `handler`, `phase`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [store/Store.ts:2400](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2400)
+Defined in: [store/Store.ts:2445](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2445)
 
 Subscribe to events by channel and type.
 
@@ -757,7 +757,7 @@ store.onEvent('ui', 'action', (event, getState, emit, phase) => {
 
 > **onRegistrationChange**(`observer`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [store/Store.ts:2182](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2182)
+Defined in: [store/Store.ts:2227](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2227)
 
 Subscribe to events by channel and type.
 
@@ -828,7 +828,7 @@ store.onEvent('ui', 'action', (event, getState, emit, phase) => {
 
 > **registerEffect**(`spec`): `any`
 
-Defined in: [store/Store.ts:2868](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2868)
+Defined in: [store/Store.ts:2913](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2913)
 
 Register a post-reducer effect (sees final state). Returns an unsubscribe.
 
@@ -852,7 +852,7 @@ Register a post-reducer effect (sees final state). Returns an unsubscribe.
 
 > **registerMiddleware**(`mw`): `any`
 
-Defined in: [store/Store.ts:2512](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2512)
+Defined in: [store/Store.ts:2557](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2557)
 
 Registers a middleware (runs **before** reducers).
 
@@ -907,7 +907,7 @@ store.registerMiddleware((state, event) => {
 
 > **registerReducer**(`name`, `spec`, `options?`): `any`
 
-Defined in: [store/Store.ts:2641](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2641)
+Defined in: [store/Store.ts:2686](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2686)
 
 Dynamically **adds** a named slice reducer at runtime.
 
@@ -961,7 +961,7 @@ dispose();
 
 > **registerSlice**(`name`, `spec`, `options?`): `any`
 
-Defined in: [store/Store.ts:2654](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2654)
+Defined in: [store/Store.ts:2699](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2699)
 
 Mounts a slice and hands back the widened store alongside a disposer.
 
@@ -1000,7 +1000,7 @@ The name `registerSlice` is what the guide uses; `registerReducer` keeps its bro
 
 > **replaceEffects**(`next`, `opts`): `void`
 
-Defined in: [store/Store.ts:3082](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3082)
+Defined in: [store/Store.ts:3127](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3127)
 
 Replaces all registered **effects** (HMR-friendly).
 
@@ -1042,7 +1042,7 @@ if (import.meta.hot) {
 
 > **replaceMiddleware**(`next`, `opts`): `void`
 
-Defined in: [store/Store.ts:3028](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3028)
+Defined in: [store/Store.ts:3073](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3073)
 
 Replaces the **entire** middleware pipeline (HMR-friendly).
 
@@ -1084,7 +1084,7 @@ if (import.meta.hot) {
 
 > **replaceReducers**(`next`, `opts`): `void`
 
-Defined in: [store/Store.ts:3161](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3161)
+Defined in: [store/Store.ts:3206](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3206)
 
 Replaces the entire **reducer set** (HMR-friendly).
 
@@ -1141,7 +1141,7 @@ if (import.meta.hot) {
 
 > **subscribe**(`fn`): () => `void`
 
-Defined in: [store/Store.ts:2456](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2456)
+Defined in: [store/Store.ts:2501](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2501)
 
 Subscribes to **coarse-grained** commits (called once per successful event, only if state changed).
 
@@ -1183,7 +1183,7 @@ off();
 
 > **withEffect**(`spec`): `any`
 
-Defined in: [store/Store.ts:2729](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2729)
+Defined in: [store/Store.ts:2774](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2774)
 
 Registers an effect and returns the widened store, for chaining.
 
@@ -1207,7 +1207,7 @@ Registers an effect and returns the widened store, for chaining.
 
 > **withMiddleware**(`mw`): `any`
 
-Defined in: [store/Store.ts:2719](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2719)
+Defined in: [store/Store.ts:2764](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2764)
 
 Registers middleware and returns the widened store, for chaining.
 
@@ -1231,7 +1231,7 @@ Registers middleware and returns the widened store, for chaining.
 
 > **withSlice**(`name`, `spec`, `options?`): `any`
 
-Defined in: [store/Store.ts:2709](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2709)
+Defined in: [store/Store.ts:2754](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L2754)
 
 Mounts a slice and returns the widened store, for chaining.
 
@@ -1273,7 +1273,7 @@ the documented rule is that a disposer stays library-private.
 
 > `static` **buildAncestorPaths**(`path`): `string`[]
 
-Defined in: [store/Store.ts:3588](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3588)
+Defined in: [store/Store.ts:3633](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3633)
 
 Builds ancestor paths for a dotted path.
 

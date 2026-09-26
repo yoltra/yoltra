@@ -10,7 +10,7 @@
 
 > **MiddlewareInput**\<`S`, `EM`\> = [`MiddlewareFunction`](MiddlewareFunction.md)\<`S`, `EM`\> \| [`MiddlewareSpec`](../interfaces/MiddlewareSpec.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:426](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L426)
+Defined in: [types.ts:461](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L461)
 
 Middleware input: accepts either a function (legacy) or a spec object (recommended).
 

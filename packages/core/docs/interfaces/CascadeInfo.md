@@ -8,7 +8,7 @@
 
 # Interface: CascadeInfo\<EM\>
 
-Defined in: [types.ts:658](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L658)
+Defined in: [types.ts:710](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L710)
 
 What [StoreSpec.onCascade](../type-aliases/StoreSpec.md#oncascade) receives when a ceiling is breached.
 
@@ -26,7 +26,7 @@ Event map.
 
 > `readonly` **chain**: readonly `string`[]
 
-Defined in: [types.ts:674](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L674)
+Defined in: [types.ts:726](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L726)
 
 Ids from the root of the chain to the refused event's parent, newest last.
 
@@ -41,7 +41,7 @@ the cycle at the end rather than the thousand identical hops before it.
 
 > `readonly` **depth**: `number`
 
-Defined in: [types.ts:666](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L666)
+Defined in: [types.ts:718](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L718)
 
 Causal depth the refused event would have had.
 
@@ -51,7 +51,7 @@ Causal depth the refused event would have had.
 
 > `readonly` **event**: [`EventUnion`](../type-aliases/EventUnion.md)\<`EM`\>
 
-Defined in: [types.ts:664](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L664)
+Defined in: [types.ts:716](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L716)
 
 The event that was refused — the one that would have extended the chain.
 
@@ -61,7 +61,7 @@ The event that was refused — the one that would have extended the chain.
 
 > `readonly` **limit**: `"maxReduceDepth"` \| `"maxTransitionsPerDrain"`
 
-Defined in: [types.ts:660](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L660)
+Defined in: [types.ts:712](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L712)
 
 Which ceiling was hit.
 
@@ -71,6 +71,6 @@ Which ceiling was hit.
 
 > `readonly` **limitValue**: `number`
 
-Defined in: [types.ts:662](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L662)
+Defined in: [types.ts:714](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L714)
 
 The configured value that was exceeded.

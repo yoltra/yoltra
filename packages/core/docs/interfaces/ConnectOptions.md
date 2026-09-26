@@ -8,7 +8,7 @@
 
 # Interface: ConnectOptions
 
-Defined in: [types.ts:231](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L231)
+Defined in: [types.ts:266](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L266)
 
 Options for [StoreInstance.connect](StoreInstance.md#connect).
 
@@ -18,7 +18,7 @@ Options for [StoreInstance.connect](StoreInstance.md#connect).
 
 > `readonly` `optional` **immediate**: `boolean`
 
-Defined in: [types.ts:246](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L246)
+Defined in: [types.ts:281](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L281)
 
 Deliver the current value once, immediately, before any change arrives.
 

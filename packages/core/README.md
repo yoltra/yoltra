@@ -212,7 +212,10 @@ const globalLogger = {
 ## Middleware
 
 Middleware runs **synchronously, before** reducers and can cancel event propagation (return
-`false` to reject → "uncommitted" event). Async work belongs in effects, not middleware. Supports
+`false` to reject → "uncommitted" event; returning nothing allows it). Async work belongs in
+effects, not middleware. When an event does not commit, `emit` says why: `reason` is
+`"vetoed"`, `"deduped"` or `"cascade"`, and a veto names the middleware in `vetoedBy`, so a
+guard refusing an action is distinguishable from a double-click being collapsed. Supports
 both raw functions (legacy) and `MiddlewareSpec` objects with targeting:
 
 ```typescript
@@ -795,6 +798,7 @@ store.registerEffect({
 | `store.subscribe(listener)`                     | Coarse subscription (any state change)         |
 | `store.connect(spec, handler)`                  | Fine-grained path subscription with wildcards  |
 | `store.onEvent(channel, type, handler, phase?, options?)` | Event subscription (committed/uncommitted/written/all). Silent during replay unless `{ duringReplay: true }` |
+| `store.onRegistrationChange(observer, opts?)` | Fires when the store gains or loses a reducer, middleware or effect |
 | `store.onEffect(channel, type, handler)`        | Single-event effect shorthand                  |
 | `store.dispose()`                               | Cleanup timers and resources                   |
 
@@ -965,6 +969,8 @@ stops a runaway from hanging the tab.
   React hooks and Suspense
 - **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**:
   Five steps to a working app
+- **[Upgrading to 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/en/UPGRADE_0.8.md)**:
+  Five behaviour changes, and one hazard if you roll back
 - **[Decoration Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/DECORATION_GUIDE.md)**:
   Adding a slice, middleware or effect to somebody else's store, with the types
 - **[Event Queue Architecture](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)**:

@@ -10,7 +10,7 @@
 
 > **WidenNames**\<`R`, `N`\> = `string` *extends* `N` ? `R` : `R` \| `N`
 
-Defined in: [types.ts:1876](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1876)
+Defined in: [types.ts:1928](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1928)
 
 The slice-name union after adding `N`.
 

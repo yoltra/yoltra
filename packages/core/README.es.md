@@ -773,6 +773,7 @@ store.registerEffect({
 | `store.subscribe(listener)`                     | Suscripción gruesa (cualquier cambio de estado)       |
 | `store.connect(spec, handler)`                  | Suscripción de grano fino por ruta con wildcards      |
 | `store.onEvent(channel, type, handler, phase?, options?)` | Suscripción a eventos (committed/uncommitted/written/all). Silenciosa durante el replay salvo `{ duringReplay: true }` |
+| `store.onRegistrationChange(observer, opts?)` | Avisa cuando el store gana o pierde un reducer, middleware o efecto |
 | `store.onEffect(channel, type, handler)`        | Shorthand de efecto para un solo evento               |
 | `store.dispose()`                               | Limpiar timers y recursos                             |
 
@@ -946,6 +947,8 @@ es algo que nadie escriba.
   Hooks de React y Suspense
 - **[Guia de Inicio Rápido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**:
   Cinco pasos hacia una app funcional
+- **[Actualizar a 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/es/UPGRADE_0.8.md)**:
+  Cinco cambios de comportamiento, y un riesgo si haces rollback
 - **[Guía de Decoración](https://github.com/yoltra/yoltra/blob/main/docs/es/DECORATION_GUIDE.md)**:
   Agregar una slice, middleware o efecto al store de alguien más, con los tipos
 - **[Arquitectura de Cola de Eventos](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)**:

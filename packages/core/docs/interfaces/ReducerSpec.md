@@ -8,7 +8,7 @@
 
 # Interface: ReducerSpec\<S, EM\>
 
-Defined in: [types.ts:1054](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1054)
+Defined in: [types.ts:1106](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1106)
 
 One reducer's definition blob (stateful event consumer).
 
@@ -53,7 +53,7 @@ Event map.
 
 > `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"reducer"`\>
 
-Defined in: [types.ts:1073](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1073)
+Defined in: [types.ts:1125](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1125)
 
 Optional metadata for debugging tools and DevTools integration.
 
@@ -63,7 +63,7 @@ Optional metadata for debugging tools and DevTools integration.
 
 > **reducer**: [`ReducerFunction`](../type-aliases/ReducerFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:1068](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1068)
+Defined in: [types.ts:1120](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1120)
 
 Pure reducer function: `(state, event) => nextState`.
 
@@ -73,7 +73,7 @@ Pure reducer function: `(state, event) => nextState`.
 
 > **state**: `S`
 
-Defined in: [types.ts:1058](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1058)
+Defined in: [types.ts:1110](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1110)
 
 Initial state for this reducer.
 
@@ -83,6 +83,6 @@ Initial state for this reducer.
 
 > `optional` **when**: [`When`](../type-aliases/When.md)\<`EM`\>
 
-Defined in: [types.ts:1063](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1063)
+Defined in: [types.ts:1115](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1115)
 
 Event targeting using the unified `When` matcher.

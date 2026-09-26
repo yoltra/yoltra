@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Adds an upgrade guide for 0.7.x to 0.8.0, in English and Spanish, and corrects the migration guide's description of middleware, which still said it returns a boolean. The existing migration guide covers arriving from Redux, Zustand or Jotai and had nothing about moving between Yoltra versions, which this release needs: five behaviour changes and a hazard on rollback are hard to extract from a list of thirty changelog entries. Each section leads with how you would notice.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}
