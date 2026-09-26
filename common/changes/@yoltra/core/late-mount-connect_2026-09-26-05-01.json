@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "A slice mounted after construction now wakes `connect` subscriptions. `registerReducer` broadcast to `subscribe` listeners but emitted nothing on the connector bus, so `useAtomicProp`, `useAtomicProps` and the Suspense hooks never learned the slice existed: a component subscribed to a path inside it simply never re-rendered, and nothing reported an error. The mount now emits the new slice's root and leaf paths. Found while building the decoration feature, which would otherwise have shipped a documented-as-working path that does not work.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

@@ -20,12 +20,12 @@ import { describe, expectTypeOf, it } from "vitest";
 import { createStore } from "../../src/store/Store";
 import { defineEffect, defineMiddleware, defineSlice } from "../../src/types";
 import type {
-  DecoratableStore,
   DeepReadonly,
   Dotted,
   EMAddOf,
   MiddlewareFunction,
   ReducerSpec,
+  StoreInstance,
   Unsubscribe,
 } from "../../src/types";
 
@@ -34,7 +34,22 @@ import type {
 type AppEM = { ui: { increment: number } };
 type AppState = { counter: { value: number } };
 
-declare const store: DecoratableStore<"counter", AppState, AppEM>;
+// A real store now, not a declared one: the runtime carries the surface the spike proved.
+//
+// The explicit `<S, EM>` overload, not the inferring one. An unannotated spec literal gives
+// `EMOfSpec` nothing to infer an event map from, so `EM` lands on `EventMapBase` - whose
+// index signatures accept **any** channel and payload, which would quietly make every
+// negative assertion below vacuous.
+const store = createStore<AppState, AppEM>({
+  name: "ExtendTypes",
+  reducer: {
+    counter: {
+      state: { value: 0 },
+      when: { keys: [["ui", "increment"]] },
+      reducer: (s) => s,
+    },
+  },
+});
 
 // ── Three decorations, each contributing its own event map ────────────────────
 
@@ -115,7 +130,7 @@ const clashing = defineSlice<ClashTwo>()({
   reducer: (s) => s,
 });
 
-declare const clashBase: DecoratableStore<"counter", AppState, ClashOne>;
+declare const clashBase: StoreInstance<"counter", AppState, ClashOne>;
 const clashed = clashBase.withSlice("clash", clashing);
 
 describe("compatibility and guards", () => {

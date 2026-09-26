@@ -597,6 +597,65 @@ const dispose = store.registerReducer("filters", {
 dispose();
 ```
 
+### Decorar un store, con sus tipos
+
+Una slice agregada en runtime era invisible para el sistema de tipos: `registerReducer`
+recibía un `string` y devolvía un disposer, así que nada aguas abajo sabía que la slice
+existía ni qué forma tenía. `withSlice` devuelve **el mismo store, re-tipado**:
+
+```typescript
+type TransferEM = { transfer: { granted: { id: string } } };
+
+const transfers = defineSlice<TransferEM>()({
+  state: { granted: [] as string[] },
+  when: { keys: [["transfer", "granted"]] },
+  reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+});
+
+const app = store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+
+app.getState().transfers.granted; // string[]
+app.emit("transfer", "granted", { id: "a1" }); // el canal nuevo ya es emitible
+```
+
+`withMiddleware` y `withEffect` hacen lo mismo para el mapa de eventos. Las llamadas se
+encadenan, y una librería publica un decorador tomando un store y devolviendo otro:
+
+```typescript
+export function withTransfers<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
+  store: StoreInstance<R, S, EM>,
+  config: TransfersConfig,
+) {
+  return store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+}
+
+// Los decoradores se anidan, en cualquier orden.
+const decorated = withTransfers(withDevtools(store, dtConfig), config);
+```
+
+**Por qué los builders.** El `when` de un spec lleva cadenas de canal y tipo, no tipos de
+payload, así que el mapa de eventos que aporta una decoración no puede inferirse de ahí, y
+TypeScript no tiene inferencia parcial de argumentos de tipo. `defineSlice<EM>()` lo coloca en
+posición de valor, donde la inferencia sí funciona, así que ningún sitio de registro necesita
+un argumento de tipo ni un cast. Una consecuencia que conviene conocer: **una función de
+middleware sin spec nunca puede ampliar el mapa de eventos**, porque el parámetro de evento de
+`MiddlewareFunction` es un tipo mapeado del que no se puede inferir nada de vuelta. Solo la
+forma de spec de `defineMiddleware` puede.
+
+**Es el mismo objeto.** Nada se vuelve a suscribir, ningún estado se mueve, y una llamada
+`store.call()` en vuelo no se ve afectada. Solo cambia el tipo.
+
+**Orden.** Decora en el ámbito del módulo, una vez, antes del primer render. Entre
+`createStore` y la decoración la slice realmente no existe, y un componente que la lea verá
+`undefined` hasta que exista.
+
+**Disposición.** `withSlice` no devuelve disposer a propósito: después de ejecutarlo, el tipo
+ampliado sigue prometiendo una slice que ya no está, y ningún sistema de tipos puede expresar
+"válido hasta esa llamada". Usa `registerSlice` cuando la slice sea tuya y necesites
+desmontarla, y mantén ese disposer privado a la librería. Leer una slice desmontada lanza un
+error con nombre en desarrollo, en lugar de devolver `undefined` desde un tipo que prometía un
+valor.
+
 ---
 
 ## Hot Module Replacement
@@ -721,6 +780,10 @@ store.registerEffect({
 
 | API                                 | Descripción                               |
 | ----------------------------------- | ----------------------------------------- |
+| `store.registerSlice(name, spec, opts?)` | Agrega un slice en runtime; devuelve el store re-tipado y un disposer |
+| `store.withSlice(name, spec, opts?)` | Igual, devolviendo el store re-tipado para encadenar |
+| `store.withMiddleware(mw)`, `store.withEffect(spec)` | Registra y amplía el mapa de eventos |
+| `defineSlice<EM>()`, `defineMiddleware<EM>()`, `defineEffect<EM>()` | Declara el mapa de eventos que aporta un spec |
 | `store.registerReducer(name, spec)` | Agregar un slice en tiempo de ejecución   |
 | `store.registerMiddleware(fn)`      | Agregar middleware en tiempo de ejecución |
 | `store.registerEffect(spec)`        | Agregar un efecto en tiempo de ejecución  |
@@ -856,9 +919,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 10.0 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 11.2 KB | 16 KB |
-| todo | 12.7 KB | 18 KB |
+| `{ createStore }` | 10.2 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 11.4 KB | 16 KB |
+| todo | 12.9 KB | 18 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que públicas una vez que tu empaquetador define

@@ -624,6 +624,63 @@ const dispose = store.registerReducer("filters", {
 dispose();
 ```
 
+### Decorating a store, with its types
+
+A slice added at runtime used to be invisible to the type system: `registerReducer` took a
+plain `string` and returned a bare disposer, so nothing downstream knew the slice existed or
+what shape it had. `withSlice` returns **the same store, re-typed**:
+
+```typescript
+type TransferEM = { transfer: { granted: { id: string } } };
+
+const transfers = defineSlice<TransferEM>()({
+  state: { granted: [] as string[] },
+  when: { keys: [["transfer", "granted"]] },
+  reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+});
+
+const app = store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+
+app.getState().transfers.granted; // string[]
+app.emit("transfer", "granted", { id: "a1" }); // the new channel is emittable
+```
+
+`withMiddleware` and `withEffect` do the same for the event map. Calls chain, and a library
+publishes a decorator by taking a store and returning one:
+
+```typescript
+export function withTransfers<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
+  store: StoreInstance<R, S, EM>,
+  config: TransfersConfig,
+) {
+  return store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+}
+
+// Decorators nest, in any order.
+const decorated = withTransfers(withDevtools(store, dtConfig), config);
+```
+
+**Why the builders.** A spec's `when` carries channel and type strings and no payload types,
+so the event map a decoration contributes cannot be inferred from it, and TypeScript has no
+partial type-argument inference. `defineSlice<EM>()` puts it in a value position, where
+inference works, so no registration site needs a type argument or a cast. One consequence
+worth knowing: **a bare middleware function can never widen the event map**, because
+`MiddlewareFunction`'s event parameter is a mapped type nothing can be inferred back out of.
+Only the spec form from `defineMiddleware` can.
+
+**It is the same object.** Nothing re-subscribes, no state moves, and any in-flight
+`store.call()` is unaffected. Only the type changes.
+
+**Ordering.** Decorate at module scope, once, before the first render. Between `createStore`
+and the decoration the slice genuinely does not exist, and a component reading it sees
+`undefined` until it does.
+
+**Disposal.** `withSlice` hands back no disposer on purpose: after one runs, the widened type
+still promises a slice that is gone, and no type system can express "valid until that call".
+Use `registerSlice` when you own the slice and need teardown, and keep that disposer private
+to the library. Reading a disposed slice throws a named error in development rather than
+returning `undefined` from a type that promised a value.
+
 ---
 
 ## Hot Module Replacement
@@ -745,6 +802,10 @@ store.registerEffect({
 
 | API                                 | Description               |
 | ----------------------------------- | ------------------------- |
+| `store.registerSlice(name, spec, opts?)` | Add a slice at runtime; returns the widened store plus a disposer |
+| `store.withSlice(name, spec, opts?)` | Same, returning the widened store for chaining |
+| `store.withMiddleware(mw)`, `store.withEffect(spec)` | Register and widen the event map |
+| `defineSlice<EM>()`, `defineMiddleware<EM>()`, `defineEffect<EM>()` | Declare the event map a spec contributes |
 | `store.registerReducer(name, spec)` | Add a slice at runtime    |
 | `store.registerMiddleware(fn)`      | Add middleware at runtime |
 | `store.registerEffect(spec)`        | Add an effect at runtime  |
@@ -873,9 +934,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 10.0 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 11.2 KB | 16 KB |
-| everything | 12.7 KB | 18 KB |
+| `{ createStore }` | 10.2 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 11.4 KB | 16 KB |
+| everything | 12.9 KB | 18 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines

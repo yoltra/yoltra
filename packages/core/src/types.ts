@@ -690,7 +690,7 @@ export interface StoreInstance<
   R extends string = string,
   S extends Record<R, any> = Record<string, any>,
   EM extends EventMapBase = EventMapBase,
-> {
+> extends StoreDecoration<R, S, EM> {
   /**
    * Store name (used by DevTools to identify the instance).
    */
@@ -769,17 +769,25 @@ export interface StoreInstance<
   /**
    * Register a post-reducer effect (sees final state). Returns an unsubscribe.
    */
-  registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): Unsubscribe;
+  registerEffect<Spec extends EffectSpec<any, any>>(
+    spec: Spec,
+  ): Unsubscribe & { store: DecoratableStore<R, S, Merge<EM, EMAddOf<Spec>>>; dispose(): void };
 
   /**
    * Dynamically add middleware, in either the function or the spec form.
    */
-  registerMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): Unsubscribe;
+  registerMiddleware<M extends MiddlewareInput<any, any>>(
+    mw: M,
+  ): Unsubscribe & { store: DecoratableStore<R, S, Merge<EM, EMAddOf<M>>>; dispose(): void };
 
   /**
    * Dynamically add/remove a namespaced reducer slice at runtime.
    */
-  registerReducer(name: string, spec: ReducerSpec<any, EM>): Unsubscribe;
+  registerReducer(
+    name: string,
+    spec: ReducerSpec<any, EM>,
+    options?: { owner?: string },
+  ): Unsubscribe & { store: StoreInstance<string, Record<string, any>, EM>; dispose(): void };
 
   /**
    * Cleanup resources (timers, etc.) when disposing the store.
@@ -1845,6 +1853,85 @@ export type EmptyEventMap = Record<never, never>;
 export type StateOfSpec<X> = X extends ReducerSpec<infer St, any> ? St : never;
 
 /**
+ * What a decoration contributes to a store: some slices, some events, either possibly empty.
+ *
+ * @remarks
+ * Phantom. Never constructed, and never present at runtime; it exists so a library can state
+ * its contribution once and have {@link Decorated} and {@link StoreDecorator} read it back.
+ *
+ * @example
+ * ```ts
+ * type TransfersDecoration = Decoration<{ transfers: TransferState }, TransfersEM>;
+ * ```
+ *
+ * @public
+ */
+export interface Decoration<
+  AddS extends Record<string, any> = Record<never, never>,
+  AddEM extends EventMapBase = EmptyEventMap,
+> {
+  readonly slices: AddS;
+  readonly events: AddEM;
+}
+
+/**
+ * The store type that results from applying a {@link Decoration}.
+ *
+ * @public
+ */
+export type Decorated<R extends string, S extends Record<R, any>, EM extends EventMapBase, D> =
+  D extends Decoration<infer AddS, infer AddEM>
+    ? StoreInstance<
+        WidenNames<R, keyof AddS & string>,
+        SatisfiesSlices<Prettify<S & AddS>, WidenNames<R, keyof AddS & string>>,
+        Merge<EM, AddEM>
+      >
+    : never;
+
+/**
+ * The shape a `withX(store, config)` decorator conforms to, with `config` curried away.
+ *
+ * @remarks
+ * **Generic over the incoming store on purpose**, and that is what makes composition work
+ * rather than a variance rule. `R`, `S` and `EM` are inference sites, so at each call in a
+ * nest TypeScript instantiates them from whatever the argument actually is: an EM-only
+ * decorator nested inside one that also adds a slice infers the already-widened `R` and `S`
+ * and carries them through untouched. Either order composes, and nothing is lost.
+ *
+ * Nesting is the composition mechanism; there is no `pipe`. Every decorator takes
+ * `(store, config)`, so each step in a pipe needs a lambda to become unary, which makes
+ * `pipe(store, s => withA(s, cfgA), s => withB(s, cfgB))` **longer** than
+ * `withB(withA(store, cfgA), cfgB)`. A pipe only pays for curried decorators, which would be
+ * a different convention from the one `withDevtools` already set.
+ *
+ * A dependency on another decoration needs no registry either: constrain the input.
+ * `EM extends EventMapBase & RequiredEM` fails at the call site naming the channels that are
+ * missing, and still composes, because TypeScript infers `EM` and then checks the constraint.
+ *
+ * @example
+ * ```ts
+ * export function withTransfers<
+ *   R extends string,
+ *   S extends Record<R, any>,
+ *   EM extends EventMapBase,
+ * >(store: StoreInstance<R, S, EM>, config: TransfersConfig) {
+ *   return store.withSlice("transfers", defineSlice<TransfersEM>()({ ... }), {
+ *     owner: "@scope/transfers",
+ *   });
+ * }
+ * ```
+ *
+ * @public
+ */
+export type StoreDecorator<D extends Decoration<any, any>> = <
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+>(
+  store: StoreInstance<R, S, EM>,
+) => Decorated<R, S, EM, D>;
+
+/**
  * A store that can be decorated, and whose type grows as it is.
  *
  * @public
@@ -1853,7 +1940,7 @@ export type DecoratableStore<
   R extends string,
   S extends Record<R, any>,
   EM extends EventMapBase,
-> = StoreInstance<R, S, EM> & StoreDecoration<R, S, EM>;
+> = StoreInstance<R, S, EM>;
 
 /**
  * Proves to the compiler that a widened state record still covers every slice name.

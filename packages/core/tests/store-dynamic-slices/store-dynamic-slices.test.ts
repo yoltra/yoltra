@@ -379,3 +379,170 @@ describe("provenance across the other seams", () => {
     expect(origins).toEqual(["dynamic", "dynamic"]);
   });
 });
+
+describe("typed growth at runtime", () => {
+  // The runtime half of the decoration feature. The type half lives in
+  // tests/store-types/store-extend.test-d.ts; these are the behaviours that must hold for
+  // the types to be telling the truth.
+
+  it("returns the same store object, re-typed", () => {
+    // Decoration is type-level only. A wrapper or a copy would silently detach every
+    // existing subscription, so identity is the contract.
+    const store = createStore({ name: "IdentityStore", reducer: { base: baseReducer } });
+
+    const widened = store.withSlice("added", {
+      state: { n: 0 },
+      when: { keys: [["ui", "increment"]] },
+      reducer: (s: { n: number }) => s,
+    } as ReducerSpec<{ n: number }, EM>);
+
+    expect(widened).toBe(store);
+  });
+
+  it("leaves existing subscriptions and state untouched", async () => {
+    const store = createStore({ name: "UntouchedStore", reducer: { base: baseReducer } });
+
+    const coarse = vi.fn();
+    store.subscribe(coarse);
+    const events = vi.fn();
+    store.onEvent("ui", "increment", events);
+
+    await store.emit("ui", "increment", 1);
+    const coarseBefore = coarse.mock.calls.length;
+    const eventsBefore = events.mock.calls.length;
+
+    store.withSlice("added", {
+      state: { n: 0 },
+      when: { keys: [["ui", "increment"]] },
+      reducer: (s: { n: number }) => ({ n: s.n + 1 }),
+    } as ReducerSpec<{ n: number }, EM>);
+
+    await store.emit("ui", "increment", 2);
+
+    // The pre-existing subscriptions still fire, and the pre-existing slice still reduces.
+    expect(coarse.mock.calls.length).toBeGreaterThan(coarseBefore);
+    expect(events.mock.calls.length).toBe(eventsBefore + 1);
+    expect((store.getState() as any).base.value).toBe(3);
+  });
+
+  it("chains, and every slice ends up mounted and reducing", async () => {
+    const store = createStore({ name: "ChainStore", reducer: { base: baseReducer } });
+
+    const slice = (start: number): ReducerSpec<{ n: number }, EM> => ({
+      state: { n: start },
+      when: { keys: [["ui", "increment"]] },
+      reducer: (s) => ({ n: s.n + 1 }),
+    });
+
+    store
+      .withSlice("a", slice(10))
+      .withMiddleware(() => true)
+      .withSlice("b", slice(20));
+
+    await store.emit("ui", "increment", 1);
+
+    const state = store.getState() as any;
+    expect(state.a.n).toBe(11);
+    expect(state.b.n).toBe(21);
+  });
+
+  it("wakes a connect subscription when the slice it watches is mounted late", async () => {
+    // registerReducer broadcast to `listeners` (so useSelector woke) but emitted nothing on
+    // the connector bus (so useAtomicProp, useAtomicProps and the Suspense hooks never did).
+    // A component subscribed to a path inside a decoration's slice simply never rendered,
+    // which would have made the whole feature ship a documented-as-working path that does
+    // not work.
+    const store = createStore({ name: "LateMountStore", reducer: { base: baseReducer } });
+
+    const seen: unknown[] = [];
+    store.connect({ reducer: "late" as any, property: "n" }, (chg) => {
+      seen.push(chg.newValue);
+    });
+
+    store.registerSlice("late", {
+      state: { n: 7 },
+      when: { keys: [["ui", "increment"]] },
+      reducer: (s: { n: number }) => ({ n: s.n + 1 }),
+    } as ReducerSpec<{ n: number }, EM>);
+
+    expect(seen).toEqual([7]);
+
+    // And it keeps working afterwards, through the ordinary commit path.
+    await store.emit("ui", "increment", 1);
+    expect(seen).toEqual([7, 8]);
+  });
+
+  it("returns a disposer that still works as a bare function", () => {
+    // Back-compat: the return widened from a function to a callable object, so every
+    // existing `const off = store.registerReducer(...); off();` must be untouched.
+    const store = createStore({ name: "BackCompatStore", reducer: { base: baseReducer } });
+
+    const off = store.registerReducer("tmp", {
+      state: { n: 0 },
+      when: { keys: [["ui", "increment"]] },
+      reducer: (s: { n: number }) => s,
+    } as ReducerSpec<{ n: number }, EM>);
+
+    expect(typeof off).toBe("function");
+    expect((store.getState() as any).tmp).toBeDefined();
+
+    off();
+    expect((store.getState() as any).tmp).toBeUndefined();
+  });
+
+  it("also exposes .store and .dispose on that return", () => {
+    const store = createStore({ name: "RegistrationShapeStore", reducer: { base: baseReducer } });
+
+    const reg = store.registerSlice(
+      "tmp",
+      {
+        state: { n: 0 },
+        when: { keys: [["ui", "increment"]] },
+        reducer: (s: { n: number }) => s,
+      } as ReducerSpec<{ n: number }, EM>,
+      { owner: "@scope/pkg" },
+    );
+
+    expect(reg.store).toBe(store);
+    reg.dispose();
+    expect((store.getState() as any).tmp).toBeUndefined();
+  });
+
+  it("names the owner when a disposed slice is read again in development", () => {
+    // The one place the type/runtime gap is catchable: after the disposer runs, a widened
+    // type still promises the slice. Better a named error than `undefined` from a type that
+    // said `number`.
+    const store = createStore({ name: "DisposedReadStore", reducer: { base: baseReducer } });
+
+    const reg = store.registerSlice(
+      "gone",
+      {
+        state: { n: 0 },
+        when: { keys: [["ui", "increment"]] },
+        reducer: (s: { n: number }) => s,
+      } as ReducerSpec<{ n: number }, EM>,
+      { owner: "@scope/pkg" },
+    );
+    reg.dispose();
+
+    expect(() => store.connect({ reducer: "gone" as any, property: "n" }, () => {})).toThrow(
+      /@scope\/pkg/,
+    );
+  });
+
+  it("lets a slice be remounted under the same name after disposal", () => {
+    const store = createStore({ name: "RemountStore", reducer: { base: baseReducer } });
+    const spec = {
+      state: { n: 1 },
+      when: { keys: [["ui", "increment"]] },
+      reducer: (s: { n: number }) => s,
+    } as ReducerSpec<{ n: number }, EM>;
+
+    store.registerSlice("again", spec).dispose();
+    store.registerSlice("again", spec);
+
+    expect(() =>
+      store.connect({ reducer: "again" as any, property: "n" }, () => {}),
+    ).not.toThrow();
+  });
+});

@@ -10,6 +10,6 @@
 
 > **Primitive** = `string` \| `number` \| `boolean` \| `bigint` \| `symbol` \| `null` \| `undefined` \| `Date` \| `RegExp`
 
-Defined in: [types.ts:1467](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1467)
+Defined in: [types.ts:1475](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1475)
 
 Primitive types (terminal leaves in deep traversal).

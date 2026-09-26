@@ -24,6 +24,7 @@
 - [CascadeInfo](interfaces/CascadeInfo.md)
 - [Change](interfaces/Change.md)
 - [ConnectOptions](interfaces/ConnectOptions.md)
+- [Decoration](interfaces/Decoration.md)
 - [EffectSpec](interfaces/EffectSpec.md)
 - [EmitOptions](interfaces/EmitOptions.md)
 - [EmitResult](interfaces/EmitResult.md)
@@ -52,6 +53,7 @@
 ## Type Aliases
 
 - [DecoratableStore](type-aliases/DecoratableStore.md)
+- [Decorated](type-aliases/Decorated.md)
 - [DeepReadonly](type-aliases/DeepReadonly.md)
 - [DeepRO](type-aliases/DeepRO.md)
 - [Dotted](type-aliases/Dotted.md)
@@ -85,6 +87,7 @@
 - [RootValue](type-aliases/RootValue.md)
 - [SatisfiesSlices](type-aliases/SatisfiesSlices.md)
 - [StateOfSpec](type-aliases/StateOfSpec.md)
+- [StoreDecorator](type-aliases/StoreDecorator.md)
 - [StoreSpec](type-aliases/StoreSpec.md)
 - [Unsubscribe](type-aliases/Unsubscribe.md)
 - [When](type-aliases/When.md)

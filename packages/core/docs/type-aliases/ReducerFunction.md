@@ -10,7 +10,7 @@
 
 > **ReducerFunction**\<`S`, `EM`\> = (`state`, `event`) => `S` \| [`Rejection`](../interfaces/Rejection.md)
 
-Defined in: [types.ts:1033](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1033)
+Defined in: [types.ts:1041](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1041)
 
 Pure reducer function (stateful event consumer).
 

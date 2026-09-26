@@ -348,6 +348,23 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private readonly sliceOwner = new Map<string, string>();
 
   /**
+   * Slices unmounted by their owner, for a development-time diagnostic.
+   *
+   * @remarks
+   * Decoration re-types the store, and after a disposer runs the widened type still claims
+   * a slice that is gone. Reading it would hand a component `undefined` from a type that
+   * promised a value, which is the silent failure this whole feature exists to remove.
+   * Populated only for `dynamic` and `internal` slices: a `spec` slice removed by a
+   * `replace*` was not promised by anyone's widened type.
+   *
+   * @internal
+   */
+  private readonly disposedSlices = new Set<string>();
+
+  /** Owner names for {@link disposedSlices}, so the error can say who. @internal */
+  private readonly disposedSliceOwners = new Map<string, string>();
+
+  /**
    * Whether `__replayEvents()` is allowed.
    * Set from `spec.devtools.allowReplay`.
    *
@@ -693,6 +710,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.sliceUnsubs.clear();
     this.sliceOrigin.clear();
     this.sliceOwner.clear();
+    this.disposedSlices.clear();
+    this.disposedSliceOwners.clear();
     (this.middleware as unknown as unknown[]).length = 0;
     this.changedPathSink = null;
   }
@@ -2015,6 +2034,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     h: (chg: Change) => void,
     options?: ConnectOptions,
   ): () => void {
+    // The one place the type/runtime gap after a disposal can be caught. A widened type
+    // still promises a slice its owner has unmounted, and TypeScript cannot express
+    // "valid until that call" - so the silent `undefined` a component would read becomes a
+    // named error instead. Development only; one Set and one membership test.
+    if (
+      process.env.NODE_ENV !== "production" &&
+      this.disposedSlices.has(spec.reducer as unknown as string)
+    ) {
+      const owner = this.disposedSliceOwners.get(spec.reducer as unknown as string);
+      throw new Error(
+        `[yoltra] Slice "${String(spec.reducer)}" was unmounted by its owner` +
+          `${owner === undefined ? "" : ` (${owner})`}. Hooks and subscriptions widened for ` +
+          `it are no longer valid.`,
+      );
+    }
+
     const off = this.connectorBus.on(spec.reducer, spec.property, h);
 
     if (options?.immediate === true) {
@@ -2196,16 +2231,50 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public registerMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): Unsubscribe {
+  public registerMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): any {
     const entry = { input: mw, origin: "dynamic" as Origin };
     this.middleware.push(entry);
-    return () => {
+    return this.asRegistration(() => {
       // Spliced by entry identity. `indexOf` on the function meant registering the same
       // middleware twice and disposing once removed the first registration rather than the
       // one being disposed.
       const i = this.middleware.indexOf(entry);
       if (i !== -1) this.middleware.splice(i, 1);
-    };
+    });
+  }
+
+  /**
+   * Turns a disposer into the callable object `register*` returns.
+   *
+   * @remarks
+   * `Object.assign` onto the function rather than a new object, so every existing call site
+   * keeps working verbatim: `const off = store.registerEffect(spec); off();` compiles and
+   * runs exactly as before, while `.store` and `.dispose` become available to a library that
+   * wants the widened type.
+   *
+   * A callable object rather than an overload or a second method: an overload cannot change
+   * the return shape based on nothing, and a parallel `registerSliceX` family would leave
+   * the originals permanently second class and force libraries to branch on the core version.
+   *
+   * @internal
+   */
+  private asRegistration(dispose: () => void): any {
+    return Object.assign(dispose, { store: this, dispose });
+  }
+
+  /**
+   * The one place the widening cast lives.
+   *
+   * @remarks
+   * Decoration is type-level only. This returns the **same runtime object**: subscriptions,
+   * effects, middleware, the dedup cache, both buses and any in-flight `call()` are
+   * untouched, and nothing re-subscribes. Keeping the cast here means no call site needs one,
+   * which is the entire point of the feature.
+   *
+   * @internal
+   */
+  private widened(): any {
+    return this;
   }
 
   /**
@@ -2230,7 +2299,20 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public registerReducer(name: string, spec: ReducerSpec<any, EM>): () => void {
+  public registerReducer(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
+    return this.registerSlice(name, spec as any, options);
+  }
+
+  /**
+   * Mounts a slice and hands back the widened store alongside a disposer.
+   *
+   * @remarks
+   * The name `registerSlice` is what the guide uses; `registerReducer` keeps its broader
+   * `name: string` signature and delegates here, so existing call sites are untouched.
+   *
+   * @public
+   */
+  public registerSlice(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
     // `hasOwnProperty`, not `in`: the registry is a plain object, so `in` also answers true for
     // everything on `Object.prototype`. A slice legitimately named `toString`, `constructor` or
     // `valueOf` was refused as already existing — with a message naming a reducer that does not
@@ -2242,15 +2324,55 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.mountSlice(name as R, spec as ReducerSpec<S[R], EM>, {
       preserveState: false,
       origin: "dynamic",
+      owner: options?.owner,
     });
 
     this.listeners.forEach((l) => l()); // broadcast new slice
+    // And the fine-grained bus, or `useAtomicProp` would never learn the slice exists.
+    this.announceMountedSlice(name, (this.state as any)[name]);
 
-    return () => {
+    return this.asRegistration(() => {
       // disposer
       this.unmountSlice(name as R, { deleteState: true });
       this.listeners.forEach((l) => l());
-    };
+    });
+  }
+
+  /**
+   * Mounts a slice and returns the widened store, for chaining.
+   *
+   * @remarks
+   * No disposer, deliberately. After a disposer runs, the widened type still promises a
+   * slice that is gone, and TypeScript cannot express "valid until that call". The chaining
+   * API therefore does not hand one out, so the footgun does not exist on the path most
+   * people take; {@link registerSlice} carries one for the library that owns the slice, and
+   * the documented rule is that a disposer stays library-private.
+   *
+   * @public
+   */
+  public withSlice(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
+    this.registerSlice(name, spec, options);
+    return this.widened();
+  }
+
+  /**
+   * Registers middleware and returns the widened store, for chaining.
+   *
+   * @public
+   */
+  public withMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): any {
+    this.registerMiddleware(mw);
+    return this.widened();
+  }
+
+  /**
+   * Registers an effect and returns the widened store, for chaining.
+   *
+   * @public
+   */
+  public withEffect(spec: EffectSpec<DeepReadonly<S>, EM>): any {
+    this.registerEffect(spec);
+    return this.widened();
   }
 
   /**
@@ -2387,8 +2509,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     );
   }
 
-  public registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): () => void {
-    return this.registerEffectWithOrigin(spec, "dynamic");
+  public registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): any {
+    return this.asRegistration(this.registerEffectWithOrigin(spec, "dynamic"));
   }
 
   /**
@@ -2774,6 +2896,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const rName = name as unknown as string;
     this.sliceOrigin.set(rName, opts.origin ?? "spec");
     if (opts.owner !== undefined) this.sliceOwner.set(rName, opts.owner);
+    // Remounting under the same name makes the slice valid again.
+    this.disposedSlices.delete(rName);
+    this.disposedSliceOwners.delete(rName);
     const { reducer, state, when } = rSpec;
 
     // Install reducer instance (FIXED: only pass reducer function)
@@ -2849,6 +2974,47 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
+   * Announces a newly mounted slice on the connector bus.
+   *
+   * @remarks
+   * `registerReducer` has always broadcast to `listeners`, which wakes `subscribe` and so
+   * `useSelector`. It emitted **nothing** on `connectorBus`, which is what `connect` rides,
+   * so `useAtomicProp`, `useAtomicProps` and the Suspense hooks never woke for a slice
+   * mounted after creation: a component subscribed to a path inside it simply never
+   * re-rendered. That makes the decoration story ship a documented-as-working path that does
+   * not work, which is why this is here rather than filed as a follow-up.
+   *
+   * Skipped when nothing is subscribed, and skipped entirely during construction, where no
+   * subscriber can exist yet.
+   *
+   * @internal
+   */
+  private announceMountedSlice(rName: string, nextSlice: unknown): void {
+    // Diffed against an empty object rather than `undefined`. `detectChangedProps(undefined,
+    // x)` reports only `""`, the root, so a subscriber watching `"n"` inside the new slice
+    // would hear nothing at all - which is the very failure this method exists to fix.
+    const isObjectLike = typeof nextSlice === "object" && nextSlice !== null;
+    const leafPaths = detectChangedProps(isObjectLike ? {} : undefined, nextSlice);
+
+    // The root always appears: a whole-slice subscription (`property: ""`) is watching for
+    // exactly this, and a slice that *is* one value has no leaf to report.
+    const toEmit = new Set<string>([""]);
+    for (const p of leafPaths) {
+      if (p === "") continue;
+      for (const a of Store.buildAncestorPaths(p)) toEmit.add(a);
+    }
+
+    for (const path of toEmit) {
+      const newValue = this.getAtPath((this.state as any)[rName], path);
+      this.connectorBus.emit(rName as R, path as any, {
+        oldValue: undefined,
+        newValue,
+        path,
+      });
+    }
+  }
+
+  /**
    * Unmounts a slice: disposes reducer-bus listeners, removes reducer,
    * and optionally deletes the slice state.
    *
@@ -2862,6 +3028,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     // Remove from pattern reducers if present
     this.patternReducers.delete(name);
+    if (process.env.NODE_ENV !== "production") {
+      const origin = this.sliceOrigin.get(rName);
+      if (origin === "dynamic" || origin === "internal") {
+        this.disposedSlices.add(rName);
+        const owner = this.sliceOwner.get(rName);
+        if (owner !== undefined) this.disposedSliceOwners.set(rName, owner);
+      }
+    }
     this.sliceOrigin.delete(rName);
     this.sliceOwner.delete(rName);
 
