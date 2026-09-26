@@ -833,7 +833,30 @@ export interface StoreInstance<
     type: T,
     handler: NarrowedEventHandler<DeepReadonly<S>, EM, C, T>,
     phase?: EventPhase,
+    options?: {
+      /**
+       * Also call this handler while devtools is replaying, which it does not by default.
+       *
+       * @remarks
+       * Opt in only for a handler that derives view state purely from the event stream and
+       * performs no I/O. A handler that publishes, writes or notifies must stay out: replay
+       * is a debugging operation, and a scrub of the timeline should not reach a peer, a
+       * socket or an analytics endpoint.
+       */
+      duringReplay?: boolean;
+    },
   ): Unsubscribe;
+
+  /**
+   * `true` while devtools is applying a snapshot or replaying events.
+   *
+   * @remarks
+   * For anything that must branch rather than simply skip. Most code needs nothing: replay
+   * does not notify event subscribers unless they opted in.
+   *
+   * A getter, so destructuring it takes a snapshot rather than a live view.
+   */
+  readonly isReplaying: boolean;
 
   /**
    * Replaces the entire middleware pipeline (HMR-friendly).
@@ -1605,6 +1628,21 @@ export type EventSubscriptionHandler<S = any, EM extends EventMapBase = EventMap
   emit: Emit<EM>,
   phase: NotifiedPhase,
 ) => void | Promise<void>;
+
+/**
+ * One `onEvent` subscription: the handler plus whether it asked to hear replayed events.
+ *
+ * @remarks
+ * An entry per subscription rather than the bare handler, for two reasons. It is where the
+ * replay opt-in lives; and it gives each subscription its own identity, so two subscriptions
+ * sharing one handler function are two Set members and disposing one no longer removes both.
+ *
+ * @internal
+ */
+export interface EventSubscriberEntry<S, EM extends EventMapBase> {
+  readonly handler: EventSubscriptionHandler<S, EM>;
+  readonly duringReplay: boolean;
+}
 
 /**
  * Narrowed event subscription handler for specific `(channel, type)` pairs.

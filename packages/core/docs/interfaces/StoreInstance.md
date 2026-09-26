@@ -49,6 +49,23 @@ Returns a promise that resolves when the event has been processed.
 
 ***
 
+### isReplaying
+
+> `readonly` **isReplaying**: `boolean`
+
+Defined in: [types.ts:859](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L859)
+
+`true` while devtools is applying a snapshot or replaying events.
+
+#### Remarks
+
+For anything that must branch rather than simply skip. Most code needs nothing: replay
+does not notify event subscribers unless they opted in.
+
+A getter, so destructuring it takes a snapshot rather than a live view.
+
+***
+
 ### name
 
 > **name**: `string`
@@ -180,7 +197,7 @@ Read the full state (already readonly).
 
 > **hotReplace**(`partial`): `void`
 
-Defined in: [types.ts:868](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L868)
+Defined in: [types.ts:891](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L891)
 
 Convenience API to replace any subset of store parts (HMR patterns).
 
@@ -216,7 +233,7 @@ Partial replacement set.
 
 > **instrument**(`observer`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:920](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L920)
+Defined in: [types.ts:943](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L943)
 
 Registers an instrumentation observer, called once per emitted event
 (committed or vetoed) after the synchronous reduce phase, with the exact
@@ -291,7 +308,7 @@ Unsubscribe/teardown function.
 
 ### onEvent()
 
-> **onEvent**\<`C`, `T`\>(`channel`, `type`, `handler`, `phase?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
+> **onEvent**\<`C`, `T`\>(`channel`, `type`, `handler`, `phase?`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
 Defined in: [types.ts:831](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L831)
 
@@ -345,6 +362,21 @@ Handler function `(event, getState, emit, phase)`.
 [`EventPhase`](../type-aliases/EventPhase.md)
 
 Event phase to subscribe to (default: `'committed'`).
+
+##### options?
+
+###### duringReplay?
+
+`boolean`
+
+Also call this handler while devtools is replaying, which it does not by default.
+
+**Remarks**
+
+Opt in only for a handler that derives view state purely from the event stream and
+performs no I/O. A handler that publishes, writes or notifies must stay out: replay
+is a debugging operation, and a scrub of the timeline should not reach a peer, a
+socket or an analytics endpoint.
 
 #### Returns
 
@@ -442,7 +474,7 @@ Dynamically add/remove a namespaced reducer slice at runtime.
 
 > **replaceEffects**(`next`): `void`
 
-Defined in: [types.ts:850](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L850)
+Defined in: [types.ts:873](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L873)
 
 Replaces all registered effects (HMR-friendly).
 
@@ -464,7 +496,7 @@ New effects array (as EffectSpecs).
 
 > **replaceMiddleware**(`next`): `void`
 
-Defined in: [types.ts:843](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L843)
+Defined in: [types.ts:866](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L866)
 
 Replaces the entire middleware pipeline (HMR-friendly).
 
@@ -486,7 +518,7 @@ New middleware array.
 
 > **replaceReducers**(`next`, `opts?`): `void`
 
-Defined in: [types.ts:858](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L858)
+Defined in: [types.ts:881](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L881)
 
 Replaces the entire reducer set (HMR-friendly).
 

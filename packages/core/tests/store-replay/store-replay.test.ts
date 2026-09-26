@@ -158,9 +158,63 @@ describe("Store - __replayEvents", () => {
     expect(store.getState().counter.value).toBe(3);
   });
 
-  it("notifies committed event subscribers during replay", () => {
+  it("does NOT notify event subscribers during replay", () => {
+    // This asserted the opposite. Replay used to call every `onEvent` handler exactly as a
+    // live event would, so scrubbing a devtools timeline re-ran real work: publishing to
+    // peers, writing to sockets, firing analytics for events that did not happen again. The
+    // loop's own comment listed what replay skips and subscribers were simply missing from
+    // it, and nothing was available to detect the difference from inside a handler.
     const store = createStore({
       name: "ReplayStore",
+      reducer: { counter: counterReducer },
+      devtools: { allowReplay: true },
+    });
+
+    const committed = vi.fn();
+    const uncommitted = vi.fn();
+    const written = vi.fn();
+    const all = vi.fn();
+    store.onEvent("math", "add", committed, "committed");
+    store.onEvent("math", "add", uncommitted, "uncommitted");
+    store.onEvent("math", "add", written, "written");
+    store.onEvent("math", "add", all, "all");
+
+    store.__replayEvents({ counter: { value: 0 } }, [
+      { channel: "math", type: "add", payload: 7, id: "replay-1" },
+    ]);
+
+    expect(committed).not.toHaveBeenCalled();
+    expect(written).not.toHaveBeenCalled();
+    expect(all).not.toHaveBeenCalled();
+    expect(uncommitted).not.toHaveBeenCalled();
+  });
+
+  it("notifies a subscriber that opted in with duringReplay", () => {
+    // The escape hatch, for a subscriber deriving view state purely from the event stream.
+    const store = createStore({
+      name: "ReplayOptInStore",
+      reducer: { counter: counterReducer },
+      devtools: { allowReplay: true },
+    });
+
+    const optedIn = vi.fn();
+    const defaulted = vi.fn();
+    store.onEvent("math", "add", optedIn, "committed", { duringReplay: true });
+    store.onEvent("math", "add", defaulted, "committed");
+
+    store.__replayEvents({ counter: { value: 0 } }, [
+      { channel: "math", type: "add", payload: 7, id: "replay-1" },
+    ]);
+
+    expect(optedIn).toHaveBeenCalledTimes(1);
+    expect(defaulted).not.toHaveBeenCalled();
+  });
+
+  it("still notifies every subscriber for a live event", () => {
+    // The guard is scoped to replay. If it leaked into the normal path it would silence
+    // every handler in the application, which is the failure worth pinning explicitly.
+    const store = createStore({
+      name: "ReplayLiveStore",
       reducer: { counter: counterReducer },
       devtools: { allowReplay: true },
     });
@@ -171,8 +225,97 @@ describe("Store - __replayEvents", () => {
     store.__replayEvents({ counter: { value: 0 } }, [
       { channel: "math", type: "add", payload: 7, id: "replay-1" },
     ]);
+    expect(handler).not.toHaveBeenCalled();
 
-    expect(handler).toHaveBeenCalled();
+    return store.emit("math", "add", 7).then(() => {
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("still fires coarse subscribers during replay", () => {
+    // State really did change, so `subscribe` must keep firing or the UI cannot follow a
+    // scrub. Only event subscribers are silenced.
+    const store = createStore({
+      name: "ReplayCoarseStore",
+      reducer: { counter: counterReducer },
+      devtools: { allowReplay: true },
+    });
+
+    const listener = vi.fn();
+    store.subscribe(listener);
+
+    store.__replayEvents({ counter: { value: 0 } }, [
+      { channel: "math", type: "add", payload: 7, id: "replay-1" },
+    ]);
+
+    expect(listener).toHaveBeenCalled();
+  });
+
+  describe("isReplaying", () => {
+    function replayStore() {
+      return createStore({
+        name: "IsReplayingStore",
+        reducer: { counter: counterReducer },
+        devtools: { allowReplay: true },
+      });
+    }
+
+    it("is true inside an opted-in handler and false afterwards", () => {
+      const store = replayStore();
+      const seen: boolean[] = [];
+      store.onEvent("math", "add", () => { seen.push(store.isReplaying); }, "committed", {
+        duringReplay: true,
+      });
+
+      store.__replayEvents({ counter: { value: 0 } }, [
+        { channel: "math", type: "add", payload: 7, id: "r1" },
+      ]);
+
+      expect(seen).toEqual([true]);
+      expect(store.isReplaying).toBe(false);
+    });
+
+    it("is true during a bare __applyExternalState and false afterwards", () => {
+      const store = replayStore();
+      let during: boolean | undefined;
+      store.connect({ reducer: "counter", property: "value" }, () => {
+        during = store.isReplaying;
+      });
+
+      store.__applyExternalState({ counter: { value: 42 } });
+
+      expect(during).toBe(true);
+      expect(store.isReplaying).toBe(false);
+    });
+
+    it("is restored when a replayed reducer throws", () => {
+      // `finally`, not a trailing assignment. Left stuck at `true`, the store would silence
+      // every event subscriber from that point on - a debugging operation permanently
+      // breaking the application it was debugging.
+      const store = createStore({
+        name: "ThrowingReplayStore",
+        reducer: {
+          counter: {
+            state: { value: 0 },
+            when: { any: true },
+            reducer: () => {
+              throw new Error("reducer exploded");
+            },
+          },
+        },
+        devtools: { allowReplay: true },
+      });
+
+      try {
+        store.__replayEvents({ counter: { value: 0 } }, [
+          { channel: "math", type: "add", payload: 7, id: "r1" },
+        ]);
+      } catch {
+        // whether it propagates is not what this test is about
+      }
+
+      expect(store.isReplaying).toBe(false);
+    });
   });
 
   it("event IDs are strings (crypto.randomUUID format)", async () => {

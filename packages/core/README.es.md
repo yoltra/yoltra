@@ -332,6 +332,25 @@ store.onEvent(
 );
 ```
 
+### Suscriptores de eventos y viaje en el tiempo
+
+**El replay no llama a tus handlers.** Recorrer una línea de tiempo de DevTools vuelve a reducir
+los eventos, así que el estado sigue el recorrido, pero los handlers de `onEvent` permanecen en
+silencio. Antes se ejecutaban igual que con un evento real, así que arrastrar la línea de tiempo
+volvía a publicar a los pares, a escribir en sockets y a disparar analítica por eventos que no
+estaban ocurriendo de nuevo, sin nada dentro del handler que permitiera notar la diferencia.
+
+Un handler que deriva estado de vista puramente del flujo de eventos, y que no hace E/S, puede
+activarlo:
+
+```ts
+store.onEvent("ui", "save", handler, "committed", { duringReplay: true });
+```
+
+`store.isReplaying` existe para lo que deba ramificar en lugar de simplemente omitirse. Los
+suscriptores gruesos de `subscribe` y las suscripciones de `connect` siguen disparándose, porque
+el estado sí cambió y la interfaz tiene que seguir el recorrido.
+
 ---
 
 ## Los commits son atómicos entre slices
@@ -668,7 +687,7 @@ store.registerEffect({
 | `store.getState()`                              | Obtener snapshot del estado actual (solo lectura)     |
 | `store.subscribe(listener)`                     | Suscripción gruesa (cualquier cambio de estado)       |
 | `store.connect(spec, handler)`                  | Suscripción de grano fino por ruta con wildcards      |
-| `store.onEvent(channel, type, handler, phase?)` | Suscripción a eventos (committed/uncommitted/all)     |
+| `store.onEvent(channel, type, handler, phase?, options?)` | Suscripción a eventos (committed/uncommitted/written/all). Silenciosa durante el replay salvo `{ duringReplay: true }` |
 | `store.onEffect(channel, type, handler)`        | Shorthand de efecto para un solo evento               |
 | `store.dispose()`                               | Limpiar timers y recursos                             |
 

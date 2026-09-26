@@ -35,6 +35,7 @@ import type {
   CascadeInfo,
   InstrumentedEvent,
   EventPhase,
+  EventSubscriberEntry,
   EventSubscriptionHandler,
   NarrowedEventHandler,
   When,
@@ -244,7 +245,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private readonly committedEventSubscribers = new Map<
     string,
-    Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
+    Set<EventSubscriberEntry<DeepReadonly<S>, EM>>
   >();
 
   /**
@@ -255,7 +256,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private readonly uncommittedEventSubscribers = new Map<
     string,
-    Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
+    Set<EventSubscriberEntry<DeepReadonly<S>, EM>>
   >();
 
   /**
@@ -277,13 +278,25 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private readonly writtenEventSubscribers = new Map<
     string,
-    Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
+    Set<EventSubscriberEntry<DeepReadonly<S>, EM>>
   >();
 
   private readonly allEventSubscribers = new Map<
     string,
-    Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
+    Set<EventSubscriberEntry<DeepReadonly<S>, EM>>
   >();
+
+  /**
+   * True while a devtools time-travel is applying a snapshot or replaying events.
+   *
+   * @remarks
+   * Saved and restored rather than set and cleared to `false`: `__replayEvents` calls
+   * `__applyExternalState` as its first step, so clearing on the inner call's way out would
+   * unset the flag for the entire event loop that follows it.
+   *
+   * @internal
+   */
+  private replaying = false;
 
   /**
    * Track reducerBus unsubs per slice for HMR/register/unregister.
@@ -855,7 +868,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const phaseSet = phaseMap.get(key);
 
     if (phaseSet?.size) {
-      for (const handler of [...phaseSet]) this.invokeEventSubscriber(handler, event, phase);
+      for (const entry of [...phaseSet]) {
+        if (this.replaying && !entry.duringReplay) continue;
+        this.invokeEventSubscriber(entry.handler, event, phase);
+      }
     }
 
     // Notify 'all' subscribers.
@@ -867,7 +883,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (phase === "written") return;
     const allSet = this.allEventSubscribers.get(key);
     if (allSet?.size) {
-      for (const handler of [...allSet]) this.invokeEventSubscriber(handler, event, phase);
+      for (const entry of [...allSet]) {
+        if (this.replaying && !entry.duringReplay) continue;
+        this.invokeEventSubscriber(entry.handler, event, phase);
+      }
     }
   }
 
@@ -1178,29 +1197,30 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       }
     }
 
-    // Event subscriptions
-    const event: Array<{ channel: string; type: string; phase: string }> = [];
-    for (const [key, set] of this.committedEventSubscribers) {
-      if (set.size === 0) continue;
-      const [channel, type] = key.split("::");
-      for (let i = 0; i < set.size; i++) {
-        event.push({ channel, type, phase: "committed" });
+    // Event subscriptions. `duringReplay` is reported so a panel can explain why a handler
+    // stayed silent during a time-travel instead of leaving it looking broken.
+    const event: Array<{
+      channel: string;
+      type: string;
+      phase: string;
+      duringReplay: boolean;
+    }> = [];
+    const collectSubscribers = (
+      map: Map<string, Set<EventSubscriberEntry<DeepReadonly<S>, EM>>>,
+      phase: string,
+    ): void => {
+      for (const [key, set] of map) {
+        if (set.size === 0) continue;
+        const [channel, type] = key.split("::");
+        for (const entry of set) {
+          event.push({ channel, type, phase, duringReplay: entry.duringReplay });
+        }
       }
-    }
-    for (const [key, set] of this.uncommittedEventSubscribers) {
-      if (set.size === 0) continue;
-      const [channel, type] = key.split("::");
-      for (let i = 0; i < set.size; i++) {
-        event.push({ channel, type, phase: "uncommitted" });
-      }
-    }
-    for (const [key, set] of this.allEventSubscribers) {
-      if (set.size === 0) continue;
-      const [channel, type] = key.split("::");
-      for (let i = 0; i < set.size; i++) {
-        event.push({ channel, type, phase: "all" });
-      }
-    }
+    };
+    collectSubscribers(this.committedEventSubscribers, "committed");
+    collectSubscribers(this.uncommittedEventSubscribers, "uncommitted");
+    collectSubscribers(this.writtenEventSubscribers, "written");
+    collectSubscribers(this.allEventSubscribers, "all");
 
     // Coarse subscribers count
     const coarse = this.listeners.size;
@@ -1246,6 +1266,24 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       );
     }
 
+    // Saved and restored, never set-and-clear-to-false. `__replayEvents` calls this as its
+    // first step, so clearing on the way out here would unset the flag for the whole event
+    // loop that follows and let every replayed event notify subscribers after all.
+    const wasReplaying = this.replaying;
+    this.replaying = true;
+    try {
+      return this.applyExternalStateInner(nextPlain);
+    } finally {
+      this.replaying = wasReplaying;
+    }
+  }
+
+  /**
+   * The body of {@link __applyExternalState}, with the replay flag already set.
+   *
+   * @internal
+   */
+  private applyExternalStateInner(nextPlain: any) {
     const prev = this.state as any;
     const next = nextPlain;
 
@@ -1335,6 +1373,28 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       );
     }
 
+    // Wraps the whole body, snapshot included. Event subscribers are notified below, and
+    // the point of the flag is that they are not - unless they asked to be.
+    const wasReplaying = this.replaying;
+    this.replaying = true;
+    try {
+      this.replayEventsInner(snapshot, events);
+    } finally {
+      // `finally`, so a reducer that throws mid-scrub does not leave the store believing it
+      // is still replaying and silencing every subscriber from then on.
+      this.replaying = wasReplaying;
+    }
+  }
+
+  /**
+   * The body of {@link __replayEvents}, with the replay flag already set.
+   *
+   * @internal
+   */
+  private replayEventsInner(
+    snapshot: any,
+    events: Array<{ channel: string; type: string; payload: any; id: string; meta?: EventMeta }>,
+  ): void {
     // 1. Apply snapshot (restores base state)
     this.__applyExternalState(snapshot);
 
@@ -1382,7 +1442,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         this.listeners.forEach((l) => l());
       }
 
-      // NOTE: No middleware, no effects, no dedup, no DevTools logging
+      // NOTE: No middleware, no effects, no dedup, no DevTools logging, and no event
+      // subscribers unless one opted in with `{ duringReplay: true }`. Subscribers used to
+      // be missing from this list and notified anyway, so scrubbing a timeline re-ran every
+      // `onEvent` handler as though the events had happened again - publishing to peers,
+      // writing to sockets and firing analytics, with nothing available to detect it.
     }
   }
 
@@ -1941,11 +2005,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
+  public get isReplaying(): boolean {
+    return this.replaying;
+  }
+
   public onEvent<C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
     type: T,
     handler: NarrowedEventHandler<DeepReadonly<S>, EM, C, T>,
     phase: EventPhase = "committed",
+    options?: { duringReplay?: boolean },
   ): Unsubscribe {
     const key = `${channel}::${String(type)}`;
 
@@ -1961,13 +2030,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (!targetMap.has(key)) {
       targetMap.set(key, new Set());
     }
-    // Store handler with type cast since internal storage uses the broad type
-    targetMap.get(key)!.add(handler as EventSubscriptionHandler<DeepReadonly<S>, EM>);
+    // An entry per subscription, not the bare handler. Storing the function meant two
+    // subscriptions sharing one handler were one Set member, so disposing either removed
+    // both - and it left nowhere to record the replay opt-in.
+    const entry: EventSubscriberEntry<DeepReadonly<S>, EM> = {
+      handler: handler as EventSubscriptionHandler<DeepReadonly<S>, EM>,
+      duringReplay: options?.duringReplay === true,
+    };
+    targetMap.get(key)!.add(entry);
 
     return () => {
       const set = targetMap.get(key);
       if (set) {
-        set.delete(handler as EventSubscriptionHandler<DeepReadonly<S>, EM>);
+        set.delete(entry);
         if (set.size === 0) targetMap.delete(key);
       }
     };

@@ -344,6 +344,24 @@ all. `written` is the stricter fact, added rather than substituted, so toasts an
 working unchanged. `all` stays `committed | uncommitted`; folding `written` in would hand existing
 subscribers a second notification per event.
 
+### Event subscribers and time-travel
+
+**Replay does not call your handlers.** Scrubbing a DevTools timeline reduces the events again,
+so state follows the scrub, but `onEvent` handlers stay silent. They used to run exactly as they
+do for a live event, which meant dragging a timeline re-published to peers, re-wrote to sockets
+and re-fired analytics for events that were not happening again, with nothing available inside a
+handler to tell the difference.
+
+A handler that derives view state purely from the event stream, and performs no I/O, can opt in:
+
+```ts
+store.onEvent("ui", "save", handler, "committed", { duringReplay: true });
+```
+
+`store.isReplaying` is there for anything that has to branch rather than simply skip. Coarse
+`subscribe` listeners and `connect` subscriptions keep firing throughout, because the state
+genuinely did change and the UI has to follow the scrub.
+
 ---
 
 ## Commits are atomic across slices
@@ -695,7 +713,7 @@ store.registerEffect({
 | `store.getState()`                              | Get current readonly state snapshot            |
 | `store.subscribe(listener)`                     | Coarse subscription (any state change)         |
 | `store.connect(spec, handler)`                  | Fine-grained path subscription with wildcards  |
-| `store.onEvent(channel, type, handler, phase?)` | Event subscription (committed/uncommitted/all) |
+| `store.onEvent(channel, type, handler, phase?, options?)` | Event subscription (committed/uncommitted/written/all). Silent during replay unless `{ duringReplay: true }` |
 | `store.onEffect(channel, type, handler)`        | Single-event effect shorthand                  |
 | `store.dispose()`                               | Cleanup timers and resources                   |
 

@@ -196,8 +196,20 @@ describe("Store - __devtoolsIntrospect", () => {
     store.onEvent("ui", "decrement", vi.fn(), "committed");
 
     const info = store.__devtoolsIntrospect();
-    expect(info.event).toContainEqual({ channel: "ui", type: "increment", phase: "committed" });
-    expect(info.event).toContainEqual({ channel: "ui", type: "decrement", phase: "committed" });
+    // `duringReplay` rides along so a panel can explain a handler that stayed silent during
+    // a time-travel, rather than leaving it looking broken.
+    expect(info.event).toContainEqual({
+      channel: "ui",
+      type: "increment",
+      phase: "committed",
+      duringReplay: false,
+    });
+    expect(info.event).toContainEqual({
+      channel: "ui",
+      type: "decrement",
+      phase: "committed",
+      duringReplay: false,
+    });
   });
 
   it("returns uncommitted event subscriptions", () => {
@@ -209,7 +221,12 @@ describe("Store - __devtoolsIntrospect", () => {
     store.onEvent("ui", "increment", vi.fn(), "uncommitted");
 
     const info = store.__devtoolsIntrospect();
-    expect(info.event).toContainEqual({ channel: "ui", type: "increment", phase: "uncommitted" });
+    expect(info.event).toContainEqual({
+      channel: "ui",
+      type: "increment",
+      phase: "uncommitted",
+      duringReplay: false,
+    });
   });
 
   it("tracks coarse subscriber count", () => {
