@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "`createYoltra` now returns a chainable hook set: `withSlice`, `withMiddleware` and `withEffect` are methods on the returned `Yoltra`, and free-function forms are exported for a library handed a `Yoltra` it did not create. Each returns a new hook set bound to the **same context object**, re-typed, so a `<StoreProvider>` from any view in a chain serves the hooks of every other and the Suspense cache is shared, since it keys on store identity. Call them at module scope, once, before the first render: `createHooks` allocates fresh function objects per call. Also strengthens the public-export test, which was a one-way `toHaveProperty` loop and had drifted - `createYoltra` and the entity hooks were exported and missing from the asserted list.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

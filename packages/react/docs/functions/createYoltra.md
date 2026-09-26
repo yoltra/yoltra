@@ -10,7 +10,7 @@
 
 > **createYoltra**\<`RM`\>(`cfg`): [`Yoltra`](../interfaces/Yoltra.md)\<keyof `RM` & `string`, `StateFromReducers`\<`RM`\>, `EMFromReducersStrict`\<`RM`\>\>
 
-Defined in: [react/src/createYoltra.tsx:172](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L172)
+Defined in: [react/src/createYoltra.tsx:171](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L171)
 
 One-call setup: create a store and its fully-typed React hooks together.
 

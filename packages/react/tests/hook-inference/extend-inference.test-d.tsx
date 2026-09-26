@@ -19,7 +19,9 @@ import { describe, expectTypeOf, it } from "vitest";
 
 import { defineMiddleware, defineSlice } from "@yoltra/core";
 
-import type { DecoratableYoltra } from "../../src/createYoltra";
+import type { ReducerSpec } from "@yoltra/core";
+
+import { createYoltra } from "../../src/createYoltra";
 
 type AppEM = { ui: { increment: number } };
 type AppState = { counter: { value: number } };
@@ -47,7 +49,19 @@ const sliceC = defineSlice<LibCEM>()({
   reducer: (s) => s,
 });
 
-declare const app: DecoratableYoltra<"counter", AppState, AppEM>;
+// A real `createYoltra` now, not a declared surface: the runtime carries these methods.
+//
+// The spec is an **annotated const**, not an inline literal. `createYoltra` has only the
+// inferring overload, and an inline literal gives `EMOfSpec` nothing to infer an event map
+// from, so `EM` lands on `EventMapBase` - whose index signatures accept any channel and any
+// payload, quietly making every negative assertion below pass for free.
+const counterSpec: ReducerSpec<{ value: number }, AppEM> = {
+  state: { value: 0 },
+  when: { keys: [["ui", "increment"]] },
+  reducer: (s) => s,
+};
+
+const app = createYoltra({ name: "ExtendInference", reducer: { counter: counterSpec } });
 
 // Slice, then middleware, then slice. The middleware step must carry step one's widening
 // through untouched.

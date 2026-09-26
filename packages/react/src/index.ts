@@ -22,8 +22,8 @@ export { createHooks } from "./hooks/createHooks";
 export type { UseAtomicProp, UseAtomicProps, UseEvent, YoltraHooks } from "./hooks/createHooks";
 export type { UseSuspenseAtomicProp, UseSuspenseAtomicProps } from "./hooks/suspense";
 
-export { createYoltra } from "./createYoltra";
-export type { Yoltra } from "./createYoltra";
+export { createYoltra, withEffect, withMiddleware, withSlice } from "./createYoltra";
+export type { DecoratableYoltra, Yoltra, YoltraDecoration } from "./createYoltra";
 
 export type { OneOrMany, PathValue } from "./hooks/hooks";
 export type { SuspenseAtomicPropOptions, SuspenseAtomicPropsOptions } from "./hooks/suspense";
