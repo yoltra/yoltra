@@ -965,6 +965,8 @@ stops a runaway from hanging the tab.
   React hooks and Suspense
 - **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**:
   Five steps to a working app
+- **[Decoration Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/DECORATION_GUIDE.md)**:
+  Adding a slice, middleware or effect to somebody else's store, with the types
 - **[Event Queue Architecture](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)**:
   Technical deep-dive
 - **[Library Comparison](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**:

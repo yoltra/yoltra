@@ -2126,8 +2126,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * - `'committed'` (default): Events that passed middleware and reached reducers.
    *   Notified after reducers, before effects.
    * - `'uncommitted'`: Events rejected by middleware. Notified immediately after rejection.
+   * - `'written'`: Events that actually changed state. Stricter than `committed`, which
+   *   fires for every event a store accepts including one with no reducers at all.
    * - `'all'`: Both committed and uncommitted events. Handler receives the phase parameter
-   *   to distinguish between the two.
+   *   to distinguish between the two. Deliberately not `written` as well: an event that
+   *   writes is also committed, so folding it in would notify every existing `all`
+   *   subscriber twice for one event.
+   *
+   * **Replay:** a handler is not called while devtools is replaying, unless it opted in with
+   * `{ duringReplay: true }`.
    *
    * @typeParam C - Channel key within `EM`.
    * @typeParam T - Event type key within channel `C`.
@@ -3073,7 +3080,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * Replaces the entire **reducer set** (HMR-friendly).
    *
    * @param next - Map of slice specs keyed by slice name.
-   * @param opts - `{ preserveState?: boolean }` (default `true`).
+   * @param opts - `{ preserveState?: boolean }` (default `true`) and
+   * `{ scope?: "spec" | "all" }` (default `"spec"`).
+   *
+   * @remarks
+   * Replaces **spec-provenance slices only**. A slice mounted after construction with
+   * `registerSlice` survives, along with its state: it was never part of the set this call
+   * is replacing. Pass `{ scope: "all" }` for the pre-0.8.0 wholesale behaviour.
+   *
+   * Throws, before mutating anything, if `next` names a slice a library mounted at runtime.
    *
    * @example Hot module replacement
    * ```ts

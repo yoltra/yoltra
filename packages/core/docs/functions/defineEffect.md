@@ -10,7 +10,7 @@
 
 > **defineEffect**\<`EMAdd`, `St`\>(): (`spec`) => [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`St`\>, `EMAdd`\> & [`EventMapCarrier`](../interfaces/EventMapCarrier.md)\<`EMAdd`\>
 
-Defined in: [types.ts:2178](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2178)
+Defined in: [types.ts:2181](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2181)
 
 Declares an effect spec together with the event map it contributes.
 

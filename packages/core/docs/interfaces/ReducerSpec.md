@@ -8,14 +8,14 @@
 
 # Interface: ReducerSpec\<S, EM\>
 
-Defined in: [types.ts:1051](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1051)
+Defined in: [types.ts:1054](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1054)
 
 One reducer's definition blob (stateful event consumer).
 
 ## Remarks
 
-Use `when` for event targeting (preferred). The `events` property is
-kept for backward compatibility but `when` is recommended for new code.
+Use `when` for event targeting. An earlier `events` array was removed; this remark
+outlived it and described a property that no longer exists.
 
 ## Example
 
@@ -53,7 +53,7 @@ Event map.
 
 > `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"reducer"`\>
 
-Defined in: [types.ts:1070](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1070)
+Defined in: [types.ts:1073](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1073)
 
 Optional metadata for debugging tools and DevTools integration.
 
@@ -63,7 +63,7 @@ Optional metadata for debugging tools and DevTools integration.
 
 > **reducer**: [`ReducerFunction`](../type-aliases/ReducerFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:1065](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1065)
+Defined in: [types.ts:1068](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1068)
 
 Pure reducer function: `(state, event) => nextState`.
 
@@ -73,7 +73,7 @@ Pure reducer function: `(state, event) => nextState`.
 
 > **state**: `S`
 
-Defined in: [types.ts:1055](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1055)
+Defined in: [types.ts:1058](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1058)
 
 Initial state for this reducer.
 
@@ -83,6 +83,6 @@ Initial state for this reducer.
 
 > `optional` **when**: [`When`](../type-aliases/When.md)\<`EM`\>
 
-Defined in: [types.ts:1060](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1060)
+Defined in: [types.ts:1063](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1063)
 
 Event targeting using the unified `When` matcher.

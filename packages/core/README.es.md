@@ -946,6 +946,8 @@ es algo que nadie escriba.
   Hooks de React y Suspense
 - **[Guia de Inicio Rápido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**:
   Cinco pasos hacia una app funcional
+- **[Guía de Decoración](https://github.com/yoltra/yoltra/blob/main/docs/es/DECORATION_GUIDE.md)**:
+  Agregar una slice, middleware o efecto al store de alguien más, con los tipos
 - **[Arquitectura de Cola de Eventos](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)**:
   Inmersión técnica profunda
 - **[Comparación de Bibliotecas](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**:

@@ -805,7 +805,10 @@ export interface StoreInstance<
    * **Phases:**
    * - `'committed'` (default): Events that passed middleware and reached reducers
    * - `'uncommitted'`: Events rejected by middleware
-   * - `'all'`: Both committed and uncommitted events (handler receives phase parameter)
+   * - `'written'`: Events that actually changed state
+   * - `'all'`: Both committed and uncommitted events (handler receives phase parameter).
+   *   Deliberately not `written` as well: an event that writes is also committed, so folding
+   *   it in would notify every existing `all` subscriber twice for one event.
    *
    * @typeParam C - Channel key within `EM`.
    * @typeParam T - Event type key within channel `C`.
@@ -1028,8 +1031,8 @@ export interface StoreInstance<
  * @typeParam EM - Event map.
  *
  * @remarks
- * Use `when` for event targeting (preferred). The `events` property is
- * kept for backward compatibility but `when` is recommended for new code.
+ * Use `when` for event targeting. An earlier `events` array was removed; this remark
+ * outlived it and described a property that no longer exists.
  *
  * @example
  * Using `when` (recommended)
