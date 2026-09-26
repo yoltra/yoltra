@@ -38,6 +38,18 @@ const BRIDGE_MARK = "__YOLTRA_DEVTOOLS_BRIDGE__";
  */
 const DEFAULT_MAX_SNAPSHOT_BYTES = 6 * 1024 * 1024;
 
+/**
+ * Per-event byte cap for a payload or a single patch value.
+ *
+ * @remarks
+ * Far below the snapshot cap, because events are frequent and a snapshot is not. Unbounded,
+ * one oversized payload produced a frame past the hub's 8 MiB limit, and `ws` answers that
+ * by closing the connection rather than dropping the message: a single large emit ended the
+ * devtools session. Faithful binary encoding makes this reachable in ordinary use, since an
+ * `ArrayBuffer` now carries its bytes instead of serializing to `{}`.
+ */
+const DEFAULT_MAX_EVENT_BYTES = 512 * 1024;
+
 /** Chooses the transport, honouring an explicit one above all. */
 function resolveSocketFactory(
   config: DevtoolsWrapperConfig,
@@ -172,6 +184,7 @@ export function withDevtools<
 
   // Create browser WS client
   const maxSnapshotBytes = config.maxSnapshotBytes ?? DEFAULT_MAX_SNAPSHOT_BYTES;
+  const maxEventBytes = config.maxEventBytes ?? DEFAULT_MAX_EVENT_BYTES;
   // One options object for every encode below: the redaction contract is that NOTHING the
   // agent forwards — snapshot, travel snapshot, payload, patch — skips the hook.
   const sanitize = config.sanitize;
@@ -386,6 +399,23 @@ export function withDevtools<
     // reconstruction stays correlated (DEV-7). Wire ordering is preserved by the
     // event log's array insertion order, not by this version.
     if (info.committed) snapshotVersion++;
+    // Bounded like a snapshot. A payload is arbitrary application data and can be any
+    // size, and the hub answers an oversized frame by closing the socket rather than
+    // dropping the message.
+    const boundedPayload = encodeStateBounded(
+      info.event.payload,
+      maxEventBytes,
+      encodeOptions,
+    );
+    let patchesTruncated = false;
+    const boundedPatches = info.committed
+      ? patchesFromChange(info.changedPaths, info.prevValues, info.nextValues).map((op) => {
+          if (!("value" in op)) return op;
+          const b = encodeStateBounded(op.value, maxEventBytes, patchEncodeOptions(op.path));
+          if (b.truncated) patchesTruncated = true;
+          return { ...op, value: b.value };
+        })
+      : [];
     const storeEvent: StoreEvent = {
       type: "STORE_EVENT",
       ...baseMsg(),
@@ -396,15 +426,11 @@ export function withDevtools<
         type: info.event.type,
         // Encoded like state: a payload is arbitrary application data, so it can hold the same
         // Map, BigInt or cycle that made a bare stringify throw or quietly destroy it.
-        payload: encodeState(info.event.payload, encodeOptions).value,
+        payload: boundedPayload.value,
+        ...(boundedPayload.truncated ? { truncated: true } : {}),
       },
-      patches: info.committed
-        ? patchesFromChange(info.changedPaths, info.prevValues, info.nextValues).map((op) =>
-            "value" in op
-              ? { ...op, value: encodeState(op.value, patchEncodeOptions(op.path)).value }
-              : op,
-          )
-        : [],
+      patches: boundedPatches,
+      ...(patchesTruncated ? { patchesTruncated: true } : {}),
       snapshotVersion,
       committed: info.committed,
     };

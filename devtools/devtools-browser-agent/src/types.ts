@@ -93,6 +93,18 @@ export interface DevtoolsWrapperConfig {
   maxSnapshotBytes?: number;
 
   /**
+   * Byte cap for a single event payload or patch value.
+   *
+   * @remarks
+   * Separate from, and far below, {@link maxSnapshotBytes}: events are frequent and a
+   * snapshot is not. An oversized frame is answered by the hub closing the socket, not by
+   * dropping the message, so one large emit used to end the session.
+   *
+   * @defaultValue 524288 (512 KiB)
+   */
+  maxEventBytes?: number;
+
+  /**
    * Redacts a value before it leaves the process.
    *
    * @remarks

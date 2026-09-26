@@ -754,7 +754,7 @@ export type UseSuspenseAtomicProps<R extends string, S extends Record<R, any>> =
  * @remarks
  * The package-level `useSuspenseAtomicProp`/`useSuspenseAtomicProps` read the package-level
  * `StoreContext`. `createHooks` is given a *different* context, so its hook set used to stop
- * short of Suspense: mixing the two families threw "useStore must be used inside
+ * short of Suspense: mixing the two families threw "[yoltra] No store in context
  * <StoreProvider>" at runtime, with nothing in the types to warn about it, because the store
  * was in the other context all along. Building them here from the same `useStore` the rest of
  * the set uses makes the set complete.

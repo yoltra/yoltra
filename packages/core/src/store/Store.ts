@@ -123,6 +123,15 @@ const DEFAULT_DEDUP_KEY_WINDOW_MS = 100;
 const MAX_REGISTRATION_CASCADE = 64;
 
 /**
+ * How many disposed slice names to remember for the development-time read diagnostic.
+ *
+ * @remarks
+ * Bounded so a long session of mount-and-dispose cycles does not accumulate forever. The
+ * diagnostic is for a slice someone has just stopped using.
+ */
+const MAX_REMEMBERED_DISPOSED_SLICES = 64;
+
+/**
  * Causal depth at which the store stops extending an event chain.
  *
  * @remarks
@@ -368,12 +377,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * Populated only for `dynamic` and `internal` slices: a `spec` slice removed by a
    * `replace*` was not promised by anyone's widened type.
    *
+   * Bounded, because a long development session that mounts and disposes repeatedly would
+   * otherwise accumulate an entry per cycle forever. The oldest is dropped: the diagnostic
+   * exists for a slice someone has just stopped using, and a name disposed hundreds of
+   * mounts ago is not the one being read by mistake. Maps to the owner, or `undefined`
+   * when the library did not name itself.
+   *
    * @internal
    */
-  private readonly disposedSlices = new Set<string>();
-
-  /** Owner names for {@link disposedSlices}, so the error can say who. @internal */
-  private readonly disposedSliceOwners = new Map<string, string>();
+  private readonly disposedSlices = new Map<string, string | undefined>();
 
   /** @internal */
   private readonly registrationObservers = new Set<RegistrationObserver<EM>>();
@@ -750,7 +762,6 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.sliceOrigin.clear();
     this.sliceOwner.clear();
     this.disposedSlices.clear();
-    this.disposedSliceOwners.clear();
     // Terminal and silent. `dispose()` means the store is gone, not that its slices were
     // individually unmounted, and firing N changes would invite teardown against a store
     // already tearing down, in an order nobody controls, while these very observers are
@@ -2088,7 +2099,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       process.env.NODE_ENV !== "production" &&
       this.disposedSlices.has(spec.reducer as unknown as string)
     ) {
-      const owner = this.disposedSliceOwners.get(spec.reducer as unknown as string);
+      const owner = this.disposedSlices.get(spec.reducer as unknown as string);
       throw new Error(
         `[yoltra] Slice "${String(spec.reducer)}" was unmounted by its owner` +
           `${owner === undefined ? "" : ` (${owner})`}. Hooks and subscriptions widened for ` +
@@ -3344,7 +3355,6 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (opts.owner !== undefined) this.sliceOwner.set(rName, opts.owner);
     // Remounting under the same name makes the slice valid again.
     this.disposedSlices.delete(rName);
-    this.disposedSliceOwners.delete(rName);
     const { reducer, state, when } = rSpec;
 
     // Install reducer instance (FIXED: only pass reducer function)
@@ -3510,9 +3520,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (process.env.NODE_ENV !== "production") {
       const origin = this.sliceOrigin.get(rName);
       if (origin === "dynamic" || origin === "internal") {
-        this.disposedSlices.add(rName);
-        const owner = this.sliceOwner.get(rName);
-        if (owner !== undefined) this.disposedSliceOwners.set(rName, owner);
+        this.disposedSlices.set(rName, this.sliceOwner.get(rName));
+        while (this.disposedSlices.size > MAX_REMEMBERED_DISPOSED_SLICES) {
+          // Map preserves insertion order, so the first key is the oldest.
+          this.disposedSlices.delete(this.disposedSlices.keys().next().value as string);
+        }
       }
     }
     this.sliceOrigin.delete(rName);

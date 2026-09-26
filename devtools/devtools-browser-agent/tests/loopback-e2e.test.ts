@@ -431,4 +431,62 @@ describe("the panel's subscription list stays current", () => {
     // The call mounted and unmounted a reply listener. Neither should have reached the hub.
     expect(msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS").length).toBe(afterDynamic);
   });
+
+  it("truncates an oversized event payload instead of killing the socket", async () => {
+    // Snapshots have always been bounded; event payloads were not. The hub caps a frame at
+    // 8 MiB and `ws` answers an oversized one by *closing the connection*, not by dropping
+    // the message, so a single large emit ended the session. Faithful binary encoding makes
+    // this reachable in ordinary use: an ArrayBuffer now carries its bytes rather than
+    // serializing to `{}`.
+    const hub = createLoopbackHub();
+    const store = createStore({
+      name: "big-payload",
+      reducer: { counter: counterSpec },
+    });
+    withDevtools(store as never, {
+      port: 0,
+      storeId: "s-big",
+      socketFactory: hub.agentSocketFactory,
+      maxEventBytes: 2_048,
+    });
+    cleanups.push(() => store.dispose());
+
+    const panel = new hub.WebSocket("ws://loopback");
+    const msgs: AnyMsg[] = [];
+    panel.onmessage = (ev) => msgs.push(JSON.parse(ev.data as string));
+    cleanups.push(() => panel.close());
+    await tick();
+    panel.send(
+      JSON.stringify({
+        type: "HANDSHAKE_REQUEST",
+        protocolVersion: PROTOCOL_VERSION,
+        role: DevtoolsRole.EXTENSION,
+        extension: { id: "panel-big", name: "Embedded Panel", capabilities: {} },
+      }),
+    );
+    await waitFor(
+      () =>
+        msgs.some(
+          (m) =>
+            (m.type === "STORE_CONNECTED" && m.store?.id === "s-big") ||
+            (m.type === "STORE_REGISTRY" && m.stores?.some((st: AnyMsg) => st.id === "s-big")),
+        ),
+      { label: "store visible to panel" },
+    );
+
+    await (store as never as { emit: (...a: unknown[]) => Promise<unknown> }).emit(
+      "ui",
+      "increment",
+      "x".repeat(100_000),
+    );
+
+    const evt = await waitFor(
+      () => msgs.find((m) => m.type === "STORE_EVENT"),
+      { label: "STORE_EVENT at panel" },
+    );
+
+    expect(evt.event.truncated).toBe(true);
+    // The frame arrived, and is nowhere near the cap that would have closed the socket.
+    expect(JSON.stringify(evt).length).toBeLessThan(10_000);
+  });
 });

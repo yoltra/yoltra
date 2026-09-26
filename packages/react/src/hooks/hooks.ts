@@ -16,6 +16,7 @@ import type {
 } from "@yoltra/core";
 import { useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { StoreContext } from "../context/StoreContext";
+import { createHooks, type YoltraHooks } from "./createHooks";
 import { guardProjection, projectDeclared } from "../utils/declaredProjection";
 import { getAtPath, hasWildcard, normalizePath, specsSignature } from "../utils/path";
 import { useStableSnapshot } from "../utils/useStableSnapshot";
@@ -46,6 +47,38 @@ export type { PathValue };
 export type OneOrMany<T> = T | readonly T[];
 
 /**
+ * The one implementation behind every export in this module.
+ *
+ * @remarks
+ * These used to be a second, parallel implementation of the same six hooks, and the two
+ * drifted: the `written` phase once left three copies claiming a handler could only ever see
+ * two, and `useAtomicProps`' declared-path guard existed here and **not** in the copy
+ * `createYoltra` hands out - so the recommended path was the unguarded one. The exports below
+ * are now typed faces on this single set, which is the only arrangement where a fix cannot
+ * land in one copy and miss the other.
+ *
+ * Bound to the package-level context, which is what `<StoreProvider>` fills.
+ *
+ * Built lazily, on first render rather than at module load. `createHooks` reaches the
+ * Suspense hooks, which reach this module, so evaluating it at import time made whichever
+ * of the three loaded first see the others half-initialized. By first render every module
+ * is settled.
+ *
+ * @internal
+ */
+let boundHooks: YoltraHooks<string, Record<string, any>, EventMapBase> | null = null;
+
+/** @internal */
+function bound(): YoltraHooks<string, Record<string, any>, EventMapBase> {
+  boundHooks ??= createHooks(
+    StoreContext as unknown as React.Context<
+      StoreInstance<string, Record<string, any>, EventMapBase> | null
+    >,
+  );
+  return boundHooks;
+}
+
+/**
  * Returns the current {@link StoreInstance} from {@link StoreContext}.
  * Throws if used outside of a `<StoreProvider>`.
  *
@@ -66,10 +99,7 @@ export function useStore<
   R extends string,
   S extends Record<R, any>,
 >(): StoreInstance<R, S, EM> {
-  const ctx = useContext(StoreContext);
-  if (!ctx) throw new Error("useStore must be used inside <StoreProvider>");
-
-  return ctx as StoreInstance<R, S, EM>;
+  return bound().useStore() as unknown as StoreInstance<R, S, EM>;
 }
 
 /**
@@ -86,7 +116,7 @@ export function useStore<
  * @public
  */
 export function useEmit<EM extends EventMapBase>(): Emit<EM> {
-  return useStore<EM, any, any>().emit;
+  return bound().useEmit() as unknown as Emit<EM>;
 }
 
 // `shallowEqual` is single-sourced in `../utils/shallowEqual` and re-exported
@@ -115,54 +145,7 @@ export function useSelector<S extends Record<any, any>, T>(
   selector: (state: DeepReadonly<S>) => T,
   isEqual: (a: T, b: T) => boolean = Object.is,
 ): T {
-  const store = useStore<any, any, S>();
-
-  const subscribe = useMemo(() => (notify: () => void) => store.subscribe(notify), [store]);
-
-  const getSnapshot = useStableSnapshot(
-    () => selector(store.getState() as DeepReadonly<S>),
-    isEqual,
-    [store],
-  );
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
-/** @internal */
-function useAtomicPropImpl<R extends string, S extends Record<R, any>, T = any>(
-  spec: { reducer: R; property: string },
-  map?: (value: any) => T,
-  isEqual: (a: T, b: T) => boolean = Object.is,
-): T {
-  const store = useStore<any, R, S>();
-
-  const normalizedSpec = useMemo(() => {
-    const prop = normalizePath(spec.property);
-    return { reducer: spec.reducer, property: prop } as const;
-  }, [spec.reducer, spec.property]);
-
-  const subscribe = useMemo(
-    () => (notify: () => void) =>
-      store.connect(
-        { reducer: normalizedSpec.reducer, property: normalizedSpec.property },
-        () => notify(),
-      ),
-    [store, normalizedSpec],
-  );
-
-  const isGlob = hasWildcard(normalizedSpec.property);
-  const getSnapshot = useStableSnapshot(
-    () => {
-      const full = store.getState() as S;
-      const slice = (full as any)[normalizedSpec.reducer];
-      const source = isGlob ? slice : getAtPath(slice, normalizedSpec.property);
-      return map ? map(source) : (source as unknown as T);
-    },
-    isEqual,
-    [store, normalizedSpec],
-  );
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot) as any;
+  return (bound().useSelector as (...args: unknown[]) => T)(selector, isEqual);
 }
 
 /**
@@ -264,9 +247,7 @@ export function useAtomicProp<R extends string, S extends Record<R, any>, T = an
   map?: (value: any) => T,
   isEqual: (a: T, b: T) => boolean = Object.is,
 ): T {
-  // One implementation regardless of whether `map` is passed, so toggling `map`
-  // presence between renders never changes the hook call order (Rules of Hooks).
-  return useAtomicPropImpl<R, S, T>(spec, map, isEqual);
+  return (bound().useAtomicProp as (...args: unknown[]) => T)(spec, map, isEqual);
 }
 
 /**
@@ -327,98 +308,7 @@ export function useAtomicProps<R extends string, S extends Record<R, any>, T>(
   selector: (state: DeepReadonly<S>) => T,
   isEqual: (a: T, b: T) => boolean = Object.is,
 ): T {
-  return useAtomicPropsImpl<R, S, T>(specs as any, selector, isEqual);
-}
-
-/** @internal */
-function useAtomicPropsImpl<R extends string, S extends Record<R, any>, T>(
-  specs: Array<{
-    reducer: R;
-    property: OneOrMany<string> | OneOrMany<WithGlob<Dotted<S[R]>>>;
-  }>,
-  selector: (state: DeepReadonly<S>) => T,
-  isEqual: (a: T, b: T) => boolean = Object.is,
-): T {
-  const store = useStore<EventMapBase, R, S>();
-
-  const versionRef = useRef(0);
-  const lastSelRef = useRef<T | undefined>(undefined);
-  const lastVerRef = useRef<number>(-1);
-  const hasValueRef = useRef(false);
-
-  // Latest selector/isEqual via refs so passing them inline does not rebuild
-  // getSnapshot (which would drop the memoized value) every render.
-  const selectorRef = useRef(selector);
-  selectorRef.current = selector;
-  const isEqualRef = useRef(isEqual);
-  isEqualRef.current = isEqual;
-
-  const normalizedSpecs = useMemo(() => {
-    return specs.map((sp) => ({
-      reducer: sp.reducer,
-      property: Array.isArray(sp.property)
-        ? (sp.property as readonly string[]).map((p) => normalizePath(p as string))
-        : normalizePath(sp.property as string),
-    }));
-    // `specsSignature` is a stable structural key for `specs`; keying the memo
-    // on it (not the array, a fresh reference each render) is intentional and
-    // already covers `specs`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [specsSignature(specs)]);
-
-  const subscribe = useMemo(
-    () => (notify: () => void) => {
-      const tick = () => {
-        versionRef.current++;
-        notify();
-      };
-
-      const unsubs = normalizedSpecs.flatMap((sp) => {
-        const props = Array.isArray(sp.property) ? sp.property : [sp.property];
-        return props.map((p) => store.connect({ reducer: sp.reducer, property: p }, tick));
-      });
-
-      return () => {
-        for (const u of unsubs) u();
-      };
-    },
-    [store, normalizedSpecs],
-  );
-
-  // Derived from the very specs that drive the subscriptions above, so what the selector can
-  // see and what wakes the component come from one source and cannot drift apart.
-  const declared = useMemo(
-    () =>
-      normalizedSpecs.flatMap((sp) =>
-        (Array.isArray(sp.property) ? sp.property : [sp.property]).map((property) => ({
-          reducer: sp.reducer as string,
-          property,
-        })),
-      ),
-    [normalizedSpecs],
-  );
-
-  const getSnapshot = useCallback(() => {
-    if (lastVerRef.current !== versionRef.current || !hasValueRef.current) {
-      const projection = projectDeclared(store.getState(), declared);
-      const visible =
-        process.env.NODE_ENV !== "production" ? guardProjection(projection, declared) : projection;
-      const next = selectorRef.current(visible as DeepReadonly<S>);
-
-      // Track presence with a boolean so an `undefined` selection still caches
-      // (using `undefined` as "no value yet" would disable the equality cache).
-      if (!hasValueRef.current || !isEqualRef.current(lastSelRef.current as T, next)) {
-        lastSelRef.current = next;
-        hasValueRef.current = true;
-      }
-
-      lastVerRef.current = versionRef.current;
-    }
-
-    return lastSelRef.current as T;
-  }, [store, declared]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return (bound().useAtomicProps as (...args: unknown[]) => T)(specs, selector, isEqual);
 }
 
 /**
@@ -494,24 +384,5 @@ export function useEvent<
     duringReplay?: boolean;
   },
 ): void {
-  const store = useStore<EM, any, any>();
-  const handlerRef = useRef(handler);
-  handlerRef.current = handler; // Always keep latest handler (solves stale closures)
-
-  const duringReplay = options?.duringReplay === true;
-
-  useEffect(() => {
-    return store.onEvent(
-      channel,
-      type,
-      (event, getState, emit, eventPhase) => {
-        handlerRef.current(event as Event<EM, C, T>, getState, emit, eventPhase);
-      },
-      phase,
-      { duringReplay },
-    );
-    // The primitive, never `options`. An object literal is a new reference on every render,
-    // so depending on it would unsubscribe and resubscribe on each one - a loop no existing
-    // test would catch, because the subscription would still look correct at every point.
-  }, [store, channel, type, phase, duringReplay]);
+  (bound().useEvent as (...args: unknown[]) => void)(channel, type, handler, phase, options);
 }

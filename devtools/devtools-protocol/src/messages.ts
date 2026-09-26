@@ -63,9 +63,21 @@ export interface StoreEvent extends BaseMessage {
     channel: string;
     type: string;
     payload: unknown;
+    /**
+     * `true` when the payload exceeded the agent's per-event byte cap and was replaced by a
+     * truncation marker.
+     *
+     * @remarks
+     * Snapshots have always been bounded; event payloads were not, so one oversized payload
+     * produced a frame above the hub's own limit and the socket was closed rather than the
+     * message dropped. A payload the panel cannot show is better than a session that ends.
+     */
+    truncated?: boolean;
   };
   /** RFC 6902 JSON Patch operations describing state changes. */
   patches: JsonPatch[];
+  /** `true` when at least one patch value was replaced by a truncation marker. */
+  patchesTruncated?: boolean;
   /** Monotonically increasing snapshot version counter. */
   snapshotVersion: number;
   /** `true` if the event passed middleware; `false` if bounced. */

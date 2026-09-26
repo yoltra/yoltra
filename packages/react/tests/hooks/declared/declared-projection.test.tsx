@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { StoreProvider } from "../../../src/context/StoreProvider";
 import { useAtomicProps } from "../../../src/hooks/hooks";
+import { createYoltra } from "../../../src/createYoltra";
+import type { ReducerSpec } from "@yoltra/core";
 import {
   expandPattern,
   projectDeclared,
@@ -185,5 +187,47 @@ describe("wildcards expand to what they actually match", () => {
     const first = (projected.todo as { items: Array<Record<string, unknown>> }).items[0]!;
     expect("done" in first).toBe(true);
     expect("title" in first).toBe(false);
+  });
+});
+
+describe("the guard applies to the hooks createYoltra hands out", () => {
+  // It did not. `useAtomicProps` had two implementations, and the declared-path guard lived
+  // only in the package-level copy - the one the barrel deliberately steers people away
+  // from. Through `createYoltra`, which the docs recommend, a selector could read state it
+  // never declared, get the right value once, and then never re-render, because the
+  // component is subscribed to the declared paths only. Silently.
+
+  type EM = { ui: { go: number } };
+  const spec: ReducerSpec<{ a: number; b: number }, EM> = {
+    state: { a: 1, b: 2 },
+    when: { keys: [["ui", "go"]] },
+    reducer: (s: { a: number; b: number }, e) => (e.type === "go" ? { ...s, b: s.b + 1 } : s),
+  };
+
+  it("refuses an undeclared read, naming the path", () => {
+    const app = createYoltra({ name: "GuardedApp", reducer: { s: spec } });
+    // React logs the render failure; the assertion is on the throw, not the log.
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      function Probe() {
+        return <>{String(app.useAtomicProps([{ reducer: "s", property: "a" }], (st: any) => st.s.b))}</>;
+      }
+      // Loud in development, because in production this read is `undefined` and the
+      // component simply stops updating - which is the failure worth refusing.
+      expect(() => render(<Probe />)).toThrow(/did not subscribe to/);
+    } finally {
+      err.mockRestore();
+    }
+  });
+
+  it("still delivers what was declared", () => {
+    const app = createYoltra({ name: "GuardedAppOk", reducer: { s: spec } });
+    let seen: unknown;
+    function Probe() {
+      seen = app.useAtomicProps([{ reducer: "s", property: "a" }], (st: any) => st.s.a);
+      return null;
+    }
+    render(<Probe />);
+    expect(seen).toBe(1);
   });
 });

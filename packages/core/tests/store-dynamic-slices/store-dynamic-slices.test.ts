@@ -638,3 +638,25 @@ describe("failures found in review", () => {
     expect(listener.mock.calls.length).toBe(afterFirst);
   });
 });
+
+describe("the disposed-slice diagnostic is bounded", () => {
+  it("does not accumulate a name per mount-and-dispose cycle", () => {
+    // Development-only, and it only ever holds slice names, but a long session that mounts
+    // and disposes repeatedly would otherwise grow it without limit.
+    const store = createStore({ name: "BoundedDiagStore", reducer: { base: baseReducer } });
+    const spec = {
+      state: { n: 0 },
+      when: { keys: [["ui", "increment"]] },
+      reducer: (s: { n: number }) => s,
+    } as ReducerSpec<any, EM>;
+
+    for (let i = 0; i < 200; i += 1) {
+      store.registerSlice(`s${i}`, spec).dispose();
+    }
+
+    expect((store as any).disposedSlices.size).toBeLessThanOrEqual(64);
+    // And it remembers the most recent, which is the one someone is likely to read by
+    // mistake.
+    expect((store as any).disposedSlices.has("s199")).toBe(true);
+  });
+});

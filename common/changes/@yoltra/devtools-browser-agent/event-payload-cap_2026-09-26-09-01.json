@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "comment": "Event payloads and patch values are size-bounded, like snapshots already were. The hub caps a frame at 8 MiB and `ws` answers an oversized one by closing the connection rather than dropping the message, so a single large emit ended the devtools session. Faithful binary encoding makes this reachable in ordinary use: an `ArrayBuffer` now carries its bytes instead of serializing to `{}`. New `maxEventBytes` option, defaulting to 512 KiB, far below the snapshot cap because events are frequent and a snapshot is not. A truncated payload is flagged on the wire so a panel can say so rather than showing `undefined`.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-browser-agent"
+}
