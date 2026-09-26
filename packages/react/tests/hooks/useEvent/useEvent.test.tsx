@@ -470,3 +470,43 @@ describe("useEvent forwards the replay opt-in", () => {
     expect(defaulted).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("two useEvent calls sharing one handler function", () => {
+  // Core changed how subscriptions are stored: the registries used to hold the bare handler
+  // in a Set, so two subscriptions sharing one function were a single member and disposing
+  // either removed both. They now hold an entry per subscription.
+  //
+  // React is unaffected by that change, and this test is here to keep it that way. `useEvent`
+  // never hands core the caller's function: it registers a fresh arrow created inside the
+  // effect callback, which closes over a ref. Two calls have always produced two distinct
+  // references and therefore two independent subscriptions, before the change and after it.
+
+  it("fires the handler once per call, and unmounting cleans up both", () => {
+    const { store } = createMockStore({});
+    const handler = vi.fn();
+
+    function Probe() {
+      // Deliberately the same function object in both calls.
+      useEvent("ui" as any, "ping" as any, handler);
+      useEvent("ui" as any, "ping" as any, handler);
+      return null;
+    }
+
+    const { unmount } = render(
+      <StoreProvider store={store}>
+        <Probe />
+      </StoreProvider>,
+    );
+
+    expect(store.getEventSubscriptions()).toHaveLength(2);
+
+    act(() => {
+      store.notifyEvent("ui", "ping", 1, "committed");
+    });
+    expect(handler).toHaveBeenCalledTimes(2);
+
+    // Neither disposer may take the other's subscription with it.
+    unmount();
+    expect(store.getEventSubscriptions()).toHaveLength(0);
+  });
+});
