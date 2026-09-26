@@ -289,3 +289,79 @@ describe("a state too large for the transport", () => {
     expect(String(snapshot.truncationNote ?? "")).not.toBe("");
   });
 });
+
+describe("the panel's subscription list stays current", () => {
+  const cleanups: Array<() => void> = [];
+  afterEach(() => {
+    for (const c of cleanups.splice(0).reverse()) {
+      try {
+        c();
+      } catch {
+        /* best-effort */
+      }
+    }
+  });
+
+  it("pushes STORE_SUBSCRIPTIONS when something is registered at runtime", async () => {
+    // `__devtoolsIntrospect()` is a pull, so until the agent subscribed to registration
+    // changes the panel's list went stale the moment anything mounted: a decoration adding a
+    // slice, a hot reload, an `onEvent` from a component. The panel had no way to know and
+    // no reason to ask again.
+    const hub = createLoopbackHub();
+    const store = createStore({
+      name: "subscriptions-push",
+      reducer: { counter: counterSpec },
+    });
+    withDevtools(store, {
+      port: 0,
+      storeId: "s-push",
+      socketFactory: hub.agentSocketFactory,
+    });
+    cleanups.push(() => store.dispose());
+
+    const panel = new hub.WebSocket("ws://loopback");
+    const msgs: AnyMsg[] = [];
+    panel.onmessage = (ev) => msgs.push(JSON.parse(ev.data as string));
+    cleanups.push(() => panel.close());
+    await tick();
+    panel.send(
+      JSON.stringify({
+        type: "HANDSHAKE_REQUEST",
+        protocolVersion: PROTOCOL_VERSION,
+        role: DevtoolsRole.EXTENSION,
+        extension: { id: "panel-push", name: "Embedded Panel", capabilities: {} },
+      }),
+    );
+    await waitFor(
+      () =>
+        msgs.some(
+          (m) =>
+            (m.type === "STORE_CONNECTED" && m.store?.id === "s-push") ||
+            (m.type === "STORE_REGISTRY" && m.stores?.some((st: AnyMsg) => st.id === "s-push")),
+        ),
+      { label: "store visible to panel" },
+    );
+
+    const before = msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS").length;
+
+    // Nobody asked. The agent should volunteer it.
+    store.registerSlice("late", {
+      state: { n: 0 },
+      when: { keys: [["ui", "increment"]] },
+      reducer: (s: { n: number }) => s,
+    } as ReducerSpec<any, EM>);
+
+    const pushed = await waitFor(
+      () => {
+        const frames = msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS");
+        return frames.length > before ? frames[frames.length - 1] : undefined;
+      },
+      { label: "pushed STORE_SUBSCRIPTIONS" },
+    );
+
+    // And it carries the new slice, with the provenance a panel needs to attribute it.
+    const late = (pushed.reducers as AnyMsg[]).find((r) => r.name === "late");
+    expect(late).toBeDefined();
+    expect(late?.origin).toBe("dynamic");
+  });
+});

@@ -332,19 +332,7 @@ export function withDevtools<
         }
 
         case "REQUEST_SUBSCRIPTIONS": {
-          const introspection = store.__devtoolsIntrospect();
-          const response = {
-            type: "STORE_SUBSCRIPTIONS",
-            ...baseMsg(),
-            storeId,
-            atomic: introspection.atomic,
-            event: introspection.event,
-            coarse: introspection.coarse,
-            effects: introspection.effects,
-            middleware: introspection.middleware,
-            reducers: introspection.reducers,
-          };
-          wsClient.send(JSON.stringify(response));
+          wsClient.send(JSON.stringify(subscriptionsFrame()));
           break;
         }
 
@@ -423,6 +411,33 @@ export function withDevtools<
     wsClient.send(JSON.stringify(storeEvent));
   });
 
+  /** The `STORE_SUBSCRIPTIONS` frame, built from a fresh introspection. */
+  const subscriptionsFrame = () => {
+    const introspection = store.__devtoolsIntrospect();
+    return {
+      type: "STORE_SUBSCRIPTIONS",
+      ...baseMsg(),
+      storeId,
+      atomic: introspection.atomic,
+      event: introspection.event,
+      coarse: introspection.coarse,
+      effects: introspection.effects,
+      middleware: introspection.middleware,
+      reducers: introspection.reducers,
+    };
+  };
+
+  // Pushed, not only answered. `__devtoolsIntrospect()` is a pull, so until now the panel's
+  // subscription list went stale the moment anything was registered at runtime: a decoration
+  // mounting a slice, a hot reload, an `onEvent` added by a component. The panel had no way
+  // to know and no reason to ask again.
+  // The transport buffers while disconnected, so this needs no connection check. Each frame
+  // is a full snapshot, so if several are buffered only the last one carries anything the
+  // earlier ones did not.
+  const registrationUnsub = store.onRegistrationChange(() => {
+    wsClient.send(JSON.stringify(subscriptionsFrame()));
+  });
+
   // Connect to hub
   wsClient.connect(host, config.port);
 
@@ -431,6 +446,7 @@ export function withDevtools<
   // and folded into store.dispose() so disposing the store also detaches devtools.
   const disposeDevtools = () => {
     instrumentUnsub();
+    registrationUnsub();
     wsClient.disconnect();
     (store as unknown as { __yoltraDevtoolsDispose?: () => void }).__yoltraDevtoolsDispose =
       undefined;
