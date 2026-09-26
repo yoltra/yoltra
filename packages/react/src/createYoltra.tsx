@@ -6,13 +6,21 @@ import {
   createStore,
   type DeepReadonly,
   type EffectSpec,
+  type EMAddOf,
   type EMFromReducersStrict,
   type EventMapBase,
   type EventUnion,
+  type Merge,
   type MiddlewareFunction,
+  type MiddlewareInput,
   type ReducersMapAny,
+  type ReducerSpec,
+  type SatisfiesSlices,
   type StateFromReducers,
+  type StateOfSpec,
   type StoreInstance,
+  type WidenNames,
+  type WidenState,
 } from "@yoltra/core";
 import React, { createContext, type ReactNode } from "react";
 
@@ -38,6 +46,68 @@ export interface Yoltra<R extends string, S extends Record<R, any>, EM extends E
   /** Optional provider to scope a different store instance to a subtree. */
   StoreProvider: React.FC<{ store?: StoreInstance<R, S, EM>; children: ReactNode }>;
 }
+
+/**
+ * The chainable decoration surface on a {@link Yoltra}.
+ *
+ * @remarks
+ * Declared separately from {@link Yoltra} until the runtime lands, so the type machinery can
+ * be proven before anything implements it. Once it does, `Yoltra` extends this and
+ * {@link DecoratableYoltra} collapses to an alias.
+ *
+ * Every method returns a **new hook set bound to the same context object**, re-typed. The
+ * context is never recreated, so a `StoreProvider` from any view in the chain serves the
+ * hooks of every other, and the Suspense cache is shared - it keys on store identity through
+ * a `WeakMap`, and the widened store is the same object.
+ *
+ * Call these at **module scope, once, before first render**. `createHooks` allocates fresh
+ * function objects per call, so decorating inside a component would hand React a different
+ * hook set on every render.
+ *
+ * @public
+ */
+export interface YoltraDecoration<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+> {
+  /** Mounts a slice and returns a widened `Yoltra`: the same store, a new hook set. */
+  withSlice<N extends string, Spec extends ReducerSpec<any, any>>(
+    name: N,
+    spec: Spec,
+    options?: { owner?: string },
+  ): DecoratableYoltra<
+    WidenNames<R, N>,
+    SatisfiesSlices<WidenState<S, N, StateOfSpec<Spec>>, WidenNames<R, N>>,
+    Merge<EM, EMAddOf<Spec>>
+  >;
+
+  /**
+   * Registers middleware and returns a `Yoltra` widened by whatever event map it declares.
+   *
+   * Only the spec form can widen; a bare `MiddlewareFunction` contributes nothing, because
+   * its event parameter is `EventUnion<EM>` and TypeScript cannot infer `EM` back out of it.
+   */
+  withMiddleware<M extends MiddlewareInput<any, any>>(
+    mw: M,
+  ): DecoratableYoltra<R, S, Merge<EM, EMAddOf<M>>>;
+
+  /** Registers an effect and returns a `Yoltra` widened by whatever event map it declares. */
+  withEffect<Spec extends EffectSpec<any, any>>(
+    spec: Spec,
+  ): DecoratableYoltra<R, S, Merge<EM, EMAddOf<Spec>>>;
+}
+
+/**
+ * A {@link Yoltra} carrying the chainable decoration surface.
+ *
+ * @public
+ */
+export type DecoratableYoltra<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+> = Yoltra<R, S, EM> & YoltraDecoration<R, S, EM>;
 
 /**
  * One-call setup: create a store and its fully-typed React hooks together.

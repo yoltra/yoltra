@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Store, typedEvents } from "../../src/store/Store";
+import { defineEffect, defineMiddleware, defineSlice } from "../../src/types";
 import type { EventKey } from "../../src/types";
 
 describe("Store.buildAncestorPaths", () => {
@@ -36,5 +37,65 @@ describe("typedEvents", () => {
 
     expect(uiKeys).toEqual([["ui", "increment"]]);
     expect(dataKeys).toEqual([["data", "loaded"]]);
+  });
+});
+
+describe("spec builders (defineSlice / defineMiddleware / defineEffect)", () => {
+  // These exist for their return *type*: they park the event map a decoration contributes in
+  // a value position, which is the only place TypeScript can infer it from. At runtime they
+  // must do nothing at all, and these tests pin that.
+  type LibEM = { "lib.transfer": { granted: { id: string } } };
+
+  it("returns the very same spec object, not a copy", () => {
+    const spec = {
+      state: { granted: [] as string[] },
+      when: { keys: [["lib.transfer", "granted"]] } as const,
+      reducer: (s: { granted: string[] }) => s,
+    };
+
+    expect(defineSlice<LibEM>()(spec)).toBe(spec);
+  });
+
+  it("adds no runtime property, so the brand cannot leak into state or the wire", () => {
+    // The brand is a phantom. If it were ever assigned, it would show up in
+    // `Object.keys`, in a devtools snapshot, and in anything that serializes a spec.
+    const before = {
+      state: { n: 0 },
+      when: { any: true } as const,
+      reducer: (s: { n: number }) => s,
+    };
+    const after = defineSlice<LibEM>()(before);
+
+    expect(Object.keys(after)).toEqual(["state", "when", "reducer"]);
+    expect("~yoltraEventMap" in after).toBe(false);
+  });
+
+  it("is identity for middleware and effect specs too", () => {
+    const mw = { when: { any: true } as const, middleware: () => true };
+    const fx = { when: { any: true } as const, effect: async () => {} };
+
+    expect(defineMiddleware<LibEM>()(mw)).toBe(mw);
+    expect(defineEffect<LibEM>()(fx)).toBe(fx);
+    expect(Object.keys(defineEffect<LibEM>()(fx))).toEqual(["when", "effect"]);
+  });
+
+  it("leaves a built spec usable by a real store", () => {
+    // The point of the builders is that the spec they return is an ordinary spec. If the
+    // brand ever became real, this would break.
+    const slice = defineSlice<LibEM>()({
+      state: { granted: [] as string[] },
+      when: { keys: [["lib.transfer", "granted"]] },
+      reducer: (s, e) =>
+        e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s,
+    });
+
+    const store = new Store<"transfers", { transfers: { granted: string[] } }, LibEM>({
+      name: "BuilderStore",
+      reducer: { transfers: slice },
+    });
+
+    return store.emit("lib.transfer", "granted", { id: "a1" }).then(() => {
+      expect(store.getState().transfers.granted).toEqual(["a1"]);
+    });
   });
 });

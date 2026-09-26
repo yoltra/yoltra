@@ -21,7 +21,22 @@ export type { AliasWatch } from "./utils/immutability";
 // Export the eventKeys helper function
 export { eventKeys } from "./types";
 
+// Spec builders that carry the event map a decoration contributes. Runtime identity
+// functions; the whole point is the type they return.
+export { defineSlice, defineMiddleware, defineEffect } from "./types";
+
 export type {
+  Prettify,
+  Merge,
+  WidenNames,
+  WidenState,
+  EventMapCarrier,
+  EMAddOf,
+  StateOfSpec,
+  SatisfiesSlices,
+  DecoratableStore,
+  WidenedSlice,
+  StoreDecoration,
   EventMapBase,
   EventKey,
   Event,

@@ -1626,3 +1626,260 @@ export type NarrowedEventHandler<
   emit: Emit<EM>,
   phase: NotifiedPhase,
 ) => void | Promise<void>;
+// ============================================
+// Typed growth: decorating a store after construction
+// ============================================
+
+/**
+ * Flattens an intersection into a single object type.
+ *
+ * @remarks
+ * Chaining decorations produces `S & Record<"a", A> & Record<"b", B>`, which is correct but
+ * displays as an intersection in every hover and error message. This collapses it.
+ *
+ * Apply it at the **top level only**. It is a homomorphic mapped type, so running it over a
+ * slice whose state *is* a `Map`, `Set` or `Date` destroys that type - the same failure
+ * {@link DeepReadonly} handles the built-ins explicitly to avoid.
+ *
+ * @public
+ */
+export type Prettify<T> = { [K in keyof T]: T[K] } & {};
+
+/**
+ * Merges `B` into `A`, flattening the result. An empty `B` leaves `A` untouched, so a
+ * decoration that adds no events costs nothing at the type level.
+ *
+ * @public
+ */
+export type Merge<A, B> = [keyof B] extends [never] ? A : Prettify<A & B>;
+
+/**
+ * The slice-name union after adding `N`.
+ *
+ * @remarks
+ * The `string extends N` guard is load-bearing. Passing a `string`-typed variable rather than
+ * a literal would otherwise widen the union to `string`, and every `S[R1]` lookup downstream
+ * would resolve to the union of every slice's state - silently destroying `useAtomicProp`
+ * inference across the whole application. Degrading to "no widening" is the safe failure.
+ *
+ * @public
+ */
+export type WidenNames<R extends string, N extends string> = string extends N ? R : R | N;
+
+/**
+ * The state record after adding slice `N` with state `St`. Degrades to `S` when `N` is not a
+ * string literal, for the reason given on {@link WidenNames}.
+ *
+ * @public
+ */
+export type WidenState<S, N extends string, St> = string extends N
+  ? S
+  : Prettify<S & Record<N, St>>;
+
+/**
+ * Phantom carrier for the event map a spec contributes.
+ *
+ * @remarks
+ * `EMAdd` cannot be inferred from a spec's `when`: `{ keys: [["chan", "evt"]] }` carries
+ * channel and type strings and no payload types, so there is nothing to infer a map from. And
+ * TypeScript has no partial type-argument inference, so a `registerSlice<N, St, EMAdd>` would
+ * force a caller who names `EMAdd` to hand-write `N` and `St` too.
+ *
+ * The way out is to put `EMAdd` in a **value** position, where inference works. The builders
+ * ({@link defineSlice}, {@link defineMiddleware}, {@link defineEffect}) brand a spec with this
+ * interface, and the register methods read it back with {@link EMAddOf}. Nothing exists at
+ * runtime; the property is never assigned.
+ *
+ * The property is **required, not optional**: an optional one makes
+ * `X extends EventMapCarrier<infer E>` match every object and infer `unknown`. And it is a
+ * *function* type so `EMAdd` sits in both co- and contravariant position, which keeps the
+ * inference exact rather than widening to a supertype.
+ *
+ * @public
+ */
+export interface EventMapCarrier<EMAdd extends EventMapBase> {
+  /** Phantom. Never present at runtime, and never read. */
+  readonly "~yoltraEventMap": (em: EMAdd) => EMAdd;
+}
+
+/**
+ * Reads the event map a spec contributes, or `{}` when it declares none.
+ *
+ * @remarks
+ * Only a branded spec widens the event map. An unbranded object literal contributes `{}`,
+ * which is today's behaviour and therefore always safe.
+ *
+ * @public
+ */
+export type EMAddOf<X> = X extends { readonly "~yoltraEventMap": (em: infer E) => unknown }
+  ? E extends EventMapBase
+    ? E
+    : {}
+  : {};
+
+/**
+ * Reads a reducer spec's state type.
+ *
+ * @public
+ */
+export type StateOfSpec<X> = X extends ReducerSpec<infer St, any> ? St : never;
+
+/**
+ * A store that can be decorated, and whose type grows as it is.
+ *
+ * @public
+ */
+export type DecoratableStore<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+> = StoreInstance<R, S, EM> & StoreDecoration<R, S, EM>;
+
+/**
+ * Proves to the compiler that a widened state record still covers every slice name.
+ *
+ * @remarks
+ * `StoreInstance` constrains `S extends Record<R, any>`, and TypeScript cannot correlate
+ * {@link WidenState} with {@link WidenNames} well enough to see that the widened record
+ * always carries the widened key set - both branch on `string extends N`, but it checks each
+ * in isolation.
+ *
+ * The intersection is with `unknown`, **never `any`**. `T & unknown` reduces to `T`, so every
+ * slice keeps its exact type; `T & any` is `any`, which silently collapses every slice's
+ * state and destroys the inference this feature exists to provide. That was a real bug caught
+ * by the spike, and it is the reason this helper is written out rather than inlined.
+ *
+ * @public
+ */
+export type SatisfiesSlices<T, K extends string> = Prettify<T & Record<K, unknown>>;
+
+/**
+ * The store type after mounting slice `N` from `Spec`.
+ *
+ * @public
+ */
+export type WidenedSlice<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+  N extends string,
+  Spec,
+> = DecoratableStore<
+  WidenNames<R, N>,
+  SatisfiesSlices<WidenState<S, N, StateOfSpec<Spec>>, WidenNames<R, N>>,
+  Merge<EM, EMAddOf<Spec>>
+>;
+
+/**
+ * The registration surface whose return types carry the widening.
+ *
+ * @remarks
+ * Every method returns the **same runtime object**, re-typed. Subscriptions, effects,
+ * middleware, the dedup cache, both buses and any in-flight `call()` are untouched; the only
+ * runtime effect is the registration itself.
+ *
+ * Note there is no explicit type parameter for the added event map anywhere. It is inferred
+ * from a single value position, so the partial-inference problem never arises and no call
+ * site needs a type argument or a cast.
+ *
+ * @public
+ */
+export interface StoreDecoration<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+> {
+  /**
+   * Mounts a slice and hands back both the widened store and a disposer.
+   *
+   * The disposer is **library-private**: after it runs, the widened type still promises a
+   * slice that is gone. Application code should take {@link StoreDecoration.withSlice}
+   * instead, which returns no disposer at all.
+   */
+  registerSlice<N extends string, Spec extends ReducerSpec<any, any>>(
+    name: N,
+    spec: Spec,
+    options?: { owner?: string },
+  ): Unsubscribe & { store: WidenedSlice<R, S, EM, N, Spec>; dispose(): void };
+
+  /** Mounts a slice and returns the widened store, for chaining. */
+  withSlice<N extends string, Spec extends ReducerSpec<any, any>>(
+    name: N,
+    spec: Spec,
+    options?: { owner?: string },
+  ): WidenedSlice<R, S, EM, N, Spec>;
+
+  /**
+   * Registers middleware and returns the store widened by whatever event map it declares.
+   *
+   * Only the **spec form** can widen: `MiddlewareFunction`'s event parameter is
+   * `EventUnion<EM>`, a mapped type TypeScript cannot infer `EM` back out of. A bare function
+   * therefore contributes `{}`.
+   */
+  withMiddleware<M extends MiddlewareInput<any, any>>(
+    mw: M,
+  ): DecoratableStore<R, S, Merge<EM, EMAddOf<M>>>;
+
+  /** Registers an effect and returns the store widened by whatever event map it declares. */
+  withEffect<Spec extends EffectSpec<any, any>>(
+    spec: Spec,
+  ): DecoratableStore<R, S, Merge<EM, EMAddOf<Spec>>>;
+}
+
+/**
+ * Declares a reducer spec together with the event map it contributes.
+ *
+ * @remarks
+ * Curried so `EMAdd` is named once and `St` is inferred from `state`, which is what lets every
+ * registration site stay free of type arguments. Identity at runtime.
+ *
+ * @example
+ * ```ts
+ * type LibEM = { "lib.transfer": { granted: { id: string } } };
+ *
+ * const transfers = defineSlice<LibEM>()({
+ *   state: { granted: [] as string[] },
+ *   when: { keys: [["lib.transfer", "granted"]] },
+ *   reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+ * });
+ *
+ * const widened = store.withSlice("transfers", transfers);
+ * // widened.getState().transfers.granted is string[], and `lib.transfer` is emittable
+ * ```
+ *
+ * @public
+ */
+export const defineSlice =
+  <EMAdd extends EventMapBase>() =>
+  <St>(spec: ReducerSpec<St, EMAdd>): ReducerSpec<St, EMAdd> & EventMapCarrier<EMAdd> =>
+    spec as ReducerSpec<St, EMAdd> & EventMapCarrier<EMAdd>;
+
+/**
+ * Declares a middleware spec together with the event map it contributes.
+ *
+ * @remarks
+ * The spec form is the **only** form that can widen an event map. Identity at runtime.
+ *
+ * @public
+ */
+export const defineMiddleware =
+  <EMAdd extends EventMapBase, St = any>() =>
+  (
+    spec: MiddlewareSpec<DeepReadonly<St>, EMAdd>,
+  ): MiddlewareSpec<DeepReadonly<St>, EMAdd> & EventMapCarrier<EMAdd> =>
+    spec as MiddlewareSpec<DeepReadonly<St>, EMAdd> & EventMapCarrier<EMAdd>;
+
+/**
+ * Declares an effect spec together with the event map it contributes.
+ *
+ * @remarks
+ * Identity at runtime.
+ *
+ * @public
+ */
+export const defineEffect =
+  <EMAdd extends EventMapBase, St = any>() =>
+  (
+    spec: EffectSpec<DeepReadonly<St>, EMAdd>,
+  ): EffectSpec<DeepReadonly<St>, EMAdd> & EventMapCarrier<EMAdd> =>
+    spec as EffectSpec<DeepReadonly<St>, EMAdd> & EventMapCarrier<EMAdd>;
