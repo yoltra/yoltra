@@ -35,8 +35,17 @@ describe("Store - __devtoolsIntrospect", () => {
     const info = store.__devtoolsIntrospect();
     // `origin` is what makes `replace*` mean "replace mine"; `owner` is introspection only
     // and stays undefined unless a library named itself.
+    //
+    // `when` used to be `undefined` here. This slice is keyed, and the matcher was read from the
+    // map that only holds pattern-based slices — so a panel was told how the most common slice
+    // form dispatches and nothing about what it matches.
     expect(info.reducers).toEqual([
-      { name: "counter", when: undefined, origin: "spec", owner: undefined },
+      {
+        name: "counter",
+        when: { keys: [["ui", "increment"], ["ui", "decrement"]] },
+        origin: "spec",
+        owner: undefined,
+      },
     ]);
   });
 

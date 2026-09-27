@@ -306,6 +306,38 @@ Tres cosas que conviene saber:
 
 ---
 
+### Apuntar a un canal que no puedes nombrar por adelantado
+
+`when` compara de forma exacta: `{ channel: "plan" }` coincide con `plan` y con nada más. Eso es un
+problema para un guard cuyos canales llegan con namespace — el `bb::plan` de un par federado junto a
+un `plan` local — porque los alias los invienta quien federa, así que ninguna lista se puede escribir
+por adelantado.
+
+`channelPattern` existe para eso, donde `*` representa cero o más caracteres:
+
+```typescript
+export const rateGuard: MiddlewareSpec<S, EM> = {
+  when: { channelPattern: "*plan" },   // `plan` y `bb::plan`
+  middleware: (state, event) => withinBudget(event.channel),
+};
+```
+
+**Aquí hay una trampa que vale más que la función.** Un guard que ya filtra en su propio cuerpo,
+sobre un canal base sin el namespace, parece que iría más rápido con `when` — y convertirlo a
+`{ channel: "plan" }` deja de ver en silencio todos los canales con namespace. Nada lanza. El guard
+sigue ejecutándose, sigue devolviendo `true`, y deja de proteger el tráfico para el que se escribió.
+Un runtime consumidor estuvo a una revisión de enviar exactamente eso, en la única defensa que su
+diseño asignaba a limitar el tráfico de los pares.
+
+Así que si un middleware filtra sobre algo menos que la cadena completa del canal, no es candidato
+para `{ channel }`. Usa `channelPattern`, o deja el filtro en el cuerpo.
+
+Coincidir con todo y filtrar a mano tiene un segundo costo además del salto previo a la llamada: el
+matcher es lo que reporta `onRegistrationChange`, así que un guard escrito así le dice a todo
+observador que coincide con el store entero.
+
+---
+
 ## Observar lo que está instalado
 
 `onRegistrationChange` avisa cuando un store gana o pierde un reducer, middleware o efecto.

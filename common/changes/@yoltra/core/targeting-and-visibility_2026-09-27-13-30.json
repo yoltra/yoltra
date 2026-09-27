@@ -1,0 +1,15 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "`When` gains `{ channelPattern }`, where `*` stands for zero or more characters. The four existing forms compare exactly, so a guard whose channels arrive namespaced — a federated peer's `bb::plan` beside a local `plan` — could not use `when` at all, because the aliases are invented by whoever federates and no list can be written in advance. Such a guard had to match every event and filter in its own body, which costs the pre-call skip and misreports the middleware to every observer as matching the whole store. `*` is the only metacharacter and everything else is escaped, so a pattern cannot become an expression that backtracks; it stays a string rather than a predicate because a matcher is reported to observers and travels to a devtools panel, and a function would make every one of them opaque. The decoration guide records the trap beside it: a guard already filtering on a stripped base channel, converted to `when` as a free optimisation, silently stops guarding every namespaced channel and nothing fails.",
+      "type": "minor"
+    },
+    {
+      "packageName": "@yoltra/core",
+      "comment": "A keyed slice now reports the keys it matches. `RegistrationChange.when` is documented as the normalized matcher, and both producers read it from the map that holds only pattern-based slices — a keyed slice dispatches through the reducer bus and is deliberately absent from that map — so the most common slice form reported how it dispatches and nothing about what it matches, in `onRegistrationChange` and in `__devtoolsIntrospect` alike. Two consumers wanted this in order to publish a store's live topology. Function-form middleware also reported `undefined` where the effects path reports `{ any: true }` for the same meaning; the two now agree.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

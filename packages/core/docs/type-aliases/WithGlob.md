@@ -10,7 +10,7 @@
 
 > **WithGlob**\<`T`\> = `T` \| `` `${string}*${string}` ``
 
-Defined in: [types.ts:1677](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1677)
+Defined in: [types.ts:1695](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1695)
 
 Allow wildcard patterns like "*" and "**" anywhere in the string.
 

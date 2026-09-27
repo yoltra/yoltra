@@ -8,17 +8,19 @@
 
 # Type Alias: When\<EM\>
 
-> **When**\<`EM`\> = \{ `any`: `true`; \} \| \{ `keys`: `ReadonlyArray`\<[`EventKey`](EventKey.md)\<`EM`\>\>; \} \| \{ `channel`: keyof `EM` & `string`; \} \| \{ `channels`: `ReadonlyArray`\<keyof `EM` & `string`\>; \}
+> **When**\<`EM`\> = \{ `any`: `true`; \} \| \{ `keys`: `ReadonlyArray`\<[`EventKey`](EventKey.md)\<`EM`\>\>; \} \| \{ `channel`: keyof `EM` & `string`; \} \| \{ `channels`: `ReadonlyArray`\<keyof `EM` & `string`\>; \} \| \{ `channelPattern`: `string`; \}
 
-Defined in: [types.ts:1458](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1458)
+Defined in: [types.ts:1475](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1475)
 
 Matcher for event targeting across reducers, effects, middleware, and subscriptions.
 
-Supports four targeting modes:
+Supports five targeting modes:
 - `{ any: true }` — match all events
 - `{ keys: [...] }` — match specific `[channel, type]` pairs (correlated)
 - `{ channel: 'x' }` — match all events in a channel
 - `{ channels: ['x', 'y'] }` — match all events in multiple channels
+- `{ channelPattern: 'x' }` — match channels by pattern, with `*` standing for zero or more
+  characters. Untyped by construction: it exists to match channels the event map does not name.
 
 ## Type Parameters
 
@@ -27,6 +29,22 @@ Supports four targeting modes:
 `EM` *extends* [`EventMapBase`](EventMapBase.md)
 
 Event map.
+
+## Remarks
+
+The first four compare exactly. `channelPattern` is for the case they cannot express: a channel
+that arrives namespaced, such as a federated peer's `alias::plan` beside a local `plan`, where a
+guard wants both and cannot know the aliases in advance.
+
+Without it such a guard has to match everything and filter in its own body, which costs the
+pre-call skip and — more quietly — misreports itself, because the matcher an observer sees
+through `onRegistrationChange` then says it matches the entire store.
+
+`*` stands for zero or more characters, so `"*plan"` covers `plan` and `bb::plan` with one rule,
+and `"*::plan"` covers only the namespaced forms. Everything else in the pattern is literal.
+
+**It stays a string rather than a predicate on purpose.** A matcher is reported to observers and
+travels to a devtools panel; a function would make every one of them opaque.
 
 ## Examples
 

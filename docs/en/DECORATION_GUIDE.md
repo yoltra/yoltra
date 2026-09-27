@@ -301,6 +301,37 @@ Three things to know:
 
 ---
 
+### Targeting a channel you cannot name in advance
+
+`when` compares exactly: `{ channel: "plan" }` matches `plan` and nothing else. That is a problem
+for a guard whose channels arrive namespaced — a federated peer's `bb::plan` beside a local `plan` —
+because the aliases are invented by whoever federates, so no list can be written ahead of time.
+
+`channelPattern` is for that, with `*` standing for zero or more characters:
+
+```typescript
+export const rateGuard: MiddlewareSpec<S, EM> = {
+  when: { channelPattern: "*plan" },   // `plan` and `bb::plan`
+  middleware: (state, event) => withinBudget(event.channel),
+};
+```
+
+**There is a trap here worth more than the feature.** A guard that already filters in its own body,
+on a stripped base channel, looks like it would be faster with `when` — and converting it to
+`{ channel: "plan" }` silently stops it seeing every namespaced channel. Nothing throws. The guard
+keeps running, keeps returning `true`, and no longer guards the traffic it was written for. A
+consuming runtime came within a review of shipping exactly that, on the one defence its design
+assigned to bounding peer traffic.
+
+So if a middleware filters on anything less than the whole channel string, it is not a candidate
+for `{ channel }`. Use `channelPattern`, or leave the filter in the body.
+
+Matching everything and filtering by hand has a second cost besides the pre-call skip: the matcher
+is what `onRegistrationChange` reports, so a guard written that way tells every observer it matches
+the entire store.
+
+---
+
 ## Watching what is installed
 
 `onRegistrationChange` tells you when a store gains or loses a reducer, middleware or effect.

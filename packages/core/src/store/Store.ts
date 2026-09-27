@@ -364,6 +364,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private readonly patternReducers = new Map<R, When<EM>>();
 
   /**
+   * Maps slice name to the matcher an observer is told about, for every slice.
+   *
+   * @remarks
+   * Separate from {@link patternReducers} on purpose. That map decides what the emit loop
+   * re-tests per event, so a keyed slice must stay out of it — it dispatches through
+   * `reducerBus` instead. But a keyed slice still *has* a matcher, and reporting `undefined`
+   * for it told an observer that the most common slice form matches nothing knowable.
+   *
+   * @internal
+   */
+  private readonly reportedSliceWhen = new Map<R, When<EM>>();
+
+  /**
    * Where each mounted slice came from. See {@link Origin}.
    *
    * @remarks
@@ -786,6 +799,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.connectorBus.clear();
     this.reducerBus.clear();
     this.patternReducers.clear();
+    this.reportedSliceWhen.clear();
     this.sliceUnsubs.clear();
     this.sliceOrigin.clear();
     this.sliceOwner.clear();
@@ -1306,7 +1320,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   public __devtoolsIntrospect() {
     // Reducers
     const reducers = (Object.keys(this.reducers) as Array<R>).map((name) => {
-      const when = this.patternReducers.get(name);
+      const when = this.reportedSliceWhen.get(name);
       return {
         name: name as string,
         when,
@@ -2259,7 +2273,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         // exactly the registrations that were already there.
         origin: this.sliceOrigin.get(name) ?? "spec",
         owner: this.sliceOwner.get(name),
-        when: this.patternReducers.get(name as R),
+        when: this.reportedSliceWhen.get(name as R),
         // From this observer's point of view the state exists; it never saw a prior value.
         state: "initialized",
         dispatch: this.patternReducers.has(name as R) ? "pattern" : "keyed",
@@ -2273,7 +2287,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         name: meta?.name ?? (typeof entry.input === "function" ? entry.input.name : undefined),
         description: meta?.description,
         origin: entry.origin,
-        when: getMiddlewareWhen(entry.input),
+        // Normalized, so a function-form middleware reports what it actually matches instead of
+        // `undefined`. The effects path already does this; the two disagreed for the same meaning.
+        when: getMiddlewareWhen(entry.input) ?? ({ any: true } as When<EM>),
         dispatch: "pattern",
       });
     }
@@ -2636,7 +2652,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         name: meta?.name ?? (typeof entry.input === "function" ? entry.input.name : undefined),
         description: meta?.description,
         origin: entry.origin,
-        when: getMiddlewareWhen(entry.input),
+        // Normalized, so a function-form middleware reports what it actually matches instead of
+        // `undefined`. The effects path already does this; the two disagreed for the same meaning.
+        when: getMiddlewareWhen(entry.input) ?? ({ any: true } as When<EM>),
         dispatch: "pattern",
       };
     });
@@ -3471,6 +3489,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (isPatternBased) {
       // Store as pattern-based reducer for runtime matching
       this.patternReducers.set(name, when);
+      this.reportedSliceWhen.set(name, when);
       // No unsubs needed for pattern reducers - they're called from emit loop
       this.sliceUnsubs.set(rName, []);
       return;
@@ -3482,9 +3501,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // If no targeting at all, treat as "all events" (pattern-based)
     if (eventKeys.length === 0 && !when) {
       this.patternReducers.set(name, { any: true });
+      this.reportedSliceWhen.set(name, { any: true });
       this.sliceUnsubs.set(rName, []);
       return;
     }
+
+    // Keyed: it dispatches through `reducerBus` rather than the emit loop, so it must not join
+    // `patternReducers` — but it has a matcher, and an observer is entitled to see it.
+    this.reportedSliceWhen.set(name, { keys: eventKeys } as When<EM>);
 
     // Wire reducerBus listeners and save disposers for HMR
     const unsubs: Array<() => void> = [];
@@ -3533,7 +3557,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       name: rName,
       origin: this.sliceOrigin.get(rName) ?? "spec",
       owner: this.sliceOwner.get(rName),
-      when: this.patternReducers.get(rName as R),
+      when: this.reportedSliceWhen.get(rName as R),
       state,
       dispatch: this.patternReducers.has(rName as R) ? "pattern" : "keyed",
     }));
@@ -3605,6 +3629,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     // Remove from pattern reducers if present
     this.patternReducers.delete(name);
+    this.reportedSliceWhen.delete(name);
     if (process.env.NODE_ENV !== "production") {
       const origin = this.sliceOrigin.get(rName);
       if (origin === "dynamic" || origin === "internal") {

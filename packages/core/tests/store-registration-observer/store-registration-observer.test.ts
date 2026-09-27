@@ -515,3 +515,92 @@ describe("failures found in review", () => {
     expect(batches[1]?.[0]?.name).toBe("reaction");
   });
 });
+
+describe("a registration reports the matcher it actually has", () => {
+  /**
+   * `RegistrationChange.when` is documented as "the normalized matcher, as `matchesWhen` will
+   * actually use it", and for the most common slice form it was absent.
+   *
+   * Both producers read `patternReducers`, which only holds pattern-based slices, because that map
+   * decides what the emit loop re-tests per event and a keyed slice dispatches through the reducer
+   * bus instead. So a keyed slice reported `dispatch: "keyed"` and no keys — the observer was told
+   * how it dispatches and nothing about what it matches. Two consumers wanted this to publish a
+   * store's live topology and could not.
+   *
+   * Function-form middleware had the mirror problem: it reported `undefined` where the effects
+   * path reports `{ any: true }` for the same meaning.
+   */
+  type TopoEM = { ui: { a: null; b: null } };
+  type TopoState = { s: { n: number } };
+
+  const keyedSlice: ReducerSpec<{ n: number }, TopoEM> = {
+    state: { n: 0 },
+    when: { keys: [["ui", "a"]] },
+    reducer: (s) => s,
+  };
+
+  it("carries the keys of a keyed slice", () => {
+    const store = createStore<TopoState, TopoEM>({
+      name: "TopoKeyed",
+      reducer: { s: keyedSlice },
+    });
+    const changes: RegistrationChange<TopoEM>[] = [];
+    store.onRegistrationChange((c) => changes.push(...c), { emitCurrent: true });
+
+    const slice = changes.find((c) => c.kind === "reducer" && c.name === "s");
+    expect(slice).toBeDefined();
+    expect(slice!.dispatch).toBe("keyed");
+    expect(slice!.when).toEqual({ keys: [["ui", "a"]] });
+
+    store.dispose();
+  });
+
+  it("carries the keys when a keyed slice mounts later", () => {
+    const store = createStore<{ s: { n: number } }, TopoEM>({
+      name: "TopoKeyedLate",
+      reducer: { s: { state: { n: 0 }, when: { any: true }, reducer: (s) => s } },
+    });
+    const changes: RegistrationChange<TopoEM>[] = [];
+    store.onRegistrationChange((c) => changes.push(...c));
+
+    store.registerReducer("later", keyedSlice);
+
+    const mounted = changes.find((c) => c.name === "later" && c.op === "mounted");
+    expect(mounted?.when).toEqual({ keys: [["ui", "a"]] });
+
+    store.dispose();
+  });
+
+  it("still reports a pattern slice as a pattern", () => {
+    const store = createStore<TopoState, TopoEM>({
+      name: "TopoPattern",
+      reducer: { s: { state: { n: 0 }, when: { channel: "ui" }, reducer: (s) => s } },
+    });
+    const changes: RegistrationChange<TopoEM>[] = [];
+    store.onRegistrationChange((c) => changes.push(...c), { emitCurrent: true });
+
+    const slice = changes.find((c) => c.kind === "reducer" && c.name === "s");
+    expect(slice!.dispatch).toBe("pattern");
+    expect(slice!.when).toEqual({ channel: "ui" });
+
+    store.dispose();
+  });
+
+  it("normalizes function-form middleware to what it matches", () => {
+    // Not `undefined`. An observer told `undefined` would have to know that the absence means
+    // "everything" — which is exactly what the effects path already spells out.
+    const store = createStore<TopoState, TopoEM>({
+      name: "TopoMw",
+      reducer: { s: { state: { n: 0 }, when: { any: true }, reducer: (s) => s } },
+      middleware: [() => true],
+    });
+    const changes: RegistrationChange<TopoEM>[] = [];
+    store.onRegistrationChange((c) => changes.push(...c), { emitCurrent: true });
+
+    const mw = changes.find((c) => c.kind === "middleware");
+    expect(mw).toBeDefined();
+    expect(mw!.when).toEqual({ any: true });
+
+    store.dispose();
+  });
+});
