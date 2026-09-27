@@ -3,14 +3,14 @@
   flex-direction: column;
   // Falls back to a scale step rather than 0: a Stack with no gap is almost never what the
   // caller meant, and silently rendering one is harder to notice than a wrong-looking space.
-  gap: var(--yl-stack-gap, var(--yl-space-4));
+  gap: var(--yl-stack-gap, var(--yl-space-3));
 }
 
 .yl-inline {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: var(--yl-inline-gap, var(--yl-space-3));
+  gap: var(--yl-inline-gap, var(--yl-space-2));
 
   &--nowrap {
     flex-wrap: nowrap;
@@ -19,7 +19,7 @@
 
 .yl-grid {
   display: grid;
-  gap: var(--yl-grid-gap, var(--yl-space-4));
+  gap: var(--yl-grid-gap, var(--yl-space-3));
 }
 
 .yl-divider {

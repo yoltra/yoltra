@@ -42,6 +42,38 @@ function alpha(hex: string, a: number): string {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
+/**
+ * Two colours blended, as a hex literal.
+ *
+ * @remarks
+ * The dark theme's surfaces used to be four hand-picked hexes, which made them the one part of
+ * this file the palette did not explain. They are now mixed from the brand pair, carbon
+ * `neutral[900]` and the deepest brand blue `primary[900]`, so "why is the panel this colour"
+ * has an answer, and a brand change moves the whole theme instead of leaving it behind.
+ *
+ * Mixed at author time rather than with CSS `color-mix()`: these have to be plain values so the
+ * contrast suite can measure them and a snapshot can record them.
+ *
+ * @internal
+ */
+function mix(from: string, to: string, ratio: number): string {
+  const channels = (hex: string) =>
+    [0, 2, 4].map((i) => parseInt(hex.replace("#", "").slice(i, i + 2), 16));
+  const [a, b] = [channels(from), channels(to)];
+  const out = a.map((v, i) => Math.round(v + (b[i]! - v) * ratio));
+  return `#${out.map((v) => v.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+}
+
+/**
+ * The dark theme's base surface: brand carbon with brand blue mixed into it.
+ *
+ * @remarks
+ * 16% is enough that the surface reads as blue-black rather than neutral grey, which is what
+ * makes a dark Yoltra interface look like Yoltra, and little enough that text contrast is
+ * unaffected. Every other dark surface is this stepped toward black or toward `neutral[800]`.
+ */
+const DARK_BASE = mix(foundationTokens.palette.neutral[900], foundationTokens.palette.primary[900], 0.16);
+
 export interface SemanticColorTokens {
   /**
    * The brand colours, for identity rather than for text.
@@ -57,8 +89,17 @@ export interface SemanticColorTokens {
   /** Text and icons. `onInk` is for content on the `ink` surface, which does not flip with the theme. */
   fg: { default: string; secondary: string; muted: string; inverse: string; disabled: string; brand: string; link: string; linkHover: string; onInk: string };
   border: { subtle: string; strong: string; focus: string; divider: string; onInk: string };
-  /** The loud interactive surface: a primary button, a selected tab. */
-  interactive: { bg: string; bgHover: string; bgActive: string; fg: string; border: string };
+  /**
+   * The loud interactive surface: a primary button, a selected tab.
+   *
+   * @remarks
+   * `track` is the *unfilled* part of a control, the groove a switch knob slides along or the
+   * remainder of a progress bar. It is a role rather than a switch-local value because a slider
+   * and a progress bar want the same surface, and it has to be dark enough that a pale knob is
+   * visible against it: WCAG 1.4.11 treats a knob's position as the state indicator, so it needs
+   * 3:1. A switch knob was previously `fg.inverse` on `border.strong`, which is 1.48:1.
+   */
+  interactive: { bg: string; bgHover: string; bgActive: string; fg: string; border: string; track: string };
   /**
    * The quiet interactive surface: a ghost button, a menu item, a dialog's close control.
    *
@@ -95,7 +136,7 @@ export const lightTheme: ThemeTokens = {
   colors: {
     brand: { primary: p.primary[500], secondary: p.secondary[400] },
     bg: {
-      canvas: "#FBFCFE",
+      canvas: mix(p.white, p.primary[50], 0.25),
       subtle: p.neutral[100],
       panel: p.white,
       elevated: p.white,
@@ -134,6 +175,8 @@ export const lightTheme: ThemeTokens = {
       bgActive: p.primary[800],
       fg: p.white,
       border: p.primary[700],
+      // Mid-grey rather than a pale border colour, so a white knob reads against it: 4.76:1.
+      track: p.neutral[500],
     },
     interactiveQuiet: {
       bg: "transparent",
@@ -158,16 +201,16 @@ export const darkTheme: ThemeTokens = {
   id: "dark",
   colors: {
     brand: { primary: p.primary[400], secondary: p.secondary[300] },
+    // Every surface is `DARK_BASE` stepped toward black or toward `neutral[800]`, so the ramp is
+    // one decision rather than five, and it is anchored on the brand rather than on taste.
     bg: {
-      // Literals, deliberately: see the module remarks. A dark surface ramp is not a tint of
-      // the neutral scale, and these four are tuned against each other.
-      canvas: "#0B1220",
-      subtle: "#111A2B",
-      panel: "#121C30",
-      elevated: "#18243B",
-      inset: "#0A1424",
-      overlay: "rgba(2, 6, 23, 0.66)",
-      ink: "#0A1424",
+      canvas: mix(DARK_BASE, p.black, 0.34),
+      subtle: mix(DARK_BASE, p.black, 0.16),
+      panel: DARK_BASE,
+      elevated: mix(DARK_BASE, p.neutral[800], 0.3),
+      inset: mix(DARK_BASE, p.black, 0.52),
+      overlay: alpha(mix(DARK_BASE, p.black, 0.62), 0.66),
+      ink: mix(DARK_BASE, p.black, 0.52),
     },
     fg: {
       default: "#E5EEF8",
@@ -195,6 +238,8 @@ export const darkTheme: ThemeTokens = {
       bgActive: p.primary[200],
       fg: "#0B1220",
       border: p.primary[300],
+      // Light in the dark theme, because the knob here is dark. Both states keep the same knob.
+      track: p.neutral[400],
     },
     interactiveQuiet: {
       bg: "transparent",

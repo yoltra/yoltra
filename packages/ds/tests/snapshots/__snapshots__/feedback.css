@@ -62,7 +62,7 @@
   align-items: center;
   text-align: center;
   gap: var(--yl-space-3);
-  padding: var(--yl-space-10) var(--yl-space-5);
+  padding: var(--yl-space-8) var(--yl-space-4);
   color: var(--yl-color-fg-secondary);
 }
 .yl-empty__icon {

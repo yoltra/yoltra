@@ -209,8 +209,8 @@ Measured the way a consumer ships it — bundled, tree-shaken, minified, gzipped
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ Button, Card, Stack, Text }` | 2.7 KB | 4 KB |
-| everything | 5.4 KB | 8 KB |
+| `{ Button, Card, Stack, Text }` | 2.8 KB | 4 KB |
+| everything | 5.6 KB | 8 KB |
 | `{ Dialog }` from `/client` | 1.8 KB | 3 KB |
 | all of `/client` | 4.3 KB | 5.5 KB |
 <!-- size-table:end -->
@@ -261,6 +261,23 @@ the weight:
 Roles: `hero`, `h1`–`h4`, `body-lg`, `body`, `body-sm`, `label`, `button`, `caption`, `code`.
 Axes: `size`, `weight`, `leading`, `tracking`, `family`, `transform`. An axis a role does not set
 is not emitted, so it cannot override an inherited value with nothing.
+
+### The dark theme is the brand
+
+Its surfaces are not hand-picked. Each one is mixed from the brand pair, carbon `#0F172A` and
+the deepest brand blue `#123F68`, so a dark interface reads as blue-black rather than neutral
+grey, and a brand change moves the whole theme instead of leaving it behind:
+
+```
+panel    = carbon + 16% brand blue
+canvas   = that, 34% toward black
+subtle   = that, 16% toward black
+inset    = that, 52% toward black
+elevated = that, 30% toward neutral[800]
+```
+
+The light theme carries the brand in its accents instead, where it belongs on a white page:
+interactive fills, links, focus rings, and a canvas tinted with `primary[50]`.
 
 ### Brand colour and contrast
 

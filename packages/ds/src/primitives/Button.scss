@@ -9,7 +9,7 @@
   font-size: 1.5rem;
   font-weight: 600;
   line-height: 1.2;
-  padding: var(--yl-space-3) var(--yl-space-5);
+  padding: var(--yl-space-2) var(--yl-space-4);
   border-radius: var(--yl-radius-md);
   border: 1px solid transparent;
   cursor: pointer;
@@ -50,7 +50,7 @@
   }
 
   &--sm {
-    padding: var(--yl-space-2) var(--yl-space-3);
+    padding: var(--yl-space-1) var(--yl-space-3);
     font-size: 1.3rem;
   }
 }

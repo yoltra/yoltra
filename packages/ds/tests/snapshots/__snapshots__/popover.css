@@ -13,7 +13,7 @@
 }
 
 .yl-popover {
-  padding: var(--yl-space-4);
+  padding: var(--yl-space-3);
   font-size: 1.4rem;
   line-height: 1.5;
 }

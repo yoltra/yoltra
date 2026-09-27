@@ -211,8 +211,8 @@ verificado por `rush size` en cada build.
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ Button, Card, Stack, Text }` | 2.7 KB | 4 KB |
-| todo | 5.4 KB | 8 KB |
+| `{ Button, Card, Stack, Text }` | 2.8 KB | 4 KB |
+| todo | 5.6 KB | 8 KB |
 | `{ Dialog }` desde `/client` | 1.8 KB | 3 KB |
 | todo `/client` | 4.3 KB | 5.5 KB |
 <!-- size-table:end -->
@@ -265,6 +265,24 @@ el peso:
 Roles: `hero`, `h1`–`h4`, `body-lg`, `body`, `body-sm`, `label`, `button`, `caption`, `code`.
 Ejes: `size`, `weight`, `leading`, `tracking`, `family`, `transform`. Un eje que un rol no define
 no se emite, así que no puede sobrescribir un valor heredado con nada.
+
+### El tema oscuro es la marca
+
+Sus superficies no están elegidas a mano. Cada una se mezcla a partir del par de marca, carbón
+`#0F172A` y el azul de marca más profundo `#123F68`, para que una interfaz oscura se lea como
+negro azulado y no como gris neutro, y para que un cambio de marca mueva el tema completo en vez
+de dejarlo atrás:
+
+```
+panel    = carbón + 16% de azul de marca
+canvas   = eso, 34% hacia el negro
+subtle   = eso, 16% hacia el negro
+inset    = eso, 52% hacia el negro
+elevated = eso, 30% hacia neutral[800]
+```
+
+El tema claro lleva la marca en sus acentos, que es donde corresponde sobre una página blanca:
+rellenos interactivos, enlaces, anillos de foco y un lienzo teñido con `primary[50]`.
 
 ### Color de marca y contraste
 

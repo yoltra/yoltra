@@ -7,7 +7,7 @@
 .yl-table th,
 .yl-table td {
   text-align: left;
-  padding: var(--yl-space-3);
+  padding: var(--yl-space-2) var(--yl-space-3);
   border-bottom: 1px solid var(--yl-color-border-subtle);
   vertical-align: top;
 }

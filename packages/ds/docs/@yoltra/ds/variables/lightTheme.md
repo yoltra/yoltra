@@ -10,4 +10,4 @@
 
 > `const` **lightTheme**: [`ThemeTokens`](../interfaces/ThemeTokens.md)
 
-Defined in: [tokens/themes.ts:93](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L93)
+Defined in: [tokens/themes.ts:134](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L134)

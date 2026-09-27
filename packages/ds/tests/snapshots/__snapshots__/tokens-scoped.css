@@ -112,7 +112,7 @@
   --yl-container-xl: 1180px;
   --yl-color-brand-primary: #1A7FE2;
   --yl-color-brand-secondary: #7D83FF;
-  --yl-color-bg-canvas: #FBFCFE;
+  --yl-color-bg-canvas: #FBFDFF;
   --yl-color-bg-subtle: #F1F5F9;
   --yl-color-bg-panel: #FFFFFF;
   --yl-color-bg-elevated: #FFFFFF;
@@ -138,6 +138,7 @@
   --yl-color-interactive-bg-active: #10497D;
   --yl-color-interactive-fg: #FFFFFF;
   --yl-color-interactive-border: #0E5598;
+  --yl-color-interactive-track: #64748B;
   --yl-color-interactive-quiet-bg: transparent;
   --yl-color-interactive-quiet-bg-hover: rgba(15, 23, 42, 0.05);
   --yl-color-interactive-quiet-bg-active: rgba(15, 23, 42, 0.09);
@@ -163,13 +164,13 @@
 .yl-root[data-theme='dark'] {
   --yl-color-brand-primary: #4A9DFF;
   --yl-color-brand-secondary: #A9AFFF;
-  --yl-color-bg-canvas: #0B1220;
-  --yl-color-bg-subtle: #111A2B;
-  --yl-color-bg-panel: #121C30;
-  --yl-color-bg-elevated: #18243B;
-  --yl-color-bg-inset: #0A1424;
-  --yl-color-bg-overlay: rgba(2, 6, 23, 0.66);
-  --yl-color-bg-ink: #0A1424;
+  --yl-color-bg-canvas: #0A1322;
+  --yl-color-bg-subtle: #0D182C;
+  --yl-color-bg-panel: #0F1D34;
+  --yl-color-bg-elevated: #142136;
+  --yl-color-bg-inset: #070E19;
+  --yl-color-bg-overlay: rgba(6, 11, 20, 0.66);
+  --yl-color-bg-ink: #070E19;
   --yl-color-fg-default: #E5EEF8;
   --yl-color-fg-secondary: #B6C2D2;
   --yl-color-fg-muted: #8A9AAF;
@@ -189,6 +190,7 @@
   --yl-color-interactive-bg-active: #B8D8FF;
   --yl-color-interactive-fg: #0B1220;
   --yl-color-interactive-border: #84BEFF;
+  --yl-color-interactive-track: #94A3B8;
   --yl-color-interactive-quiet-bg: transparent;
   --yl-color-interactive-quiet-bg-hover: rgba(226, 232, 240, 0.06);
   --yl-color-interactive-quiet-bg-active: rgba(226, 232, 240, 0.1);

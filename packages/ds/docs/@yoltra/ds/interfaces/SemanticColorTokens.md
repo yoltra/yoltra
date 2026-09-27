@@ -8,7 +8,7 @@
 
 # Interface: SemanticColorTokens
 
-Defined in: [tokens/themes.ts:45](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L45)
+Defined in: [tokens/themes.ts:77](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L77)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [tokens/themes.ts:45](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **bg**: `object`
 
-Defined in: [tokens/themes.ts:56](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L56)
+Defined in: [tokens/themes.ts:88](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L88)
 
 Surfaces, from the page backwards. `ink` is the always-dark surface code sits on.
 
@@ -54,7 +54,7 @@ Surfaces, from the page backwards. `ink` is the always-dark surface code sits on
 
 > **border**: `object`
 
-Defined in: [tokens/themes.ts:59](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L59)
+Defined in: [tokens/themes.ts:91](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L91)
 
 #### divider
 
@@ -82,7 +82,7 @@ Defined in: [tokens/themes.ts:59](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **brand**: `object`
 
-Defined in: [tokens/themes.ts:54](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L54)
+Defined in: [tokens/themes.ts:86](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L86)
 
 The brand colours, for identity rather than for text.
 
@@ -106,7 +106,7 @@ branded reads `fg.brand`, which is a step darker and passes.
 
 > **fg**: `object`
 
-Defined in: [tokens/themes.ts:58](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L58)
+Defined in: [tokens/themes.ts:90](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L90)
 
 Text and icons. `onInk` is for content on the `ink` surface, which does not flip with the theme.
 
@@ -152,7 +152,7 @@ Text and icons. `onInk` is for content on the `ink` surface, which does not flip
 
 > **interactive**: `object`
 
-Defined in: [tokens/themes.ts:61](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L61)
+Defined in: [tokens/themes.ts:102](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L102)
 
 The loud interactive surface: a primary button, a selected tab.
 
@@ -176,13 +176,25 @@ The loud interactive surface: a primary button, a selected tab.
 
 > **fg**: `string`
 
+#### track
+
+> **track**: `string`
+
+#### Remarks
+
+`track` is the *unfilled* part of a control, the groove a switch knob slides along or the
+remainder of a progress bar. It is a role rather than a switch-local value because a slider
+and a progress bar want the same surface, and it has to be dark enough that a pale knob is
+visible against it: WCAG 1.4.11 treats a knob's position as the state indicator, so it needs
+3:1. A switch knob was previously `fg.inverse` on `border.strong`, which is 1.48:1.
+
 ***
 
 ### interactiveQuiet
 
 > **interactiveQuiet**: `object`
 
-Defined in: [tokens/themes.ts:70](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L70)
+Defined in: [tokens/themes.ts:111](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L111)
 
 The quiet interactive surface: a ghost button, a menu item, a dialog's close control.
 
@@ -218,7 +230,7 @@ button's internals.
 
 > **status**: `object`
 
-Defined in: [tokens/themes.ts:80](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L80)
+Defined in: [tokens/themes.ts:121](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L121)
 
 Feedback colours. `solid` is the accent on its own.
 

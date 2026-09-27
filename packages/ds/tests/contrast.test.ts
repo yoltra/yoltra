@@ -112,6 +112,12 @@ function pairings(t: ThemeTokens) {
     ["focus ring on canvas", c.border.focus, c.bg.canvas],
     ["focus ring on panel", c.border.focus, c.bg.panel],
     ["interactive fill on canvas", c.interactive.bg, c.bg.canvas],
+    // A switch knob's position *is* the state, so the knob has to be findable against both
+    // tracks. It was `fg.inverse` on `border.strong`, which is 1.48:1 in the light theme: a white
+    // dot on a pale grey groove. Using a text token as a knob background was the root error.
+    ["switch knob on its resting track", c.bg.panel, c.interactive.track],
+    ["switch knob on its checked track", c.bg.panel, c.interactive.bg],
+    ["resting track against the page", c.interactive.track, c.bg.canvas],
   ];
   for (const kind of ["info", "success", "warning", "error"] as const) {
     nonText.push([`status.${kind} accent on canvas`, c.status[kind].solid, c.bg.canvas]);
