@@ -11,3 +11,5 @@
 > **CardElevation** = `"none"` \| `"xs"` \| `"sm"` \| `"md"` \| `"lg"` \| `"xl"`
 
 Defined in: [primitives/Card/Card.tsx:18](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card/Card.tsx#L18)
+
+How much a card lifts off the page.

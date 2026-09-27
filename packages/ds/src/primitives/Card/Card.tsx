@@ -2,19 +2,19 @@ import type { CSSProperties, ElementType, HTMLAttributes, ReactNode } from "reac
 
 import type { SpaceToken } from "../Layout/Layout";
 
-/** How much a card lifts off the page. */
 /**
  * A card's surface.
  *
  * @remarks
  * `subtle` is a tinted panel, for a card that groups something secondary. A consuming project
- * added `.zync-card--subtle` locally and two of its screens gave up on `Card` and inlined a
- * border instead, which is a clear enough signal.
+ * added a tinted variant of its own locally, and two of its screens gave up on `Card` and
+ * inlined a border instead, which is a clear enough signal.
  *
  * @public
  */
 export type CardTone = "default" | "subtle";
 
+/** How much a card lifts off the page. @public */
 export type CardElevation = "none" | "xs" | "sm" | "md" | "lg" | "xl";
 
 export interface CardProps extends HTMLAttributes<HTMLElement> {

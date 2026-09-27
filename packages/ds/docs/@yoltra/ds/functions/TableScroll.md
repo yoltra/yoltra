@@ -30,8 +30,8 @@ Separate from [Table](Table.md) rather than built into it, because wrapping ever
 region would change the layout of every table that did not need one, and because the label has
 to come from the caller.
 
-A consuming project carried this as `.zync-table-wrap` at eight call sites, in a runtime
-`<style>` tag, which is a clear enough signal that it belongs here.
+A consuming project carried a wrapper of its own at eight call sites, injected through a
+runtime `<style>` tag, which is a clear enough signal that it belongs here.
 
 ## Example
 
