@@ -379,6 +379,22 @@ That matters most where a change is used as a signal to re-read, which is what t
 
 ---
 
+## A reducer sees one slice, and writes one slice
+
+This is a guarantee, not a convention. A reducer is handed its own slice as `state` and the
+event, and nothing else: no `getState`, no store reference, no sibling. What it returns is written
+back under the name it was mounted as, so it cannot write another slice even by returning a
+whole-store-shaped object.
+
+The consequence is worth stating because it is easy to build a mechanism you do not need: **inside
+one slice there is no second writer, so there is no authorisation question** — only the ordinary
+question of whether that reducer's own code is correct. Two reducers wanting to guard each other's
+data is two slices, and core already keeps them apart for free.
+
+The one cross-slice effect a reducer has is refusing the event outright, which is the next section.
+
+---
+
 ## Refusing a write
 
 A reducer returns `Rejected(reason)` instead of state to decline. **The whole event is rejected**:
@@ -436,8 +452,8 @@ const res = await store.call("rpc", "ask", { q: "who?" }, { reply: ["rpc", "answ
 res.payload.text;
 ```
 
-The responder does nothing special. It replies through the `emit` it was handed, and the store's
-causal stamp correlates the two, and **there is no id to mint, echo, or forget**:
+The responder does nothing special. It replies through the `emit` it was handed, the store's
+parent stamp correlates the two, and **there is no id to mint, echo, or forget**:
 
 ```typescript
 store.registerEffect({
@@ -505,6 +521,17 @@ and is then counted on `call.dropped` rather than blocking.
 However a call ends, whether resolved, timed out or aborted, the subscription is removed and any producer
 parked on backpressure is released. A wedged responder is worse than the unbounded buffer this
 replaced.
+
+### Going further
+
+The exported surface is `ReplySpec`, `CallOptions`, `CallHandle`, `CallTimeoutError` and
+`CallAbortedError`. Two things this section does not cover:
+
+- **`correlationId`**, for a responder that cannot reply directly — because it answers on a later
+  turn, or across a worker or a network. It widens the match to include an echoed id; the parent
+  check still runs first.
+- **Testing a call**, and the rest of the detail, in the
+  [Request & Reply guide](https://github.com/yoltra/yoltra/blob/main/docs/en/REQUEST_REPLY_GUIDE.md).
 
 ## Reading a value as you subscribe
 

@@ -8,7 +8,7 @@
 
 # Class: CallTimeoutError
 
-Defined in: [store/call.ts:132](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L132)
+Defined in: [store/call.ts:136](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L136)
 
 Raised when a call goes [CallOptions.timeoutMs](../interfaces/CallOptions.md#timeoutms) without a correlated event.
 
@@ -22,7 +22,7 @@ Raised when a call goes [CallOptions.timeoutMs](../interfaces/CallOptions.md#tim
 
 > **new CallTimeoutError**(`channel`, `type`, `idleMs`): `CallTimeoutError`
 
-Defined in: [store/call.ts:137](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L137)
+Defined in: [store/call.ts:141](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L141)
 
 #### Parameters
 
@@ -52,7 +52,7 @@ Defined in: [store/call.ts:137](https://github.com/yoltra/yoltra/blob/main/packa
 
 > `readonly` **channel**: `string`
 
-Defined in: [store/call.ts:133](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L133)
+Defined in: [store/call.ts:137](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L137)
 
 ***
 
@@ -60,7 +60,7 @@ Defined in: [store/call.ts:133](https://github.com/yoltra/yoltra/blob/main/packa
 
 > `readonly` **idleMs**: `number`
 
-Defined in: [store/call.ts:135](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L135)
+Defined in: [store/call.ts:139](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L139)
 
 ***
 
@@ -68,4 +68,4 @@ Defined in: [store/call.ts:135](https://github.com/yoltra/yoltra/blob/main/packa
 
 > `readonly` **type**: `string`
 
-Defined in: [store/call.ts:134](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L134)
+Defined in: [store/call.ts:138](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L138)

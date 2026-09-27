@@ -8,7 +8,7 @@
 
 # Interface: ReducerSpec\<S, EM\>
 
-Defined in: [types.ts:1106](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1106)
+Defined in: [types.ts:1124](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1124)
 
 One reducer's definition blob (stateful event consumer).
 
@@ -16,6 +16,18 @@ One reducer's definition blob (stateful event consumer).
 
 Use `when` for event targeting. An earlier `events` array was removed; this remark
 outlived it and described a property that no longer exists.
+
+**A reducer receives exactly one slice and returns exactly one slice.** `state` here is this
+reducer's own slice, not the store's state, and the value returned is written back only under
+this reducer's name. There is no path to a sibling: the reducer is handed no `getState`, no
+store reference, and no second argument beyond the event, and returning a whole-store-shaped
+object writes nothing extra because the commit is keyed by the name the reducer was mounted
+under.
+
+So cross-slice isolation is a **framework guarantee, not a convention**. There is no second
+writer to a slice and therefore no intra-slice authorisation question — only the ordinary
+question of whether this reducer's own code is correct. The one cross-slice effect available is
+a [Rejection](Rejection.md), which refuses the whole event rather than writing anywhere.
 
 ## Example
 
@@ -53,7 +65,7 @@ Event map.
 
 > `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"reducer"`\>
 
-Defined in: [types.ts:1125](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1125)
+Defined in: [types.ts:1144](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1144)
 
 Optional metadata for debugging tools and DevTools integration.
 
@@ -63,9 +75,10 @@ Optional metadata for debugging tools and DevTools integration.
 
 > **reducer**: [`ReducerFunction`](../type-aliases/ReducerFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:1120](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1120)
+Defined in: [types.ts:1139](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1139)
 
-Pure reducer function: `(state, event) => nextState`.
+Pure reducer function: `(state, event) => nextState`, where `state` is this reducer's slice
+and the return value replaces that slice and nothing else.
 
 ***
 
@@ -73,9 +86,9 @@ Pure reducer function: `(state, event) => nextState`.
 
 > **state**: `S`
 
-Defined in: [types.ts:1110](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1110)
+Defined in: [types.ts:1128](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1128)
 
-Initial state for this reducer.
+Initial state for this reducer's own slice.
 
 ***
 
@@ -83,6 +96,6 @@ Initial state for this reducer.
 
 > `optional` **when**: [`When`](../type-aliases/When.md)\<`EM`\>
 
-Defined in: [types.ts:1115](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1115)
+Defined in: [types.ts:1133](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1133)
 
 Event targeting using the unified `When` matcher.

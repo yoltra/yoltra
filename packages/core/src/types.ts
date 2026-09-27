@@ -1006,8 +1006,14 @@ export interface StoreInstance<
   }): void;
 
   /**
-   * Replays a sequence of events from a snapshot through reducers and event
-   * subscribers ONLY. Skips dedup, middleware, and effects.
+   * Replays a sequence of events from a snapshot through reducers ONLY. Skips dedup,
+   * middleware, effects, DevTools logging, and event subscribers.
+   *
+   * A subscriber that legitimately wants replayed events opts in per subscription with
+   * `onEvent(channel, type, handler, phase, { duringReplay: true })`. Without that opt-in,
+   * scrubbing a timeline would re-run every handler as though the events had happened again -
+   * publishing to peers, writing to sockets and firing analytics, with nothing available to
+   * detect it.
    *
    * Gated by `createStore({ devtools: { allowReplay: true } })`.
    * Throws if replay is not enabled.
@@ -1086,6 +1092,18 @@ export interface StoreInstance<
  * Use `when` for event targeting. An earlier `events` array was removed; this remark
  * outlived it and described a property that no longer exists.
  *
+ * **A reducer receives exactly one slice and returns exactly one slice.** `state` here is this
+ * reducer's own slice, not the store's state, and the value returned is written back only under
+ * this reducer's name. There is no path to a sibling: the reducer is handed no `getState`, no
+ * store reference, and no second argument beyond the event, and returning a whole-store-shaped
+ * object writes nothing extra because the commit is keyed by the name the reducer was mounted
+ * under.
+ *
+ * So cross-slice isolation is a **framework guarantee, not a convention**. There is no second
+ * writer to a slice and therefore no intra-slice authorisation question — only the ordinary
+ * question of whether this reducer's own code is correct. The one cross-slice effect available is
+ * a {@link Rejection}, which refuses the whole event rather than writing anywhere.
+ *
  * @example
  * Using `when` (recommended)
  * ```ts
@@ -1105,7 +1123,7 @@ export interface StoreInstance<
  */
 export interface ReducerSpec<S = any, EM extends EventMapBase = EventMapBase> {
   /**
-   * Initial state for this reducer.
+   * Initial state for this reducer's own slice.
    */
   state: S;
 
@@ -1115,7 +1133,8 @@ export interface ReducerSpec<S = any, EM extends EventMapBase = EventMapBase> {
   when?: When<EM>;
 
   /**
-   * Pure reducer function: `(state, event) => nextState`.
+   * Pure reducer function: `(state, event) => nextState`, where `state` is this reducer's slice
+   * and the return value replaces that slice and nothing else.
    */
   reducer: ReducerFunction<S, EM>;
 

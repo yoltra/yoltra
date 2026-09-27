@@ -241,7 +241,7 @@ Partial replacement set.
 
 > **instrument**(`observer`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:1065](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1065)
+Defined in: [types.ts:1071](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1071)
 
 Registers an instrumentation observer, called once per emitted event
 (committed or vetoed) after the synchronous reduce phase, with the exact
@@ -564,7 +564,7 @@ Dynamically add/remove a namespaced reducer slice at runtime.
 
 > **registerSlice**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
 
-Defined in: [types.ts:2151](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2151)
+Defined in: [types.ts:2170](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2170)
 
 Mounts a slice and hands back both the widened store and a disposer.
 
@@ -722,7 +722,7 @@ Coarse subscription: runs after any state change (once per committed event).
 
 > **withEffect**\<`Spec`\>(`spec`): [`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`Spec`\>\>\>
 
-Defined in: [types.ts:2176](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2176)
+Defined in: [types.ts:2195](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2195)
 
 Registers an effect and returns the store widened by whatever event map it declares.
 
@@ -752,7 +752,7 @@ Registers an effect and returns the store widened by whatever event map it decla
 
 > **withMiddleware**\<`M`\>(`mw`): [`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`M`\>\>\>
 
-Defined in: [types.ts:2171](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2171)
+Defined in: [types.ts:2190](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2190)
 
 Registers middleware and returns the store widened by whatever event map it declares.
 
@@ -786,7 +786,7 @@ therefore contributes `{}`.
 
 > **withSlice**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`WidenedSlice`](../type-aliases/WidenedSlice.md)\<`R`, `S`, `EM`, `N`, `Spec`\>
 
-Defined in: [types.ts:2158](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2158)
+Defined in: [types.ts:2177](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2177)
 
 Mounts a slice and returns the widened store, for chaining.
 

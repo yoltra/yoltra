@@ -161,3 +161,10 @@ may see events now arriving that were previously swallowed. That is the fix, not
 `store.call`, and every existing `registerX` call site. The registration methods return a
 callable object now instead of a bare function, so `const off = store.registerEffect(spec);
 off();` compiles and runs exactly as before.
+
+> **`store.call` is unchanged in 0.8.0, not absent.** It arrived in **0.6.0** with reply
+> specifications, streaming progress with real backpressure, an idle rather than total timeout,
+> `AbortSignal` and `cancel()`, and none of it moved since. If you are meeting it for the first
+> time while upgrading, it is documented in full in the
+> [Request & Reply guide](./REQUEST_REPLY_GUIDE.md) — this page is silent on it only because
+> there is nothing to do.

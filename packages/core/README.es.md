@@ -366,6 +366,23 @@ los hooks de React.
 
 ---
 
+## Un reducer ve una slice, y escribe una slice
+
+Esto es una garantía, no una convención. A un reducer se le entrega su propia slice como `state` y
+el evento, y nada más: ni `getState`, ni una referencia al store, ni ninguna slice hermana. Lo que
+devuelve se escribe bajo el nombre con el que fue montado, así que no puede escribir otra slice ni
+aunque devuelva un objeto con la forma del store completo.
+
+Vale la pena decir la consecuencia, porque es fácil construir un mecanismo que no hace falta:
+**dentro de una slice no hay un segundo escritor, así que no hay pregunta de autorización** — solo
+la pregunta habitual de si el código de ese reducer es correcto. Dos reducers que quieran
+protegerse los datos mutuamente son dos slices, y el core ya las mantiene separadas gratis.
+
+El único efecto entre slices que tiene un reducer es rechazar el evento, que es la sección
+siguiente.
+
+---
+
 ## Rechazar una escritura
 
 Un reducer devuelve `Rejected(reason)` en lugar de estado para declinar. **Se rechaza el evento
@@ -429,7 +446,7 @@ const res = await store.call("rpc", "ask", { q: "quien?" }, { reply: ["rpc", "an
 res.payload.text;
 ```
 
-`Quien Responde` no hace nada especial. Responde con el `emit` que recibio, y la marca causal del
+`Quien Responde` no hace nada especial. Responde con el `emit` que recibio, la marca de padre del
 store correlaciona ambos: **no hay id que generar, devolver ni olvidar**.
 
 ```typescript
@@ -486,6 +503,17 @@ progreso no iterado se almacena hasta `highWaterMark` y después se cuenta en `c
 
 Termine como termine, la suscripción se elimina y se libera cualquier productor detenido por la
 contrapresión. Un `Quien Responde` atascado es peor que el buffer sin límite que esto reemplazo.
+
+### Para profundizar
+
+La superficie exportada es `ReplySpec`, `CallOptions`, `CallHandle`, `CallTimeoutError` y
+`CallAbortedError`. Dos cosas que esta sección no cubre:
+
+- **`correlationId`**, para un `Quien Responde` que no puede contestar directamente — porque lo hace
+  en un turno posterior, o a través de un worker o de la red. Amplía la coincidencia para incluir un
+  id devuelto; la comprobación del padre se sigue ejecutando primero.
+- **Cómo probar una llamada**, y el resto del detalle, en la
+  [guía de Petición y Respuesta](https://github.com/yoltra/yoltra/blob/main/docs/es/REQUEST_REPLY_GUIDE.md).
 
 ---
 
@@ -947,15 +975,15 @@ es algo que nadie escriba.
   Descripción general y configuración rápida
 - **[@yoltra/react](../react/README.md)**:
   Hooks de React y Suspense
-- **[Guia de Inicio Rápido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**:
+- **[Guia de Inicio Rápido](https://github.com/yoltra/yoltra/blob/main/docs/es/QUICK_START_GUIDE.md)**:
   Cinco pasos hacia una app funcional
 - **[Actualizar a 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/es/UPGRADE_0.8.md)**:
   Cinco cambios de comportamiento, y un riesgo si haces rollback
 - **[Guía de Decoración](https://github.com/yoltra/yoltra/blob/main/docs/es/DECORATION_GUIDE.md)**:
   Agregar una slice, middleware o efecto al store de alguien más, con los tipos
-- **[Arquitectura de Cola de Eventos](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)**:
+- **[Arquitectura de Cola de Eventos](https://github.com/yoltra/yoltra/blob/main/docs/es/design/event-queue-architecture.md)**:
   Inmersión técnica profunda
-- **[Comparación de Bibliotecas](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**:
+- **[Comparación de Bibliotecas](https://github.com/yoltra/yoltra/blob/main/docs/es/design/state-management-library-comparison.md)**:
   Comparación arquitectónica
 
 ---

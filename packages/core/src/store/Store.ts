@@ -1538,8 +1538,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
-   * Replays a sequence of events from a snapshot through reducers and event
-   * subscribers ONLY. Skips dedup, middleware, and effects.
+   * Replays a sequence of events from a snapshot through reducers ONLY. Skips dedup,
+   * middleware, effects, DevTools logging, and event subscribers.
+   *
+   * A subscriber that legitimately wants replayed events opts in per subscription with
+   * `{ duringReplay: true }`; see the note in the replay loop below for why the default is
+   * silence.
    *
    * This method is gated by the `devtools.allowReplay` runtime config.
    * If replay is not enabled, this method throws.
@@ -2856,8 +2860,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * with the same two bugs: the subscription outlives the call, and a responder that forgets to
    * echo the id produces a timeout with nothing to point at. This is that, once.
    *
-   * **Correlation is causal.** The store stamps `parentId` on anything emitted while an event is
-   * being handled, so a responder that replies through the `emit` it was handed is already
+   * **Correlation is structural.** The store stamps `parentId` on anything emitted while an event
+   * is being handled, so a responder that replies through the `emit` it was handed is already
    * correlated. There is no id to mint, echo, or forget:
    *
    * ```ts
@@ -2868,6 +2872,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *   },
    * });
    * ```
+   *
+   * The match tests the **immediate** parent, not descent: a reply emitted a further hop down a
+   * cascade carries the intermediate event's id and will not be seen. A responder that cannot
+   * reply directly — because it answers later, on another turn, or across a transport — echoes
+   * {@link CallOptions.correlationId} instead, which widens the match rather than replacing it.
    *
    * **The reply carries its own discriminant.** A call resolves to the *event*, not the payload,
    * because a caller often cannot know which kind of reply it will get:
