@@ -8,7 +8,7 @@
 
 # Interface: FieldControlProps
 
-Defined in: [primitives/Form.tsx:13](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L13)
+Defined in: [primitives/Form/Form.tsx:13](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L13)
 
 What a field hands back for wiring a control.
 
@@ -26,7 +26,7 @@ the wiring visible and type-checked.
 
 > **aria-describedby**: `undefined` \| `string`
 
-Defined in: [primitives/Form.tsx:16](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L16)
+Defined in: [primitives/Form/Form.tsx:16](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L16)
 
 Points at the hint and error text, so both are announced with the control.
 
@@ -36,7 +36,7 @@ Points at the hint and error text, so both are announced with the control.
 
 > **aria-invalid**: `undefined` \| `boolean`
 
-Defined in: [primitives/Form.tsx:18](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L18)
+Defined in: [primitives/Form/Form.tsx:18](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L18)
 
 `true` while the field has an error.
 
@@ -46,4 +46,4 @@ Defined in: [primitives/Form.tsx:18](https://github.com/yoltra/yoltra/blob/main/
 
 > **id**: `string`
 
-Defined in: [primitives/Form.tsx:14](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L14)
+Defined in: [primitives/Form/Form.tsx:14](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L14)

@@ -10,7 +10,7 @@
 
 > **EmptyState**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Feedback.tsx:122](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L122)
+Defined in: [primitives/Feedback/Feedback.tsx:122](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L122)
 
 What to show where there is nothing to show.
 

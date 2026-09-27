@@ -10,7 +10,7 @@
 
 > **Spinner**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Feedback.tsx:28](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L28)
+Defined in: [primitives/Feedback/Feedback.tsx:28](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L28)
 
 An indeterminate loading indicator.
 

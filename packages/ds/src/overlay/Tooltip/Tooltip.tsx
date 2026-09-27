@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 
-import { Portal } from "./Portal";
-import { useAnchoredPosition } from "./useAnchoredPosition";
-import type { Placement } from "./placement";
+import { Portal } from "../Portal/Portal";
+import { useAnchoredPosition } from "../useAnchoredPosition";
+import type { Placement } from "../placement";
 
 /**
  * What the described element has to carry.

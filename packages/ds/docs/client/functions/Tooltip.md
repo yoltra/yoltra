@@ -10,7 +10,7 @@
 
 > **Tooltip**(`__namedParameters`): `Element`
 
-Defined in: [overlay/Tooltip.tsx:68](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L68)
+Defined in: [overlay/Tooltip/Tooltip.tsx:68](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L68)
 
 A short description that appears on hover or focus.
 

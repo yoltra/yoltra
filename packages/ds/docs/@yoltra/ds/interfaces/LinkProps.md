@@ -8,7 +8,7 @@
 
 # Interface: LinkProps
 
-Defined in: [primitives/Typography.tsx:91](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L91)
+Defined in: [primitives/Typography/Typography.tsx:91](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L91)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Typography.tsx:91](https://github.com/yoltra/yoltra/blob
 
 > `optional` **children**: `ReactNode`
 
-Defined in: [primitives/Typography.tsx:101](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L101)
+Defined in: [primitives/Typography/Typography.tsx:101](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L101)
 
 #### Overrides
 
@@ -32,7 +32,7 @@ Defined in: [primitives/Typography.tsx:101](https://github.com/yoltra/yoltra/blo
 
 > `optional` **external**: `boolean`
 
-Defined in: [primitives/Typography.tsx:100](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L100)
+Defined in: [primitives/Typography/Typography.tsx:100](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L100)
 
 Marks the link as leaving the site.
 

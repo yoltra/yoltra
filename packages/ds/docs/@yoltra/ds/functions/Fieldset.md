@@ -10,7 +10,7 @@
 
 > **Fieldset**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Form.tsx:122](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L122)
+Defined in: [primitives/Form/Form.tsx:122](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L122)
 
 A group of related controls.
 

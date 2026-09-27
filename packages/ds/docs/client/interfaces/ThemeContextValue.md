@@ -8,7 +8,7 @@
 
 # Interface: ThemeContextValue
 
-Defined in: [theme/ThemeProvider.tsx:16](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider.tsx#L16)
+Defined in: [theme/ThemeProvider/ThemeProvider.tsx:16](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider/ThemeProvider.tsx#L16)
 
 What [useTheme](../functions/useTheme.md) returns.
 
@@ -18,7 +18,7 @@ What [useTheme](../functions/useTheme.md) returns.
 
 > **setTheme**: (`t`) => `void`
 
-Defined in: [theme/ThemeProvider.tsx:18](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider.tsx#L18)
+Defined in: [theme/ThemeProvider/ThemeProvider.tsx:18](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider/ThemeProvider.tsx#L18)
 
 #### Parameters
 
@@ -36,7 +36,7 @@ Defined in: [theme/ThemeProvider.tsx:18](https://github.com/yoltra/yoltra/blob/m
 
 > **theme**: `"light"` \| `"dark"`
 
-Defined in: [theme/ThemeProvider.tsx:17](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider.tsx#L17)
+Defined in: [theme/ThemeProvider/ThemeProvider.tsx:17](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider/ThemeProvider.tsx#L17)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [theme/ThemeProvider.tsx:17](https://github.com/yoltra/yoltra/blob/m
 
 > **toggle**: () => `void`
 
-Defined in: [theme/ThemeProvider.tsx:19](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider.tsx#L19)
+Defined in: [theme/ThemeProvider/ThemeProvider.tsx:19](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider/ThemeProvider.tsx#L19)
 
 #### Returns
 

@@ -10,7 +10,7 @@
 
 > **Textarea**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Field.tsx:91](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field.tsx#L91)
+Defined in: [primitives/Field/Field.tsx:91](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field/Field.tsx#L91)
 
 A multi-line text input. Resizes vertically only, so it cannot break a layout sideways.
 

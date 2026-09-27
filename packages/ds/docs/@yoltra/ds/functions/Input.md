@@ -10,7 +10,7 @@
 
 > **Input**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Field.tsx:42](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field.tsx#L42)
+Defined in: [primitives/Field/Field.tsx:42](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field/Field.tsx#L42)
 
 A text input.
 

@@ -8,7 +8,7 @@
  * is identical, so the DS CSS variables resolve either way.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { ThemeId } from "../tokens/themes";
+import type { ThemeId } from "../../tokens/themes";
 
 const STORAGE_KEY = "yoltra-theme";
 

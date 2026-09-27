@@ -1,6 +1,6 @@
 import type { CSSProperties, ElementType, HTMLAttributes, ReactNode } from "react";
 
-import type { FoundationTokens } from "../tokens/tokens";
+import type { FoundationTokens } from "../../tokens/tokens";
 
 /**
  * A step on the spacing scale.

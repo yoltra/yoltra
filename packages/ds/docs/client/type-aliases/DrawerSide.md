@@ -10,4 +10,4 @@
 
 > **DrawerSide** = `"left"` \| `"right"` \| `"top"` \| `"bottom"`
 
-Defined in: [overlay/Modal.tsx:9](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Modal.tsx#L9)
+Defined in: [overlay/Modal/Modal.tsx:9](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Modal/Modal.tsx#L9)

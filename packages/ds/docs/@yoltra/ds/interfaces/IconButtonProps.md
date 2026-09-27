@@ -8,7 +8,7 @@
 
 # Interface: IconButtonProps
 
-Defined in: [primitives/Button.tsx:73](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L73)
+Defined in: [primitives/Button/Button.tsx:73](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L73)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Button.tsx:73](https://github.com/yoltra/yoltra/blob/mai
 
 > **children**: `ReactNode`
 
-Defined in: [primitives/Button.tsx:86](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L86)
+Defined in: [primitives/Button/Button.tsx:86](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L86)
 
 The glyph. Hidden from assistive technology, since `label` carries the meaning.
 
@@ -34,7 +34,7 @@ The glyph. Hidden from assistive technology, since `label` carries the meaning.
 
 > **label**: `string`
 
-Defined in: [primitives/Button.tsx:82](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L82)
+Defined in: [primitives/Button/Button.tsx:82](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L82)
 
 What the button does, in words.
 
@@ -50,7 +50,7 @@ interface — so this component does not offer the option of omitting it.
 
 > `optional` **size**: [`ButtonSize`](../type-aliases/ButtonSize.md)
 
-Defined in: [primitives/Button.tsx:84](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L84)
+Defined in: [primitives/Button/Button.tsx:84](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L84)
 
 ***
 
@@ -58,4 +58,4 @@ Defined in: [primitives/Button.tsx:84](https://github.com/yoltra/yoltra/blob/mai
 
 > `optional` **variant**: [`ButtonVariant`](../type-aliases/ButtonVariant.md)
 
-Defined in: [primitives/Button.tsx:83](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L83)
+Defined in: [primitives/Button/Button.tsx:83](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L83)

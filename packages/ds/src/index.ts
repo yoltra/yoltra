@@ -31,8 +31,8 @@ export { themeCss } from "./tokens/css";
 
 // Server-safe primitives. Interactive primitives (CodeBlock, Tabs) and the
 // theme controller (ThemeProvider/useTheme/applyTheme) live in ./client.
-export { Button, ButtonLink } from "./primitives/Button";
-export { ButtonGroup, IconButton } from "./primitives/Button";
+export { Button, ButtonLink } from "./primitives/Button/Button";
+export { ButtonGroup, IconButton } from "./primitives/Button/Button";
 export type {
   ButtonGroupProps,
   ButtonLinkProps,
@@ -40,17 +40,17 @@ export type {
   ButtonSize,
   ButtonVariant,
   IconButtonProps,
-} from "./primitives/Button";
-export { Badge } from "./primitives/Badge";
-export type { BadgeProps } from "./primitives/Badge";
-export { Callout } from "./primitives/Callout";
-export type { CalloutProps, CalloutKind } from "./primitives/Callout";
-export { Input, Select, Textarea } from "./primitives/Field";
-export type { InputProps, SelectProps, TextareaProps, FieldSize } from "./primitives/Field";
-export { Table, THead, TBody, TR, TH, TD } from "./primitives/Table";
+} from "./primitives/Button/Button";
+export { Badge } from "./primitives/Badge/Badge";
+export type { BadgeProps } from "./primitives/Badge/Badge";
+export { Callout } from "./primitives/Callout/Callout";
+export type { CalloutProps, CalloutKind } from "./primitives/Callout/Callout";
+export { Input, Select, Textarea } from "./primitives/Field/Field";
+export type { InputProps, SelectProps, TextareaProps, FieldSize } from "./primitives/Field/Field";
+export { Table, THead, TBody, TR, TH, TD } from "./primitives/Table/Table";
 
 // Layout
-export { Container, Divider, Grid, Inline, Stack } from "./primitives/Layout";
+export { Container, Divider, Grid, Inline, Stack } from "./primitives/Layout/Layout";
 export type {
   Align,
   ContainerProps,
@@ -61,27 +61,27 @@ export type {
   Justify,
   SpaceToken,
   StackProps,
-} from "./primitives/Layout";
-export { Card } from "./primitives/Card";
-export type { CardProps, CardElevation } from "./primitives/Card";
+} from "./primitives/Layout/Layout";
+export { Card } from "./primitives/Card/Card";
+export type { CardProps, CardElevation } from "./primitives/Card/Card";
 
 // Typography
-export { Heading, InlineCode, Kbd, Link, Text } from "./primitives/Typography";
+export { Heading, InlineCode, Kbd, Link, Text } from "./primitives/Typography/Typography";
 export type {
   HeadingProps,
   LinkProps,
   TextProps,
   TextSize,
   TextTone,
-} from "./primitives/Typography";
+} from "./primitives/Typography/Typography";
 
 // Feedback
-export { EmptyState, Skeleton, Spinner } from "./primitives/Feedback";
-export type { EmptyStateProps, SkeletonProps, SpinnerProps } from "./primitives/Feedback";
+export { EmptyState, Skeleton, Spinner } from "./primitives/Feedback/Feedback";
+export type { EmptyStateProps, SkeletonProps, SpinnerProps } from "./primitives/Feedback/Feedback";
 
 // Utility
-export { VisuallyHidden } from "./primitives/VisuallyHidden";
-export type { VisuallyHiddenProps } from "./primitives/VisuallyHidden";
+export { VisuallyHidden } from "./primitives/VisuallyHidden/VisuallyHidden";
+export type { VisuallyHiddenProps } from "./primitives/VisuallyHidden/VisuallyHidden";
 
 // Forms
 export {
@@ -92,7 +92,7 @@ export {
   RadioGroup,
   Slider,
   Switch,
-} from "./primitives/Form";
+} from "./primitives/Form/Form";
 export type {
   CheckboxProps,
   FieldControlProps,
@@ -103,4 +103,4 @@ export type {
   SliderProps,
   SwitchProps,
   ToggleProps,
-} from "./primitives/Form";
+} from "./primitives/Form/Form";

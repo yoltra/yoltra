@@ -8,7 +8,7 @@
 
 # Interface: TabsProps
 
-Defined in: [primitives/Tabs.tsx:11](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs.tsx#L11)
+Defined in: [primitives/Tabs/Tabs.tsx:11](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs/Tabs.tsx#L11)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [primitives/Tabs.tsx:11](https://github.com/yoltra/yoltra/blob/main/
 
 > `optional` **defaultId**: `string`
 
-Defined in: [primitives/Tabs.tsx:13](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs.tsx#L13)
+Defined in: [primitives/Tabs/Tabs.tsx:13](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs/Tabs.tsx#L13)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [primitives/Tabs.tsx:13](https://github.com/yoltra/yoltra/blob/main/
 
 > **items**: [`TabItem`](TabItem.md)[]
 
-Defined in: [primitives/Tabs.tsx:12](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs.tsx#L12)
+Defined in: [primitives/Tabs/Tabs.tsx:12](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs/Tabs.tsx#L12)

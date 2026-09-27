@@ -10,7 +10,7 @@
 
 > **Badge**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Badge.tsx:24](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Badge.tsx#L24)
+Defined in: [primitives/Badge/Badge.tsx:24](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Badge/Badge.tsx#L24)
 
 A small label for status or category.
 

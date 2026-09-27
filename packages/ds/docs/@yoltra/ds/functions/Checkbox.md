@@ -10,7 +10,7 @@
 
 > **Checkbox**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Form.tsx:162](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L162)
+Defined in: [primitives/Form/Form.tsx:162](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L162)
 
 A checkbox.
 

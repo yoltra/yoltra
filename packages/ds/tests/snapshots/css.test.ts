@@ -31,6 +31,9 @@ import { themeCss } from "../../src/tokens/css";
  * `"none"` when `CI` is set; this list is what covers the local case, where a missing snapshot
  * is written instead.
  */
+// Ordered by basename across both tiers, which is what `build-styles.mjs` publishes in. It used
+// to be grouped by directory here and alphabetical there, a difference that meant nothing until
+// the sheets moved into per-component directories and the two orders diverged visibly.
 const EXPECTED_SHEETS = [
   "base.scss",
   "Badge.scss",
@@ -42,12 +45,12 @@ const EXPECTED_SHEETS = [
   "Field.scss",
   "Form.scss",
   "Layout.scss",
-  "Table.scss",
-  "Tabs.scss",
-  "Typography.scss",
   "Modal.scss",
   "Popover.scss",
+  "Table.scss",
+  "Tabs.scss",
   "Tooltip.scss",
+  "Typography.scss",
 ];
 
 /** `Button.scss` becomes `button.css`, the name `build-styles.mjs` publishes it under. */

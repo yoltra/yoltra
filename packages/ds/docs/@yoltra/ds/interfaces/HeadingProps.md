@@ -8,7 +8,7 @@
 
 # Interface: HeadingProps
 
-Defined in: [primitives/Typography.tsx:8](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L8)
+Defined in: [primitives/Typography/Typography.tsx:8](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L8)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Typography.tsx:8](https://github.com/yoltra/yoltra/blob/
 
 > `optional` **children**: `ReactNode`
 
-Defined in: [primitives/Typography.tsx:21](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L21)
+Defined in: [primitives/Typography/Typography.tsx:21](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L21)
 
 #### Overrides
 
@@ -32,7 +32,7 @@ Defined in: [primitives/Typography.tsx:21](https://github.com/yoltra/yoltra/blob
 
 > `optional` **level**: `4` \| `6` \| `1` \| `2` \| `3` \| `5`
 
-Defined in: [primitives/Typography.tsx:10](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L10)
+Defined in: [primitives/Typography/Typography.tsx:10](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L10)
 
 Outline level, 1–6. Rendered as the matching `h` element.
 
@@ -42,7 +42,7 @@ Outline level, 1–6. Rendered as the matching `h` element.
 
 > `optional` **size**: [`TextSize`](../type-aliases/TextSize.md)
 
-Defined in: [primitives/Typography.tsx:20](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L20)
+Defined in: [primitives/Typography/Typography.tsx:20](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L20)
 
 Visual size, when it should differ from the level.
 

@@ -10,7 +10,7 @@
 
 > **Button**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Button.tsx:35](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L35)
+Defined in: [primitives/Button/Button.tsx:35](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L35)
 
 A button.
 

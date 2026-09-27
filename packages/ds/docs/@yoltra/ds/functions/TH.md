@@ -10,7 +10,7 @@
 
 > **TH**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Table.tsx:58](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table.tsx#L58)
+Defined in: [primitives/Table/Table.tsx:58](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table/Table.tsx#L58)
 
 A table header cell. See [Table](Table.md).
 

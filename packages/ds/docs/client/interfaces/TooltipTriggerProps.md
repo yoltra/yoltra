@@ -8,7 +8,7 @@
 
 # Interface: TooltipTriggerProps
 
-Defined in: [overlay/Tooltip.tsx:19](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L19)
+Defined in: [overlay/Tooltip/Tooltip.tsx:19](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L19)
 
 What the described element has to carry.
 
@@ -24,7 +24,7 @@ tooltip is not showing.
 
 > **aria-describedby**: `undefined` \| `string`
 
-Defined in: [overlay/Tooltip.tsx:21](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L21)
+Defined in: [overlay/Tooltip/Tooltip.tsx:21](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L21)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [overlay/Tooltip.tsx:21](https://github.com/yoltra/yoltra/blob/main/
 
 > **onBlur**: () => `void`
 
-Defined in: [overlay/Tooltip.tsx:25](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L25)
+Defined in: [overlay/Tooltip/Tooltip.tsx:25](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L25)
 
 #### Returns
 
@@ -44,7 +44,7 @@ Defined in: [overlay/Tooltip.tsx:25](https://github.com/yoltra/yoltra/blob/main/
 
 > **onFocus**: () => `void`
 
-Defined in: [overlay/Tooltip.tsx:24](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L24)
+Defined in: [overlay/Tooltip/Tooltip.tsx:24](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L24)
 
 #### Returns
 
@@ -56,7 +56,7 @@ Defined in: [overlay/Tooltip.tsx:24](https://github.com/yoltra/yoltra/blob/main/
 
 > **onPointerEnter**: () => `void`
 
-Defined in: [overlay/Tooltip.tsx:22](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L22)
+Defined in: [overlay/Tooltip/Tooltip.tsx:22](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L22)
 
 #### Returns
 
@@ -68,7 +68,7 @@ Defined in: [overlay/Tooltip.tsx:22](https://github.com/yoltra/yoltra/blob/main/
 
 > **onPointerLeave**: () => `void`
 
-Defined in: [overlay/Tooltip.tsx:23](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L23)
+Defined in: [overlay/Tooltip/Tooltip.tsx:23](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L23)
 
 #### Returns
 
@@ -80,7 +80,7 @@ Defined in: [overlay/Tooltip.tsx:23](https://github.com/yoltra/yoltra/blob/main/
 
 > **ref**: (`node`) => `void`
 
-Defined in: [overlay/Tooltip.tsx:20](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L20)
+Defined in: [overlay/Tooltip/Tooltip.tsx:20](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L20)
 
 #### Parameters
 

@@ -10,7 +10,7 @@
 
 > **SpaceToken** = keyof [`FoundationTokens`](../interfaces/FoundationTokens.md)\[`"spacing"`\]
 
-Defined in: [primitives/Layout.tsx:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L15)
+Defined in: [primitives/Layout/Layout.tsx:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L15)
 
 A step on the spacing scale.
 

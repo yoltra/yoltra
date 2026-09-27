@@ -11,10 +11,10 @@ import {
   type ReactNode,
 } from "react";
 
-import { Portal } from "./Portal";
-import { focusableWithin, useDismiss, useReturnFocus } from "./hooks";
-import { useAnchoredPosition, type Point } from "./useAnchoredPosition";
-import type { Placement } from "./placement";
+import { Portal } from "../Portal/Portal";
+import { focusableWithin, useDismiss, useReturnFocus } from "../hooks";
+import { useAnchoredPosition, type Point } from "../useAnchoredPosition";
+import type { Placement } from "../placement";
 
 /**
  * What a trigger has to carry for the overlay to be announced correctly.

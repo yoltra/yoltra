@@ -10,7 +10,7 @@
 
 > **useTheme**(): [`ThemeContextValue`](../interfaces/ThemeContextValue.md)
 
-Defined in: [theme/ThemeProvider.tsx:101](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider.tsx#L101)
+Defined in: [theme/ThemeProvider/ThemeProvider.tsx:101](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider/ThemeProvider.tsx#L101)
 
 Reads and sets the current theme.
 

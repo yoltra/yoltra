@@ -2,8 +2,8 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useRef, useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { Portal } from "../src/overlay/Portal";
-import { Dialog, Drawer } from "../src/overlay/Modal";
+import { Portal } from "../src/overlay/Portal/Portal";
+import { Dialog, Drawer } from "../src/overlay/Modal/Modal";
 
 /**
  * The overlay tier, which is the part of this package where a mistake is invisible.

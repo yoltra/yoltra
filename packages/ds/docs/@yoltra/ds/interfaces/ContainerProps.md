@@ -8,7 +8,7 @@
 
 # Interface: ContainerProps
 
-Defined in: [primitives/Layout.tsx:233](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L233)
+Defined in: [primitives/Layout/Layout.tsx:233](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L233)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Layout.tsx:233](https://github.com/yoltra/yoltra/blob/ma
 
 > `optional` **as**: `ElementType`
 
-Defined in: [primitives/Layout.tsx:234](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L234)
+Defined in: [primitives/Layout/Layout.tsx:234](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L234)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [primitives/Layout.tsx:234](https://github.com/yoltra/yoltra/blob/ma
 
 > `optional` **children**: `ReactNode`
 
-Defined in: [primitives/Layout.tsx:235](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L235)
+Defined in: [primitives/Layout/Layout.tsx:235](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L235)
 
 #### Overrides
 

@@ -10,7 +10,7 @@
 
 > **applyTheme**(`theme`): `void`
 
-Defined in: [theme/ThemeProvider.tsx:46](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider.tsx#L46)
+Defined in: [theme/ThemeProvider/ThemeProvider.tsx:46](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider/ThemeProvider.tsx#L46)
 
 Sets `data-theme` on the document root.
 

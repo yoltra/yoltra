@@ -8,7 +8,7 @@
 
 # Interface: ButtonProps
 
-Defined in: [primitives/Button.tsx:14](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L14)
+Defined in: [primitives/Button/Button.tsx:14](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L14)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Button.tsx:14](https://github.com/yoltra/yoltra/blob/mai
 
 > **children**: `ReactNode`
 
-Defined in: [primitives/Button.tsx:17](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L17)
+Defined in: [primitives/Button/Button.tsx:17](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L17)
 
 #### Overrides
 
@@ -32,7 +32,7 @@ Defined in: [primitives/Button.tsx:17](https://github.com/yoltra/yoltra/blob/mai
 
 > `optional` **size**: [`ButtonSize`](../type-aliases/ButtonSize.md)
 
-Defined in: [primitives/Button.tsx:16](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L16)
+Defined in: [primitives/Button/Button.tsx:16](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L16)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [primitives/Button.tsx:16](https://github.com/yoltra/yoltra/blob/mai
 
 > `optional` **variant**: [`ButtonVariant`](../type-aliases/ButtonVariant.md)
 
-Defined in: [primitives/Button.tsx:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L15)
+Defined in: [primitives/Button/Button.tsx:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L15)

@@ -10,7 +10,7 @@
 
 > **Inline**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Layout.tsx:145](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L145)
+Defined in: [primitives/Layout/Layout.tsx:145](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L145)
 
 Lays its children out in a row, wrapping when they run out of room.
 

@@ -1,6 +1,6 @@
 import type { CSSProperties, ElementType, HTMLAttributes, ReactNode } from "react";
 
-import type { SpaceToken } from "./Layout";
+import type { SpaceToken } from "../Layout/Layout";
 
 /** How much a card lifts off the page. */
 export type CardElevation = "none" | "xs" | "sm" | "md" | "lg" | "xl";

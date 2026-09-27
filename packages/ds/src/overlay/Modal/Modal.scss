@@ -1,4 +1,4 @@
-@use "../styles" as *;
+@use "../../styles" as *;
 
 // The portal root, filling the viewport. `fixed` rather than `absolute` because the panel is
 // positioned against the viewport, not against `document.body` — which has a height.

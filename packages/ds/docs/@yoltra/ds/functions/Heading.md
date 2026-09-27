@@ -10,7 +10,7 @@
 
 > **Heading**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Typography.tsx:35](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L35)
+Defined in: [primitives/Typography/Typography.tsx:35](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L35)
 
 A section heading.
 

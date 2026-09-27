@@ -2,8 +2,8 @@
 
 import { useCallback, useId, useRef, useState, type ReactNode, type RefObject } from "react";
 
-import { Portal } from "./Portal";
-import { useDismiss, useFocusTrap, useScrollLock } from "./hooks";
+import { Portal } from "../Portal/Portal";
+import { useDismiss, useFocusTrap, useScrollLock } from "../hooks";
 
 export type DialogSize = "sm" | "md" | "lg" | "full";
 export type DrawerSide = "left" | "right" | "top" | "bottom";

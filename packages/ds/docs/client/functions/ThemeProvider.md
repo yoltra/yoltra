@@ -10,7 +10,7 @@
 
 > **ThemeProvider**(`__namedParameters`): `Element`
 
-Defined in: [theme/ThemeProvider.tsx:64](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider.tsx#L64)
+Defined in: [theme/ThemeProvider/ThemeProvider.tsx:64](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/ThemeProvider/ThemeProvider.tsx#L64)
 
 Holds the current theme and applies it to the document.
 

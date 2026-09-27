@@ -8,7 +8,7 @@
 
 # Interface: SpinnerProps
 
-Defined in: [primitives/Feedback.tsx:3](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L3)
+Defined in: [primitives/Feedback/Feedback.tsx:3](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L3)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Feedback.tsx:3](https://github.com/yoltra/yoltra/blob/ma
 
 > `optional` **label**: `string`
 
-Defined in: [primitives/Feedback.tsx:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L15)
+Defined in: [primitives/Feedback/Feedback.tsx:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L15)
 
 What is being waited for.
 
@@ -37,6 +37,6 @@ happens.
 
 > `optional` **size**: `"sm"` \| `"md"` \| `"lg"`
 
-Defined in: [primitives/Feedback.tsx:5](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L5)
+Defined in: [primitives/Feedback/Feedback.tsx:5](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L5)
 
 Diameter. Defaults to `md`.

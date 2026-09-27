@@ -31,6 +31,15 @@ export function compiledStyles(): CompiledStyle[] {
   return (compiled ??= compileAll());
 }
 
+/** Every `.scss` beneath a directory, at any depth. */
+function scssIn(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) return scssIn(full);
+    return entry.name.endsWith(".scss") ? [full] : [];
+  });
+}
+
 function compileAll(): CompiledStyle[] {
   // `.trim()` mirrors `scripts/build-styles.mjs`, which trims and then writes a single trailing
   // newline. Matching it here is what lets a CSS snapshot be compared directly against the file
@@ -39,15 +48,14 @@ function compileAll(): CompiledStyle[] {
     sass.compile(file, { loadPaths: [SRC], style: "expanded" }).css.trim();
 
   // Both directories that hold component styles. Scanning only `primitives` would have left
-  // the overlay tier, the one that leans hardest on tokens, unchecked.
+  // the overlay tier, the one that leans hardest on tokens, unchecked. Recursive, because a
+  // component owns a directory: `primitives/Button/Button.scss`.
   const dirs = ["primitives", "overlay"].map((d) => path.join(SRC, d));
   return [
     { name: "base.scss", css: compile(path.join(SRC, "styles", "base.scss")) },
-    ...dirs.flatMap((dir) =>
-      readdirSync(dir)
-        .filter((f) => f.endsWith(".scss"))
-        .sort()
-        .map((f) => ({ name: f, css: compile(path.join(dir, f)) })),
-    ),
+    ...dirs
+      .flatMap(scssIn)
+      .sort((a, b) => path.basename(a).localeCompare(path.basename(b)))
+      .map((file) => ({ name: path.basename(file), css: compile(file) })),
   ];
 }

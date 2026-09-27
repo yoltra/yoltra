@@ -8,7 +8,7 @@
 
 # Interface: BadgeProps
 
-Defined in: [primitives/Badge.tsx:3](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Badge.tsx#L3)
+Defined in: [primitives/Badge/Badge.tsx:3](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Badge/Badge.tsx#L3)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Badge.tsx:3](https://github.com/yoltra/yoltra/blob/main/
 
 > **children**: `ReactNode`
 
-Defined in: [primitives/Badge.tsx:5](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Badge.tsx#L5)
+Defined in: [primitives/Badge/Badge.tsx:5](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Badge/Badge.tsx#L5)
 
 #### Overrides
 
@@ -32,4 +32,4 @@ Defined in: [primitives/Badge.tsx:5](https://github.com/yoltra/yoltra/blob/main/
 
 > `optional` **variant**: `"neutral"` \| `"brand"`
 
-Defined in: [primitives/Badge.tsx:4](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Badge.tsx#L4)
+Defined in: [primitives/Badge/Badge.tsx:4](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Badge/Badge.tsx#L4)

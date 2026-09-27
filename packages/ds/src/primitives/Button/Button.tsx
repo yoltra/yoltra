@@ -1,6 +1,6 @@
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
-import { VisuallyHidden } from "./VisuallyHidden";
+import { VisuallyHidden } from "../VisuallyHidden/VisuallyHidden";
 
 /** Visual weight of a button. @public */
 export type ButtonVariant = "primary" | "ghost";

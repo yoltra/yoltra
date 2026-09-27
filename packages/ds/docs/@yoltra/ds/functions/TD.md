@@ -10,7 +10,7 @@
 
 > **TD**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Table.tsx:63](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table.tsx#L63)
+Defined in: [primitives/Table/Table.tsx:63](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table/Table.tsx#L63)
 
 A table cell. Accepts `colSpan`, `rowSpan` and the other native attributes. See [Table](Table.md).
 

@@ -10,7 +10,7 @@
 
 > **Slider**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Form.tsx:328](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L328)
+Defined in: [primitives/Form/Form.tsx:328](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L328)
 
 A control for choosing from a range.
 

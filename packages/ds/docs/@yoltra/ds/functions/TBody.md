@@ -10,7 +10,7 @@
 
 > **TBody**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Table.tsx:39](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table.tsx#L39)
+Defined in: [primitives/Table/Table.tsx:39](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table/Table.tsx#L39)
 
 A table body. See [Table](Table.md).
 

@@ -8,7 +8,7 @@
 
 # Interface: FieldsetProps
 
-Defined in: [primitives/Form.tsx:96](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L96)
+Defined in: [primitives/Form/Form.tsx:96](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L96)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [primitives/Form.tsx:96](https://github.com/yoltra/yoltra/blob/main/
 
 > **children**: `ReactNode`
 
-Defined in: [primitives/Form.tsx:100](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L100)
+Defined in: [primitives/Form/Form.tsx:100](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L100)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [primitives/Form.tsx:100](https://github.com/yoltra/yoltra/blob/main
 
 > `optional` **className**: `string`
 
-Defined in: [primitives/Form.tsx:101](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L101)
+Defined in: [primitives/Form/Form.tsx:101](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L101)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [primitives/Form.tsx:101](https://github.com/yoltra/yoltra/blob/main
 
 > `optional` **hint**: `ReactNode`
 
-Defined in: [primitives/Form.tsx:99](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L99)
+Defined in: [primitives/Form/Form.tsx:99](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L99)
 
 ***
 
@@ -40,6 +40,6 @@ Defined in: [primitives/Form.tsx:99](https://github.com/yoltra/yoltra/blob/main/
 
 > **legend**: `ReactNode`
 
-Defined in: [primitives/Form.tsx:98](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L98)
+Defined in: [primitives/Form/Form.tsx:98](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L98)
 
 Names the group. Rendered as a `<legend>`.

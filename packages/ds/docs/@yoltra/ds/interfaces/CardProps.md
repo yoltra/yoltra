@@ -8,7 +8,7 @@
 
 # Interface: CardProps
 
-Defined in: [primitives/Card.tsx:8](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card.tsx#L8)
+Defined in: [primitives/Card/Card.tsx:8](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card/Card.tsx#L8)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Card.tsx:8](https://github.com/yoltra/yoltra/blob/main/p
 
 > `optional` **as**: `ElementType`
 
-Defined in: [primitives/Card.tsx:23](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card.tsx#L23)
+Defined in: [primitives/Card/Card.tsx:23](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card/Card.tsx#L23)
 
 Element to render.
 
@@ -36,7 +36,7 @@ card ends up unreachable by keyboard.
 
 > `optional` **bordered**: `boolean`
 
-Defined in: [primitives/Card.tsx:14](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card.tsx#L14)
+Defined in: [primitives/Card/Card.tsx:14](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card/Card.tsx#L14)
 
 Draw a border. On by default; turn it off when the card sits on a tinted surface.
 
@@ -46,7 +46,7 @@ Draw a border. On by default; turn it off when the card sits on a tinted surface
 
 > `optional` **children**: `ReactNode`
 
-Defined in: [primitives/Card.tsx:24](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card.tsx#L24)
+Defined in: [primitives/Card/Card.tsx:24](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card/Card.tsx#L24)
 
 #### Overrides
 
@@ -58,7 +58,7 @@ Defined in: [primitives/Card.tsx:24](https://github.com/yoltra/yoltra/blob/main/
 
 > `optional` **elevation**: [`CardElevation`](../type-aliases/CardElevation.md)
 
-Defined in: [primitives/Card.tsx:12](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card.tsx#L12)
+Defined in: [primitives/Card/Card.tsx:12](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card/Card.tsx#L12)
 
 Shadow depth, from the elevation tokens. Defaults to `xs`.
 
@@ -68,6 +68,6 @@ Shadow depth, from the elevation tokens. Defaults to `xs`.
 
 > `optional` **padding**: `number`
 
-Defined in: [primitives/Card.tsx:10](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card.tsx#L10)
+Defined in: [primitives/Card/Card.tsx:10](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card/Card.tsx#L10)
 
 Inner spacing, as a step on the spacing scale. Defaults to `5` (20px).

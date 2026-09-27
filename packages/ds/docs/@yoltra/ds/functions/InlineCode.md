@@ -10,7 +10,7 @@
 
 > **InlineCode**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Typography.tsx:139](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L139)
+Defined in: [primitives/Typography/Typography.tsx:139](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L139)
 
 Code inside a line of prose.
 

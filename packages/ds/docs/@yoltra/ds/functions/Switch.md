@@ -10,7 +10,7 @@
 
 > **Switch**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Form.tsx:275](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L275)
+Defined in: [primitives/Form/Form.tsx:275](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L275)
 
 An on/off control that takes effect immediately.
 

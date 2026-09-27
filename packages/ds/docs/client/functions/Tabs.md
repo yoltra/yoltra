@@ -10,7 +10,7 @@
 
 > **Tabs**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Tabs.tsx:35](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs.tsx#L35)
+Defined in: [primitives/Tabs/Tabs.tsx:35](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs/Tabs.tsx#L35)
 
 Tabbed panels.
 

@@ -1,4 +1,4 @@
-@use "../styles" as *;
+@use "../../styles" as *;
 
 // Anchored surfaces are placed in viewport coordinates by `useAnchoredPosition`, so `fixed` is
 // not a preference — it is what makes those coordinates mean anything. `left`/`top` come from
