@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Adds a decoration guide, in English and Spanish: what the spec builders are for and why the event map cannot be inferred without them, how a library publishes a `withX(store, config)` decorator, why decorators nest rather than pipe, how a decoration declares a dependency on another, what `replace*` now preserves, the React rules (module scope, once, before first render), watching registrations, and the one thing types cannot express about disposal.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

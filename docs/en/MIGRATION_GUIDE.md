@@ -172,10 +172,10 @@ know you want them.
 
 ### Middleware
 
-Redux middleware wraps `dispatch`. Yoltra middleware is **synchronous** and
-returns a boolean — return `false` to **reject** an event (it becomes an
-"uncommitted" event your UI can react to). Async middleware work moves to
-effects.
+Redux middleware wraps `dispatch`. Yoltra middleware is **synchronous**, and only an explicit
+`false` rejects an event, which then becomes an "uncommitted" event your UI can react to.
+Returning nothing allows it, so middleware that only logs or measures needs no `return` at all.
+Async middleware work moves to effects.
 
 ```ts
 middleware: [

@@ -65,6 +65,14 @@ export function freezeState<T>(
 
   seen.add(obj as any);
 
+  // Binary views are returned untouched. `Object.freeze` on a TypedArray or DataView that
+  // has elements is a `TypeError` by language rule - indexed properties on a view cannot be
+  // made non-configurable - so walking one here threw at store construction and made it
+  // impossible to keep bytes in slice state at all. There is nothing to deep-freeze in any
+  // case: the contents are numbers, not a reachable object graph. Immutability for a view is
+  // therefore reference-level, the same treatment `Map` and `Set` already get.
+  if (ArrayBuffer.isView(obj)) return obj as any;
+
   // Arrays: handle indices only (skip length descriptor churn)
   if (Array.isArray(obj)) {
     const arr = obj as unknown as any[];

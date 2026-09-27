@@ -36,7 +36,8 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yoltra/yoltra.git"
+    "url": "https://github.com/yoltra/yoltra.git",
+    "directory": "packages/react"
   },
   "bugs": {
     "url": "https://github.com/yoltra/yoltra/issues"
@@ -58,7 +59,7 @@
     "node": ">=18"
   },
   "peerDependencies": {
-    "@yoltra/core": "^0.7.0",
+    "@yoltra/core": "^0.8.0",
     "react": "^18 || ^19"
   },
   "peerDependenciesMeta": {

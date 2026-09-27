@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Effect metadata is released when its effect is unregistered or replaced. `effectMeta` was never pruned by `replaceEffects` or by any disposer, so entries accumulated for effects that no longer existed. Pruned per dropped effect rather than wholesale, since clearing the map would strip the metadata of every effect being preserved.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

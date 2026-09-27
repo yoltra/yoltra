@@ -4,6 +4,11 @@
 
 > [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | 👉 🇺🇸 English Version &nbsp;
 
+[![npm version](https://img.shields.io/npm/v/@yoltra/devtools-server)](https://www.npmjs.com/package/@yoltra/devtools-server)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/devtools-server)](https://www.npmjs.com/package/@yoltra/devtools-server)
+[![types](https://img.shields.io/npm/types/@yoltra/devtools-server)](https://www.npmjs.com/package/@yoltra/devtools-server)
+[![License](https://img.shields.io/npm/l/@yoltra/devtools-server)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+
 **Central WebSocket hub that brokers DevTools protocol traffic between Yoltra stores and
 extensions.**
 

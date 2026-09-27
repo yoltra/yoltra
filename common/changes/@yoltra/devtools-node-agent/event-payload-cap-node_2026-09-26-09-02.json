@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-node-agent",
+      "comment": "Event payloads and patch values are size-bounded, like snapshots already were, with a new `maxEventBytes` option defaulting to 512 KiB. An oversized frame was answered by the hub closing the socket rather than dropping the message.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-node-agent"
+}

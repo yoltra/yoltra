@@ -10,7 +10,7 @@
 
 > **Emit**\<`EM`\> = \<`C`, `T`\>(`channel`, `type`, `payload`, `opts?`) => `Promise`\<[`EmitResult`](../interfaces/EmitResult.md)\>
 
-Defined in: [types.ts:305](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L305)
+Defined in: [types.ts:340](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L340)
 
 ## Type Parameters
 

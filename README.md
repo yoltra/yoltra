@@ -4,8 +4,11 @@
 
 > [ 🇲🇽 Versión en Español](./docs/es/README.md)&nbsp; | &nbsp; 👉 🇺🇸 English Version &nbsp;
 
-![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
-![License](https://img.shields.io/npm/l/@yoltra/core)
+[![npm version](https://img.shields.io/npm/v/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![types](https://img.shields.io/npm/types/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![License](https://img.shields.io/npm/l/@yoltra/core)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/yoltra/yoltra/ci.yml?branch=main)](https://github.com/yoltra/yoltra/actions/workflows/ci.yml)
 
 **Fine-grained reactive state, event-sourced, with time-travel devtools. For complex,
 interactive apps.**
@@ -85,6 +88,85 @@ the one place you get fine-grained reactivity, an event log with real time-trave
 setup, and full type-safety, together.** A deeper, honest
 comparison lives in the
 [library comparison](./docs/en/design/state-management-library-comparison.md).
+
+---
+
+## How a store works
+
+One event, end to end. The reduce phase is synchronous, so `getState()` is correct the moment
+`emit()` returns; effects run afterwards as an independent task.
+
+```mermaid
+flowchart TD
+    emit["emit channel, type, payload"] --> dedup{"dedup enabled?"}
+    dedup -->|"off by default"| queue
+    dedup -->|"on"| fp["fingerprint through the codec:<br/>Map, Set, Date, BigInt, binary and<br/>cycles all compare by content"]
+    fp -->|"seen inside the window"| swallowed(["skipped"])
+    fp -->|"new"| queue["FIFO reduce queue"]
+    queue --> drain["drainReduce<br/>synchronous, re-entrancy guarded"]
+
+    subgraph sync ["Synchronous reduce phase"]
+    direction TB
+        drain --> mw["middleware<br/>matched by when"]
+        mw -->|"returns false, or throws"| veto["vetoed"]
+        mw -->|"true, or nothing at all"| red["reducers<br/>matched by when"]
+        red --> stage["stage every matching slice<br/>nothing written yet"]
+        stage -->|"any slice returns Rejected"| reject["discard every staged write"]
+        stage -->|"all accepted"| commit["commit one new state root<br/>frozen in development"]
+    end
+
+    veto --> nUncommitted["onEvent uncommitted"]
+    reject --> nCommitted["onEvent committed"]
+    commit --> nCommitted
+    commit --> paths["connectorBus<br/>exact changed leaf paths"]
+    nCommitted --> nWritten["onEvent written<br/>only when state changed"]
+    nWritten --> listeners["subscribe listeners"]
+
+    paths --> atomic(["useAtomicProp and the Suspense hooks"])
+    listeners --> selector(["useSelector"])
+    nCommitted --> useEvent(["useEvent"])
+
+    commit --> instr["instrument observers<br/>changed paths, old and new values, timing"]
+    instr --> persistOut(["persist: throttled write, codec encoded"])
+    instr --> agent(["devtools agent"])
+
+    commit --> fx["effects, matched by when<br/>async, awaited one after another"]
+    fx --> call(["store.call rides an internal reply effect"])
+```
+
+### `when`: one matcher, two dispatch routes
+
+Reducers, middleware and effects all target events the same way, and the shape you choose
+decides how the store finds them.
+
+```mermaid
+flowchart LR
+    when["when"] --> keys["keys<br/>exact channel and type pairs"]
+    when --> any["any"]
+    when --> chan["channel"]
+    when --> chans["channels"]
+
+    keys --> keyed["keyed dispatch<br/>O(1) map lookup"]
+    any --> scan["pattern dispatch<br/>matched on every event"]
+    chan --> scan
+    chans --> scan
+
+    keyed --> run(["handler runs"])
+    scan --> run
+```
+
+`keys` is exact and typed against your event map, so a typo is a compile error. The other three
+are matched at runtime, which is what lets one handler cover a whole channel.
+
+### The niceties, and where they plug in
+
+| Piece | Where it sits |
+| --- | --- |
+| **codec** | Content dedup, persistence on both read and write, devtools snapshots and event payloads. Round-trips `Map`, `Set`, `Date`, `RegExp`, `Error`, `BigInt`, typed arrays, cycles and shared references, and reports what it cannot represent instead of dropping it |
+| **persistence** | `hydrate()` seeds initial state before the store exists, so there is no boot flash; `persist()` rides the instrumentation seam |
+| **devtools** | `instrument()` streams events and patches; time travel applies state back through `__applyExternalState`. Replay does not re-run your `onEvent` handlers unless they opt in |
+| **registration** | `registerSlice`, `registerMiddleware` and `registerEffect` add to a live store and widen its types. `replace*` replaces only what the application authored, so a hot reload leaves a library's slice alone |
+| **cascade guard** | An event emitted from a handler carries its cause and its depth, so a cycle is stopped and named rather than hanging the tab |
 
 ---
 
@@ -214,6 +296,8 @@ pulls in a Node-only WebSocket, and vice versa.
 - **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**: 3 steps to a working app
 - **[Migration Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/MIGRATION_GUIDE.md)**: coming from Redux, Zustand, or Jotai
 - **[Request & Reply Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/REQUEST_REPLY_GUIDE.md)**: `store.call()`: correlation without ids, streaming progress with real backpressure
+- **[Upgrading to 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/en/UPGRADE_0.8.md)**: what changed, how you would notice, and what to do
+- **[Decoration Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/DECORATION_GUIDE.md)**: adding a slice, middleware or effect to somebody else's store, with the types
 - **[Testing Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/TESTING_GUIDE.md)**: unit-test stores, effects, middleware, and components
 - **[Next.js Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/NEXTJS_GUIDE.md)**: client-side usage in the Pages and App Router
 - **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)**: store, middleware, effects, `When` matchers, instrumentation
@@ -250,7 +334,7 @@ more details.
 
 ## Status
 
-Yoltra is in **Release Candidate** stage (v0.7.0):
+Yoltra is in **Release Candidate** stage:
 
 - The core and React APIs are stable and used in production applications.
 - TypeScript types are strict and comprehensive; coverage, bundle-size, and benchmark gates run in CI.

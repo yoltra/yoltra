@@ -1,5 +1,9 @@
 # @yoltra/eslint-config-base
 
+[![npm version](https://img.shields.io/npm/v/@yoltra/eslint-config-base)](https://www.npmjs.com/package/@yoltra/eslint-config-base)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/eslint-config-base)](https://www.npmjs.com/package/@yoltra/eslint-config-base)
+[![License](https://img.shields.io/npm/l/@yoltra/eslint-config-base)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+
 Shared ESLint **flat config** for Node.js + browser TypeScript libraries in the Yoltra monorepo.
 
 ## Install
@@ -23,7 +27,7 @@ export default [
 ];
 ```
 
-For React projects, use [`@yoltra/eslint-config-react`](../eslint-config-react), which extends this base.
+For React projects, use [`@yoltra/eslint-config-react`](https://github.com/yoltra/yoltra/tree/main/tools/eslint-config-react), which extends this base.
 
 ## License
 

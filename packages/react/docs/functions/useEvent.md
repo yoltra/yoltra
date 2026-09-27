@@ -8,9 +8,9 @@
 
 # Function: useEvent()
 
-> **useEvent**\<`EM`, `C`, `T`\>(`channel`, `type`, `handler`, `phase`): `void`
+> **useEvent**\<`EM`, `C`, `T`\>(`channel`, `type`, `handler`, `phase`, `options?`): `void`
 
-Defined in: [react/src/hooks/hooks.ts:471](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/hooks.ts#L471)
+Defined in: [react/src/hooks/hooks.ts:361](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/hooks.ts#L361)
 
 Subscribe to store events from a React component.
 
@@ -71,6 +71,20 @@ Handler called when the event fires. Receives `(event, getState, emit, phase)`.
 `EventPhase` = `"committed"`
 
 Event phase to subscribe to (default: `'committed'`).
+
+### options?
+
+#### duringReplay?
+
+`boolean`
+
+Also run this handler while devtools is replaying, which it does not by default.
+
+**Remarks**
+
+Opt in only for a handler that derives view state purely from the event stream. A
+handler that publishes, writes or notifies must stay out: scrubbing a timeline is a
+debugging operation and should not reach a peer, a socket or an analytics endpoint.
 
 ## Returns
 

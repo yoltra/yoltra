@@ -16,6 +16,7 @@ import type {
 } from "@yoltra/core";
 import * as React from "react";
 import { useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { guardProjection, projectDeclared } from "../utils/declaredProjection";
 import { getAtPath, hasWildcard, normalizePath, specsSignature, toDottedPath } from "../utils/path";
 import { shallowEqual } from "../utils/shallowEqual";
 import { useStableSnapshot } from "../utils/useStableSnapshot";
@@ -158,6 +159,17 @@ export type UseEvent<EM extends EventMapBase, S> = <
     phase: NotifiedPhase,
   ) => void | Promise<void>,
   phase?: EventPhase,
+  options?: {
+    /**
+     * Also run this handler while devtools is replaying, which it does not by default.
+     *
+     * @remarks
+     * Opt in only for a handler that derives view state purely from the event stream. A
+     * handler that publishes, writes or notifies must stay out: scrubbing a timeline is a
+     * debugging operation and should not reach a peer, a socket or an analytics endpoint.
+     */
+    duringReplay?: boolean;
+  },
 ) => void;
 
 /**
@@ -382,9 +394,33 @@ export function createHooks<
       [store, normalizedSpecs],
     );
 
+    // Derived from the very specs that drive the subscriptions above, so what the selector
+    // can see and what wakes the component come from one source and cannot drift apart.
+    const declared = useMemo(
+      () =>
+        normalizedSpecs.flatMap((sp) =>
+          (Array.isArray(sp.property) ? sp.property : [sp.property]).map((property) => ({
+            reducer: sp.reducer as string,
+            property,
+          })),
+        ),
+      [normalizedSpecs],
+    );
+
     const getSnapshot = useCallback(() => {
       if (lastVerRef.current !== versionRef.current || !hasValueRef.current) {
-        const next = selectorRef.current(store.getState());
+        // Projected to the declared paths, and guarded in development. Without this a
+        // selector could read state it never declared: it would get the right value once
+        // and then never re-render, because the component is subscribed to the declared
+        // paths only. This guard lived in the package-level copy of the hook and not in
+        // this one, which is the copy `createYoltra` hands out - so the recommended path
+        // was the unguarded one.
+        const projection = projectDeclared(store.getState(), declared);
+        const visible =
+          process.env.NODE_ENV !== "production"
+            ? guardProjection(projection, declared)
+            : projection;
+        const next = selectorRef.current(visible as DeepReadonly<S>);
         // Track presence with a boolean so an `undefined` selection still caches
         // (using `undefined` as "no value yet" would disable the equality cache).
         if (!hasValueRef.current || !isEqualRef.current(lastSelRef.current as T, next)) {
@@ -394,7 +430,7 @@ export function createHooks<
         lastVerRef.current = versionRef.current;
       }
       return lastSelRef.current as T;
-    }, [store]);
+    }, [store, declared]);
 
     return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   };
@@ -416,10 +452,13 @@ export function createHooks<
       phase: NotifiedPhase,
     ) => void | Promise<void>,
     phase: EventPhase = "committed",
+    options?: { duringReplay?: boolean },
   ): void => {
     const store = useStore();
     const handlerRef = useRef(handler);
     handlerRef.current = handler; // Always keep latest handler (solves stale closures)
+
+    const duringReplay = options?.duringReplay === true;
 
     useEffect(() => {
       return store.onEvent(
@@ -434,8 +473,12 @@ export function createHooks<
           );
         },
         phase,
+        { duringReplay },
       );
-    }, [store, channel, type, phase]);
+      // The primitive, never `options`. An object literal is a new reference on every render,
+      // so depending on it would unsubscribe and resubscribe on each one - a loop no existing
+      // test would catch, because the subscription would still look correct at every point.
+    }, [store, channel, type, phase, duringReplay]);
   };
 
   // Bound to the context above, not the package-level one, so the returned set is complete:

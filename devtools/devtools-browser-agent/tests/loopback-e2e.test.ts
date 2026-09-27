@@ -289,3 +289,204 @@ describe("a state too large for the transport", () => {
     expect(String(snapshot.truncationNote ?? "")).not.toBe("");
   });
 });
+
+describe("the panel's subscription list stays current", () => {
+  const cleanups: Array<() => void> = [];
+  afterEach(() => {
+    for (const c of cleanups.splice(0).reverse()) {
+      try {
+        c();
+      } catch {
+        /* best-effort */
+      }
+    }
+  });
+
+  it("pushes STORE_SUBSCRIPTIONS when something is registered at runtime", async () => {
+    // `__devtoolsIntrospect()` is a pull, so until the agent subscribed to registration
+    // changes the panel's list went stale the moment anything mounted: a decoration adding a
+    // slice, a hot reload, an `onEvent` from a component. The panel had no way to know and
+    // no reason to ask again.
+    const hub = createLoopbackHub();
+    const store = createStore({
+      name: "subscriptions-push",
+      reducer: { counter: counterSpec },
+    });
+    withDevtools(store, {
+      port: 0,
+      storeId: "s-push",
+      socketFactory: hub.agentSocketFactory,
+    });
+    cleanups.push(() => store.dispose());
+
+    const panel = new hub.WebSocket("ws://loopback");
+    const msgs: AnyMsg[] = [];
+    panel.onmessage = (ev) => msgs.push(JSON.parse(ev.data as string));
+    cleanups.push(() => panel.close());
+    await tick();
+    panel.send(
+      JSON.stringify({
+        type: "HANDSHAKE_REQUEST",
+        protocolVersion: PROTOCOL_VERSION,
+        role: DevtoolsRole.EXTENSION,
+        extension: { id: "panel-push", name: "Embedded Panel", capabilities: {} },
+      }),
+    );
+    await waitFor(
+      () =>
+        msgs.some(
+          (m) =>
+            (m.type === "STORE_CONNECTED" && m.store?.id === "s-push") ||
+            (m.type === "STORE_REGISTRY" && m.stores?.some((st: AnyMsg) => st.id === "s-push")),
+        ),
+      { label: "store visible to panel" },
+    );
+
+    const before = msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS").length;
+
+    // Nobody asked. The agent should volunteer it.
+    store.registerSlice("late", {
+      state: { n: 0 },
+      when: { keys: [["ui", "increment"]] },
+      reducer: (s: { n: number }) => s,
+    } as ReducerSpec<any, EM>);
+
+    const pushed = await waitFor(
+      () => {
+        const frames = msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS");
+        return frames.length > before ? frames[frames.length - 1] : undefined;
+      },
+      { label: "pushed STORE_SUBSCRIPTIONS" },
+    );
+
+    // And it carries the new slice, with the provenance a panel needs to attribute it.
+    const late = (pushed.reducers as AnyMsg[]).find((r) => r.name === "late");
+    expect(late).toBeDefined();
+    expect(late?.origin).toBe("dynamic");
+  });
+
+  it("does not push a snapshot for the store's own internal registrations", async () => {
+    // `store.call()` mounts and unmounts a reply listener per call. Forwarding those turned
+    // ordinary request/response traffic into two whole-store snapshots per call, which is a
+    // lot of hub bandwidth to describe something the panel does not display.
+    const hub = createLoopbackHub();
+    const store = createStore({
+      name: "internal-quiet",
+      reducer: { counter: counterSpec },
+    });
+    withDevtools(store as never, {
+      port: 0,
+      storeId: "s-quiet",
+      socketFactory: hub.agentSocketFactory,
+    });
+    cleanups.push(() => store.dispose());
+
+    const panel = new hub.WebSocket("ws://loopback");
+    const msgs: AnyMsg[] = [];
+    panel.onmessage = (ev) => msgs.push(JSON.parse(ev.data as string));
+    cleanups.push(() => panel.close());
+    await tick();
+    panel.send(
+      JSON.stringify({
+        type: "HANDSHAKE_REQUEST",
+        protocolVersion: PROTOCOL_VERSION,
+        role: DevtoolsRole.EXTENSION,
+        extension: { id: "panel-quiet", name: "Embedded Panel", capabilities: {} },
+      }),
+    );
+    await waitFor(
+      () =>
+        msgs.some(
+          (m) =>
+            (m.type === "STORE_CONNECTED" && m.store?.id === "s-quiet") ||
+            (m.type === "STORE_REGISTRY" && m.stores?.some((st: AnyMsg) => st.id === "s-quiet")),
+        ),
+      { label: "store visible to panel" },
+    );
+
+    const before = msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS").length;
+
+    (store as never as { registerEffect: (s: unknown) => void }).registerEffect({
+      when: { keys: [["rpc", "ask"]] },
+      effect: async (_e: unknown, _g: unknown, emit: any) => {
+        await emit("rpc", "answer", { ok: true });
+      },
+    });
+    // One push for the effect above, which is a `dynamic` registration and should be seen.
+    await waitFor(
+      () => msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS").length > before,
+      { label: "push for the dynamic effect" },
+    );
+    const afterDynamic = msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS").length;
+
+    await (store as never as { call: (...a: unknown[]) => Promise<unknown> }).call(
+      "rpc",
+      "ask",
+      {},
+      { reply: ["rpc", "answer"] },
+    );
+    await tick();
+    await tick();
+
+    // The call mounted and unmounted a reply listener. Neither should have reached the hub.
+    expect(msgs.filter((m) => m.type === "STORE_SUBSCRIPTIONS").length).toBe(afterDynamic);
+  });
+
+  it("truncates an oversized event payload instead of killing the socket", async () => {
+    // Snapshots have always been bounded; event payloads were not. The hub caps a frame at
+    // 8 MiB and `ws` answers an oversized one by *closing the connection*, not by dropping
+    // the message, so a single large emit ended the session. Faithful binary encoding makes
+    // this reachable in ordinary use: an ArrayBuffer now carries its bytes rather than
+    // serializing to `{}`.
+    const hub = createLoopbackHub();
+    const store = createStore({
+      name: "big-payload",
+      reducer: { counter: counterSpec },
+    });
+    withDevtools(store as never, {
+      port: 0,
+      storeId: "s-big",
+      socketFactory: hub.agentSocketFactory,
+      maxEventBytes: 2_048,
+    });
+    cleanups.push(() => store.dispose());
+
+    const panel = new hub.WebSocket("ws://loopback");
+    const msgs: AnyMsg[] = [];
+    panel.onmessage = (ev) => msgs.push(JSON.parse(ev.data as string));
+    cleanups.push(() => panel.close());
+    await tick();
+    panel.send(
+      JSON.stringify({
+        type: "HANDSHAKE_REQUEST",
+        protocolVersion: PROTOCOL_VERSION,
+        role: DevtoolsRole.EXTENSION,
+        extension: { id: "panel-big", name: "Embedded Panel", capabilities: {} },
+      }),
+    );
+    await waitFor(
+      () =>
+        msgs.some(
+          (m) =>
+            (m.type === "STORE_CONNECTED" && m.store?.id === "s-big") ||
+            (m.type === "STORE_REGISTRY" && m.stores?.some((st: AnyMsg) => st.id === "s-big")),
+        ),
+      { label: "store visible to panel" },
+    );
+
+    await (store as never as { emit: (...a: unknown[]) => Promise<unknown> }).emit(
+      "ui",
+      "increment",
+      "x".repeat(100_000),
+    );
+
+    const evt = await waitFor(
+      () => msgs.find((m) => m.type === "STORE_EVENT"),
+      { label: "STORE_EVENT at panel" },
+    );
+
+    expect(evt.event.truncated).toBe(true);
+    // The frame arrived, and is nowhere near the cap that would have closed the socket.
+    expect(JSON.stringify(evt).length).toBeLessThan(10_000);
+  });
+});

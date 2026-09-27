@@ -17,7 +17,8 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yoltra/yoltra.git"
+    "url": "https://github.com/yoltra/yoltra.git",
+    "directory": "devtools/devtools-storeview"
   },
   "bugs": {
     "url": "https://github.com/yoltra/yoltra/issues"
@@ -34,7 +35,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "sideEffects": true,
   "scripts": {
@@ -42,6 +44,7 @@
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "test": "vitest --coverage --watch=false",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
+    "prepublishOnly": "node ../../common/scripts/copy-license.cjs",
     "docs": "rushx docs:js && rushx docs:md && rushx docs:stamp",
     "docs:stamp": "node ../../tools/repo-tools/bin/docs-stamp.mjs docs",
     "docs:md": "typedoc --options ./typedoc.json",

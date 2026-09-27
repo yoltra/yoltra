@@ -5,8 +5,10 @@
 > 👉 🇲🇽 Versión en Español&nbsp; |
 > &nbsp;[ 🇺🇸 English Versión](./README.md)&nbsp;
 
-![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
-![License](https://badgen.net/npm/license/@yoltra/core)
+[![versión npm](https://img.shields.io/npm/v/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![descargas npm](https://img.shields.io/npm/dm/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![tipos](https://img.shields.io/npm/types/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![Licencia](https://img.shields.io/npm/l/@yoltra/core)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
 
 **Contenedor de estado orientado a eventos, agnóstico de framework, con suscripciones de grano
 fino por ruta.**
@@ -231,7 +233,8 @@ const adminGuard: MiddlewareSpec<AppState, AppEM> = {
   meta: { type: "middleware", name: "adminGuard" },
 };
 
-// Middleware global: se ejecuta para todos los eventos (sincrono: devuelve un boolean, nunca una Promise)
+// Middleware global: se ejecuta para todos los eventos. Sincrono, nunca una Promise: solo un
+// `false` explicito veta, asi que un middleware que solo observa puede no devolver nada.
 const logger = (state, event) => {
   console.log("Event:", event.channel, event.type);
   return true;
@@ -330,6 +333,25 @@ store.onEvent(
   "all",
 );
 ```
+
+### Suscriptores de eventos y viaje en el tiempo
+
+**El replay no llama a tus handlers.** Recorrer una línea de tiempo de DevTools vuelve a reducir
+los eventos, así que el estado sigue el recorrido, pero los handlers de `onEvent` permanecen en
+silencio. Antes se ejecutaban igual que con un evento real, así que arrastrar la línea de tiempo
+volvía a publicar a los pares, a escribir en sockets y a disparar analítica por eventos que no
+estaban ocurriendo de nuevo, sin nada dentro del handler que permitiera notar la diferencia.
+
+Un handler que deriva estado de vista puramente del flujo de eventos, y que no hace E/S, puede
+activarlo:
+
+```ts
+store.onEvent("ui", "save", handler, "committed", { duringReplay: true });
+```
+
+`store.isReplaying` existe para lo que deba ramificar en lugar de simplemente omitirse. Los
+suscriptores gruesos de `subscribe` y las suscripciones de `connect` siguen disparándose, porque
+el estado sí cambió y la interfaz tiene que seguir el recorrido.
 
 ---
 
@@ -577,6 +599,65 @@ const dispose = store.registerReducer("filters", {
 dispose();
 ```
 
+### Decorar un store, con sus tipos
+
+Una slice agregada en runtime era invisible para el sistema de tipos: `registerReducer`
+recibía un `string` y devolvía un disposer, así que nada aguas abajo sabía que la slice
+existía ni qué forma tenía. `withSlice` devuelve **el mismo store, re-tipado**:
+
+```typescript
+type TransferEM = { transfer: { granted: { id: string } } };
+
+const transfers = defineSlice<TransferEM>()({
+  state: { granted: [] as string[] },
+  when: { keys: [["transfer", "granted"]] },
+  reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+});
+
+const app = store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+
+app.getState().transfers.granted; // string[]
+app.emit("transfer", "granted", { id: "a1" }); // el canal nuevo ya es emitible
+```
+
+`withMiddleware` y `withEffect` hacen lo mismo para el mapa de eventos. Las llamadas se
+encadenan, y una librería publica un decorador tomando un store y devolviendo otro:
+
+```typescript
+export function withTransfers<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
+  store: StoreInstance<R, S, EM>,
+  config: TransfersConfig,
+) {
+  return store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+}
+
+// Los decoradores se anidan, en cualquier orden.
+const decorated = withTransfers(withDevtools(store, dtConfig), config);
+```
+
+**Por qué los builders.** El `when` de un spec lleva cadenas de canal y tipo, no tipos de
+payload, así que el mapa de eventos que aporta una decoración no puede inferirse de ahí, y
+TypeScript no tiene inferencia parcial de argumentos de tipo. `defineSlice<EM>()` lo coloca en
+posición de valor, donde la inferencia sí funciona, así que ningún sitio de registro necesita
+un argumento de tipo ni un cast. Una consecuencia que conviene conocer: **una función de
+middleware sin spec nunca puede ampliar el mapa de eventos**, porque el parámetro de evento de
+`MiddlewareFunction` es un tipo mapeado del que no se puede inferir nada de vuelta. Solo la
+forma de spec de `defineMiddleware` puede.
+
+**Es el mismo objeto.** Nada se vuelve a suscribir, ningún estado se mueve, y una llamada
+`store.call()` en vuelo no se ve afectada. Solo cambia el tipo.
+
+**Orden.** Decora en el ámbito del módulo, una vez, antes del primer render. Entre
+`createStore` y la decoración la slice realmente no existe, y un componente que la lea verá
+`undefined` hasta que exista.
+
+**Disposición.** `withSlice` no devuelve disposer a propósito: después de ejecutarlo, el tipo
+ampliado sigue prometiendo una slice que ya no está, y ningún sistema de tipos puede expresar
+"válido hasta esa llamada". Usa `registerSlice` cuando la slice sea tuya y necesites
+desmontarla, y mantén ese disposer privado a la librería. Leer una slice desmontada lanza un
+error con nombre en desarrollo, en lugar de devolver `undefined` desde un tipo que prometía un
+valor.
+
 ---
 
 ## Hot Module Replacement
@@ -604,6 +685,32 @@ if (import.meta.hot) {
   });
 }
 ```
+
+### `replace*` reemplaza lo que tú escribiste, no lo que agregó una librería
+
+Un reducer, middleware o efecto registrado **después** de la construcción, con
+`registerReducer`, `registerMiddleware` o `registerEffect`, sobrevive a una llamada a
+`replace*`. Esos registros nunca formaron parte del conjunto que estás reemplazando: nadie que
+escribe `replaceReducers(myReducers)` quiere decir "y ademas borra la slice que montó devtools,
+junto con su estado".
+
+Antes ocurría lo contrario, lo que hacía que la línea de HMR de arriba borrara la slice de una
+librería y su estado al primer guardado de archivo, sin error y sin advertencia. Es también la
+razón por la que una llamada `store.call()` en vuelo ya no muere a mitad de recarga: su
+listener de respuesta pertenece al propio store.
+
+Pasa `{ scope: "all" }` para el comportamiento anterior, que un arnés de pruebas que reinicia un
+store entre casos sí puede querer:
+
+```typescript
+store.replaceReducers(nextReducers, { scope: "all" });
+store.hotReplace({ reducer: nextReducers, scope: "all" }); // se reenvía a los tres
+```
+
+Una aplicación que declara una slice que una librería ya montó recibe un error que nombra la
+slice, en lugar de una apropiación silenciosa que deja a la librería con un disposer de algo que
+ya no es suyo. En desarrollo, `replace*` registra en nivel debug cuando preservó algo, así que
+"por qué sigue disparándose ese efecto tras la recarga" tiene respuesta.
 
 ---
 
@@ -667,7 +774,8 @@ store.registerEffect({
 | `store.getState()`                              | Obtener snapshot del estado actual (solo lectura)     |
 | `store.subscribe(listener)`                     | Suscripción gruesa (cualquier cambio de estado)       |
 | `store.connect(spec, handler)`                  | Suscripción de grano fino por ruta con wildcards      |
-| `store.onEvent(channel, type, handler, phase?)` | Suscripción a eventos (committed/uncommitted/all)     |
+| `store.onEvent(channel, type, handler, phase?, options?)` | Suscripción a eventos (committed/uncommitted/written/all). Silenciosa durante el replay salvo `{ duringReplay: true }` |
+| `store.onRegistrationChange(observer, opts?)` | Avisa cuando el store gana o pierde un reducer, middleware o efecto |
 | `store.onEffect(channel, type, handler)`        | Shorthand de efecto para un solo evento               |
 | `store.dispose()`                               | Limpiar timers y recursos                             |
 
@@ -675,6 +783,10 @@ store.registerEffect({
 
 | API                                 | Descripción                               |
 | ----------------------------------- | ----------------------------------------- |
+| `store.registerSlice(name, spec, opts?)` | Agrega un slice en runtime; devuelve el store re-tipado y un disposer |
+| `store.withSlice(name, spec, opts?)` | Igual, devolviendo el store re-tipado para encadenar |
+| `store.withMiddleware(mw)`, `store.withEffect(spec)` | Registra y amplía el mapa de eventos |
+| `defineSlice<EM>()`, `defineMiddleware<EM>()`, `defineEffect<EM>()` | Declara el mapa de eventos que aporta un spec |
 | `store.registerReducer(name, spec)` | Agregar un slice en tiempo de ejecución   |
 | `store.registerMiddleware(fn)`      | Agregar middleware en tiempo de ejecución |
 | `store.registerEffect(spec)`        | Agregar un efecto en tiempo de ejecución  |
@@ -683,10 +795,10 @@ store.registerEffect({
 
 | API                                     | Descripción                                 |
 | --------------------------------------- | ------------------------------------------- |
-| `store.replaceReducers(reducers, opts)` | Reemplazar todos los reducers               |
-| `store.replaceMiddleware(middleware)`   | Reemplazar todos los middleware             |
-| `store.replaceEffects(effects)`         | Reemplazar todos los efectos                |
-| `store.hotReplace(partial)`             | Reemplazar cualquier subconjunto de una vez |
+| `store.replaceReducers(reducers, opts)`     | Reemplaza los reducers del spec; los de runtime sobreviven salvo `{ scope: "all" }` |
+| `store.replaceMiddleware(middleware, opts)` | Reemplaza el middleware del spec; misma regla |
+| `store.replaceEffects(effects, opts)`       | Reemplaza los efectos del spec; misma regla   |
+| `store.hotReplace(partial)`                 | Reemplaza cualquier subconjunto; reenvía `scope` |
 
 ### Helpers
 
@@ -810,9 +922,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 8.3 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 9.7 KB | 16 KB |
-| todo | 11.2 KB | 18 KB |
+| `{ createStore }` | 11.5 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 12.8 KB | 16 KB |
+| todo | 14.2 KB | 18 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que públicas una vez que tu empaquetador define
@@ -837,6 +949,10 @@ es algo que nadie escriba.
   Hooks de React y Suspense
 - **[Guia de Inicio Rápido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**:
   Cinco pasos hacia una app funcional
+- **[Actualizar a 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/es/UPGRADE_0.8.md)**:
+  Cinco cambios de comportamiento, y un riesgo si haces rollback
+- **[Guía de Decoración](https://github.com/yoltra/yoltra/blob/main/docs/es/DECORATION_GUIDE.md)**:
+  Agregar una slice, middleware o efecto al store de alguien más, con los tipos
 - **[Arquitectura de Cola de Eventos](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)**:
   Inmersión técnica profunda
 - **[Comparación de Bibliotecas](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**:

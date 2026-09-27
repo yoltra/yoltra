@@ -10,7 +10,7 @@
 
 > **encodeState**(`input`, `options`): [`EncodeResult`](../interfaces/EncodeResult.md)
 
-Defined in: [serialize/codec.ts:90](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L90)
+Defined in: [serialize/codec.ts:232](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L232)
 
 Encodes a value into something `JSON.stringify` can carry losslessly.
 

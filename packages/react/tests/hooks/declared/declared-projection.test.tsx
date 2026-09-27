@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { StoreProvider } from "../../../src/context/StoreProvider";
 import { useAtomicProps } from "../../../src/hooks/hooks";
+import { createYoltra } from "../../../src/createYoltra";
+import type { ReducerSpec } from "@yoltra/core";
 import {
   expandPattern,
   projectDeclared,
@@ -185,5 +187,104 @@ describe("wildcards expand to what they actually match", () => {
     const first = (projected.todo as { items: Array<Record<string, unknown>> }).items[0]!;
     expect("done" in first).toBe(true);
     expect("title" in first).toBe(false);
+  });
+});
+
+describe("the guard applies to the hooks createYoltra hands out", () => {
+  // It did not. `useAtomicProps` had two implementations, and the declared-path guard lived
+  // only in the package-level copy - the one the barrel deliberately steers people away
+  // from. Through `createYoltra`, which the docs recommend, a selector could read state it
+  // never declared, get the right value once, and then never re-render, because the
+  // component is subscribed to the declared paths only. Silently.
+
+  type EM = { ui: { go: number } };
+  const spec: ReducerSpec<{ a: number; b: number }, EM> = {
+    state: { a: 1, b: 2 },
+    when: { keys: [["ui", "go"]] },
+    reducer: (s: { a: number; b: number }, e) => (e.type === "go" ? { ...s, b: s.b + 1 } : s),
+  };
+
+  it("refuses an undeclared read, naming the path", () => {
+    const app = createYoltra({ name: "GuardedApp", reducer: { s: spec } });
+    // React logs the render failure; the assertion is on the throw, not the log.
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      function Probe() {
+        return <>{String(app.useAtomicProps([{ reducer: "s", property: "a" }], (st: any) => st.s.b))}</>;
+      }
+      // Loud in development, because in production this read is `undefined` and the
+      // component simply stops updating - which is the failure worth refusing.
+      expect(() => render(<Probe />)).toThrow(/did not subscribe to/);
+    } finally {
+      err.mockRestore();
+    }
+  });
+
+  it("still delivers what was declared", () => {
+    const app = createYoltra({ name: "GuardedAppOk", reducer: { s: spec } });
+    let seen: unknown;
+    function Probe() {
+      seen = app.useAtomicProps([{ reducer: "s", property: "a" }], (st: any) => st.s.a);
+      return null;
+    }
+    render(<Probe />);
+    expect(seen).toBe(1);
+  });
+});
+
+describe("a glob that covers a container and the paths beneath it", () => {
+  // The shape a real example uses: declare `satellites.**`, then read the array itself and
+  // reduce over it. `**` expands to the container path *and* the paths under it, so the
+  // projection assigned the real array at `satellites` and then tried to write
+  // `satellites.0` into it. State is frozen in development, so that threw; in production it
+  // would have silently mutated the store's own state, which is worse.
+  type EM = { ui: { go: number } };
+  type Fleet = { satellites: Array<{ battery: number; name: string }> };
+
+  const fleet: ReducerSpec<Fleet, EM> = {
+    state: {
+      satellites: [
+        { battery: 50, name: "a" },
+        { battery: 70, name: "b" },
+      ],
+    },
+    when: { keys: [["ui", "go"]] },
+    reducer: (s) => s,
+  };
+
+  it("hands the selector a usable array, and does not touch state", () => {
+    const app = createYoltra({ name: "GlobContainer", reducer: { fleet } });
+    const before = app.store.getState().fleet.satellites;
+
+    let avg: number | undefined;
+    function Probe() {
+      avg = app.useAtomicProps([{ reducer: "fleet", property: "satellites.**" }], (s: any) => {
+        const sats = s.fleet.satellites;
+        return Math.round(sats.reduce((a: number, x: any) => a + x.battery, 0) / sats.length);
+      });
+      return null;
+    }
+
+    expect(() => render(<Probe />)).not.toThrow();
+    expect(avg).toBe(60);
+
+    // The projection is a copy. The store's own array is untouched, and still frozen.
+    expect(app.store.getState().fleet.satellites).toBe(before);
+    expect(before[0]!.battery).toBe(50);
+  });
+
+  it("works for the barrel copy of the hook too", () => {
+    // Both hook sets share one implementation now, so this is a guard against them diverging
+    // again rather than a second behaviour.
+    const app = createYoltra({ name: "GlobContainerBarrel", reducer: { fleet } });
+    let names: string[] | undefined;
+    function Probe() {
+      names = app.useAtomicProps([{ reducer: "fleet", property: "satellites.**" }], (s: any) =>
+        s.fleet.satellites.map((x: any) => x.name),
+      );
+      return null;
+    }
+    render(<Probe />);
+    expect(names).toEqual(["a", "b"]);
   });
 });

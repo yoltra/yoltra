@@ -10,7 +10,7 @@
 
 > **withNodetools**\<`R`, `S`, `EM`\>(`store`, `config`): `StoreInstance`\<`R`, `S`, `EM`\>
 
-Defined in: [withNodetools.ts:64](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/withNodetools.ts#L64)
+Defined in: [withNodetools.ts:76](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/withNodetools.ts#L76)
 
 Wraps a Yoltra store with DevTools instrumentation for Node.js environments.
 

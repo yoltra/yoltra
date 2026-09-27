@@ -33,8 +33,150 @@ type Tagged =
   | { readonly [TAG]: "regexp"; readonly source: string; readonly flags: string }
   | { readonly [TAG]: "error"; readonly name: string; readonly message: string }
   | { readonly [TAG]: "ref"; readonly path: string }
-  | { readonly [TAG]: "unsupported"; readonly kind: string }
+  | { readonly [TAG]: "binary"; readonly kind: BinaryKind; readonly b64: string }
+  | {
+      readonly [TAG]: "unsupported";
+      readonly kind: string;
+      /**
+       * The value's own enumerable properties, when it had any worth keeping.
+       *
+       * A class instance used to encode as a plain object carrying its own props - lossy,
+       * but often good enough for persistence. Replacing that with a bare marker would make
+       * a data-loss *fix* more destructive than the bug, so the props ride along and the
+       * path is still reported in {@link EncodeReport.unsupported}. Lossy and loud, without
+       * being newly lossy.
+       */
+      readonly value?: Record<string, unknown>;
+    }
   | { readonly [TAG]: "escaped"; readonly value: Record<string, unknown> };
+
+/**
+ * The binary views the codec round-trips faithfully.
+ *
+ * @remarks
+ * One tag with a discriminant rather than eleven tags. The constructor name is carried so
+ * {@link decodeState} can restore the right view type rather than handing back bytes.
+ */
+type BinaryKind =
+  | "ArrayBuffer"
+  | "DataView"
+  | "Int8Array"
+  | "Uint8Array"
+  | "Uint8ClampedArray"
+  | "Int16Array"
+  | "Uint16Array"
+  | "Int32Array"
+  | "Uint32Array"
+  | "Float32Array"
+  | "Float64Array"
+  | "BigInt64Array"
+  | "BigUint64Array";
+
+/**
+ * Decode targets, as a frozen allow-list.
+ *
+ * @remarks
+ * **Never `globalThis[kind]`.** A snapshot arrives off a devtools socket or out of
+ * `localStorage`, so `kind` is attacker-influenced input; indexing the global object with it
+ * is an injection vector. An unrecognised kind decodes to `undefined`, exactly like every
+ * other unrecognised tag.
+ *
+ * The prototype is `null`, and lookups go through `Object.hasOwn`. A frozen **object
+ * literal** is not enough: `Object.freeze` stops writes, not inherited reads, so
+ * `kind: "constructor"` resolved to `Object.prototype.constructor` and
+ * `new Object(buffer)` handed the buffer straight back. Same hole as `globalThis[kind]`,
+ * reached by a different road.
+ */
+const BINARY_CONSTRUCTORS = Object.freeze(
+  Object.assign(Object.create(null) as object, {
+    Int8Array,
+    Uint8Array,
+    Uint8ClampedArray,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array,
+    BigInt64Array,
+    BigUint64Array,
+  }),
+) as Readonly<Record<string, { new (buffer: ArrayBufferLike): ArrayBufferView } | undefined>>;
+
+/**
+ * The supported kind a view should round-trip as, or `undefined` if there is none.
+ *
+ * @remarks
+ * Resolved by `instanceof`, not by `constructor.name`. Node's `Buffer` is a `Uint8Array`
+ * subclass and is everywhere, and its name is not in the allow-list, so a name lookup tagged
+ * it `kind: "Buffer"`, reported nothing, and the decoder returned `undefined` for it - a
+ * silent total loss of the value, through `persist` as much as through time travel. The same
+ * applied to `Float16Array` and to any user subclass.
+ *
+ * A subclass therefore comes back as its base. That is lossy, and the caller is told: the
+ * path is added to {@link EncodeReport.unsupported} whenever the resolved kind is not the
+ * constructor's own name.
+ *
+ * @internal
+ */
+function resolveBinaryKind(view: ArrayBufferView): BinaryKind | undefined {
+  const own = view.constructor?.name;
+  if (own !== undefined && Object.prototype.hasOwnProperty.call(BINARY_CONSTRUCTORS, own)) {
+    return own as BinaryKind;
+  }
+  if (view instanceof DataView) return "DataView";
+  for (const name of Object.keys(BINARY_CONSTRUCTORS)) {
+    const Ctor = BINARY_CONSTRUCTORS[name] as unknown as
+      | (abstract new (...args: never[]) => ArrayBufferView)
+      | undefined;
+    if (Ctor !== undefined && view instanceof Ctor) return name as BinaryKind;
+  }
+  return undefined;
+}
+
+/**
+ * Bytes to base64.
+ *
+ * @remarks
+ * Base64 rather than a number array for two reasons that both bite at scale: it costs about
+ * 1.37 JSON characters per byte against roughly 3.5 for `255,`, which decides whether a
+ * snapshot fits {@link encodeStateBounded}'s cap; and it is **one** node where an array of
+ * 100 000 bytes is 100 000 nodes and would exhaust the budget on its own.
+ *
+ * Chunked because `String.fromCharCode.apply` throws `RangeError` somewhere above 64K
+ * arguments, which is not a size a state tree has any trouble reaching.
+ *
+ * @internal
+ */
+function bytesToBase64(bytes: Uint8Array): string {
+  const maybeBuffer = (globalThis as { Buffer?: { from(b: Uint8Array): { toString(e: string): string } } })
+    .Buffer;
+  if (maybeBuffer !== undefined) return maybeBuffer.from(bytes).toString("base64");
+
+  const CHUNK = 0x2000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+
+/** @internal */
+function base64ToBytes(b64: string): Uint8Array {
+  const maybeBuffer = (
+    globalThis as { Buffer?: { from(s: string, e: string): Uint8Array } }
+  ).Buffer;
+  if (maybeBuffer !== undefined) {
+    const buf = maybeBuffer.from(b64, "base64");
+    // Copy out of Node's pooled allocation: a Buffer is a view onto a shared slab, so
+    // handing its `.buffer` to a typed array would expose unrelated memory.
+    return new Uint8Array(buf.subarray(0, buf.length));
+  }
+  const binary = atob(b64);
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) out[i] = binary.charCodeAt(i);
+  return out;
+}
 
 /** Options for {@link encodeState}. */
 export interface EncodeOptions {
@@ -167,6 +309,73 @@ export function encodeState(input: unknown, options: EncodeOptions = {}): Encode
       return value.map((item, index) => walk(item, `${path}/${index}`));
     }
 
+    if (value instanceof ArrayBuffer) {
+      // Charged by size, and charged *before* encoding, so `encodeStateBounded`'s shrink
+      // loop stops an oversized buffer on the next attempt rather than base64-encoding it
+      // again first. Left at one node, a state dominated by a single large buffer would
+      // burn every attempt reducing a budget that was never the reason it overflowed.
+      nodes += Math.ceil(value.byteLength / 64);
+      if (nodes > maxNodes) {
+        truncated = true;
+        return { [TAG]: "unsupported", kind: "truncated" } satisfies Tagged;
+      }
+      return {
+        [TAG]: "binary",
+        kind: "ArrayBuffer",
+        b64: bytesToBase64(new Uint8Array(value)),
+      } satisfies Tagged;
+    }
+    if (ArrayBuffer.isView(value)) {
+      const view = value as ArrayBufferView;
+      // Charged *before* encoding, not after. Charging afterwards meant a 10 MB buffer was
+      // fully base64-encoded on every one of the shrink loop's attempts before the budget
+      // it had just blown was noticed.
+      nodes += Math.ceil(view.byteLength / 64);
+
+      const kind = resolveBinaryKind(view);
+      if (kind === undefined) {
+        // An exotic view with no supported base. Reported, and its bytes kept, rather than
+        // tagged with a kind the decoder will reject.
+        unsupported.push(path);
+        return {
+          [TAG]: "unsupported",
+          kind: view.constructor?.name ?? "ArrayBufferView",
+        } satisfies Tagged;
+      }
+
+      // Only the view's own window, not the whole backing buffer. A decoded view therefore
+      // does not share a buffer with its former siblings - a real fidelity loss, and much
+      // cheaper than carrying the buffer plus every offset.
+      const bytes = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+      const out: Tagged = { [TAG]: "binary", kind, b64: bytesToBase64(bytes) };
+      // A subclass round-trips as its base, which keeps the bytes but loses the subclass.
+      // Reported, because `Buffer` coming back a `Uint8Array` changes what `.toString()`
+      // and `.equals()` do, and silence about that is what this module exists to prevent.
+      if (view.constructor?.name !== kind) unsupported.push(path);
+      return out;
+    }
+
+    // Everything past here is walked with `Object.entries`, which is only faithful for a
+    // plain object. Without this guard a class instance silently lost its prototype, and
+    // nothing anywhere said so.
+    const proto = Object.getPrototypeOf(value as object) as object | null;
+    const ctorName = (value as { constructor?: { name?: string } }).constructor?.name;
+    // `ctorName !== "Object"` is not belt and braces: a cross-realm plain object - from an
+    // iframe, a `vm` context, a worker boundary - has a *different* `Object.prototype` and
+    // would otherwise be reported unsupported for being ordinary.
+    if (proto !== null && proto !== Object.prototype && ctorName !== "Object") {
+      unsupported.push(path);
+      const own: Record<string, unknown> = {};
+      for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+        own[key] = walk(item, `${path}/${escapePointer(key)}`);
+      }
+      return {
+        [TAG]: "unsupported",
+        kind: ctorName ?? "unknown",
+        value: own,
+      } satisfies Tagged;
+    }
+
     const out: Record<string, unknown> = {};
     for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
       out[key] = walk(item, `${path}/${escapePointer(key)}`);
@@ -238,7 +447,37 @@ export function decodeState(input: unknown): unknown {
           error.name = tagged.name;
           return error;
         }
+        case "binary": {
+          const bytes = base64ToBytes(tagged.b64);
+          if (tagged.kind === "ArrayBuffer") {
+            const copy = bytes.slice();
+            byPath.set(path, copy.buffer);
+            return copy.buffer;
+          }
+          if (tagged.kind === "DataView") {
+            const copy = bytes.slice();
+            const view = new DataView(copy.buffer);
+            byPath.set(path, view);
+            return view;
+          }
+          // An own-property check as well as a null prototype: belt and braces on the one
+          // lookup in this file whose key comes from the payload. `hasOwnProperty.call`
+          // rather than `Object.hasOwn`, because `src` targets the oldest runtime the
+          // bundle supports.
+          const Ctor = Object.prototype.hasOwnProperty.call(BINARY_CONSTRUCTORS, tagged.kind)
+            ? BINARY_CONSTRUCTORS[tagged.kind]
+            : undefined;
+          // Unknown kind: same answer as any other unrecognised tag. Never a global lookup.
+          if (Ctor === undefined) return undefined;
+          const restored = new Ctor(bytes.slice().buffer);
+          byPath.set(path, restored);
+          return restored;
+        }
         case "unsupported":
+          // An exotic that kept its own properties decodes to those properties: the same
+          // lossy round-trip it had before the prototype guard existed, rather than a
+          // newly destructive `undefined`. The path was reported at encode time either way.
+          if (tagged.value !== undefined) return walkPlain(tagged.value, path);
           // Nothing faithful to return. `undefined` says "not representable" without pretending.
           return undefined;
         case "ref":

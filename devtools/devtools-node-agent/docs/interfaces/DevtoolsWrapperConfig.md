@@ -92,7 +92,7 @@ developer machine, where the hub warns at startup that it is open.
 
 > `optional` **autoReconnect**: `boolean`
 
-Defined in: [types.ts:129](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L129)
+Defined in: [types.ts:141](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L141)
 
 Whether to automatically reconnect after an unexpected disconnect.
 
@@ -106,7 +106,7 @@ Whether to automatically reconnect after an unexpected disconnect.
 
 > `optional` **baseDelay**: `number`
 
-Defined in: [types.ts:133](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L133)
+Defined in: [types.ts:145](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L145)
 
 Base delay (ms) for exponential backoff between reconnection attempts.
 
@@ -134,7 +134,7 @@ Hub server hostname or IP address.
 
 > `optional` **maxDelay**: `number`
 
-Defined in: [types.ts:135](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L135)
+Defined in: [types.ts:147](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L147)
 
 Maximum delay cap (ms) for exponential backoff.
 
@@ -144,11 +144,33 @@ Maximum delay cap (ms) for exponential backoff.
 
 ***
 
+### maxEventBytes?
+
+> `optional` **maxEventBytes**: `number`
+
+Defined in: [types.ts:97](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L97)
+
+Byte cap for a single event payload or patch value.
+
+#### Remarks
+
+Separate from, and far below, [maxSnapshotBytes](#maxsnapshotbytes): events are frequent and a
+snapshot is not. An oversized frame is answered by the hub closing the socket, not by
+dropping the message, so one large emit used to end the session.
+
+#### Default Value
+
+```ts
+524288 (512 KiB)
+```
+
+***
+
 ### maxReconnectAttempts?
 
 > `optional` **maxReconnectAttempts**: `number`
 
-Defined in: [types.ts:131](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L131)
+Defined in: [types.ts:143](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L143)
 
 Maximum number of reconnection attempts before giving up.
 
@@ -195,7 +217,7 @@ Hub server port number. Required -- there is no default.
 
 > `optional` **sampling**: [`SamplingConfig`](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/docs/interfaces/SamplingConfig.md)
 
-Defined in: [types.ts:127](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L127)
+Defined in: [types.ts:139](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L139)
 
 Sampling configuration defined by the DevTools protocol.
 
@@ -210,7 +232,7 @@ See [@yoltra/devtools-protocol!SamplingConfig](https://github.com/yoltra/yoltra/
 
 > `optional` **sanitize**: (`path`, `value`) => `unknown`
 
-Defined in: [types.ts:109](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L109)
+Defined in: [types.ts:121](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L121)
 
 Redacts a value before it leaves the process.
 
@@ -270,7 +292,7 @@ Providing a stable ID lets the hub correlate a store across restarts.
 
 > `optional` **throttleMs**: `number`
 
-Defined in: [types.ts:119](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L119)
+Defined in: [types.ts:131](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L131)
 
 Throttle interval for DevTools updates (milliseconds).
 

@@ -35,7 +35,10 @@ describe("StoreProvider / StoreContext integration", () => {
 
     // Rendering should throw synchronously.
     expect(() => render(<BadComponent />)).toThrowError(
-      "useStore must be used inside <StoreProvider>",
+      // One message now, not two. The package-level hooks used to carry their own, terser
+      // wording; they delegate to the same implementation `createHooks` returns, whose
+      // message names the fix rather than only the rule.
+      "[yoltra] No store in context",
     );
   });
 });

@@ -15,7 +15,7 @@ import {
   type StoreEvent,
   type StoreMetrics,
 } from "@yoltra/devtools-protocol";
-import { encodeState, encodeStateBounded, decodeState } from "@yoltra/core";
+import { encodeStateBounded, decodeState } from "@yoltra/core";
 import { createPostMessageSocketFactory } from "./postMessage-client";
 
 /**
@@ -37,6 +37,18 @@ const BRIDGE_MARK = "__YOLTRA_DEVTOOLS_BRIDGE__";
  * bytes is refused exactly as one that overshoots by a megabyte.
  */
 const DEFAULT_MAX_SNAPSHOT_BYTES = 6 * 1024 * 1024;
+
+/**
+ * Per-event byte cap for a payload or a single patch value.
+ *
+ * @remarks
+ * Far below the snapshot cap, because events are frequent and a snapshot is not. Unbounded,
+ * one oversized payload produced a frame past the hub's 8 MiB limit, and `ws` answers that
+ * by closing the connection rather than dropping the message: a single large emit ended the
+ * devtools session. Faithful binary encoding makes this reachable in ordinary use, since an
+ * `ArrayBuffer` now carries its bytes instead of serializing to `{}`.
+ */
+const DEFAULT_MAX_EVENT_BYTES = 512 * 1024;
 
 /** Chooses the transport, honouring an explicit one above all. */
 function resolveSocketFactory(
@@ -172,6 +184,7 @@ export function withDevtools<
 
   // Create browser WS client
   const maxSnapshotBytes = config.maxSnapshotBytes ?? DEFAULT_MAX_SNAPSHOT_BYTES;
+  const maxEventBytes = config.maxEventBytes ?? DEFAULT_MAX_EVENT_BYTES;
   // One options object for every encode below: the redaction contract is that NOTHING the
   // agent forwards — snapshot, travel snapshot, payload, patch — skips the hook.
   const sanitize = config.sanitize;
@@ -332,19 +345,7 @@ export function withDevtools<
         }
 
         case "REQUEST_SUBSCRIPTIONS": {
-          const introspection = store.__devtoolsIntrospect();
-          const response = {
-            type: "STORE_SUBSCRIPTIONS",
-            ...baseMsg(),
-            storeId,
-            atomic: introspection.atomic,
-            event: introspection.event,
-            coarse: introspection.coarse,
-            effects: introspection.effects,
-            middleware: introspection.middleware,
-            reducers: introspection.reducers,
-          };
-          wsClient.send(JSON.stringify(response));
+          wsClient.send(JSON.stringify(subscriptionsFrame()));
           break;
         }
 
@@ -398,6 +399,23 @@ export function withDevtools<
     // reconstruction stays correlated (DEV-7). Wire ordering is preserved by the
     // event log's array insertion order, not by this version.
     if (info.committed) snapshotVersion++;
+    // Bounded like a snapshot. A payload is arbitrary application data and can be any
+    // size, and the hub answers an oversized frame by closing the socket rather than
+    // dropping the message.
+    const boundedPayload = encodeStateBounded(
+      info.event.payload,
+      maxEventBytes,
+      encodeOptions,
+    );
+    let patchesTruncated = false;
+    const boundedPatches = info.committed
+      ? patchesFromChange(info.changedPaths, info.prevValues, info.nextValues).map((op) => {
+          if (!("value" in op)) return op;
+          const b = encodeStateBounded(op.value, maxEventBytes, patchEncodeOptions(op.path));
+          if (b.truncated) patchesTruncated = true;
+          return { ...op, value: b.value };
+        })
+      : [];
     const storeEvent: StoreEvent = {
       type: "STORE_EVENT",
       ...baseMsg(),
@@ -408,19 +426,47 @@ export function withDevtools<
         type: info.event.type,
         // Encoded like state: a payload is arbitrary application data, so it can hold the same
         // Map, BigInt or cycle that made a bare stringify throw or quietly destroy it.
-        payload: encodeState(info.event.payload, encodeOptions).value,
+        payload: boundedPayload.value,
+        ...(boundedPayload.truncated ? { truncated: true } : {}),
       },
-      patches: info.committed
-        ? patchesFromChange(info.changedPaths, info.prevValues, info.nextValues).map((op) =>
-            "value" in op
-              ? { ...op, value: encodeState(op.value, patchEncodeOptions(op.path)).value }
-              : op,
-          )
-        : [],
+      patches: boundedPatches,
+      ...(patchesTruncated ? { patchesTruncated: true } : {}),
       snapshotVersion,
       committed: info.committed,
     };
     wsClient.send(JSON.stringify(storeEvent));
+  });
+
+  /** The `STORE_SUBSCRIPTIONS` frame, built from a fresh introspection. */
+  const subscriptionsFrame = () => {
+    const introspection = store.__devtoolsIntrospect();
+    return {
+      type: "STORE_SUBSCRIPTIONS",
+      ...baseMsg(),
+      storeId,
+      atomic: introspection.atomic,
+      event: introspection.event,
+      coarse: introspection.coarse,
+      effects: introspection.effects,
+      middleware: introspection.middleware,
+      reducers: introspection.reducers,
+    };
+  };
+
+  // Pushed, not only answered. `__devtoolsIntrospect()` is a pull, so until now the panel's
+  // subscription list went stale the moment anything was registered at runtime: a decoration
+  // mounting a slice, a hot reload, an `onEvent` added by a component. The panel had no way
+  // to know and no reason to ask again.
+  // The transport buffers while disconnected, so this needs no connection check. Each frame
+  // is a full snapshot, so if several are buffered only the last one carries anything the
+  // earlier ones did not.
+  const registrationUnsub = store.onRegistrationChange((changes) => {
+    // `internal` registrations are the store's own machinery, and `store.call()` mounts and
+    // unmounts a reply listener per call. Forwarding those turned ordinary request/response
+    // traffic into two whole-store snapshots per call, which is a lot of hub bandwidth to
+    // describe something a panel does not display.
+    if (changes.every((c) => c.origin === "internal")) return;
+    wsClient.send(JSON.stringify(subscriptionsFrame()));
   });
 
   // Connect to hub
@@ -431,6 +477,7 @@ export function withDevtools<
   // and folded into store.dispose() so disposing the store also detaches devtools.
   const disposeDevtools = () => {
     instrumentUnsub();
+    registrationUnsub();
     wsClient.disconnect();
     (store as unknown as { __yoltraDevtoolsDispose?: () => void }).__yoltraDevtoolsDispose =
       undefined;

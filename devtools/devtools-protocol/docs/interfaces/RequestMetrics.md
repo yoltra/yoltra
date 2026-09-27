@@ -8,7 +8,7 @@
 
 # Interface: RequestMetrics
 
-Defined in: [messages.ts:221](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L221)
+Defined in: [messages.ts:233](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L233)
 
 Request performance metrics from a store.
 
@@ -50,7 +50,7 @@ Role of the sender.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:223](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L223)
+Defined in: [messages.ts:235](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L235)
 
 ***
 
@@ -72,7 +72,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"REQUEST_METRICS"`
 
-Defined in: [messages.ts:222](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L222)
+Defined in: [messages.ts:234](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L234)
 
 Discriminant field identifying the message type.
 

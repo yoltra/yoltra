@@ -221,7 +221,42 @@ export interface EmitResult {
   readonly written: boolean;
   /** Present when a reducer refused the write. See {@link Rejection}. */
   readonly rejected?: Rejection;
+  /**
+   * Why the event did not commit. Absent when it did.
+   *
+   * @remarks
+   * `committed: false` used to arrive from three unrelated causes through one shared frozen
+   * object, so a caller could not tell a guard refusing an action from a double-click being
+   * deduplicated - which want opposite responses. A submit button should show the refusal and
+   * say nothing about the duplicate.
+   *
+   * See {@link EmitResult.vetoedBy} for which middleware refused it.
+   */
+  readonly reason?: NotCommittedReason;
+  /**
+   * The name of the middleware that vetoed, when it declared one through `meta.name`.
+   *
+   * @remarks
+   * A reducer refusal has always named its slice, through `rejectedBy` and `onRejected`. A
+   * middleware veto named nobody, so "the event vanished" had no attribution at all. A bare
+   * middleware function contributes its own function name; an anonymous one leaves this
+   * absent.
+   */
+  readonly vetoedBy?: string;
 }
+
+/**
+ * Why an event did not commit.
+ *
+ * @remarks
+ * - `vetoed` - middleware returned `false`, or threw.
+ * - `deduped` - an identical event was seen inside the dedup window.
+ * - `cascade` - the event exceeded `maxReduceDepth` or the per-drain transition ceiling, so
+ *   the store refused it rather than letting a cycle run away.
+ *
+ * @public
+ */
+export type NotCommittedReason = "vetoed" | "deduped" | "cascade";
 
 /**
  * Options for {@link StoreInstance.connect}.
@@ -471,7 +506,10 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
   /**
    * Middleware chain executed before reducers/effects.
    * Accepts either functions (legacy) or MiddlewareSpec objects (recommended).
-   * If any middleware returns false (or resolves to false), the event will not propagate.
+   *
+   * An event stops propagating only when a middleware returns an explicit `false`, or
+   * throws. Returning nothing allows it. Middleware is synchronous: a `Promise` is not
+   * `false`, so it cannot veto.
    */
   middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
 
@@ -567,6 +605,23 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * @param slice - Name of the slice whose reducer threw.
    */
   onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
+
+  /**
+   * Called when an `onEvent` subscriber throws, or rejects.
+   *
+   * @remarks
+   * The fourth of a set: reducers, effects, rejections and cascades all had a hook, and event
+   * subscribers had `console.error` and nothing else - so an application could not route a
+   * failing subscriber to its own error reporting. Subscribers are the seam a decoration is
+   * told to use, which makes the gap more visible than it was.
+   *
+   * A throwing subscriber never stops the others, with or without this hook.
+   */
+  onSubscriberError?: (
+    error: unknown,
+    event: EventUnion<EM>,
+    phase: NotifiedPhase,
+  ) => void;
 
   /**
    * Maximum causal depth of an event chain before the store refuses to extend it.
@@ -687,7 +742,7 @@ export interface StoreInstance<
   R extends string = string,
   S extends Record<R, any> = Record<string, any>,
   EM extends EventMapBase = EventMapBase,
-> {
+> extends StoreDecoration<R, S, EM> {
   /**
    * Store name (used by DevTools to identify the instance).
    */
@@ -766,17 +821,25 @@ export interface StoreInstance<
   /**
    * Register a post-reducer effect (sees final state). Returns an unsubscribe.
    */
-  registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): Unsubscribe;
+  registerEffect<Spec extends EffectSpec<any, any>>(
+    spec: Spec,
+  ): Unsubscribe & { store: DecoratableStore<R, S, Merge<EM, EMAddOf<Spec>>>; dispose(): void };
 
   /**
    * Dynamically add middleware, in either the function or the spec form.
    */
-  registerMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): Unsubscribe;
+  registerMiddleware<M extends MiddlewareInput<any, any>>(
+    mw: M,
+  ): Unsubscribe & { store: DecoratableStore<R, S, Merge<EM, EMAddOf<M>>>; dispose(): void };
 
   /**
    * Dynamically add/remove a namespaced reducer slice at runtime.
    */
-  registerReducer(name: string, spec: ReducerSpec<any, EM>): Unsubscribe;
+  registerReducer(
+    name: string,
+    spec: ReducerSpec<any, EM>,
+    options?: { owner?: string },
+  ): Unsubscribe & { store: StoreInstance<string, Record<string, any>, EM>; dispose(): void };
 
   /**
    * Cleanup resources (timers, etc.) when disposing the store.
@@ -794,7 +857,10 @@ export interface StoreInstance<
    * **Phases:**
    * - `'committed'` (default): Events that passed middleware and reached reducers
    * - `'uncommitted'`: Events rejected by middleware
-   * - `'all'`: Both committed and uncommitted events (handler receives phase parameter)
+   * - `'written'`: Events that actually changed state
+   * - `'all'`: Both committed and uncommitted events (handler receives phase parameter).
+   *   Deliberately not `written` as well: an event that writes is also committed, so folding
+   *   it in would notify every existing `all` subscriber twice for one event.
    *
    * @typeParam C - Channel key within `EM`.
    * @typeParam T - Event type key within channel `C`.
@@ -830,21 +896,90 @@ export interface StoreInstance<
     type: T,
     handler: NarrowedEventHandler<DeepReadonly<S>, EM, C, T>,
     phase?: EventPhase,
+    options?: {
+      /**
+       * Also call this handler while devtools is replaying, which it does not by default.
+       *
+       * @remarks
+       * Opt in only for a handler that derives view state purely from the event stream and
+       * performs no I/O. A handler that publishes, writes or notifies must stay out: replay
+       * is a debugging operation, and a scrub of the timeline should not reach a peer, a
+       * socket or an analytics endpoint.
+       */
+      duringReplay?: boolean;
+    },
   ): Unsubscribe;
+
+  /**
+   * Called when the store gains or loses a reducer, middleware or effect.
+   *
+   * @remarks
+   * A push seam, because `__devtoolsIntrospect()` is pull-only: a devtools panel's
+   * subscription list goes stale the moment a decoration mounts anything, and a library that
+   * needs to react to another library has nothing to wait on.
+   *
+   * Delivered as an **array, one batch per public call**. `replaceReducers` unmounts and then
+   * remounts, so between those steps a slice that is merely being updated does not exist; a
+   * per-change observer would see a spurious unmount. `hotReplace` delivers a single batch
+   * spanning all three kinds.
+   *
+   * Observers run **after** the state broadcast, so the view layer has already been told a
+   * fact before a library gets to react to it. A registration made *by* an observer is
+   * legitimate and is queued rather than delivered re-entrantly: depth-first work,
+   * breadth-first notification, so no observer ever sees a half-built topology.
+   *
+   * Synchronous. A `Promise` returned from an observer is not awaited, and is reported in
+   * development, because the store has already moved on by the time it would resolve.
+   *
+   * **Replay never produces a change.** `__replayEvents` and `__applyExternalState` alter
+   * state and never topology, so there is no `duringReplay` option here and none is needed.
+   *
+   * `dispose()` fires nothing: the store is going away, not being dismantled slice by slice.
+   *
+   * @param observer - Receives one batch per registration change.
+   * @param options - `emitCurrent` synthesizes a `"mounted"` batch for everything already
+   * installed, delivered synchronously before this call returns. Spec-time registrations
+   * happen inside `createStore`, so a decorator applied afterwards never saw them arrive;
+   * this closes that gap without a separate pull API to race against. The synthesized
+   * changes carry their **real** origins, never a synthetic marker, because filtering on
+   * provenance is the main thing an observer does.
+   * @returns Unsubscribe function.
+   */
+  onRegistrationChange(
+    observer: RegistrationObserver<EM>,
+    options?: { emitCurrent?: boolean },
+  ): Unsubscribe;
+
+  /**
+   * `true` while devtools is applying a snapshot or replaying events.
+   *
+   * @remarks
+   * For anything that must branch rather than simply skip. Most code needs nothing: replay
+   * does not notify event subscribers unless they opted in.
+   *
+   * A getter, so destructuring it takes a snapshot rather than a live view.
+   */
+  readonly isReplaying: boolean;
 
   /**
    * Replaces the entire middleware pipeline (HMR-friendly).
    *
    * @param next - New middleware array.
    */
-  replaceMiddleware(next: MiddlewareFunction<DeepReadonly<S>, EM>[]): void;
+  replaceMiddleware(
+    next: MiddlewareInput<DeepReadonly<S>, EM>[],
+    opts?: { scope?: ReplaceScope },
+  ): void;
 
   /**
    * Replaces all registered effects (HMR-friendly).
    *
    * @param next - New effects array (as EffectSpecs).
    */
-  replaceEffects(next: Array<EffectSpec<DeepReadonly<S>, EM>>): void;
+  replaceEffects(
+    next: Array<EffectSpec<DeepReadonly<S>, EM>>,
+    opts?: { scope?: ReplaceScope },
+  ): void;
 
   /**
    * Replaces the entire reducer set (HMR-friendly).
@@ -854,7 +989,7 @@ export interface StoreInstance<
    */
   replaceReducers(
     next: Record<R, ReducerSpec<S[R], EM>>,
-    opts?: { preserveState?: boolean },
+    opts?: { preserveState?: boolean; scope?: ReplaceScope },
   ): void;
 
   /**
@@ -867,6 +1002,7 @@ export interface StoreInstance<
     middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
     effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
     preserveState?: boolean;
+    scope?: ReplaceScope;
   }): void;
 
   /**
@@ -895,11 +1031,23 @@ export interface StoreInstance<
    * @internal
    */
   __devtoolsIntrospect(): {
-    reducers: Array<{ name: string; when?: unknown }>;
-    effects: Array<{ channel: string; type: string; name?: string; description?: string }>;
-    middleware: Array<{ name?: string; description?: string; when?: unknown }>;
+    reducers: Array<{ name: string; when?: unknown; origin: Origin; owner?: string }>;
+    effects: Array<{
+      channel: string;
+      type: string;
+      name?: string;
+      description?: string;
+      origin: Origin;
+    }>;
+    middleware: Array<{
+      name?: string;
+      description?: string;
+      when?: unknown;
+      origin: Origin;
+    }>;
     atomic: Array<{ reducer: string; property: string }>;
-    event: Array<{ channel: string; type: string; phase: string }>;
+    /** `duringReplay` says whether a subscription hears replayed events. */
+    event: Array<{ channel: string; type: string; phase: string; duringReplay: boolean }>;
     coarse: number;
     dedupHits: number;
     queueDepth: number;
@@ -935,8 +1083,8 @@ export interface StoreInstance<
  * @typeParam EM - Event map.
  *
  * @remarks
- * Use `when` for event targeting (preferred). The `events` property is
- * kept for backward compatibility but `when` is recommended for new code.
+ * Use `when` for event targeting. An earlier `events` array was removed; this remark
+ * outlived it and described a property that no longer exists.
  *
  * @example
  * Using `when` (recommended)
@@ -1058,12 +1206,24 @@ export type EventUnion<EM extends EventMapBase> = {
 
 /**
  * Middleware function: log, guard, or veto an event **synchronously**.
- * Return `true` to continue, `false` to swallow / cancel propagation.
  *
  * @remarks
+ * **Only an explicit `false` vetoes.** Returning `true`, or returning nothing at all, allows
+ * the event, so middleware that only logs or measures can simply fall off the end.
+ *
+ * The return type is `boolean | void` rather than `boolean` for that reason: under these
+ * semantics an omitted `return` is correct, so making the compiler demand one would be
+ * wrong. It was `boolean` while any falsy value vetoed, which made a missing `return`
+ * silently swallow every event the middleware matched.
+ *
  * Middleware runs in the synchronous reduce phase (so `getState()` is correct
  * immediately after `emit()`), and therefore must be synchronous. Perform async
- * work in effects instead.
+ * work in effects instead - a `Promise` is not `false`, so an async middleware allows the
+ * event while it is still deciding, and the store logs an error in development when it sees
+ * one returned.
+ *
+ * A middleware that **throws** vetoes the event and logs, naming the event: a guard that
+ * crashed has not decided the event is safe.
  *
  * @typeParam S  - Store state (readonly).
  * @typeParam EM - Event map.
@@ -1074,7 +1234,7 @@ export type MiddlewareFunction<S = any, EM extends EventMapBase = EventMapBase> 
   state: S,
   event: EventUnion<EM>,
   emit: Emit<EM>,
-) => boolean;
+) => boolean | void;
 
 /**
  * Middleware specification with optional event targeting and metadata.
@@ -1592,6 +1752,107 @@ export type EventSubscriptionHandler<S = any, EM extends EventMapBase = EventMap
 ) => void | Promise<void>;
 
 /**
+ * One change to a store's registrations.
+ *
+ * @remarks
+ * Self-sufficient on purpose: an observer should never need a follow-up
+ * `__devtoolsIntrospect()` call to act on what it was told.
+ *
+ * @public
+ */
+export interface RegistrationChange<EM extends EventMapBase = EventMapBase> {
+  readonly kind: "reducer" | "middleware" | "effect";
+  readonly op: "mounted" | "unmounted";
+  /** Slice name for a reducer; `meta.name` for middleware and effects; absent when unnamed. */
+  readonly name?: string;
+  readonly origin: Origin;
+  /** Introspection only, and only ever what a library passed. */
+  readonly owner?: string;
+  readonly description?: string;
+  /**
+   * The **normalized** matcher, as `matchesWhen` will actually use it.
+   *
+   * @remarks
+   * Not the raw spec's `when`. `registerEffect` normalizes three ways, including turning no
+   * targeting at all into `{ any: true }`, so handing back the raw form would describe
+   * something other than what will fire.
+   */
+  readonly when?: When<EM>;
+  /**
+   * Reducers only: what happened to the slice's state.
+   *
+   * @remarks
+   * Four values, and the fourth is the one that matters. `replaceReducers` updates an
+   * existing slice by unmounting it with its state intact and remounting, so an observer
+   * treating every `"unmounted"` as destruction would tear down a subscription it is about
+   * to need. `"retained"` says the state survived; `"deleted"` says it did not.
+   */
+  readonly state?: "initialized" | "preserved" | "deleted" | "retained";
+  /** Whether this registration is dispatched by key (O(1)) or by runtime matching. */
+  readonly dispatch?: "keyed" | "pattern";
+}
+
+/**
+ * Observer for {@link StoreInstance.onRegistrationChange}.
+ *
+ * @public
+ */
+export type RegistrationObserver<EM extends EventMapBase = EventMapBase> = (
+  changes: readonly RegistrationChange<EM>[],
+) => void;
+
+/**
+ * Where a registration came from.
+ *
+ * @remarks
+ * The distinction already existed in the API surface and simply was not honoured. `replace*`
+ * exists to replace *what the application authored*; a registration a library made through
+ * `registerReducer` / `registerMiddleware` / `registerEffect` after construction was never in
+ * that set, and no caller of `replaceReducers(myReducers)` means "and also delete the slice
+ * devtools or a decoration mounted".
+ *
+ * - `spec` - supplied to `createStore`, or installed by a `replace*` call.
+ * - `dynamic` - registered after construction, which is the only way to decorate a store
+ *   that already exists.
+ * - `internal` - the store's own machinery, currently the reply listener behind
+ *   `store.call()`. Preserved even under `{ scope: "all" }`, because a test harness resetting
+ *   a store between cases never means "and abandon the call that is in flight".
+ *
+ * Recorded internally. No public signature takes it, and **no library declares it**: getting
+ * this right must not depend on anyone remembering to pass a string.
+ *
+ * @public
+ */
+export type Origin = "spec" | "dynamic" | "internal";
+
+/**
+ * Which registrations a `replace*` call is allowed to remove.
+ *
+ * @remarks
+ * `"spec"` is the default and replaces only what the application authored. `"all"` restores
+ * the pre-0.8.0 behaviour exactly, for a caller that genuinely wants it, such as a test
+ * harness resetting a store between cases. `internal` registrations survive both.
+ *
+ * @public
+ */
+export type ReplaceScope = "spec" | "all";
+
+/**
+ * One `onEvent` subscription: the handler plus whether it asked to hear replayed events.
+ *
+ * @remarks
+ * An entry per subscription rather than the bare handler, for two reasons. It is where the
+ * replay opt-in lives; and it gives each subscription its own identity, so two subscriptions
+ * sharing one handler function are two Set members and disposing one no longer removes both.
+ *
+ * @internal
+ */
+export interface EventSubscriberEntry<S, EM extends EventMapBase> {
+  readonly handler: EventSubscriptionHandler<S, EM>;
+  readonly duringReplay: boolean;
+}
+
+/**
  * Narrowed event subscription handler for specific `(channel, type)` pairs.
  * Provides better type inference when subscribing to a single event type.
  *
@@ -1626,3 +1887,351 @@ export type NarrowedEventHandler<
   emit: Emit<EM>,
   phase: NotifiedPhase,
 ) => void | Promise<void>;
+// ============================================
+// Typed growth: decorating a store after construction
+// ============================================
+
+/**
+ * Flattens an intersection into a single object type.
+ *
+ * @remarks
+ * Chaining decorations produces `S & Record<"a", A> & Record<"b", B>`, which is correct but
+ * displays as an intersection in every hover and error message. This collapses it.
+ *
+ * Apply it at the **top level only**. It is a homomorphic mapped type, so running it over a
+ * slice whose state *is* a `Map`, `Set` or `Date` destroys that type - the same failure
+ * {@link DeepReadonly} handles the built-ins explicitly to avoid.
+ *
+ * @public
+ */
+export type Prettify<T> = { [K in keyof T]: T[K] } & {};
+
+/**
+ * Merges `B` into `A`, flattening the result. An empty `B` leaves `A` untouched, so a
+ * decoration that adds no events costs nothing at the type level.
+ *
+ * @public
+ */
+export type Merge<A, B> = [keyof B] extends [never] ? A : Prettify<A & B>;
+
+/**
+ * The slice-name union after adding `N`.
+ *
+ * @remarks
+ * The `string extends N` guard is load-bearing. Passing a `string`-typed variable rather than
+ * a literal would otherwise widen the union to `string`, and every `S[R1]` lookup downstream
+ * would resolve to the union of every slice's state - silently destroying `useAtomicProp`
+ * inference across the whole application. Degrading to "no widening" is the safe failure.
+ *
+ * @public
+ */
+export type WidenNames<R extends string, N extends string> = string extends N ? R : R | N;
+
+/**
+ * The state record after adding slice `N` with state `St`. Degrades to `S` when `N` is not a
+ * string literal, for the reason given on {@link WidenNames}.
+ *
+ * @public
+ */
+export type WidenState<S, N extends string, St> = string extends N
+  ? S
+  : Prettify<S & Record<N, St>>;
+
+/**
+ * Phantom carrier for the event map a spec contributes.
+ *
+ * @remarks
+ * `EMAdd` cannot be inferred from a spec's `when`: `{ keys: [["chan", "evt"]] }` carries
+ * channel and type strings and no payload types, so there is nothing to infer a map from. And
+ * TypeScript has no partial type-argument inference, so a `registerSlice<N, St, EMAdd>` would
+ * force a caller who names `EMAdd` to hand-write `N` and `St` too.
+ *
+ * The way out is to put `EMAdd` in a **value** position, where inference works. The builders
+ * ({@link defineSlice}, {@link defineMiddleware}, {@link defineEffect}) brand a spec with this
+ * interface, and the register methods read it back with {@link EMAddOf}. Nothing exists at
+ * runtime; the property is never assigned.
+ *
+ * The property is **required, not optional**: an optional one makes
+ * `X extends EventMapCarrier<infer E>` match every object and infer `unknown`. And it is a
+ * *function* type so `EMAdd` sits in both co- and contravariant position, which keeps the
+ * inference exact rather than widening to a supertype.
+ *
+ * @public
+ */
+export interface EventMapCarrier<EMAdd extends EventMapBase> {
+  /** Phantom. Never present at runtime, and never read. */
+  readonly "~yoltraEventMap": (em: EMAdd) => EMAdd;
+}
+
+/**
+ * Reads the event map a spec contributes, or `{}` when it declares none.
+ *
+ * @remarks
+ * Only a branded spec widens the event map. An unbranded object literal contributes `{}`,
+ * which is today's behaviour and therefore always safe.
+ *
+ * @public
+ */
+export type EMAddOf<X> = X extends { readonly "~yoltraEventMap": (em: infer E) => unknown }
+  ? E extends EventMapBase
+    ? E
+    : EmptyEventMap
+  : EmptyEventMap;
+
+/**
+ * The event map a spec contributes when it declares none.
+ *
+ * @remarks
+ * `Record<never, never>` rather than `{}`: the bare empty-object type accepts any non-nullish
+ * value, including `0` and `""`, so it would let nonsense through {@link Merge}. This has no
+ * keys, which is the actual claim being made, and {@link Merge} short-circuits on it.
+ *
+ * @public
+ */
+export type EmptyEventMap = Record<never, never>;
+
+/**
+ * Reads a reducer spec's state type.
+ *
+ * @public
+ */
+export type StateOfSpec<X> = X extends ReducerSpec<infer St, any> ? St : never;
+
+/**
+ * What a decoration contributes to a store: some slices, some events, either possibly empty.
+ *
+ * @remarks
+ * Phantom. Never constructed, and never present at runtime; it exists so a library can state
+ * its contribution once and have {@link Decorated} and {@link StoreDecorator} read it back.
+ *
+ * @example
+ * ```ts
+ * type TransfersDecoration = Decoration<{ transfers: TransferState }, TransfersEM>;
+ * ```
+ *
+ * @public
+ */
+export interface Decoration<
+  AddS extends Record<string, any> = Record<never, never>,
+  AddEM extends EventMapBase = EmptyEventMap,
+> {
+  readonly slices: AddS;
+  readonly events: AddEM;
+}
+
+/**
+ * The store type that results from applying a {@link Decoration}.
+ *
+ * @public
+ */
+export type Decorated<R extends string, S extends Record<R, any>, EM extends EventMapBase, D> =
+  D extends Decoration<infer AddS, infer AddEM>
+    ? StoreInstance<
+        WidenNames<R, keyof AddS & string>,
+        SatisfiesSlices<Prettify<S & AddS>, WidenNames<R, keyof AddS & string>>,
+        Merge<EM, AddEM>
+      >
+    : never;
+
+/**
+ * The shape a `withX(store, config)` decorator conforms to, with `config` curried away.
+ *
+ * @remarks
+ * **Generic over the incoming store on purpose**, and that is what makes composition work
+ * rather than a variance rule. `R`, `S` and `EM` are inference sites, so at each call in a
+ * nest TypeScript instantiates them from whatever the argument actually is: an EM-only
+ * decorator nested inside one that also adds a slice infers the already-widened `R` and `S`
+ * and carries them through untouched. Either order composes, and nothing is lost.
+ *
+ * Nesting is the composition mechanism; there is no `pipe`. Every decorator takes
+ * `(store, config)`, so each step in a pipe needs a lambda to become unary, which makes
+ * `pipe(store, s => withA(s, cfgA), s => withB(s, cfgB))` **longer** than
+ * `withB(withA(store, cfgA), cfgB)`. A pipe only pays for curried decorators, which would be
+ * a different convention from the one `withDevtools` already set.
+ *
+ * A dependency on another decoration needs no registry either: constrain the input.
+ * `EM extends EventMapBase & RequiredEM` fails at the call site naming the channels that are
+ * missing, and still composes, because TypeScript infers `EM` and then checks the constraint.
+ *
+ * @example
+ * ```ts
+ * export function withTransfers<
+ *   R extends string,
+ *   S extends Record<R, any>,
+ *   EM extends EventMapBase,
+ * >(store: StoreInstance<R, S, EM>, config: TransfersConfig) {
+ *   return store.withSlice("transfers", defineSlice<TransfersEM>()({ ... }), {
+ *     owner: "@scope/transfers",
+ *   });
+ * }
+ * ```
+ *
+ * @public
+ */
+export type StoreDecorator<D extends Decoration<any, any>> = <
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+>(
+  store: StoreInstance<R, S, EM>,
+) => Decorated<R, S, EM, D>;
+
+/**
+ * A store that can be decorated, and whose type grows as it is.
+ *
+ * @public
+ */
+export type DecoratableStore<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+> = StoreInstance<R, S, EM>;
+
+/**
+ * Proves to the compiler that a widened state record still covers every slice name.
+ *
+ * @remarks
+ * `StoreInstance` constrains `S extends Record<R, any>`, and TypeScript cannot correlate
+ * {@link WidenState} with {@link WidenNames} well enough to see that the widened record
+ * always carries the widened key set - both branch on `string extends N`, but it checks each
+ * in isolation.
+ *
+ * The intersection is with `unknown`, **never `any`**. `T & unknown` reduces to `T`, so every
+ * slice keeps its exact type; `T & any` is `any`, which silently collapses every slice's
+ * state and destroys the inference this feature exists to provide. That was a real bug caught
+ * by the spike, and it is the reason this helper is written out rather than inlined.
+ *
+ * @public
+ */
+export type SatisfiesSlices<T, K extends string> = Prettify<T & Record<K, unknown>>;
+
+/**
+ * The store type after mounting slice `N` from `Spec`.
+ *
+ * @public
+ */
+export type WidenedSlice<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+  N extends string,
+  Spec,
+> = DecoratableStore<
+  WidenNames<R, N>,
+  SatisfiesSlices<WidenState<S, N, StateOfSpec<Spec>>, WidenNames<R, N>>,
+  Merge<EM, EMAddOf<Spec>>
+>;
+
+/**
+ * The registration surface whose return types carry the widening.
+ *
+ * @remarks
+ * Every method returns the **same runtime object**, re-typed. Subscriptions, effects,
+ * middleware, the dedup cache, both buses and any in-flight `call()` are untouched; the only
+ * runtime effect is the registration itself.
+ *
+ * Note there is no explicit type parameter for the added event map anywhere. It is inferred
+ * from a single value position, so the partial-inference problem never arises and no call
+ * site needs a type argument or a cast.
+ *
+ * @public
+ */
+export interface StoreDecoration<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+> {
+  /**
+   * Mounts a slice and hands back both the widened store and a disposer.
+   *
+   * The disposer is **library-private**: after it runs, the widened type still promises a
+   * slice that is gone. Application code should take {@link StoreDecoration.withSlice}
+   * instead, which returns no disposer at all.
+   */
+  registerSlice<N extends string, Spec extends ReducerSpec<any, any>>(
+    name: N,
+    spec: Spec,
+    options?: { owner?: string },
+  ): Unsubscribe & { store: WidenedSlice<R, S, EM, N, Spec>; dispose(): void };
+
+  /** Mounts a slice and returns the widened store, for chaining. */
+  withSlice<N extends string, Spec extends ReducerSpec<any, any>>(
+    name: N,
+    spec: Spec,
+    options?: { owner?: string },
+  ): WidenedSlice<R, S, EM, N, Spec>;
+
+  /**
+   * Registers middleware and returns the store widened by whatever event map it declares.
+   *
+   * Only the **spec form** can widen: `MiddlewareFunction`'s event parameter is
+   * `EventUnion<EM>`, a mapped type TypeScript cannot infer `EM` back out of. A bare function
+   * therefore contributes `{}`.
+   */
+  withMiddleware<M extends MiddlewareInput<any, any>>(
+    mw: M,
+  ): DecoratableStore<R, S, Merge<EM, EMAddOf<M>>>;
+
+  /** Registers an effect and returns the store widened by whatever event map it declares. */
+  withEffect<Spec extends EffectSpec<any, any>>(
+    spec: Spec,
+  ): DecoratableStore<R, S, Merge<EM, EMAddOf<Spec>>>;
+}
+
+/**
+ * Declares a reducer spec together with the event map it contributes.
+ *
+ * @remarks
+ * Curried so `EMAdd` is named once and `St` is inferred from `state`, which is what lets every
+ * registration site stay free of type arguments. Identity at runtime.
+ *
+ * @example
+ * ```ts
+ * type LibEM = { "lib.transfer": { granted: { id: string } } };
+ *
+ * const transfers = defineSlice<LibEM>()({
+ *   state: { granted: [] as string[] },
+ *   when: { keys: [["lib.transfer", "granted"]] },
+ *   reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+ * });
+ *
+ * const widened = store.withSlice("transfers", transfers);
+ * // widened.getState().transfers.granted is string[], and `lib.transfer` is emittable
+ * ```
+ *
+ * @public
+ */
+export const defineSlice =
+  <EMAdd extends EventMapBase>() =>
+  <St>(spec: ReducerSpec<St, EMAdd>): ReducerSpec<St, EMAdd> & EventMapCarrier<EMAdd> =>
+    spec as ReducerSpec<St, EMAdd> & EventMapCarrier<EMAdd>;
+
+/**
+ * Declares a middleware spec together with the event map it contributes.
+ *
+ * @remarks
+ * The spec form is the **only** form that can widen an event map. Identity at runtime.
+ *
+ * @public
+ */
+export const defineMiddleware =
+  <EMAdd extends EventMapBase, St = any>() =>
+  (
+    spec: MiddlewareSpec<DeepReadonly<St>, EMAdd>,
+  ): MiddlewareSpec<DeepReadonly<St>, EMAdd> & EventMapCarrier<EMAdd> =>
+    spec as MiddlewareSpec<DeepReadonly<St>, EMAdd> & EventMapCarrier<EMAdd>;
+
+/**
+ * Declares an effect spec together with the event map it contributes.
+ *
+ * @remarks
+ * Identity at runtime.
+ *
+ * @public
+ */
+export const defineEffect =
+  <EMAdd extends EventMapBase, St = any>() =>
+  (
+    spec: EffectSpec<DeepReadonly<St>, EMAdd>,
+  ): EffectSpec<DeepReadonly<St>, EMAdd> & EventMapCarrier<EMAdd> =>
+    spec as EffectSpec<DeepReadonly<St>, EMAdd> & EventMapCarrier<EMAdd>;

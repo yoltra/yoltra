@@ -5,8 +5,10 @@
 > 👉 🇲🇽 Versión en Español&nbsp; |
 > &nbsp;[ 🇺🇸 English Versión](./README.md)&nbsp;
 
-![npm downloads](https://badgen.net/npm/dm/@yoltra/react)
-![License](https://badgen.net/npm/license/@yoltra/react)
+[![versión npm](https://img.shields.io/npm/v/@yoltra/react)](https://www.npmjs.com/package/@yoltra/react)
+[![descargas npm](https://img.shields.io/npm/dm/@yoltra/react)](https://www.npmjs.com/package/@yoltra/react)
+[![tipos](https://img.shields.io/npm/types/@yoltra/react)](https://www.npmjs.com/package/@yoltra/react)
+[![Licencia](https://img.shields.io/npm/l/@yoltra/react)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
 
 **Hooks de React para [yoltra](../../README.md) con
 suscripciones de grano fino por ruta.**
@@ -139,6 +141,40 @@ Provee el store con `<AppStoreContext.Provider value={store}>` en tu raíz.
 
 ---
 
+## Agregar a un store, con sus tipos
+
+Una librería puede montar una slice en un store que no creó, y los hooks crecen para conocerla.
+`withSlice`, `withMiddleware` y `withEffect` devuelven un `Yoltra` cuyos tipos se ampliaron.
+
+```tsx
+import { defineSlice } from "@yoltra/core";
+
+// Ámbito de módulo, una sola vez, antes del primer render.
+export const app = createYoltra({ name: "App", reducer: { counter } })
+  .withSlice("transfers", defineSlice<TransferEM>()({ ... }));
+
+export const { useAtomicProp, useEmit } = app;
+
+// Tipado, sobre una slice que la aplicación nunca declaró.
+const granted = useAtomicProp({ reducer: "transfers", property: "granted" });
+```
+
+Tres cosas que conviene saber:
+
+- **Ámbito de módulo, una vez, antes del primer render.** Cada llamada construye un conjunto
+  nuevo de hooks, porque `createHooks` asigna funciones nuevas. Llamarla dentro de un componente
+  le daría a React un `useAtomicProp` distinto en cada render.
+- **El store y el contexto son los mismos objetos.** Solo cambian los tipos, así que un
+  `<StoreProvider>` de cualquier vista de la cadena sirve a los hooks de todas las demás, y la
+  caché de Suspense se comparte.
+- **También existen las funciones libres**, para una librería que recibe un `Yoltra` que no creó:
+  `withSlice(yoltra, name, spec)`.
+
+El contrato completo, incluido qué hacer con la disposición, está en la
+[guía de decoración](https://github.com/yoltra/yoltra/blob/main/docs/es/DECORATION_GUIDE.md).
+
+---
+
 ## API de Hooks
 
 ### `useAtomicProp({ reducer, property }, map?, isEqual?)`
@@ -193,7 +229,7 @@ const filtered = useAtomicProps(
 
 ---
 
-### `useEvent(channel, type, handler, phase?)`
+### `useEvent(channel, type, handler, phase?, options?)`
 
 Suscríbete a eventos del store desde un componente. No afecta el flujo de eventos. Es fire-and-forget.
 
@@ -228,7 +264,18 @@ useEvent(
 
 - `'committed'` (por defecto): eventos que pasaron el middleware y llegaron a los reducers
 - `'uncommitted'`: eventos rechazados por el middleware
-- `'all'`: ambos, con parámetro `phase` para distinguir
+- `'written'`: eventos que de verdad cambiaron el estado
+- `'all'`: committed y uncommitted, con parámetro `phase` para distinguir
+
+**Viaje en el tiempo.** Un handler **no** se ejecuta mientras DevTools está haciendo replay.
+Recorrer una línea de tiempo volvía a ejecutar cada handler igual que un evento real, lo que
+significaba volver a publicar, volver a escribir y volver a disparar analítica por eventos que no
+estaban ocurriendo de nuevo. Actívalo solo para un handler que derive estado de vista del flujo
+de eventos y no haga E/S:
+
+```tsx
+useEvent("ui", "save", handler, "committed", { duringReplay: true });
+```
 
 ---
 
@@ -318,7 +365,7 @@ const stats = useSuspenseAtomicProps(
 
 `createYoltra` y `createHooks` devuelven estos dos junto con el resto, ligados al mismo contexto.
 Deliberadamente **no** se exportan desde el barrel del paquete: una copia a nivel de paquete sería
-idéntica en forma y aun así lanzaría `useStore must be used inside <StoreProvider>` en tiempo de
+idéntica en forma y aun así lanzaría `[yoltra] No store in context` en tiempo de
 ejecución cuando el contexto que lee nunca se lleno, un error que los tipos no podian atrapar.
 Importarlos desde cualquier sitio que no sea el resultado de tu propio `createYoltra`/`createHooks`
 es ahora un error de compilación, que es el mismo aviso llegando en el momento correcto.
@@ -415,11 +462,11 @@ function TodoItem({ index }: { index: number }) {
 
 ## Ejemplos
 
-- **[App de Tareas con Profiler](../../examples/v0/yoltra-in-react)**: CRUD completo con
+- **[App de Tareas con Profiler](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-in-react)**: CRUD completo con
   comparación de flamegraph · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-react)
-- **[Logo Cinético (3000 particulas)](../../examples/v0/yoltra-kinetic-logo)**: Suscripciones
+- **[Logo Cinético (3000 particulas)](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-kinetic-logo)**: Suscripciones
   independientes por circulo SVG · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/kinetic-logo)
-- **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)**: estado de cliente + cambio de tema · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)
+- **[Next.js (Pages Router)](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-in-nextjs)**: estado de cliente + cambio de tema · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)
 
 ---
 
@@ -438,7 +485,7 @@ function TodoItem({ index }: { index: number }) {
 
 ## Contribuir
 
-- [Raíz del Monorepo](../../)
+- [Raíz del Monorepo](https://github.com/yoltra/yoltra)
 - [Guia de Contribución](../../CONTRIBUTING.md)
 
 ---

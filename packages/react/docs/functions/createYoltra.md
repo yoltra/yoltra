@@ -10,7 +10,7 @@
 
 > **createYoltra**\<`RM`\>(`cfg`): [`Yoltra`](../interfaces/Yoltra.md)\<keyof `RM` & `string`, `StateFromReducers`\<`RM`\>, `EMFromReducersStrict`\<`RM`\>\>
 
-Defined in: [react/src/createYoltra.tsx:102](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L102)
+Defined in: [react/src/createYoltra.tsx:171](https://github.com/yoltra/yoltra/blob/main/packages/react/src/createYoltra.tsx#L171)
 
 One-call setup: create a store and its fully-typed React hooks together.
 
@@ -85,7 +85,7 @@ between them. For SSR, create a store per request and scope it with
 **The Suspense hooks are part of this set.** Take `useSuspenseAtomicProp` and
 `useSuspenseAtomicProps` from here, not from the `@yoltra/react` barrel: the
 barrel's copies read the *package-level* context, which this function never
-fills, so they would throw `useStore must be used inside <StoreProvider>` at
+fills, so they would throw `[yoltra] No store in context` at
 runtime with nothing in the types to warn you — the two are identical in
 shape. The ones returned here are bound to this store's own context and need
 no provider, like the rest of the set.

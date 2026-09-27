@@ -33,8 +33,10 @@ describe("Store - __devtoolsIntrospect", () => {
     });
 
     const info = store.__devtoolsIntrospect();
+    // `origin` is what makes `replace*` mean "replace mine"; `owner` is introspection only
+    // and stays undefined unless a library named itself.
     expect(info.reducers).toEqual([
-      { name: "counter", when: undefined },
+      { name: "counter", when: undefined, origin: "spec", owner: undefined },
     ]);
   });
 
@@ -58,6 +60,7 @@ describe("Store - __devtoolsIntrospect", () => {
         type: "increment",
         name: "logIncrement",
         description: "Logs increment events",
+      origin: "spec",
       },
     ]);
   });
@@ -81,6 +84,7 @@ describe("Store - __devtoolsIntrospect", () => {
         type: "decrement",
         name: undefined,
         description: undefined,
+      origin: "spec",
       },
     ]);
   });
@@ -105,6 +109,7 @@ describe("Store - __devtoolsIntrospect", () => {
         type: "*",
         name: "globalLogger",
         description: "Logs all events",
+      origin: "spec",
       },
     ]);
   });
@@ -128,6 +133,7 @@ describe("Store - __devtoolsIntrospect", () => {
         type: "*",
         name: undefined,
         description: undefined,
+      origin: "spec",
       },
     ]);
   });
@@ -151,6 +157,7 @@ describe("Store - __devtoolsIntrospect", () => {
         name: "authGuard",
         description: "Guards admin events",
         when: { channel: "admin" },
+        origin: "spec",
       },
     ]);
   });
@@ -166,7 +173,7 @@ describe("Store - __devtoolsIntrospect", () => {
 
     const info = store.__devtoolsIntrospect();
     expect(info.middleware).toEqual([
-      { name: "myMiddleware" },
+      { name: "myMiddleware", origin: "spec" },
     ]);
   });
 
@@ -182,7 +189,7 @@ describe("Store - __devtoolsIntrospect", () => {
     const info = store.__devtoolsIntrospect();
     // Anonymous arrow functions have empty string names
     expect(info.middleware).toEqual([
-      { name: undefined },
+      { name: undefined, origin: "spec" },
     ]);
   });
 
@@ -196,8 +203,20 @@ describe("Store - __devtoolsIntrospect", () => {
     store.onEvent("ui", "decrement", vi.fn(), "committed");
 
     const info = store.__devtoolsIntrospect();
-    expect(info.event).toContainEqual({ channel: "ui", type: "increment", phase: "committed" });
-    expect(info.event).toContainEqual({ channel: "ui", type: "decrement", phase: "committed" });
+    // `duringReplay` rides along so a panel can explain a handler that stayed silent during
+    // a time-travel, rather than leaving it looking broken.
+    expect(info.event).toContainEqual({
+      channel: "ui",
+      type: "increment",
+      phase: "committed",
+      duringReplay: false,
+    });
+    expect(info.event).toContainEqual({
+      channel: "ui",
+      type: "decrement",
+      phase: "committed",
+      duringReplay: false,
+    });
   });
 
   it("returns uncommitted event subscriptions", () => {
@@ -209,7 +228,12 @@ describe("Store - __devtoolsIntrospect", () => {
     store.onEvent("ui", "increment", vi.fn(), "uncommitted");
 
     const info = store.__devtoolsIntrospect();
-    expect(info.event).toContainEqual({ channel: "ui", type: "increment", phase: "uncommitted" });
+    expect(info.event).toContainEqual({
+      channel: "ui",
+      type: "increment",
+      phase: "uncommitted",
+      duringReplay: false,
+    });
   });
 
   it("tracks coarse subscriber count", () => {
@@ -252,6 +276,7 @@ describe("Store - __devtoolsIntrospect", () => {
         type: "increment",
         name: "dynamic",
         description: "Added at runtime",
+        origin: "dynamic",
       },
     ]);
 
@@ -271,7 +296,7 @@ describe("Store - __devtoolsIntrospect", () => {
 
     const info = store.__devtoolsIntrospect();
     expect(info.middleware).toEqual([
-      { name: "logger" },
+      { name: "logger", origin: "dynamic" },
     ]);
 
     unsub();

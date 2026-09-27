@@ -120,9 +120,13 @@ event and assert the reduced error state.
 
 ## Testing middleware (rejection)
 
-Middleware is synchronous and returns a boolean. A `false` return rejects the
-event (state does not change) and produces an **uncommitted** event, which you
-can observe with `onEvent(..., "uncommitted")`.
+Middleware is synchronous. **Only an explicit `false` rejects** the event (state
+does not change), producing an **uncommitted** event you can observe with
+`onEvent(..., "uncommitted")`. Returning `true`, or returning nothing at all,
+allows it, so middleware that only logs or measures needs no `return`.
+
+Test the allow path as well as the veto. A guard that stops rejecting is a
+silent failure, and so is one that rejects everything.
 
 ```ts
 it("rejects boost below the battery threshold", () => {

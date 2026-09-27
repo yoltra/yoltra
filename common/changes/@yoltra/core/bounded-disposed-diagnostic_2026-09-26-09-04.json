@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "The development-only record of disposed slice names is bounded at 64. A long session that mounts and disposes repeatedly would otherwise accumulate an entry per cycle for the lifetime of the store. The oldest is dropped, since the diagnostic exists for a slice someone has just stopped using.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

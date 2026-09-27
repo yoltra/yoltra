@@ -8,7 +8,7 @@
 
 # Type Alias: PersistencePhase
 
-> **PersistencePhase** = `"read"` \| `"write"` \| `"decode"` \| `"migrate"`
+> **PersistencePhase** = `"read"` \| `"write"` \| `"decode"` \| `"migrate"` \| `"encode"`
 
 Defined in: [persistence/persist.ts:27](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L27)
 

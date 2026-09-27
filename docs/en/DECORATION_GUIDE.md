@@ -1,0 +1,321 @@
+![Yoltra logo](https://yoltra.dev/assets/yoltra-logo.png)
+
+# Decorating a store
+
+> 👉 🇺🇸 English Version&nbsp; | &nbsp;[ 🇲🇽 Versión en Español](../es/DECORATION_GUIDE.md)
+
+A store is created by an application. A capability is often written by somebody else: a file
+transfer, a telemetry pipeline, a media session. That library needs to add a slice, guard some
+events and react to others, on a store it did not create and cannot change the definition of.
+
+Yoltra already had the seams for that. What it did not have was types that survived using
+them, or a guarantee that a hot reload would not quietly undo the whole thing.
+
+---
+
+## The shape of the problem
+
+Before 0.8.0, decorating a store looked like this:
+
+```typescript
+// Don't write this any more.
+store.registerReducer("transfers", transfersSpec as any);
+store.registerMiddleware(guard as any);
+```
+
+Two casts, and a third at every place the application later touched the slice, because
+`registerReducer` took a plain `string` and returned nothing but a disposer. Nothing
+downstream knew `transfers` existed, what shape it had, or which channels it answered to.
+
+And then the developer saved a file:
+
+```typescript
+if (import.meta.hot) {
+  import.meta.hot.accept("./reducers", (mod) => {
+    store.replaceReducers(mod.reducers, { preserveState: true });
+  });
+}
+```
+
+That line, which core's own documentation recommended, deleted the library's slice **and its
+state**. No error, no warning. The capability worked until the first hot reload.
+
+---
+
+## Declaring what a decoration contributes
+
+Start with the spec builders. They exist for one reason, and it is worth understanding
+because it explains the whole shape of the API.
+
+A spec's `when` carries channel and type *strings*:
+
+```typescript
+when: { keys: [["transfer", "granted"]] }
+```
+
+Strings, and no payload types. There is nothing there to infer an event map from. And
+TypeScript has no partial type-argument inference, so a hypothetical
+`registerSlice<Name, State, EventMap>` would force you to hand-write the name and the state
+type any time you wanted to name the event map.
+
+`defineSlice` puts the event map in a **value** position, where inference does work:
+
+```typescript
+import { defineSlice } from "@yoltra/core";
+
+type TransferEM = {
+  transfer: { granted: { id: string }; revoked: { id: string } };
+};
+
+export const transfers = defineSlice<TransferEM>()({
+  state: { granted: [] as string[] },
+  when: { keys: [["transfer", "granted"]] },
+  reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+});
+```
+
+Named once. Every registration site infers from it, with no type argument and no cast.
+
+`defineMiddleware` and `defineEffect` do the same. **One consequence is worth knowing before
+it surprises you: a bare middleware function can never widen the event map.**
+
+```typescript
+// Registers fine. Contributes no channels, and cannot.
+store.withMiddleware((state, event) => true);
+
+// Contributes its channels.
+store.withMiddleware(defineMiddleware<TransferEM>()({
+  when: { channel: "transfer" },
+  middleware: () => true,
+}));
+```
+
+`MiddlewareFunction`'s event parameter is `EventUnion<EM>`, a mapped type nothing can be
+inferred back out of. Only the spec form carries the map.
+
+---
+
+## Growing the store's type
+
+```typescript
+const app = store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+
+app.getState().transfers.granted;          // string[]
+app.emit("transfer", "granted", { id: "a1" });  // the new channel is emittable
+```
+
+`withSlice`, `withMiddleware` and `withEffect` all return the store with its types widened,
+so calls chain:
+
+```typescript
+const app = store
+  .withSlice("transfers", transfers)
+  .withMiddleware(quota)
+  .withEffect(uploader);
+```
+
+**It is the same object.** Decoration is a type-level operation: nothing re-subscribes, no
+state moves, the dedup cache is untouched, and an in-flight `store.call()` carries on. Only
+the type changes.
+
+```typescript
+store.withSlice("transfers", transfers) === store; // true
+```
+
+---
+
+## Publishing a decorator
+
+A library exports a function that takes a store and returns one:
+
+```typescript
+import type { EventMapBase, StoreInstance } from "@yoltra/core";
+
+export function withTransfers<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+>(store: StoreInstance<R, S, EM>, config: TransfersConfig) {
+  return store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+}
+```
+
+Generic over the incoming store, which is the part that matters. `R`, `S` and `EM` are
+inference sites, so they take whatever the caller actually has, and decorators compose by
+nesting in any order:
+
+```typescript
+const decorated = withTransfers(withTelemetry(store, tConfig), config);
+// or
+const decorated = withTelemetry(withTransfers(store, config), tConfig);
+```
+
+Both reach the same type. A decorator that adds only events, wrapped around one that also
+adds a slice, infers the already-widened values and carries them through.
+
+`withDevtools(store, config)` is the degenerate case of this contract: it adds nothing and
+returns the store unchanged.
+
+### There is no `pipe`
+
+It was considered and declined. Every decorator takes `(store, config)`, so each step in a
+pipe needs a lambda to become unary:
+
+```typescript
+pipe(store, s => withA(s, cfgA), s => withB(s, cfgB))  // longer
+withB(withA(store, cfgA), cfgB)                        // shorter
+```
+
+A pipe only pays for *curried* decorators, which would be a different convention from the one
+`withDevtools` already set, and every extra generic layer is another place inference can
+degrade. If four-deep nesting ever becomes common, a pipe is purely additive and can arrive
+then.
+
+### Requiring another decoration
+
+Constrain the input. No registry, no ordering table:
+
+```typescript
+export function withAudit<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase & TransferEM,   // ← the dependency
+>(store: StoreInstance<R, S, EM>) {
+  return store.withEffect(auditor);
+}
+```
+
+Applied to a store that has not been decorated yet, this fails at the call site and names the
+channels that are missing. It still composes, because TypeScript infers `EM` from the
+argument and *then* checks the constraint.
+
+For a dependency that leaves no type trace, a decoration that binds with `onEvent` and adds
+no channels, check at runtime instead:
+
+```typescript
+store.onRegistrationChange(
+  (changes) => {
+    /* react, or throw naming what is missing */
+  },
+  { emitCurrent: true },
+);
+```
+
+---
+
+## Surviving a hot reload
+
+`replace*` replaces **what the application authored**. Anything registered after construction
+survives, along with its state:
+
+```typescript
+store.registerSlice("transfers", transfers);   // a library's slice
+store.replaceReducers(appReducers);            // the app's hot reload
+store.getState().transfers;                    // still here
+```
+
+You do not declare this and neither does the library. Provenance is recorded internally,
+because correctness must not depend on anyone remembering to pass a string.
+
+Three details follow from it:
+
+- **`{ scope: "all" }`** restores the pre-0.8.0 behaviour exactly, for a test harness
+  resetting a store between cases. `hotReplace` forwards it to all three.
+- **A collision throws.** If the application authors a slice a library already mounted, you
+  get an error naming the slice and its owner, thrown before anything is mutated. A silent
+  takeover would leave the library holding a disposer for something no longer its own.
+- **A debug line** says what was preserved, in development, so "why is that effect still
+  firing after a reload" has an answer.
+
+---
+
+## React
+
+```typescript
+// state/yoltra.ts - module scope, once.
+export const app = createYoltra({ name: "App", reducer: { counter } })
+  .withSlice("transfers", transfers);
+
+export const { useAtomicProp, useEmit, useEvent } = app;
+```
+
+`useAtomicProp({ reducer: "transfers", property: "granted" })` is typed, on a slice the
+application never declared.
+
+Three things to know:
+
+- **Module scope, once, before the first render.** Each `with*` builds a new hook set, because
+  `createHooks` allocates fresh function objects. Calling one inside a component would hand
+  React a different `useAtomicProp` on every render.
+- **Providers interoperate.** The context object is re-typed, never recreated, so a
+  `<StoreProvider>` from any view in the chain serves the hooks of every other. The Suspense
+  cache is shared for the same reason: it keys on store identity.
+- **Free functions exist** for a library handed a `Yoltra` it did not create:
+  `withSlice(yoltra, name, spec)`.
+
+---
+
+## Watching what is installed
+
+`onRegistrationChange` tells you when a store gains or loses a reducer, middleware or effect.
+Devtools uses it to keep its panel current; a library can use it to react to another library.
+
+```typescript
+const off = store.onRegistrationChange(
+  (changes) => {
+    for (const c of changes) {
+      if (c.origin === "internal") continue;   // the store's own machinery
+      console.log(c.op, c.kind, c.name, c.owner);
+    }
+  },
+  { emitCurrent: true },
+);
+```
+
+- **Changes arrive in batches**, one per public call. `replaceReducers` updates a slice by
+  unmounting and remounting it, so a per-change view would show something merely being updated
+  disappearing.
+- **`emitCurrent`** synthesizes a mounted change for everything already installed, delivered
+  before the call returns. Spec-time registrations happen inside `createStore`, so a decorator
+  applied afterwards never saw them arrive.
+- **`state` has four values** for a reducer, and the fourth is the one to watch: `"retained"`
+  means the slice's state survived an unmount, `"deleted"` means it did not. Treating every
+  unmount as destruction will tear down a subscription you are about to need.
+- **Registering from inside an observer is fine.** It is queued, not delivered re-entrantly,
+  so nobody ever sees a half-built topology.
+- Replay produces no changes. It alters state, never topology.
+
+---
+
+## Disposal, and the one thing types cannot express
+
+`withSlice` returns no disposer. That is deliberate.
+
+After a disposer runs, the widened type still promises a slice that is gone, and no type
+system can say "valid until that call". So the chaining API does not hand one out, and the
+footgun stays off the path most people take.
+
+When you own the slice and need teardown, use `registerSlice`:
+
+```typescript
+const reg = store.registerSlice("transfers", transfers, { owner: "@scope/transfers" });
+reg.store;      // the widened store
+reg.dispose();  // library-private: do not export this
+```
+
+**Keep that disposer inside the library.** Handing it to application code hands out the
+ability to invalidate types the application is still relying on.
+
+Reading a disposed slice throws a named error in development rather than returning
+`undefined` from a type that promised a value:
+
+> `[yoltra] Slice "transfers" was unmounted by its owner (@scope/transfers). Hooks and
+> subscriptions widened for it are no longer valid.`
+
+---
+
+## Ordering
+
+Decorate at module scope, at import time, before the first render. Between `createStore` and
+the decoration the slice genuinely does not exist, and a component reading it sees `undefined`
+until it does. That window is safe, not broken, and it closes as soon as the slice mounts.

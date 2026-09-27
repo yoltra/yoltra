@@ -8,7 +8,7 @@
 
 # Interface: BoundedEncodeResult
 
-Defined in: [serialize/codec.ts:317](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L317)
+Defined in: [serialize/codec.ts:556](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L556)
 
 Outcome of [encodeStateBounded](../functions/encodeStateBounded.md).
 
@@ -18,7 +18,7 @@ Outcome of [encodeStateBounded](../functions/encodeStateBounded.md).
 
 > `readonly` `optional` **note**: `string`
 
-Defined in: [serialize/codec.ts:323](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L323)
+Defined in: [serialize/codec.ts:562](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L562)
 
 Explains what was dropped, for display beside a partial tree.
 
@@ -28,7 +28,7 @@ Explains what was dropped, for display beside a partial tree.
 
 > `readonly` **truncated**: `boolean`
 
-Defined in: [serialize/codec.ts:321](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L321)
+Defined in: [serialize/codec.ts:560](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L560)
 
 `true` when the state did not fit and parts were replaced by markers.
 
@@ -38,6 +38,6 @@ Defined in: [serialize/codec.ts:321](https://github.com/yoltra/yoltra/blob/main/
 
 > `readonly` **value**: `unknown`
 
-Defined in: [serialize/codec.ts:319](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L319)
+Defined in: [serialize/codec.ts:558](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L558)
 
 The encoded value, small enough to send.

@@ -10,7 +10,7 @@
 
 > **withDevtools**\<`R`, `S`, `EM`\>(`store`, `config`): `StoreInstance`\<`R`, `S`, `EM`\>
 
-Defined in: [withDevtools.ts:91](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/withDevtools.ts#L91)
+Defined in: [withDevtools.ts:103](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/withDevtools.ts#L103)
 
 Wraps a Yoltra store with DevTools instrumentation for browser environments.
 

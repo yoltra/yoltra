@@ -5,8 +5,10 @@
 > [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
 > | &nbsp; 👉 🇺🇸 English Version
 
-![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
-![License](https://badgen.net/npm/license/@yoltra/core)
+[![npm version](https://img.shields.io/npm/v/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![types](https://img.shields.io/npm/types/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![License](https://img.shields.io/npm/l/@yoltra/core)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
 
 **Framework-agnostic event-driven state container with fine-grained path subscriptions.**
 
@@ -212,7 +214,10 @@ const globalLogger = {
 ## Middleware
 
 Middleware runs **synchronously, before** reducers and can cancel event propagation (return
-`false` to reject → "uncommitted" event). Async work belongs in effects, not middleware. Supports
+`false` to reject → "uncommitted" event; returning nothing allows it). Async work belongs in
+effects, not middleware. When an event does not commit, `emit` says why: `reason` is
+`"vetoed"`, `"deduped"` or `"cascade"`, and a veto names the middleware in `vetoedBy`, so a
+guard refusing an action is distinguishable from a double-click being collapsed. Supports
 both raw functions (legacy) and `MiddlewareSpec` objects with targeting:
 
 ```typescript
@@ -228,7 +233,8 @@ const adminGuard: MiddlewareSpec<AppState, AppEM> = {
   meta: { type: "middleware", name: "adminGuard" },
 };
 
-// Global middleware: runs for all events (synchronous: return a boolean, never a Promise)
+// Global middleware: runs for all events. Synchronous, never a Promise: only an explicit
+// `false` vetoes, so middleware that just observes can return nothing at all.
 const logger = (state, event) => {
   console.log("Event:", event.channel, event.type);
   return true;
@@ -342,6 +348,24 @@ whether or not a reducer wrote anything, including every event in a store with n
 all. `written` is the stricter fact, added rather than substituted, so toasts and analytics keep
 working unchanged. `all` stays `committed | uncommitted`; folding `written` in would hand existing
 subscribers a second notification per event.
+
+### Event subscribers and time-travel
+
+**Replay does not call your handlers.** Scrubbing a DevTools timeline reduces the events again,
+so state follows the scrub, but `onEvent` handlers stay silent. They used to run exactly as they
+do for a live event, which meant dragging a timeline re-published to peers, re-wrote to sockets
+and re-fired analytics for events that were not happening again, with nothing available inside a
+handler to tell the difference.
+
+A handler that derives view state purely from the event stream, and performs no I/O, can opt in:
+
+```ts
+store.onEvent("ui", "save", handler, "committed", { duringReplay: true });
+```
+
+`store.isReplaying` is there for anything that has to branch rather than simply skip. Coarse
+`subscribe` listeners and `connect` subscriptions keep firing throughout, because the state
+genuinely did change and the UI has to follow the scrub.
 
 ---
 
@@ -605,6 +629,63 @@ const dispose = store.registerReducer("filters", {
 dispose();
 ```
 
+### Decorating a store, with its types
+
+A slice added at runtime used to be invisible to the type system: `registerReducer` took a
+plain `string` and returned a bare disposer, so nothing downstream knew the slice existed or
+what shape it had. `withSlice` returns **the same store, re-typed**:
+
+```typescript
+type TransferEM = { transfer: { granted: { id: string } } };
+
+const transfers = defineSlice<TransferEM>()({
+  state: { granted: [] as string[] },
+  when: { keys: [["transfer", "granted"]] },
+  reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+});
+
+const app = store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+
+app.getState().transfers.granted; // string[]
+app.emit("transfer", "granted", { id: "a1" }); // the new channel is emittable
+```
+
+`withMiddleware` and `withEffect` do the same for the event map. Calls chain, and a library
+publishes a decorator by taking a store and returning one:
+
+```typescript
+export function withTransfers<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
+  store: StoreInstance<R, S, EM>,
+  config: TransfersConfig,
+) {
+  return store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+}
+
+// Decorators nest, in any order.
+const decorated = withTransfers(withDevtools(store, dtConfig), config);
+```
+
+**Why the builders.** A spec's `when` carries channel and type strings and no payload types,
+so the event map a decoration contributes cannot be inferred from it, and TypeScript has no
+partial type-argument inference. `defineSlice<EM>()` puts it in a value position, where
+inference works, so no registration site needs a type argument or a cast. One consequence
+worth knowing: **a bare middleware function can never widen the event map**, because
+`MiddlewareFunction`'s event parameter is a mapped type nothing can be inferred back out of.
+Only the spec form from `defineMiddleware` can.
+
+**It is the same object.** Nothing re-subscribes, no state moves, and any in-flight
+`store.call()` is unaffected. Only the type changes.
+
+**Ordering.** Decorate at module scope, once, before the first render. Between `createStore`
+and the decoration the slice genuinely does not exist, and a component reading it sees
+`undefined` until it does.
+
+**Disposal.** `withSlice` hands back no disposer on purpose: after one runs, the widened type
+still promises a slice that is gone, and no type system can express "valid until that call".
+Use `registerSlice` when you own the slice and need teardown, and keep that disposer private
+to the library. Reading a disposed slice throws a named error in development rather than
+returning `undefined` from a type that promised a value.
+
 ---
 
 ## Hot Module Replacement
@@ -632,6 +713,30 @@ if (import.meta.hot) {
   });
 }
 ```
+
+### `replace*` replaces what you authored, not what a library added
+
+A reducer, middleware or effect registered **after** construction, with `registerReducer`,
+`registerMiddleware` or `registerEffect`, survives a `replace*` call. Those registrations were
+never part of the set you are replacing: nobody writing `replaceReducers(myReducers)` means "and
+also delete the slice devtools mounted, along with its state".
+
+This used to go the other way, which made the HMR line above delete a library's slice and its
+state on the first file save, with no error and no warning. It is also why an in-flight
+`store.call()` no longer dies mid-reload: its reply listener belongs to the store itself.
+
+Pass `{ scope: "all" }` for the old wholesale behaviour, which a test harness resetting a store
+between cases may genuinely want:
+
+```typescript
+store.replaceReducers(nextReducers, { scope: "all" });
+store.hotReplace({ reducer: nextReducers, scope: "all" }); // forwards to all three
+```
+
+An application that authors a slice a library already mounted gets an error naming the slice,
+rather than a silent takeover that leaves the library holding a disposer for something no longer
+its own. In development, `replace*` logs at debug level when it preserved anything, so "why is
+that effect still firing after a reload" has an answer.
 
 ---
 
@@ -694,7 +799,8 @@ store.registerEffect({
 | `store.getState()`                              | Get current readonly state snapshot            |
 | `store.subscribe(listener)`                     | Coarse subscription (any state change)         |
 | `store.connect(spec, handler)`                  | Fine-grained path subscription with wildcards  |
-| `store.onEvent(channel, type, handler, phase?)` | Event subscription (committed/uncommitted/all) |
+| `store.onEvent(channel, type, handler, phase?, options?)` | Event subscription (committed/uncommitted/written/all). Silent during replay unless `{ duringReplay: true }` |
+| `store.onRegistrationChange(observer, opts?)` | Fires when the store gains or loses a reducer, middleware or effect |
 | `store.onEffect(channel, type, handler)`        | Single-event effect shorthand                  |
 | `store.dispose()`                               | Cleanup timers and resources                   |
 
@@ -702,6 +808,10 @@ store.registerEffect({
 
 | API                                 | Description               |
 | ----------------------------------- | ------------------------- |
+| `store.registerSlice(name, spec, opts?)` | Add a slice at runtime; returns the widened store plus a disposer |
+| `store.withSlice(name, spec, opts?)` | Same, returning the widened store for chaining |
+| `store.withMiddleware(mw)`, `store.withEffect(spec)` | Register and widen the event map |
+| `defineSlice<EM>()`, `defineMiddleware<EM>()`, `defineEffect<EM>()` | Declare the event map a spec contributes |
 | `store.registerReducer(name, spec)` | Add a slice at runtime    |
 | `store.registerMiddleware(fn)`      | Add middleware at runtime |
 | `store.registerEffect(spec)`        | Add an effect at runtime  |
@@ -710,10 +820,10 @@ store.registerEffect({
 
 | API                                     | Description                |
 | --------------------------------------- | -------------------------- |
-| `store.replaceReducers(reducers, opts)` | Replace all reducers       |
-| `store.replaceMiddleware(middleware)`   | Replace all middleware     |
-| `store.replaceEffects(effects)`         | Replace all effects        |
-| `store.hotReplace(partial)`             | Replace any subset at once |
+| `store.replaceReducers(reducers, opts)`   | Replace spec reducers; runtime ones survive unless `{ scope: "all" }` |
+| `store.replaceMiddleware(middleware, opts)` | Replace spec middleware; same rule |
+| `store.replaceEffects(effects, opts)`       | Replace spec effects; same rule    |
+| `store.hotReplace(partial)`                 | Replace any subset at once; forwards `scope` |
 
 ### Helpers
 
@@ -830,9 +940,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 8.3 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 9.7 KB | 16 KB |
-| everything | 11.2 KB | 18 KB |
+| `{ createStore }` | 11.5 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 12.8 KB | 16 KB |
+| everything | 14.2 KB | 18 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines
@@ -861,6 +971,10 @@ stops a runaway from hanging the tab.
   React hooks and Suspense
 - **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**:
   Five steps to a working app
+- **[Upgrading to 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/en/UPGRADE_0.8.md)**:
+  Five behaviour changes, and one hazard if you roll back
+- **[Decoration Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/DECORATION_GUIDE.md)**:
+  Adding a slice, middleware or effect to somebody else's store, with the types
 - **[Event Queue Architecture](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)**:
   Technical deep-dive
 - **[Library Comparison](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**:

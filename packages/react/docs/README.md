@@ -12,10 +12,12 @@
 - [SuspenseAtomicPropsOptions](interfaces/SuspenseAtomicPropsOptions.md)
 - [SuspenseCache](interfaces/SuspenseCache.md)
 - [Yoltra](interfaces/Yoltra.md)
+- [YoltraDecoration](interfaces/YoltraDecoration.md)
 - [YoltraHooks](interfaces/YoltraHooks.md)
 
 ## Type Aliases
 
+- [DecoratableYoltra](type-aliases/DecoratableYoltra.md)
 - [OneOrMany](type-aliases/OneOrMany.md)
 - [PathValue](type-aliases/PathValue.md)
 - [UseAtomicProp](type-aliases/UseAtomicProp.md)
@@ -45,3 +47,6 @@
 - [useEvent](functions/useEvent.md)
 - [useSelector](functions/useSelector.md)
 - [useStore](functions/useStore.md)
+- [withEffect](functions/withEffect.md)
+- [withMiddleware](functions/withMiddleware.md)
+- [withSlice](functions/withSlice.md)

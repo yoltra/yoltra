@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { encodeStateBounded } from "../../src/index";
+import { decodeState, encodeStateBounded } from "../../src/index";
 
 describe("encodeStateBounded", () => {
   it("returns untruncated output when the value fits", () => {
@@ -55,5 +55,48 @@ describe("encodeStateBounded", () => {
     // Whatever survived the truncation went through the hook.
     const survivors = JSON.stringify(result.value);
     expect(survivors).not.toContain('"token 1"');
+  });
+});
+
+describe("binary and the node budget", () => {
+  it("shrinks a state dominated by one large buffer instead of giving up", () => {
+    // A buffer is one *value* but it is the whole payload. Left charged at one node, the
+    // shrink loop would spend all eight attempts reducing a budget that was never the
+    // reason the output overflowed, and abandon a state it could have encoded in part.
+    // Charging by byte length gives the loop something to actually act on.
+    const state = {
+      label: "small",
+      blob: new Uint8Array(200_000),
+    };
+
+    const result = encodeStateBounded(state, 4_096);
+
+    expect(result.truncated).toBe(true);
+    // It still produced something, and that something is within the cap.
+    expect(JSON.stringify(result.value).length).toBeLessThanOrEqual(4_096);
+  });
+
+  it("leaves a small buffer alone when there is room", () => {
+    const result = encodeStateBounded({ blob: new Uint8Array([1, 2, 3]) }, 64_000);
+
+    expect(result.truncated).toBe(false);
+    const restored = decodeState(result.value) as { blob: Uint8Array };
+    expect(Array.from(restored.blob)).toEqual([1, 2, 3]);
+  });
+});
+
+describe("a buffer is charged before it is encoded", () => {
+  it("gives up on an oversized buffer without base64-encoding it repeatedly", () => {
+    // The node charge used to be applied *after* `bytesToBase64`, so each of the shrink
+    // loop's attempts fully encoded a buffer it was about to discard. Charging first means
+    // the budget is blown before the work is done.
+    const big = new Uint8Array(400_000);
+    const started = Date.now();
+
+    const result = encodeStateBounded({ blob: big }, 1_024);
+
+    expect(result.truncated).toBe(true);
+    // Not a benchmark, just a ceiling: repeated full encodes of 400 KB would blow past this.
+    expect(Date.now() - started).toBeLessThan(2_000);
   });
 });

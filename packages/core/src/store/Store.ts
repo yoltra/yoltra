@@ -35,7 +35,13 @@ import type {
   CascadeInfo,
   InstrumentedEvent,
   EventPhase,
+  EventSubscriberEntry,
+  Origin,
+  RegistrationChange,
+  RegistrationObserver,
+  ReplaceScope,
   EventSubscriptionHandler,
+  NotifiedPhase,
   NarrowedEventHandler,
   When,
 } from "../types";
@@ -49,6 +55,7 @@ import {
   buildAncestorPaths as ancestorPaths,
   getAtPath as readAtPath,
 } from "./paths";
+import { fingerprint as fingerprintOf } from "./fingerprint";
 import {
   getMiddlewareFunction,
   getMiddlewareWhen,
@@ -108,6 +115,24 @@ function freezeInDev<T>(value: T, alias?: AliasWatch): DeepReadonly<T> {
 const DEFAULT_DEDUP_KEY_WINDOW_MS = 100;
 
 /**
+ * Ceiling on rounds of registration notification triggered by observers registering.
+ *
+ * @remarks
+ * Mirrors {@link DEFAULT_MAX_REDUCE_DEPTH} and exists for the same reason: a legitimate
+ * reaction chain is bounded, a cycle is not.
+ */
+const MAX_REGISTRATION_CASCADE = 64;
+
+/**
+ * How many disposed slice names to remember for the development-time read diagnostic.
+ *
+ * @remarks
+ * Bounded so a long session of mount-and-dispose cycles does not accumulate forever. The
+ * diagnostic is for a slice someone has just stopped using.
+ */
+const MAX_REMEMBERED_DISPOSED_SLICES = 64;
+
+/**
  * Causal depth at which the store stops extending an event chain.
  *
  * @remarks
@@ -140,6 +165,25 @@ const CASCADE_CHAIN_LIMIT = 16;
  * @internal
  */
 const NOT_COMMITTED: EmitResult = Object.freeze({ committed: false, written: false });
+
+/**
+ * Distinct results for the three ways an event fails to commit.
+ *
+ * @remarks
+ * These were one shared frozen object, so `committed: false` reached the caller with no way
+ * to tell a guard refusing an action from a double-click being deduplicated. Those want
+ * opposite responses: show the refusal, say nothing about the duplicate.
+ */
+const DEDUPED: EmitResult = Object.freeze({
+  committed: false,
+  written: false,
+  reason: "deduped" as const,
+});
+const CASCADE_REFUSED: EmitResult = Object.freeze({
+  committed: false,
+  written: false,
+  reason: "cascade" as const,
+});
 const COMMITTED_UNWRITTEN: EmitResult = Object.freeze({ committed: true, written: false });
 const WRITTEN: EmitResult = Object.freeze({ committed: true, written: true });
 
@@ -171,11 +215,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   /**
    * Registered middleware pipeline (run **before** reducers).
    * Stores either raw functions (legacy) or MiddlewareSpec objects.
-   * Return `false` from the middleware function to stop propagation.
+   *
+   * Only an explicit `false` stops propagation. Returning nothing allows the event, so
+   * middleware that only logs or measures needs no `return` at all.
    *
    * @internal
    */
-  private readonly middleware: MiddlewareInput<DeepReadonly<S>, EM>[];
+  private readonly middleware: Array<{
+    input: MiddlewareInput<DeepReadonly<S>, EM>;
+    origin: Origin;
+  }>;
 
   /**
    * Installed slice reducers keyed by slice name.
@@ -219,7 +268,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
-  private readonly effects = new Map<string, Set<EffectFunction<DeepReadonly<S>, EM>>>();
+  private readonly effects = new Map<
+    string,
+    Set<{ effect: EffectFunction<DeepReadonly<S>, EM>; origin: Origin }>
+  >();
 
   /**
    * Pattern-based effects that need runtime matching.
@@ -231,6 +283,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private readonly patternEffects = new Set<{
     effect: EffectFunction<DeepReadonly<S>, EM>;
     when: When<EM>;
+    origin: Origin;
   }>();
 
   /**
@@ -241,7 +294,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private readonly committedEventSubscribers = new Map<
     string,
-    Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
+    Set<EventSubscriberEntry<DeepReadonly<S>, EM>>
   >();
 
   /**
@@ -252,7 +305,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private readonly uncommittedEventSubscribers = new Map<
     string,
-    Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
+    Set<EventSubscriberEntry<DeepReadonly<S>, EM>>
   >();
 
   /**
@@ -274,13 +327,25 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private readonly writtenEventSubscribers = new Map<
     string,
-    Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
+    Set<EventSubscriberEntry<DeepReadonly<S>, EM>>
   >();
 
   private readonly allEventSubscribers = new Map<
     string,
-    Set<EventSubscriptionHandler<DeepReadonly<S>, EM>>
+    Set<EventSubscriberEntry<DeepReadonly<S>, EM>>
   >();
+
+  /**
+   * True while a devtools time-travel is applying a snapshot or replaying events.
+   *
+   * @remarks
+   * Saved and restored rather than set and cleared to `false`: `__replayEvents` calls
+   * `__applyExternalState` as its first step, so clearing on the inner call's way out would
+   * unset the flag for the entire event loop that follows it.
+   *
+   * @internal
+   */
+  private replaying = false;
 
   /**
    * Track reducerBus unsubs per slice for HMR/register/unregister.
@@ -297,6 +362,78 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private readonly patternReducers = new Map<R, When<EM>>();
+
+  /**
+   * Where each mounted slice came from. See {@link Origin}.
+   *
+   * @remarks
+   * This is what makes `replace*` mean "replace mine" rather than "replace everything". It
+   * is written by `mountSlice` and never by a caller.
+   *
+   * @internal
+   */
+  private readonly sliceOrigin = new Map<string, Origin>();
+
+  /**
+   * Who claims each dynamically mounted slice, for introspection only.
+   *
+   * @remarks
+   * Surfaced in `__devtoolsIntrospect()` and named in the collision error. **Never read by
+   * `replace*`.** Correctness comes from {@link Origin}, which nobody has to remember to
+   * pass; if preservation depended on this string, forgetting it would silently delete a
+   * library's state.
+   *
+   * @internal
+   */
+  private readonly sliceOwner = new Map<string, string>();
+
+  /**
+   * Slices unmounted by their owner, for a development-time diagnostic.
+   *
+   * @remarks
+   * Decoration re-types the store, and after a disposer runs the widened type still claims
+   * a slice that is gone. Reading it would hand a component `undefined` from a type that
+   * promised a value, which is the silent failure this whole feature exists to remove.
+   * Populated only for `dynamic` and `internal` slices: a `spec` slice removed by a
+   * `replace*` was not promised by anyone's widened type.
+   *
+   * Bounded, because a long development session that mounts and disposes repeatedly would
+   * otherwise accumulate an entry per cycle forever. The oldest is dropped: the diagnostic
+   * exists for a slice someone has just stopped using, and a name disposed hundreds of
+   * mounts ago is not the one being read by mistake. Maps to the owner, or `undefined`
+   * when the library did not name itself.
+   *
+   * @internal
+   */
+  private readonly disposedSlices = new Map<string, string | undefined>();
+
+  /** @internal */
+  private readonly registrationObservers = new Set<RegistrationObserver<EM>>();
+
+  /**
+   * Changes accumulated inside the current public call, flushed once at its end.
+   *
+   * @internal
+   */
+  private pendingRegistrationChanges: RegistrationChange<EM>[] | null = null;
+
+  /**
+   * Depth of nested registration transactions.
+   *
+   * @remarks
+   * `hotReplace` calls three `replace*` methods, and each of those registers repeatedly.
+   * Only the outermost public entry point flushes, so one `hotReplace` produces one batch
+   * spanning all three kinds rather than three batches of intermediate topology.
+   *
+   * @internal
+   */
+  private registrationDepth = 0;
+
+  /** True while observers are being notified, so a re-entrant change is queued. @internal */
+  private notifyingRegistrations = false;
+
+  /** Batches produced by an observer's own registrations, drained after the current one. @internal */
+  private readonly queuedRegistrationBatches: Array<readonly RegistrationChange<EM>[]> = [];
 
   /**
    * Whether `__replayEvents()` is allowed.
@@ -330,6 +467,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     error: unknown,
     event: EventUnion<EM>,
     slice: string,
+  ) => void;
+
+  /** @internal */
+  private readonly onSubscriberError?: (
+    error: unknown,
+    event: EventUnion<EM>,
+    phase: NotifiedPhase,
   ) => void;
 
   /**
@@ -446,13 +590,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * Tracks processed events by fingerprint with timestamps for TTL-based deduplication.
    *
    * **Deduplication Behavior:**
-   * - Events are fingerprinted using `channel::type::JSON(payload)`
+   * - Events are fingerprinted through the codec, so `Map`, `Set`, `Date`, `BigInt`, binary
+   *   and cyclic payloads all compare by content rather than collapsing to `{}`
+   * - Plain-object keys are sorted, so key order is not content; array and `Map` order is
    * - If an identical fingerprint is seen within the dedup window, it's skipped
-   * - The window is 50ms in development, 100ms in production
+   * - The window is `dedupWindowMs`, which defaults to `0` (dedup off)
    *
    * **Limitations:**
-   * - Non-serializable payloads (functions, symbols, circular refs) get unique
-   *   fingerprints and won't be deduplicated
+   * - A payload larger than the fingerprint node budget is never deduplicated, which is the
+   *   safe direction: a missed dedup costs a duplicate, a false one drops a real event
    * - Legitimate rapid-fire identical events may be incorrectly deduplicated
    * - The cache is bounded to 1000 entries with lazy pruning
    *
@@ -508,13 +654,21 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.name = spec.name ?? "yoltra Store";
     this.reducerBus = new EventBus<EM>();
     this.connectorBus = new LooseEventBus();
-    this.middleware = [...(spec.middleware ?? [])];
+    // Tagged `spec`, not left bare. If this tag is missing, `replaceMiddleware` silently
+    // becomes a no-op: it would find nothing of `spec` provenance to remove and preserve
+    // everything instead. No test notices unless one asserts that spec registrations ARE
+    // still replaced, which is why that test exists.
+    this.middleware = (spec.middleware ?? []).map((input) => ({
+      input: input as MiddlewareInput<DeepReadonly<S>, EM>,
+      origin: "spec" as Origin,
+    }));
     this.reducers = {} as Record<R, Reducer<S[R], EM>>;
     this.state = {} as any;
     this.replayEnabled = spec.devtools?.allowReplay ?? false;
     this.idFactory = spec.idFactory ?? (() => crypto.randomUUID());
     this.onEffectError = spec.onEffectError;
     this.onReducerError = spec.onReducerError;
+    this.onSubscriberError = spec.onSubscriberError;
 
     // Depth is bounded whether or not anybody asked. The queue drains synchronously, so an
     // unbounded cascade is a frozen tab or a pinned core with no error to point at — a failure
@@ -548,7 +702,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
      */
     if (spec.effects?.length) {
       for (const effSpec of spec.effects) {
-        this.registerEffect(effSpec);
+        // `spec`, not the public `registerEffect`'s `dynamic`. Same hazard as the middleware
+        // tag above: get this wrong and `replaceEffects` stops replacing anything.
+        this.registerEffectWithOrigin(effSpec, "spec");
       }
     }
 
@@ -631,6 +787,17 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.reducerBus.clear();
     this.patternReducers.clear();
     this.sliceUnsubs.clear();
+    this.sliceOrigin.clear();
+    this.sliceOwner.clear();
+    this.disposedSlices.clear();
+    // Terminal and silent. `dispose()` means the store is gone, not that its slices were
+    // individually unmounted, and firing N changes would invite teardown against a store
+    // already tearing down, in an order nobody controls, while these very observers are
+    // being cleared. Consistent with `dispose()` not firing `listeners` either.
+    this.registrationObservers.clear();
+    this.pendingRegistrationChanges = null;
+    this.queuedRegistrationBatches.length = 0;
+    (this.middleware as unknown as unknown[]).length = 0;
     this.changedPathSink = null;
   }
 
@@ -646,25 +813,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private fingerprint(channel: string, type: string, payload: unknown): string {
-    const base = `${channel}::${type}`;
-
-    try {
-      // Fast path for primitives
-      if (payload === null || payload === undefined) {
-        return `${base}::null`;
-      }
-      if (typeof payload !== "object") {
-        return `${base}::${String(payload)}`;
-      }
-
-      // Attempt JSON serialization (handles most cases)
-      const json = JSON.stringify(payload);
-      return `${base}::${json}`;
-    } catch {
-      // Non-serializable payload - use timestamp to avoid false positives
-      // This means non-serializable payloads won't be deduplicated
-      return `${base}::${Date.now()}::${Math.random()}`;
-    }
+    return fingerprintOf(channel, type, payload);
   }
 
   /**
@@ -801,7 +950,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (effectSet && effectSet.size > 0) {
       for (const h of [...effectSet]) {
         try {
-          await h(event, this.getState, emit);
+          await h.effect(event, this.getState, emit);
         } catch (e) {
           console.error("Effect error:", e);
           this.onEffectError?.(e, event);
@@ -868,7 +1017,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const phaseSet = phaseMap.get(key);
 
     if (phaseSet?.size) {
-      for (const handler of [...phaseSet]) this.invokeEventSubscriber(handler, event, phase);
+      for (const entry of [...phaseSet]) {
+        if (this.replaying && !entry.duringReplay) continue;
+        this.invokeEventSubscriber(entry.handler, event, phase);
+      }
     }
 
     // Notify 'all' subscribers.
@@ -880,7 +1032,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (phase === "written") return;
     const allSet = this.allEventSubscribers.get(key);
     if (allSet?.size) {
-      for (const handler of [...allSet]) this.invokeEventSubscriber(handler, event, phase);
+      for (const entry of [...allSet]) {
+        if (this.replaying && !entry.duringReplay) continue;
+        this.invokeEventSubscriber(entry.handler, event, phase);
+      }
     }
   }
 
@@ -896,13 +1051,20 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     event: EventUnion<EM>,
     phase: "committed" | "uncommitted" | "written",
   ): void {
+    const report = (e: unknown): void => {
+      console.error("Event subscription error:", e);
+      // Reported as well as logged, so an application can route this to whatever it uses for
+      // errors. Reducers, effects, rejections and cascades all had a hook; subscribers had
+      // the console and nothing else.
+      this.onSubscriberError?.(e, event, phase);
+    };
     try {
       const result = handler(event, this.getState, this.emit, phase) as unknown;
       if (result && typeof (result as Promise<unknown>).then === "function") {
-        (result as Promise<unknown>).catch((e) => console.error("Event subscription error:", e));
+        (result as Promise<unknown>).catch(report);
       }
     } catch (e) {
-      console.error("Event subscription error:", e);
+      report(e);
     }
   }
 
@@ -1145,17 +1307,34 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // Reducers
     const reducers = (Object.keys(this.reducers) as Array<R>).map((name) => {
       const when = this.patternReducers.get(name);
-      return { name: name as string, when };
+      return {
+        name: name as string,
+        when,
+        origin: this.sliceOrigin.get(name as string) ?? "spec",
+        owner: this.sliceOwner.get(name as string),
+      };
     });
 
     // Effects (keyed) — metadata looked up from the store-owned effectMeta map
-    const effects: Array<{ channel: string; type: string; name?: string; description?: string }> = [];
+    const effects: Array<{
+      channel: string;
+      type: string;
+      name?: string;
+      description?: string;
+      origin: Origin;
+    }> = [];
     for (const [key, set] of this.effects) {
       if (set.size === 0) continue;
       const [channel, type] = key.split("::");
-      for (const fn of set) {
-        const meta = this.effectMeta.get(fn);
-        effects.push({ channel, type, name: meta?.name, description: meta?.description });
+      for (const entry of set) {
+        const meta = this.effectMeta.get(entry.effect);
+        effects.push({
+          channel,
+          type,
+          name: meta?.name,
+          description: meta?.description,
+          origin: entry.origin,
+        });
       }
     }
     // Effects (pattern-based) — entry is { effect, when }; metadata in effectMeta
@@ -1166,19 +1345,26 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         type: "*",
         name: meta?.name,
         description: meta?.description,
+        origin: entry.origin,
       });
     }
 
     // Middleware
-    const middleware: Array<{ name?: string; description?: string; when?: unknown }> = [];
-    for (const mwInput of this.middleware) {
+    const middleware: Array<{
+      name?: string;
+      description?: string;
+      when?: unknown;
+      origin: Origin;
+    }> = [];
+    for (const { input: mwInput, origin } of this.middleware) {
       if (typeof mwInput === "function") {
-        middleware.push({ name: mwInput.name || undefined });
+        middleware.push({ name: mwInput.name || undefined, origin });
       } else {
         middleware.push({
           name: (mwInput as any).meta?.name,
           description: (mwInput as any).meta?.description,
           when: (mwInput as any).when,
+          origin,
         });
       }
     }
@@ -1191,29 +1377,30 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       }
     }
 
-    // Event subscriptions
-    const event: Array<{ channel: string; type: string; phase: string }> = [];
-    for (const [key, set] of this.committedEventSubscribers) {
-      if (set.size === 0) continue;
-      const [channel, type] = key.split("::");
-      for (let i = 0; i < set.size; i++) {
-        event.push({ channel, type, phase: "committed" });
+    // Event subscriptions. `duringReplay` is reported so a panel can explain why a handler
+    // stayed silent during a time-travel instead of leaving it looking broken.
+    const event: Array<{
+      channel: string;
+      type: string;
+      phase: string;
+      duringReplay: boolean;
+    }> = [];
+    const collectSubscribers = (
+      map: Map<string, Set<EventSubscriberEntry<DeepReadonly<S>, EM>>>,
+      phase: string,
+    ): void => {
+      for (const [key, set] of map) {
+        if (set.size === 0) continue;
+        const [channel, type] = key.split("::");
+        for (const entry of set) {
+          event.push({ channel, type, phase, duringReplay: entry.duringReplay });
+        }
       }
-    }
-    for (const [key, set] of this.uncommittedEventSubscribers) {
-      if (set.size === 0) continue;
-      const [channel, type] = key.split("::");
-      for (let i = 0; i < set.size; i++) {
-        event.push({ channel, type, phase: "uncommitted" });
-      }
-    }
-    for (const [key, set] of this.allEventSubscribers) {
-      if (set.size === 0) continue;
-      const [channel, type] = key.split("::");
-      for (let i = 0; i < set.size; i++) {
-        event.push({ channel, type, phase: "all" });
-      }
-    }
+    };
+    collectSubscribers(this.committedEventSubscribers, "committed");
+    collectSubscribers(this.uncommittedEventSubscribers, "uncommitted");
+    collectSubscribers(this.writtenEventSubscribers, "written");
+    collectSubscribers(this.allEventSubscribers, "all");
 
     // Coarse subscribers count
     const coarse = this.listeners.size;
@@ -1259,6 +1446,24 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       );
     }
 
+    // Saved and restored, never set-and-clear-to-false. `__replayEvents` calls this as its
+    // first step, so clearing on the way out here would unset the flag for the whole event
+    // loop that follows and let every replayed event notify subscribers after all.
+    const wasReplaying = this.replaying;
+    this.replaying = true;
+    try {
+      return this.applyExternalStateInner(nextPlain);
+    } finally {
+      this.replaying = wasReplaying;
+    }
+  }
+
+  /**
+   * The body of {@link __applyExternalState}, with the replay flag already set.
+   *
+   * @internal
+   */
+  private applyExternalStateInner(nextPlain: any) {
     const prev = this.state as any;
     const next = nextPlain;
 
@@ -1272,7 +1477,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // A snapshot missing this slice must not blank it out — retain the current
       // slice (storing `undefined` would make getState().<slice>.x throw later).
       if (nextSlice === undefined) {
-        if (process.env.NODE_ENV !== "production") {
+        // Only warn for slices the snapshot should have carried. A snapshot taken before a
+        // decoration mounted legitimately lacks its slice, so warning would fire on every
+        // step of every scrub and point at nothing actionable.
+        if (
+          process.env.NODE_ENV !== "production" &&
+          (this.sliceOrigin.get(rName) ?? "spec") === "spec"
+        ) {
           console.warn(
             `[yoltra] External state is missing slice "${String(
               rName,
@@ -1348,6 +1559,28 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       );
     }
 
+    // Wraps the whole body, snapshot included. Event subscribers are notified below, and
+    // the point of the flag is that they are not - unless they asked to be.
+    const wasReplaying = this.replaying;
+    this.replaying = true;
+    try {
+      this.replayEventsInner(snapshot, events);
+    } finally {
+      // `finally`, so a reducer that throws mid-scrub does not leave the store believing it
+      // is still replaying and silencing every subscriber from then on.
+      this.replaying = wasReplaying;
+    }
+  }
+
+  /**
+   * The body of {@link __replayEvents}, with the replay flag already set.
+   *
+   * @internal
+   */
+  private replayEventsInner(
+    snapshot: any,
+    events: Array<{ channel: string; type: string; payload: any; id: string; meta?: EventMeta }>,
+  ): void {
     // 1. Apply snapshot (restores base state)
     this.__applyExternalState(snapshot);
 
@@ -1395,7 +1628,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         this.listeners.forEach((l) => l());
       }
 
-      // NOTE: No middleware, no effects, no dedup, no DevTools logging
+      // NOTE: No middleware, no effects, no dedup, no DevTools logging, and no event
+      // subscribers unless one opted in with `{ duringReplay: true }`. Subscribers used to
+      // be missing from this list and notified anyway, so scrubbing a timeline re-ran every
+      // `onEvent` handler as though the events had happened again - publishing to peers,
+      // writing to sockets and firing analytics, with nothing available to detect it.
     }
   }
 
@@ -1487,9 +1724,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           : this.fingerprint(channel as string, type as string, payload);
       if (this.shouldDedupe(fp, windowMs)) {
         // A suppressed duplicate never reaches middleware or a reducer, so it is neither
-        // committed nor written — the same answer a vetoed event gives, which is correct: in
-        // both cases the caller's event had no effect.
-        return NOT_COMMITTED;
+        // committed nor written. It carries `reason: "deduped"` to say so: a caller handling
+        // `committed: false` needs to tell a guard refusing the action from a double-click
+        // being collapsed, and those want opposite responses.
+        return DEDUPED;
       }
     }
 
@@ -1525,7 +1763,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         depth,
         parent.chain,
       );
-      return NOT_COMMITTED;
+      return CASCADE_REFUSED;
     }
 
     let resolve!: (result: EmitResult) => void;
@@ -1601,7 +1839,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           );
           // Resolve rather than abandon: a caller awaiting this emit would otherwise hang, which
           // is the failure the ceiling exists to prevent, arriving by another door.
-          resolve(NOT_COMMITTED);
+          resolve(CASCADE_REFUSED);
           continue;
         }
 
@@ -1667,12 +1905,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private applyEventSync(event: EventUnion<EM>): EmitResult {
-    // Middleware (synchronous). Return false to veto; async work belongs in effects.
-    for (const mwInput of this.middleware) {
+    // Middleware (synchronous). Return `false` to veto; async work belongs in effects.
+    for (const { input: mwInput } of this.middleware) {
       const when = getMiddlewareWhen(mwInput);
       if (!matchesWhen(when, event)) continue;
       const mw = getMiddlewareFunction(mwInput);
-      let ok: boolean;
+      let ok: boolean | void;
       try {
         ok = mw(this.state, event, this.emit);
         if (
@@ -1691,13 +1929,35 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           );
         }
       } catch (err) {
-        console.error("Middleware error:", err);
+        // A throw is still a veto: middleware guards things, and a guard that crashed has
+        // not decided the event is safe. But say so, because "the event vanished" and "the
+        // middleware threw" look nothing alike from the outside.
+        console.error(
+          `[yoltra] Middleware threw for "${event.channel}/${event.type}"; the event was ` +
+            `vetoed and did not reach any reducer.`,
+          err,
+        );
         ok = false;
       }
-      if (!ok) {
-        // Rejected by middleware — notify uncommitted subscribers, do not commit.
+      // Only an explicit `false` vetoes. Middleware that does its work and falls off the end
+      // has an opinion about nothing, and the safe reading of "no opinion" is "allow" - the
+      // previous `!ok` test made a missing `return` swallow every event the middleware
+      // matched, which surfaces as reducers quietly stopping for one channel and looks like
+      // a routing, `when` or registration-order problem. Nothing about it points at the
+      // middleware.
+      if (ok === false) {
+        // Rejected by middleware - notify uncommitted subscribers, do not commit.
         this.notifyEventSubscribers(event, "uncommitted");
-        return NOT_COMMITTED;
+        // Named, so "the event vanished" has an author. A reducer refusal has always named
+        // its slice; a veto named nobody.
+        const vetoedBy =
+          typeof mwInput === "function" ? mwInput.name || undefined : mwInput.meta?.name;
+        return Object.freeze({
+          committed: false,
+          written: false,
+          reason: "vetoed" as const,
+          ...(vetoedBy !== undefined && vetoedBy !== "" ? { vetoedBy } : {}),
+        });
       }
     }
 
@@ -1876,6 +2136,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     h: (chg: Change) => void,
     options?: ConnectOptions,
   ): () => void {
+    // The one place the type/runtime gap after a disposal can be caught. A widened type
+    // still promises a slice its owner has unmounted, and TypeScript cannot express
+    // "valid until that call" - so the silent `undefined` a component would read becomes a
+    // named error instead. Development only; one Set and one membership test.
+    if (
+      process.env.NODE_ENV !== "production" &&
+      this.disposedSlices.has(spec.reducer as unknown as string)
+    ) {
+      const owner = this.disposedSlices.get(spec.reducer as unknown as string);
+      throw new Error(
+        `[yoltra] Slice "${String(spec.reducer)}" was unmounted by its owner` +
+          `${owner === undefined ? "" : ` (${owner})`}. Hooks and subscriptions widened for ` +
+          `it are no longer valid.`,
+      );
+    }
+
     const off = this.connectorBus.on(spec.reducer, spec.property, h);
 
     if (options?.immediate === true) {
@@ -1896,6 +2172,253 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
+   * Subscribe to reducer, middleware and effect registrations.
+   *
+   * Delivered as an array, one batch per public call: `replaceReducers` unmounts and then
+   * remounts, and a per-change observer would see a spurious unmount of a slice that is only
+   * being updated. Observers run after the state broadcast, and a registration made by an
+   * observer is queued rather than delivered re-entrantly.
+   *
+   * Replay never produces a change, so there is no `duringReplay` option here. `dispose()`
+   * fires nothing.
+   *
+   * @param observer - Receives one batch per registration change.
+   * @param options - `emitCurrent` synthesizes a `'mounted'` batch for everything already
+   * installed, delivered synchronously before this call returns, carrying each registration's
+   * real origin rather than a synthetic marker.
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * ```ts
+   * const off = store.onRegistrationChange((changes) => {
+   *   for (const c of changes) {
+   *     console.log(c.op, c.kind, c.name, c.origin);
+   *   }
+   * }, { emitCurrent: true });
+   * off();
+   * ```
+   *
+   * @public
+   */
+  public onRegistrationChange(
+    observer: RegistrationObserver<EM>,
+    options?: { emitCurrent?: boolean },
+  ): Unsubscribe {
+    this.registrationObservers.add(observer);
+
+    if (options?.emitCurrent === true) {
+      const current = this.describeCurrentRegistrations();
+      // Synchronously, before returning. Pull-then-subscribe would be two shapes and a race
+      // to reason about; this is one shape and no race by construction.
+      //
+      // Flagged while delivering, so a registration made from inside this very snapshot is
+      // queued like any other rather than re-entering the notifier. Without the flag an
+      // observer that registers on first sight of the store broke the documented contract
+      // on the one call most likely to do it.
+      if (current.length > 0) {
+        const wasNotifying = this.notifyingRegistrations;
+        this.notifyingRegistrations = true;
+        try {
+          this.invokeRegistrationObserver(observer, current);
+        } finally {
+          this.notifyingRegistrations = wasNotifying;
+        }
+        if (!wasNotifying) this.drainQueuedRegistrationBatches();
+      }
+    }
+
+    return () => {
+      this.registrationObservers.delete(observer);
+    };
+  }
+
+  /**
+   * Everything currently installed, as `"mounted"` changes.
+   *
+   * @internal
+   */
+  private describeCurrentRegistrations(): RegistrationChange<EM>[] {
+    const out: RegistrationChange<EM>[] = [];
+
+    for (const name of Object.keys(this.reducers)) {
+      out.push({
+        kind: "reducer",
+        op: "mounted",
+        name,
+        // The real origin, never a synthetic "existing" marker. Filtering on provenance is
+        // the main thing an observer does, and a snapshot that lied about it would break
+        // exactly the registrations that were already there.
+        origin: this.sliceOrigin.get(name) ?? "spec",
+        owner: this.sliceOwner.get(name),
+        when: this.patternReducers.get(name as R),
+        // From this observer's point of view the state exists; it never saw a prior value.
+        state: "initialized",
+        dispatch: this.patternReducers.has(name as R) ? "pattern" : "keyed",
+      });
+    }
+    for (const entry of this.middleware) {
+      const meta = typeof entry.input === "function" ? undefined : entry.input.meta;
+      out.push({
+        kind: "middleware",
+        op: "mounted",
+        name: meta?.name ?? (typeof entry.input === "function" ? entry.input.name : undefined),
+        description: meta?.description,
+        origin: entry.origin,
+        when: getMiddlewareWhen(entry.input),
+        dispatch: "pattern",
+      });
+    }
+    for (const [key, set] of this.effects) {
+      const [channel, type] = key.split("::");
+      for (const entry of set) {
+        out.push({
+          kind: "effect",
+          op: "mounted",
+          name: this.effectMeta.get(entry.effect)?.name,
+          description: this.effectMeta.get(entry.effect)?.description,
+          origin: entry.origin,
+          when: { keys: [[channel, type]] } as When<EM>,
+          dispatch: "keyed",
+        });
+      }
+    }
+    for (const entry of this.patternEffects) {
+      out.push({
+        kind: "effect",
+        op: "mounted",
+        name: this.effectMeta.get(entry.effect)?.name,
+        description: this.effectMeta.get(entry.effect)?.description,
+        origin: entry.origin,
+        when: entry.when,
+        dispatch: "pattern",
+      });
+    }
+    return out;
+  }
+
+  /**
+   * Runs `fn` as one registration transaction, flushing a single batch at the outermost end.
+   *
+   * @internal
+   */
+  private inRegistrationTransaction<T>(fn: () => T): T {
+    this.registrationDepth += 1;
+    try {
+      return fn();
+    } finally {
+      this.registrationDepth -= 1;
+      if (this.registrationDepth === 0) this.flushRegistrationChanges();
+    }
+  }
+
+  /**
+   * Records a change, to be delivered when the current transaction ends.
+   *
+   * @remarks
+   * Guarded on observer count **before** anything is allocated. These call sites run inside
+   * `createStore`, so a twenty-slice store with nobody listening must build no objects and
+   * no arrays at all - the same discipline `emitInstrumentation` already follows.
+   *
+   * @internal
+   */
+  private recordRegistrationChange(make: () => RegistrationChange<EM>): void {
+    if (this.registrationObservers.size === 0) return;
+    (this.pendingRegistrationChanges ??= []).push(make());
+    if (this.registrationDepth === 0) this.flushRegistrationChanges();
+  }
+
+  /** @internal */
+  private flushRegistrationChanges(): void {
+    const batch = this.pendingRegistrationChanges;
+    this.pendingRegistrationChanges = null;
+    if (batch === null || batch.length === 0) return;
+
+    if (this.notifyingRegistrations) {
+      // An observer registered something of its own. That is the legitimate
+      // ordering-dependency case, so it is neither forbidden nor delivered re-entrantly:
+      // queued, and drained once the current notification finishes.
+      this.queuedRegistrationBatches.push(batch);
+      return;
+    }
+
+    this.notifyingRegistrations = true;
+    try {
+      this.deliverRegistrationBatch(batch);
+      this.drainQueuedRegistrationBatches();
+    } finally {
+      this.notifyingRegistrations = false;
+    }
+  }
+
+  /**
+   * Delivers batches an observer produced while being notified.
+   *
+   * @remarks
+   * Bounded like the reduce depth, and for the same reason: two observers registering in
+   * response to each other would otherwise loop forever. Logged rather than thrown - the
+   * topology is correct at that point, and throwing would truncate the stream *and* unwind a
+   * caller that did nothing wrong.
+   *
+   * @internal
+   */
+  private drainQueuedRegistrationBatches(): void {
+    let drained = 0;
+    while (this.queuedRegistrationBatches.length > 0) {
+      if (drained >= MAX_REGISTRATION_CASCADE) {
+        console.error(
+          `[yoltra] Registration notifications exceeded ${MAX_REGISTRATION_CASCADE} rounds; ` +
+            `dropping the rest. Two observers are most likely registering in response to ` +
+            `each other.`,
+        );
+        this.queuedRegistrationBatches.length = 0;
+        break;
+      }
+      drained += 1;
+      this.deliverRegistrationBatch(this.queuedRegistrationBatches.shift()!);
+    }
+  }
+
+  /** @internal */
+  private deliverRegistrationBatch(batch: readonly RegistrationChange<EM>[]): void {
+    // Snapshot before iterating, like every other observer seam here: an observer added
+    // during a notification does not receive the batch it was added in.
+    for (const observer of [...this.registrationObservers]) {
+      this.invokeRegistrationObserver(observer, batch);
+    }
+  }
+
+  /** @internal */
+  private invokeRegistrationObserver(
+    observer: RegistrationObserver<EM>,
+    batch: readonly RegistrationChange<EM>[],
+  ): void {
+    try {
+      const result = observer(batch) as unknown;
+      if (
+        process.env.NODE_ENV !== "production" &&
+        typeof (result as Promise<unknown>)?.then === "function"
+      ) {
+        // Deliberately not awaited, and deliberately not `.catch`ed either: we are not
+        // adopting this promise. Registration notification is synchronous, so by the time it
+        // resolves the store has moved on and anything it does lands at an unpredictable
+        // point relative to everything else.
+        console.error(
+          "[yoltra] A registration observer returned a Promise. Registration notifications " +
+            "are synchronous: the store has already moved on by the time it resolves. Do the " +
+            "work synchronously, or schedule it yourself and accept that the topology may " +
+            "have changed again.",
+        );
+      }
+    } catch (e) {
+      console.error("Registration observer error:", e);
+    }
+  }
+
+  public get isReplaying(): boolean {
+    return this.replaying;
+  }
+
+  /**
    * Subscribe to events by channel and type.
    *
    * Event subscriptions are intended for the View layer (e.g., React components)
@@ -1906,8 +2429,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * - `'committed'` (default): Events that passed middleware and reached reducers.
    *   Notified after reducers, before effects.
    * - `'uncommitted'`: Events rejected by middleware. Notified immediately after rejection.
+   * - `'written'`: Events that actually changed state. Stricter than `committed`, which
+   *   fires for every event a store accepts including one with no reducers at all.
    * - `'all'`: Both committed and uncommitted events. Handler receives the phase parameter
-   *   to distinguish between the two.
+   *   to distinguish between the two. Deliberately not `written` as well: an event that
+   *   writes is also committed, so folding it in would notify every existing `all`
+   *   subscriber twice for one event.
+   *
+   * **Replay:** a handler is not called while devtools is replaying, unless it opted in with
+   * `{ duringReplay: true }`.
    *
    * @typeParam C - Channel key within `EM`.
    * @typeParam T - Event type key within channel `C`.
@@ -1946,6 +2476,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     type: T,
     handler: NarrowedEventHandler<DeepReadonly<S>, EM, C, T>,
     phase: EventPhase = "committed",
+    options?: { duringReplay?: boolean },
   ): Unsubscribe {
     const key = `${channel}::${String(type)}`;
 
@@ -1961,13 +2492,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (!targetMap.has(key)) {
       targetMap.set(key, new Set());
     }
-    // Store handler with type cast since internal storage uses the broad type
-    targetMap.get(key)!.add(handler as EventSubscriptionHandler<DeepReadonly<S>, EM>);
+    // An entry per subscription, not the bare handler. Storing the function meant two
+    // subscriptions sharing one handler were one Set member, so disposing either removed
+    // both - and it left nowhere to record the replay opt-in.
+    const entry: EventSubscriberEntry<DeepReadonly<S>, EM> = {
+      handler: handler as EventSubscriptionHandler<DeepReadonly<S>, EM>,
+      duringReplay: options?.duringReplay === true,
+    };
+    targetMap.get(key)!.add(entry);
 
     return () => {
       const set = targetMap.get(key);
       if (set) {
-        set.delete(handler as EventSubscriptionHandler<DeepReadonly<S>, EM>);
+        set.delete(entry);
         if (set.size === 0) targetMap.delete(key);
       }
     };
@@ -2046,12 +2583,111 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public registerMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): Unsubscribe {
-    this.middleware.push(mw as any);
-    return () => {
-      const i = this.middleware.indexOf(mw as any);
-      if (i !== -1) this.middleware.splice(i, 1);
-    };
+  public registerMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): any {
+    const entry = { input: mw, origin: "dynamic" as Origin };
+    this.middleware.push(entry);
+    this.recordMiddlewareChange(entry, "mounted");
+    return this.asRegistration(() => {
+      // Spliced by entry identity. `indexOf` on the function meant registering the same
+      // middleware twice and disposing once removed the first registration rather than the
+      // one being disposed.
+      const i = this.middleware.indexOf(entry);
+      // Idempotent: a second call must not re-announce a removal that already happened.
+      if (i === -1) return;
+      this.middleware.splice(i, 1);
+      // Announced *after* the splice, so an observer that reads the store sees it gone.
+      this.recordMiddlewareChange(entry, "unmounted");
+    });
+  }
+
+  /**
+   * Turns a disposer into the callable object `register*` returns.
+   *
+   * @remarks
+   * `Object.assign` onto the function rather than a new object, so every existing call site
+   * keeps working verbatim: `const off = store.registerEffect(spec); off();` compiles and
+   * runs exactly as before, while `.store` and `.dispose` become available to a library that
+   * wants the widened type.
+   *
+   * A callable object rather than an overload or a second method: an overload cannot change
+   * the return shape based on nothing, and a parallel `registerSliceX` family would leave
+   * the originals permanently second class and force libraries to branch on the core version.
+   *
+   * @internal
+   */
+  private recordMiddlewareChange(
+    entry: { input: MiddlewareInput<DeepReadonly<S>, EM>; origin: Origin },
+    op: "mounted" | "unmounted",
+  ): void {
+    this.recordRegistrationChange(() => {
+      const meta = typeof entry.input === "function" ? undefined : entry.input.meta;
+      return {
+        kind: "middleware",
+        op,
+        name: meta?.name ?? (typeof entry.input === "function" ? entry.input.name : undefined),
+        description: meta?.description,
+        origin: entry.origin,
+        when: getMiddlewareWhen(entry.input),
+        dispatch: "pattern",
+      };
+    });
+  }
+
+  /**
+   * Drops an effect's metadata only once nothing is still registered with it.
+   *
+   * @remarks
+   * `effectMeta` is keyed by the effect *function*, and the same function can legitimately
+   * back several registrations. Deleting on the first disposal stripped the name and
+   * description of the ones still live, which a devtools panel then showed as unnamed.
+   *
+   * @internal
+   */
+  private releaseEffectMeta(effect: EffectFunction<DeepReadonly<S>, EM>): void {
+    for (const set of this.effects.values()) {
+      for (const entry of set) if (entry.effect === effect) return;
+    }
+    for (const entry of this.patternEffects) if (entry.effect === effect) return;
+    this.effectMeta.delete(effect);
+  }
+
+  /** @internal */
+  private recordEffectChange(
+    effect: EffectFunction<DeepReadonly<S>, EM>,
+    when: When<EM> | undefined,
+    origin: Origin,
+    op: "mounted" | "unmounted",
+    dispatch: "keyed" | "pattern",
+  ): void {
+    this.recordRegistrationChange(() => ({
+      kind: "effect",
+      op,
+      name: this.effectMeta.get(effect)?.name,
+      description: this.effectMeta.get(effect)?.description,
+      origin,
+      when,
+      dispatch,
+    }));
+  }
+
+  /** @internal */
+  private asRegistration(dispose: () => void): any {
+    return Object.assign(dispose, { store: this, dispose });
+  }
+
+  /**
+   * The one place the widening cast lives.
+   *
+   * @remarks
+   * Decoration is type-level only. This returns the **same runtime object**: subscriptions,
+   * effects, middleware, the dedup cache, both buses and any in-flight `call()` are
+   * untouched, and nothing re-subscribes. Keeping the cast here means no call site needs one,
+   * which is the entire point of the feature.
+   *
+   * @internal
+   */
+  private widened(): any {
+    return this;
   }
 
   /**
@@ -2076,7 +2712,33 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public registerReducer(name: string, spec: ReducerSpec<any, EM>): () => void {
+  public registerReducer(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
+    return this.registerSlice(name, spec as any, options);
+  }
+
+  /**
+   * Mounts a slice and hands back the widened store alongside a disposer.
+   *
+   * @remarks
+   * The name `registerSlice` is what the guide uses; `registerReducer` keeps its broader
+   * `name: string` signature and delegates here, so existing call sites are untouched.
+   *
+   * @public
+   */
+  public registerSlice(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
+    // One transaction, so observers are notified *after* the state broadcast below rather
+    // than from inside `mountSlice`. The view layer should learn a fact before a library
+    // gets to react to it; reversed, a library's own registration would publish before the
+    // originating one had reached the UI.
+    return this.inRegistrationTransaction(() => this.registerSliceInner(name, spec, options));
+  }
+
+  /** @internal */
+  private registerSliceInner(
+    name: string,
+    spec: ReducerSpec<any, EM>,
+    options?: { owner?: string },
+  ): any {
     // `hasOwnProperty`, not `in`: the registry is a plain object, so `in` also answers true for
     // everything on `Object.prototype`. A slice legitimately named `toString`, `constructor` or
     // `valueOf` was refused as already existing — with a message naming a reducer that does not
@@ -2087,15 +2749,60 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     this.mountSlice(name as R, spec as ReducerSpec<S[R], EM>, {
       preserveState: false,
+      origin: "dynamic",
+      owner: options?.owner,
     });
 
     this.listeners.forEach((l) => l()); // broadcast new slice
+    // And the fine-grained bus, or `useAtomicProp` would never learn the slice exists.
+    this.announceMountedSlice(name, (this.state as any)[name]);
 
-    return () => {
-      // disposer
-      this.unmountSlice(name as R, { deleteState: true });
-      this.listeners.forEach((l) => l());
-    };
+    return this.asRegistration(() => {
+      // Idempotent. A second call used to re-announce the unmount and re-broadcast to every
+      // listener, for a slice that had already gone.
+      if (!Object.prototype.hasOwnProperty.call(this.reducers, name)) return;
+      this.inRegistrationTransaction(() => {
+        this.unmountSlice(name as R, { deleteState: true });
+        this.listeners.forEach((l) => l());
+      });
+    });
+  }
+
+  /**
+   * Mounts a slice and returns the widened store, for chaining.
+   *
+   * @remarks
+   * No disposer, deliberately. After a disposer runs, the widened type still promises a
+   * slice that is gone, and TypeScript cannot express "valid until that call". The chaining
+   * API therefore does not hand one out, so the footgun does not exist on the path most
+   * people take; {@link registerSlice} carries one for the library that owns the slice, and
+   * the documented rule is that a disposer stays library-private.
+   *
+   * @public
+   */
+  public withSlice(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
+    this.registerSlice(name, spec, options);
+    return this.widened();
+  }
+
+  /**
+   * Registers middleware and returns the widened store, for chaining.
+   *
+   * @public
+   */
+  public withMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): any {
+    this.registerMiddleware(mw);
+    return this.widened();
+  }
+
+  /**
+   * Registers an effect and returns the widened store, for chaining.
+   *
+   * @public
+   */
+  public withEffect(spec: EffectSpec<DeepReadonly<S>, EM>): any {
+    this.registerEffect(spec);
+    return this.widened();
   }
 
   /**
@@ -2216,7 +2923,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     opts: CallOptions<EM>,
   ): CallHandle<EventUnion<EM>, EventUnion<EM>> {
     return performCall<S, EM, C, T>(
-      { idFactory: this.idFactory, registerEffect: this.registerEffect, emit: this.emit },
+      {
+        idFactory: this.idFactory,
+        // `internal`, so an in-flight call survives even `replaceEffects(next, { scope: "all" })`.
+        // A test harness resetting a store between cases never means "and abandon the call
+        // that is currently awaiting a reply", and the symptom would be a hang to the idle
+        // timeout with nothing pointing at the reset.
+        registerEffect: (effSpec) => this.registerEffectWithOrigin(effSpec, "internal"),
+        emit: this.emit,
+      },
       channel,
       type,
       payload,
@@ -2224,7 +2939,23 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     );
   }
 
-  public registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): () => void {
+  public registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): any {
+    return this.asRegistration(this.registerEffectWithOrigin(spec, "dynamic"));
+  }
+
+  /**
+   * {@link registerEffect}, with the provenance the caller cannot set.
+   *
+   * @remarks
+   * Kept private so no origin parameter leaks into `StoreInstance`. Three callers: the
+   * constructor (`spec`), the public method (`dynamic`), and `store.call()` (`internal`).
+   *
+   * @internal
+   */
+  private registerEffectWithOrigin(
+    spec: EffectSpec<DeepReadonly<S>, EM>,
+    origin: Origin,
+  ): () => void {
     const { effect, meta, when } = spec;
     const unsubs: Array<() => void> = [];
 
@@ -2244,11 +2975,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     if (isPatternBased) {
       // Store as pattern-based effect for runtime matching
-      const entry = { effect, when: when! };
+      const entry = { effect, when: when!, origin };
       this.patternEffects.add(entry);
+      this.recordEffectChange(effect, when!, origin, "mounted", "pattern");
 
       return () => {
+        this.recordEffectChange(effect, when!, origin, "unmounted", "pattern");
         this.patternEffects.delete(entry);
+        this.releaseEffectMeta(effect);
       };
     }
 
@@ -2258,11 +2992,17 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // If no keys (no targeting at all), this effect matches ALL events
     // We treat it as a pattern-based effect with `any: true`
     if (eventKeys.length === 0 && !when) {
-      const entry = { effect, when: { any: true } as When<EM> };
+      // Normalized, not raw: no targeting at all means "every event", and an observer told
+      // `undefined` would have to re-derive that for itself.
+      const normalized = { any: true } as When<EM>;
+      const entry = { effect, when: normalized, origin };
       this.patternEffects.add(entry);
+      this.recordEffectChange(effect, normalized, origin, "mounted", "pattern");
 
       return () => {
+        this.recordEffectChange(effect, normalized, origin, "unmounted", "pattern");
         this.patternEffects.delete(entry);
+        this.releaseEffectMeta(effect);
       };
     }
 
@@ -2272,13 +3012,17 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       if (!this.effects.has(key)) {
         this.effects.set(key, new Set());
       }
-      this.effects.get(key)!.add(effect);
+      const entry = { effect, origin };
+      this.effects.get(key)!.add(entry);
+      const keyedWhen = { keys: [[channel, type]] } as When<EM>;
+      this.recordEffectChange(effect, keyedWhen, origin, "mounted", "keyed");
 
       // Create disposer
       unsubs.push(() => {
+        this.recordEffectChange(effect, keyedWhen, origin, "unmounted", "keyed");
         const set = this.effects.get(key);
         if (set) {
-          set.delete(effect);
+          set.delete(entry);
           if (set.size === 0) this.effects.delete(key);
         }
       });
@@ -2286,6 +3030,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     return () => {
       for (const u of unsubs) u();
+      this.releaseEffectMeta(effect);
     };
   }
 
@@ -2354,12 +3099,42 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public replaceMiddleware(next: MiddlewareInput<DeepReadonly<S>, EM>[]): void {
+  public replaceMiddleware(
+    next: MiddlewareInput<DeepReadonly<S>, EM>[],
+    opts: { scope?: ReplaceScope } = {},
+  ): void {
+    this.inRegistrationTransaction(() => this.replaceMiddlewareInner(next, opts));
+  }
+
+  /** @internal */
+  private replaceMiddlewareInner(
+    next: MiddlewareInput<DeepReadonly<S>, EM>[],
+    opts: { scope?: ReplaceScope } = {},
+  ): void {
     // Accepts either form. Taking only the bare function meant a hot reload silently discarded
     // the `when` targeting and `meta` of every spec-form middleware, so after an HMR pass a
     // middleware scoped to one channel began running on all of them.
+    const scope = opts.scope ?? "spec";
+    const retained = this.middleware.filter((e) =>
+      scope === "all" ? e.origin === "internal" : e.origin !== "spec",
+    );
+    // Recorded explicitly: this truncates the array rather than going through
+    // `registerMiddleware`, so nothing else would notice the entries leaving.
+    for (const entry of this.middleware) {
+      if (!retained.includes(entry)) this.recordMiddlewareChange(entry, "unmounted");
+    }
     (this.middleware as any).length = 0;
-    for (const mw of next) this.middleware.push(mw as any);
+    // Order matters and is reproduced rather than incidental: spec middleware exists at
+    // construction and dynamic middleware is appended after it, so new spec entries go first
+    // and retained ones follow. A dynamic auth guard silently moving from first to last
+    // changes which events get vetoed, and nothing about the symptom would point here.
+    for (const mw of next) {
+      const entry = { input: mw, origin: "spec" as Origin };
+      this.middleware.push(entry);
+      this.recordMiddlewareChange(entry, "mounted");
+    }
+    for (const entry of retained) this.middleware.push(entry);
+    this.reportPreserved("replaceMiddleware", retained.length, scope);
   }
 
   /**
@@ -2378,19 +3153,73 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public replaceEffects(next: Array<EffectSpec<DeepReadonly<S>, EM>>): void {
-    this.effects.clear();
-    this.patternEffects.clear();
-    for (const spec of next) {
-      this.registerEffect(spec);
+  public replaceEffects(
+    next: Array<EffectSpec<DeepReadonly<S>, EM>>,
+    opts: { scope?: ReplaceScope } = {},
+  ): void {
+    this.inRegistrationTransaction(() => this.replaceEffectsInner(next, opts));
+  }
+
+  /** @internal */
+  private replaceEffectsInner(
+    next: Array<EffectSpec<DeepReadonly<S>, EM>>,
+    opts: { scope?: ReplaceScope } = {},
+  ): void {
+    const scope = opts.scope ?? "spec";
+    const keeps = (origin: Origin): boolean =>
+      scope === "all" ? origin === "internal" : origin !== "spec";
+
+    let preserved = 0;
+    for (const [key, set] of this.effects) {
+      for (const entry of [...set]) {
+        if (keeps(entry.origin)) {
+          preserved += 1;
+          continue;
+        }
+        this.recordEffectChange(
+          entry.effect,
+          { keys: [key.split("::") as [string, string]] } as When<EM>,
+          entry.origin,
+          "unmounted",
+          "keyed",
+        );
+        set.delete(entry);
+        // Pruned per dropped function rather than wholesale. `effectMeta` was never cleared
+        // here at all, so it grew stale entries forever; clearing all of it would instead
+        // strip the metadata of every effect being preserved.
+        this.releaseEffectMeta(entry.effect);
+      }
+      if (set.size === 0) this.effects.delete(key);
     }
+    for (const entry of [...this.patternEffects]) {
+      if (keeps(entry.origin)) {
+        preserved += 1;
+        continue;
+      }
+      this.recordEffectChange(entry.effect, entry.when, entry.origin, "unmounted", "pattern");
+      this.patternEffects.delete(entry);
+      this.releaseEffectMeta(entry.effect);
+    }
+
+    for (const spec of next) {
+      this.registerEffectWithOrigin(spec, "spec");
+    }
+    this.reportPreserved("replaceEffects", preserved, scope);
   }
 
   /**
    * Replaces the entire **reducer set** (HMR-friendly).
    *
    * @param next - Map of slice specs keyed by slice name.
-   * @param opts - `{ preserveState?: boolean }` (default `true`).
+   * @param opts - `{ preserveState?: boolean }` (default `true`) and
+   * `{ scope?: "spec" | "all" }` (default `"spec"`).
+   *
+   * @remarks
+   * Replaces **spec-provenance slices only**. A slice mounted after construction with
+   * `registerSlice` survives, along with its state: it was never part of the set this call
+   * is replacing. Pass `{ scope: "all" }` for the pre-0.8.0 wholesale behaviour.
+   *
+   * Throws, before mutating anything, if `next` names a slice a library mounted at runtime.
    *
    * @example Hot module replacement
    * ```ts
@@ -2405,17 +3234,41 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   public replaceReducers(
     next: Record<R, ReducerSpec<S[R], EM>>,
-    opts: { preserveState?: boolean } = {},
+    opts: { preserveState?: boolean; scope?: ReplaceScope } = {},
+  ): void {
+    this.inRegistrationTransaction(() => this.replaceReducersInner(next, opts));
+  }
+
+  /** @internal */
+  private replaceReducersInner(
+    next: Record<R, ReducerSpec<S[R], EM>>,
+    opts: { preserveState?: boolean; scope?: ReplaceScope } = {},
   ): void {
     const preserveState = opts.preserveState !== false; // default true
+    const scope = opts.scope ?? "spec";
 
     const currentKeys = new Set(Object.keys(this.reducers as any));
     const nextEntries = Object.entries(next);
     const nextKeys = new Set(nextEntries.map(([k]) => k));
 
-    // Remove slices that no longer exist
+    this.assertNoSliceCollision(next, scope);
+
+    const rootBefore = this.state;
+
+    // Remove slices that no longer exist - but only the ones this call owns. A slice a
+    // library mounted with `registerReducer` was never in the set `replaceReducers` is
+    // replacing, and no caller of `replaceReducers(myReducers)` means "and also delete the
+    // slice devtools or a decoration mounted, along with its state".
+    let preserved = 0;
     for (const k of currentKeys) {
-      if (!nextKeys.has(k)) this.unmountSlice(k as R, { deleteState: true });
+      if (nextKeys.has(k)) continue;
+      const origin = this.sliceOrigin.get(k) ?? "spec";
+      const removable = scope === "all" ? origin !== "internal" : origin === "spec";
+      if (!removable) {
+        preserved += 1;
+        continue;
+      }
+      this.unmountSlice(k as R, { deleteState: true });
     }
 
     // Add or update slices
@@ -2423,13 +3276,74 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       if (currentKeys.has(k)) {
         // Update reducer impl + event wiring; preserve current state
         this.unmountSlice(k as R, { deleteState: false });
-        this.mountSlice(k as R, rSpec as any, { preserveState });
+        this.mountSlice(k as R, rSpec as any, { preserveState, origin: "spec" });
       } else {
         // New slice
-        this.mountSlice(k as R, rSpec as any, { preserveState: false });
+        this.mountSlice(k as R, rSpec as any, { preserveState: false, origin: "spec" });
       }
     }
 
+    // `registerReducer` has always broadcast after mounting and this never did, so a React
+    // tree went on rendering the pre-reload state after an HMR pass until something else
+    // happened to wake it. Gated on root identity, so an all-preserving replace costs
+    // nothing.
+    if (this.state !== rootBefore) this.listeners.forEach((l) => l());
+
+    this.reportPreserved("replaceReducers", preserved, scope);
+  }
+
+  /**
+   * Refuses, before anything is mutated, to take over a slice mounted at runtime.
+   *
+   * @remarks
+   * An application authoring a slice a library owns is a real mistake, and a silent takeover
+   * is the worst available outcome: the library keeps a disposer for a slice that is no
+   * longer its own. Throwing part-way through would be worse still, which is why this runs
+   * as a pre-flight and why `hotReplace` calls it before swapping anything at all.
+   *
+   * @internal
+   */
+  private assertNoSliceCollision(
+    next: Record<string, unknown>,
+    scope: ReplaceScope,
+  ): void {
+    if (scope !== "spec") return;
+    const collisions = Object.keys(next).filter(
+      (k) => this.sliceOrigin.get(k) === "dynamic",
+    );
+    if (collisions.length === 0) return;
+
+    const named = collisions
+      .map((k) => {
+        const owner = this.sliceOwner.get(k);
+        return owner === undefined ? `"${k}"` : `"${k}" (owner: ${owner})`;
+      })
+      .join(", ");
+    throw new Error(
+      `[yoltra] replaceReducers would take over ${collisions.length === 1 ? "a slice" : "slices"} ` +
+        `mounted at runtime: ${named}. Rename the slice, or pass { scope: "all" } to replace ` +
+        `it deliberately.`,
+    );
+  }
+
+  /**
+   * Says what a `replace*` call left alone, when it left anything alone.
+   *
+   * @remarks
+   * Development only, and silent unless something was actually preserved, so the normal HMR
+   * path stays quiet. `console.debug` rather than `warn`: this is correct operation, and
+   * every existing `warn` in this file marks a genuine problem. It exists so "why is that
+   * effect still firing after a reload" has an answer that does not require reading core.
+   *
+   * @internal
+   */
+  private reportPreserved(method: string, count: number, scope: ReplaceScope): void {
+    if (count === 0) return;
+    if (process.env.NODE_ENV === "production") return;
+    console.debug(
+      `[yoltra] ${method} preserved ${count} registration${count === 1 ? "" : "s"} made after ` +
+        `construction.${scope === "spec" ? ' Pass { scope: "all" } to replace them too.' : ""}`,
+    );
   }
 
   /**
@@ -2454,11 +3368,28 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
     effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
     preserveState?: boolean;
+    scope?: ReplaceScope;
   }): void {
-    if (partial.middleware) this.replaceMiddleware(partial.middleware);
-    if (partial.effects) this.replaceEffects(partial.effects);
-    if (partial.reducer)
-      this.replaceReducers(partial.reducer, { preserveState: partial.preserveState });
+    // `scope` is forwarded to all three rather than living on `replaceReducers` alone: this
+    // is the documented HMR entry point, and a harness that wants the old wholesale
+    // semantics should need one flag, not three.
+    const scope = partial.scope;
+
+    // Checked up front, across the whole call. `replaceReducers` refuses to take over a
+    // slice a library owns, and that refusal used to fire *after* middleware and effects had
+    // already been swapped - leaving the new module's middleware running against the old
+    // reducers, which is a worse state than either before or after. A partial hot reload is
+    // harder to diagnose than a refused one.
+    if (partial.reducer) this.assertNoSliceCollision(partial.reducer, scope ?? "spec");
+
+    // One transaction across all three, so a hot reload produces a single batch rather than
+    // three snapshots of a topology mid-rebuild.
+    this.inRegistrationTransaction(() => {
+      if (partial.middleware) this.replaceMiddleware(partial.middleware, { scope });
+      if (partial.effects) this.replaceEffects(partial.effects, { scope });
+      if (partial.reducer)
+        this.replaceReducers(partial.reducer, { preserveState: partial.preserveState, scope });
+    });
   }
 
   /**
@@ -2474,9 +3405,30 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private mountSlice(
     name: R,
     rSpec: ReducerSpec<S[R], EM>,
-    opts: { preserveState: boolean },
+    opts: { preserveState: boolean; origin?: Origin; owner?: string },
+  ): void {
+    this.mountSliceInner(name, rSpec, opts);
+    // Recorded here, not inside the body. The body returns early for a pattern-based slice,
+    // so a record placed at its end fired only for keyed slices and `{ any: true }` slices
+    // were never reported at all.
+    this.recordSliceChange(
+      name as unknown as string,
+      "mounted",
+      opts.preserveState ? "preserved" : "initialized",
+    );
+  }
+
+  /** @internal */
+  private mountSliceInner(
+    name: R,
+    rSpec: ReducerSpec<S[R], EM>,
+    opts: { preserveState: boolean; origin?: Origin; owner?: string },
   ): void {
     const rName = name as unknown as string;
+    this.sliceOrigin.set(rName, opts.origin ?? "spec");
+    if (opts.owner !== undefined) this.sliceOwner.set(rName, opts.owner);
+    // Remounting under the same name makes the slice valid again.
+    this.disposedSlices.delete(rName);
     const { reducer, state, when } = rSpec;
 
     // Install reducer instance (FIXED: only pass reducer function)
@@ -2552,6 +3504,75 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
+   * Records a slice mount or unmount for {@link onRegistrationChange}.
+   *
+   * @internal
+   */
+  private recordSliceChange(
+    rName: string,
+    op: "mounted" | "unmounted",
+    state: "initialized" | "preserved" | "deleted" | "retained",
+  ): void {
+    this.recordRegistrationChange(() => ({
+      kind: "reducer",
+      op,
+      name: rName,
+      origin: this.sliceOrigin.get(rName) ?? "spec",
+      owner: this.sliceOwner.get(rName),
+      when: this.patternReducers.get(rName as R),
+      state,
+      dispatch: this.patternReducers.has(rName as R) ? "pattern" : "keyed",
+    }));
+  }
+
+  /**
+   * Announces a newly mounted slice on the connector bus.
+   *
+   * @remarks
+   * `registerReducer` has always broadcast to `listeners`, which wakes `subscribe` and so
+   * `useSelector`. It emitted **nothing** on `connectorBus`, which is what `connect` rides,
+   * so `useAtomicProp`, `useAtomicProps` and the Suspense hooks never woke for a slice
+   * mounted after creation: a component subscribed to a path inside it simply never
+   * re-rendered. That makes the decoration story ship a documented-as-working path that does
+   * not work, which is why this is here rather than filed as a follow-up.
+   *
+   * Scope, stated precisely because it is narrower than it looks: this emits the slice root
+   * and its **top-level** keys, which is exactly what an ordinary commit emits when a
+   * subtree first appears - `detectChangedProps` reports a newly-appearing branch at its
+   * root, not leaf by leaf. So a `connect` on `"deep.n"` does not fire here, and does not
+   * fire on a normal commit that first creates `deep` either. Consistent, not complete.
+   *
+   * Skipped when nothing is subscribed, and skipped entirely during construction, where no
+   * subscriber can exist yet.
+   *
+   * @internal
+   */
+  private announceMountedSlice(rName: string, nextSlice: unknown): void {
+    // Diffed against an empty object rather than `undefined`. `detectChangedProps(undefined,
+    // x)` reports only `""`, the root, so a subscriber watching `"n"` inside the new slice
+    // would hear nothing at all - which is the very failure this method exists to fix.
+    const isObjectLike = typeof nextSlice === "object" && nextSlice !== null;
+    const leafPaths = detectChangedProps(isObjectLike ? {} : undefined, nextSlice);
+
+    // The root always appears: a whole-slice subscription (`property: ""`) is watching for
+    // exactly this, and a slice that *is* one value has no leaf to report.
+    const toEmit = new Set<string>([""]);
+    for (const p of leafPaths) {
+      if (p === "") continue;
+      for (const a of Store.buildAncestorPaths(p)) toEmit.add(a);
+    }
+
+    for (const path of toEmit) {
+      const newValue = this.getAtPath((this.state as any)[rName], path);
+      this.connectorBus.emit(rName as R, path as any, {
+        oldValue: undefined,
+        newValue,
+        path,
+      });
+    }
+  }
+
+  /**
    * Unmounts a slice: disposes reducer-bus listeners, removes reducer,
    * and optionally deletes the slice state.
    *
@@ -2562,9 +3583,26 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private unmountSlice(name: R, opts: { deleteState: boolean }): void {
     const rName = name as unknown as string;
+    // Recorded before the registries are torn down, while origin and owner are still known.
+    // `retained` rather than `deleted` when the state survives: `replaceReducers` updates a
+    // slice by unmounting and remounting it, and an observer that treated every unmount as
+    // destruction would tear down a subscription it is about to need.
+    this.recordSliceChange(rName, "unmounted", opts.deleteState ? "deleted" : "retained");
 
     // Remove from pattern reducers if present
     this.patternReducers.delete(name);
+    if (process.env.NODE_ENV !== "production") {
+      const origin = this.sliceOrigin.get(rName);
+      if (origin === "dynamic" || origin === "internal") {
+        this.disposedSlices.set(rName, this.sliceOwner.get(rName));
+        while (this.disposedSlices.size > MAX_REMEMBERED_DISPOSED_SLICES) {
+          // Map preserves insertion order, so the first key is the oldest.
+          this.disposedSlices.delete(this.disposedSlices.keys().next().value as string);
+        }
+      }
+    }
+    this.sliceOrigin.delete(rName);
+    this.sliceOwner.delete(rName);
 
     // Dispose reducerBus listeners
     const unsubs = this.sliceUnsubs.get(rName);
@@ -2680,6 +3718,7 @@ export function createStore<
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
   onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
+  onSubscriberError?: (error: unknown, event: EventUnion<EM>, phase: NotifiedPhase) => void;
   maxReduceDepth?: number;
   maxTransitionsPerDrain?: number;
   onCascade?: (info: CascadeInfo<EM>) => void;
@@ -2730,6 +3769,11 @@ export function createStore<RM extends ReducersMapAny>(cfg: {
     error: unknown,
     event: EventUnion<EMFromReducersStrict<RM>>,
     slice: string,
+  ) => void;
+  onSubscriberError?: (
+    error: unknown,
+    event: EventUnion<EMFromReducersStrict<RM>>,
+    phase: NotifiedPhase,
   ) => void;
   maxReduceDepth?: number;
   maxTransitionsPerDrain?: number;

@@ -310,7 +310,12 @@ describe("Store advanced coverage", () => {
 
     await store.emit("ui", "dangerous", null);
 
-    expect(errorSpy).toHaveBeenCalledWith("Middleware error:", expect.any(Error));
+    // The message names the event and the consequence, because "the event vanished" and
+    // "a middleware threw" look nothing alike from the outside.
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Middleware threw for "ui/dangerous"'),
+      expect.any(Error),
+    );
 
     // Remove the throwing middleware so we can reach reducerBus.emit
     offMw();

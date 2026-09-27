@@ -4,6 +4,11 @@
 
 > [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | 👉 🇺🇸 English Version &nbsp;
 
+[![npm version](https://img.shields.io/npm/v/@yoltra/devtools-node-agent)](https://www.npmjs.com/package/@yoltra/devtools-node-agent)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/devtools-node-agent)](https://www.npmjs.com/package/@yoltra/devtools-node-agent)
+[![types](https://img.shields.io/npm/types/@yoltra/devtools-node-agent)](https://www.npmjs.com/package/@yoltra/devtools-node-agent)
+[![License](https://img.shields.io/npm/l/@yoltra/devtools-node-agent)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+
 **Node.js DevTools agent — connect a Yoltra store to the DevTools hub from a Node.js process.**
 
 `@yoltra/devtools-node-agent` transparently instruments a Yoltra store so every event, state

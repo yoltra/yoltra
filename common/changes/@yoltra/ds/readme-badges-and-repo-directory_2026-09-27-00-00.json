@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Add npm version, downloads, types and licence badges to both READMEs, and set `repository.directory` so relative links in the published README resolve to this package's directory rather than the repository root.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

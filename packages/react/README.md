@@ -5,8 +5,10 @@
 > [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
 > | &nbsp; 👉 🇺🇸 English Version
 
-![npm downloads](https://badgen.net/npm/dm/@yoltra/react)
-![License](https://badgen.net/npm/license/@yoltra/react)
+[![npm version](https://img.shields.io/npm/v/@yoltra/react)](https://www.npmjs.com/package/@yoltra/react)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/react)](https://www.npmjs.com/package/@yoltra/react)
+[![types](https://img.shields.io/npm/types/@yoltra/react)](https://www.npmjs.com/package/@yoltra/react)
+[![License](https://img.shields.io/npm/l/@yoltra/react)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
 
 **React hooks for [yoltra](../../README.md) with
 fine-grained path subscriptions.**
@@ -138,6 +140,40 @@ Provide the store with `<AppStoreContext.Provider value={store}>` at your root.
 
 ---
 
+## Adding to a store, with its types
+
+A library can mount a slice on a store it did not create, and the hooks grow to know about it.
+`withSlice`, `withMiddleware` and `withEffect` return a `Yoltra` whose types have widened.
+
+```tsx
+import { defineSlice } from "@yoltra/core";
+
+// Module scope, once, before the first render.
+export const app = createYoltra({ name: "App", reducer: { counter } })
+  .withSlice("transfers", defineSlice<TransferEM>()({ ... }));
+
+export const { useAtomicProp, useEmit } = app;
+
+// Typed, on a slice the application never declared.
+const granted = useAtomicProp({ reducer: "transfers", property: "granted" });
+```
+
+Three things to know:
+
+- **Module scope, once, before the first render.** Each call builds a new hook set, because
+  `createHooks` allocates fresh function objects. Calling one inside a component would hand React
+  a different `useAtomicProp` on every render.
+- **The store and the context are the same objects.** Only the types change, so a
+  `<StoreProvider>` from any view in the chain serves the hooks of every other, and the Suspense
+  cache is shared.
+- **Free functions exist too**, for a library handed a `Yoltra` it did not create:
+  `withSlice(yoltra, name, spec)`.
+
+The full contract, including what to do about disposal, is in the
+[decoration guide](https://github.com/yoltra/yoltra/blob/main/docs/en/DECORATION_GUIDE.md).
+
+---
+
 ## Hooks API
 
 ### `useAtomicProp({ reducer, property }, map?, isEqual?)`
@@ -191,7 +227,7 @@ const filtered = useAtomicProps(
 
 ---
 
-### `useEvent(channel, type, handler, phase?)`
+### `useEvent(channel, type, handler, phase?, options?)`
 
 Subscribe to store events from a component. Does not affect event flow. Fire-and-forget.
 
@@ -226,7 +262,17 @@ useEvent(
 
 - `'committed'` (default): events that passed middleware and reached reducers
 - `'uncommitted'`: events rejected by middleware
-- `'all'`: both, with `phase` parameter to distinguish
+- `'written'`: events that actually changed state
+- `'all'`: committed and uncommitted, with `phase` parameter to distinguish
+
+**Time travel.** A handler does **not** run while DevTools is replaying. Scrubbing a timeline
+used to re-run every handler exactly as a live event would, which meant re-publishing, re-writing
+and re-firing analytics for events that were not happening again. Opt in only for a handler that
+derives view state from the event stream and performs no I/O:
+
+```tsx
+useEvent("ui", "save", handler, "committed", { duringReplay: true });
+```
 
 ---
 
@@ -315,7 +361,7 @@ const stats = useSuspenseAtomicProps(
 
 `createYoltra` and `createHooks` return these two alongside the rest, bound to the same context.
 They are deliberately **not** exported from the package barrel: a package-level copy would be
-identical in shape and still throw `useStore must be used inside <StoreProvider>` at runtime
+identical in shape and still throw `[yoltra] No store in context` at runtime
 whenever the context it reads was never filled, a mistake the types could not catch. Importing
 them from anywhere but your own `createYoltra`/`createHooks` result is now a compile error,
 which is the same warning arriving at the right time.
@@ -430,11 +476,11 @@ function Row({ id }: { id: string }) {
 
 ## Examples
 
-- **[Todo App with Profiler](../../examples/v0/yoltra-in-react)**: Full CRUD with flamegraph
+- **[Todo App with Profiler](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-in-react)**: Full CRUD with flamegraph
   comparison · [▶ Open the live demo](https://yoltra.dev/en/demos/in-react)
-- **[Kinetic Logo (3000 particles)](../../examples/v0/yoltra-kinetic-logo)**: Independent
+- **[Kinetic Logo (3000 particles)](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-kinetic-logo)**: Independent
   subscriptions per circle · [▶ Open the live demo](https://yoltra.dev/en/demos/kinetic-logo)
-- **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)**: client-side state + theme switcher · [▶ Open the live demo](https://yoltra.dev/en/demos/in-nextjs)
+- **[Next.js (Pages Router)](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-in-nextjs)**: client-side state + theme switcher · [▶ Open the live demo](https://yoltra.dev/en/demos/in-nextjs)
 
 ---
 
@@ -453,7 +499,7 @@ function Row({ id }: { id: string }) {
 
 ## Contributing
 
-- [Monorepo Root](../../)
+- [Monorepo Root](https://github.com/yoltra/yoltra)
 - [Contributing Guide](../../CONTRIBUTING.md)
 
 ---

@@ -8,7 +8,7 @@
 
 # Interface: RequestSubscriptions
 
-Defined in: [messages.ts:211](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L211)
+Defined in: [messages.ts:223](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L223)
 
 Request subscription and consumer info from a store.
 
@@ -50,7 +50,7 @@ Role of the sender.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:213](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L213)
+Defined in: [messages.ts:225](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L225)
 
 ***
 
@@ -72,7 +72,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"REQUEST_SUBSCRIPTIONS"`
 
-Defined in: [messages.ts:212](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L212)
+Defined in: [messages.ts:224](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L224)
 
 Discriminant field identifying the message type.
 

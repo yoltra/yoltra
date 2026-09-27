@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "`encodeStateBounded` stops an oversized buffer before encoding it rather than after. The node charge for a binary value was applied following `bytesToBase64`, so each attempt of the shrink loop fully base64-encoded a buffer it was about to discard.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

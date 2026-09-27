@@ -9,7 +9,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yoltra/yoltra.git"
+    "url": "https://github.com/yoltra/yoltra.git",
+    "directory": "devtools/devtools-node-agent"
   },
   "type": "module",
   "main": "dist/devtools-node-agent.cjs",
@@ -23,7 +24,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "sideEffects": false,
   "scripts": {
@@ -31,13 +33,14 @@
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "test": "vitest --coverage --watch=false",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
+    "prepublishOnly": "node ../../common/scripts/copy-license.cjs",
     "docs": "rushx docs:js && rushx docs:md && rushx docs:stamp",
     "docs:stamp": "node ../../tools/repo-tools/bin/docs-stamp.mjs docs",
     "docs:md": "typedoc --options ./typedoc.json",
     "docs:js": "typedoc --options ./typedoc.json --json ./.typedoc/devtools-node-agent-en.json"
   },
   "peerDependencies": {
-    "@yoltra/core": "^0.7.0"
+    "@yoltra/core": "^0.8.0"
   },
   "dependencies": {
     "@yoltra/devtools-protocol": "workspace:*",

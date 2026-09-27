@@ -8,13 +8,17 @@
 
 # Interface: StoreInstance\<R, S, EM\>
 
-Defined in: [types.ts:686](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L686)
+Defined in: [types.ts:741](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L741)
 
 Public Store surface.
 
 ## Remarks
 
 The concrete Store implements this as `StoreInstance<R, DeepReadonly<S>, EM>`.
+
+## Extends
+
+- [`StoreDecoration`](StoreDecoration.md)\<`R`, `S`, `EM`\>
 
 ## Type Parameters
 
@@ -42,10 +46,27 @@ Event map.
 
 > **emit**: [`Emit`](../type-aliases/Emit.md)\<`EM`\>
 
-Defined in: [types.ts:705](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L705)
+Defined in: [types.ts:760](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L760)
 
 Emit a typed event `(channel, type, payload)`.
 Returns a promise that resolves when the event has been processed.
+
+***
+
+### isReplaying
+
+> `readonly` **isReplaying**: `boolean`
+
+Defined in: [types.ts:962](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L962)
+
+`true` while devtools is applying a snapshot or replaying events.
+
+#### Remarks
+
+For anything that must branch rather than simply skip. Most code needs nothing: replay
+does not notify event subscribers unless they opted in.
+
+A getter, so destructuring it takes a snapshot rather than a live view.
 
 ***
 
@@ -53,7 +74,7 @@ Returns a promise that resolves when the event has been processed.
 
 > **name**: `string`
 
-Defined in: [types.ts:694](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L694)
+Defined in: [types.ts:749](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L749)
 
 Store name (used by DevTools to identify the instance).
 
@@ -63,7 +84,7 @@ Store name (used by DevTools to identify the instance).
 
 > **call**\<`C`, `T`\>(`channel`, `type`, `payload`, `opts`): [`CallHandle`](CallHandle.md)\<[`EventUnion`](../type-aliases/EventUnion.md)\<`EM`\>, [`EventUnion`](../type-aliases/EventUnion.md)\<`EM`\>\>
 
-Defined in: [types.ts:734](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L734)
+Defined in: [types.ts:789](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L789)
 
 Sends a request and waits for the reply, correlating the two automatically.
 
@@ -111,7 +132,7 @@ is a local primitive.
 
 > **connect**(`spec`, `handler`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:720](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L720)
+Defined in: [types.ts:775](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L775)
 
 Fine-grained subscription: listen to a specific `reducer.property` path.
 Accepts a dotted path string (e.g., "data.123.title").
@@ -151,7 +172,7 @@ Handler receiving a [Change](Change.md) with `{ oldValue, newValue, path }`.
 
 > **dispose**(): `void`
 
-Defined in: [types.ts:785](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L785)
+Defined in: [types.ts:848](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L848)
 
 Cleanup resources (timers, etc.) when disposing the store.
 Call this if you're dynamically creating/destroying stores.
@@ -166,7 +187,7 @@ Call this if you're dynamically creating/destroying stores.
 
 > **getState**(): [`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>
 
-Defined in: [types.ts:699](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L699)
+Defined in: [types.ts:754](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L754)
 
 Read the full state (already readonly).
 
@@ -180,7 +201,7 @@ Read the full state (already readonly).
 
 > **hotReplace**(`partial`): `void`
 
-Defined in: [types.ts:865](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L865)
+Defined in: [types.ts:1000](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1000)
 
 Convenience API to replace any subset of store parts (HMR patterns).
 
@@ -206,6 +227,10 @@ Partial replacement set.
 
 `Record`\<`R`, [`ReducerSpec`](ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
 
+###### scope?
+
+[`ReplaceScope`](../type-aliases/ReplaceScope.md)
+
 #### Returns
 
 `void`
@@ -216,7 +241,7 @@ Partial replacement set.
 
 > **instrument**(`observer`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:917](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L917)
+Defined in: [types.ts:1065](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1065)
 
 Registers an instrumentation observer, called once per emitted event
 (committed or vetoed) after the synchronous reduce phase, with the exact
@@ -243,7 +268,7 @@ Unsubscribe function.
 
 > **onEffect**\<`C`, `T`\>(`channel`, `type`, `handler`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:752](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L752)
+Defined in: [types.ts:807](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L807)
 
 Convenience helper to register an **effect** filtered by a single `(channel, type)` pair.
 
@@ -291,9 +316,9 @@ Unsubscribe/teardown function.
 
 ### onEvent()
 
-> **onEvent**\<`C`, `T`\>(`channel`, `type`, `handler`, `phase?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
+> **onEvent**\<`C`, `T`\>(`channel`, `type`, `handler`, `phase?`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:828](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L828)
+Defined in: [types.ts:894](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L894)
 
 Subscribe to events by channel and type.
 
@@ -304,7 +329,10 @@ and cannot cancel event propagation.
 **Phases:**
 - `'committed'` (default): Events that passed middleware and reached reducers
 - `'uncommitted'`: Events rejected by middleware
-- `'all'`: Both committed and uncommitted events (handler receives phase parameter)
+- `'written'`: Events that actually changed state
+- `'all'`: Both committed and uncommitted events (handler receives phase parameter).
+  Deliberately not `written` as well: an event that writes is also committed, so folding
+  it in would notify every existing `all` subscriber twice for one event.
 
 #### Type Parameters
 
@@ -346,6 +374,21 @@ Handler function `(event, getState, emit, phase)`.
 
 Event phase to subscribe to (default: `'committed'`).
 
+##### options?
+
+###### duringReplay?
+
+`boolean`
+
+Also call this handler while devtools is replaying, which it does not by default.
+
+**Remarks**
+
+Opt in only for a handler that derives view state purely from the event stream and
+performs no I/O. A handler that publishes, writes or notifies must stay out: replay
+is a debugging operation, and a scrub of the timeline should not reach a peer, a
+socket or an analytics endpoint.
+
 #### Returns
 
 [`Unsubscribe`](../type-aliases/Unsubscribe.md)
@@ -374,51 +417,124 @@ store.onEvent('ui', 'action', (event, getState, emit, phase) => {
 
 ***
 
+### onRegistrationChange()
+
+> **onRegistrationChange**(`observer`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
+
+Defined in: [types.ts:948](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L948)
+
+Called when the store gains or loses a reducer, middleware or effect.
+
+#### Parameters
+
+##### observer
+
+[`RegistrationObserver`](../type-aliases/RegistrationObserver.md)\<`EM`\>
+
+Receives one batch per registration change.
+
+##### options?
+
+`emitCurrent` synthesizes a `"mounted"` batch for everything already
+installed, delivered synchronously before this call returns. Spec-time registrations
+happen inside `createStore`, so a decorator applied afterwards never saw them arrive;
+this closes that gap without a separate pull API to race against. The synthesized
+changes carry their **real** origins, never a synthetic marker, because filtering on
+provenance is the main thing an observer does.
+
+###### emitCurrent?
+
+`boolean`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md)
+
+Unsubscribe function.
+
+#### Remarks
+
+A push seam, because `__devtoolsIntrospect()` is pull-only: a devtools panel's
+subscription list goes stale the moment a decoration mounts anything, and a library that
+needs to react to another library has nothing to wait on.
+
+Delivered as an **array, one batch per public call**. `replaceReducers` unmounts and then
+remounts, so between those steps a slice that is merely being updated does not exist; a
+per-change observer would see a spurious unmount. `hotReplace` delivers a single batch
+spanning all three kinds.
+
+Observers run **after** the state broadcast, so the view layer has already been told a
+fact before a library gets to react to it. A registration made *by* an observer is
+legitimate and is queued rather than delivered re-entrantly: depth-first work,
+breadth-first notification, so no observer ever sees a half-built topology.
+
+Synchronous. A `Promise` returned from an observer is not awaited, and is reported in
+development, because the store has already moved on by the time it would resolve.
+
+**Replay never produces a change.** `__replayEvents` and `__applyExternalState` alter
+state and never topology, so there is no `duringReplay` option here and none is needed.
+
+`dispose()` fires nothing: the store is going away, not being dismantled slice by slice.
+
+***
+
 ### registerEffect()
 
-> **registerEffect**(`spec`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
+> **registerEffect**\<`Spec`\>(`spec`): [`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
 
-Defined in: [types.ts:769](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L769)
+Defined in: [types.ts:824](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L824)
 
 Register a post-reducer effect (sees final state). Returns an unsubscribe.
+
+#### Type Parameters
+
+##### Spec
+
+`Spec` *extends* [`EffectSpec`](EffectSpec.md)\<`any`, `any`\>
 
 #### Parameters
 
 ##### spec
 
-[`EffectSpec`](EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>
+`Spec`
 
 #### Returns
 
-[`Unsubscribe`](../type-aliases/Unsubscribe.md)
+[`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
 
 ***
 
 ### registerMiddleware()
 
-> **registerMiddleware**(`mw`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
+> **registerMiddleware**\<`M`\>(`mw`): [`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
 
-Defined in: [types.ts:774](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L774)
+Defined in: [types.ts:831](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L831)
 
 Dynamically add middleware, in either the function or the spec form.
+
+#### Type Parameters
+
+##### M
+
+`M` *extends* [`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<`any`, `any`\>
 
 #### Parameters
 
 ##### mw
 
-[`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>
+`M`
 
 #### Returns
 
-[`Unsubscribe`](../type-aliases/Unsubscribe.md)
+[`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
 
 ***
 
 ### registerReducer()
 
-> **registerReducer**(`name`, `spec`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
+> **registerReducer**(`name`, `spec`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
 
-Defined in: [types.ts:779](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L779)
+Defined in: [types.ts:838](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L838)
 
 Dynamically add/remove a namespaced reducer slice at runtime.
 
@@ -432,17 +548,71 @@ Dynamically add/remove a namespaced reducer slice at runtime.
 
 [`ReducerSpec`](ReducerSpec.md)\<`any`, `EM`\>
 
+##### options?
+
+###### owner?
+
+`string`
+
 #### Returns
 
-[`Unsubscribe`](../type-aliases/Unsubscribe.md)
+[`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
+
+***
+
+### registerSlice()
+
+> **registerSlice**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
+
+Defined in: [types.ts:2151](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2151)
+
+Mounts a slice and hands back both the widened store and a disposer.
+
+The disposer is **library-private**: after it runs, the widened type still promises a
+slice that is gone. Application code should take [StoreDecoration.withSlice](StoreDecoration.md#withslice)
+instead, which returns no disposer at all.
+
+#### Type Parameters
+
+##### N
+
+`N` *extends* `string`
+
+##### Spec
+
+`Spec` *extends* [`ReducerSpec`](ReducerSpec.md)\<`any`, `any`\>
+
+#### Parameters
+
+##### name
+
+`N`
+
+##### spec
+
+`Spec`
+
+##### options?
+
+###### owner?
+
+`string`
+
+#### Returns
+
+[`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
+
+#### Inherited from
+
+[`StoreDecoration`](StoreDecoration.md).[`registerSlice`](StoreDecoration.md#registerslice)
 
 ***
 
 ### replaceEffects()
 
-> **replaceEffects**(`next`): `void`
+> **replaceEffects**(`next`, `opts?`): `void`
 
-Defined in: [types.ts:847](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L847)
+Defined in: [types.ts:979](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L979)
 
 Replaces all registered effects (HMR-friendly).
 
@@ -454,6 +624,12 @@ Replaces all registered effects (HMR-friendly).
 
 New effects array (as EffectSpecs).
 
+##### opts?
+
+###### scope?
+
+[`ReplaceScope`](../type-aliases/ReplaceScope.md)
+
 #### Returns
 
 `void`
@@ -462,9 +638,9 @@ New effects array (as EffectSpecs).
 
 ### replaceMiddleware()
 
-> **replaceMiddleware**(`next`): `void`
+> **replaceMiddleware**(`next`, `opts?`): `void`
 
-Defined in: [types.ts:840](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L840)
+Defined in: [types.ts:969](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L969)
 
 Replaces the entire middleware pipeline (HMR-friendly).
 
@@ -472,9 +648,15 @@ Replaces the entire middleware pipeline (HMR-friendly).
 
 ##### next
 
-[`MiddlewareFunction`](../type-aliases/MiddlewareFunction.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
+[`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
 
 New middleware array.
+
+##### opts?
+
+###### scope?
+
+[`ReplaceScope`](../type-aliases/ReplaceScope.md)
 
 #### Returns
 
@@ -486,7 +668,7 @@ New middleware array.
 
 > **replaceReducers**(`next`, `opts?`): `void`
 
-Defined in: [types.ts:855](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L855)
+Defined in: [types.ts:990](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L990)
 
 Replaces the entire reducer set (HMR-friendly).
 
@@ -506,6 +688,10 @@ Map of slice specs keyed by slice name.
 
 `boolean`
 
+###### scope?
+
+[`ReplaceScope`](../type-aliases/ReplaceScope.md)
+
 #### Returns
 
 `void`
@@ -516,7 +702,7 @@ Map of slice specs keyed by slice name.
 
 > **subscribe**(`listener`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:710](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L710)
+Defined in: [types.ts:765](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L765)
 
 Coarse subscription: runs after any state change (once per committed event).
 
@@ -529,3 +715,111 @@ Coarse subscription: runs after any state change (once per committed event).
 #### Returns
 
 [`Unsubscribe`](../type-aliases/Unsubscribe.md)
+
+***
+
+### withEffect()
+
+> **withEffect**\<`Spec`\>(`spec`): [`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`Spec`\>\>\>
+
+Defined in: [types.ts:2176](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2176)
+
+Registers an effect and returns the store widened by whatever event map it declares.
+
+#### Type Parameters
+
+##### Spec
+
+`Spec` *extends* [`EffectSpec`](EffectSpec.md)\<`any`, `any`\>
+
+#### Parameters
+
+##### spec
+
+`Spec`
+
+#### Returns
+
+[`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`Spec`\>\>\>
+
+#### Inherited from
+
+[`StoreDecoration`](StoreDecoration.md).[`withEffect`](StoreDecoration.md#witheffect)
+
+***
+
+### withMiddleware()
+
+> **withMiddleware**\<`M`\>(`mw`): [`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`M`\>\>\>
+
+Defined in: [types.ts:2171](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2171)
+
+Registers middleware and returns the store widened by whatever event map it declares.
+
+Only the **spec form** can widen: `MiddlewareFunction`'s event parameter is
+`EventUnion<EM>`, a mapped type TypeScript cannot infer `EM` back out of. A bare function
+therefore contributes `{}`.
+
+#### Type Parameters
+
+##### M
+
+`M` *extends* [`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<`any`, `any`\>
+
+#### Parameters
+
+##### mw
+
+`M`
+
+#### Returns
+
+[`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`M`\>\>\>
+
+#### Inherited from
+
+[`StoreDecoration`](StoreDecoration.md).[`withMiddleware`](StoreDecoration.md#withmiddleware)
+
+***
+
+### withSlice()
+
+> **withSlice**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`WidenedSlice`](../type-aliases/WidenedSlice.md)\<`R`, `S`, `EM`, `N`, `Spec`\>
+
+Defined in: [types.ts:2158](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2158)
+
+Mounts a slice and returns the widened store, for chaining.
+
+#### Type Parameters
+
+##### N
+
+`N` *extends* `string`
+
+##### Spec
+
+`Spec` *extends* [`ReducerSpec`](ReducerSpec.md)\<`any`, `any`\>
+
+#### Parameters
+
+##### name
+
+`N`
+
+##### spec
+
+`Spec`
+
+##### options?
+
+###### owner?
+
+`string`
+
+#### Returns
+
+[`WidenedSlice`](../type-aliases/WidenedSlice.md)\<`R`, `S`, `EM`, `N`, `Spec`\>
+
+#### Inherited from
+
+[`StoreDecoration`](StoreDecoration.md).[`withSlice`](StoreDecoration.md#withslice)

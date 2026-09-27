@@ -24,7 +24,7 @@ export interface PersistenceAdapter {
 }
 
 /** Where a failure happened, so a handler can tell a bad write from a bad payload. */
-export type PersistencePhase = "read" | "write" | "decode" | "migrate";
+export type PersistencePhase = "read" | "write" | "decode" | "migrate" | "encode";
 
 /** Shared configuration. */
 export interface PersistOptions {
@@ -76,7 +76,11 @@ interface Envelope {
 }
 
 /** @internal */
-function report(options: PersistOptions, error: unknown, phase: PersistencePhase): void {
+function report(
+  options: Pick<PersistOptions, "onError">,
+  error: unknown,
+  phase: PersistencePhase,
+): void {
   options.onError?.(error, phase);
 }
 
@@ -179,15 +183,50 @@ export interface PersistableStore {
   instrument(observer: (info: { changedPaths?: readonly string[] }) => void): () => void;
 }
 
-/** Serializes the slices being persisted. */
-function encodeEnvelope(state: unknown, options: Pick<PersistOptions, "version" | "slices">): string {
+/**
+ * Serializes the slices being persisted.
+ *
+ * @remarks
+ * The encode report used to be dropped on the floor, so a value the codec could not
+ * represent was written as a lossy stand-in and **nothing anywhere said so** - the loss only
+ * surfaced later, as a slice that came back wrong. It is now reported through
+ * {@link PersistOptions.onError} under the `"encode"` phase. Its own phase rather than
+ * `"write"`: a serialization loss and an adapter failure need different responses, and
+ * telling them apart is what `onError` is for.
+ *
+ * Reporting never blocks the write. Partial state is better than none, and the caller is the
+ * one who decides what a loss means.
+ */
+function encodeEnvelope(
+  state: unknown,
+  options: Pick<PersistOptions, "version" | "slices" | "onError">,
+): string {
   const all = (state ?? {}) as Record<string, unknown>;
   const slices: Record<string, unknown> =
     options.slices === undefined
       ? all
       : Object.fromEntries(options.slices.filter((s) => s in all).map((s) => [s, all[s]]));
 
-  return JSON.stringify(encodeState({ version: options.version, slices }).value);
+  const { value, report: encodeReport } = encodeState({ version: options.version, slices });
+
+  if (encodeReport.truncated || encodeReport.unsupported.length > 0) {
+    // Both, when both. A ternary reported only the truncation and threw away the paths,
+    // which are the actionable half: "too large" says retry with less, a named path says
+    // which value to change.
+    const parts: string[] = [];
+    if (encodeReport.truncated) parts.push("state was too large to encode in full");
+    if (encodeReport.unsupported.length > 0) {
+      parts.push(`values with no faithful representation at: ${encodeReport.unsupported.join(", ")}`);
+    }
+    const detail = parts.join("; ");
+    report(
+      options,
+      new Error(`[yoltra] Persisted state is incomplete - ${detail}.`),
+      "encode",
+    );
+  }
+
+  return JSON.stringify(value);
 }
 
 /**
@@ -265,7 +304,7 @@ export function persist(store: PersistableStore, options: PersistOptions): () =>
  */
 export function dehydrate(
   store: Pick<PersistableStore, "getState">,
-  options: Pick<PersistOptions, "version" | "slices">,
+  options: Pick<PersistOptions, "version" | "slices" | "onError">,
 ): string {
   return encodeEnvelope(store.getState(), options);
 }

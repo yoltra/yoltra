@@ -6,6 +6,11 @@
 > | 👉
 > [ 🇺🇸 English Version](./README.md)&nbsp;
 
+[![npm version](https://img.shields.io/npm/v/@yoltra/devtools-browser-agent)](https://www.npmjs.com/package/@yoltra/devtools-browser-agent)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/devtools-browser-agent)](https://www.npmjs.com/package/@yoltra/devtools-browser-agent)
+[![types](https://img.shields.io/npm/types/@yoltra/devtools-browser-agent)](https://www.npmjs.com/package/@yoltra/devtools-browser-agent)
+[![License](https://img.shields.io/npm/l/@yoltra/devtools-browser-agent)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+
 **Browser DevTools agent — connect a Yoltra store to the DevTools hub from the browser.**
 
 `@yoltra/devtools-browser-agent` transparently instruments a Yoltra store so every event, state
