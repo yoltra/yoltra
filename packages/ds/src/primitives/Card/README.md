@@ -35,6 +35,7 @@ so:
 | `padding` | `SpaceToken` | `4` (16px) | A step on the spacing scale, not a length. |
 | `elevation` | `"none" \| "xs" \| "sm" \| "md" \| "lg" \| "xl"` | `"xs"` | |
 | `bordered` | `boolean` | `true` | Pass `bordered={false}` for a flat surface. |
+| `tone` | `"default" \| "subtle"` | `"default"` | `subtle` tints the surface. |
 | `as` | `ElementType` | `"div"` | |
 
 ## Notes
@@ -43,5 +44,6 @@ so:
 `--yl-card-padding` and `--yl-card-shadow`, so an application can override one
 instance from its own stylesheet without reaching into the component's classes.
 
-There is no tinted variant. A consuming project wanted one and added
-`.zync-card--subtle` locally; it is a reasonable request and is not here yet.
+`tone="subtle"` tints the surface, for a card holding something secondary to what surrounds it.
+It exists because a consuming project added the same thing locally and two of its screens gave up
+on `Card` entirely and inlined a border instead.

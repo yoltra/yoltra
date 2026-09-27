@@ -11,3 +11,9 @@
     border-color: transparent;
   }
 }
+
+.yl-card--subtle {
+  // A tint rather than a shadow. Two call sites in a consuming project abandoned `Card` and
+  // inlined a border to get this, which is the cost of not having it.
+  background: var(--yl-color-bg-subtle);
+}

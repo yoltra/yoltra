@@ -20,3 +20,17 @@
   font-family: var(--yl-font-mono);
   font-size: var(--yl-text-label-size);
 }
+
+.yl-th--numeric,
+.yl-td--numeric {
+  text-align: right;
+  font-variant-numeric: var(--yl-font-numeric);
+}
+
+.yl-table-scroll {
+  overflow-x: auto;
+}
+.yl-table-scroll:focus-visible {
+  outline: var(--yl-border-width-medium) solid var(--yl-color-border-focus);
+  outline-offset: 2px;
+}

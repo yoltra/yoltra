@@ -42,5 +42,22 @@ simple case pay for the complex one.
 `scope` on a header cell is not optional in practice. Without it a screen reader has
 to guess which cells a header governs.
 
-There is no responsive overflow container and no numeric alignment. A consuming
-project added both locally, which is a fair signal that they belong here.
+Figures get `numeric` on both the header and the body cell, which right-aligns them and switches
+on tabular figures so the column does not shuffle sideways as values change width:
+
+```tsx
+<TH scope="col" numeric>Size</TH>
+<TD numeric>12.5</TD>
+```
+
+A table wider than its column goes in a `TableScroll`, a separate component rather than a prop
+because wrapping every table would change the layout of every table that did not need it:
+
+```tsx
+<TableScroll label="Published packages">
+  <Table>{rows}</Table>
+</TableScroll>
+```
+
+Its `label` is required: the region is focusable so it can be scrolled from the keyboard, and a
+focusable region with no name is a tab stop that announces nothing.

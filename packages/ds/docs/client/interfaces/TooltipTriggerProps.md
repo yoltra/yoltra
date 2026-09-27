@@ -24,7 +24,7 @@ tooltip is not showing.
 
 > **aria-describedby**: `undefined` \| `string`
 
-Defined in: [overlay/Tooltip/Tooltip.tsx:21](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L21)
+Defined in: [overlay/Tooltip/Tooltip.tsx:31](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L31)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [overlay/Tooltip/Tooltip.tsx:21](https://github.com/yoltra/yoltra/bl
 
 > **onBlur**: () => `void`
 
-Defined in: [overlay/Tooltip/Tooltip.tsx:25](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L25)
+Defined in: [overlay/Tooltip/Tooltip.tsx:35](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L35)
 
 #### Returns
 
@@ -44,7 +44,7 @@ Defined in: [overlay/Tooltip/Tooltip.tsx:25](https://github.com/yoltra/yoltra/bl
 
 > **onFocus**: () => `void`
 
-Defined in: [overlay/Tooltip/Tooltip.tsx:24](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L24)
+Defined in: [overlay/Tooltip/Tooltip.tsx:34](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L34)
 
 #### Returns
 
@@ -56,7 +56,7 @@ Defined in: [overlay/Tooltip/Tooltip.tsx:24](https://github.com/yoltra/yoltra/bl
 
 > **onPointerEnter**: () => `void`
 
-Defined in: [overlay/Tooltip/Tooltip.tsx:22](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L22)
+Defined in: [overlay/Tooltip/Tooltip.tsx:32](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L32)
 
 #### Returns
 
@@ -68,7 +68,7 @@ Defined in: [overlay/Tooltip/Tooltip.tsx:22](https://github.com/yoltra/yoltra/bl
 
 > **onPointerLeave**: () => `void`
 
-Defined in: [overlay/Tooltip/Tooltip.tsx:23](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L23)
+Defined in: [overlay/Tooltip/Tooltip.tsx:33](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L33)
 
 #### Returns
 
@@ -91,3 +91,20 @@ Defined in: [overlay/Tooltip/Tooltip.tsx:20](https://github.com/yoltra/yoltra/bl
 #### Returns
 
 `void`
+
+***
+
+### tabIndex
+
+> **tabIndex**: `0`
+
+Defined in: [overlay/Tooltip/Tooltip.tsx:30](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L30)
+
+Makes the trigger reachable by keyboard.
+
+#### Remarks
+
+Supplied because a tooltip that only opens on hover is a tooltip half the readers of a page
+cannot see. A `<button>` is already focusable and setting this changes nothing for it; a `<span>`
+or an `<svg>` is not, and without this its tooltip would never open. A consuming project added
+`tabIndex={0}` at three separate call sites before noticing it was the same omission each time.

@@ -102,6 +102,16 @@ export interface SemanticColorTokens {
    */
   interactiveQuiet: { bg: string; bgHover: string; bgActive: string; fg: string; border: string };
   /**
+   * The destructive interactive surface: a delete, a revoke, a disconnect.
+   *
+   * @remarks
+   * Shaped like {@link SemanticColorTokens.interactive} and inverted the same way between themes,
+   * because the reason is the same: a dark fill on a dark canvas reads as disabled. Light uses
+   * `error[600]`, where a white label is 4.83:1; `[500]` is 3.76:1 and would have failed, which is
+   * the same step-too-light mistake the brand colour made.
+   */
+  interactiveDanger: { bg: string; bgHover: string; bgActive: string; fg: string; border: string };
+  /**
    * Feedback colours. `solid` is the accent on its own.
    *
    * @remarks
@@ -181,6 +191,13 @@ function buildLightTheme(): ThemeTokens {
         // Mid-grey rather than a pale border colour, so a white knob reads against it: 4.76:1.
         track: p.neutral[500],
       },
+      interactiveDanger: {
+        bg: p.error[600],
+        bgHover: p.error[700],
+        bgActive: p.error[800],
+        fg: p.white,
+        border: p.error[700],
+      },
       interactiveQuiet: {
         bg: "transparent",
         bgHover: /*#__PURE__*/ alpha(p.neutral[900], 0.05),
@@ -258,6 +275,13 @@ function buildDarkTheme(): ThemeTokens {
         border: p.primary[300],
         // Light in the dark theme, because the knob here is dark. Both states keep the same knob.
         track: p.neutral[400],
+      },
+      interactiveDanger: {
+        bg: p.error[400],
+        bgHover: p.error[300],
+        bgActive: p.error[200],
+        fg: "#0B1220",
+        border: p.error[300],
       },
       interactiveQuiet: {
         bg: "transparent",

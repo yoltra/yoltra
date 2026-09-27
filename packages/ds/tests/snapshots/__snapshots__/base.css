@@ -47,3 +47,16 @@ html {
     max-width: var(--yl-container-xl);
   }
 }
+
+.yl-root a:not([class]) {
+  color: var(--yl-color-fg-link);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.yl-root a:not([class]):hover {
+  color: var(--yl-color-fg-link-hover);
+}
+.yl-root a:not([class]):focus-visible {
+  outline: var(--yl-border-width-medium) solid var(--yl-color-border-focus);
+  outline-offset: 2px;
+}

@@ -25,3 +25,17 @@
     font-size: var(--yl-text-label-size);
   }
 }
+
+// Figures, not prose: right-aligned so the digits line up, and tabular so the column does not
+// shuffle sideways when a value changes width.
+.yl-th--numeric,
+.yl-td--numeric {
+  text-align: right;
+  font-variant-numeric: var(--yl-font-numeric);
+}
+
+.yl-table-scroll {
+  overflow-x: auto;
+  // A focusable scroll region needs a visible ring when it is reached from the keyboard.
+  @include focus-ring;
+}

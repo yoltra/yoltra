@@ -42,12 +42,15 @@ export type {
   IconButtonProps,
 } from "./primitives/Button/Button";
 export { Badge } from "./primitives/Badge/Badge";
-export type { BadgeProps } from "./primitives/Badge/Badge";
+export type { BadgeProps, BadgeVariant } from "./primitives/Badge/Badge";
 export { Callout } from "./primitives/Callout/Callout";
 export type { CalloutProps, CalloutKind } from "./primitives/Callout/Callout";
 export { Input, Select, Textarea } from "./primitives/Field/Field";
+export { Label } from "./primitives/Form/Form";
+export type { LabelProps } from "./primitives/Form/Form";
 export type { InputProps, SelectProps, TextareaProps, FieldSize } from "./primitives/Field/Field";
-export { Table, THead, TBody, TR, TH, TD } from "./primitives/Table/Table";
+export { Table, THead, TBody, TR, TH, TD, TableScroll } from "./primitives/Table/Table";
+export type { TableScrollProps, NumericCellProps } from "./primitives/Table/Table";
 
 // Layout
 export { Container, Divider, Grid, Inline, Stack } from "./primitives/Layout/Layout";
@@ -63,7 +66,7 @@ export type {
   StackProps,
 } from "./primitives/Layout/Layout";
 export { Card } from "./primitives/Card/Card";
-export type { CardProps, CardElevation } from "./primitives/Card/Card";
+export type { CardProps, CardElevation, CardTone } from "./primitives/Card/Card";
 
 // Typography
 export { Heading, InlineCode, Kbd, Link, Text } from "./primitives/Typography/Typography";

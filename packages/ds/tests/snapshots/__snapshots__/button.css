@@ -42,6 +42,54 @@
 .yl-btn--ghost:hover {
   background: var(--yl-color-interactive-quiet-bg-hover);
 }
+.yl-btn--danger {
+  background: var(--yl-color-interactive-danger-bg);
+  color: var(--yl-color-interactive-danger-fg);
+  border-color: var(--yl-color-interactive-danger-bg);
+}
+.yl-btn--danger:hover {
+  background: var(--yl-color-interactive-danger-bg-hover);
+  border-color: var(--yl-color-interactive-danger-bg-hover);
+}
+.yl-btn--danger:active {
+  background: var(--yl-color-interactive-danger-bg-active);
+}
+.yl-btn[aria-pressed=true] {
+  background: var(--yl-color-interactive-quiet-bg-active);
+  border-color: var(--yl-color-border-strong);
+}
+.yl-btn[aria-disabled=true] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.yl-btn[aria-busy=true] {
+  position: relative;
+}
+.yl-btn[aria-busy=true] .yl-btn__label {
+  opacity: 0;
+}
+.yl-btn__spinner {
+  --btn-spinner-size: 1.4rem;
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  inline-size: var(--btn-spinner-size);
+  block-size: var(--btn-spinner-size);
+  margin-block-start: calc(var(--btn-spinner-size) / -2);
+  margin-inline-start: calc(var(--btn-spinner-size) / -2);
+  border: var(--yl-border-width-medium) solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--yl-radius-round);
+  animation: yl-btn-spin var(--yl-motion-duration-slow) linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .yl-btn__spinner {
+    animation: none;
+  }
+}
+.yl-btn--lg {
+  padding: var(--yl-space-3) var(--yl-space-5);
+}
 .yl-btn--sm {
   padding: var(--yl-space-1) var(--yl-space-3);
   font-size: var(--yl-text-label-size);
@@ -71,4 +119,10 @@
 .yl-btn-group > .yl-btn:focus-visible {
   position: relative;
   z-index: 1;
+}
+
+@keyframes yl-btn-spin {
+  to {
+    transform: rotate(1turn);
+  }
 }

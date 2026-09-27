@@ -18,6 +18,16 @@ import type { Placement } from "../placement";
  */
 export interface TooltipTriggerProps {
   ref: (node: HTMLElement | null) => void;
+  /**
+   * Makes the trigger reachable by keyboard.
+   *
+   * @remarks
+   * Supplied because a tooltip that only opens on hover is a tooltip half the readers of a page
+   * cannot see. A `<button>` is already focusable and setting this changes nothing for it; a `<span>`
+   * or an `<svg>` is not, and without this its tooltip would never open. A consuming project added
+   * `tabIndex={0}` at three separate call sites before noticing it was the same omission each time.
+   */
+  tabIndex: 0;
   "aria-describedby": string | undefined;
   onPointerEnter: () => void;
   onPointerLeave: () => void;
@@ -125,6 +135,7 @@ export function Tooltip({
     <>
       {children({
         ref: setAnchor,
+        tabIndex: 0,
         "aria-describedby": open ? id : undefined,
         onPointerEnter: () => show(false),
         onPointerLeave: hide,

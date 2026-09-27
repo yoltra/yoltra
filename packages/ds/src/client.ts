@@ -56,3 +56,19 @@ export type {
   Side,
 } from "./overlay/placement";
 export type { Point } from "./overlay/useAnchoredPosition";
+
+/**
+ * The overlay behaviours, on their own.
+ *
+ * @remarks
+ * These were implemented, shipped inside the bundle and exported by neither entry point, so no
+ * consumer could reach them. One consequence is on the record: a consuming project hand-rolled a
+ * `role="dialog"` overlay with no focus trap, no Escape handling, no scroll lock and no focus
+ * restore, which is exactly the set of things `useFocusTrap`, `useDismiss`, `useScrollLock` and
+ * `useReturnFocus` already did.
+ *
+ * Reach for {@link Dialog}, {@link Drawer}, {@link Popover} or {@link Menu} first. These are for
+ * the surface those four do not cover.
+ */
+export { focusableWithin, useDismiss, useFocusTrap, useReturnFocus, useScrollLock } from "./overlay/hooks";
+export type { DismissOptions } from "./overlay/hooks";

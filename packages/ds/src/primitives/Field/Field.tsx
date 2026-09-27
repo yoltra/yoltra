@@ -27,13 +27,13 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
  * A text input.
  *
  * @remarks
- * Every field needs a label a screen reader can reach. Pair it with a `<label htmlFor>`, or
+ * Every field needs a label a screen reader can reach. Pair it with {@link Label}, or
  * with {@link VisuallyHidden} where the design leaves no room for visible text — a
  * `placeholder` is not a label: it disappears the moment somebody types.
  *
  * @example
  * ```tsx
- * <label className="yl-label" htmlFor="host">Hub host</label>
+ * <Label htmlFor="host">Hub host</Label>
  * <Input id="host" name="host" block placeholder="127.0.0.1" />
  * ```
  *

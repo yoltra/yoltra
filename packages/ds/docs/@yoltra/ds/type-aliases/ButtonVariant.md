@@ -8,7 +8,7 @@
 
 # Type Alias: ButtonVariant
 
-> **ButtonVariant** = `"primary"` \| `"ghost"`
+> **ButtonVariant** = `"primary"` \| `"ghost"` \| `"danger"`
 
 Defined in: [primitives/Button/Button.tsx:6](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L6)
 

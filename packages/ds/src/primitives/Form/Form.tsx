@@ -1,4 +1,38 @@
-import type { InputHTMLAttributes, ReactNode } from "react";
+import type { InputHTMLAttributes, LabelHTMLAttributes, ReactNode } from "react";
+
+export interface LabelProps extends LabelHTMLAttributes<HTMLLabelElement> {
+  children: ReactNode;
+}
+
+/**
+ * A field's label.
+ *
+ * @remarks
+ * Prefer {@link FormField}, which renders this and wires the `id` and `aria-describedby` for you.
+ * This exists for the layouts `FormField`'s column does not fit, such as a label beside its
+ * control in a toolbar.
+ *
+ * It exists at all because the class did not work on its own. `.yl-label` was styled only as
+ * `.yl-field > .yl-label`, while this package's own documentation showed a bare
+ * `<label className="yl-label">`; a consuming project copied that example sixteen times and every
+ * one of them received no styling. The rule is standalone now, and this component means nobody has
+ * to know the class name to get it.
+ *
+ * @example
+ * ```tsx
+ * <Label htmlFor="host">Hub host</Label>
+ * <Input id="host" name="host" />
+ * ```
+ *
+ * @public
+ */
+export function Label({ className, children, ...rest }: LabelProps) {
+  return (
+    <label className={["yl-label", className].filter(Boolean).join(" ")} {...rest}>
+      {children}
+    </label>
+  );
+}
 
 /**
  * What a field hands back for wiring a control.

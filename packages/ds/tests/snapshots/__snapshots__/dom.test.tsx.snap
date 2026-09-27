@@ -8,12 +8,52 @@ exports[`Badge > brand 1`] = `
 </span>
 `;
 
+exports[`Badge > error 1`] = `
+<span
+  class="yl-badge"
+>
+  error
+</span>
+`;
+
+exports[`Badge > info 1`] = `
+<span
+  class="yl-badge"
+>
+  info
+</span>
+`;
+
 exports[`Badge > neutral 1`] = `
 <span
   class="yl-badge"
 >
   Draft
 </span>
+`;
+
+exports[`Badge > success 1`] = `
+<span
+  class="yl-badge"
+>
+  success
+</span>
+`;
+
+exports[`Badge > warning 1`] = `
+<span
+  class="yl-badge"
+>
+  warning
+</span>
+`;
+
+exports[`Button > danger 1`] = `
+<button
+  class="yl-btn yl-btn--danger"
+>
+  Delete
+</button>
 `;
 
 exports[`Button > disabled 1`] = `
@@ -41,6 +81,42 @@ exports[`Button > ghost sm 1`] = `
 </button>
 `;
 
+exports[`Button > loading 1`] = `
+<button
+  aria-busy="true"
+  aria-disabled="true"
+  class="yl-btn yl-btn--primary"
+>
+  <span
+    class="yl-btn__label"
+  >
+    Save
+  </span>
+  <span
+    aria-hidden="true"
+    class="yl-btn__spinner"
+  />
+</button>
+`;
+
+exports[`Button > not pressed 1`] = `
+<button
+  aria-pressed="false"
+  class="yl-btn yl-btn--primary"
+>
+  Bold
+</button>
+`;
+
+exports[`Button > pressed 1`] = `
+<button
+  aria-pressed="true"
+  class="yl-btn yl-btn--primary"
+>
+  Bold
+</button>
+`;
+
 exports[`Button > primary md 1`] = `
 <button
   class="yl-btn yl-btn--primary"
@@ -63,6 +139,14 @@ exports[`Button > submit 1`] = `
   type="submit"
 >
   Save
+</button>
+`;
+
+exports[`Button > touch size 1`] = `
+<button
+  class="yl-btn yl-btn--primary yl-btn--lg"
+>
+  Sell
 </button>
 `;
 
@@ -273,6 +357,15 @@ exports[`Card > padded 1`] = `
 <div
   class="yl-card"
   style="--yl-card-padding: var(--yl-space-4); --yl-card-shadow: var(--yl-elevation-xs);"
+>
+  Body
+</div>
+`;
+
+exports[`Card > subtle tone 1`] = `
+<div
+  class="yl-card yl-card--subtle"
+  style="--yl-card-shadow: var(--yl-elevation-xs);"
 >
   Body
 </div>
@@ -682,6 +775,15 @@ exports[`Form > FormField with an error 1`] = `
 </div>
 `;
 
+exports[`Form > Label 1`] = `
+<label
+  class="yl-label"
+  for="host"
+>
+  Hub host
+</label>
+`;
+
 exports[`Form > Radio 1`] = `
 <div
   class="yl-toggle"
@@ -1052,6 +1154,61 @@ exports[`Table > a full composition 1`] = `
       </td>
       <td>
         12 KB
+      </td>
+    </tr>
+  </tbody>
+</table>
+`;
+
+exports[`Table > inside a scroll region 1`] = `
+<div
+  aria-label="Published packages"
+  class="yl-table-scroll"
+  role="region"
+  tabindex="0"
+>
+  <table
+    class="yl-table"
+  >
+    <tbody>
+      <tr>
+        <td>
+          core
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+`;
+
+exports[`Table > numeric cells 1`] = `
+<table
+  class="yl-table"
+>
+  <thead>
+    <tr>
+      <th
+        scope="col"
+      >
+        Package
+      </th>
+      <th
+        class="yl-th--numeric"
+        scope="col"
+      >
+        Size
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        core
+      </td>
+      <td
+        class="yl-td--numeric"
+      >
+        12.5
       </td>
     </tr>
   </tbody>

@@ -8,7 +8,7 @@
 
 # Interface: ToggleProps
 
-Defined in: [primitives/Form/Form.tsx:137](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L137)
+Defined in: [primitives/Form/Form.tsx:171](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L171)
 
 Shared by the boxed controls: checkbox, radio and switch.
 
@@ -22,7 +22,7 @@ Shared by the boxed controls: checkbox, radio and switch.
 
 > `optional` **hint**: `ReactNode`
 
-Defined in: [primitives/Form/Form.tsx:141](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L141)
+Defined in: [primitives/Form/Form.tsx:175](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L175)
 
 Guidance under the label, announced with the control.
 
@@ -32,6 +32,6 @@ Guidance under the label, announced with the control.
 
 > **label**: `ReactNode`
 
-Defined in: [primitives/Form/Form.tsx:139](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L139)
+Defined in: [primitives/Form/Form.tsx:173](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L173)
 
 The visible, clickable label.

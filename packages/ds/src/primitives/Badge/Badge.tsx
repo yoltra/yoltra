@@ -1,7 +1,18 @@
 import type { HTMLAttributes, ReactNode } from "react";
 
+/** Badge kinds. The four statuses match {@link CalloutKind}. @public */
+export type BadgeVariant = "neutral" | "brand" | "info" | "success" | "warning" | "error";
+
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  variant?: "neutral" | "brand";
+  /**
+   * What the badge is saying.
+   *
+   * @remarks
+   * The four status kinds are the same words `Callout` uses, on purpose: a design system with two
+   * vocabularies for one idea makes the reader learn both. Two consuming projects added these
+   * locally before they existed here.
+   */
+  variant?: BadgeVariant;
   children: ReactNode;
 }
 

@@ -8,3 +8,7 @@
 .yl-card--borderless {
   border-color: transparent;
 }
+
+.yl-card--subtle {
+  background: var(--yl-color-bg-subtle);
+}

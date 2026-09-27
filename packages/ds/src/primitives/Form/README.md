@@ -43,6 +43,15 @@ Related controls belong in a fieldset, which gives them one name:
 </RadioGroup>
 ```
 
+A label on its own, for the layouts `FormField`'s column does not fit:
+
+```tsx
+<Inline gap={2} align="center">
+  <Label htmlFor="q">Filter</Label>
+  <Input id="q" size="sm" />
+</Inline>
+```
+
 The toggles carry their own label:
 
 ```tsx
@@ -56,7 +65,8 @@ The toggles carry their own label:
 `FormField`: `id`, `label`, `hint`, `error`, `required`, and `children` as
 `(control) => ReactNode`.
 
-`Fieldset`: `legend`, `hint`. `RadioGroup`: `legend`, `hint`, `inline`.
+`Label`: every native `label` attribute. `Fieldset`: `legend`, `hint`. `RadioGroup`: `legend`,
+`hint`, `inline`.
 
 `Checkbox` / `Radio` / `Switch`: every native input attribute except `type`, plus
 `label` and `hint`.
@@ -74,6 +84,11 @@ decoration.
 
 `valueText` on `Slider` becomes `aria-valuetext`. A number on its own is rarely what
 a reader wants read out.
+
+`.yl-label` is styled on its own now. It used to be styled only as `.yl-field > .yl-label`, while
+this package's own TSDoc showed a bare `<label className="yl-label">`, so a consuming project copied
+that example sixteen times and every one received nothing. `Label` means nobody needs the class name
+at all.
 
 The switch knob is `--yl-color-bg-panel` on `--yl-color-interactive-track`. Both
 exist because the knob's position is the state, so it has to clear 3:1 against the

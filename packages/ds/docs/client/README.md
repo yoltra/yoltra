@@ -15,6 +15,7 @@
 - [CodeBlockProps](interfaces/CodeBlockProps.md)
 - [ContextMenuProps](interfaces/ContextMenuProps.md)
 - [DialogProps](interfaces/DialogProps.md)
+- [DismissOptions](interfaces/DismissOptions.md)
 - [DrawerProps](interfaces/DrawerProps.md)
 - [MenuItemProps](interfaces/MenuItemProps.md)
 - [MenuProps](interfaces/MenuProps.md)

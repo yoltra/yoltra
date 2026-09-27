@@ -51,9 +51,10 @@ tabs, copy button) are client components.
 | `lightTheme` / `darkTheme` / `themes` | Semantic roles (background/foreground/border/interactive/status). |
 | `themeCss()` | Emits the `--yl-*` custom properties for both themes. **Properties only**, no component rules. |
 | `ThemeProvider` / `useTheme` / `applyTheme` | Generic theme controller (reflects onto `data-theme`). |
-| `Button`, `ButtonLink`, `Badge`, `CodeBlock`, `Callout`, `Tabs`, `Table` | Primitive components. |
+| `Button`, `ButtonLink`, `Badge`, `CodeBlock`, `Callout`, `Tabs`, `Table`, `TableScroll`, `Label` | Primitive components. |
 | `Portal`, `Dialog`, `Drawer` | Modal overlays, rendered outside the tree. See below. |
 | `Popover`, `Menu`, `ContextMenu`, `Tooltip` | Anchored overlays, positioned against a trigger or a point. |
+| `useFocusTrap`, `useDismiss`, `useReturnFocus`, `useScrollLock` | The behaviours those overlays are built from, for a surface they do not cover. |
 
 > Consumers that own their state (like the Yoltra website, which drives the
 > theme through a Yoltra store) can skip `ThemeProvider` and set `data-theme`
@@ -209,8 +210,8 @@ Measured the way a consumer ships it — bundled, tree-shaken, minified, gzipped
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ Button, Card, Stack, Text }` | 0.7 KB | 1 KB |
-| everything | 5.6 KB | 8 KB |
+| `{ Button, Card, Stack, Text }` | 0.9 KB | 1.2 KB |
+| everything | 5.8 KB | 8 KB |
 | `{ Dialog }` from `/client` | 1.8 KB | 3 KB |
 | all of `/client` | 4.6 KB | 5.5 KB |
 <!-- size-table:end -->

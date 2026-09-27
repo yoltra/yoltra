@@ -10,4 +10,4 @@
 
 > `const` **darkTheme**: [`ThemeTokens`](../interfaces/ThemeTokens.md)
 
-Defined in: [tokens/themes.ts:279](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L279)
+Defined in: [tokens/themes.ts:303](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L303)

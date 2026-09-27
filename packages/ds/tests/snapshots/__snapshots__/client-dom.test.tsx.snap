@@ -1035,7 +1035,9 @@ exports[`Tooltip > records its surface once the trigger has focus 1`] = `
 `;
 
 exports[`Tooltip > records the trigger it wires up 1`] = `
-<button>
+<button
+  tabindex="0"
+>
   Deploy
 </button>
 `;

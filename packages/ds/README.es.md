@@ -53,9 +53,10 @@ primitivos se renderizan en el servidor — solo los controles interactivos
 | `lightTheme` / `darkTheme` / `themes` | Mapeos semánticos de roles. |
 | `themeCss()` | Emite las propiedades personalizadas `--yl-*` de ambos temas. **Solo propiedades**, sin reglas de componentes. |
 | `ThemeProvider` / `useTheme` / `applyTheme` | Controlador genérico de tema. |
-| `Button`, `ButtonLink`, `Badge`, `CodeBlock`, `Callout`, `Tabs`, `Table` | Componentes primitivos. |
+| `Button`, `ButtonLink`, `Badge`, `CodeBlock`, `Callout`, `Tabs`, `Table`, `TableScroll`, `Label` | Componentes primitivos. |
 | `Portal`, `Dialog`, `Drawer` | Overlays modales, renderizados fuera del árbol. Ver más abajo. |
 | `Popover`, `Menu`, `ContextMenu`, `Tooltip` | Overlays anclados, posicionados contra un trigger o un punto. |
+| `useFocusTrap`, `useDismiss`, `useReturnFocus`, `useScrollLock` | Los comportamientos con los que están hechos esos overlays, para una superficie que no cubren. |
 
 ## Marca
 
@@ -211,8 +212,8 @@ verificado por `rush size` en cada build.
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ Button, Card, Stack, Text }` | 0.7 KB | 1 KB |
-| todo | 5.6 KB | 8 KB |
+| `{ Button, Card, Stack, Text }` | 0.9 KB | 1.2 KB |
+| todo | 5.8 KB | 8 KB |
 | `{ Dialog }` desde `/client` | 1.8 KB | 3 KB |
 | todo `/client` | 4.6 KB | 5.5 KB |
 <!-- size-table:end -->

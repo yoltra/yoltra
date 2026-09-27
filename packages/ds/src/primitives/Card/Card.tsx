@@ -3,6 +3,18 @@ import type { CSSProperties, ElementType, HTMLAttributes, ReactNode } from "reac
 import type { SpaceToken } from "../Layout/Layout";
 
 /** How much a card lifts off the page. */
+/**
+ * A card's surface.
+ *
+ * @remarks
+ * `subtle` is a tinted panel, for a card that groups something secondary. A consuming project
+ * added `.zync-card--subtle` locally and two of its screens gave up on `Card` and inlined a
+ * border instead, which is a clear enough signal.
+ *
+ * @public
+ */
+export type CardTone = "default" | "subtle";
+
 export type CardElevation = "none" | "xs" | "sm" | "md" | "lg" | "xl";
 
 export interface CardProps extends HTMLAttributes<HTMLElement> {
@@ -12,6 +24,8 @@ export interface CardProps extends HTMLAttributes<HTMLElement> {
   elevation?: CardElevation;
   /** Draw a border. On by default; turn it off when the card sits on a tinted surface. */
   bordered?: boolean;
+  /** Surface treatment. `subtle` tints it, for content that is secondary to what surrounds it. */
+  tone?: CardTone;
   /**
    * Element to render.
    *
@@ -43,6 +57,7 @@ export function Card({
   padding,
   elevation = "xs",
   bordered = true,
+  tone = "default",
   as: Tag = "div",
   className,
   style,
@@ -56,7 +71,14 @@ export function Card({
 
   return (
     <Tag
-      className={["yl-card", !bordered && "yl-card--borderless", className].filter(Boolean).join(" ")}
+      className={[
+        "yl-card",
+        !bordered && "yl-card--borderless",
+        tone !== "default" && `yl-card--${tone}`,
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
       style={style === undefined ? vars : { ...vars, ...style }}
       {...rest}
     >

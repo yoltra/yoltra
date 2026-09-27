@@ -190,6 +190,43 @@ visible against it: WCAG 1.4.11 treats a knob's position as the state indicator,
 
 ***
 
+### interactiveDanger
+
+> **interactiveDanger**: `object`
+
+Defined in: [tokens/themes.ts:113](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L113)
+
+The destructive interactive surface: a delete, a revoke, a disconnect.
+
+#### bg
+
+> **bg**: `string`
+
+#### bgActive
+
+> **bgActive**: `string`
+
+#### bgHover
+
+> **bgHover**: `string`
+
+#### border
+
+> **border**: `string`
+
+#### fg
+
+> **fg**: `string`
+
+#### Remarks
+
+Shaped like [SemanticColorTokens.interactive](#interactive) and inverted the same way between themes,
+because the reason is the same: a dark fill on a dark canvas reads as disabled. Light uses
+`error[600]`, where a white label is 4.83:1; `[500]` is 3.76:1 and would have failed, which is
+the same step-too-light mistake the brand colour made.
+
+***
+
 ### interactiveQuiet
 
 > **interactiveQuiet**: `object`
@@ -230,7 +267,7 @@ button's internals.
 
 > **status**: `object`
 
-Defined in: [tokens/themes.ts:113](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L113)
+Defined in: [tokens/themes.ts:123](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L123)
 
 Feedback colours. `solid` is the accent on its own.
 

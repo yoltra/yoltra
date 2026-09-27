@@ -10,7 +10,7 @@
 
 > **IconButton**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Button/Button.tsx:99](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L99)
+Defined in: [primitives/Button/Button.tsx:174](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L174)
 
 A button showing only an icon.
 

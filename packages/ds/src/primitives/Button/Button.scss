@@ -50,6 +50,73 @@
     }
   }
 
+  &--danger {
+    background: var(--yl-color-interactive-danger-bg);
+    color: var(--yl-color-interactive-danger-fg);
+    border-color: var(--yl-color-interactive-danger-bg);
+
+    &:hover {
+      background: var(--yl-color-interactive-danger-bg-hover);
+      border-color: var(--yl-color-interactive-danger-bg-hover);
+    }
+    &:active {
+      background: var(--yl-color-interactive-danger-bg-active);
+    }
+  }
+
+  // A toggle that is on reads as a pressed surface rather than a different colour, so the set it
+  // sits in still looks like one control.
+  &[aria-pressed="true"] {
+    background: var(--yl-color-interactive-quiet-bg-active);
+    border-color: var(--yl-color-border-strong);
+  }
+
+  // `aria-disabled` rather than `disabled`, so a busy control keeps its focus. The appearance has
+  // to match the real thing or the two states look like different bugs.
+  &[aria-disabled="true"] {
+    @include disabled-control;
+  }
+
+  &[aria-busy="true"] {
+    position: relative;
+
+    // Zero opacity, not `visibility` or `display`: those remove the text from the accessibility
+    // tree, and a busy button with no accessible name is worse than a wide one.
+    .yl-btn__label {
+      opacity: 0;
+    }
+  }
+
+  &__spinner {
+    --btn-spinner-size: 1.4rem;
+
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    inline-size: var(--btn-spinner-size);
+    block-size: var(--btn-spinner-size);
+    margin-block-start: calc(var(--btn-spinner-size) / -2);
+    margin-inline-start: calc(var(--btn-spinner-size) / -2);
+    border: var(--yl-border-width-medium) solid currentColor;
+    border-top-color: transparent;
+    border-radius: var(--yl-radius-round);
+    animation: yl-btn-spin var(--yl-motion-duration-slow) linear infinite;
+  }
+
+  // Drawn here rather than borrowed from `Spinner`, so `button.css` stays self-sufficient: a
+  // consumer importing one stylesheet should not discover it needed a second one.
+  @include reduced-motion {
+    &__spinner {
+      animation: none;
+    }
+  }
+
+  &--lg {
+    // 44px, the size a finger needs. It is what `md` used to be before the density pass, which is
+    // why the numbers look familiar.
+    padding: var(--yl-space-3) var(--yl-space-5);
+  }
+
   &--sm {
     padding: var(--yl-space-1) var(--yl-space-3);
     font-size: var(--yl-text-label-size);
@@ -84,5 +151,11 @@
   > .yl-btn:focus-visible {
     position: relative;
     z-index: 1;
+  }
+}
+
+@keyframes yl-btn-spin {
+  to {
+    transform: rotate(1turn);
   }
 }

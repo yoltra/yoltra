@@ -10,7 +10,7 @@
 
 > **Table**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Table/Table.tsx:25](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table/Table.tsx#L25)
+Defined in: [primitives/Table/Table.tsx:92](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table/Table.tsx#L92)
 
 A data table.
 

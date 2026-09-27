@@ -22,6 +22,7 @@ import {
   InlineCode,
   Input,
   Kbd,
+  Label,
   Link,
   Radio,
   RadioGroup,
@@ -37,6 +38,7 @@ import {
   THead,
   TR,
   Table,
+  TableScroll,
   Text,
   Textarea,
   VisuallyHidden,
@@ -101,6 +103,11 @@ describe("Button", () => {
     ),
     ["disabled", () => <Button disabled>Save</Button>],
     ["submit", () => <Button type="submit">Save</Button>],
+    ["danger", () => <Button variant="danger">Delete</Button>],
+    ["touch size", () => <Button size="lg">Sell</Button>],
+    ["loading", () => <Button loading>Save</Button>],
+    ["pressed", () => <Button pressed>Bold</Button>],
+    ["not pressed", () => <Button pressed={false}>Bold</Button>],
   ]);
 });
 
@@ -164,6 +171,10 @@ describe("Badge", () => {
   snapshotAll([
     ["neutral", () => <Badge>Draft</Badge>],
     ["brand", () => <Badge variant="brand">New</Badge>],
+    ...(["info", "success", "warning", "error"] as const).map((variant): Case => [
+      variant,
+      () => <Badge variant={variant}>{variant}</Badge>,
+    ]),
   ]);
 });
 
@@ -186,6 +197,7 @@ describe("Card", () => {
       () => <Card elevation={elevation}>Body</Card>,
     ]),
     ["as a section", () => <Card as="section">Body</Card>],
+    ["subtle tone", () => <Card tone="subtle">Body</Card>],
   ]);
 });
 
@@ -298,6 +310,7 @@ describe("Form", () => {
         </Fieldset>
       ),
     ],
+    ["Label", () => <Label htmlFor="host">Hub host</Label>],
     ["Checkbox", () => <Checkbox id="a" label="Remember me" />],
     ["Checkbox with a hint", () => <Checkbox id="a" label="Remember me" hint="On this device." />],
     ["Radio", () => <Radio id="b" name="r" label="Daily" />],
@@ -325,6 +338,41 @@ describe("Form", () => {
 
 describe("Table", () => {
   snapshotAll([
+    [
+      "numeric cells",
+      () => (
+        <Table>
+          <THead>
+            <TR>
+              <TH scope="col">Package</TH>
+              <TH scope="col" numeric>
+                Size
+              </TH>
+            </TR>
+          </THead>
+          <TBody>
+            <TR>
+              <TD>core</TD>
+              <TD numeric>12.5</TD>
+            </TR>
+          </TBody>
+        </Table>
+      ),
+    ],
+    [
+      "inside a scroll region",
+      () => (
+        <TableScroll label="Published packages">
+          <Table>
+            <TBody>
+              <TR>
+                <TD>core</TD>
+              </TR>
+            </TBody>
+          </Table>
+        </TableScroll>
+      ),
+    ],
     [
       "a full composition",
       () => (

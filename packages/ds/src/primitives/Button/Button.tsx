@@ -3,15 +3,69 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "reac
 import { VisuallyHidden } from "../VisuallyHidden/VisuallyHidden";
 
 /** Visual weight of a button. @public */
-export type ButtonVariant = "primary" | "ghost";
-/** Button scale. @public */
-export type ButtonSize = "md" | "sm";
+export type ButtonVariant = "primary" | "ghost" | "danger";
+/**
+ * Button scale.
+ *
+ * @remarks
+ * `md` is 36px tall, which is comfortable with a pointer. `lg` is 44px, the size a finger needs,
+ * and is what a control used standing up at a counter should be. `sm` is for dense chrome.
+ *
+ * @public
+ */
+export type ButtonSize = "md" | "sm" | "lg";
 
 function classes(variant: ButtonVariant, size: ButtonSize, className?: string): string {
-  return ["yl-btn", `yl-btn--${variant}`, size === "sm" && "yl-btn--sm", className].filter(Boolean).join(" ");
+  return ["yl-btn", `yl-btn--${variant}`, size !== "md" && `yl-btn--${size}`, className]
+    .filter(Boolean)
+    .join(" ");
 }
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+/**
+ * The shared shape of a button's state props.
+ *
+ * @remarks
+ * `loading` and `pressed` are deliberately separate from `disabled`. A loading button is still
+ * the control you just pressed and should keep its focus; a pressed one is a toggle and has to
+ * say so.
+ */
+interface ButtonStateProps {
+  /**
+   * Work is in flight.
+   *
+   * @remarks
+   * Sets `aria-busy` and `aria-disabled` rather than `disabled`, so the control keeps its place in
+   * the tab order and a reader is not thrown out of it mid-action. Clicks are swallowed while it
+   * is set.
+   *
+   * The label stays in the layout at zero opacity rather than being hidden, which keeps the
+   * button exactly as wide as it was and keeps its accessible name: `visibility: hidden` and
+   * `display: none` both remove the text from the accessibility tree, leaving a busy button with
+   * no name.
+   */
+  loading?: boolean;
+  /**
+   * Whether a toggle button is on.
+   *
+   * @remarks
+   * Becomes `aria-pressed`. Set it only when the button really is a toggle: on a button that
+   * performs an action, `aria-pressed` reports a state that does not exist.
+   */
+  pressed?: boolean;
+}
+
+/** The label and the spinner, or just the children when nothing is in flight. */
+function content(loading: boolean | undefined, children: ReactNode): ReactNode {
+  if (loading !== true) return children;
+  return (
+    <>
+      <span className="yl-btn__label">{children}</span>
+      <span className="yl-btn__spinner" aria-hidden="true" />
+    </>
+  );
+}
+
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, ButtonStateProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   children: ReactNode;
@@ -22,20 +76,41 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  *
  * @remarks
  * `primary` for the one action a view is about; `ghost` for everything beside it. A screen
- * with two primary buttons has told the reader nothing about which one to press.
+ * with two primary buttons has told the reader nothing about which one to press. `danger` for
+ * something that destroys, and only for that: a warning colour used for emphasis stops reading
+ * as a warning.
  *
  * @example
  * ```tsx
  * <Button onClick={connect}>Connect</Button>
  * <Button variant="ghost" size="sm" onClick={cancel}>Cancel</Button>
+ * <Button variant="danger" onClick={remove}>Delete</Button>
+ * <Button size="lg" loading={saving} onClick={save}>Save</Button>
+ * <Button pressed={bold} onClick={toggleBold}>Bold</Button>
  * ```
  *
  * @public
  */
-export function Button({ variant = "primary", size = "md", className, children, ...rest }: ButtonProps) {
+export function Button({
+  variant = "primary",
+  size = "md",
+  loading,
+  pressed,
+  className,
+  children,
+  onClick,
+  ...rest
+}: ButtonProps) {
   return (
-    <button className={classes(variant, size, className)} {...rest}>
-      {children}
+    <button
+      className={classes(variant, size, className)}
+      aria-busy={loading === true ? true : undefined}
+      aria-disabled={loading === true ? true : undefined}
+      aria-pressed={pressed}
+      onClick={loading === true ? undefined : onClick}
+      {...rest}
+    >
+      {content(loading, children)}
     </button>
   );
 }
@@ -70,7 +145,7 @@ export function ButtonLink({ variant = "primary", size = "md", className, childr
   );
 }
 
-export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, ButtonStateProps {
   /**
    * What the button does, in words.
    *
@@ -100,13 +175,23 @@ export function IconButton({
   label,
   variant = "ghost",
   size = "md",
+  loading,
+  pressed,
   className,
   children,
+  onClick,
   ...rest
 }: IconButtonProps) {
   const cls = ["yl-icon-btn", classes(variant, size), className].filter(Boolean).join(" ");
   return (
-    <button className={cls} {...rest}>
+    <button
+      className={cls}
+      aria-busy={loading === true ? true : undefined}
+      aria-disabled={loading === true ? true : undefined}
+      aria-pressed={pressed}
+      onClick={loading === true ? undefined : onClick}
+      {...rest}
+    >
       <span aria-hidden="true">{children}</span>
       <VisuallyHidden>{label}</VisuallyHidden>
     </button>

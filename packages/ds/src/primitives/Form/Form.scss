@@ -1,5 +1,13 @@
 @use "../../styles" as *;
 
+// Standalone, not `.yl-field > .yl-label`. It was nested, so a label written outside a field
+// wrapper received nothing, and this package's own TSDoc showed exactly that usage.
+.yl-label {
+  font-size: var(--yl-text-label-size);
+  font-weight: var(--yl-font-weight-semibold);
+  color: var(--yl-color-fg-secondary);
+}
+
 .yl-field {
   // Sub-grid: 2px of air before the required marker, where the scale starts at 4px.
   --required-gap: 0.2rem;
@@ -10,12 +18,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--yl-space-1);
-
-  > .yl-label {
-    font-size: var(--yl-text-label-size);
-    font-weight: var(--yl-font-weight-semibold);
-    color: var(--yl-color-fg-secondary);
-  }
 
   &__required {
     color: var(--yl-color-status-error-fg);

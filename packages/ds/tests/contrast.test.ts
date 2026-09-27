@@ -95,6 +95,9 @@ function pairings(t: ThemeTokens) {
     ["interactive label on its fill", c.interactive.fg, c.interactive.bg],
     ["interactive label on hover", c.interactive.fg, c.interactive.bgHover],
     ["interactive label on active", c.interactive.fg, c.interactive.bgActive],
+    ["danger label on its fill", c.interactiveDanger.fg, c.interactiveDanger.bg],
+    ["danger label on hover", c.interactiveDanger.fg, c.interactiveDanger.bgHover],
+    ["danger label on active", c.interactiveDanger.fg, c.interactiveDanger.bgActive],
     ["quiet label on canvas", c.interactiveQuiet.fg, c.bg.canvas],
     ["quiet label on its hover", c.interactiveQuiet.fg, c.interactiveQuiet.bgHover],
     ["fg.inverse on interactive fill", c.fg.inverse, c.interactive.bg],
@@ -112,6 +115,7 @@ function pairings(t: ThemeTokens) {
     ["focus ring on canvas", c.border.focus, c.bg.canvas],
     ["focus ring on panel", c.border.focus, c.bg.panel],
     ["interactive fill on canvas", c.interactive.bg, c.bg.canvas],
+    ["danger fill on canvas", c.interactiveDanger.bg, c.bg.canvas],
     // A switch knob's position *is* the state, so the knob has to be findable against both
     // tracks. It was `fg.inverse` on `border.strong`, which is 1.48:1 in the light theme: a white
     // dot on a pale grey groove. Using a text token as a knob background was the root error.

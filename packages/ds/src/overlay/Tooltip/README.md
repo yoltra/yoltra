@@ -49,6 +49,7 @@ The surface never takes focus and never receives pointer events, because catchin
 pointer would let it flicker itself out of existence by triggering the leave handler
 on the element underneath.
 
-The trigger props do not include `tabIndex`. A non-focusable trigger needs one or the
-tooltip is mouse-only, and a consuming project added it at three call sites before
-noticing the pattern.
+The trigger props include `tabIndex: 0`. A `<button>` is focusable already and it changes nothing
+there; a `<span>` or an `<svg>` is not, and without it that tooltip would open for a pointer and
+never for a keyboard. A consuming project added it at three separate call sites before noticing it
+was the same omission each time.

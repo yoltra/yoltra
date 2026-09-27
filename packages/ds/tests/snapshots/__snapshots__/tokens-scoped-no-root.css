@@ -147,6 +147,11 @@
   --yl-color-interactive-fg: #FFFFFF;
   --yl-color-interactive-border: #0E5598;
   --yl-color-interactive-track: #64748B;
+  --yl-color-interactive-danger-bg: #D92D20;
+  --yl-color-interactive-danger-bg-hover: #B42318;
+  --yl-color-interactive-danger-bg-active: #912018;
+  --yl-color-interactive-danger-fg: #FFFFFF;
+  --yl-color-interactive-danger-border: #B42318;
   --yl-color-interactive-quiet-bg: transparent;
   --yl-color-interactive-quiet-bg-hover: rgba(15, 23, 42, 0.05);
   --yl-color-interactive-quiet-bg-active: rgba(15, 23, 42, 0.09);
@@ -199,6 +204,11 @@
   --yl-color-interactive-fg: #0B1220;
   --yl-color-interactive-border: #84BEFF;
   --yl-color-interactive-track: #94A3B8;
+  --yl-color-interactive-danger-bg: #F97066;
+  --yl-color-interactive-danger-bg-hover: #FDA29B;
+  --yl-color-interactive-danger-bg-active: #FECDCA;
+  --yl-color-interactive-danger-fg: #0B1220;
+  --yl-color-interactive-danger-border: #FDA29B;
   --yl-color-interactive-quiet-bg: transparent;
   --yl-color-interactive-quiet-bg-hover: rgba(226, 232, 240, 0.06);
   --yl-color-interactive-quiet-bg-active: rgba(226, 232, 240, 0.1);

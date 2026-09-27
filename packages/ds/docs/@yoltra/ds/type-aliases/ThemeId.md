@@ -10,4 +10,4 @@
 
 > **ThemeId** = keyof *typeof* [`themes`](../variables/themes.md)
 
-Defined in: [tokens/themes.ts:282](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L282)
+Defined in: [tokens/themes.ts:306](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L306)

@@ -26,13 +26,13 @@ A text input.
 
 ## Remarks
 
-Every field needs a label a screen reader can reach. Pair it with a `<label htmlFor>`, or
+Every field needs a label a screen reader can reach. Pair it with [Label](Label.md), or
 with [VisuallyHidden](VisuallyHidden.md) where the design leaves no room for visible text — a
 `placeholder` is not a label: it disappears the moment somebody types.
 
 ## Example
 
 ```tsx
-<label className="yl-label" htmlFor="host">Hub host</label>
+<Label htmlFor="host">Hub host</Label>
 <Input id="host" name="host" block placeholder="127.0.0.1" />
 ```
