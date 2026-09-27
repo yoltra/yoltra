@@ -51,6 +51,19 @@ The event descriptor (channel, type, payload).
 
 > **payload**: `unknown`
 
+#### truncated?
+
+> `optional` **truncated**: `boolean`
+
+`true` when the payload exceeded the agent's per-event byte cap and was replaced by a
+truncation marker.
+
+##### Remarks
+
+Snapshots have always been bounded; event payloads were not, so one oversized payload
+produced a frame above the hub's own limit and the socket was closed rather than the
+message dropped. A payload the panel cannot show is better than a session that ends.
+
 #### type
 
 > **type**: `string`

@@ -29,7 +29,7 @@ incrementally or request a full [StateSnapshot](StateSnapshot.md) when needed.
 
 > **committed**: `boolean`
 
-Defined in: [messages.ts:72](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L72)
+Defined in: [messages.ts:84](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L84)
 
 `true` if the event passed middleware; `false` if bounced.
 
@@ -53,6 +53,19 @@ Defined in: [messages.ts:61](https://github.com/yoltra/yoltra/blob/main/devtools
 
 > **payload**: `unknown`
 
+#### truncated?
+
+> `optional` **truncated**: `boolean`
+
+`true` when the payload exceeded the agent's per-event byte cap and was replaced by a
+truncation marker.
+
+##### Remarks
+
+Snapshots have always been bounded; event payloads were not, so one oversized payload
+produced a frame above the hub's own limit and the socket was closed rather than the
+message dropped. A payload the panel cannot show is better than a session that ends.
+
 #### type
 
 > **type**: `string`
@@ -63,9 +76,19 @@ Defined in: [messages.ts:61](https://github.com/yoltra/yoltra/blob/main/devtools
 
 > **patches**: [`JsonPatch`](JsonPatch.md)[]
 
-Defined in: [messages.ts:68](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L68)
+Defined in: [messages.ts:78](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L78)
 
 RFC 6902 JSON Patch operations describing state changes.
+
+***
+
+### patchesTruncated?
+
+> `optional` **patchesTruncated**: `boolean`
+
+Defined in: [messages.ts:80](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L80)
+
+`true` when at least one patch value was replaced by a truncation marker.
 
 ***
 
@@ -73,7 +96,7 @@ RFC 6902 JSON Patch operations describing state changes.
 
 > **snapshotVersion**: `number`
 
-Defined in: [messages.ts:70](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L70)
+Defined in: [messages.ts:82](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L82)
 
 Monotonically increasing snapshot version counter.
 

@@ -14,7 +14,7 @@ import {
   type StoreEvent,
   type StoreMetrics,
 } from "@yoltra/devtools-protocol";
-import { encodeState, encodeStateBounded, decodeState } from "@yoltra/core";
+import { encodeStateBounded, decodeState } from "@yoltra/core";
 import { MetricsCollector } from "./metrics-collector";
 import type { DevtoolsWrapperConfig } from "./types";
 import { DevtoolsWsClient } from "./ws-client";

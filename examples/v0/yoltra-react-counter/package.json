@@ -21,8 +21,8 @@
   "dependencies": {
     "react": "19.1.1",
     "react-dom": "19.1.1",
-    "@yoltra/core": "^0.8.0",
-    "@yoltra/react": "^0.8.0",
+    "@yoltra/core": "^0.7.0",
+    "@yoltra/react": "^0.7.0",
     "@yoltra/ds": "^0.3.0"
   },
   "devDependencies": {

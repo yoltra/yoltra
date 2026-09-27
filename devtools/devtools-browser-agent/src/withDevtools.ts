@@ -15,7 +15,7 @@ import {
   type StoreEvent,
   type StoreMetrics,
 } from "@yoltra/devtools-protocol";
-import { encodeState, encodeStateBounded, decodeState } from "@yoltra/core";
+import { encodeStateBounded, decodeState } from "@yoltra/core";
 import { createPostMessageSocketFactory } from "./postMessage-client";
 
 /**
