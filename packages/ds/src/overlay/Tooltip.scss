@@ -1,3 +1,5 @@
+@use "../styles" as *;
+
 .yl-tooltip {
   position: fixed;
   // Above the anchored surfaces: a tooltip can describe a control inside a popover, and it is

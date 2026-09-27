@@ -81,15 +81,17 @@
 }
 
 .yl-drawer, .yl-dialog {
-  position: relative;
-  display: flex;
-  flex-direction: column;
   background: var(--yl-color-bg-elevated);
   color: var(--yl-color-fg-default);
   box-shadow: var(--yl-elevation-xl);
 }
 .yl-drawer:focus, .yl-dialog:focus {
   outline: none;
+}
+.yl-drawer, .yl-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .yl-dialog {

@@ -1,6 +1,19 @@
-@use "../styles/mixins" as *;
+@use "../styles" as *;
 
 .yl-field {
+  // The wrapper, moved here from Field.scss. `FormField` renders this class, so the file that
+  // renders it owns it: previously a consumer importing `form.css` for `FormField` also needed
+  // `field.css` for the wrapper's layout, and nothing said so.
+  display: flex;
+  flex-direction: column;
+  gap: var(--yl-space-1);
+
+  > .yl-label {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--yl-color-fg-secondary);
+  }
+
   &__required {
     color: var(--yl-color-status-error-fg);
     margin-inline-start: 0.2rem;
@@ -71,8 +84,7 @@
     cursor: pointer;
 
     &:has(input:disabled) {
-      color: var(--yl-color-fg-disabled);
-      cursor: not-allowed;
+      @include disabled-text;
     }
   }
 
@@ -96,7 +108,7 @@
   @include focus-ring(2px);
 
   &:disabled {
-    cursor: not-allowed;
+    @include disabled-control;
   }
 }
 
@@ -109,7 +121,7 @@
   background: var(--yl-color-interactive-track);
   position: relative;
   cursor: pointer;
-  transition: background var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
+  @include transition(background);
 
   &::after {
     content: "";
@@ -120,7 +132,7 @@
     block-size: 1.6rem;
     border-radius: var(--yl-radius-round);
     background: var(--yl-color-bg-panel);
-    transition: translate var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
+    @include transition(translate);
   }
 
   &:checked {
@@ -134,8 +146,7 @@
   @include focus-ring(2px);
 
   &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
+    @include disabled-control;
   }
 }
 
@@ -147,12 +158,11 @@
   @include focus-ring(2px);
 
   &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
+    @include disabled-control;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@include reduced-motion {
   .yl-switch,
   .yl-switch::after {
     transition: none;

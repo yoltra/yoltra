@@ -1,3 +1,5 @@
+@use "../styles" as *;
+
 .yl-card {
   padding: var(--yl-card-padding, var(--yl-space-4));
   border-radius: var(--yl-radius-lg);

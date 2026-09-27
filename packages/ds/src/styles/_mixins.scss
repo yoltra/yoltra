@@ -6,6 +6,7 @@
 // What SASS contributes is nesting, per-component files, and the handful of repeated
 // fragments below that were previously copied between string literals.
 
+@use "sass:list";
 @use "sass:map";
 
 /// Breakpoints, deliberately in px.
@@ -57,4 +58,67 @@ $breakpoints: (sm: 480px, md: 768px, lg: 1024px, xl: 1280px);
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/// Honour a reader who has asked for less movement.
+///
+/// The media query itself was the duplication: three stylesheets wrote it out to suppress three
+/// different things, an animation here and a transition there. The condition is shared; what it
+/// suppresses is not, so that part stays with the component.
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+/// Text in a control that cannot be used.
+///
+/// No contrast minimum applies here: WCAG 1.4.3 exempts an inactive component, and copy that
+/// passed the text threshold would not read as disabled.
+@mixin disabled-text {
+  color: var(--yl-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+/// A control that cannot be used but draws its own colours, so it fades rather than recolours.
+///
+/// Separate from {@link disabled-text} because a switch or a slider is painted by the UA from
+/// `accent-color`; setting `color` on it would change nothing a reader can see.
+@mixin disabled-control {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/// The house transition: the fast duration and the standard easing, over the given properties.
+///
+/// Written out at five sites before this, each repeating both tokens per property, which is how
+/// one of them came to name a duration that no longer existed.
+@mixin transition($properties...) {
+  $parts: ();
+  @each $property in $properties {
+    $parts: list.append(
+      $parts,
+      #{$property} var(--yl-motion-duration-fast) var(--yl-motion-ease-standard),
+      $separator: comma
+    );
+  }
+  transition: $parts;
+}
+
+/// An elevated surface that can receive focus as a fallback.
+///
+/// Shared by the modal tier and the anchored tier, which had a placeholder each: the same three
+/// declarations and the same `&:focus` reset, with the same explanation written twice. Position
+/// and border stay with the caller, because a dialog is centred in the viewport and a popover is
+/// pinned to a trigger.
+@mixin surface($elevation: var(--yl-elevation-lg)) {
+  background: var(--yl-color-bg-elevated);
+  color: var(--yl-color-fg-default);
+  box-shadow: $elevation;
+
+  &:focus {
+    // Focus lands here only when the surface holds nothing focusable. That is a destination
+    // rather than a navigation stop, so it should not draw a ring.
+    outline: none;
+  }
 }

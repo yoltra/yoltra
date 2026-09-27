@@ -1,3 +1,5 @@
+@use "../styles" as *;
+
 .yl-spinner {
   display: inline-flex;
   align-items: center;
@@ -50,7 +52,7 @@
 
 // Motion is decoration here. A reader who has asked for less of it should get a still
 // placeholder and a still spinner, not a smaller amount of spinning.
-@media (prefers-reduced-motion: reduce) {
+@include reduced-motion {
   .yl-spinner__ring,
   .yl-skeleton {
     animation: none;

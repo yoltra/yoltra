@@ -1,4 +1,4 @@
-@use "../styles/mixins" as *;
+@use "../styles" as *;
 
 .yl-btn {
   display: inline-flex;
@@ -14,10 +14,7 @@
   border: 1px solid transparent;
   cursor: pointer;
   text-decoration: none;
-  transition:
-    background var(--yl-motion-duration-fast) var(--yl-motion-ease-standard),
-    border-color var(--yl-motion-duration-fast) var(--yl-motion-ease-standard),
-    transform var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
+  @include transition(background, border-color, transform);
 
   &:active {
     transform: translateY(1px);

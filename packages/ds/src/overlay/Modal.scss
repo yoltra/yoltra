@@ -1,4 +1,4 @@
-@use "../styles/mixins" as *;
+@use "../styles" as *;
 
 // The portal root, filling the viewport. `fixed` rather than `absolute` because the panel is
 // positioned against the viewport, not against `document.body` — which has a height.
@@ -95,18 +95,11 @@
 // Shared surface treatment. `position: relative` lifts it above the scrim without a second
 // z-index — they are siblings, and the later one wins.
 %yl-modal-surface {
+  @include surface(var(--yl-elevation-xl));
+
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--yl-color-bg-elevated);
-  color: var(--yl-color-fg-default);
-  box-shadow: var(--yl-elevation-xl);
-
-  &:focus {
-    // The panel takes focus when it holds no focusable child; that is a fallback, not a
-    // navigation stop, so it should not draw a ring.
-    outline: none;
-  }
 }
 
 .yl-dialog {
@@ -197,7 +190,7 @@
 
 // An overlay that flies in is the one animation a motion-sensitive reader cannot look away
 // from, because it is what they were just asked to look at.
-@media (prefers-reduced-motion: reduce) {
+@include reduced-motion {
   .yl-dialog,
   .yl-drawer {
     animation: none;

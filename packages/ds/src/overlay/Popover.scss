@@ -1,23 +1,16 @@
-@use "../styles/mixins" as *;
+@use "../styles" as *;
 
 // Anchored surfaces are placed in viewport coordinates by `useAnchoredPosition`, so `fixed` is
 // not a preference — it is what makes those coordinates mean anything. `left`/`top` come from
 // the element's inline style.
 %yl-anchored-surface {
+  @include surface(var(--yl-elevation-lg));
+
   position: fixed;
   z-index: var(--yl-z-popover);
   max-width: min(36rem, calc(100vw - var(--yl-space-8)));
-  background: var(--yl-color-bg-elevated);
-  color: var(--yl-color-fg-default);
   border: 1px solid var(--yl-color-border-subtle);
   border-radius: var(--yl-radius-lg);
-  box-shadow: var(--yl-elevation-lg);
-
-  &:focus {
-    // Focus lands here as a fallback when the surface holds nothing focusable; that is a
-    // destination, not a navigation stop, so it should not draw a ring.
-    outline: none;
-  }
 }
 
 .yl-popover {

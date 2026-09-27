@@ -2,7 +2,7 @@
 //
 // Loaded once per application. Everything else is opt-in per component.
 
-@use "./mixins" as *;
+@use "./index" as *;
 
 /// **1rem is 10px.**
 ///

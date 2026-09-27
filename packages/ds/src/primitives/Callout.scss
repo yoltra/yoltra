@@ -1,3 +1,5 @@
+@use "../styles" as *;
+
 .yl-callout {
   display: flex;
   gap: var(--yl-space-3);

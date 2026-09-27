@@ -1,15 +1,17 @@
 .yl-menu, .yl-popover {
-  position: fixed;
-  z-index: var(--yl-z-popover);
-  max-width: min(36rem, 100vw - var(--yl-space-8));
   background: var(--yl-color-bg-elevated);
   color: var(--yl-color-fg-default);
-  border: 1px solid var(--yl-color-border-subtle);
-  border-radius: var(--yl-radius-lg);
   box-shadow: var(--yl-elevation-lg);
 }
 .yl-menu:focus, .yl-popover:focus {
   outline: none;
+}
+.yl-menu, .yl-popover {
+  position: fixed;
+  z-index: var(--yl-z-popover);
+  max-width: min(36rem, 100vw - var(--yl-space-8));
+  border: 1px solid var(--yl-color-border-subtle);
+  border-radius: var(--yl-radius-lg);
 }
 
 .yl-popover {
