@@ -5,8 +5,10 @@
 > 👉 🇲🇽 Versión en Español&nbsp; |
 > &nbsp;[ 🇺🇸 English Versión](./README.md)&nbsp;
 
-![npm downloads](https://badgen.net/npm/dm/@yoltra/react)
-![License](https://badgen.net/npm/license/@yoltra/react)
+[![versión npm](https://img.shields.io/npm/v/@yoltra/react)](https://www.npmjs.com/package/@yoltra/react)
+[![descargas npm](https://img.shields.io/npm/dm/@yoltra/react)](https://www.npmjs.com/package/@yoltra/react)
+[![tipos](https://img.shields.io/npm/types/@yoltra/react)](https://www.npmjs.com/package/@yoltra/react)
+[![Licencia](https://img.shields.io/npm/l/@yoltra/react)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
 
 **Hooks de React para [yoltra](../../README.md) con
 suscripciones de grano fino por ruta.**
@@ -460,11 +462,11 @@ function TodoItem({ index }: { index: number }) {
 
 ## Ejemplos
 
-- **[App de Tareas con Profiler](../../examples/v0/yoltra-in-react)**: CRUD completo con
+- **[App de Tareas con Profiler](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-in-react)**: CRUD completo con
   comparación de flamegraph · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-react)
-- **[Logo Cinético (3000 particulas)](../../examples/v0/yoltra-kinetic-logo)**: Suscripciones
+- **[Logo Cinético (3000 particulas)](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-kinetic-logo)**: Suscripciones
   independientes por circulo SVG · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/kinetic-logo)
-- **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)**: estado de cliente + cambio de tema · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)
+- **[Next.js (Pages Router)](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-in-nextjs)**: estado de cliente + cambio de tema · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)
 
 ---
 
@@ -483,7 +485,7 @@ function TodoItem({ index }: { index: number }) {
 
 ## Contribuir
 
-- [Raíz del Monorepo](../../)
+- [Raíz del Monorepo](https://github.com/yoltra/yoltra)
 - [Guia de Contribución](../../CONTRIBUTING.md)
 
 ---

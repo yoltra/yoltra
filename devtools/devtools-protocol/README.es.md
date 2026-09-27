@@ -4,6 +4,11 @@
 
 > 👉 🇲🇽 Versión en Español &nbsp; | [ 🇺🇸 English Version](./README.md)&nbsp;
 
+[![versión npm](https://img.shields.io/npm/v/@yoltra/devtools-protocol)](https://www.npmjs.com/package/@yoltra/devtools-protocol)
+[![descargas npm](https://img.shields.io/npm/dm/@yoltra/devtools-protocol)](https://www.npmjs.com/package/@yoltra/devtools-protocol)
+[![tipos](https://img.shields.io/npm/types/@yoltra/devtools-protocol)](https://www.npmjs.com/package/@yoltra/devtools-protocol)
+[![Licencia](https://img.shields.io/npm/l/@yoltra/devtools-protocol)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+
 **Tipos de protocolo compartidos, definiciones de mensajes y utilidades para el conjunto de
 Yoltra DevTools.**
 

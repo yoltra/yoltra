@@ -4,6 +4,11 @@
 
 > 👉 🇲🇽 Versión en Español&nbsp; | &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp;
 
+[![versión npm](https://img.shields.io/npm/v/@yoltra/devtools-ui)](https://www.npmjs.com/package/@yoltra/devtools-ui)
+[![descargas npm](https://img.shields.io/npm/dm/@yoltra/devtools-ui)](https://www.npmjs.com/package/@yoltra/devtools-ui)
+[![tipos](https://img.shields.io/npm/types/@yoltra/devtools-ui)](https://www.npmjs.com/package/@yoltra/devtools-ui)
+[![Licencia](https://img.shields.io/npm/l/@yoltra/devtools-ui)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+
 **Hooks de React y lógica de negocio compartidos por las UIs de Yoltra DevTools.**
 
 `@yoltra/devtools-ui` es una capa de lógica sin interfaz que ofrece hooks de React para conectarse

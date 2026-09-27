@@ -5,8 +5,10 @@
 > 👉 🇲🇽 Versión en Español&nbsp; |
 > &nbsp;[ 🇺🇸 English Versión](./README.md)&nbsp;
 
-![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
-![License](https://badgen.net/npm/license/@yoltra/core)
+[![versión npm](https://img.shields.io/npm/v/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![descargas npm](https://img.shields.io/npm/dm/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![tipos](https://img.shields.io/npm/types/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![Licencia](https://img.shields.io/npm/l/@yoltra/core)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
 
 **Contenedor de estado orientado a eventos, agnóstico de framework, con suscripciones de grano
 fino por ruta.**

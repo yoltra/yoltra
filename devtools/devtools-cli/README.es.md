@@ -4,6 +4,11 @@
 
 > 👉 🇲🇽 Versión en Español&nbsp; | &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp;
 
+[![versión npm](https://img.shields.io/npm/v/@yoltra/devtools-cli)](https://www.npmjs.com/package/@yoltra/devtools-cli)
+[![descargas npm](https://img.shields.io/npm/dm/@yoltra/devtools-cli)](https://www.npmjs.com/package/@yoltra/devtools-cli)
+[![tipos](https://img.shields.io/npm/types/@yoltra/devtools-cli)](https://www.npmjs.com/package/@yoltra/devtools-cli)
+[![Licencia](https://img.shields.io/npm/l/@yoltra/devtools-cli)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+
 **UI de terminal para Yoltra DevTools — inspecciona stores desde la línea de comandos.**
 
 `@yoltra/devtools-cli` es una aplicación de terminal hecha con React + Ink que empotra un hub de

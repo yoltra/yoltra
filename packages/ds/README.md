@@ -4,6 +4,11 @@
 
 > [ 🇲🇽 Versión en Español](./README.es.md)&nbsp; | 👉 🇺🇸 English Version &nbsp;
 
+[![npm version](https://img.shields.io/npm/v/@yoltra/ds)](https://www.npmjs.com/package/@yoltra/ds)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/ds)](https://www.npmjs.com/package/@yoltra/ds)
+[![types](https://img.shields.io/npm/types/@yoltra/ds)](https://www.npmjs.com/package/@yoltra/ds)
+[![License](https://img.shields.io/npm/l/@yoltra/ds)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+
 The **Yoltra Design System** — foundation tokens, semantic light/dark themes, a
 CSS-variable stylesheet generator, and primitive React components shared across
 the [Yoltra](https://yoltra.dev) website, documentation, and examples.

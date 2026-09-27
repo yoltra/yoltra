@@ -4,9 +4,11 @@
 
 > [ 🇲🇽 Versión en Español](./docs/es/README.md)&nbsp; | &nbsp; 👉 🇺🇸 English Version &nbsp;
 
-![npm version](https://img.shields.io/npm/v/@yoltra/core)
-![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
-![License](https://img.shields.io/npm/l/@yoltra/core)
+[![npm version](https://img.shields.io/npm/v/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![types](https://img.shields.io/npm/types/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![License](https://img.shields.io/npm/l/@yoltra/core)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/yoltra/yoltra/ci.yml?branch=main)](https://github.com/yoltra/yoltra/actions/workflows/ci.yml)
 
 **Fine-grained reactive state, event-sourced, with time-travel devtools. For complex,
 interactive apps.**

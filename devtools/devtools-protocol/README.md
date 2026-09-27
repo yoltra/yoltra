@@ -4,6 +4,11 @@
 
 > [ 🇲🇽 Versión en Español](./README.es.md) &nbsp; | 👉 🇺🇸 English Version &nbsp;
 
+[![npm version](https://img.shields.io/npm/v/@yoltra/devtools-protocol)](https://www.npmjs.com/package/@yoltra/devtools-protocol)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/devtools-protocol)](https://www.npmjs.com/package/@yoltra/devtools-protocol)
+[![types](https://img.shields.io/npm/types/@yoltra/devtools-protocol)](https://www.npmjs.com/package/@yoltra/devtools-protocol)
+[![License](https://img.shields.io/npm/l/@yoltra/devtools-protocol)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+
 **Shared protocol types, message definitions, and utilities for the Yoltra DevTools suite.**
 
 `@yoltra/devtools-protocol` is the foundational vocabulary package for the entire DevTools

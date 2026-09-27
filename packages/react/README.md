@@ -5,8 +5,10 @@
 > [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
 > | &nbsp; 👉 🇺🇸 English Version
 
-![npm downloads](https://badgen.net/npm/dm/@yoltra/react)
-![License](https://badgen.net/npm/license/@yoltra/react)
+[![npm version](https://img.shields.io/npm/v/@yoltra/react)](https://www.npmjs.com/package/@yoltra/react)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/react)](https://www.npmjs.com/package/@yoltra/react)
+[![types](https://img.shields.io/npm/types/@yoltra/react)](https://www.npmjs.com/package/@yoltra/react)
+[![License](https://img.shields.io/npm/l/@yoltra/react)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
 
 **React hooks for [yoltra](../../README.md) with
 fine-grained path subscriptions.**
@@ -474,11 +476,11 @@ function Row({ id }: { id: string }) {
 
 ## Examples
 
-- **[Todo App with Profiler](../../examples/v0/yoltra-in-react)**: Full CRUD with flamegraph
+- **[Todo App with Profiler](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-in-react)**: Full CRUD with flamegraph
   comparison · [▶ Open the live demo](https://yoltra.dev/en/demos/in-react)
-- **[Kinetic Logo (3000 particles)](../../examples/v0/yoltra-kinetic-logo)**: Independent
+- **[Kinetic Logo (3000 particles)](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-kinetic-logo)**: Independent
   subscriptions per circle · [▶ Open the live demo](https://yoltra.dev/en/demos/kinetic-logo)
-- **[Next.js (Pages Router)](../../examples/v0/yoltra-in-nextjs)**: client-side state + theme switcher · [▶ Open the live demo](https://yoltra.dev/en/demos/in-nextjs)
+- **[Next.js (Pages Router)](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-in-nextjs)**: client-side state + theme switcher · [▶ Open the live demo](https://yoltra.dev/en/demos/in-nextjs)
 
 ---
 
@@ -497,7 +499,7 @@ function Row({ id }: { id: string }) {
 
 ## Contributing
 
-- [Monorepo Root](../../)
+- [Monorepo Root](https://github.com/yoltra/yoltra)
 - [Contributing Guide](../../CONTRIBUTING.md)
 
 ---

@@ -4,6 +4,11 @@
 
 > 👉 🇲🇽 Versión en Español&nbsp; | &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp;
 
+[![versión npm](https://img.shields.io/npm/v/@yoltra/devtools-storeview)](https://www.npmjs.com/package/@yoltra/devtools-storeview)
+[![descargas npm](https://img.shields.io/npm/dm/@yoltra/devtools-storeview)](https://www.npmjs.com/package/@yoltra/devtools-storeview)
+[![tipos](https://img.shields.io/npm/types/@yoltra/devtools-storeview)](https://www.npmjs.com/package/@yoltra/devtools-storeview)
+[![Licencia](https://img.shields.io/npm/l/@yoltra/devtools-storeview)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+
 **UI de React DOM para Yoltra DevTools — el inspector visual de stores.**
 
 `@yoltra/devtools-storeview` ofrece una aplicación de React completa para inspeccionar stores de

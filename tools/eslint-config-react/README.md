@@ -1,6 +1,10 @@
 # @yoltra/eslint-config-react
 
-Shared ESLint **flat config** for React + TypeScript libraries in the Yoltra monorepo. Extends [`@yoltra/eslint-config-base`](../eslint-config-base) with the React Hooks and React Refresh rules.
+[![npm version](https://img.shields.io/npm/v/@yoltra/eslint-config-react)](https://www.npmjs.com/package/@yoltra/eslint-config-react)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/eslint-config-react)](https://www.npmjs.com/package/@yoltra/eslint-config-react)
+[![License](https://img.shields.io/npm/l/@yoltra/eslint-config-react)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+
+Shared ESLint **flat config** for React + TypeScript libraries in the Yoltra monorepo. Extends [`@yoltra/eslint-config-base`](https://github.com/yoltra/yoltra/tree/main/tools/eslint-config-base) with the React Hooks and React Refresh rules.
 
 ## Install
 

@@ -17,7 +17,8 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yoltra/yoltra.git"
+    "url": "https://github.com/yoltra/yoltra.git",
+    "directory": "devtools/devtools-browser-agent"
   },
   "bugs": {
     "url": "https://github.com/yoltra/yoltra/issues"

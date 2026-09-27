@@ -5,8 +5,10 @@
 > [ 🇲🇽 Versión en Español](./README.es.md)&nbsp;
 > | &nbsp; 👉 🇺🇸 English Version
 
-![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
-![License](https://badgen.net/npm/license/@yoltra/core)
+[![npm version](https://img.shields.io/npm/v/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![npm downloads](https://img.shields.io/npm/dm/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![types](https://img.shields.io/npm/types/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![License](https://img.shields.io/npm/l/@yoltra/core)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
 
 **Framework-agnostic event-driven state container with fine-grained path subscriptions.**
 

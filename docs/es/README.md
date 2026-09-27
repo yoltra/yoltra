@@ -4,9 +4,11 @@
 
 > 👉 🇲🇽 Versión en Español | [ 🇺🇸 English Version](../../README.md)
 
-![npm version](https://img.shields.io/npm/v/@yoltra/core)
-![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
-![License](https://img.shields.io/npm/l/@yoltra/core)
+[![versión npm](https://img.shields.io/npm/v/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![descargas npm](https://img.shields.io/npm/dm/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![tipos](https://img.shields.io/npm/types/@yoltra/core)](https://www.npmjs.com/package/@yoltra/core)
+[![Licencia](https://img.shields.io/npm/l/@yoltra/core)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/yoltra/yoltra/ci.yml?branch=main)](https://github.com/yoltra/yoltra/actions/workflows/ci.yml)
 
 **Estado reactivo de grano fino, basado en eventos (event-sourced), con devtools que incluyen viaje en el
 tiempo. Para aplicaciones complejas e interactivas.**

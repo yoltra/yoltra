@@ -9,7 +9,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yoltra/yoltra.git"
+    "url": "https://github.com/yoltra/yoltra.git",
+    "directory": "devtools/devtools-node-agent"
   },
   "type": "module",
   "main": "dist/devtools-node-agent.cjs",
