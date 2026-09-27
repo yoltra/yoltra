@@ -203,6 +203,52 @@ store.onRegistrationChange(
 
 ---
 
+### When the decorator owns something the store must not hold
+
+Everything above assumes a decorator's only product is the store. Sometimes it is not. A
+decoration that owns a lifecycle, a connection, or a credential needs a way to hand that back,
+and it must not park it in reduced state: state is snapshotted, frozen, diffed and shipped to a
+devtools panel, so a token in a slice is a token in a transcript.
+
+Three independent libraries in this ecosystem hit the same wall — one needing `drain()` as a
+first-class call so a rolling deploy can announce departure and flush *without* tearing the store
+down, one needing `suspend()`/`resume()`/`reattach()` on a live handle, one needing queue
+introspection. All three returned a pair:
+
+```typescript
+export function withMesh<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
+  store: StoreInstance<R, S, EM>,
+  config: MeshConfig,
+) {
+  const grown = store.withSlice("mesh", meshSlice).withMiddleware(meshGuard);
+  const handle: MeshHandle = { drain, announce, close };
+  return { store: grown, handle };
+}
+```
+
+**Be clear about what that costs.** `StoreDecorator<D>` returns `Decorated<…>`, which is a store
+and nothing else, so a pair is not a `StoreDecorator` and the two properties this guide is built
+on both go:
+
+- **Nesting.** `withB(withA(store))` no longer typechecks, because the outer call's parameter is a
+  store. The caller destructures: `const { store: s1, handle } = withMesh(store); const s2 = withLog(s1);`
+  As `There is no pipe` explains, nesting is the only composition mechanism, so losing it means
+  composing by hand.
+- **Dependency by constraint.** The `EM extends EventMapBase & RequiredEM` trick above works
+  because the argument *is* a store. Against a pair the constraint has to be restated against
+  `typeof pair.store`, which is more machinery than it is worth.
+
+Widening itself survives: `.store` carries the grown type, so a chain still works if each step is
+threaded by hand.
+
+If you can avoid it, do. A decorator that only needs to clean up should return the store and keep
+its disposer private, as `Disposal, and the one thing types cannot express` describes. Reach for a
+handle when the thing you are handing back is genuinely not the store — and when you do, return
+`{ store, handle }` rather than a handle carrying `.store`, so the store stays the obvious thing
+to pass on.
+
+---
+
 ## Surviving a hot reload
 
 `replace*` replaces **what the application authored**. Anything registered after construction

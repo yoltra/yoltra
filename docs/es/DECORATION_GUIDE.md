@@ -206,6 +206,54 @@ store.onRegistrationChange(
 
 ---
 
+### Cuando el decorador es dueño de algo que el store no debe guardar
+
+Todo lo anterior asume que el único producto de un decorador es el store. A veces no lo es. Una
+decoración que es dueña de un ciclo de vida, de una conexión o de una credencial necesita una forma
+de devolverla, y no debe dejarla en el estado reducido: el estado se fotografía, se congela, se
+difunde y se envía a un panel de devtools, así que un token en una slice es un token en una
+transcripción.
+
+Tres librerías independientes de este ecosistema chocaron con el mismo muro — una necesitaba
+`drain()` como llamada de primera clase para que un despliegue progresivo pueda anunciar su salida
+y vaciar la cola *sin* desmontar el store, otra necesitaba `suspend()`/`resume()`/`reattach()` en un
+handle vivo, otra introspección de su cola. Las tres devolvieron un par:
+
+```typescript
+export function withMesh<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
+  store: StoreInstance<R, S, EM>,
+  config: MeshConfig,
+) {
+  const grown = store.withSlice("mesh", meshSlice).withMiddleware(meshGuard);
+  const handle: MeshHandle = { drain, announce, close };
+  return { store: grown, handle };
+}
+```
+
+**Conviene ser claro sobre lo que eso cuesta.** `StoreDecorator<D>` devuelve `Decorated<…>`, que es
+un store y nada más, así que un par no es un `StoreDecorator` y se pierden las dos propiedades sobre
+las que está construida esta guía:
+
+- **El anidamiento.** `withB(withA(store))` ya no compila, porque el parámetro de la llamada externa
+  es un store. Quien llama desestructura:
+  `const { store: s1, handle } = withMesh(store); const s2 = withLog(s1);`
+  Como explica `No hay pipe`, el anidamiento es el único mecanismo de composición, así que perderlo
+  significa componer a mano.
+- **La dependencia por restricción.** El truco `EM extends EventMapBase & RequiredEM` de arriba
+  funciona porque el argumento *es* un store. Contra un par hay que replantear la restricción sobre
+  `typeof pair.store`, que es más maquinaria de la que vale.
+
+El ensanchamiento en sí sobrevive: `.store` lleva el tipo crecido, así que una cadena sigue
+funcionando si cada paso se enhebra a mano.
+
+Si puedes evitarlo, evítalo. Un decorador que solo necesita limpiar debería devolver el store y
+mantener su disposer privado, como describe `La eliminación, y lo único que los tipos no pueden
+expresar`. Recurre a un handle cuando lo que devuelves genuinamente no es el store — y cuando lo
+hagas, devuelve `{ store, handle }` en lugar de un handle con `.store`, para que el store siga
+siendo lo obvio que pasar adelante.
+
+---
+
 ## Sobrevivir a una recarga en caliente
 
 `replace*` reemplaza **lo que escribió la aplicación**. Todo lo registrado después de la

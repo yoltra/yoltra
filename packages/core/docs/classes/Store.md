@@ -858,7 +858,7 @@ Registers a middleware (runs **before** reducers).
 
 ##### mw
 
-[`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>
+[`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<`any`, `any`\>
 
 Middleware `(state, event, emit) => boolean`. Return `false` to cancel event
        propagation.
@@ -919,7 +919,7 @@ New slice name (must not already exist).
 
 ##### spec
 
-[`ReducerSpec`](../interfaces/ReducerSpec.md)\<`any`, `EM`\>
+[`ReducerSpec`](../interfaces/ReducerSpec.md)\<`any`, `any`\>
 
 Reducer spec (state, when, reducer).
 
@@ -971,7 +971,7 @@ Mounts a slice and hands back the widened store alongside a disposer.
 
 ##### spec
 
-[`ReducerSpec`](../interfaces/ReducerSpec.md)\<`any`, `EM`\>
+[`ReducerSpec`](../interfaces/ReducerSpec.md)\<`any`, `any`\>
 
 ##### options?
 
@@ -1189,7 +1189,7 @@ Registers an effect and returns the widened store, for chaining.
 
 ##### spec
 
-[`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>
+[`EffectSpec`](../interfaces/EffectSpec.md)\<`any`, `any`\>
 
 #### Returns
 
@@ -1213,7 +1213,7 @@ Registers middleware and returns the widened store, for chaining.
 
 ##### mw
 
-[`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>
+[`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<`any`, `any`\>
 
 #### Returns
 
@@ -1241,7 +1241,7 @@ Mounts a slice and returns the widened store, for chaining.
 
 ##### spec
 
-[`ReducerSpec`](../interfaces/ReducerSpec.md)\<`any`, `EM`\>
+[`ReducerSpec`](../interfaces/ReducerSpec.md)\<`any`, `any`\>
 
 ##### options?
 

@@ -2592,7 +2592,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public registerMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): any {
+  public registerMiddleware(mw: MiddlewareInput<any, any>): any {
     const entry = { input: mw, origin: "dynamic" as Origin };
     this.middleware.push(entry);
     this.recordMiddlewareChange(entry, "mounted");
@@ -2721,7 +2721,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public registerReducer(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
+  public registerReducer(name: string, spec: ReducerSpec<any, any>, options?: { owner?: string }): any {
     return this.registerSlice(name, spec as any, options);
   }
 
@@ -2734,7 +2734,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public registerSlice(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
+  public registerSlice(name: string, spec: ReducerSpec<any, any>, options?: { owner?: string }): any {
     // One transaction, so observers are notified *after* the state broadcast below rather
     // than from inside `mountSlice`. The view layer should learn a fact before a library
     // gets to react to it; reversed, a library's own registration would publish before the
@@ -2789,7 +2789,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public withSlice(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
+  public withSlice(name: string, spec: ReducerSpec<any, any>, options?: { owner?: string }): any {
     this.registerSlice(name, spec, options);
     return this.widened();
   }
@@ -2799,7 +2799,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public withMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): any {
+  public withMiddleware(mw: MiddlewareInput<any, any>): any {
     this.registerMiddleware(mw);
     return this.widened();
   }
@@ -2809,7 +2809,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public withEffect(spec: EffectSpec<DeepReadonly<S>, EM>): any {
+  public withEffect(spec: EffectSpec<any, any>): any {
     this.registerEffect(spec);
     return this.widened();
   }

@@ -57,7 +57,7 @@ Returns a promise that resolves when the event has been processed.
 
 > `readonly` **isReplaying**: `boolean`
 
-Defined in: [types.ts:986](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L986)
+Defined in: [types.ts:997](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L997)
 
 `true` while devtools is applying a snapshot or replaying events.
 
@@ -172,7 +172,7 @@ Handler receiving a [Change](Change.md) with `{ oldValue, newValue, path }`.
 
 > **dispose**(): `void`
 
-Defined in: [types.ts:872](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L872)
+Defined in: [types.ts:883](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L883)
 
 Cleanup resources (timers, etc.) when disposing the store.
 Call this if you're dynamically creating/destroying stores.
@@ -201,7 +201,7 @@ Read the full state (already readonly).
 
 > **hotReplace**(`partial`): `void`
 
-Defined in: [types.ts:1024](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1024)
+Defined in: [types.ts:1035](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1035)
 
 Convenience API to replace any subset of store parts (HMR patterns).
 
@@ -241,7 +241,7 @@ Partial replacement set.
 
 > **instrument**(`observer`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:1095](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1095)
+Defined in: [types.ts:1106](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1106)
 
 Registers an instrumentation observer, called once per emitted event
 (committed or vetoed) after the synchronous reduce phase, with the exact
@@ -318,7 +318,7 @@ Unsubscribe/teardown function.
 
 > **onEvent**\<`C`, `T`\>(`channel`, `type`, `handler`, `phase?`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:918](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L918)
+Defined in: [types.ts:929](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L929)
 
 Subscribe to events by channel and type.
 
@@ -421,7 +421,7 @@ store.onEvent('ui', 'action', (event, getState, emit, phase) => {
 
 > **onRegistrationChange**(`observer`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:972](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L972)
+Defined in: [types.ts:983](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L983)
 
 Called when the store gains or loses a reducer, middleware or effect.
 
@@ -532,21 +532,31 @@ Dynamically add middleware, in either the function or the spec form.
 
 ### registerReducer()
 
-> **registerReducer**(`name`, `spec`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
+> **registerReducer**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
 
-Defined in: [types.ts:862](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L862)
+Defined in: [types.ts:873](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L873)
 
 Dynamically add/remove a namespaced reducer slice at runtime.
+
+#### Type Parameters
+
+##### N
+
+`N` *extends* `string`
+
+##### Spec
+
+`Spec` *extends* [`ReducerSpec`](ReducerSpec.md)\<`any`, `any`\>
 
 #### Parameters
 
 ##### name
 
-`string`
+`N`
 
 ##### spec
 
-[`ReducerSpec`](ReducerSpec.md)\<`any`, `EM`\>
+`Spec`
 
 ##### options?
 
@@ -558,13 +568,25 @@ Dynamically add/remove a namespaced reducer slice at runtime.
 
 [`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
 
+#### Remarks
+
+Generic over the spec for the same reason [StoreDecoration.registerSlice](StoreDecoration.md#registerslice) is, and it
+matters for anyone writing a decorator. Typed as `ReducerSpec<any, EM>` — the store's *own*
+event map — a spec naming a channel the application's `EM` does not contain could not
+typecheck, and neither direction of assignability held: the forward direction failed on
+`reducer`, a property rather than a method, so `strictFunctionTypes` checks its parameters
+contravariantly and bivariance does not rescue it; the reverse failed on `when`. A decoration
+therefore had to keep a cast. With `Spec` inferred from the value, the concrete key tuple
+satisfies `ReducerSpec<any, any>` and the contributed event map is recovered from the brand,
+exactly as the `with*` family already did.
+
 ***
 
 ### registerSlice()
 
 > **registerSlice**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
 
-Defined in: [types.ts:2194](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2194)
+Defined in: [types.ts:2205](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2205)
 
 Mounts a slice and hands back both the widened store and a disposer.
 
@@ -612,7 +634,7 @@ instead, which returns no disposer at all.
 
 > **replaceEffects**(`next`, `opts?`): `void`
 
-Defined in: [types.ts:1003](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1003)
+Defined in: [types.ts:1014](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1014)
 
 Replaces all registered effects (HMR-friendly).
 
@@ -640,7 +662,7 @@ New effects array (as EffectSpecs).
 
 > **replaceMiddleware**(`next`, `opts?`): `void`
 
-Defined in: [types.ts:993](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L993)
+Defined in: [types.ts:1004](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1004)
 
 Replaces the entire middleware pipeline (HMR-friendly).
 
@@ -668,7 +690,7 @@ New middleware array.
 
 > **replaceReducers**(`next`, `opts?`): `void`
 
-Defined in: [types.ts:1014](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1014)
+Defined in: [types.ts:1025](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1025)
 
 Replaces the entire reducer set (HMR-friendly).
 
@@ -722,7 +744,7 @@ Coarse subscription: runs after any state change (once per committed event).
 
 > **withEffect**\<`Spec`\>(`spec`): [`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`Spec`\>\>\>
 
-Defined in: [types.ts:2219](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2219)
+Defined in: [types.ts:2230](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2230)
 
 Registers an effect and returns the store widened by whatever event map it declares.
 
@@ -752,7 +774,7 @@ Registers an effect and returns the store widened by whatever event map it decla
 
 > **withMiddleware**\<`M`\>(`mw`): [`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`M`\>\>\>
 
-Defined in: [types.ts:2214](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2214)
+Defined in: [types.ts:2225](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2225)
 
 Registers middleware and returns the store widened by whatever event map it declares.
 
@@ -786,7 +808,7 @@ therefore contributes `{}`.
 
 > **withSlice**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`WidenedSlice`](../type-aliases/WidenedSlice.md)\<`R`, `S`, `EM`, `N`, `Spec`\>
 
-Defined in: [types.ts:2201](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2201)
+Defined in: [types.ts:2212](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2212)
 
 Mounts a slice and returns the widened store, for chaining.
 

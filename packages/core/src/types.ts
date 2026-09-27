@@ -858,12 +858,23 @@ export interface StoreInstance<
 
   /**
    * Dynamically add/remove a namespaced reducer slice at runtime.
+   *
+   * @remarks
+   * Generic over the spec for the same reason {@link StoreDecoration.registerSlice} is, and it
+   * matters for anyone writing a decorator. Typed as `ReducerSpec<any, EM>` — the store's *own*
+   * event map — a spec naming a channel the application's `EM` does not contain could not
+   * typecheck, and neither direction of assignability held: the forward direction failed on
+   * `reducer`, a property rather than a method, so `strictFunctionTypes` checks its parameters
+   * contravariantly and bivariance does not rescue it; the reverse failed on `when`. A decoration
+   * therefore had to keep a cast. With `Spec` inferred from the value, the concrete key tuple
+   * satisfies `ReducerSpec<any, any>` and the contributed event map is recovered from the brand,
+   * exactly as the `with*` family already did.
    */
-  registerReducer(
-    name: string,
-    spec: ReducerSpec<any, EM>,
+  registerReducer<N extends string, Spec extends ReducerSpec<any, any>>(
+    name: N,
+    spec: Spec,
     options?: { owner?: string },
-  ): Unsubscribe & { store: StoreInstance<string, Record<string, any>, EM>; dispose(): void };
+  ): Unsubscribe & { store: WidenedSlice<R, S, EM, N, Spec>; dispose(): void };
 
   /**
    * Cleanup resources (timers, etc.) when disposing the store.

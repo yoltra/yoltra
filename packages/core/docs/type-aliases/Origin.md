@@ -10,7 +10,7 @@
 
 > **Origin** = `"spec"` \| `"dynamic"` \| `"internal"`
 
-Defined in: [types.ts:1869](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1869)
+Defined in: [types.ts:1880](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1880)
 
 Where a registration came from.
 
