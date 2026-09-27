@@ -1,6 +1,19 @@
 # Change Log - @yoltra/devtools-browser-agent
 
-This log was last generated on Wed, 19 Aug 2026 05:30:50 GMT and should not be manually modified.
+This log was last generated on Sun, 27 Sep 2026 08:03:17 GMT and should not be manually modified.
+
+## 0.8.0
+Sun, 27 Sep 2026 08:03:17 GMT
+
+### Minor changes
+
+- Event payloads and patch values are size-bounded, like snapshots already were. The hub caps a frame at 8 MiB and `ws` answers an oversized one by closing the connection rather than dropping the message, so a single large emit ended the devtools session. Faithful binary encoding makes this reachable in ordinary use: an `ArrayBuffer` now carries its bytes instead of serializing to `{}`. New `maxEventBytes` option, defaulting to 512 KiB, far below the snapshot cap because events are frequent and a snapshot is not. A truncated payload is flagged on the wire so a panel can say so rather than showing `undefined`.
+- The agent now pushes `STORE_SUBSCRIPTIONS` when the store's registrations change, instead of only answering `REQUEST_SUBSCRIPTIONS`. Introspection is a pull, so the panel's list went stale the moment anything was registered at runtime - a decoration mounting a slice, a hot reload, an `onEvent` added by a component - with no way for the panel to know and no reason for it to ask again. Peer range moves to `@yoltra/core ^0.8.0`.
+
+### Patches
+
+- Ship the LICENSE file in the published package. `files` excluded it and npm does not force-include a licence the way it does a README, so the tarball carried MIT-licensed code with no licence text.
+- The agent no longer pushes a whole-store snapshot for the store's own internal registrations. `store.call()` mounts and unmounts a reply listener per call, so ordinary request/response traffic produced two `STORE_SUBSCRIPTIONS` frames per call - a lot of hub bandwidth to describe something the panel does not display.
 
 ## 0.7.0
 Wed, 19 Aug 2026 05:30:50 GMT

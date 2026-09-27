@@ -1,6 +1,18 @@
 # Change Log - @yoltra/devtools-node-agent
 
-This log was last generated on Wed, 19 Aug 2026 05:30:50 GMT and should not be manually modified.
+This log was last generated on Sun, 27 Sep 2026 08:03:17 GMT and should not be manually modified.
+
+## 0.8.0
+Sun, 27 Sep 2026 08:03:17 GMT
+
+### Minor changes
+
+- Event payloads and patch values are size-bounded, like snapshots already were, with a new `maxEventBytes` option defaulting to 512 KiB. An oversized frame was answered by the hub closing the socket rather than dropping the message.
+
+### Patches
+
+- Peer range moves to `@yoltra/core ^0.8.0`.
+- Ship the LICENSE file in the published package. `files` excluded it and npm does not force-include a licence the way it does a README, so the tarball carried MIT-licensed code with no licence text.
 
 ## 0.7.0
 Wed, 19 Aug 2026 05:30:50 GMT

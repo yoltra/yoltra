@@ -1,6 +1,17 @@
 # Change Log - @yoltra/devtools-protocol
 
-This log was last generated on Wed, 19 Aug 2026 05:30:50 GMT and should not be manually modified.
+This log was last generated on Sun, 27 Sep 2026 08:03:17 GMT and should not be manually modified.
+
+## 0.8.0
+Sun, 27 Sep 2026 08:03:17 GMT
+
+### Minor changes
+
+- `StoreEvent` gains optional `event.truncated` and `patchesTruncated` flags, so a panel can show that a payload exceeded the agent's per-event byte cap rather than rendering the truncation marker as an absent value.
+
+### Patches
+
+- Ship the LICENSE file in the published package. `files` excluded it and npm does not force-include a licence the way it does a README, so the tarball carried MIT-licensed code with no licence text.
 
 ## 0.7.0
 Wed, 19 Aug 2026 05:30:50 GMT

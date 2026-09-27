@@ -1,6 +1,6 @@
 {
   "name": "@yoltra/devtools-browser-agent",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Browser store agent for Yoltra DevTools — instruments stores and reports to the hub via native WebSocket",
   "license": "MIT",
   "author": {

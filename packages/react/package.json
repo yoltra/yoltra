@@ -1,6 +1,6 @@
 {
   "name": "@yoltra/react",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "React bindings for Yoltra",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && vite build && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types",

@@ -1,6 +1,14 @@
 # Change Log - @yoltra/devtools-storeview
 
-This log was last generated on Wed, 19 Aug 2026 05:30:50 GMT and should not be manually modified.
+This log was last generated on Sun, 27 Sep 2026 08:03:17 GMT and should not be manually modified.
+
+## 0.8.0
+Sun, 27 Sep 2026 08:03:17 GMT
+
+### Patches
+
+- Add npm version, downloads, types and licence badges to both READMEs, and set `repository.directory` so relative links in the published README resolve to this package's directory rather than the repository root.
+- Ship the LICENSE file in the published package. `files` excluded it and npm does not force-include a licence the way it does a README, so the tarball carried MIT-licensed code with no licence text.
 
 ## 0.7.0
 Wed, 19 Aug 2026 05:30:50 GMT

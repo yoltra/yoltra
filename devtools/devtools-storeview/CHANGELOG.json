@@ -2,6 +2,21 @@
   "name": "@yoltra/devtools-storeview",
   "entries": [
     {
+      "version": "0.8.0",
+      "tag": "@yoltra/devtools-storeview_v0.8.0",
+      "date": "Sun, 27 Sep 2026 08:03:17 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Add npm version, downloads, types and licence badges to both READMEs, and set `repository.directory` so relative links in the published README resolve to this package's directory rather than the repository root."
+          },
+          {
+            "comment": "Ship the LICENSE file in the published package. `files` excluded it and npm does not force-include a licence the way it does a README, so the tarball carried MIT-licensed code with no licence text."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.7.0",
       "tag": "@yoltra/devtools-storeview_v0.7.0",
       "date": "Wed, 19 Aug 2026 05:30:50 GMT",

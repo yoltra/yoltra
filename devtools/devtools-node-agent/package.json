@@ -1,6 +1,6 @@
 {
   "name": "@yoltra/devtools-node-agent",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Node.js store agent for Yoltra DevTools — instruments stores and reports to the hub",
   "author": {
     "name": "Manu Ramirez <@pixerael>",

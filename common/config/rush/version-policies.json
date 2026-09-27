@@ -18,7 +18,7 @@
      */
     "definitionName": "lockStepVersion",
     "policyName": "yoltra",
-    "version": "0.7.0",
+    "version": "0.8.0",
     "nextBump": "minor"
   },
   {

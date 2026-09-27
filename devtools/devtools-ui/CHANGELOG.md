@@ -1,6 +1,17 @@
 # Change Log - @yoltra/devtools-ui
 
-This log was last generated on Wed, 19 Aug 2026 05:30:50 GMT and should not be manually modified.
+This log was last generated on Sun, 27 Sep 2026 08:03:17 GMT and should not be manually modified.
+
+## 0.8.0
+Sun, 27 Sep 2026 08:03:17 GMT
+
+### Patches
+
+- Ship the LICENSE file in the published package. `files` excluded it and npm does not force-include a licence the way it does a README, so the tarball carried MIT-licensed code with no licence text.
+
+### Updates
+
+- Regenerate the committed API reference so `EventLogEntry` documents the optional `truncated` flag it already carries from the protocol.
 
 ## 0.7.0
 Wed, 19 Aug 2026 05:30:50 GMT
