@@ -231,3 +231,60 @@ describe("the guard applies to the hooks createYoltra hands out", () => {
     expect(seen).toBe(1);
   });
 });
+
+describe("a glob that covers a container and the paths beneath it", () => {
+  // The shape a real example uses: declare `satellites.**`, then read the array itself and
+  // reduce over it. `**` expands to the container path *and* the paths under it, so the
+  // projection assigned the real array at `satellites` and then tried to write
+  // `satellites.0` into it. State is frozen in development, so that threw; in production it
+  // would have silently mutated the store's own state, which is worse.
+  type EM = { ui: { go: number } };
+  type Fleet = { satellites: Array<{ battery: number; name: string }> };
+
+  const fleet: ReducerSpec<Fleet, EM> = {
+    state: {
+      satellites: [
+        { battery: 50, name: "a" },
+        { battery: 70, name: "b" },
+      ],
+    },
+    when: { keys: [["ui", "go"]] },
+    reducer: (s) => s,
+  };
+
+  it("hands the selector a usable array, and does not touch state", () => {
+    const app = createYoltra({ name: "GlobContainer", reducer: { fleet } });
+    const before = app.store.getState().fleet.satellites;
+
+    let avg: number | undefined;
+    function Probe() {
+      avg = app.useAtomicProps([{ reducer: "fleet", property: "satellites.**" }], (s: any) => {
+        const sats = s.fleet.satellites;
+        return Math.round(sats.reduce((a: number, x: any) => a + x.battery, 0) / sats.length);
+      });
+      return null;
+    }
+
+    expect(() => render(<Probe />)).not.toThrow();
+    expect(avg).toBe(60);
+
+    // The projection is a copy. The store's own array is untouched, and still frozen.
+    expect(app.store.getState().fleet.satellites).toBe(before);
+    expect(before[0]!.battery).toBe(50);
+  });
+
+  it("works for the barrel copy of the hook too", () => {
+    // Both hook sets share one implementation now, so this is a guard against them diverging
+    // again rather than a second behaviour.
+    const app = createYoltra({ name: "GlobContainerBarrel", reducer: { fleet } });
+    let names: string[] | undefined;
+    function Probe() {
+      names = app.useAtomicProps([{ reducer: "fleet", property: "satellites.**" }], (s: any) =>
+        s.fleet.satellites.map((x: any) => x.name),
+      );
+      return null;
+    }
+    render(<Probe />);
+    expect(names).toEqual(["a", "b"]);
+  });
+});

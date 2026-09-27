@@ -45,13 +45,21 @@ export function MissionLog() {
 
   // One subscription per command. The typed hook takes a literal `(channel, type)` pair, which
   // is what narrows `event.payload` to that event's shape rather than a union of all of them.
-  useEvent("command", "boost", (event, _get, _emit, phase) => record("boost", event.payload.id, phase), "all");
-  useEvent("command", "deploy", (event, _get, _emit, phase) => record("deploy", event.payload.id, phase), "all");
+  //
+  // `duringReplay` because this log is derived purely from the event stream and performs no
+  // I/O, which is exactly what the opt-in is for. A handler is silent during a DevTools
+  // scrub by default, so that replaying a timeline cannot re-send or re-write anything. This
+  // one has nothing to re-send, and a log that froze while you dragged the timeline would
+  // defeat the demo.
+  const replayed = { duringReplay: true };
+  useEvent("command", "boost", (event, _get, _emit, phase) => record("boost", event.payload.id, phase), "all", replayed);
+  useEvent("command", "deploy", (event, _get, _emit, phase) => record("deploy", event.payload.id, phase), "all", replayed);
   useEvent(
     "command",
     "transmit",
     (event, _get, _emit, phase) => record("transmit", event.payload.id, phase),
     "all",
+    replayed,
   );
 
   return (

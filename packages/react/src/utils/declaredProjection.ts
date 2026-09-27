@@ -81,6 +81,20 @@ export function expandPattern(root: unknown, pattern: string): string[] {
   return found;
 }
 
+/**
+ * Containers this module created, and may therefore write into.
+ *
+ * @remarks
+ * A container that came from state must never be written to. A glob expands to the container
+ * path *and* the paths beneath it, so `satellites.**` assigns the real array at `satellites`
+ * and then tries to write `satellites.0` into it. State is frozen in development, so that
+ * threw `Cannot assign to read only property '0'`; in production it would silently mutate the
+ * store's own state, which is worse. Either way the container has to be copied first.
+ *
+ * @internal
+ */
+const owned = new WeakSet<object>();
+
 /** @internal */
 function assignAtPath(target: Record<string, unknown>, source: unknown, path: string[], value: unknown): void {
   if (path.length === 0) return;
@@ -91,12 +105,27 @@ function assignAtPath(target: Record<string, unknown>, source: unknown, path: st
   for (let i = 0; i < path.length - 1; i++) {
     const key = path[i]!;
     const nextOrigin = isObjectLike(origin) ? origin[key] : undefined;
-    if (!isObjectLike(cursor[key])) {
+    const existing = cursor[key];
+
+    if (!isObjectLike(existing)) {
       // Mirror the container kind, so a declared `items.0.title` still hands the selector an
-      // array rather than an object with a "0" key — `map` and `Object.values` on it would
+      // array rather than an object with a "0" key. `map` and `Object.values` on it would
       // otherwise behave differently from the real state for no reason the caller can see.
-      cursor[key] = Array.isArray(nextOrigin) ? [] : {};
+      const fresh = (Array.isArray(nextOrigin) ? [] : {}) as Record<string, unknown>;
+      owned.add(fresh);
+      cursor[key] = fresh;
+    } else if (!owned.has(existing as object)) {
+      // Borrowed from state by a shallower declaration. Shallow-copy it so the contents
+      // survive and the deeper write lands somewhere we are allowed to touch.
+      const copy = (
+        Array.isArray(existing)
+          ? [...(existing as unknown[])]
+          : { ...(existing as Record<string, unknown>) }
+      ) as Record<string, unknown>;
+      owned.add(copy);
+      cursor[key] = copy;
     }
+
     cursor = cursor[key] as Record<string, unknown>;
     origin = nextOrigin;
   }
