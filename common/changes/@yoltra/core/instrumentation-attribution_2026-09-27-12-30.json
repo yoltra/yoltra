@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "`InstrumentedEvent` now carries `reason` and `vetoedBy`, the two fields `EmitResult` gained in 0.8.0. That release gave attribution to the emitter and not to the observer, so an instrumentation consumer could report `committed: false` and could not say whether a guard had refused the action, a double-click had been deduplicated, or a cascade had breached its ceiling — three things wanting three different responses, which is the argument 0.8.0 itself made for `EmitResult`. Instrumentation is the only seam that sees uncommitted events without the observer joining the pipeline, so there was nowhere else to gather it; the values were already computed and dropped. Documented with its honest limit: a deduplicated event never reaches instrumentation and neither does a cascade refusal, so `reason` reads `\"vetoed\"` or nothing today.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

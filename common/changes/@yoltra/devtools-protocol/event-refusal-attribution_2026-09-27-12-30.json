@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-protocol",
+      "comment": "`StoreEvent` carries `reason` and `vetoedBy` for an event that did not commit. Both optional, so an older agent and an older panel are unaffected.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-protocol"
+}

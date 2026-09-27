@@ -91,6 +91,22 @@ export function EventTimeline({
                 entry.committed ? styles.statusDotCommitted : styles.statusDotBounced
               }`}
             />
+            {!entry.committed && entry.reason !== undefined && (
+              // The dot says an event bounced. This says what stopped it, and who, which is the
+              // difference between a guard refusing an action and a double-click being deduped.
+              <span
+                className={styles.refusal}
+                title={
+                  entry.vetoedBy !== undefined
+                    ? `${entry.reason} by ${entry.vetoedBy}`
+                    : entry.reason
+                }
+              >
+                {entry.vetoedBy !== undefined
+                  ? `${entry.reason}: ${entry.vetoedBy}`
+                  : entry.reason}
+              </span>
+            )}
             <span className={styles.channel}>{entry.event.channel}</span>
             <span className={styles.type}>{entry.event.type}</span>
             <span className={styles.payload}>

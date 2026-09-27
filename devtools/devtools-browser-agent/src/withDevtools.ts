@@ -433,6 +433,10 @@ export function withDevtools<
       ...(patchesTruncated ? { patchesTruncated: true } : {}),
       snapshotVersion,
       committed: info.committed,
+      // Forwarded so the panel can say *why* an event vanished. Without these, a guard refusing
+      // an action and a deduplicated double-click render identically.
+      ...(info.reason !== undefined ? { reason: info.reason } : {}),
+      ...(info.vetoedBy !== undefined ? { vetoedBy: info.vetoedBy } : {}),
     };
     wsClient.send(JSON.stringify(storeEvent));
   });

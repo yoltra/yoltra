@@ -2097,6 +2097,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // Present only when a reducer refused, so an observer can tell a refusal from a veto —
       // identical in state, entirely different in cause.
       ...(result.rejected !== undefined ? { rejected: result.rejected } : {}),
+      // 0.8.0 gave attribution to the emitter and not to the observer: `EmitResult` gained both of
+      // these and the instrumentation path dropped them, so a devtools panel or a trace could
+      // report `committed: false` and not say why. The values are already computed on `result`.
+      ...(result.reason !== undefined ? { reason: result.reason } : {}),
+      ...(result.vetoedBy !== undefined ? { vetoedBy: result.vetoedBy } : {}),
     };
     for (const observer of [...this.instrumentObservers]) {
       try {

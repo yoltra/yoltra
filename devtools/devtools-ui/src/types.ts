@@ -119,6 +119,16 @@ export interface EventLogEntry {
   snapshotVersion: number;
   /** Whether the event was committed to the store. */
   committed: boolean;
+  /**
+   * Why the event did not commit, when it did not.
+   *
+   * @remarks
+   * `committed: false` says an event vanished; this says what happened to it. Absent when the
+   * event committed, and absent from an agent older than the field.
+   */
+  reason?: StoreEvent["reason"];
+  /** Which middleware vetoed, when one did and it had a name. */
+  vetoedBy?: StoreEvent["vetoedBy"];
   /** ISO-8601 timestamp of the event. */
   timestamp: string;
 }

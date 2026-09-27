@@ -8,7 +8,7 @@
 
 # Interface: EmitToStore
 
-Defined in: [messages.ts:296](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L296)
+Defined in: [messages.ts:316](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L316)
 
 Emit an event to a store from an extension.
 
@@ -29,7 +29,7 @@ and [eventEmit](ExtensionCapabilities.md#eventemit) on the extension.
 
 > **event**: `object`
 
-Defined in: [messages.ts:299](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L299)
+Defined in: [messages.ts:319](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L319)
 
 #### channel
 
@@ -77,7 +77,7 @@ Role of the sender.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:298](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L298)
+Defined in: [messages.ts:318](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L318)
 
 ***
 
@@ -99,7 +99,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"EMIT_TO_STORE"`
 
-Defined in: [messages.ts:297](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L297)
+Defined in: [messages.ts:317](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L317)
 
 Discriminant field identifying the message type.
 

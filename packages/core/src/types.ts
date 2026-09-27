@@ -390,6 +390,30 @@ export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
    * identical in state and are entirely different in cause.
    */
   rejected?: Rejection;
+  /**
+   * Why the event did not commit. Absent when it did.
+   *
+   * @remarks
+   * The same value {@link EmitResult.reason} carries, so an observer can tell a guard refusing an
+   * action from a double-click being deduplicated — a distinction `committed: false` alone cannot
+   * make, and the one an observer needs most, because instrumentation is the only seam that sees
+   * uncommitted events without participating in the pipeline.
+   *
+   * **In practice this reads `"vetoed"` or nothing.** A deduplicated event is dropped at `emit`
+   * before it is ever queued, and a cascade refusal returns before the drain reaches
+   * instrumentation, so neither is visible here at all. The type admits the other values because
+   * it is shared with `EmitResult`, not because they are currently reachable.
+   */
+  reason?: NotCommittedReason;
+  /**
+   * Which middleware vetoed, when one did and it had a name.
+   *
+   * @remarks
+   * The same value {@link EmitResult.vetoedBy} carries: a spec's `meta.name`, or a plain
+   * function's `name`. Absent for an anonymous function, and absent whenever the event committed.
+   * A middleware that throws is attributed too — a throw is treated as a veto.
+   */
+  vetoedBy?: string;
 }
 
 /**

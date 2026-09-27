@@ -102,6 +102,8 @@ export function useEventLog(
         patches: msg.patches,
         snapshotVersion: msg.snapshotVersion,
         committed: msg.committed,
+        ...(msg.reason !== undefined ? { reason: msg.reason } : {}),
+        ...(msg.vetoedBy !== undefined ? { vetoedBy: msg.vetoedBy } : {}),
         timestamp: msg.timestamp,
       };
 

@@ -10,7 +10,7 @@
 
 > **EventUnion**\<`EM`\> = `{ [C in keyof EM & string]: { [T in keyof EM[C] & string]: Event<EM, C, T> }[keyof EM[C] & string] }`\[keyof `EM` & `string`\]
 
-Defined in: [types.ts:1220](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1220)
+Defined in: [types.ts:1244](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1244)
 
 Every legal `{ channel, type, payload, id }` as a *distinct* object type.
 

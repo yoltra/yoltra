@@ -8,7 +8,7 @@
 
 # Interface: StateSnapshot
 
-Defined in: [messages.ts:98](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L98)
+Defined in: [messages.ts:118](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L118)
 
 Full state snapshot, sent in response to [RequestState](RequestState.md).
 
@@ -29,7 +29,7 @@ registered reducer slices for UI display.
 
 > **reducerNames**: `string`[]
 
-Defined in: [messages.ts:106](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L106)
+Defined in: [messages.ts:126](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L126)
 
 List of reducer slice names.
 
@@ -67,7 +67,7 @@ Role of the sender.
 
 > **state**: `unknown`
 
-Defined in: [messages.ts:102](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L102)
+Defined in: [messages.ts:122](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L122)
 
 Serialized state tree — complete unless [StateSnapshot.truncated](#truncated) says otherwise.
 
@@ -77,7 +77,7 @@ Serialized state tree — complete unless [StateSnapshot.truncated](#truncated) 
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:100](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L100)
+Defined in: [messages.ts:120](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L120)
 
 ***
 
@@ -99,7 +99,7 @@ ISO 8601 timestamp of when the message was created.
 
 > `optional` **truncated**: `boolean`
 
-Defined in: [messages.ts:116](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L116)
+Defined in: [messages.ts:136](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L136)
 
 `true` when the state was too large to send whole and parts were replaced by markers.
 
@@ -116,7 +116,7 @@ because a debugger that quietly lies about state is not a debugger.
 
 > `optional` **truncationNote**: `string`
 
-Defined in: [messages.ts:118](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L118)
+Defined in: [messages.ts:138](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L138)
 
 Explains what was dropped and why, for display alongside a truncated tree.
 
@@ -126,7 +126,7 @@ Explains what was dropped and why, for display alongside a truncated tree.
 
 > **type**: `"STATE_SNAPSHOT"`
 
-Defined in: [messages.ts:99](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L99)
+Defined in: [messages.ts:119](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L119)
 
 Discriminant field identifying the message type.
 
@@ -140,6 +140,6 @@ Discriminant field identifying the message type.
 
 > **version**: `number`
 
-Defined in: [messages.ts:104](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L104)
+Defined in: [messages.ts:124](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L124)
 
 Snapshot version matching the latest event's `snapshotVersion`.

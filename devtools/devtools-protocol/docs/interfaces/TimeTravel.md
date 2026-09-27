@@ -8,7 +8,7 @@
 
 # Interface: TimeTravel
 
-Defined in: [messages.ts:250](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L250)
+Defined in: [messages.ts:270](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L270)
 
 Time travel: jump a store to a specific state.
 
@@ -30,7 +30,7 @@ the entire state tree and notifies all subscribers. This requires
 
 > **snapshotVersion**: `number`
 
-Defined in: [messages.ts:256](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L256)
+Defined in: [messages.ts:276](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L276)
 
 Snapshot version being jumped to.
 
@@ -68,7 +68,7 @@ Role of the sender.
 
 > **state**: `unknown`
 
-Defined in: [messages.ts:254](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L254)
+Defined in: [messages.ts:274](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L274)
 
 Full state to apply via `__applyExternalState`.
 
@@ -78,7 +78,7 @@ Full state to apply via `__applyExternalState`.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:252](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L252)
+Defined in: [messages.ts:272](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L272)
 
 ***
 
@@ -100,7 +100,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"TIME_TRAVEL"`
 
-Defined in: [messages.ts:251](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L251)
+Defined in: [messages.ts:271](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L271)
 
 Discriminant field identifying the message type.
 
