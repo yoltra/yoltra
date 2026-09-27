@@ -25,8 +25,7 @@ import {
   CallTimeoutError,
   type CallHandle,
   type CallOptions,
-  parseReply,
-  isReplyTo,
+  type ReplySpec,
 } from "./call";
 import { CallQueue } from "./callQueue";
 
@@ -180,4 +179,58 @@ export function performCall<
   } as CallHandle<EventUnion<EM>, EventUnion<EM>>;
 
   return handle;
+}
+
+/*
+ * Both helpers below live here rather than in `call.ts`, and are not exported.
+ *
+ * They were `@internal` and exported for this module, which put them in the published
+ * `call.d.ts` while TypeDoc's `excludeInternal` kept them out of the reference. A consumer
+ * reviewing the package read `isReplyTo` there and reasonably concluded it was public API, then
+ * built a conclusion on it. `call.d.ts` now carries exactly the public surface — `ReplySpec`,
+ * `CallOptions`, `CallHandle`, `CallTimeoutError`, `CallAbortedError` — and nothing else.
+ */
+/**
+ * Normalises a {@link ReplySpec} into a channel and a terminal-type test.
+ *
+ * @internal
+ */
+function parseReply<EM extends EventMapBase>(
+  reply: ReplySpec<EM>,
+): { channel: string; isTerminal: (type: string) => boolean } {
+  const [channel, types] = reply as readonly [string, (string | readonly string[])?];
+
+  // A channel on its own means every reply on it ends the call — the shape a responder with one
+  // kind of answer takes, and the one where naming the type would be noise.
+  if (types === undefined) return { channel, isTerminal: () => true };
+
+  if (typeof types === "string") return { channel, isTerminal: (t) => t === types };
+
+  const set = new Set(types);
+  return { channel, isTerminal: (t) => set.has(t) };
+}
+
+/**
+ * Whether `event` is a reply to the request identified by `requestId` / `correlationId`.
+ *
+ * @remarks
+ * The parent link first: the store stamps `parentId` on anything emitted while handling an event,
+ * so a responder that answers through the `emit` it was given is correlated without doing
+ * anything. The explicit id is the fallback for replies that crossed a boundary the parent link
+ * cannot.
+ *
+ * Note this tests the **immediate** parent, not descent. A reply emitted a further hop down a
+ * cascade carries the intermediate event's id as its `parentId` and does not match; such a
+ * responder must echo a `correlationId`.
+ *
+ * @internal
+ */
+function isReplyTo<EM extends EventMapBase>(
+  event: EventUnion<EM>,
+  requestId: string,
+  correlationId: string | undefined,
+): boolean {
+  if (event.parentId === requestId) return true;
+  if (correlationId === undefined) return false;
+  return (event.meta as { correlationId?: unknown } | undefined)?.correlationId === correlationId;
 }
