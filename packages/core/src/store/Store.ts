@@ -2172,54 +2172,30 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
-   * Subscribe to events by channel and type.
+   * Subscribe to reducer, middleware and effect registrations.
    *
-   * Event subscriptions are intended for the View layer (e.g., React components)
-   * to react to events without affecting the event flow. They are fire-and-forget
-   * and cannot cancel event propagation.
+   * Delivered as an array, one batch per public call: `replaceReducers` unmounts and then
+   * remounts, and a per-change observer would see a spurious unmount of a slice that is only
+   * being updated. Observers run after the state broadcast, and a registration made by an
+   * observer is queued rather than delivered re-entrantly.
    *
-   * **Phases:**
-   * - `'committed'` (default): Events that passed middleware and reached reducers.
-   *   Notified after reducers, before effects.
-   * - `'uncommitted'`: Events rejected by middleware. Notified immediately after rejection.
-   * - `'written'`: Events that actually changed state. Stricter than `committed`, which
-   *   fires for every event a store accepts including one with no reducers at all.
-   * - `'all'`: Both committed and uncommitted events. Handler receives the phase parameter
-   *   to distinguish between the two. Deliberately not `written` as well: an event that
-   *   writes is also committed, so folding it in would notify every existing `all`
-   *   subscriber twice for one event.
+   * Replay never produces a change, so there is no `duringReplay` option here. `dispose()`
+   * fires nothing.
    *
-   * **Replay:** a handler is not called while devtools is replaying, unless it opted in with
-   * `{ duringReplay: true }`.
-   *
-   * @typeParam C - Channel key within `EM`.
-   * @typeParam T - Event type key within channel `C`.
-   * @param channel - Channel to subscribe to.
-   * @param type - Event type to subscribe to.
-   * @param handler - Handler function `(event, getState, emit, phase)`.
-   * @param phase - Event phase to subscribe to (default: `'committed'`).
+   * @param observer - Receives one batch per registration change.
+   * @param options - `emitCurrent` synthesizes a `'mounted'` batch for everything already
+   * installed, delivered synchronously before this call returns, carrying each registration's
+   * real origin rather than a synthetic marker.
    * @returns Unsubscribe function.
    *
-   * @example Committed events (default)
+   * @example
    * ```ts
-   * const off = store.onEvent('ui', 'save', (event, getState, emit, phase) => {
-   *   console.log('Save committed:', event.payload);
-   * });
+   * const off = store.onRegistrationChange((changes) => {
+   *   for (const c of changes) {
+   *     console.log(c.op, c.kind, c.name, c.origin);
+   *   }
+   * }, { emitCurrent: true });
    * off();
-   * ```
-   *
-   * @example Uncommitted (rejected) events
-   * ```ts
-   * store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
-   *   console.log('Delete was rejected by middleware');
-   * }, 'uncommitted');
-   * ```
-   *
-   * @example All events
-   * ```ts
-   * store.onEvent('ui', 'action', (event, getState, emit, phase) => {
-   *   console.log('Action:', phase); // 'committed' or 'uncommitted'
-   * }, 'all');
    * ```
    *
    * @public
@@ -2442,6 +2418,59 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     return this.replaying;
   }
 
+  /**
+   * Subscribe to events by channel and type.
+   *
+   * Event subscriptions are intended for the View layer (e.g., React components)
+   * to react to events without affecting the event flow. They are fire-and-forget
+   * and cannot cancel event propagation.
+   *
+   * **Phases:**
+   * - `'committed'` (default): Events that passed middleware and reached reducers.
+   *   Notified after reducers, before effects.
+   * - `'uncommitted'`: Events rejected by middleware. Notified immediately after rejection.
+   * - `'written'`: Events that actually changed state. Stricter than `committed`, which
+   *   fires for every event a store accepts including one with no reducers at all.
+   * - `'all'`: Both committed and uncommitted events. Handler receives the phase parameter
+   *   to distinguish between the two. Deliberately not `written` as well: an event that
+   *   writes is also committed, so folding it in would notify every existing `all`
+   *   subscriber twice for one event.
+   *
+   * **Replay:** a handler is not called while devtools is replaying, unless it opted in with
+   * `{ duringReplay: true }`.
+   *
+   * @typeParam C - Channel key within `EM`.
+   * @typeParam T - Event type key within channel `C`.
+   * @param channel - Channel to subscribe to.
+   * @param type - Event type to subscribe to.
+   * @param handler - Handler function `(event, getState, emit, phase)`.
+   * @param phase - Event phase to subscribe to (default: `'committed'`).
+   * @returns Unsubscribe function.
+   *
+   * @example Committed events (default)
+   * ```ts
+   * const off = store.onEvent('ui', 'save', (event, getState, emit, phase) => {
+   *   console.log('Save committed:', event.payload);
+   * });
+   * off();
+   * ```
+   *
+   * @example Uncommitted (rejected) events
+   * ```ts
+   * store.onEvent('ui', 'delete', (event, getState, emit, phase) => {
+   *   console.log('Delete was rejected by middleware');
+   * }, 'uncommitted');
+   * ```
+   *
+   * @example All events
+   * ```ts
+   * store.onEvent('ui', 'action', (event, getState, emit, phase) => {
+   *   console.log('Action:', phase); // 'committed' or 'uncommitted'
+   * }, 'all');
+   * ```
+   *
+   * @public
+   */
   public onEvent<C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
     type: T,
