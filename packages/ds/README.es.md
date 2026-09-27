@@ -211,10 +211,10 @@ verificado por `rush size` en cada build.
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ Button, Card, Stack, Text }` | 2.8 KB | 4 KB |
+| `{ Button, Card, Stack, Text }` | 0.7 KB | 1 KB |
 | todo | 5.6 KB | 8 KB |
 | `{ Dialog }` desde `/client` | 1.8 KB | 3 KB |
-| todo `/client` | 4.3 KB | 5.5 KB |
+| todo `/client` | 4.6 KB | 5.5 KB |
 <!-- size-table:end -->
 
 La distancia entre las filas de barrel y las de import nombrado es el tree-shaking funcionando —

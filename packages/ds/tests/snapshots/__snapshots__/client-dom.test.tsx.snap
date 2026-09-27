@@ -112,7 +112,7 @@ exports[`ContextMenu > open at a point 1`] = `
     aria-label="Actions"
     class="yl-menu"
     data-placement="bottom-start"
-    id="«rf»"
+    id="«rh»"
     role="menu"
     style="left: 10px; top: 20px;"
     tabindex="-1"
@@ -141,7 +141,7 @@ exports[`Dialog > size full 1`] = `
       class="yl-modal__scrim"
     />
     <div
-      aria-labelledby="«r3»-title"
+      aria-labelledby="«id0»-title"
       aria-modal="true"
       class="yl-dialog yl-dialog--full"
       role="dialog"
@@ -155,7 +155,7 @@ exports[`Dialog > size full 1`] = `
         >
           <h2
             class="yl-modal__title"
-            id="«r3»-title"
+            id="«id0»-title"
           >
             Confirm
           </h2>
@@ -196,7 +196,7 @@ exports[`Dialog > size lg 1`] = `
       class="yl-modal__scrim"
     />
     <div
-      aria-labelledby="«r2»-title"
+      aria-labelledby="«id0»-title"
       aria-modal="true"
       class="yl-dialog yl-dialog--lg"
       role="dialog"
@@ -210,7 +210,7 @@ exports[`Dialog > size lg 1`] = `
         >
           <h2
             class="yl-modal__title"
-            id="«r2»-title"
+            id="«id0»-title"
           >
             Confirm
           </h2>
@@ -251,7 +251,7 @@ exports[`Dialog > size md 1`] = `
       class="yl-modal__scrim"
     />
     <div
-      aria-labelledby="«r1»-title"
+      aria-labelledby="«id0»-title"
       aria-modal="true"
       class="yl-dialog yl-dialog--md"
       role="dialog"
@@ -265,7 +265,7 @@ exports[`Dialog > size md 1`] = `
         >
           <h2
             class="yl-modal__title"
-            id="«r1»-title"
+            id="«id0»-title"
           >
             Confirm
           </h2>
@@ -306,7 +306,7 @@ exports[`Dialog > size sm 1`] = `
       class="yl-modal__scrim"
     />
     <div
-      aria-labelledby="«r0»-title"
+      aria-labelledby="«id0»-title"
       aria-modal="true"
       class="yl-dialog yl-dialog--sm"
       role="dialog"
@@ -320,7 +320,7 @@ exports[`Dialog > size sm 1`] = `
         >
           <h2
             class="yl-modal__title"
-            id="«r0»-title"
+            id="«id0»-title"
           >
             Confirm
           </h2>
@@ -361,7 +361,7 @@ exports[`Dialog > with a custom close label 1`] = `
       class="yl-modal__scrim"
     />
     <div
-      aria-labelledby="«r7»-title"
+      aria-labelledby="«id0»-title"
       aria-modal="true"
       class="yl-dialog yl-dialog--md"
       role="dialog"
@@ -375,7 +375,7 @@ exports[`Dialog > with a custom close label 1`] = `
         >
           <h2
             class="yl-modal__title"
-            id="«r7»-title"
+            id="«id0»-title"
           >
             Confirm
           </h2>
@@ -416,8 +416,8 @@ exports[`Dialog > with a description 1`] = `
       class="yl-modal__scrim"
     />
     <div
-      aria-describedby="«r4»-description"
-      aria-labelledby="«r4»-title"
+      aria-describedby="«id0»-description"
+      aria-labelledby="«id0»-title"
       aria-modal="true"
       class="yl-dialog yl-dialog--md"
       role="dialog"
@@ -431,13 +431,13 @@ exports[`Dialog > with a description 1`] = `
         >
           <h2
             class="yl-modal__title"
-            id="«r4»-title"
+            id="«id0»-title"
           >
             Confirm
           </h2>
           <p
             class="yl-modal__description"
-            id="«r4»-description"
+            id="«id0»-description"
           >
             This cannot be undone.
           </p>
@@ -478,7 +478,7 @@ exports[`Dialog > with a footer 1`] = `
       class="yl-modal__scrim"
     />
     <div
-      aria-labelledby="«r5»-title"
+      aria-labelledby="«id0»-title"
       aria-modal="true"
       class="yl-dialog yl-dialog--md"
       role="dialog"
@@ -492,7 +492,7 @@ exports[`Dialog > with a footer 1`] = `
         >
           <h2
             class="yl-modal__title"
-            id="«r5»-title"
+            id="«id0»-title"
           >
             Confirm
           </h2>
@@ -542,7 +542,7 @@ exports[`Dialog > without a close button 1`] = `
       class="yl-modal__scrim"
     />
     <div
-      aria-labelledby="«r6»-title"
+      aria-labelledby="«id0»-title"
       aria-modal="true"
       class="yl-dialog yl-dialog--md"
       role="dialog"
@@ -556,7 +556,7 @@ exports[`Dialog > without a close button 1`] = `
         >
           <h2
             class="yl-modal__title"
-            id="«r6»-title"
+            id="«id0»-title"
           >
             Confirm
           </h2>
@@ -586,7 +586,7 @@ exports[`Drawer > side bottom 1`] = `
       class="yl-modal__scrim"
     />
     <div
-      aria-labelledby="«rb»-title"
+      aria-labelledby="«rd»-title"
       aria-modal="true"
       class="yl-drawer yl-drawer--bottom"
       role="dialog"
@@ -600,7 +600,7 @@ exports[`Drawer > side bottom 1`] = `
         >
           <h2
             class="yl-modal__title"
-            id="«rb»-title"
+            id="«rd»-title"
           >
             Filters
           </h2>
@@ -641,119 +641,9 @@ exports[`Drawer > side left 1`] = `
       class="yl-modal__scrim"
     />
     <div
-      aria-labelledby="«r8»-title"
-      aria-modal="true"
-      class="yl-drawer yl-drawer--left"
-      role="dialog"
-      tabindex="-1"
-    >
-      <header
-        class="yl-modal__head"
-      >
-        <div
-          class="yl-modal__heading"
-        >
-          <h2
-            class="yl-modal__title"
-            id="«r8»-title"
-          >
-            Filters
-          </h2>
-        </div>
-        <button
-          aria-label="Close"
-          class="yl-modal__close"
-          type="button"
-        >
-          <span
-            aria-hidden="true"
-          >
-            ×
-          </span>
-        </button>
-      </header>
-      <div
-        class="yl-modal__body"
-      >
-        <p>
-          Body
-        </p>
-      </div>
-    </div>
-  </div>
-</div>
-`;
-
-exports[`Drawer > side right 1`] = `
-<div
-  data-yl-portal=""
->
-  <div
-    class="yl-modal"
-  >
-    <div
-      aria-hidden="true"
-      class="yl-modal__scrim"
-    />
-    <div
-      aria-labelledby="«r9»-title"
-      aria-modal="true"
-      class="yl-drawer yl-drawer--right"
-      role="dialog"
-      tabindex="-1"
-    >
-      <header
-        class="yl-modal__head"
-      >
-        <div
-          class="yl-modal__heading"
-        >
-          <h2
-            class="yl-modal__title"
-            id="«r9»-title"
-          >
-            Filters
-          </h2>
-        </div>
-        <button
-          aria-label="Close"
-          class="yl-modal__close"
-          type="button"
-        >
-          <span
-            aria-hidden="true"
-          >
-            ×
-          </span>
-        </button>
-      </header>
-      <div
-        class="yl-modal__body"
-      >
-        <p>
-          Body
-        </p>
-      </div>
-    </div>
-  </div>
-</div>
-`;
-
-exports[`Drawer > side top 1`] = `
-<div
-  data-yl-portal=""
->
-  <div
-    class="yl-modal"
-  >
-    <div
-      aria-hidden="true"
-      class="yl-modal__scrim"
-    />
-    <div
       aria-labelledby="«ra»-title"
       aria-modal="true"
-      class="yl-drawer yl-drawer--top"
+      class="yl-drawer yl-drawer--left"
       role="dialog"
       tabindex="-1"
     >
@@ -794,7 +684,62 @@ exports[`Drawer > side top 1`] = `
 </div>
 `;
 
-exports[`Drawer > with an explicit size 1`] = `
+exports[`Drawer > side right 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«rb»-title"
+      aria-modal="true"
+      class="yl-drawer yl-drawer--right"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«rb»-title"
+          >
+            Filters
+          </h2>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Drawer > side top 1`] = `
 <div
   data-yl-portal=""
 >
@@ -808,9 +753,8 @@ exports[`Drawer > with an explicit size 1`] = `
     <div
       aria-labelledby="«rc»-title"
       aria-modal="true"
-      class="yl-drawer yl-drawer--right"
+      class="yl-drawer yl-drawer--top"
       role="dialog"
-      style="--yl-drawer-size: 32rem;"
       tabindex="-1"
     >
       <header
@@ -850,6 +794,62 @@ exports[`Drawer > with an explicit size 1`] = `
 </div>
 `;
 
+exports[`Drawer > with an explicit size 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«re»-title"
+      aria-modal="true"
+      class="yl-drawer yl-drawer--right"
+      role="dialog"
+      style="--yl-drawer-size: 32rem;"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«re»-title"
+          >
+            Filters
+          </h2>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
 exports[`Menu > open with items and a separator 1`] = `
 <div
   data-yl-portal=""
@@ -858,7 +858,7 @@ exports[`Menu > open with items and a separator 1`] = `
     aria-label="Actions"
     class="yl-menu"
     data-placement="bottom-start"
-    id="«re»"
+    id="«rg»"
     role="menu"
     style="left: 8px; top: 8px;"
     tabindex="-1"
@@ -896,7 +896,7 @@ exports[`Popover > open against its trigger 1`] = `
     aria-label="Details"
     class="yl-popover"
     data-placement="bottom-start"
-    id="«rd»"
+    id="«rf»"
     role="dialog"
     style="left: 8px; top: 8px;"
     tabindex="-1"
@@ -927,27 +927,36 @@ exports[`Tabs > defaults to the first tab 1`] = `
     role="tablist"
   >
     <button
+      aria-controls="«id0»-panel-one"
       aria-selected="true"
       class="yl-tabs__tab"
       data-active="true"
+      id="«id0»-tab-one"
       role="tab"
+      tabindex="0"
       type="button"
     >
       One
     </button>
     <button
+      aria-controls="«id0»-panel-two"
       aria-selected="false"
       class="yl-tabs__tab"
       data-active="false"
+      id="«id0»-tab-two"
       role="tab"
+      tabindex="-1"
       type="button"
     >
       Two
     </button>
   </div>
   <div
+    aria-labelledby="«id0»-tab-one"
     class="yl-tabs__panel"
+    id="«id0»-panel-one"
     role="tabpanel"
+    tabindex="0"
   >
     <p>
       First
@@ -965,27 +974,36 @@ exports[`Tabs > honours defaultId 1`] = `
     role="tablist"
   >
     <button
+      aria-controls="«id0»-panel-one"
       aria-selected="false"
       class="yl-tabs__tab"
       data-active="false"
+      id="«id0»-tab-one"
       role="tab"
+      tabindex="-1"
       type="button"
     >
       One
     </button>
     <button
+      aria-controls="«id0»-panel-two"
       aria-selected="true"
       class="yl-tabs__tab"
       data-active="true"
+      id="«id0»-tab-two"
       role="tab"
+      tabindex="0"
       type="button"
     >
       Two
     </button>
   </div>
   <div
+    aria-labelledby="«id0»-tab-two"
     class="yl-tabs__panel"
+    id="«id0»-panel-two"
     role="tabpanel"
+    tabindex="0"
   >
     <p>
       Second
@@ -1007,7 +1025,7 @@ exports[`Tooltip > records its surface once the trigger has focus 1`] = `
   <div
     class="yl-tooltip"
     data-placement="bottom"
-    id="«rg»"
+    id="«ri»"
     role="tooltip"
     style="left: 8px; top: 8px;"
   >

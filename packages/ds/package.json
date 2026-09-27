@@ -101,12 +101,13 @@
     {
       "name": "a typical import",
       "import": "{ Button, Card, Stack, Text }",
-      "limitKb": 4,
+      "limitKb": 1,
       "external": [
         "react",
         "react-dom",
         "tslib"
-      ]
+      ],
+      "$comment": "1 KB, down from 4. It measures 0.7 KB while the token graph is shakeable and 1.4 KB the moment one member expression is hoisted to module scope in tokens.ts or themes.ts, which puts the palette back into every consumer's bundle. This budget is the only thing in the suite that would notice, so the headroom is deliberately thin. It does not grow when components are added: the four named here are what it measures."
     },
     {
       "name": "barrel",

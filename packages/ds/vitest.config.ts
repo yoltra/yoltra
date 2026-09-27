@@ -5,6 +5,10 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     include: ["tests/**/*.test.{ts,tsx}"],
+    // React's `useId` counter is global to the module, so adding one anywhere renumbers every id
+    // generated after it. Without this, one component gaining ARIA wiring rewrites the snapshots
+    // of every component that happens to render later in the same file.
+    snapshotSerializers: ["./tests/support/idSerializer.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],

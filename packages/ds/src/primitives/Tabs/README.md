@@ -32,21 +32,27 @@ The first tab is selected unless another is named:
 | --- | --- | --- |
 | `items` | `TabItem[]` | Each is `{ id, label, content }`. |
 | `defaultId` | `string` | Defaults to the first item. |
+| `activation` | `"automatic" \| "manual"` | `"automatic"`: selection follows focus. |
 
 ## Notes
 
-This is a minimal implementation, and it is worth being precise about where it stops.
-It sets `role="tablist"`, `role="tab"`, `aria-selected` and `role="tabpanel"`, and
-only the selected panel is in the document.
+It implements the ARIA tabs pattern.
 
-It does **not** implement the rest of the ARIA tabs pattern: there is no arrow-key
-navigation between tabs, no `aria-controls` tying a tab to its panel, no
-`aria-labelledby` tying the panel back, and no roving `tabIndex`, so every tab is a
-separate tab stop. A keyboard reader can reach and activate all of them, which is why
-this is a gap rather than a defect, but it is not the pattern an assistive technology
-user expects.
+- **One tab stop.** The selected tab is the only one with `tabIndex={0}`, so Tab moves past the
+  set rather than through it, and arrow keys move within.
+- **Arrows follow the writing direction.** `ArrowRight` advances in a left-to-right container and
+  retreats in a right-to-left one, read from the computed direction rather than assumed. `Home`
+  and `End` jump to the ends, and the ends wrap.
+- **`aria-controls` and `aria-labelledby`** tie each tab to its panel and the panel back to its
+  tab.
+- **The panel is focusable**, so Tab from the selected tab lands in the content it selected. That
+  matters most when the panel holds nothing focusable of its own.
 
-Selection is internal. There is no controlled form, so a URL cannot drive which tab
-is open.
+Selection follows focus by default, which is what the ARIA practices recommend when a panel is
+cheap. `activation="manual"` moves focus only and waits for Enter, Space or a click, for the case
+the recommendation carves out: a panel expensive enough that arrowing past three to reach the
+fourth would fetch three things nobody asked for.
+
+Selection is internal. There is no controlled form, so a URL cannot drive which tab is open.
 
 There is no accordion beside this. A consuming project built one, and it is not here.

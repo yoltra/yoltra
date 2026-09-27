@@ -209,10 +209,10 @@ Measured the way a consumer ships it — bundled, tree-shaken, minified, gzipped
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ Button, Card, Stack, Text }` | 2.8 KB | 4 KB |
+| `{ Button, Card, Stack, Text }` | 0.7 KB | 1 KB |
 | everything | 5.6 KB | 8 KB |
 | `{ Dialog }` from `/client` | 1.8 KB | 3 KB |
-| all of `/client` | 4.3 KB | 5.5 KB |
+| all of `/client` | 4.6 KB | 5.5 KB |
 <!-- size-table:end -->
 
 The gap between the barrel rows and the named-import rows is tree-shaking working — `{ Dialog }`

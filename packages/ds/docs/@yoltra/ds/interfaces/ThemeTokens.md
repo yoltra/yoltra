@@ -8,7 +8,7 @@
 
 # Interface: ThemeTokens
 
-Defined in: [tokens/themes.ts:129](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L129)
+Defined in: [tokens/themes.ts:121](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L121)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [tokens/themes.ts:129](https://github.com/yoltra/yoltra/blob/main/pa
 
 > **colors**: [`SemanticColorTokens`](SemanticColorTokens.md)
 
-Defined in: [tokens/themes.ts:131](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L131)
+Defined in: [tokens/themes.ts:123](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L123)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [tokens/themes.ts:131](https://github.com/yoltra/yoltra/blob/main/pa
 
 > **id**: `"light"` \| `"dark"`
 
-Defined in: [tokens/themes.ts:130](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L130)
+Defined in: [tokens/themes.ts:122](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L122)
