@@ -1,0 +1,14 @@
+.yl-tooltip {
+  position: fixed;
+  z-index: var(--yl-z-tooltip);
+  max-width: 28rem;
+  padding: var(--yl-space-2) var(--yl-space-3);
+  font-family: var(--yl-font-sans);
+  font-size: 1.3rem;
+  line-height: 1.4;
+  color: var(--yl-color-fg-inverse);
+  background: var(--yl-color-fg);
+  border-radius: var(--yl-radius-sm);
+  box-shadow: var(--yl-elevation-md);
+  pointer-events: none;
+}

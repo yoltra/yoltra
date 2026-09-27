@@ -1,0 +1,24 @@
+.yl-tabs__list {
+  display: flex;
+  gap: var(--yl-space-1);
+  border-bottom: 1px solid var(--yl-color-border);
+}
+.yl-tabs__tab {
+  font-family: var(--yl-font-sans);
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: var(--yl-space-2) var(--yl-space-3);
+  background: none;
+  border: none;
+  color: var(--yl-color-fg-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.yl-tabs__tab[data-active=true] {
+  color: var(--yl-color-brand);
+  border-bottom-color: var(--yl-color-brand);
+}
+.yl-tabs__panel {
+  padding-top: var(--yl-space-4);
+}

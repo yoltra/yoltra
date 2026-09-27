@@ -1,8 +1,6 @@
-import { readdirSync } from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
-import * as sass from "sass-embedded";
 
+import { compiledStyles } from "./support/styles";
 import { foundationTokens } from "../src/tokens/tokens";
 import { darkTheme, lightTheme } from "../src/tokens/themes";
 import { themeCss } from "../src/tokens/css";
@@ -15,39 +13,6 @@ import { themeCss } from "../src/tokens/css";
  * and renders as though the declaration were absent — which for a border colour means no
  * border, on one component, in one theme, noticed by whoever happens to look.
  */
-
-const SRC = path.resolve(__dirname, "..", "src");
-
-/**
- * Compiles every stylesheet the package ships, once.
- *
- * @remarks
- * Memoized deliberately: sass compilation is the slow part of this file, and calling it per
- * assertion recompiled thirteen files each time — enough to time the suite out under a
- * parallel run.
- */
-let compiled: Array<{ name: string; css: string }> | null = null;
-
-function compiledStyles(): Array<{ name: string; css: string }> {
-  return (compiled ??= compileAll());
-}
-
-function compileAll(): Array<{ name: string; css: string }> {
-  const compile = (file: string) =>
-    sass.compile(file, { loadPaths: [SRC], style: "expanded" }).css;
-
-  // Both directories that hold component styles. Scanning only `primitives` would have left
-  // the overlay tier — the one that leans hardest on tokens — unchecked.
-  const dirs = ["primitives", "overlay"].map((d) => path.join(SRC, d));
-  return [
-    { name: "base.scss", css: compile(path.join(SRC, "styles", "base.scss")) },
-    ...dirs.flatMap((dir) =>
-      readdirSync(dir)
-        .filter((f) => f.endsWith(".scss"))
-        .map((f) => ({ name: f, css: compile(path.join(dir, f)) })),
-    ),
-  ];
-}
 
 /** Custom properties the token sheet defines. */
 let defined: Set<string> | null = null;

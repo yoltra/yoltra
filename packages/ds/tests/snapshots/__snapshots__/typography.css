@@ -1,0 +1,114 @@
+.yl-heading {
+  font-family: var(--yl-font-sans);
+  color: var(--yl-color-fg);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0;
+  text-wrap: balance;
+}
+.yl-heading--h1 {
+  font-size: 3.2rem;
+  letter-spacing: -0.02em;
+}
+.yl-heading--h2 {
+  font-size: 2.4rem;
+  letter-spacing: -0.01em;
+}
+.yl-heading--h3 {
+  font-size: 2rem;
+}
+.yl-heading--h4 {
+  font-size: 1.7rem;
+}
+.yl-heading--h5 {
+  font-size: 1.5rem;
+}
+.yl-heading--h6 {
+  font-size: 1.4rem;
+}
+.yl-heading--lg {
+  font-size: 2rem;
+}
+.yl-heading--md {
+  font-size: 1.7rem;
+}
+.yl-heading--sm {
+  font-size: 1.5rem;
+}
+.yl-heading--xs {
+  font-size: 1.3rem;
+}
+
+.yl-text {
+  font-family: var(--yl-font-sans);
+  color: var(--yl-color-fg);
+  line-height: 1.6;
+  margin: 0;
+}
+.yl-text--xs {
+  font-size: 1.2rem;
+}
+.yl-text--sm {
+  font-size: 1.3rem;
+}
+.yl-text--md {
+  font-size: 1.5rem;
+}
+.yl-text--lg {
+  font-size: 1.7rem;
+}
+.yl-text--secondary {
+  color: var(--yl-color-fg-secondary);
+}
+.yl-text--muted {
+  color: var(--yl-color-fg-muted);
+}
+.yl-text--brand {
+  color: var(--yl-color-brand);
+}
+.yl-text--danger {
+  color: var(--yl-color-error-fg);
+}
+.yl-text--medium {
+  font-weight: 600;
+}
+.yl-text--bold {
+  font-weight: 700;
+}
+
+.yl-link {
+  color: var(--yl-color-brand);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  border-radius: var(--yl-radius-xs);
+}
+.yl-link:hover {
+  text-decoration-thickness: 2px;
+}
+.yl-link:focus-visible {
+  outline: 2px solid var(--yl-color-border-focus);
+  outline-offset: 2px;
+}
+
+.yl-inline-code {
+  font-family: var(--yl-font-mono);
+  font-size: 0.9em;
+  padding: 0.2rem var(--yl-space-1);
+  border-radius: var(--yl-radius-xs);
+  border: 1px solid var(--yl-color-border);
+  background: var(--yl-color-bg-subtle);
+  color: var(--yl-color-fg-secondary);
+}
+
+.yl-kbd {
+  font-family: var(--yl-font-mono);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0.4rem var(--yl-space-2);
+  border-radius: var(--yl-radius-sm);
+  border: 1px solid var(--yl-color-border-strong);
+  border-bottom-width: 2px;
+  background: var(--yl-color-bg-subtle);
+  color: var(--yl-color-fg-secondary);
+  white-space: nowrap;
+}
