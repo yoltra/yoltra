@@ -13,7 +13,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--yl-space-4) var(--yl-space-6);
-  border-bottom: 1px solid var(--yl-color-border);
+  border-bottom: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
   background: var(--yl-color-bg-panel);
 }
 .app-header__brand {
@@ -21,8 +21,8 @@
   align-items: center;
   gap: var(--yl-space-2);
   font-weight: 700;
-  font-size: 18px;
-  color: var(--yl-color-fg);
+  font-size: var(--yl-text-body-lg-size);
+  color: var(--yl-color-fg-default);
   text-decoration: none;
 }
 
@@ -43,14 +43,14 @@
   margin-bottom: var(--yl-space-4);
 }
 .hero__title {
-  font-size: 36px;
+  font-size: var(--yl-text-h1-size);
   line-height: 1.1;
   font-weight: 700;
   letter-spacing: -0.02em;
   margin: 0;
 }
 .hero__lede {
-  font-size: 18px;
+  font-size: var(--yl-text-body-lg-size);
   line-height: 1.6;
   color: var(--yl-color-fg-secondary);
   max-width: 46ch;
@@ -58,12 +58,14 @@
 }
 .hero__lede code,
 .yl-callout code {
+  --inline-code-pad-y: 0.2rem;
+
   font-family: var(--yl-font-mono);
   font-size: 0.9em;
-  padding: 1px 5px;
-  border-radius: var(--yl-radius-sm);
+  padding: var(--inline-code-pad-y) var(--yl-space-1);
+  border-radius: var(--yl-radius-xs);
   background: var(--yl-color-bg-subtle);
-  border: 1px solid var(--yl-color-border);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
 }
 
 /* ---- Counter card ---------------------------------------------------- */
@@ -74,22 +76,24 @@
   gap: var(--yl-space-4);
   padding: var(--yl-space-12) var(--yl-space-8);
   border-radius: var(--yl-radius-xl);
-  border: 1px solid var(--yl-color-border);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
   background: var(--yl-color-bg-panel);
   box-shadow: var(--yl-elevation-md);
 }
 .counter-card__label {
   font-family: var(--yl-font-mono);
-  font-size: 13px;
+  font-size: var(--yl-text-label-size);
   color: var(--yl-color-fg-muted);
   letter-spacing: 0.02em;
 }
 .counter-card__value {
-  font-size: 96px;
+  --counter-value-size: 9.6rem;
+
+  font-size: var(--counter-value-size);
   line-height: 1;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--yl-color-brand);
+  font-weight: var(--yl-font-weight-extrabold);
+  font-variant-numeric: var(--yl-font-numeric);
+  color: var(--yl-color-fg-brand);
 }
 .counter-card__actions {
   display: flex;
@@ -97,9 +101,11 @@
   gap: var(--yl-space-3);
 }
 .counter-card__actions .yl-btn {
-  min-width: 56px;
-  font-size: 20px;
+  --counter-btn-min-width: 5.6rem;
+
+  min-width: var(--counter-btn-min-width);
+  font-size: var(--yl-text-h3-size);
 }
 .counter-card__actions .yl-btn--sm {
-  font-size: 14px;
+  font-size: var(--yl-text-body-sm-size);
 }

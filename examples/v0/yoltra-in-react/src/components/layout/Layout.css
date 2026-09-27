@@ -10,7 +10,7 @@
   align-items: center;
   gap: var(--yl-space-6);
   padding: var(--yl-space-4) var(--yl-space-6);
-  border-bottom: 1px solid var(--yl-color-border);
+  border-bottom: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
   background: var(--yl-color-bg-panel);
 }
 .app-header__brand {
@@ -18,8 +18,8 @@
   align-items: center;
   gap: var(--yl-space-2);
   font-weight: 700;
-  font-size: 18px;
-  color: var(--yl-color-fg);
+  font-size: var(--yl-text-body-lg-size);
+  color: var(--yl-color-fg-default);
   text-decoration: none;
 }
 
@@ -30,19 +30,19 @@
   margin-right: auto;
 }
 .app-nav a {
-  font-size: 15px;
+  font-size: var(--yl-text-body-size);
   font-weight: 600;
   color: var(--yl-color-fg-secondary);
   text-decoration: none;
   padding: var(--yl-space-1) 0;
-  border-bottom: 2px solid transparent;
+  border-bottom: var(--yl-border-width-medium) solid transparent;
 }
 .app-nav a:hover {
-  color: var(--yl-color-fg);
+  color: var(--yl-color-fg-default);
 }
 .app-nav a.is-active {
-  color: var(--yl-color-brand);
-  border-bottom-color: var(--yl-color-brand);
+  color: var(--yl-color-fg-brand);
+  border-bottom-color: var(--yl-color-fg-brand);
 }
 
 .app-main {

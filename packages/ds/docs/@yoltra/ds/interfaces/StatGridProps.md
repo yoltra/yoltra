@@ -8,7 +8,7 @@
 
 # Interface: StatGridProps
 
-Defined in: primitives/Stat/Stat.tsx:61
+Defined in: [primitives/Stat/Stat.tsx:61](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Stat/Stat.tsx#L61)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: primitives/Stat/Stat.tsx:61
 
 > **children**: `ReactNode`
 
-Defined in: primitives/Stat/Stat.tsx:62
+Defined in: [primitives/Stat/Stat.tsx:62](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Stat/Stat.tsx#L62)
 
 #### Overrides
 

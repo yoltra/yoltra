@@ -8,7 +8,7 @@
 
 # Interface: NoFlashScriptOptions
 
-Defined in: theme/noFlashScript.ts:14
+Defined in: [theme/noFlashScript.ts:14](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/noFlashScript.ts#L14)
 
 ## Properties
 
@@ -16,6 +16,6 @@ Defined in: theme/noFlashScript.ts:14
 
 > `optional` **storageKey**: `string`
 
-Defined in: theme/noFlashScript.ts:16
+Defined in: [theme/noFlashScript.ts:16](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/noFlashScript.ts#L16)
 
 The `localStorage` key. Must match whatever [ThemeProvider](../../../client/functions/ThemeProvider.md) was given.

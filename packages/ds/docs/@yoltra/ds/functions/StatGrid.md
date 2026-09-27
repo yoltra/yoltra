@@ -10,7 +10,7 @@
 
 > **StatGrid**(`__namedParameters`): `Element`
 
-Defined in: primitives/Stat/Stat.tsx:74
+Defined in: [primitives/Stat/Stat.tsx:74](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Stat/Stat.tsx#L74)
 
 A responsive row of stats.
 

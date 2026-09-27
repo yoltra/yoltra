@@ -10,7 +10,7 @@
 
 > **Stat**(`__namedParameters`): `Element`
 
-Defined in: primitives/Stat/Stat.tsx:48
+Defined in: [primitives/Stat/Stat.tsx:48](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Stat/Stat.tsx#L48)
 
 A single figure with its label.
 

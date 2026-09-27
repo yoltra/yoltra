@@ -47,7 +47,9 @@
   "files": [
     "dist/",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "scripts/codemod-tokens.mjs",
+    "scripts/token-rename-map.json"
   ],
   "engines": {
     "node": ">=18"

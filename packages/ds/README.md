@@ -258,6 +258,25 @@ The palette is deliberately **not** emitted. A stylesheet that can reach `primar
 bypassed the layer that makes theming work, and every question CSS actually asks is "which blue
 *for what*".
 
+### The tokens nobody reaches for
+
+Colour discipline tends to look after itself. Everything else gets rewritten by hand, so it is
+worth saying plainly what is already here:
+
+| Instead of | Read |
+| --- | --- |
+| `z-index: 10` | `--yl-z-base`, `--yl-z-sticky`, `--yl-z-overlay`, `--yl-z-popover`, `--yl-z-tooltip` |
+| `box-shadow: 0 12px 40px rgb(0 0 0 / 25%)` | `--yl-elevation-xs` … `--yl-elevation-xl` |
+| `transition: all 0.2s ease` | `--yl-motion-duration-{fast,normal,slow}` with `--yl-motion-ease-{standard,emphasized,decelerated}` |
+| `@media (min-width: 768px)` | `--yl-breakpoint-{sm,md,lg,xl}` |
+| `max-width: 720px` | `--yl-container-{md,lg,xl}` |
+| `font-variant-numeric: tabular-nums` | `--yl-font-numeric`, so figures that tick do not shift their own column |
+| `font-weight: 650` | `--yl-font-weight-{regular,medium,semibold,bold,extrabold}` |
+| `border: 1px solid` | `--yl-border-width-{thin,medium,thick}` |
+
+A `z-index` picked by hand is right until the day two of them meet. The rest is the same story in
+a different unit.
+
 ### The type scale
 
 Twelve roles, each emitted one axis at a time so a caller can take the size without inheriting
@@ -307,7 +326,8 @@ to *stay* below the threshold so it keeps looking disabled.
 ### Upgrading from 0.3.x
 
 Thirty-eight properties were renamed. `scripts/token-rename-map.json` is the full map and
-`scripts/codemod-tokens.mjs` applies it:
+`scripts/codemod-tokens.mjs` applies it. Both ship in the package, so this runs against an
+installed copy with nothing to clone:
 
 ```bash
 node node_modules/@yoltra/ds/scripts/codemod-tokens.mjs --write 'src/**/*.{css,scss,ts,tsx}'
@@ -319,8 +339,10 @@ what to use instead.
 
 ## Authoring
 
-Component styles are SASS, in `src/primitives/<Component>.scss` and `src/overlay/<Component>.scss`,
-compiled one file per component by `scripts/build-styles.mjs`.
+Component styles are SASS, in `src/primitives/<Component>/<Component>.scss` and
+`src/overlay/<Component>/<Component>.scss`, compiled one file per component by
+`scripts/build-styles.mjs`. The compiled name comes from the basename, so `Button/Button.scss`
+still publishes as `button.css`.
 
 SASS never owns a *value*. Colours, spacing and radii are read as `var(--yl-*)`, because
 theming is a runtime `data-theme` switch on the document root and a SASS variable compiles

@@ -10,7 +10,7 @@
 
 > **Chip**(`__namedParameters`): `Element`
 
-Defined in: primitives/Chip/Chip.tsx:31
+Defined in: [primitives/Chip/Chip.tsx:31](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Chip/Chip.tsx#L31)
 
 A compact tag for a value: a format, a filter, a keyword.
 

@@ -10,7 +10,7 @@
 
 > **ProgressBar**(`__namedParameters`): `Element`
 
-Defined in: primitives/ProgressBar/ProgressBar.tsx:44
+Defined in: [primitives/ProgressBar/ProgressBar.tsx:44](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/ProgressBar/ProgressBar.tsx#L44)
 
 A determinate progress bar.
 

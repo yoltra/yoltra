@@ -8,7 +8,7 @@
 
 # Interface: ControllableStateOptions\<T\>
 
-Defined in: hooks/useControllableState.ts:5
+Defined in: [hooks/useControllableState.ts:5](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/hooks/useControllableState.ts#L5)
 
 ## Type Parameters
 
@@ -22,7 +22,7 @@ Defined in: hooks/useControllableState.ts:5
 
 > **defaultValue**: `T`
 
-Defined in: hooks/useControllableState.ts:9
+Defined in: [hooks/useControllableState.ts:9](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/hooks/useControllableState.ts#L9)
 
 The starting value when uncontrolled.
 
@@ -32,7 +32,7 @@ The starting value when uncontrolled.
 
 > `optional` **onChange**: (`next`) => `void`
 
-Defined in: hooks/useControllableState.ts:11
+Defined in: [hooks/useControllableState.ts:11](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/hooks/useControllableState.ts#L11)
 
 Called on every change, controlled or not.
 
@@ -52,6 +52,6 @@ Called on every change, controlled or not.
 
 > `optional` **value**: `T`
 
-Defined in: hooks/useControllableState.ts:7
+Defined in: [hooks/useControllableState.ts:7](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/hooks/useControllableState.ts#L7)
 
 The controlled value. Passing it makes the caller the owner.

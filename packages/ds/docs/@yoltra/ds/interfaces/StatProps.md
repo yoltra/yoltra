@@ -8,7 +8,7 @@
 
 # Interface: StatProps
 
-Defined in: primitives/Stat/Stat.tsx:6
+Defined in: [primitives/Stat/Stat.tsx:6](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Stat/Stat.tsx#L6)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: primitives/Stat/Stat.tsx:6
 
 > `optional` **hint**: `ReactNode`
 
-Defined in: primitives/Stat/Stat.tsx:23
+Defined in: [primitives/Stat/Stat.tsx:23](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Stat/Stat.tsx#L23)
 
 A qualifier under the figure: a period, a comparison, a unit.
 
@@ -30,7 +30,7 @@ A qualifier under the figure: a period, a comparison, a unit.
 
 > **label**: `ReactNode`
 
-Defined in: primitives/Stat/Stat.tsx:8
+Defined in: [primitives/Stat/Stat.tsx:8](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Stat/Stat.tsx#L8)
 
 What the figure is.
 
@@ -40,7 +40,7 @@ What the figure is.
 
 > `optional` **size**: [`StatSize`](../type-aliases/StatSize.md)
 
-Defined in: primitives/Stat/Stat.tsx:24
+Defined in: [primitives/Stat/Stat.tsx:24](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Stat/Stat.tsx#L24)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: primitives/Stat/Stat.tsx:24
 
 > **value**: `ReactNode`
 
-Defined in: primitives/Stat/Stat.tsx:21
+Defined in: [primitives/Stat/Stat.tsx:21](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Stat/Stat.tsx#L21)
 
 The figure.
 

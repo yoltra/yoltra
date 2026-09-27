@@ -10,6 +10,6 @@
 
 > **StatSize** = `"md"` \| `"sm"`
 
-Defined in: primitives/Stat/Stat.tsx:4
+Defined in: [primitives/Stat/Stat.tsx:4](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Stat/Stat.tsx#L4)
 
 Scale of a stat.

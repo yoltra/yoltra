@@ -8,22 +8,22 @@ div.todo-factory {
 
     padding: var(--yl-space-4);
     margin-bottom: var(--yl-space-4);
-    border: 1px solid var(--yl-color-border);
+    border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
     border-radius: var(--yl-radius-lg);
     background: var(--yl-color-bg-panel);
 
     label {
         display: flex;
         flex-direction: column;
-        gap: 4px;
-        font-size: 13px;
+        gap: var(--yl-space-1);
+        font-size: var(--yl-text-label-size);
         font-weight: 600;
         color: var(--yl-color-fg-secondary);
     }
 
     .yl-input,
     .yl-select {
-        min-width: 160px;
+        min-width: 16rem;
     }
 
     .yl-btn {

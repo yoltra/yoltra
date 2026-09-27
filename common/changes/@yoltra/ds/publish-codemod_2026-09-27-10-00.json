@@ -1,0 +1,15 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "The 0.3.x to 0.4.0 codemod and its rename map now ship in the package. The README has documented `node node_modules/@yoltra/ds/scripts/codemod-tokens.mjs` since the rename landed, and `scripts/` was not in `files`, so the one command a consumer needs in order to upgrade was the one command that could not run. Verified by unpacking a real tarball and running it.",
+      "type": "patch"
+    },
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "README: a table of the tokens that get rewritten by hand rather than read — `--yl-z-*`, `--yl-elevation-*`, `--yl-motion-*`, `--yl-breakpoint-*`, `--yl-container-*`, `--yl-font-numeric`, `--yl-font-weight-*` and `--yl-border-width-*`. Colour discipline looks after itself; none of these had a single use across the projects surveyed for this release. Also corrects the authoring path, which still described the flat layout replaced two milestones ago.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

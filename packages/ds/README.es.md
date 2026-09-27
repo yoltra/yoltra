@@ -263,6 +263,25 @@ La paleta **no** se emite, deliberadamente. Una hoja de estilos que puede alcanz
 ya se saltó la capa que hace funcionar el tema, y toda pregunta que el CSS hace en realidad es
 "cuál azul *para qué*".
 
+### Los tokens que nadie usa
+
+La disciplina con el color suele cuidarse sola. Todo lo demás se reescribe a mano, así que vale
+la pena decir con claridad lo que ya existe:
+
+| En lugar de | Usa |
+| --- | --- |
+| `z-index: 10` | `--yl-z-base`, `--yl-z-sticky`, `--yl-z-overlay`, `--yl-z-popover`, `--yl-z-tooltip` |
+| `box-shadow: 0 12px 40px rgb(0 0 0 / 25%)` | `--yl-elevation-xs` … `--yl-elevation-xl` |
+| `transition: all 0.2s ease` | `--yl-motion-duration-{fast,normal,slow}` con `--yl-motion-ease-{standard,emphasized,decelerated}` |
+| `@media (min-width: 768px)` | `--yl-breakpoint-{sm,md,lg,xl}` |
+| `max-width: 720px` | `--yl-container-{md,lg,xl}` |
+| `font-variant-numeric: tabular-nums` | `--yl-font-numeric`, para que las cifras que cambian no muevan su propia columna |
+| `font-weight: 650` | `--yl-font-weight-{regular,medium,semibold,bold,extrabold}` |
+| `border: 1px solid` | `--yl-border-width-{thin,medium,thick}` |
+
+Un `z-index` elegido a mano es correcto hasta el día en que dos de ellos se encuentran. El resto
+es la misma historia en otra unidad.
+
 ### La escala tipográfica
 
 Doce roles, cada uno emitido eje por eje para que quien lo use pueda tomar el tamaño sin heredar
@@ -313,7 +332,8 @@ WCAG 1.4.3, y se verifica que *siga* por debajo del umbral para que se siga vien
 ### Migrar desde 0.3.x
 
 Treinta y ocho propiedades cambiaron de nombre. `scripts/token-rename-map.json` es el mapa
-completo y `scripts/codemod-tokens.mjs` lo aplica:
+completo y `scripts/codemod-tokens.mjs` lo aplica. Ambos se publican con el paquete, así que
+esto corre contra una copia instalada sin necesidad de clonar nada:
 
 ```bash
 node node_modules/@yoltra/ds/scripts/codemod-tokens.mjs --write 'src/**/*.{css,scss,ts,tsx}'
@@ -325,9 +345,10 @@ imprime los lugares que tocó y qué usar en su lugar.
 
 ## Autoría de estilos
 
-Los estilos de los componentes son SASS, en `src/primitives/<Componente>.scss` y
-`src/overlay/<Componente>.scss`, compilados a un archivo por componente por
-`scripts/build-styles.mjs`.
+Los estilos de los componentes son SASS, en `src/primitives/<Componente>/<Componente>.scss` y
+`src/overlay/<Componente>/<Componente>.scss`, compilados a un archivo por componente por
+`scripts/build-styles.mjs`. El nombre compilado sale del basename, así que `Button/Button.scss`
+se sigue publicando como `button.css`.
 
 SASS nunca es dueño de un *valor*. Los colores, espaciados y radios se leen como `var(--yl-*)`,
 porque el tema es un cambio de atributo `data-theme` en tiempo de ejecución sobre la raíz del

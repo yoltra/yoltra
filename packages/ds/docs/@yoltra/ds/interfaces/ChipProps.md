@@ -8,7 +8,7 @@
 
 # Interface: ChipProps
 
-Defined in: primitives/Chip/Chip.tsx:6
+Defined in: [primitives/Chip/Chip.tsx:6](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Chip/Chip.tsx#L6)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: primitives/Chip/Chip.tsx:6
 
 > **children**: `ReactNode`
 
-Defined in: primitives/Chip/Chip.tsx:8
+Defined in: [primitives/Chip/Chip.tsx:8](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Chip/Chip.tsx#L8)
 
 #### Overrides
 
@@ -32,4 +32,4 @@ Defined in: primitives/Chip/Chip.tsx:8
 
 > `optional` **variant**: [`ChipVariant`](../type-aliases/ChipVariant.md)
 
-Defined in: primitives/Chip/Chip.tsx:7
+Defined in: [primitives/Chip/Chip.tsx:7](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Chip/Chip.tsx#L7)

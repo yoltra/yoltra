@@ -3,7 +3,10 @@ body,
 #root {
   margin: 0;
   padding: 0;
-  background: #050505;
+  /* Darker than `bg-canvas` on purpose: the dots are the picture, and the page behind them is
+     meant to fall away rather than read as a surface. `bg-inset` is the design system's deepest
+     step, mixed towards black for the extra stop this needs. */
+  background: color-mix(in srgb, var(--yl-color-bg-inset) 60%, #000);
   overflow: hidden;
 }
 

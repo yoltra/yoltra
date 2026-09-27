@@ -8,7 +8,7 @@
 
 # Interface: AuthCardProps
 
-Defined in: primitives/AuthCard/AuthCard.tsx:7
+Defined in: [primitives/AuthCard/AuthCard.tsx:7](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/AuthCard/AuthCard.tsx#L7)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: primitives/AuthCard/AuthCard.tsx:7
 
 > `optional` **as**: `ElementType`
 
-Defined in: primitives/AuthCard/AuthCard.tsx:19
+Defined in: [primitives/AuthCard/AuthCard.tsx:19](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/AuthCard/AuthCard.tsx#L19)
 
 Element to render.
 
@@ -32,7 +32,7 @@ content.
 
 > **children**: `ReactNode`
 
-Defined in: primitives/AuthCard/AuthCard.tsx:10
+Defined in: [primitives/AuthCard/AuthCard.tsx:10](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/AuthCard/AuthCard.tsx#L10)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: primitives/AuthCard/AuthCard.tsx:10
 
 > `optional` **className**: `string`
 
-Defined in: primitives/AuthCard/AuthCard.tsx:20
+Defined in: [primitives/AuthCard/AuthCard.tsx:20](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/AuthCard/AuthCard.tsx#L20)
 
 ***
 
@@ -48,6 +48,6 @@ Defined in: primitives/AuthCard/AuthCard.tsx:20
 
 > **title**: `ReactNode`
 
-Defined in: primitives/AuthCard/AuthCard.tsx:9
+Defined in: [primitives/AuthCard/AuthCard.tsx:9](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/AuthCard/AuthCard.tsx#L9)
 
 The screen's heading. Rendered as the page's `h1`.

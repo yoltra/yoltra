@@ -8,7 +8,7 @@
 
 # Interface: ProgressBarProps
 
-Defined in: primitives/ProgressBar/ProgressBar.tsx:3
+Defined in: [primitives/ProgressBar/ProgressBar.tsx:3](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/ProgressBar/ProgressBar.tsx#L3)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: primitives/ProgressBar/ProgressBar.tsx:3
 
 > **label**: `string`
 
-Defined in: primitives/ProgressBar/ProgressBar.tsx:15
+Defined in: [primitives/ProgressBar/ProgressBar.tsx:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/ProgressBar/ProgressBar.tsx#L15)
 
 What is progressing, in words.
 
@@ -35,7 +35,7 @@ cannot see which section it sits in has no way to find out what it measures.
 
 > `optional` **max**: `number`
 
-Defined in: primitives/ProgressBar/ProgressBar.tsx:7
+Defined in: [primitives/ProgressBar/ProgressBar.tsx:7](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/ProgressBar/ProgressBar.tsx#L7)
 
 The end of the range. Defaults to `100`.
 
@@ -45,7 +45,7 @@ The end of the range. Defaults to `100`.
 
 > **value**: `number`
 
-Defined in: primitives/ProgressBar/ProgressBar.tsx:5
+Defined in: [primitives/ProgressBar/ProgressBar.tsx:5](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/ProgressBar/ProgressBar.tsx#L5)
 
 How far along, between `0` and `max`.
 
@@ -55,7 +55,7 @@ How far along, between `0` and `max`.
 
 > `optional` **valueText**: `string`
 
-Defined in: primitives/ProgressBar/ProgressBar.tsx:22
+Defined in: [primitives/ProgressBar/ProgressBar.tsx:22](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/ProgressBar/ProgressBar.tsx#L22)
 
 A human reading of the value, for assistive technology.
 

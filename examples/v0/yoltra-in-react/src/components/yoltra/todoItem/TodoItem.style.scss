@@ -9,7 +9,7 @@
 
     padding: var(--yl-space-3) var(--yl-space-4);
     margin-bottom: var(--yl-space-2);
-    border: 1px solid var(--yl-color-border);
+    border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
     border-radius: var(--yl-radius-md);
     background: var(--yl-color-bg-panel);
 
@@ -17,15 +17,15 @@
     label {
         display: flex;
         flex-direction: column;
-        gap: 4px;
-        font-size: 12px;
+        gap: var(--yl-space-1);
+        font-size: var(--yl-text-caption-size);
         font-weight: 600;
         color: var(--yl-color-fg-secondary);
     }
 
     .yl-input,
     .yl-select {
-        min-width: 120px;
+        min-width: 12rem;
     }
 
     /* action-icon row */
@@ -35,7 +35,7 @@
         gap: var(--yl-space-3);
 
         svg {
-            width: 16px;
+            width: 1.6rem;
             height: auto;
             cursor: pointer;
         }
@@ -44,8 +44,8 @@
 
 .todo-card p {
     margin: 0;
-    font-size: 15px;
-    color: var(--yl-color-fg);
+    font-size: var(--yl-text-body-size);
+    color: var(--yl-color-fg-default);
 }
 
 /* Status colors — DS tokens, readable on the panel in both themes. antd icons
@@ -55,19 +55,19 @@
 }
 
 .complete {
-    color: var(--yl-color-success-fg);
+    color: var(--yl-color-status-success-fg);
     text-decoration: line-through;
 }
 
 .edit {
-    color: var(--yl-color-link);
+    color: var(--yl-color-fg-link);
 }
 
 .canceled,
 .delete {
-    color: var(--yl-color-error-fg);
+    color: var(--yl-color-status-error-fg);
 }
 
 .cancel {
-    color: var(--yl-color-error-fg);
+    color: var(--yl-color-status-error-fg);
 }

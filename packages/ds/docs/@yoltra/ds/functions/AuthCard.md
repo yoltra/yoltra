@@ -10,7 +10,7 @@
 
 > **AuthCard**(`__namedParameters`): `Element`
 
-Defined in: primitives/AuthCard/AuthCard.tsx:45
+Defined in: [primitives/AuthCard/AuthCard.tsx:45](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/AuthCard/AuthCard.tsx#L45)
 
 A centred card for a sign-in, sign-up or recovery screen.
 

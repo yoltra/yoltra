@@ -10,7 +10,7 @@
 
 > **useControllableState**\<`T`\>(`__namedParameters`): \[`T`, (`next`) => `void`\]
 
-Defined in: hooks/useControllableState.ts:42
+Defined in: [hooks/useControllableState.ts:42](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/hooks/useControllableState.ts#L42)
 
 State a component owns until its caller decides to.
 

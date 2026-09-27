@@ -74,7 +74,7 @@ export function DiagnosticsPanel({ satelliteId }: { satelliteId: string }) {
         <Inline gap={2}>
           <Heading level={3}>Diagnostics</Heading>
           {status === "scanning" && <Badge>scanning…</Badge>}
-          {status === "failed" && <Badge variant="brand">stopped</Badge>}
+          {status === "failed" && <Badge variant="error">stopped</Badge>}
         </Inline>
 
         <Text>
@@ -102,7 +102,7 @@ export function DiagnosticsPanel({ satelliteId }: { satelliteId: string }) {
           <Stack gap={1}>
             {steps.map((s) => (
               <Inline key={s.subsystem} gap={2}>
-                <Badge variant={s.ok ? undefined : "brand"}>{s.ok ? "ok" : "fault"}</Badge>
+                <Badge variant={s.ok ? "success" : "error"}>{s.ok ? "ok" : "fault"}</Badge>
                 <Text>{s.subsystem}</Text>
               </Inline>
             ))}

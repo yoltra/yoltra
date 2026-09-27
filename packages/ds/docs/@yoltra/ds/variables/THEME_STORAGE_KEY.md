@@ -10,7 +10,7 @@
 
 > `const` **THEME\_STORAGE\_KEY**: `"yoltra-theme"` = `"yoltra-theme"`
 
-Defined in: theme/noFlashScript.ts:12
+Defined in: [theme/noFlashScript.ts:12](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/noFlashScript.ts#L12)
 
 Where the chosen theme is remembered.
 

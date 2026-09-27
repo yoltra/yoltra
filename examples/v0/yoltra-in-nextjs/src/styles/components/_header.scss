@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--yl-space-4) var(--yl-space-6);
-  border-bottom: 1px solid var(--yl-color-border);
+  border-bottom: 1px solid var(--yl-color-border-subtle);
   background: var(--yl-color-bg-panel);
 
   &__brand {
@@ -14,7 +14,7 @@
     gap: var(--yl-space-2);
     font-weight: 700;
     font-size: 1.8rem;
-    color: var(--yl-color-fg);
+    color: var(--yl-color-fg-default);
     text-decoration: none;
   }
 }
