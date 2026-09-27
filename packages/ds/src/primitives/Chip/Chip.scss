@@ -1,0 +1,25 @@
+@use "../../styles" as *;
+
+.yl-chip {
+  // Sub-grid: 2px, where the spacing scale starts at 4px. A chip sits inline with text and cannot
+  // afford a full step above and below.
+  --chip-pad-y: 0.2rem;
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yl-space-1);
+  padding: var(--chip-pad-y) var(--yl-space-2);
+  // A small radius rather than the pill `Badge` uses. That is the visible difference between a
+  // piece of data and a status.
+  border-radius: var(--yl-radius-sm);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
+  font-size: var(--yl-text-caption-size);
+  background: var(--yl-color-bg-subtle);
+  color: var(--yl-color-fg-secondary);
+
+  &--brand {
+    color: var(--yl-color-fg-brand);
+    border-color: var(--yl-color-status-info-border);
+    background: var(--yl-color-status-info-bg);
+  }
+}

@@ -1,0 +1,32 @@
+.yl-stat {
+  --stat-value-size: var(--yl-text-h2-size);
+  display: flex;
+  flex-direction: column;
+  gap: var(--yl-space-1);
+}
+.yl-stat__label {
+  font-size: var(--yl-text-caption-size);
+  font-weight: var(--yl-font-weight-semibold);
+  color: var(--yl-color-fg-muted);
+}
+.yl-stat__value {
+  font-size: var(--stat-value-size);
+  font-weight: var(--yl-font-weight-bold);
+  line-height: var(--yl-text-h2-leading);
+  color: var(--yl-color-fg-default);
+  font-variant-numeric: var(--yl-font-numeric);
+}
+.yl-stat__hint {
+  font-size: var(--yl-text-caption-size);
+  color: var(--yl-color-fg-muted);
+}
+.yl-stat--sm {
+  --stat-value-size: var(--yl-text-h4-size);
+}
+
+.yl-stat-grid {
+  --stat-min-width: 16rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--stat-min-width), 1fr));
+  gap: var(--yl-space-4);
+}

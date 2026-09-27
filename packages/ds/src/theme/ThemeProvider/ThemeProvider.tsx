@@ -10,7 +10,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ThemeId } from "../../tokens/themes";
 
-const STORAGE_KEY = "yoltra-theme";
+// One definition, shared with the script that runs before the first paint. A provider writing one
+// key while that script reads another restores nothing, and says nothing about it.
+import { THEME_STORAGE_KEY as STORAGE_KEY } from "../noFlashScript";
 
 /** What {@link useTheme} returns. @public */
 export interface ThemeContextValue {
@@ -50,6 +52,33 @@ export function applyTheme(theme: ThemeId): void {
 }
 
 /**
+ * The stored theme, if there is a usable one.
+ *
+ * @remarks
+ * Three ways this goes wrong, all of them seen in the wild and none of them the caller's fault:
+ *
+ * - **Reading throws.** `localStorage` is a getter that raises a `SecurityError` when site data
+ *   is blocked, which is the default in some privacy configurations. An uncaught throw here runs
+ *   inside an effect and takes the tree down, so a blocked cookie jar becomes a blank page.
+ * - **The value is not a theme.** Nothing stops another script writing to this key, and
+ *   `setAttribute("data-theme", "purple")` matches no selector, leaving every colour at its
+ *   light-theme default with no way to tell why.
+ * - **There is no `localStorage` at all**, in a non-browser renderer.
+ *
+ * All three return `null`, which is what the caller's `??` needs in order to fall through to the
+ * system preference.
+ */
+function storedTheme(): ThemeId | null {
+  try {
+    if (typeof localStorage === "undefined") return null;
+    const value = localStorage.getItem(STORAGE_KEY);
+    return value === "dark" || value === "light" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Holds the current theme and applies it to the document.
  *
  * @example
@@ -65,9 +94,8 @@ export function ThemeProvider({ children, defaultTheme = "light" }: { children: 
   const [theme, setThemeState] = useState<ThemeId>(defaultTheme);
 
   useEffect(() => {
-    const stored = (typeof localStorage !== "undefined" && localStorage.getItem(STORAGE_KEY)) as ThemeId | null;
     const system = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    const initial = stored ?? system;
+    const initial = storedTheme() ?? system;
     setThemeState(initial);
     applyTheme(initial);
   }, []);
@@ -75,7 +103,13 @@ export function ThemeProvider({ children, defaultTheme = "light" }: { children: 
   const setTheme = useCallback((t: ThemeId) => {
     setThemeState(t);
     applyTheme(t);
-    if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, t);
+    // Persistence is the part allowed to fail. Storage throws when it is blocked or full, and a
+    // theme the reader chose and can see is worth more than the promise of remembering it.
+    try {
+      if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, t);
+    } catch {
+      /* The preference is not persisted. The theme still applied. */
+    }
   }, []);
 
   const toggle = useCallback(() => setTheme(theme === "dark" ? "light" : "dark"), [theme, setTheme]);

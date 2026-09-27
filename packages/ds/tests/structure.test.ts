@@ -31,9 +31,9 @@ describe("every component carries a README", () => {
   const components = componentDirs();
 
   it("finds the components at all, so a bad glob cannot make this vacuous", () => {
-    // Eighteen today. A number rather than a floor: adding one should be a deliberate edit here,
+    // Twenty-two today. A number rather than a floor: adding one should be a deliberate edit here,
     // which is the moment somebody remembers the README.
-    expect(components.length).toBe(18);
+    expect(components.length).toBe(22);
     expect(components.map((c) => c.name)).toContain("Button");
     expect(components.map((c) => c.name)).toContain("ThemeProvider");
   });

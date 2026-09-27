@@ -1,5 +1,97 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`AuthCard > not the page's main landmark 1`] = `
+<div
+  class="yl-auth"
+>
+  <div
+    class="yl-card yl-auth__card"
+    style="--yl-card-padding: var(--yl-space-6); --yl-card-shadow: var(--yl-elevation-xs);"
+  >
+    <div
+      class="yl-stack"
+      style="--yl-stack-gap: var(--yl-space-4);"
+    >
+      <h1
+        class="yl-heading yl-heading--md"
+      >
+        Sign in
+      </h1>
+      form
+    </div>
+  </div>
+</div>
+`;
+
+exports[`AuthCard > title and children 1`] = `
+<main
+  class="yl-auth"
+>
+  <div
+    class="yl-card yl-auth__card"
+    style="--yl-card-padding: var(--yl-space-6); --yl-card-shadow: var(--yl-elevation-xs);"
+  >
+    <div
+      class="yl-stack"
+      style="--yl-stack-gap: var(--yl-space-4);"
+    >
+      <h1
+        class="yl-heading yl-heading--md"
+      >
+        Sign in
+      </h1>
+      <label
+        class="yl-label"
+        for="e"
+      >
+        Email
+      </label>
+      <input
+        class="yl-input"
+        id="e"
+      />
+    </div>
+  </div>
+</main>
+`;
+
+exports[`AuthCard > with a description and a footer 1`] = `
+<main
+  class="yl-auth"
+>
+  <div
+    class="yl-card yl-auth__card"
+    style="--yl-card-padding: var(--yl-space-6); --yl-card-shadow: var(--yl-elevation-xs);"
+  >
+    <div
+      class="yl-stack"
+      style="--yl-stack-gap: var(--yl-space-4);"
+    >
+      <h1
+        class="yl-heading yl-heading--md"
+      >
+        Sign in
+      </h1>
+      <p
+        class="yl-text yl-text--sm"
+      >
+        Use the address you registered with.
+      </p>
+      <input
+        class="yl-input"
+        id="e"
+      />
+      <a
+        class="yl-link"
+        href="/reset"
+      >
+        Forgot your password?
+      </a>
+    </div>
+  </div>
+</main>
+`;
+
 exports[`Badge > brand 1`] = `
 <span
   class="yl-badge yl-badge--brand"
@@ -369,6 +461,22 @@ exports[`Card > subtle tone 1`] = `
 >
   Body
 </div>
+`;
+
+exports[`Chip > brand 1`] = `
+<span
+  class="yl-chip yl-chip--brand"
+>
+  featured
+</span>
+`;
+
+exports[`Chip > default 1`] = `
+<span
+  class="yl-chip yl-chip--neutral"
+>
+  gguf
+</span>
 `;
 
 exports[`Feedback > EmptyState at another heading level 1`] = `
@@ -1126,6 +1234,199 @@ exports[`Layout > Stack with a gap 1`] = `
   style="--yl-stack-gap: var(--yl-space-4);"
 >
   child
+</div>
+`;
+
+exports[`ProgressBar > at the start 1`] = `
+<div
+  aria-label="Downloading"
+  aria-valuemax="100"
+  aria-valuemin="0"
+  aria-valuenow="0"
+  class="yl-progress"
+  role="progressbar"
+  style="--progress-fraction: 0;"
+>
+  <span
+    class="yl-progress__fill"
+  />
+</div>
+`;
+
+exports[`ProgressBar > clamped past the end 1`] = `
+<div
+  aria-label="Downloading"
+  aria-valuemax="10"
+  aria-valuemin="0"
+  aria-valuenow="10"
+  class="yl-progress"
+  role="progressbar"
+  style="--progress-fraction: 1;"
+>
+  <span
+    class="yl-progress__fill"
+  />
+</div>
+`;
+
+exports[`ProgressBar > complete 1`] = `
+<div
+  aria-label="Downloading"
+  aria-valuemax="12"
+  aria-valuemin="0"
+  aria-valuenow="12"
+  class="yl-progress"
+  role="progressbar"
+  style="--progress-fraction: 1;"
+>
+  <span
+    class="yl-progress__fill"
+  />
+</div>
+`;
+
+exports[`ProgressBar > part way 1`] = `
+<div
+  aria-label="Downloading"
+  aria-valuemax="12"
+  aria-valuemin="0"
+  aria-valuenow="3"
+  class="yl-progress"
+  role="progressbar"
+  style="--progress-fraction: 0.25;"
+>
+  <span
+    class="yl-progress__fill"
+  />
+</div>
+`;
+
+exports[`ProgressBar > with a spoken value 1`] = `
+<div
+  aria-label="Downloading"
+  aria-valuemax="12"
+  aria-valuemin="0"
+  aria-valuenow="3"
+  aria-valuetext="3 of 12 files"
+  class="yl-progress"
+  role="progressbar"
+  style="--progress-fraction: 0.25;"
+>
+  <span
+    class="yl-progress__fill"
+  />
+</div>
+`;
+
+exports[`Stat > a real zero 1`] = `
+<div
+  class="yl-stat"
+>
+  <span
+    class="yl-stat__label"
+  >
+    Failed
+  </span>
+  <span
+    class="yl-stat__value"
+  >
+    0
+  </span>
+</div>
+`;
+
+exports[`Stat > a value that is not a number 1`] = `
+<div
+  class="yl-stat"
+>
+  <span
+    class="yl-stat__label"
+  >
+    Status
+  </span>
+  <span
+    class="yl-stat__value"
+  >
+    <span
+      class="yl-badge"
+    >
+      Live
+    </span>
+  </span>
+</div>
+`;
+
+exports[`Stat > in a grid 1`] = `
+<div
+  class="yl-stat-grid"
+>
+  <div
+    class="yl-stat"
+  >
+    <span
+      class="yl-stat__label"
+    >
+      Models
+    </span>
+    <span
+      class="yl-stat__value"
+    >
+      12
+    </span>
+  </div>
+  <div
+    class="yl-stat"
+  >
+    <span
+      class="yl-stat__label"
+    >
+      Failed
+    </span>
+    <span
+      class="yl-stat__value"
+    >
+      0
+    </span>
+  </div>
+</div>
+`;
+
+exports[`Stat > label and value 1`] = `
+<div
+  class="yl-stat"
+>
+  <span
+    class="yl-stat__label"
+  >
+    Models
+  </span>
+  <span
+    class="yl-stat__value"
+  >
+    12
+  </span>
+</div>
+`;
+
+exports[`Stat > with a hint 1`] = `
+<div
+  class="yl-stat"
+>
+  <span
+    class="yl-stat__label"
+  >
+    Disk
+  </span>
+  <span
+    class="yl-stat__value"
+  >
+    4.2 GB
+  </span>
+  <span
+    class="yl-stat__hint"
+  >
+    of 20 GB
+  </span>
 </div>
 `;
 

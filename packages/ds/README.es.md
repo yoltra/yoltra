@@ -53,10 +53,24 @@ primitivos se renderizan en el servidor — solo los controles interactivos
 | `lightTheme` / `darkTheme` / `themes` | Mapeos semánticos de roles. |
 | `themeCss()` | Emite las propiedades personalizadas `--yl-*` de ambos temas. **Solo propiedades**, sin reglas de componentes. |
 | `ThemeProvider` / `useTheme` / `applyTheme` | Controlador genérico de tema. |
-| `Button`, `ButtonLink`, `Badge`, `CodeBlock`, `Callout`, `Tabs`, `Table`, `TableScroll`, `Label` | Componentes primitivos. |
+| `noFlashScript()` / `THEME_STORAGE_KEY` | El script en línea que restaura el tema antes del primer pintado, y la clave que comparte con el proveedor. |
+| `Heading`, `Text`, `Link`, `InlineCode`, `Kbd` | Tipografía. |
+| `Button`, `ButtonLink`, `IconButton`, `ButtonGroup` | Acciones. |
+| `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`, `RadioGroup`, `Switch`, `Slider`, `Label`, `FormField`, `Fieldset` | Controles de formulario y su etiquetado. |
+| `Card`, `Container`, `Stack`, `Inline`, `Grid`, `Divider`, `AuthCard` | Maquetación y composición. |
+| `Badge`, `Chip`, `Callout`, `Stat`, `StatGrid` | Estado y cifras. |
+| `Spinner`, `Skeleton`, `ProgressBar`, `EmptyState` | Retroalimentación: indeterminada, determinada, y cuando no hay nada que mostrar. |
+| `Table`, `TableScroll`, `THead`, `TBody`, `TR`, `TH`, `TD` | Partes presentacionales de tabla. |
+| `CodeBlock`, `Tabs`, `VisuallyHidden` | Todo lo demás. |
 | `Portal`, `Dialog`, `Drawer` | Overlays modales, renderizados fuera del árbol. Ver más abajo. |
 | `Popover`, `Menu`, `ContextMenu`, `Tooltip` | Overlays anclados, posicionados contra un trigger o un punto. |
 | `useFocusTrap`, `useDismiss`, `useReturnFocus`, `useScrollLock` | Los comportamientos con los que están hechos esos overlays, para una superficie que no cubren. |
+| `useControllableState` | Un valor que es del llamador o del componente, para construir un control propio. |
+
+Cada componente tiene su `README.md` al lado de su código, con ejemplos ejecutables y su
+contrato de accesibilidad: [`src/primitives/Button/README.md`](src/primitives/Button/README.md)
+y así con cada uno. Están en inglés, como el resto del código.
+
 
 ## Marca
 
@@ -213,9 +227,9 @@ verificado por `rush size` en cada build.
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
 | `{ Button, Card, Stack, Text }` | 0.9 KB | 1.2 KB |
-| todo | 5.8 KB | 8 KB |
+| todo | 6.4 KB | 8 KB |
 | `{ Dialog }` desde `/client` | 1.8 KB | 3 KB |
-| todo `/client` | 4.6 KB | 5.5 KB |
+| todo `/client` | 4.8 KB | 5.5 KB |
 <!-- size-table:end -->
 
 La distancia entre las filas de barrel y las de import nombrado es el tree-shaking funcionando —

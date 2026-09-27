@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { ReactElement } from "react";
 
 import {
+  AuthCard,
   Badge,
   Button,
   ButtonGroup,
@@ -10,6 +11,7 @@ import {
   Callout,
   Card,
   Checkbox,
+  Chip,
   Container,
   Divider,
   EmptyState,
@@ -24,6 +26,7 @@ import {
   Kbd,
   Label,
   Link,
+  ProgressBar,
   Radio,
   RadioGroup,
   Select,
@@ -31,6 +34,8 @@ import {
   Slider,
   Spinner,
   Stack,
+  Stat,
+  StatGrid,
   Switch,
   TBody,
   TD,
@@ -428,5 +433,71 @@ describe("VisuallyHidden", () => {
   snapshotAll([
     ["default", () => <VisuallyHidden>Skip to content</VisuallyHidden>],
     ["as a div", () => <VisuallyHidden as="div">Skip to content</VisuallyHidden>],
+  ]);
+});
+
+describe("Stat", () => {
+  snapshotAll([
+    ["label and value", () => <Stat label="Models" value={12} />],
+    // A zero is the case this component exists to get right, so it is recorded.
+    ["a real zero", () => <Stat label="Failed" value={0} />],
+    ["with a hint", () => <Stat label="Disk" value="4.2 GB" hint="of 20 GB" />],
+    ["a value that is not a number", () => <Stat label="Status" value={<Badge>Live</Badge>} />],
+    [
+      "in a grid",
+      () => (
+        <StatGrid>
+          <Stat label="Models" value={12} />
+          <Stat label="Failed" value={0} />
+        </StatGrid>
+      ),
+    ],
+  ]);
+});
+
+describe("Chip", () => {
+  snapshotAll([
+    ["default", () => <Chip>gguf</Chip>],
+    ["brand", () => <Chip variant="brand">featured</Chip>],
+  ]);
+});
+
+describe("ProgressBar", () => {
+  snapshotAll([
+    ["at the start", () => <ProgressBar label="Downloading" value={0} />],
+    ["part way", () => <ProgressBar label="Downloading" value={3} max={12} />],
+    ["complete", () => <ProgressBar label="Downloading" value={12} max={12} />],
+    [
+      "with a spoken value",
+      () => <ProgressBar label="Downloading" value={3} max={12} valueText="3 of 12 files" />,
+    ],
+    ["clamped past the end", () => <ProgressBar label="Downloading" value={99} max={10} />],
+  ]);
+});
+
+describe("AuthCard", () => {
+  snapshotAll([
+    [
+      "title and children",
+      () => (
+        <AuthCard title="Sign in">
+          <Label htmlFor="e">Email</Label>
+          <Input id="e" />
+        </AuthCard>
+      ),
+    ],
+    [
+      // The description and the footer link are children rather than props: the component is
+      // composition over `Stack`, so a caller arranges its own contents.
+      "with a description and a footer",
+      () => (
+        <AuthCard title="Sign in">
+          <Text size="sm">Use the address you registered with.</Text>
+          <Input id="e" />
+          <Link href="/reset">Forgot your password?</Link>
+        </AuthCard>
+      ),
+    ],
+    ["not the page's main landmark", () => <AuthCard as="div" title="Sign in">form</AuthCard>],
   ]);
 });

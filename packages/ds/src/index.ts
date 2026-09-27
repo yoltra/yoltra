@@ -107,3 +107,25 @@ export type {
   SwitchProps,
   ToggleProps,
 } from "./primitives/Form/Form";
+
+// ---------------------------------------------------------------------------
+// Added in 0.4.0, each because a consuming project had already built it.
+// ---------------------------------------------------------------------------
+export { Stat, StatGrid } from "./primitives/Stat/Stat";
+export type { StatProps, StatGridProps, StatSize } from "./primitives/Stat/Stat";
+export { Chip } from "./primitives/Chip/Chip";
+export type { ChipProps, ChipVariant } from "./primitives/Chip/Chip";
+export { ProgressBar } from "./primitives/ProgressBar/ProgressBar";
+export type { ProgressBarProps } from "./primitives/ProgressBar/ProgressBar";
+export { AuthCard } from "./primitives/AuthCard/AuthCard";
+export type { AuthCardProps } from "./primitives/AuthCard/AuthCard";
+
+/**
+ * The inline script that sets the theme before the first paint.
+ *
+ * @remarks
+ * On the server-safe entry because that is where it is used: inlined into a document head during a
+ * server render, long before any client component exists.
+ */
+export { noFlashScript, THEME_STORAGE_KEY } from "./theme/noFlashScript";
+export type { NoFlashScriptOptions } from "./theme/noFlashScript";

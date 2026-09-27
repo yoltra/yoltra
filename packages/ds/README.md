@@ -51,10 +51,23 @@ tabs, copy button) are client components.
 | `lightTheme` / `darkTheme` / `themes` | Semantic roles (background/foreground/border/interactive/status). |
 | `themeCss()` | Emits the `--yl-*` custom properties for both themes. **Properties only**, no component rules. |
 | `ThemeProvider` / `useTheme` / `applyTheme` | Generic theme controller (reflects onto `data-theme`). |
-| `Button`, `ButtonLink`, `Badge`, `CodeBlock`, `Callout`, `Tabs`, `Table`, `TableScroll`, `Label` | Primitive components. |
+| `noFlashScript()` / `THEME_STORAGE_KEY` | The inline script that restores the theme before the first paint, and the key it shares with the provider. |
+| `Heading`, `Text`, `Link`, `InlineCode`, `Kbd` | Typography. |
+| `Button`, `ButtonLink`, `IconButton`, `ButtonGroup` | Actions. |
+| `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`, `RadioGroup`, `Switch`, `Slider`, `Label`, `FormField`, `Fieldset` | Form controls and their labelling. |
+| `Card`, `Container`, `Stack`, `Inline`, `Grid`, `Divider`, `AuthCard` | Layout and composition. |
+| `Badge`, `Chip`, `Callout`, `Stat`, `StatGrid` | Status and figures. |
+| `Spinner`, `Skeleton`, `ProgressBar`, `EmptyState` | Feedback: indeterminate, determinate, and nothing-to-show. |
+| `Table`, `TableScroll`, `THead`, `TBody`, `TR`, `TH`, `TD` | Presentational table parts. |
+| `CodeBlock`, `Tabs`, `VisuallyHidden` | Everything else. |
 | `Portal`, `Dialog`, `Drawer` | Modal overlays, rendered outside the tree. See below. |
 | `Popover`, `Menu`, `ContextMenu`, `Tooltip` | Anchored overlays, positioned against a trigger or a point. |
 | `useFocusTrap`, `useDismiss`, `useReturnFocus`, `useScrollLock` | The behaviours those overlays are built from, for a surface they do not cover. |
+| `useControllableState` | One value that is either the caller's or the component's, for building a control of your own. |
+
+Every component keeps a `README.md` beside its source, with runnable examples and its
+accessibility contract: [`src/primitives/Button/README.md`](src/primitives/Button/README.md) and
+so on for each.
 
 > Consumers that own their state (like the Yoltra website, which drives the
 > theme through a Yoltra store) can skip `ThemeProvider` and set `data-theme`
@@ -211,9 +224,9 @@ Measured the way a consumer ships it — bundled, tree-shaken, minified, gzipped
 | Import | Size | Budget |
 | --- | --- | --- |
 | `{ Button, Card, Stack, Text }` | 0.9 KB | 1.2 KB |
-| everything | 5.8 KB | 8 KB |
+| everything | 6.4 KB | 8 KB |
 | `{ Dialog }` from `/client` | 1.8 KB | 3 KB |
-| all of `/client` | 4.6 KB | 5.5 KB |
+| all of `/client` | 4.8 KB | 5.5 KB |
 <!-- size-table:end -->
 
 The gap between the barrel rows and the named-import rows is tree-shaking working — `{ Dialog }`

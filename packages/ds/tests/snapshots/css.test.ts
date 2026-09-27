@@ -36,10 +36,12 @@ import { themeCss } from "../../src/tokens/css";
 // the sheets moved into per-component directories and the two orders diverged visibly.
 const EXPECTED_SHEETS = [
   "base.scss",
+  "AuthCard.scss",
   "Badge.scss",
   "Button.scss",
   "Callout.scss",
   "Card.scss",
+  "Chip.scss",
   "CodeBlock.scss",
   "Feedback.scss",
   "Field.scss",
@@ -47,6 +49,8 @@ const EXPECTED_SHEETS = [
   "Layout.scss",
   "Modal.scss",
   "Popover.scss",
+  "ProgressBar.scss",
+  "Stat.scss",
   "Table.scss",
   "Tabs.scss",
   "Tooltip.scss",

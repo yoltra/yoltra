@@ -1,0 +1,43 @@
+@use "../../styles" as *;
+
+.yl-stat {
+  --stat-value-size: var(--yl-text-h2-size);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--yl-space-1);
+
+  &__label {
+    font-size: var(--yl-text-caption-size);
+    font-weight: var(--yl-font-weight-semibold);
+    color: var(--yl-color-fg-muted);
+  }
+
+  &__value {
+    font-size: var(--stat-value-size);
+    font-weight: var(--yl-font-weight-bold);
+    line-height: var(--yl-text-h2-leading);
+    color: var(--yl-color-fg-default);
+    // Tabular figures so a row of stats does not shuffle sideways as the numbers update, which is
+    // the whole reason a dashboard feels unstable.
+    font-variant-numeric: var(--yl-font-numeric);
+  }
+
+  &__hint {
+    font-size: var(--yl-text-caption-size);
+    color: var(--yl-color-fg-muted);
+  }
+
+  &--sm {
+    --stat-value-size: var(--yl-text-h4-size);
+  }
+}
+
+.yl-stat-grid {
+  // A measure, not a token: it is the narrowest a labelled figure reads well at.
+  --stat-min-width: 16rem;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--stat-min-width), 1fr));
+  gap: var(--yl-space-4);
+}
