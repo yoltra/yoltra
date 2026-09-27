@@ -8,7 +8,7 @@
 
 # Interface: Decoration\<AddS, AddEM\>
 
-Defined in: [types.ts:2086](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2086)
+Defined in: [types.ts:2101](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2101)
 
 What a decoration contributes to a store: some slices, some events, either possibly empty.
 
@@ -39,7 +39,7 @@ type TransfersDecoration = Decoration<{ transfers: TransferState }, TransfersEM>
 
 > `readonly` **events**: `AddEM`
 
-Defined in: [types.ts:2091](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2091)
+Defined in: [types.ts:2106](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2106)
 
 ***
 
@@ -47,4 +47,4 @@ Defined in: [types.ts:2091](https://github.com/yoltra/yoltra/blob/main/packages/
 
 > `readonly` **slices**: `AddS`
 
-Defined in: [types.ts:2090](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2090)
+Defined in: [types.ts:2105](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2105)

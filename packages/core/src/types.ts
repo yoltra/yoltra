@@ -337,6 +337,21 @@ export interface EmitOptions {
   skipDedup?: boolean;
 }
 
+/**
+ * Emits an event.
+ *
+ * @remarks
+ * **Channel and type are joined into one key, `"channel::type"`,** and dispatch, deduplication and
+ * introspection all key on it. So two different pairs can collapse together: `("a::b", "c")` and
+ * `("a", "b::c")` both become `"a::b::c"`, and a subscriber registered for one is invoked for the
+ * other, while a dedup window lets one drop the other.
+ *
+ * A `::` in a channel is fine on its own — it is how a federated peer's channel is namespaced —
+ * so development builds warn on the **collision**, naming both pairs, rather than on the
+ * separator. Nothing throws.
+ *
+ * @public
+ */
 export type Emit<EM extends EventMapBase> = <
   C extends keyof EM & string,
   T extends keyof EM[C] & string,

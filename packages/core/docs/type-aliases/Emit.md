@@ -10,7 +10,9 @@
 
 > **Emit**\<`EM`\> = \<`C`, `T`\>(`channel`, `type`, `payload`, `opts?`) => `Promise`\<[`EmitResult`](../interfaces/EmitResult.md)\>
 
-Defined in: [types.ts:340](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L340)
+Defined in: [types.ts:355](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L355)
+
+Emits an event.
 
 ## Type Parameters
 
@@ -49,3 +51,14 @@ Defined in: [types.ts:340](https://github.com/yoltra/yoltra/blob/main/packages/c
 ## Returns
 
 `Promise`\<[`EmitResult`](../interfaces/EmitResult.md)\>
+
+## Remarks
+
+**Channel and type are joined into one key, `"channel::type"`,** and dispatch, deduplication and
+introspection all key on it. So two different pairs can collapse together: `("a::b", "c")` and
+`("a", "b::c")` both become `"a::b::c"`, and a subscriber registered for one is invoked for the
+other, while a dedup window lets one drop the other.
+
+A `::` in a channel is fine on its own — it is how a federated peer's channel is namespaced —
+so development builds warn on the **collision**, naming both pairs, rather than on the
+separator. Nothing throws.

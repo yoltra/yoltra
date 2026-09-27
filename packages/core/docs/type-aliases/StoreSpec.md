@@ -10,7 +10,7 @@
 
 > **StoreSpec**\<`R`, `S`, `EM`\> = `object`
 
-Defined in: [types.ts:518](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L518)
+Defined in: [types.ts:533](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L533)
 
 Store configuration object passed to the [Store](../classes/Store.md) constructor or [createStore](../functions/createStore.md).
 
@@ -61,7 +61,7 @@ Event map.
 
 > `optional` **dedupWindowMs**: `number`
 
-Defined in: [types.ts:559](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L559)
+Defined in: [types.ts:574](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L574)
 
 Time window in milliseconds for **content-based** event deduplication.
 When greater than 0, events with identical fingerprints
@@ -85,7 +85,7 @@ emit (e.g. React Strict Mode), prefer the per-emit [EmitOptions.dedupKey](../int
 
 > `optional` **devtools**: `object`
 
-Defined in: [types.ts:588](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L588)
+Defined in: [types.ts:603](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L603)
 
 DevTools configuration options.
 
@@ -112,7 +112,7 @@ These options control runtime DevTools capabilities such as event replay.
 
 > `optional` **effects**: [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:544](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L544)
+Defined in: [types.ts:559](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L559)
 
 Optional side-effect handlers registered at construction time.
 Runs after reducers for every propagated event.
@@ -123,7 +123,7 @@ Runs after reducers for every propagated event.
 
 > `optional` **idFactory**: () => `string`
 
-Defined in: [types.ts:580](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L580)
+Defined in: [types.ts:595](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L595)
 
 Generates the `id` for each emitted event. Defaults to `crypto.randomUUID()`.
 
@@ -159,7 +159,7 @@ const store = createStore({ name: 'Test', reducer, idFactory: () => `evt-${++n}`
 
 > `optional` **maxReduceDepth**: `number`
 
-Defined in: [types.ts:668](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L668)
+Defined in: [types.ts:683](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L683)
 
 Maximum causal depth of an event chain before the store refuses to extend it.
 
@@ -189,7 +189,7 @@ Breaching does not throw — see [StoreSpec.onCascade](#oncascade).
 
 > `optional` **maxTransitionsPerDrain**: `number`
 
-Defined in: [types.ts:690](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L690)
+Defined in: [types.ts:705](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L705)
 
 Maximum number of events one synchronous drain will process before refusing more.
 
@@ -221,7 +221,7 @@ undefined (no limit)
 
 > `optional` **middleware**: [`MiddlewareInput`](MiddlewareInput.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:538](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L538)
+Defined in: [types.ts:553](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L553)
 
 Middleware chain executed before reducers/effects.
 Accepts either functions (legacy) or MiddlewareSpec objects (recommended).
@@ -236,7 +236,7 @@ throws. Returning nothing allows it. Middleware is synchronous: a `Promise` is n
 
 > **name**: `string`
 
-Defined in: [types.ts:522](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L522)
+Defined in: [types.ts:537](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L537)
 
 Store name (used by DevTools to identify the instance).
 
@@ -246,7 +246,7 @@ Store name (used by DevTools to identify the instance).
 
 > `optional` **onCascade**: (`info`) => `void`
 
-Defined in: [types.ts:705](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L705)
+Defined in: [types.ts:720](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L720)
 
 Called when a ceiling is breached, instead of throwing.
 
@@ -277,7 +277,7 @@ is where the wiring gets named.
 
 > `optional` **onEffectError**: (`error`, `event`) => `void`
 
-Defined in: [types.ts:611](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L611)
+Defined in: [types.ts:626](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L626)
 
 Called when an effect throws or its returned promise rejects.
 
@@ -313,7 +313,7 @@ report to a service or emit a failure event. Other effects still run.
 
 > `optional` **onReducerError**: (`error`, `event`, `slice`) => `void`
 
-Defined in: [types.ts:631](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L631)
+Defined in: [types.ts:646](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L646)
 
 Invoked when a reducer throws.
 
@@ -359,7 +359,7 @@ so this hook is how a caller observes one.
 
 > `optional` **onRejected**: (`rejection`, `event`, `slice`) => `void`
 
-Defined in: [types.ts:724](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L724)
+Defined in: [types.ts:739](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L739)
 
 Called when a reducer refuses a write by returning [Rejected](../functions/Rejected.md).
 
@@ -404,7 +404,7 @@ whole, so no slice writes.
 
 > `optional` **onSubscriberError**: (`error`, `event`, `phase`) => `void`
 
-Defined in: [types.ts:644](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L644)
+Defined in: [types.ts:659](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L659)
 
 Called when an `onEvent` subscriber throws, or rejects.
 
@@ -441,7 +441,7 @@ A throwing subscriber never stops the others, with or without this hook.
 
 > **reducer**: `Record`\<`R`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
 
-Defined in: [types.ts:528](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L528)
+Defined in: [types.ts:543](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L543)
 
 Map of slice name → reducer spec.
 Each entry declares initial state, the reducer function, and the event targeting.

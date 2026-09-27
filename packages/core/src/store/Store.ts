@@ -46,6 +46,7 @@ import type {
   When,
 } from "../types";
 import { freezeState } from "../utils/immutability";
+import { warnOnKeyCollision } from "../utils/reservedSeparator";
 import { isRejected } from "./rejection";
 import type { CallHandle, CallOptions } from "./call";
 import { performCall } from "./performCall";
@@ -202,6 +203,28 @@ const now = (): number =>
   typeof performance !== "undefined" && typeof performance.now === "function"
     ? performance.now()
     : Date.now();
+
+/**
+ * Splits a `"channel::type"` key back into its two halves.
+ *
+ * @remarks
+ * On the **last** separator, not the first. A type never contains `::` in any code path the store
+ * controls, so the tail is the type and everything before it is the channel — which keeps a
+ * channel that does contain `::` readable instead of silently reported as a different channel
+ * entirely. `String.split("::")` yielded three parts for `"bb::plan::load"` and the destructuring
+ * took the first two, so the registration was reported as channel `bb`, type `plan`.
+ *
+ * `::` is reserved and warned about at `emit` (see `warnOnReservedSeparator`), so this is the
+ * belt to that braces: the warning tells an author, and this keeps introspection honest for
+ * anyone who has not read it yet.
+ *
+ * @internal
+ */
+function splitEventKey(key: string): [channel: string, type: string] {
+  const at = key.lastIndexOf("::");
+  if (at < 0) return [key, ""];
+  return [key.slice(0, at), key.slice(at + 2)];
+}
 
 export class Store<EM extends EventMapBase, R extends string, S extends Record<R, any>>
   implements StoreInstance<R, S, EM> {
@@ -1339,7 +1362,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }> = [];
     for (const [key, set] of this.effects) {
       if (set.size === 0) continue;
-      const [channel, type] = key.split("::");
+      const [channel, type] = splitEventKey(key);
       for (const entry of set) {
         const meta = this.effectMeta.get(entry.effect);
         effects.push({
@@ -1405,7 +1428,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     ): void => {
       for (const [key, set] of map) {
         if (set.size === 0) continue;
-        const [channel, type] = key.split("::");
+        const [channel, type] = splitEventKey(key);
         for (const entry of set) {
           event.push({ channel, type, phase, duringReplay: entry.duringReplay });
         }
@@ -1725,6 +1748,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     payload: EM[C][T],
     opts?: EmitOptions,
   ): Promise<EmitResult> {
+    // Before anything keys on `${channel}::${type}`. Development only, and reports an actual
+    // ambiguity rather than the mere presence of a separator: `alias::channel` is how a federated
+    // peer's channel is namespaced, so warning on `::` itself would fire for correct code.
+    if (process.env.NODE_ENV !== "production") {
+      warnOnKeyCollision(channel as string, type as string);
+    }
+
     // Deduplication is OPT-IN (see EmitOptions / StoreSpec.dedupWindowMs).
     // Content-based dedup runs only when `dedupWindowMs > 0`; identity-based
     // dedup runs when an explicit `dedupKey` is supplied. By default neither is
@@ -2294,7 +2324,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       });
     }
     for (const [key, set] of this.effects) {
-      const [channel, type] = key.split("::");
+      const [channel, type] = splitEventKey(key);
       for (const entry of set) {
         out.push({
           kind: "effect",
@@ -3210,7 +3240,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         }
         this.recordEffectChange(
           entry.effect,
-          { keys: [key.split("::") as [string, string]] } as When<EM>,
+          { keys: [splitEventKey(key)] } as When<EM>,
           entry.origin,
           "unmounted",
           "keyed",

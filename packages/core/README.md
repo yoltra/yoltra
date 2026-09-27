@@ -159,6 +159,13 @@ state.counter.value = 999; // TypeError: Cannot assign to read-only property
 
 ## Event Targeting with `When` Matchers
 
+> **Channel and type are joined into one key, `"channel::type"`.** Dispatch, deduplication and
+> introspection all key on it, so two different pairs can collapse together: `("a::b", "c")` and
+> `("a", "b::c")` both become `"a::b::c"`, and a subscriber for one is invoked for the other. A
+> `::` in a channel is fine on its own — it is how a federated peer's channel is namespaced — so
+> development builds warn on the **collision**, naming both pairs, not on the separator.
+
+
 Reducers, effects, and middleware use a unified `When` matcher to declare which events they
 respond to:
 

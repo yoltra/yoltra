@@ -161,6 +161,14 @@ state.counter.value = 999; // TypeError: Cannot assign to read-only property
 
 ## Consumo de Eventos con Matchers `When`
 
+> **El canal y el tipo se unen en una sola clave, `"canal::tipo"`.** El despacho, la deduplicación
+> y la introspección se indexan por ella, así que dos pares distintos pueden colapsar juntos:
+> `("a::b", "c")` y `("a", "b::c")` se convierten los dos en `"a::b::c"`, y un suscriptor de uno se
+> dispara con el otro. Un `::` en un canal está bien por sí solo — es como se le da namespace al
+> canal de un par federado — así que las builds de desarrollo avisan de la **colisión**, nombrando
+> ambos pares, no del separador.
+
+
 Los reducers, efectos y middleware usan un matcher `When` unificado para declarar a cuales
 eventos responden:
 
