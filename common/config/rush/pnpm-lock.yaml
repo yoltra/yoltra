@@ -398,14 +398,14 @@ importers:
   ../../examples/v0/yoltra-in-nextjs:
     dependencies:
       '@yoltra/core':
-        specifier: ^0.7.0
-        version: 0.7.0
+        specifier: ^0.8.0
+        version: 0.8.0
       '@yoltra/ds':
         specifier: ^0.3.0
         version: 0.3.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@yoltra/react':
-        specifier: ^0.7.0
-        version: 0.7.0(@yoltra/core@0.7.0)(react@19.1.1)
+        specifier: ^0.8.0
+        version: 0.8.0(@yoltra/core@0.8.0)(react@19.1.1)
       next:
         specifier: 16.3.1
         version: 16.3.1(@types/node@24.13.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(sass@1.102.0)
@@ -429,8 +429,8 @@ importers:
         specifier: ^19.1.6
         version: 19.2.4(@types/react@19.2.18)
       '@yoltra/devtools-browser-agent':
-        specifier: ^0.7.0
-        version: 0.7.0(@yoltra/core@0.7.0)
+        specifier: ^0.8.0
+        version: 0.8.0(@yoltra/core@0.8.0)
       babel-plugin-react-compiler:
         specifier: 1.0.0
         version: 1.0.0
@@ -453,14 +453,14 @@ importers:
         specifier: 2.9.0
         version: 2.9.0(react-redux@9.2.0(@types/react@19.2.18)(react@19.1.1)(redux@5.0.1))(react@19.1.1)
       '@yoltra/core':
-        specifier: ^0.7.0
-        version: 0.7.0
+        specifier: ^0.8.0
+        version: 0.8.0
       '@yoltra/ds':
         specifier: ^0.3.0
         version: 0.3.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@yoltra/react':
-        specifier: ^0.7.0
-        version: 0.7.0(@yoltra/core@0.7.0)(react@19.1.1)
+        specifier: ^0.8.0
+        version: 0.8.0(@yoltra/core@0.8.0)(react@19.1.1)
       antd:
         specifier: 5.27.1
         version: 5.27.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -502,8 +502,8 @@ importers:
         specifier: ^3.10.2
         version: 3.11.0(@swc/helpers@0.5.23)(vite@7.3.6(@types/node@24.13.3)(sass-embedded@1.102.0)(sass@1.102.0)(yaml@2.9.0))
       '@yoltra/devtools-browser-agent':
-        specifier: ^0.7.0
-        version: 0.7.0(@yoltra/core@0.7.0)
+        specifier: ^0.8.0
+        version: 0.8.0(@yoltra/core@0.8.0)
       eslint:
         specifier: ^9.30.1
         version: 9.39.5
@@ -538,14 +538,14 @@ importers:
   ../../examples/v0/yoltra-kinetic-logo:
     dependencies:
       '@yoltra/core':
-        specifier: ^0.7.0
-        version: 0.7.0
+        specifier: ^0.8.0
+        version: 0.8.0
       '@yoltra/ds':
         specifier: ^0.3.0
         version: 0.3.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@yoltra/react':
-        specifier: ^0.7.0
-        version: 0.7.0(@yoltra/core@0.7.0)(react@19.1.1)
+        specifier: ^0.8.0
+        version: 0.8.0(@yoltra/core@0.8.0)(react@19.1.1)
       react:
         specifier: 19.1.1
         version: 19.1.1
@@ -569,8 +569,8 @@ importers:
         specifier: ^3.10.2
         version: 3.11.0(@swc/helpers@0.5.23)(vite@7.3.6(@types/node@24.13.3)(sass-embedded@1.102.0)(sass@1.102.0)(yaml@2.9.0))
       '@yoltra/devtools-browser-agent':
-        specifier: ^0.7.0
-        version: 0.7.0(@yoltra/core@0.7.0)
+        specifier: ^0.8.0
+        version: 0.8.0(@yoltra/core@0.8.0)
       eslint:
         specifier: ^9.30.1
         version: 9.39.5
@@ -599,26 +599,26 @@ importers:
   ../../examples/v0/yoltra-mission-control:
     dependencies:
       '@yoltra/core':
-        specifier: ^0.7.0
-        version: 0.7.0
+        specifier: ^0.8.0
+        version: 0.8.0
       '@yoltra/devtools-browser-agent':
-        specifier: ^0.7.0
-        version: 0.7.0(@yoltra/core@0.7.0)
+        specifier: ^0.8.0
+        version: 0.8.0(@yoltra/core@0.8.0)
       '@yoltra/devtools-protocol':
-        specifier: ^0.7.0
-        version: 0.7.0
+        specifier: ^0.8.0
+        version: 0.8.0
       '@yoltra/devtools-storeview':
-        specifier: ^0.7.0
-        version: 0.7.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: ^0.8.0
+        version: 0.8.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@yoltra/devtools-ui':
-        specifier: ^0.7.0
-        version: 0.7.0(react@19.1.1)
+        specifier: ^0.8.0
+        version: 0.8.0(react@19.1.1)
       '@yoltra/ds':
         specifier: ^0.3.0
         version: 0.3.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@yoltra/react':
-        specifier: ^0.7.0
-        version: 0.7.0(@yoltra/core@0.7.0)(react@19.1.1)
+        specifier: ^0.8.0
+        version: 0.8.0(@yoltra/core@0.8.0)(react@19.1.1)
       react:
         specifier: 19.1.1
         version: 19.1.1
@@ -669,14 +669,14 @@ importers:
   ../../examples/v0/yoltra-react-counter:
     dependencies:
       '@yoltra/core':
-        specifier: ^0.7.0
-        version: 0.7.0
+        specifier: ^0.8.0
+        version: 0.8.0
       '@yoltra/ds':
         specifier: ^0.3.0
         version: 0.3.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@yoltra/react':
-        specifier: ^0.7.0
-        version: 0.7.0(@yoltra/core@0.7.0)(react@19.1.1)
+        specifier: ^0.8.0
+        version: 0.8.0(@yoltra/core@0.8.0)(react@19.1.1)
       react:
         specifier: 19.1.1
         version: 19.1.1
@@ -2564,29 +2564,29 @@ packages:
   '@vue/shared@3.5.41':
     resolution: {integrity: sha512-IOnwSCma8j+9xJT6b8H0dEYidC80NsYmNMlZxRsukYcSoGaDBohog5hDxzeUXdFeGWFA++vWvxqOmrr96VlqMA==}
 
-  '@yoltra/core@0.7.0':
-    resolution: {integrity: sha512-Bg0EHcY1zl1FeLY0ufOW03Pv2vFxpMHgkAnRX/OLvZOoWOq1m2Ylam6ZjtXPgAeBGAx7fuU1bIl7BHFdlVbloQ==}
+  '@yoltra/core@0.8.0':
+    resolution: {integrity: sha512-TbwuVmyQeYcFvj+EpWCrdeKEdkuKWcD2X5VMpIjn3ZP1niy/5q8odDXCuJ7pnWKxB41hgUewRt99x7QyAKFsSg==}
     engines: {node: '>=18'}
 
-  '@yoltra/devtools-browser-agent@0.7.0':
-    resolution: {integrity: sha512-e+pMKkl/8Crj2xyGUVsX4bwnYbOf214RYXDVWzG9EzRZ5GBaL9svZUW34Yq/Aslq8NDJKtRmkpBXeoQKu2WaKg==}
+  '@yoltra/devtools-browser-agent@0.8.0':
+    resolution: {integrity: sha512-Ww8SLZNhTEOcd0bcUXpNX8qh/zWU5Xn5xeKtD0LBSWp6llcpYZjXS2t7vzsDyCkW7Zi0gTOQTbyCDdguygwqjA==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@yoltra/core': ^0.7.0
+      '@yoltra/core': ^0.8.0
 
-  '@yoltra/devtools-protocol@0.7.0':
-    resolution: {integrity: sha512-F77cHx6HPnEl4j2OxPzHF0/QF6FTVo2Yz8NvzV2Wo8NfquJFU1CysI14YWbOBvB3QMld5Zji1e/Q6wT/pan5IQ==}
+  '@yoltra/devtools-protocol@0.8.0':
+    resolution: {integrity: sha512-zNfFB41C/3ZMn2O4gJREZoSARRbO+UcobbRzHD9u+cpyhPlPbcJYJ5ipaPALRBodxA1jiIdCQzw/BfJRQCgw/Q==}
     engines: {node: '>=18'}
 
-  '@yoltra/devtools-storeview@0.7.0':
-    resolution: {integrity: sha512-350/d782/jJnpOBI+sMS/xxzG/UUgBVFoEtJkY1QiGQT/ztmNf2/OewKOgqYA/YVK1VsTg8gpissjsRzJjWP+A==}
+  '@yoltra/devtools-storeview@0.8.0':
+    resolution: {integrity: sha512-iK7yhW0LWp0uW0OeJ9gZ6JK1YY91AgyFZb9YCrdVlj3/acqeka01Eo41n16c8W4duIwK9WciYd5Zit0XTRXIag==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19
       react-dom: ^18 || ^19
 
-  '@yoltra/devtools-ui@0.7.0':
-    resolution: {integrity: sha512-5lEdkTP16HxeaPpm6EPCt2tH0QIOK3T9xvqtVxGYTwz0ADB3/G26HS+9lp5lC4gAJBqrEvz16hAIUPCnS0EADg==}
+  '@yoltra/devtools-ui@0.8.0':
+    resolution: {integrity: sha512-9Srq1vpNwcl3XLGguFCx3hlyqAysm6V5SKHcz7p7FSNLf2kgT9MxKkx4gNZxsxGMQRcmUeXZzDtQQO2wtxNfrw==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19
@@ -2598,11 +2598,11 @@ packages:
       react: ^18 || ^19
       react-dom: ^18 || ^19
 
-  '@yoltra/react@0.7.0':
-    resolution: {integrity: sha512-bLsEJyJA6JIdHqvlLELdrQToJhC3YxwkxCbDeTD0/moO6J19RvxGEecoPItL+vu/FkHXo4dwX3eu5/gGNX0alQ==}
+  '@yoltra/react@0.8.0':
+    resolution: {integrity: sha512-0EpE6jxzgpVAllLqae9A8i86Q5LK46KYKNapyDGA6+szwvkIvxm3TEhihzT7qbGtf0Nx39GCSSCwvHZ2horD0A==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@yoltra/core': ^0.7.0
+      '@yoltra/core': ^0.8.0
       react: ^18 || ^19
 
   acorn-jsx@5.3.2:
@@ -6741,26 +6741,26 @@ snapshots:
 
   '@vue/shared@3.5.41': {}
 
-  '@yoltra/core@0.7.0': {}
+  '@yoltra/core@0.8.0': {}
 
-  '@yoltra/devtools-browser-agent@0.7.0(@yoltra/core@0.7.0)':
+  '@yoltra/devtools-browser-agent@0.8.0(@yoltra/core@0.8.0)':
     dependencies:
-      '@yoltra/core': 0.7.0
-      '@yoltra/devtools-protocol': 0.7.0
+      '@yoltra/core': 0.8.0
+      '@yoltra/devtools-protocol': 0.8.0
 
-  '@yoltra/devtools-protocol@0.7.0': {}
+  '@yoltra/devtools-protocol@0.8.0': {}
 
-  '@yoltra/devtools-storeview@0.7.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+  '@yoltra/devtools-storeview@0.8.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
     dependencies:
-      '@yoltra/devtools-protocol': 0.7.0
-      '@yoltra/devtools-ui': 0.7.0(react@19.1.1)
+      '@yoltra/devtools-protocol': 0.8.0
+      '@yoltra/devtools-ui': 0.8.0(react@19.1.1)
       classnames: 2.5.1
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
 
-  '@yoltra/devtools-ui@0.7.0(react@19.1.1)':
+  '@yoltra/devtools-ui@0.8.0(react@19.1.1)':
     dependencies:
-      '@yoltra/devtools-protocol': 0.7.0
+      '@yoltra/devtools-protocol': 0.8.0
       react: 19.1.1
 
   '@yoltra/ds@0.3.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
@@ -6769,9 +6769,9 @@ snapshots:
       react-dom: 19.1.1(react@19.1.1)
       tslib: 2.8.1
 
-  '@yoltra/react@0.7.0(@yoltra/core@0.7.0)(react@19.1.1)':
+  '@yoltra/react@0.8.0(@yoltra/core@0.8.0)(react@19.1.1)':
     dependencies:
-      '@yoltra/core': 0.7.0
+      '@yoltra/core': 0.8.0
       react: 19.1.1
       tslib: 2.8.1
 
