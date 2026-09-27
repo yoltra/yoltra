@@ -91,6 +91,86 @@ el tiempo real, setup de una llamada y tipado completo - juntos.** Una comparaci
 
 ---
 
+## Cómo funciona un store
+
+Un evento, de principio a fin. La fase de reducción es síncrona, así que `getState()` es correcto
+en el instante en que `emit()` retorna; los efectos corren después, como una tarea independiente.
+
+```mermaid
+flowchart TD
+    emit["emit canal, tipo, payload"] --> dedup{"dedup activa?"}
+    dedup -->|"desactivada por defecto"| queue
+    dedup -->|"activa"| fp["huella a través del codec:<br/>Map, Set, Date, BigInt, binarios y<br/>ciclos comparan por contenido"]
+    fp -->|"vista dentro de la ventana"| swallowed(["descartado"])
+    fp -->|"nueva"| queue["cola FIFO de reducción"]
+    queue --> drain["drainReduce<br/>síncrono, con guard de reentrada"]
+
+    subgraph sync ["Fase de reducción síncrona"]
+    direction TB
+        drain --> mw["middleware<br/>seleccionado por when"]
+        mw -->|"devuelve false, o lanza"| veto["vetado"]
+        mw -->|"true, o nada en absoluto"| red["reducers<br/>seleccionados por when"]
+        red --> stage["prepara cada slice que coincide<br/>todavía no se escribe nada"]
+        stage -->|"alguna slice devuelve Rejected"| reject["descarta toda escritura preparada"]
+        stage -->|"todas aceptan"| commit["confirma una nueva raíz de estado<br/>congelada en desarrollo"]
+    end
+
+    veto --> nUncommitted["onEvent uncommitted"]
+    reject --> nCommitted["onEvent committed"]
+    commit --> nCommitted
+    commit --> paths["connectorBus<br/>rutas hoja exactas que cambiaron"]
+    nCommitted --> nWritten["onEvent written<br/>solo si el estado cambió"]
+    nWritten --> listeners["listeners de subscribe"]
+
+    paths --> atomic(["useAtomicProp y los hooks de Suspense"])
+    listeners --> selector(["useSelector"])
+    nCommitted --> useEvent(["useEvent"])
+
+    commit --> instr["observers de instrument<br/>rutas cambiadas, valores previo y nuevo, tiempos"]
+    instr --> persistOut(["persist: escritura throttled, codificada por el codec"])
+    instr --> agent(["agente de devtools"])
+
+    commit --> fx["efectos, seleccionados por when<br/>asíncronos, esperados uno tras otro"]
+    fx --> call(["store.call usa un efecto de respuesta interno"])
+```
+
+### `when`: un matcher, dos rutas de despacho
+
+Reducers, middleware y efectos apuntan a los eventos de la misma forma, y la forma que elijas
+decide cómo los encuentra el store.
+
+```mermaid
+flowchart LR
+    when["when"] --> keys["keys<br/>pares exactos de canal y tipo"]
+    when --> any["any"]
+    when --> chan["channel"]
+    when --> chans["channels"]
+
+    keys --> keyed["despacho por clave<br/>búsqueda O(1) en un mapa"]
+    any --> scan["despacho por patrón<br/>evaluado en cada evento"]
+    chan --> scan
+    chans --> scan
+
+    keyed --> run(["el handler se ejecuta"])
+    scan --> run
+```
+
+`keys` es exacto y está tipado contra tu mapa de eventos, así que un typo es un error de
+compilación. Los otros tres se resuelven en tiempo de ejecución, que es lo que permite que un
+solo handler cubra un canal completo.
+
+### Las comodidades, y dónde se conectan
+
+| Pieza | Dónde encaja |
+| --- | --- |
+| **codec** | Dedup por contenido, persistencia al leer y al escribir, snapshots y payloads de eventos en devtools. Lleva y trae `Map`, `Set`, `Date`, `RegExp`, `Error`, `BigInt`, typed arrays, ciclos y referencias compartidas, y reporta lo que no puede representar en lugar de descartarlo |
+| **persistencia** | `hydrate()` siembra el estado inicial antes de que el store exista, así que no hay parpadeo al arrancar; `persist()` se monta sobre la costura de instrumentación |
+| **devtools** | `instrument()` transmite eventos y parches; el viaje en el tiempo devuelve estado por `__applyExternalState`. El replay no vuelve a ejecutar tus handlers de `onEvent` salvo que lo pidan |
+| **registros** | `registerSlice`, `registerMiddleware` y `registerEffect` agregan a un store vivo y amplían sus tipos. `replace*` reemplaza solo lo que escribió la aplicación, así que una recarga en caliente deja en paz la slice de una librería |
+| **guard de cascada** | Un evento emitido desde un handler lleva su causa y su profundidad, así que un ciclo se detiene y se nombra en lugar de colgar la pestaña |
+
+---
+
 ## Lo que dejas de hacer - los dolores que Yoltra elimina
 
 ### Optimización manual de renders - borra tus `useMemo`
@@ -222,8 +302,11 @@ Node, y viceversa.
 
 ## Documentación
 
-- **[Guía de inicio rápido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)** - cinco pasos hacia una app funcional
+- **[Guía de inicio rápido](https://github.com/yoltra/yoltra/blob/main/docs/es/QUICK_START_GUIDE.md)** - cinco pasos hacia una app funcional
 - **[Guía de migración](https://github.com/yoltra/yoltra/blob/main/docs/es/MIGRATION_GUIDE.md)** - si vienes de Redux, Zustand o Jotai
+- **[Actualizar a 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/es/UPGRADE_0.8.md)** - qué cambió, cómo lo notarías, y qué hacer
+- **[Guía de decoración](https://github.com/yoltra/yoltra/blob/main/docs/es/DECORATION_GUIDE.md)** - agregar una slice, middleware o efecto al store de alguien más, con los tipos
+- **[Petición y respuesta](https://github.com/yoltra/yoltra/blob/main/docs/es/REQUEST_REPLY_GUIDE.md)** - `store.call()`: correlación sin ids, progreso en streaming con backpressure real
 - **[Guía de testing](https://github.com/yoltra/yoltra/blob/main/docs/es/TESTING_GUIDE.md)** - prueba stores, efectos, middleware y componentes
 - **[Guía de Next.js](https://github.com/yoltra/yoltra/blob/main/docs/es/NEXTJS_GUIDE.md)** - uso en cliente con Pages y App Router
 - **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** - store, middleware, efectos, matchers `When`, instrumentación
