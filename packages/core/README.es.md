@@ -958,9 +958,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 11.5 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 12.8 KB | 16 KB |
-| todo | 14.2 KB | 18 KB |
+| `{ createStore }` | 11.7 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 13.0 KB | 16 KB |
+| todo | 14.4 KB | 18 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que públicas una vez que tu empaquetador define
