@@ -4,6 +4,7 @@
 
 > [ 🇲🇽 Versión en Español](./docs/es/README.md)&nbsp; | &nbsp; 👉 🇺🇸 English Version &nbsp;
 
+![npm version](https://img.shields.io/npm/v/@yoltra/core)
 ![npm downloads](https://badgen.net/npm/dm/@yoltra/core)
 ![License](https://img.shields.io/npm/l/@yoltra/core)
 
@@ -331,7 +332,7 @@ more details.
 
 ## Status
 
-Yoltra is in **Release Candidate** stage (v0.7.0):
+Yoltra is in **Release Candidate** stage:
 
 - The core and React APIs are stable and used in production applications.
 - TypeScript types are strict and comprehensive; coverage, bundle-size, and benchmark gates run in CI.
