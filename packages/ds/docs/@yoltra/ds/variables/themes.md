@@ -10,7 +10,7 @@
 
 > `const` **themes**: `object`
 
-Defined in: [tokens/themes.ts:75](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L75)
+Defined in: [tokens/themes.ts:215](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L215)
 
 ## Type Declaration
 

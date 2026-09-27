@@ -2,7 +2,7 @@
   &__list {
     display: flex;
     gap: var(--yl-space-1);
-    border-bottom: 1px solid var(--yl-color-border);
+    border-bottom: 1px solid var(--yl-color-border-subtle);
   }
 
   &__tab {
@@ -18,8 +18,8 @@
     margin-bottom: -1px;
 
     &[data-active="true"] {
-      color: var(--yl-color-brand);
-      border-bottom-color: var(--yl-color-brand);
+      color: var(--yl-color-fg-brand);
+      border-bottom-color: var(--yl-color-fg-brand);
     }
   }
 

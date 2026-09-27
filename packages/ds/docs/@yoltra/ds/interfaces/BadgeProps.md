@@ -30,6 +30,6 @@ Defined in: [primitives/Badge.tsx:5](https://github.com/yoltra/yoltra/blob/main/
 
 ### variant?
 
-> `optional` **variant**: `"brand"` \| `"neutral"`
+> `optional` **variant**: `"neutral"` \| `"brand"`
 
 Defined in: [primitives/Badge.tsx:4](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Badge.tsx#L4)

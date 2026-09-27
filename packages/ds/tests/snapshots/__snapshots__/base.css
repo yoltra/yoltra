@@ -4,7 +4,7 @@ html {
 
 .yl-root {
   font-family: var(--yl-font-sans);
-  color: var(--yl-color-fg);
+  color: var(--yl-color-fg-default);
   background: var(--yl-color-bg-canvas);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -34,16 +34,16 @@ html {
 }
 @media (min-width: 768px) {
   .yl-container {
-    max-width: 720px;
+    max-width: var(--yl-container-md);
   }
 }
 @media (min-width: 1024px) {
   .yl-container {
-    max-width: 960px;
+    max-width: var(--yl-container-lg);
   }
 }
 @media (min-width: 1280px) {
   .yl-container {
-    max-width: 1180px;
+    max-width: var(--yl-container-xl);
   }
 }

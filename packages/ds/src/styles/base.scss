@@ -23,7 +23,7 @@ html {
 
 .yl-root {
   font-family: var(--yl-font-sans);
-  color: var(--yl-color-fg);
+  color: var(--yl-color-fg-default);
   background: var(--yl-color-bg-canvas);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -44,12 +44,12 @@ html {
     padding-inline: var(--yl-space-5);
   }
   @include media-up(md) {
-    max-width: 720px;
+    max-width: var(--yl-container-md);
   }
   @include media-up(lg) {
-    max-width: 960px;
+    max-width: var(--yl-container-lg);
   }
   @include media-up(xl) {
-    max-width: 1180px;
+    max-width: var(--yl-container-xl);
   }
 }

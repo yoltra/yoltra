@@ -8,13 +8,13 @@
   line-height: 1;
   padding: 0.3rem var(--yl-space-2);
   border-radius: var(--yl-radius-round);
-  border: 1px solid var(--yl-color-border);
+  border: 1px solid var(--yl-color-border-subtle);
   color: var(--yl-color-fg-secondary);
   background: var(--yl-color-bg-subtle);
 
   &--brand {
-    color: var(--yl-color-brand);
-    border-color: var(--yl-color-info-border);
-    background: var(--yl-color-info-bg);
+    color: var(--yl-color-fg-brand);
+    border-color: var(--yl-color-status-info-border);
+    background: var(--yl-color-status-info-bg);
   }
 }

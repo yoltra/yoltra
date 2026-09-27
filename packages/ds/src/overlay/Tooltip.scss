@@ -9,7 +9,7 @@
   font-size: 1.3rem;
   line-height: 1.4;
   color: var(--yl-color-fg-inverse);
-  background: var(--yl-color-fg);
+  background: var(--yl-color-fg-default);
   border-radius: var(--yl-radius-sm);
   box-shadow: var(--yl-elevation-md);
   // It follows the pointer's target; letting it catch the pointer would let it flicker itself

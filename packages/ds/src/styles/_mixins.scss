@@ -11,8 +11,16 @@
 /// Breakpoints, deliberately in px.
 ///
 /// `rem` inside a media query resolves against the *initial* root font size, not the 62.5%
-/// one this design system sets — so a rem breakpoint would silently be 1.6 times the number
-/// it reads as. These mirror `foundationTokens.breakpoints`.
+/// one this design system sets, so a rem breakpoint would silently be 1.6 times the number it
+/// reads as.
+///
+/// These duplicate `foundationTokens.breakpoints`, and the duplication cannot be removed: a
+/// media query's condition is evaluated before any custom property has a value, so
+/// `@media (min-width: var(--yl-breakpoint-md))` is not a thing CSS can do. `--yl-breakpoint-*`
+/// is still emitted, for `@container` queries and for JavaScript that needs the same numbers.
+///
+/// What can be removed is the *drift*. `tests/styles.test.ts` parses this map and fails if it
+/// disagrees with the TypeScript, so the copy stays a copy.
 $breakpoints: (sm: 480px, md: 768px, lg: 1024px, xl: 1280px);
 
 @mixin media-up($name) {
@@ -34,7 +42,7 @@ $breakpoints: (sm: 480px, md: 768px, lg: 1024px, xl: 1280px);
   &:focus-visible {
     outline: none;
     border-color: var(--yl-color-border-focus);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--yl-color-brand) 24%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--yl-color-border-focus) 24%, transparent);
   }
 }
 

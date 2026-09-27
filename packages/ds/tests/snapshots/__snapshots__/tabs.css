@@ -1,7 +1,7 @@
 .yl-tabs__list {
   display: flex;
   gap: var(--yl-space-1);
-  border-bottom: 1px solid var(--yl-color-border);
+  border-bottom: 1px solid var(--yl-color-border-subtle);
 }
 .yl-tabs__tab {
   font-family: var(--yl-font-sans);
@@ -16,8 +16,8 @@
   margin-bottom: -1px;
 }
 .yl-tabs__tab[data-active=true] {
-  color: var(--yl-color-brand);
-  border-bottom-color: var(--yl-color-brand);
+  color: var(--yl-color-fg-brand);
+  border-bottom-color: var(--yl-color-fg-brand);
 }
 .yl-tabs__panel {
   padding-top: var(--yl-space-4);

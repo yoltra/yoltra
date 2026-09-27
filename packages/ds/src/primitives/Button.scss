@@ -15,9 +15,9 @@
   cursor: pointer;
   text-decoration: none;
   transition:
-    background var(--yl-motion-fast) var(--yl-ease),
-    border-color var(--yl-motion-fast) var(--yl-ease),
-    transform var(--yl-motion-fast) var(--yl-ease);
+    background var(--yl-motion-duration-fast) var(--yl-motion-ease-standard),
+    border-color var(--yl-motion-duration-fast) var(--yl-motion-ease-standard),
+    transform var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
 
   &:active {
     transform: translateY(1px);
@@ -26,26 +26,26 @@
   @include focus-ring;
 
   &--primary {
-    background: var(--yl-color-btn-bg);
-    color: var(--yl-color-btn-fg);
-    border-color: var(--yl-color-btn-bg);
+    background: var(--yl-color-interactive-bg);
+    color: var(--yl-color-interactive-fg);
+    border-color: var(--yl-color-interactive-bg);
 
     &:hover {
-      background: var(--yl-color-btn-bg-hover);
-      border-color: var(--yl-color-btn-bg-hover);
+      background: var(--yl-color-interactive-bg-hover);
+      border-color: var(--yl-color-interactive-bg-hover);
     }
     &:active {
-      background: var(--yl-color-btn-bg-active);
+      background: var(--yl-color-interactive-bg-active);
     }
   }
 
   &--ghost {
     background: transparent;
-    color: var(--yl-color-fg);
-    border-color: var(--yl-color-ghost-border);
+    color: var(--yl-color-fg-default);
+    border-color: var(--yl-color-interactive-quiet-border);
 
     &:hover {
-      background: var(--yl-color-ghost-bg-hover);
+      background: var(--yl-color-interactive-quiet-bg-hover);
     }
   }
 

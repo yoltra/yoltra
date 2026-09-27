@@ -1,6 +1,6 @@
 .yl-heading {
   font-family: var(--yl-font-sans);
-  color: var(--yl-color-fg);
+  color: var(--yl-color-fg-default);
   font-weight: 700;
   line-height: 1.25;
   margin: 0;
@@ -41,7 +41,7 @@
 
 .yl-text {
   font-family: var(--yl-font-sans);
-  color: var(--yl-color-fg);
+  color: var(--yl-color-fg-default);
   line-height: 1.6;
   margin: 0;
 }
@@ -64,10 +64,10 @@
   color: var(--yl-color-fg-muted);
 }
 .yl-text--brand {
-  color: var(--yl-color-brand);
+  color: var(--yl-color-fg-brand);
 }
 .yl-text--danger {
-  color: var(--yl-color-error-fg);
+  color: var(--yl-color-status-error-fg);
 }
 .yl-text--medium {
   font-weight: 600;
@@ -77,12 +77,13 @@
 }
 
 .yl-link {
-  color: var(--yl-color-brand);
+  color: var(--yl-color-fg-link);
   text-decoration: underline;
   text-underline-offset: 0.2em;
   border-radius: var(--yl-radius-xs);
 }
 .yl-link:hover {
+  color: var(--yl-color-fg-link-hover);
   text-decoration-thickness: 2px;
 }
 .yl-link:focus-visible {
@@ -95,7 +96,7 @@
   font-size: 0.9em;
   padding: 0.2rem var(--yl-space-1);
   border-radius: var(--yl-radius-xs);
-  border: 1px solid var(--yl-color-border);
+  border: 1px solid var(--yl-color-border-subtle);
   background: var(--yl-color-bg-subtle);
   color: var(--yl-color-fg-secondary);
 }

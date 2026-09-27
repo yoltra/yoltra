@@ -1,0 +1,74 @@
+{
+  "$comment": "0.3.x to 0.4.0 custom-property renames. Consumed by scripts/codemod-tokens.mjs and published in the CHANGELOG. Order is irrelevant: the codemod matches whole property names, so no rename can partially rewrite another.",
+  "renames": {
+    "--yl-border-none": "--yl-border-width-none",
+    "--yl-border-thin": "--yl-border-width-thin",
+    "--yl-border-medium": "--yl-border-width-medium",
+    "--yl-border-thick": "--yl-border-width-thick",
+
+    "--yl-bp-sm": "--yl-breakpoint-sm",
+    "--yl-bp-md": "--yl-breakpoint-md",
+    "--yl-bp-lg": "--yl-breakpoint-lg",
+    "--yl-bp-xl": "--yl-breakpoint-xl",
+
+    "--yl-ease": "--yl-motion-ease-standard",
+    "--yl-motion-fast": "--yl-motion-duration-fast",
+    "--yl-motion-normal": "--yl-motion-duration-normal",
+
+    "--yl-color-fg": "--yl-color-fg-default",
+    "--yl-color-border": "--yl-color-border-subtle",
+    "--yl-color-divider": "--yl-color-border-divider",
+    "--yl-color-link": "--yl-color-fg-link",
+    "--yl-color-link-hover": "--yl-color-fg-link-hover",
+
+    "--yl-color-btn-bg": "--yl-color-interactive-bg",
+    "--yl-color-btn-bg-hover": "--yl-color-interactive-bg-hover",
+    "--yl-color-btn-bg-active": "--yl-color-interactive-bg-active",
+    "--yl-color-btn-fg": "--yl-color-interactive-fg",
+
+    "--yl-color-ghost-bg-hover": "--yl-color-interactive-quiet-bg-hover",
+    "--yl-color-ghost-border": "--yl-color-interactive-quiet-border",
+
+    "--yl-color-code-bg": "--yl-color-bg-ink",
+    "--yl-color-code-fg": "--yl-color-fg-on-ink",
+    "--yl-color-code-border": "--yl-color-border-on-ink",
+
+    "--yl-color-info-bg": "--yl-color-status-info-bg",
+    "--yl-color-info-fg": "--yl-color-status-info-fg",
+    "--yl-color-info-border": "--yl-color-status-info-border",
+    "--yl-color-success-bg": "--yl-color-status-success-bg",
+    "--yl-color-success-fg": "--yl-color-status-success-fg",
+    "--yl-color-success-border": "--yl-color-status-success-border",
+    "--yl-color-warning-bg": "--yl-color-status-warning-bg",
+    "--yl-color-warning-fg": "--yl-color-status-warning-fg",
+    "--yl-color-warning-border": "--yl-color-status-warning-border",
+    "--yl-color-error-bg": "--yl-color-status-error-bg",
+    "--yl-color-error-fg": "--yl-color-status-error-fg",
+    "--yl-color-error-border": "--yl-color-status-error-border",
+
+    "--yl-color-brand": "--yl-color-brand-primary"
+  },
+  "judgement": {
+    "--yl-color-brand": {
+      "mechanical": "--yl-color-brand-primary",
+      "why": "The literal equivalent, and the wrong answer wherever the value was colouring text. `brand-primary` is #1A7FE2, which is 4.06:1 on white and fails the WCAG AA text threshold; that is the defect two consumers reported independently. It remains correct for decoration, which only has to clear 3:1.",
+      "use-instead": {
+        "--yl-color-fg-brand": "text that should look branded; a step darker, 5.38:1",
+        "--yl-color-fg-link": "an anchor, which has its own role and hover state",
+        "--yl-color-interactive-bg": "the fill of a control, such as accent-color or a checked switch",
+        "--yl-color-border-focus": "a focus ring"
+      }
+    }
+  },
+  "new": {
+    "$comment": "Tokens that did not exist before. Nothing to rename; listed so a consumer can see what is now available rather than discovering it by grep.",
+    "type-scale": "--yl-text-<role>-{family,size,weight,leading,tracking,transform} for hero, h1..h4, body-lg, body, body-sm, label, button, caption, code",
+    "weights": "--yl-font-weight-{regular,medium,semibold,bold,extrabold}",
+    "numeric": "--yl-font-numeric, for tabular figures",
+    "measures": "--yl-container-{md,lg,xl}, content max-widths",
+    "status-accents": "--yl-color-status-<kind>-solid, the accent on its own rather than as a bg/fg/border triad",
+    "ink-surface": "--yl-color-bg-ink, --yl-color-fg-on-ink, --yl-color-border-on-ink",
+    "quiet-interactive": "--yl-color-interactive-quiet-{bg,bg-hover,bg-active,fg,border}",
+    "motion": "--yl-motion-duration-slow, --yl-motion-ease-{emphasized,decelerated}"
+  }
+}

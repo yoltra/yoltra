@@ -51,7 +51,7 @@ primitivos se renderizan en el servidor — solo los controles interactivos
 | --- | --- |
 | `foundationTokens` | Escala primitiva: paleta, tipografía, espaciado, radios, elevación, movimiento. |
 | `lightTheme` / `darkTheme` / `themes` | Mapeos semánticos de roles. |
-| `themeCss()` | Emite la hoja de estilos completa (variables `--yl-*` + estilos base). |
+| `themeCss()` | Emite las propiedades personalizadas `--yl-*` de ambos temas. **Solo propiedades**, sin reglas de componentes. |
 | `ThemeProvider` / `useTheme` / `applyTheme` | Controlador genérico de tema. |
 | `Button`, `ButtonLink`, `Badge`, `CodeBlock`, `Callout`, `Tabs`, `Table` | Componentes primitivos. |
 | `Portal`, `Dialog`, `Drawer` | Overlays modales, renderizados fuera del árbol. Ver más abajo. |
@@ -211,8 +211,8 @@ verificado por `rush size` en cada build.
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ Button, Card, Stack, Text }` | 2.3 KB | 4 KB |
-| todo | 5.3 KB | 8 KB |
+| `{ Button, Card, Stack, Text }` | 2.7 KB | 4 KB |
+| todo | 5.4 KB | 8 KB |
 | `{ Dialog }` desde `/client` | 1.8 KB | 3 KB |
 | todo `/client` | 4.3 KB | 5.5 KB |
 <!-- size-table:end -->
@@ -226,6 +226,69 @@ gente escriba.
 Estos números son menores que antes de separar la hoja de estilos, y eso no es una mejora — el
 CSS no encogió, salió del bundle de JavaScript hacia archivos que importas deliberadamente. Suma
 las hojas de los componentes que uses al comparar.
+
+
+## Tokens
+
+Tres niveles, y un componente solo puede leer el del medio.
+
+**Primitivos**: valores crudos, `--yl-space-4`, `--yl-radius-md`, `--yl-breakpoint-lg`,
+`--yl-text-h1-size`, `--yl-motion-duration-fast`. No cargan intención, así que sobreviven un
+cambio de tema porque no participan en él.
+
+**Roles semánticos**: dicen para *qué* sirve un color, y son los únicos colores que una hoja de
+estilos debería nombrar: `--yl-color-bg-canvas`, `--yl-color-fg-muted`,
+`--yl-color-interactive-bg`, `--yl-color-status-error-fg`. Cada uno tiene un valor claro y uno
+oscuro, así que un componente que lee un rol queda tematizado sin hacer nada más.
+
+**Locales del componente**: viven en la hoja del propio componente, sin el prefijo `--yl-`, y
+derivan de un rol. El ancho de un diálogo no le importa a nadie más.
+
+La paleta **no** se emite, deliberadamente. Una hoja de estilos que puede alcanzar `primary[500]`
+ya se saltó la capa que hace funcionar el tema, y toda pregunta que el CSS hace en realidad es
+"cuál azul *para qué*".
+
+### La escala tipográfica
+
+Doce roles, cada uno emitido eje por eje para que quien lo use pueda tomar el tamaño sin heredar
+el peso:
+
+```css
+.title {
+  font-size: var(--yl-text-h2-size);
+  font-weight: var(--yl-text-h2-weight);
+  line-height: var(--yl-text-h2-leading);
+  letter-spacing: var(--yl-text-h2-tracking);
+}
+```
+
+Roles: `hero`, `h1`–`h4`, `body-lg`, `body`, `body-sm`, `label`, `button`, `caption`, `code`.
+Ejes: `size`, `weight`, `leading`, `tracking`, `family`, `transform`. Un eje que un rol no define
+no se emite, así que no puede sobrescribir un valor heredado con nada.
+
+### Color de marca y contraste
+
+`--yl-color-brand-primary` es `#1A7FE2`. Con 4.06:1 sobre blanco alcanza para un logo o
+tipografía de despliegue y **no** alcanza para texto corrido, así que el texto que debe verse de
+marca lee `--yl-color-fg-brand`, un paso más oscuro, con 5.38:1. Los rellenos de botón usan
+`--yl-color-interactive-bg`, que es el mismo paso.
+
+`tests/contrast.test.ts` calcula cada combinación en ambos temas y falla por debajo de 4.5:1 para
+texto o 3:1 para un anillo de foco o un acento de estado. El texto deshabilitado está exento, por
+WCAG 1.4.3, y se verifica que *siga* por debajo del umbral para que se siga viendo deshabilitado.
+
+### Migrar desde 0.3.x
+
+Treinta y ocho propiedades cambiaron de nombre. `scripts/token-rename-map.json` es el mapa
+completo y `scripts/codemod-tokens.mjs` lo aplica:
+
+```bash
+node node_modules/@yoltra/ds/scripts/codemod-tokens.mjs --write 'src/**/*.{css,scss,ts,tsx}'
+```
+
+Un cambio necesita criterio humano: `--yl-color-brand` se mapea mecánicamente a
+`--yl-color-brand-primary`, que es correcto para decoración e incorrecto para texto. El codemod
+imprime los lugares que tocó y qué usar en su lugar.
 
 ## Autoría de estilos
 

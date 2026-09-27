@@ -2,7 +2,7 @@
 
 .yl-heading {
   font-family: var(--yl-font-sans);
-  color: var(--yl-color-fg);
+  color: var(--yl-color-fg-default);
   font-weight: 700;
   line-height: 1.25;
   margin: 0;
@@ -25,7 +25,7 @@
 
 .yl-text {
   font-family: var(--yl-font-sans);
-  color: var(--yl-color-fg);
+  color: var(--yl-color-fg-default);
   line-height: 1.6;
   margin: 0;
 
@@ -36,21 +36,22 @@
 
   &--secondary { color: var(--yl-color-fg-secondary); }
   &--muted { color: var(--yl-color-fg-muted); }
-  &--brand { color: var(--yl-color-brand); }
-  &--danger { color: var(--yl-color-error-fg); }
+  &--brand { color: var(--yl-color-fg-brand); }
+  &--danger { color: var(--yl-color-status-error-fg); }
 
   &--medium { font-weight: 600; }
   &--bold { font-weight: 700; }
 }
 
 .yl-link {
-  color: var(--yl-color-brand);
+  color: var(--yl-color-fg-link);
   text-decoration: underline;
   // Keeps descenders legible where a flat underline would cut through them.
   text-underline-offset: 0.2em;
   border-radius: var(--yl-radius-xs);
 
   &:hover {
+    color: var(--yl-color-fg-link-hover);
     text-decoration-thickness: 2px;
   }
 
@@ -62,7 +63,7 @@
   font-size: 0.9em;
   padding: 0.2rem var(--yl-space-1);
   border-radius: var(--yl-radius-xs);
-  border: 1px solid var(--yl-color-border);
+  border: 1px solid var(--yl-color-border-subtle);
   background: var(--yl-color-bg-subtle);
   color: var(--yl-color-fg-secondary);
 }

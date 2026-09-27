@@ -4,12 +4,12 @@
   font-family: var(--yl-font-sans);
   font-size: 1.4rem;
   line-height: 1.4;
-  color: var(--yl-color-fg);
+  color: var(--yl-color-fg-default);
   background: var(--yl-color-bg-canvas);
-  border: 1px solid var(--yl-color-border);
+  border: 1px solid var(--yl-color-border-subtle);
   border-radius: var(--yl-radius-md);
   padding: var(--yl-space-2) var(--yl-space-3);
-  transition: border-color var(--yl-motion-fast) var(--yl-ease), box-shadow var(--yl-motion-fast) var(--yl-ease);
+  transition: border-color var(--yl-motion-duration-fast) var(--yl-motion-ease-standard), box-shadow var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
 }
 .yl-input:hover,
 .yl-select:hover,
@@ -21,7 +21,7 @@
 .yl-textarea:focus-visible {
   outline: none;
   border-color: var(--yl-color-border-focus);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--yl-color-brand) 24%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--yl-color-border-focus) 24%, transparent);
 }
 .yl-input:disabled,
 .yl-select:disabled,

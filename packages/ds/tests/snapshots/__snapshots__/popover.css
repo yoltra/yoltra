@@ -3,8 +3,8 @@
   z-index: var(--yl-z-popover);
   max-width: min(36rem, 100vw - var(--yl-space-8));
   background: var(--yl-color-bg-elevated);
-  color: var(--yl-color-fg);
-  border: 1px solid var(--yl-color-border);
+  color: var(--yl-color-fg-default);
+  border: 1px solid var(--yl-color-border-subtle);
   border-radius: var(--yl-radius-lg);
   box-shadow: var(--yl-elevation-lg);
 }
@@ -36,18 +36,18 @@
   font-size: 1.4rem;
   line-height: 1.4;
   text-align: left;
-  color: var(--yl-color-fg);
+  color: var(--yl-color-fg-default);
   background: transparent;
   border: 0;
   border-radius: var(--yl-radius-sm);
   cursor: pointer;
 }
 .yl-menu__item:hover {
-  background: var(--yl-color-ghost-bg-hover);
+  background: var(--yl-color-interactive-quiet-bg-hover);
 }
 .yl-menu__item:focus-visible {
   outline: none;
-  background: var(--yl-color-ghost-bg-hover);
+  background: var(--yl-color-interactive-quiet-bg-hover);
   box-shadow: inset 0 0 0 2px var(--yl-color-border-focus);
 }
 .yl-menu__item[aria-disabled=true] {
@@ -60,5 +60,5 @@
 .yl-menu__separator {
   height: 1px;
   margin: var(--yl-space-1) 0;
-  background: var(--yl-color-divider);
+  background: var(--yl-color-border-divider);
 }

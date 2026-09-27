@@ -2,7 +2,7 @@
 
 .yl-field {
   &__required {
-    color: var(--yl-color-error-fg);
+    color: var(--yl-color-status-error-fg);
     margin-inline-start: 0.2rem;
   }
 
@@ -17,7 +17,7 @@
     margin: 0;
     font-size: 1.2rem;
     line-height: 1.5;
-    color: var(--yl-color-error-fg);
+    color: var(--yl-color-status-error-fg);
 
     // The region is always in the document so a later message is an update to something the
     // reader is already watching. Empty, it must take no space.
@@ -67,7 +67,7 @@
     font-family: var(--yl-font-sans);
     font-size: 1.4rem;
     line-height: 1.4;
-    color: var(--yl-color-fg);
+    color: var(--yl-color-fg-default);
     cursor: pointer;
 
     &:has(input:disabled) {
@@ -90,7 +90,7 @@
   inline-size: 1.6rem;
   block-size: 1.6rem;
   margin: 0;
-  accent-color: var(--yl-color-brand);
+  accent-color: var(--yl-color-interactive-bg);
   cursor: pointer;
 
   @include focus-ring(2px);
@@ -109,7 +109,7 @@
   background: var(--yl-color-border-strong);
   position: relative;
   cursor: pointer;
-  transition: background var(--yl-motion-fast) var(--yl-ease);
+  transition: background var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
 
   &::after {
     content: "";
@@ -120,11 +120,11 @@
     block-size: 1.6rem;
     border-radius: var(--yl-radius-round);
     background: var(--yl-color-fg-inverse);
-    transition: translate var(--yl-motion-fast) var(--yl-ease);
+    transition: translate var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
   }
 
   &:checked {
-    background: var(--yl-color-brand);
+    background: var(--yl-color-interactive-bg);
 
     &::after {
       translate: 1.6rem 0;
@@ -141,7 +141,7 @@
 
 .yl-slider {
   inline-size: 100%;
-  accent-color: var(--yl-color-brand);
+  accent-color: var(--yl-color-interactive-bg);
   cursor: pointer;
 
   @include focus-ring(2px);

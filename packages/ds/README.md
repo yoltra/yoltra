@@ -47,9 +47,9 @@ tabs, copy button) are client components.
 
 | Export | Purpose |
 | --- | --- |
-| `foundationTokens` | Primitive scale: color palette, type, spacing, radius, elevation, motion. |
-| `lightTheme` / `darkTheme` / `themes` | Semantic role mappings (background/foreground/border/interactive/status). |
-| `themeCss()` | Emits the full stylesheet (`--yl-*` vars + component base styles). |
+| `foundationTokens` | Primitives: palette, type scale, spacing, radius, elevation, motion. Not themed. |
+| `lightTheme` / `darkTheme` / `themes` | Semantic roles (background/foreground/border/interactive/status). |
+| `themeCss()` | Emits the `--yl-*` custom properties for both themes. **Properties only**, no component rules. |
 | `ThemeProvider` / `useTheme` / `applyTheme` | Generic theme controller (reflects onto `data-theme`). |
 | `Button`, `ButtonLink`, `Badge`, `CodeBlock`, `Callout`, `Tabs`, `Table` | Primitive components. |
 | `Portal`, `Dialog`, `Drawer` | Modal overlays, rendered outside the tree. See below. |
@@ -209,8 +209,8 @@ Measured the way a consumer ships it — bundled, tree-shaken, minified, gzipped
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ Button, Card, Stack, Text }` | 2.3 KB | 4 KB |
-| everything | 5.3 KB | 8 KB |
+| `{ Button, Card, Stack, Text }` | 2.7 KB | 4 KB |
+| everything | 5.4 KB | 8 KB |
 | `{ Dialog }` from `/client` | 1.8 KB | 3 KB |
 | all of `/client` | 4.3 KB | 5.5 KB |
 <!-- size-table:end -->
@@ -222,6 +222,69 @@ not a cost anybody pays; `import * as all` is not something people write.
 These numbers are lower than before the stylesheet was split out, and that is not an
 improvement — the CSS did not get smaller, it left the JavaScript bundle for files you import
 deliberately. Add whichever component stylesheets you use when comparing.
+
+
+## Tokens
+
+Three tiers, and a component may only read the middle one.
+
+**Primitives** are raw values: `--yl-space-4`, `--yl-radius-md`, `--yl-breakpoint-lg`,
+`--yl-text-h1-size`, `--yl-motion-duration-fast`. They carry no intent, so they survive a theme
+switch by not participating in one.
+
+**Semantic roles** say what a colour is *for*, and are the only colours a stylesheet should
+name: `--yl-color-bg-canvas`, `--yl-color-fg-muted`, `--yl-color-interactive-bg`,
+`--yl-color-status-error-fg`. Each has a light and a dark value, so a component that reads a
+role is themed for free.
+
+**Component locals** stay in the component's own stylesheet, prefixed without `--yl-`, deriving
+from a role. A dialog's width is nobody else's business.
+
+The palette is deliberately **not** emitted. A stylesheet that can reach `primary[500]` has
+bypassed the layer that makes theming work, and every question CSS actually asks is "which blue
+*for what*".
+
+### The type scale
+
+Twelve roles, each emitted one axis at a time so a caller can take the size without inheriting
+the weight:
+
+```css
+.title {
+  font-size: var(--yl-text-h2-size);
+  font-weight: var(--yl-text-h2-weight);
+  line-height: var(--yl-text-h2-leading);
+  letter-spacing: var(--yl-text-h2-tracking);
+}
+```
+
+Roles: `hero`, `h1`–`h4`, `body-lg`, `body`, `body-sm`, `label`, `button`, `caption`, `code`.
+Axes: `size`, `weight`, `leading`, `tracking`, `family`, `transform`. An axis a role does not set
+is not emitted, so it cannot override an inherited value with nothing.
+
+### Brand colour and contrast
+
+`--yl-color-brand-primary` is `#1A7FE2`. At 4.06:1 on white that is enough for a logo or display
+type and **not** enough for body copy, so text that should look branded reads
+`--yl-color-fg-brand`, a step darker at 5.38:1. Button fills use `--yl-color-interactive-bg`,
+which is the same step.
+
+`tests/contrast.test.ts` computes every pairing in both themes and fails below 4.5:1 for text or
+3:1 for a focus ring or a status accent. Disabled text is exempt, per WCAG 1.4.3, and asserted
+to *stay* below the threshold so it keeps looking disabled.
+
+### Upgrading from 0.3.x
+
+Thirty-eight properties were renamed. `scripts/token-rename-map.json` is the full map and
+`scripts/codemod-tokens.mjs` applies it:
+
+```bash
+node node_modules/@yoltra/ds/scripts/codemod-tokens.mjs --write 'src/**/*.{css,scss,ts,tsx}'
+```
+
+One rename needs a human: `--yl-color-brand` maps mechanically to `--yl-color-brand-primary`,
+which is right for decoration and wrong for text. The codemod prints the sites it touched and
+what to use instead.
 
 ## Authoring
 

@@ -1,10 +1,20 @@
 /**
- * Yoltra Design System — foundation tokens.
+ * Yoltra Design System, foundation tokens.
  *
- * A brand-anchored primitive scale (color, type, space, radius, elevation,
- * motion) shared by the website, docs, and examples. Adapted from the Yoltra
- * DevTools token set and decoupled from any editor/VS Code theming so it can
- * stand alone as the public design language.
+ * A brand-anchored primitive scale (colour, type, space, radius, elevation, motion) shared by
+ * the website, docs and examples.
+ *
+ * @remarks
+ * These are **primitives**: raw values with no intent attached. Components never read them
+ * directly, because "this button is `primary[500]`" is a fact that cannot survive a theme
+ * switch. They read the semantic roles in `./themes`, which map these onto intents, and those
+ * roles are what `./css` emits as custom properties.
+ *
+ * The one deliberate exception is `palette`, which is **not emitted**. A palette step is an
+ * answer to "which blue", and every question a stylesheet actually asks is "which blue *for
+ * what*". Emitting the ramp would invite components to reach past the semantic layer, which is
+ * the coupling the layer exists to prevent. `tests/styles.test.ts` asserts the omission is
+ * deliberate rather than an oversight.
  *
  * Brand: primary blue `#1A7FE2`, ink `#0F172A`. Type: Inter + JetBrains Mono.
  */
@@ -47,6 +57,16 @@ export interface PaletteTokens {
 
 export interface FontTokens {
   family: { sans: string; mono: string };
+  /**
+   * The type scale, one entry per role.
+   *
+   * @remarks
+   * Every axis is emitted separately (`--yl-text-h1-size`, `-weight`, `-leading`, `-tracking`)
+   * rather than as a `font` shorthand. The shorthand resets properties it does not mention and
+   * cannot be read one axis at a time, so a heading that wants this size at a different weight
+   * would have to restate the whole thing, which is how the sizes came to be hardcoded in the
+   * first place.
+   */
   text: {
     hero: FontStyleToken;
     h1: FontStyleToken;
@@ -65,9 +85,29 @@ export interface FontTokens {
 
 export interface FoundationTokens {
   font: FontTokens;
+  /**
+   * The weight ramp, independent of the type scale.
+   *
+   * @remarks
+   * `font.text` fixes a weight per role, which is right for a heading and wrong for the case
+   * where a caller wants body copy one step heavier. Naming the steps means that case does not
+   * have to guess a number.
+   */
+  fontWeight: { regular: number; medium: number; semibold: number; bold: number; extrabold: number };
+  /** `font-variant-numeric` for figures that must not shift width between renders. */
+  fontNumeric: string;
   palette: PaletteTokens;
   /** Mobile-first breakpoint scale (min-width, px). Layout is CSS-owned. */
   breakpoints: { sm: number; md: number; lg: number; xl: number };
+  /**
+   * Content max-widths, stepping with the breakpoints.
+   *
+   * @remarks
+   * Tokens because a measure is a design decision, not an implementation detail of one
+   * container. Without them every application invents its own, and three of them disagreeing
+   * about how wide a page is reads as three different products.
+   */
+  container: { md: number; lg: number; xl: number };
   spacing: Record<number, number>;
   radius: {
     none: number;
@@ -79,15 +119,16 @@ export interface FoundationTokens {
     "2xl": number;
     round: number;
   };
-  elevation: Record<"none" | "xs" | "sm" | "md" | "lg" | "xl", { boxShadow: string }>;
-  border: { width: { none: 0; thin: number; medium: number; thick: number } };
+  /** Box-shadow values, keyed by height. */
+  elevation: Record<"none" | "xs" | "sm" | "md" | "lg" | "xl", string>;
+  borderWidth: { none: number; thin: number; medium: number; thick: number };
   /**
    * Stacking order for portalled surfaces.
    *
    * @remarks
    * Overlays render into `document.body`, so they escape whatever stacking context they were
    * written inside and land in the document's. Their order then depends on nothing but these
-   * numbers — which is why they are tokens rather than literals scattered across stylesheets.
+   * numbers, which is why they are tokens rather than literals scattered across stylesheets.
    *
    * The order encodes containment: a popover opened inside a dialog must sit above it, and a
    * tooltip describing that popover above them both.
@@ -121,6 +162,10 @@ export const foundationTokens: FoundationTokens = {
     },
   },
 
+  fontWeight: { regular: 400, medium: 500, semibold: 600, bold: 700, extrabold: 800 },
+
+  fontNumeric: "tabular-nums",
+
   palette: {
     primary: { 50: "#EFF6FF", 100: "#DBEBFF", 200: "#B8D8FF", 300: "#84BEFF", 400: "#4A9DFF", 500: "#1A7FE2", 600: "#116BC2", 700: "#0E5598", 800: "#10497D", 900: "#123F68" },
     secondary: { 50: "#F2F3FF", 100: "#E5E7FF", 200: "#CDD1FF", 300: "#A9AFFF", 400: "#7D83FF", 500: "#6369F1", 600: "#4D52D4", 700: "#3F43AC", 800: "#34388B", 900: "#2C306F" },
@@ -135,20 +180,22 @@ export const foundationTokens: FoundationTokens = {
 
   breakpoints: { sm: 480, md: 768, lg: 1024, xl: 1280 },
 
+  container: { md: 720, lg: 960, xl: 1180 },
+
   spacing: { 0: 0, 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32, 10: 40, 12: 48, 16: 64, 20: 80, 24: 96, 32: 128 },
 
   radius: { none: 0, xs: 4, sm: 6, md: 8, lg: 12, xl: 16, "2xl": 20, round: 9999 },
 
   elevation: {
-    none: { boxShadow: "none" },
-    xs: { boxShadow: "0 1px 2px rgba(15, 23, 42, 0.06)" },
-    sm: { boxShadow: "0 2px 6px rgba(15, 23, 42, 0.08)" },
-    md: { boxShadow: "0 6px 16px rgba(15, 23, 42, 0.12)" },
-    lg: { boxShadow: "0 12px 24px rgba(15, 23, 42, 0.16)" },
-    xl: { boxShadow: "0 18px 40px rgba(15, 23, 42, 0.22)" },
+    none: "none",
+    xs: "0 1px 2px rgba(15, 23, 42, 0.06)",
+    sm: "0 2px 6px rgba(15, 23, 42, 0.08)",
+    md: "0 6px 16px rgba(15, 23, 42, 0.12)",
+    lg: "0 12px 24px rgba(15, 23, 42, 0.16)",
+    xl: "0 18px 40px rgba(15, 23, 42, 0.22)",
   },
 
-  border: { width: { none: 0, thin: 1, medium: 2, thick: 3 } },
+  borderWidth: { none: 0, thin: 1, medium: 2, thick: 3 },
 
   zIndex: { base: 0, sticky: 100, overlay: 1000, popover: 1100, tooltip: 1200 },
 
