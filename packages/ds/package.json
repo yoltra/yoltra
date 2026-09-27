@@ -1,11 +1,11 @@
 {
   "name": "@yoltra/ds",
   "version": "0.3.0",
-  "description": "Yoltra Design System — tokens and primitive React components shared across the website, docs, and examples",
+  "description": "Yoltra Design System \u2014 tokens and primitive React components shared across the website, docs, and examples",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && vite build && node scripts/build-styles.mjs && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types",
-    "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
-    "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix",
+    "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0 && stylelint \"src/**/*.scss\" --custom-syntax postcss-scss",
+    "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix && stylelint \"src/**/*.scss\" --custom-syntax postcss-scss --fix",
     "docs": "typedoc --options ./typedoc.ds.json && rushx docs:stamp",
     "docs:stamp": "node ../../tools/repo-tools/bin/docs-stamp.mjs docs",
     "test": "node ../../tools/repo-tools/bin/repo-vitest.cjs --coverage --watch=false",
@@ -77,7 +77,9 @@
     "@testing-library/react": "16.3.0",
     "@vitest/coverage-v8": "3.2.7",
     "jsdom": "^24.0.0",
-    "vitest": "3.2.7"
+    "vitest": "3.2.7",
+    "stylelint": "17.15.0",
+    "postcss-scss": "4.0.9"
   },
   "exports": {
     ".": {

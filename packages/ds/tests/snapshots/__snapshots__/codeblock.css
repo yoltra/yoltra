@@ -1,8 +1,14 @@
 .yl-code {
+  --code-head-fg: color-mix(in srgb, var(--yl-color-fg-on-ink) 70%, transparent);
+  --code-copy-fg: color-mix(in srgb, var(--yl-color-fg-on-ink) 85%, transparent);
+  --code-copy-bg: color-mix(in srgb, var(--yl-color-fg-on-ink) 8%, transparent);
+  --code-copy-bg-hover: color-mix(in srgb, var(--yl-color-fg-on-ink) 16%, transparent);
+  --code-copy-border: color-mix(in srgb, var(--yl-color-fg-on-ink) 20%, transparent);
+  --code-copy-pad-y: 0.2rem;
   position: relative;
   margin: var(--yl-space-4) 0;
   border-radius: var(--yl-radius-lg);
-  border: 1px solid var(--yl-color-border-on-ink);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-on-ink);
   background: var(--yl-color-bg-ink);
   overflow: hidden;
 }
@@ -11,32 +17,32 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--yl-space-2) var(--yl-space-3);
-  border-bottom: 1px solid var(--yl-color-border-on-ink);
+  border-bottom: var(--yl-border-width-thin) solid var(--yl-color-border-on-ink);
   font-family: var(--yl-font-mono);
-  font-size: 1.2rem;
-  color: rgba(229, 238, 248, 0.7);
+  font-size: var(--yl-text-caption-size);
+  color: var(--code-head-fg);
 }
 .yl-code pre {
   margin: 0;
   padding: var(--yl-space-4);
   overflow-x: auto;
   font-family: var(--yl-font-mono);
-  font-size: 1.35rem;
+  font-size: var(--yl-text-code-size);
   line-height: 1.6;
   color: var(--yl-color-fg-on-ink);
 }
 .yl-code__copy {
   font-family: var(--yl-font-sans);
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: var(--yl-text-caption-size);
+  font-weight: var(--yl-font-weight-semibold);
   cursor: pointer;
-  color: rgba(229, 238, 248, 0.85);
-  background: rgba(148, 163, 184, 0.14);
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: var(--code-copy-fg);
+  background: var(--code-copy-bg);
+  border: var(--yl-border-width-thin) solid var(--code-copy-border);
   border-radius: var(--yl-radius-sm);
-  padding: 0.2rem var(--yl-space-2);
+  padding: var(--code-copy-pad-y) var(--yl-space-2);
   transition: background var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
 }
 .yl-code__copy:hover {
-  background: rgba(148, 163, 184, 0.26);
+  background: var(--code-copy-bg-hover);
 }

@@ -1,12 +1,13 @@
 .yl-input,
 .yl-select,
 .yl-textarea {
+  --textarea-min-height: 8rem;
   font-family: var(--yl-font-sans);
-  font-size: 1.4rem;
+  font-size: var(--yl-text-body-sm-size);
   line-height: 1.4;
   color: var(--yl-color-fg-default);
   background: var(--yl-color-bg-canvas);
-  border: 1px solid var(--yl-color-border-subtle);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
   border-radius: var(--yl-radius-md);
   padding: var(--yl-space-2) var(--yl-space-3);
   transition: border-color var(--yl-motion-duration-fast) var(--yl-motion-ease-standard), box-shadow var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
@@ -21,7 +22,7 @@
 .yl-textarea:focus-visible {
   outline: none;
   border-color: var(--yl-color-border-focus);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--yl-color-border-focus) 24%, transparent);
+  box-shadow: 0 0 0 var(--yl-border-width-thick) color-mix(in srgb, var(--yl-color-border-focus) 24%, transparent);
 }
 .yl-input:disabled,
 .yl-select:disabled,
@@ -43,13 +44,13 @@
 
 .yl-textarea {
   resize: vertical;
-  min-height: 8rem;
+  min-height: var(--textarea-min-height);
 }
 
 .yl-input--sm,
 .yl-select--sm {
   padding: var(--yl-space-1) var(--yl-space-2);
-  font-size: 1.3rem;
+  font-size: var(--yl-text-label-size);
 }
 
 .yl-input--block,

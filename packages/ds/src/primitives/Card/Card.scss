@@ -3,7 +3,7 @@
 .yl-card {
   padding: var(--yl-card-padding, var(--yl-space-4));
   border-radius: var(--yl-radius-lg);
-  border: 1px solid var(--yl-color-border-subtle);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
   background: var(--yl-color-bg-panel);
   box-shadow: var(--yl-card-shadow, var(--yl-elevation-xs));
 

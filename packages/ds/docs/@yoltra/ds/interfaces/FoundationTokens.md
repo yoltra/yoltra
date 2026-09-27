@@ -8,7 +8,7 @@
 
 # Interface: FoundationTokens
 
-Defined in: [tokens/tokens.ts:86](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L86)
+Defined in: [tokens/tokens.ts:88](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L88)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [tokens/tokens.ts:86](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **borderWidth**: `object`
 
-Defined in: [tokens/tokens.ts:124](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L124)
+Defined in: [tokens/tokens.ts:126](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L126)
 
 #### medium
 
@@ -40,7 +40,7 @@ Defined in: [tokens/tokens.ts:124](https://github.com/yoltra/yoltra/blob/main/pa
 
 > **breakpoints**: `object`
 
-Defined in: [tokens/tokens.ts:101](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L101)
+Defined in: [tokens/tokens.ts:103](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L103)
 
 Mobile-first breakpoint scale (min-width, px). Layout is CSS-owned.
 
@@ -66,7 +66,7 @@ Mobile-first breakpoint scale (min-width, px). Layout is CSS-owned.
 
 > **container**: `object`
 
-Defined in: [tokens/tokens.ts:110](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L110)
+Defined in: [tokens/tokens.ts:112](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L112)
 
 Content max-widths, stepping with the breakpoints.
 
@@ -94,7 +94,7 @@ about how wide a page is reads as three different products.
 
 > **elevation**: `Record`\<`"none"` \| `"xs"` \| `"sm"` \| `"md"` \| `"lg"` \| `"xl"`, `string`\>
 
-Defined in: [tokens/tokens.ts:123](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L123)
+Defined in: [tokens/tokens.ts:125](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L125)
 
 Box-shadow values, keyed by height.
 
@@ -104,7 +104,7 @@ Box-shadow values, keyed by height.
 
 > **font**: [`FontTokens`](FontTokens.md)
 
-Defined in: [tokens/tokens.ts:87](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L87)
+Defined in: [tokens/tokens.ts:89](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L89)
 
 ***
 
@@ -112,7 +112,7 @@ Defined in: [tokens/tokens.ts:87](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **fontNumeric**: `string`
 
-Defined in: [tokens/tokens.ts:98](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L98)
+Defined in: [tokens/tokens.ts:100](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L100)
 
 `font-variant-numeric` for figures that must not shift width between renders.
 
@@ -122,7 +122,7 @@ Defined in: [tokens/tokens.ts:98](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **fontWeight**: `object`
 
-Defined in: [tokens/tokens.ts:96](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L96)
+Defined in: [tokens/tokens.ts:98](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L98)
 
 The weight ramp, independent of the type scale.
 
@@ -158,7 +158,7 @@ have to guess a number.
 
 > **motion**: `object`
 
-Defined in: [tokens/tokens.ts:137](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L137)
+Defined in: [tokens/tokens.ts:139](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L139)
 
 #### duration
 
@@ -198,7 +198,7 @@ Defined in: [tokens/tokens.ts:137](https://github.com/yoltra/yoltra/blob/main/pa
 
 > **palette**: [`PaletteTokens`](PaletteTokens.md)
 
-Defined in: [tokens/tokens.ts:99](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L99)
+Defined in: [tokens/tokens.ts:101](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L101)
 
 ***
 
@@ -206,7 +206,7 @@ Defined in: [tokens/tokens.ts:99](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **radius**: `object`
 
-Defined in: [tokens/tokens.ts:112](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L112)
+Defined in: [tokens/tokens.ts:114](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L114)
 
 #### 2xl
 
@@ -246,7 +246,7 @@ Defined in: [tokens/tokens.ts:112](https://github.com/yoltra/yoltra/blob/main/pa
 
 > **spacing**: `Record`\<`number`, `number`\>
 
-Defined in: [tokens/tokens.ts:111](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L111)
+Defined in: [tokens/tokens.ts:113](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L113)
 
 ***
 
@@ -254,7 +254,7 @@ Defined in: [tokens/tokens.ts:111](https://github.com/yoltra/yoltra/blob/main/pa
 
 > **zIndex**: `object`
 
-Defined in: [tokens/tokens.ts:136](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L136)
+Defined in: [tokens/tokens.ts:138](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L138)
 
 Stacking order for portalled surfaces.
 

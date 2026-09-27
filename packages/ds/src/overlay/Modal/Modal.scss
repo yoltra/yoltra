@@ -23,7 +23,7 @@
     justify-content: space-between;
     gap: var(--yl-space-4);
     padding: var(--yl-space-4) var(--yl-space-4) var(--yl-space-3);
-    border-bottom: 1px solid var(--yl-color-border-divider);
+    border-bottom: var(--yl-border-width-thin) solid var(--yl-color-border-divider);
   }
 
   &__heading {
@@ -34,34 +34,37 @@
   }
 
   &__title {
+    @include type(h3);
+
     margin: 0;
-    font-family: var(--yl-font-sans);
-    font-size: 2rem;
-    font-weight: 650;
-    line-height: 1.3;
     color: var(--yl-color-fg-default);
   }
 
   &__description {
     margin: 0;
-    font-size: 1.4rem;
+    font-size: var(--yl-text-body-sm-size);
     line-height: 1.5;
     color: var(--yl-color-fg-secondary);
   }
 
   &__close {
+    // A square hit area for a single glyph, and the glyph inside it. Component geometry:
+    // neither is a length the design system has an opinion about.
+    --modal-close-size: 3.2rem;
+    --modal-close-glyph: 2rem;
+
     flex: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 3.2rem;
-    height: 3.2rem;
+    width: var(--modal-close-size);
+    height: var(--modal-close-size);
     padding: 0;
-    font-size: 2rem;
+    font-size: var(--modal-close-glyph);
     line-height: 1;
     color: var(--yl-color-fg-muted);
     background: transparent;
-    border: 1px solid transparent;
+    border: var(--yl-border-width-thin) solid transparent;
     border-radius: var(--yl-radius-sm);
     cursor: pointer;
 
@@ -88,7 +91,7 @@
     justify-content: flex-end;
     gap: var(--yl-space-3);
     padding: var(--yl-space-3) var(--yl-space-4);
-    border-top: 1px solid var(--yl-color-border-divider);
+    border-top: var(--yl-border-width-thin) solid var(--yl-color-border-divider);
   }
 }
 
@@ -103,21 +106,30 @@
 }
 
 .yl-dialog {
+  --dialog-width-sm: 40rem;
+  --dialog-width-md: 56rem;
+  --dialog-width-lg: 76rem;
+
   @extend %yl-modal-surface;
 
   width: 100%;
   max-height: 100%;
-  border: 1px solid var(--yl-color-border-subtle);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
   border-radius: var(--yl-radius-xl);
   animation: yl-modal-in var(--yl-motion-duration-normal) var(--yl-motion-ease-standard);
 
-  &--sm { max-width: 40rem; }
-  &--md { max-width: 56rem; }
-  &--lg { max-width: 76rem; }
+  // Measures. A dialog is as wide as its content needs, which is a component decision.
+  &--sm { max-width: var(--dialog-width-sm); }
+  &--md { max-width: var(--dialog-width-md); }
+  &--lg { max-width: var(--dialog-width-lg); }
   &--full { max-width: none; height: 100%; }
 }
 
 .yl-drawer {
+  // The default extent along the edge it is docked to. `Drawer`'s `size` prop overrides this
+  // by setting the same property inline, which is why it is public rather than local.
+  --yl-drawer-size: 42rem;
+
   @extend %yl-modal-surface;
 
   position: fixed;
@@ -126,7 +138,7 @@
   &--right {
     top: 0;
     bottom: 0;
-    width: var(--yl-drawer-size, 42rem);
+    width: var(--yl-drawer-size);
     max-width: 100%;
   }
 
@@ -134,37 +146,37 @@
   &--bottom {
     left: 0;
     right: 0;
-    height: var(--yl-drawer-size, 42rem);
+    height: var(--yl-drawer-size);
     max-height: 100%;
   }
 
   &--left {
     left: 0;
-    border-right: 1px solid var(--yl-color-border-subtle);
+    border-right: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
     animation: yl-drawer-in-left var(--yl-motion-duration-normal) var(--yl-motion-ease-standard);
   }
 
   &--right {
     right: 0;
-    border-left: 1px solid var(--yl-color-border-subtle);
+    border-left: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
     animation: yl-drawer-in-right var(--yl-motion-duration-normal) var(--yl-motion-ease-standard);
   }
 
   &--top {
     top: 0;
-    border-bottom: 1px solid var(--yl-color-border-subtle);
+    border-bottom: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
     animation: yl-drawer-in-top var(--yl-motion-duration-normal) var(--yl-motion-ease-standard);
   }
 
   &--bottom {
     bottom: 0;
-    border-top: 1px solid var(--yl-color-border-subtle);
+    border-top: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
     animation: yl-drawer-in-bottom var(--yl-motion-duration-normal) var(--yl-motion-ease-standard);
   }
 }
 
 @keyframes yl-modal-in {
-  from { opacity: 0; transform: translateY(0.8rem) scale(0.98); }
+  from { opacity: 0; transform: translateY(var(--yl-space-2)) scale(0.98); }
   to { opacity: 1; transform: none; }
 }
 

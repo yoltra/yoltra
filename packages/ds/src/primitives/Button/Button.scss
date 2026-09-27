@@ -1,23 +1,27 @@
 @use "../../styles" as *;
 
 .yl-btn {
+  // One pixel of travel on press. A component decision rather than a system one, and
+  // deliberately not the hairline token: it is movement, not a border.
+  --btn-press-travel: 1px;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--yl-space-2);
   font-family: var(--yl-font-sans);
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: var(--yl-text-button-size);
+  font-weight: var(--yl-font-weight-semibold);
   line-height: 1.2;
   padding: var(--yl-space-2) var(--yl-space-4);
   border-radius: var(--yl-radius-md);
-  border: 1px solid transparent;
+  border: var(--yl-border-width-thin) solid transparent;
   cursor: pointer;
   text-decoration: none;
   @include transition(background, border-color, transform);
 
   &:active {
-    transform: translateY(1px);
+    transform: translateY(var(--btn-press-travel));
   }
 
   @include focus-ring;
@@ -48,7 +52,7 @@
 
   &--sm {
     padding: var(--yl-space-1) var(--yl-space-3);
-    font-size: 1.3rem;
+    font-size: var(--yl-text-label-size);
   }
 }
 
@@ -69,7 +73,7 @@
   > .yl-btn:not(:first-child) {
     border-start-start-radius: 0;
     border-end-start-radius: 0;
-    margin-inline-start: -1px;
+    margin-inline-start: calc(-1 * var(--yl-border-width-thin));
   }
   > .yl-btn:not(:last-child) {
     border-start-end-radius: 0;

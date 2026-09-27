@@ -10,4 +10,4 @@
 
 > `const` **foundationTokens**: [`FoundationTokens`](../interfaces/FoundationTokens.md)
 
-Defined in: [tokens/tokens.ts:146](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L146)
+Defined in: [tokens/tokens.ts:148](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L148)

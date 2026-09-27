@@ -73,6 +73,8 @@ export interface FontTokens {
     h2: FontStyleToken;
     h3: FontStyleToken;
     h4: FontStyleToken;
+    h5: FontStyleToken;
+    h6: FontStyleToken;
     bodyLg: FontStyleToken;
     body: FontStyleToken;
     bodySm: FontStyleToken;
@@ -148,12 +150,14 @@ export const foundationTokens: FoundationTokens = {
     family: { sans: SANS, mono: MONO },
     text: {
       hero: { fontFamily: SANS, fontSize: 56, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-0.03em" },
-      h1: { fontFamily: SANS, fontSize: 36, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.02em" },
-      h2: { fontFamily: SANS, fontSize: 26, fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.01em" },
-      h3: { fontFamily: SANS, fontSize: 20, fontWeight: 650, lineHeight: 1.3 },
-      h4: { fontFamily: SANS, fontSize: 17, fontWeight: 600, lineHeight: 1.35 },
-      bodyLg: { fontFamily: SANS, fontSize: 18, fontWeight: 400, lineHeight: 1.65 },
-      body: { fontFamily: SANS, fontSize: 16, fontWeight: 400, lineHeight: 1.6 },
+      h1: { fontFamily: SANS, fontSize: 32, fontWeight: 700, lineHeight: 1.25, letterSpacing: "-0.02em" },
+      h2: { fontFamily: SANS, fontSize: 24, fontWeight: 700, lineHeight: 1.25, letterSpacing: "-0.01em" },
+      h3: { fontFamily: SANS, fontSize: 20, fontWeight: 700, lineHeight: 1.25 },
+      h4: { fontFamily: SANS, fontSize: 17, fontWeight: 700, lineHeight: 1.25 },
+      h5: { fontFamily: SANS, fontSize: 15, fontWeight: 700, lineHeight: 1.25 },
+      h6: { fontFamily: SANS, fontSize: 14, fontWeight: 700, lineHeight: 1.25 },
+      bodyLg: { fontFamily: SANS, fontSize: 17, fontWeight: 400, lineHeight: 1.6 },
+      body: { fontFamily: SANS, fontSize: 15, fontWeight: 400, lineHeight: 1.6 },
       bodySm: { fontFamily: SANS, fontSize: 14, fontWeight: 400, lineHeight: 1.5 },
       label: { fontFamily: SANS, fontSize: 13, fontWeight: 600, lineHeight: 1.3, letterSpacing: "0.01em" },
       button: { fontFamily: SANS, fontSize: 15, fontWeight: 600, lineHeight: 1.2 },

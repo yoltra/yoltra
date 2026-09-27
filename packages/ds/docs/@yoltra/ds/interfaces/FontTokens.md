@@ -76,6 +76,14 @@ The type scale, one entry per role.
 
 > **h4**: [`FontStyleToken`](FontStyleToken.md)
 
+#### h5
+
+> **h5**: [`FontStyleToken`](FontStyleToken.md)
+
+#### h6
+
+> **h6**: [`FontStyleToken`](FontStyleToken.md)
+
 #### hero
 
 > **hero**: [`FontStyleToken`](FontStyleToken.md)

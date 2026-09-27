@@ -28,12 +28,12 @@
   border: 0;
   background: var(--yl-color-border-subtle);
   margin: var(--yl-space-4) 0;
-  height: 1px;
+  height: var(--yl-border-width-thin);
   width: 100%;
 
   &--vertical {
     height: auto;
-    width: 1px;
+    width: var(--yl-border-width-thin);
     margin: 0 var(--yl-space-3);
     align-self: stretch;
   }

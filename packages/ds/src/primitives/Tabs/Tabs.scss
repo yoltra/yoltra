@@ -4,20 +4,20 @@
   &__list {
     display: flex;
     gap: var(--yl-space-1);
-    border-bottom: 1px solid var(--yl-color-border-subtle);
+    border-bottom: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
   }
 
   &__tab {
     font-family: var(--yl-font-sans);
-    font-size: 1.4rem;
-    font-weight: 600;
+    font-size: var(--yl-text-body-sm-size);
+    font-weight: var(--yl-font-weight-semibold);
     cursor: pointer;
     padding: var(--yl-space-2) var(--yl-space-3);
     background: none;
     border: none;
     color: var(--yl-color-fg-muted);
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
+    border-bottom: var(--yl-border-width-medium) solid transparent;
+    margin-bottom: calc(-1 * var(--yl-border-width-thin));
 
     &[data-active="true"] {
       color: var(--yl-color-fg-brand);

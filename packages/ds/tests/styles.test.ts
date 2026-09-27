@@ -67,13 +67,46 @@ const TOKEN_NAMESPACES = [
 const isToken = (name: string): boolean =>
   name === "--yl-ease" || TOKEN_NAMESPACES.some((ns) => name.startsWith(ns));
 
+/**
+ * `--yl-*` properties a component owns rather than the token sheet.
+ *
+ * @remarks
+ * Each of these is set from a prop as an inline style, so it is part of a component's public
+ * surface and not part of the theme: `Card`'s `padding`, `Stack`'s `gap`, `Drawer`'s `size`. The
+ * token sheet never defines them, and a stylesheet reading one is correct.
+ *
+ * Listed rather than pattern-matched, so a typo in a component property is still a failure. The
+ * suite also asserts each one is actually declared or read somewhere, which is what stops this
+ * list becoming a licence to invent names.
+ */
+const COMPONENT_OWNED = new Set([
+  "--yl-card-padding",
+  "--yl-card-shadow",
+  "--yl-stack-gap",
+  "--yl-inline-gap",
+  "--yl-grid-gap",
+  "--yl-spinner-size",
+  "--yl-drawer-size",
+]);
+
 describe("every custom property a stylesheet reads is one the tokens define", () => {
   const defined = definedProperties();
+
+  it("accounts for every component-owned property, so the allowance cannot grow unnoticed", () => {
+    const all = compiledStyles()
+      .map((s) => s.css)
+      .join("\n");
+    for (const name of COMPONENT_OWNED) {
+      expect(all, `${name} is allowed but no stylesheet mentions it`).toContain(name);
+      expect(defined.has(name), `${name} is a token after all, so it does not belong here`).toBe(false);
+    }
+  });
 
   for (const { name, css } of compiledStyles()) {
     it(`${name} references only defined properties`, () => {
       const missing = references(css)
         .filter((r) => (isToken(r.name) || !r.hasFallback) && !defined.has(r.name))
+        .filter((r) => !COMPONENT_OWNED.has(r.name))
         .map((r) => r.name);
 
       expect([...new Set(missing)]).toEqual([]);

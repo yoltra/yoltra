@@ -1,14 +1,17 @@
 @use "../../styles" as *;
 
 .yl-tooltip {
+  // A measure, not a token: a tooltip is as wide as a short sentence wants to be.
+  --tooltip-max-width: 28rem;
+
   position: fixed;
   // Above the anchored surfaces: a tooltip can describe a control inside a popover, and it is
   // always the most transient thing on screen.
   z-index: var(--yl-z-tooltip);
-  max-width: 28rem;
+  max-width: var(--tooltip-max-width);
   padding: var(--yl-space-2) var(--yl-space-3);
   font-family: var(--yl-font-sans);
-  font-size: 1.3rem;
+  font-size: var(--yl-text-label-size);
   line-height: 1.4;
   color: var(--yl-color-fg-inverse);
   background: var(--yl-color-fg-default);

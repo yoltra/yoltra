@@ -1,22 +1,22 @@
 .yl-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 1.4rem;
+  font-size: var(--yl-text-body-sm-size);
   margin: var(--yl-space-4) 0;
 }
 .yl-table th,
 .yl-table td {
   text-align: left;
   padding: var(--yl-space-2) var(--yl-space-3);
-  border-bottom: 1px solid var(--yl-color-border-subtle);
+  border-bottom: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
   vertical-align: top;
 }
 .yl-table th {
-  font-weight: 600;
+  font-weight: var(--yl-font-weight-semibold);
   color: var(--yl-color-fg-secondary);
-  font-size: 1.3rem;
+  font-size: var(--yl-text-label-size);
 }
 .yl-table code {
   font-family: var(--yl-font-mono);
-  font-size: 1.3rem;
+  font-size: var(--yl-text-label-size);
 }
