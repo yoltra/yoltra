@@ -6,13 +6,22 @@
 // What SASS contributes is nesting, per-component files, and the handful of repeated
 // fragments below that were previously copied between string literals.
 
+@use "sass:list";
 @use "sass:map";
 
 /// Breakpoints, deliberately in px.
 ///
 /// `rem` inside a media query resolves against the *initial* root font size, not the 62.5%
-/// one this design system sets — so a rem breakpoint would silently be 1.6 times the number
-/// it reads as. These mirror `foundationTokens.breakpoints`.
+/// one this design system sets, so a rem breakpoint would silently be 1.6 times the number it
+/// reads as.
+///
+/// These duplicate `foundationTokens.breakpoints`, and the duplication cannot be removed: a
+/// media query's condition is evaluated before any custom property has a value, so
+/// `@media (min-width: var(--yl-breakpoint-md))` is not a thing CSS can do. `--yl-breakpoint-*`
+/// is still emitted, for `@container` queries and for JavaScript that needs the same numbers.
+///
+/// What can be removed is the *drift*. `tests/styles.test.ts` parses this map and fails if it
+/// disagrees with the TypeScript, so the copy stays a copy.
 $breakpoints: (sm: 480px, md: 768px, lg: 1024px, xl: 1280px);
 
 @mixin media-up($name) {
@@ -24,7 +33,7 @@ $breakpoints: (sm: 480px, md: 768px, lg: 1024px, xl: 1280px);
 /// The one focus treatment, so a control cannot quietly disagree with its neighbours.
 @mixin focus-ring($offset: 2px) {
   &:focus-visible {
-    outline: 2px solid var(--yl-color-border-focus);
+    outline: var(--yl-border-width-medium) solid var(--yl-color-border-focus);
     outline-offset: $offset;
   }
 }
@@ -34,12 +43,14 @@ $breakpoints: (sm: 480px, md: 768px, lg: 1024px, xl: 1280px);
   &:focus-visible {
     outline: none;
     border-color: var(--yl-color-border-focus);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--yl-color-brand) 24%, transparent);
+    box-shadow: 0 0 0 var(--yl-border-width-thick) color-mix(in srgb, var(--yl-color-border-focus) 24%, transparent);
   }
 }
 
 /// Available to assistive technology, invisible to everyone else.
 @mixin visually-hidden {
+  // The one-pixel clip-rect idiom, not a design value: the box has to have a size to stay in the
+  // accessibility tree, and `display: none` would take it out.
   position: absolute;
   width: 1px;
   height: 1px;
@@ -49,4 +60,85 @@ $breakpoints: (sm: 480px, md: 768px, lg: 1024px, xl: 1280px);
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/// Honour a reader who has asked for less movement.
+///
+/// The media query itself was the duplication: three stylesheets wrote it out to suppress three
+/// different things, an animation here and a transition there. The condition is shared; what it
+/// suppresses is not, so that part stays with the component.
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+/// Text in a control that cannot be used.
+///
+/// No contrast minimum applies here: WCAG 1.4.3 exempts an inactive component, and copy that
+/// passed the text threshold would not read as disabled.
+@mixin disabled-text {
+  color: var(--yl-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+/// A control that cannot be used but draws its own colours, so it fades rather than recolours.
+///
+/// Separate from {@link disabled-text} because a switch or a slider is painted by the UA from
+/// `accent-color`; setting `color` on it would change nothing a reader can see.
+@mixin disabled-control {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/// The house transition: the fast duration and the standard easing, over the given properties.
+///
+/// Written out at five sites before this, each repeating both tokens per property, which is how
+/// one of them came to name a duration that no longer existed.
+@mixin transition($properties...) {
+  $parts: ();
+  @each $property in $properties {
+    $parts: list.append(
+      $parts,
+      #{$property} var(--yl-motion-duration-fast) var(--yl-motion-ease-standard),
+      $separator: comma
+    );
+  }
+  transition: $parts;
+}
+
+/// An elevated surface that can receive focus as a fallback.
+///
+/// Shared by the modal tier and the anchored tier, which had a placeholder each: the same three
+/// declarations and the same `&:focus` reset, with the same explanation written twice. Position
+/// and border stay with the caller, because a dialog is centred in the viewport and a popover is
+/// pinned to a trigger.
+@mixin surface($elevation: var(--yl-elevation-lg)) {
+  background: var(--yl-color-bg-elevated);
+  color: var(--yl-color-fg-default);
+  box-shadow: $elevation;
+
+  &:focus {
+    // Focus lands here only when the surface holds nothing focusable. That is a destination
+    // rather than a navigation stop, so it should not draw a ring.
+    outline: none;
+  }
+}
+
+/// Apply a type role: every axis of it, from the emitted scale.
+///
+/// The scale is emitted one axis at a time so a caller can take a size without a weight, which is
+/// the right shape for a token and a tedious one to write out five declarations at a time. This is
+/// the shorthand, and it is the reason the twelve roles are now reachable from CSS at all: they
+/// were emitted by nothing for four releases while `Typography.scss` kept its own numbers.
+///
+/// `letter-spacing` carries a `normal` fallback because most roles do not set one. Without it a
+/// `var()` naming an undefined property makes the declaration invalid at computed-value time, so
+/// the property would silently inherit rather than stay at its default.
+@mixin type($role) {
+  font-family: var(--yl-text-#{$role}-family);
+  font-size: var(--yl-text-#{$role}-size);
+  font-weight: var(--yl-text-#{$role}-weight);
+  line-height: var(--yl-text-#{$role}-leading);
+  letter-spacing: var(--yl-text-#{$role}-tracking, normal);
 }

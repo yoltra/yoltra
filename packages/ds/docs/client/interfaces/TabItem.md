@@ -8,7 +8,7 @@
 
 # Interface: TabItem
 
-Defined in: [primitives/Tabs.tsx:5](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs.tsx#L5)
+Defined in: [primitives/Tabs/Tabs.tsx:5](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs/Tabs.tsx#L5)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [primitives/Tabs.tsx:5](https://github.com/yoltra/yoltra/blob/main/p
 
 > **content**: `ReactNode`
 
-Defined in: [primitives/Tabs.tsx:8](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs.tsx#L8)
+Defined in: [primitives/Tabs/Tabs.tsx:8](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs/Tabs.tsx#L8)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [primitives/Tabs.tsx:8](https://github.com/yoltra/yoltra/blob/main/p
 
 > **id**: `string`
 
-Defined in: [primitives/Tabs.tsx:6](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs.tsx#L6)
+Defined in: [primitives/Tabs/Tabs.tsx:6](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs/Tabs.tsx#L6)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [primitives/Tabs.tsx:6](https://github.com/yoltra/yoltra/blob/main/p
 
 > **label**: `string`
 
-Defined in: [primitives/Tabs.tsx:7](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs.tsx#L7)
+Defined in: [primitives/Tabs/Tabs.tsx:7](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Tabs/Tabs.tsx#L7)

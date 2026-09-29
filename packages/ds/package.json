@@ -1,11 +1,11 @@
 {
   "name": "@yoltra/ds",
   "version": "0.3.0",
-  "description": "Yoltra Design System — tokens and primitive React components shared across the website, docs, and examples",
+  "description": "Yoltra Design System \u2014 tokens and primitive React components shared across the website, docs, and examples",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && vite build && node scripts/build-styles.mjs && node ../../tools/repo-tools/bin/dts-extensions.mjs dist/types",
-    "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
-    "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix",
+    "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0 && stylelint \"src/**/*.scss\" --custom-syntax postcss-scss",
+    "lint:fix": "node ../../tools/repo-tools/bin/repo-eslint.cjs --fix && stylelint \"src/**/*.scss\" --custom-syntax postcss-scss --fix",
     "docs": "typedoc --options ./typedoc.ds.json && rushx docs:stamp",
     "docs:stamp": "node ../../tools/repo-tools/bin/docs-stamp.mjs docs",
     "test": "node ../../tools/repo-tools/bin/repo-vitest.cjs --coverage --watch=false",
@@ -47,7 +47,9 @@
   "files": [
     "dist/",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "scripts/codemod-tokens.mjs",
+    "scripts/token-rename-map.json"
   ],
   "engines": {
     "node": ">=18"
@@ -77,7 +79,9 @@
     "@testing-library/react": "16.3.0",
     "@vitest/coverage-v8": "3.2.7",
     "jsdom": "^24.0.0",
-    "vitest": "3.2.7"
+    "vitest": "3.2.7",
+    "stylelint": "17.15.0",
+    "postcss-scss": "4.0.9"
   },
   "exports": {
     ".": {
@@ -99,12 +103,13 @@
     {
       "name": "a typical import",
       "import": "{ Button, Card, Stack, Text }",
-      "limitKb": 4,
+      "limitKb": 1.2,
       "external": [
         "react",
         "react-dom",
         "tslib"
-      ]
+      ],
+      "$comment": "1.2 KB, down from 4. It measures 0.9 KB while the token graph is shakeable and 1.5 KB the moment one member expression is hoisted to module scope in tokens.ts or themes.ts, which puts the palette back into every consumer's bundle. This budget is the only thing in the suite that would notice, so it sits between the two rather than at a comfortable distance from either: 0.3 KB of room for the four components it names to grow, and 0.3 KB short of the regression."
     },
     {
       "name": "barrel",

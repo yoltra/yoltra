@@ -10,7 +10,7 @@
 
 > **TH**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Table.tsx:58](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table.tsx#L58)
+Defined in: [primitives/Table/Table.tsx:125](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table/Table.tsx#L125)
 
 A table header cell. See [Table](Table.md).
 
@@ -18,7 +18,7 @@ A table header cell. See [Table](Table.md).
 
 ### \_\_namedParameters
 
-`ThHTMLAttributes`\<`HTMLTableCellElement`\> & `object`
+`ThHTMLAttributes`\<`HTMLTableCellElement`\> & [`NumericCellProps`](../interfaces/NumericCellProps.md) & `object`
 
 ## Returns
 

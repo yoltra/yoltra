@@ -8,7 +8,7 @@
 
 # Interface: TextProps
 
-Defined in: [primitives/Typography.tsx:47](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L47)
+Defined in: [primitives/Typography/Typography.tsx:47](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L47)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Typography.tsx:47](https://github.com/yoltra/yoltra/blob
 
 > `optional` **as**: `ElementType`
 
-Defined in: [primitives/Typography.tsx:52](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L52)
+Defined in: [primitives/Typography/Typography.tsx:52](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L52)
 
 Element to render. Defaults to `p`; use `span` for text inside a line.
 
@@ -30,7 +30,7 @@ Element to render. Defaults to `p`; use `span` for text inside a line.
 
 > `optional` **children**: `ReactNode`
 
-Defined in: [primitives/Typography.tsx:53](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L53)
+Defined in: [primitives/Typography/Typography.tsx:53](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L53)
 
 #### Overrides
 
@@ -42,7 +42,7 @@ Defined in: [primitives/Typography.tsx:53](https://github.com/yoltra/yoltra/blob
 
 > `optional` **size**: [`TextSize`](../type-aliases/TextSize.md)
 
-Defined in: [primitives/Typography.tsx:48](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L48)
+Defined in: [primitives/Typography/Typography.tsx:48](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L48)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [primitives/Typography.tsx:48](https://github.com/yoltra/yoltra/blob
 
 > `optional` **tone**: [`TextTone`](../type-aliases/TextTone.md)
 
-Defined in: [primitives/Typography.tsx:49](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L49)
+Defined in: [primitives/Typography/Typography.tsx:49](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L49)
 
 ***
 
@@ -58,4 +58,4 @@ Defined in: [primitives/Typography.tsx:49](https://github.com/yoltra/yoltra/blob
 
 > `optional` **weight**: `"bold"` \| `"medium"` \| `"regular"`
 
-Defined in: [primitives/Typography.tsx:50](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L50)
+Defined in: [primitives/Typography/Typography.tsx:50](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L50)

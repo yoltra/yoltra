@@ -1,0 +1,19 @@
+@use "../../styles" as *;
+
+.yl-card {
+  padding: var(--yl-card-padding, var(--yl-space-4));
+  border-radius: var(--yl-radius-lg);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
+  background: var(--yl-color-bg-panel);
+  box-shadow: var(--yl-card-shadow, var(--yl-elevation-xs));
+
+  &--borderless {
+    border-color: transparent;
+  }
+}
+
+.yl-card--subtle {
+  // A tint rather than a shadow. Two call sites in a consuming project abandoned `Card` and
+  // inlined a border to get this, which is the cost of not having it.
+  background: var(--yl-color-bg-subtle);
+}

@@ -1,0 +1,12 @@
+.yl-auth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 100%;
+  padding: var(--yl-space-4);
+}
+.yl-auth__card {
+  --auth-card-width: 40rem;
+  inline-size: 100%;
+  max-inline-size: var(--auth-card-width);
+}

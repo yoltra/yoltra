@@ -13,8 +13,11 @@ const fromHere = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 const yoltraDistAliases = {
   "@yoltra/core": fromHere("../../../packages/core/dist/yoltra.mjs"),
   "@yoltra/react": fromHere("../../../packages/react/dist/index.mjs"),
-  // Design system: the `/client` subpath must be aliased before the bare
-  // specifier so the more specific match wins.
+  // Design system: the more specific subpaths must be aliased before the bare
+  // specifier so they win. Component stylesheets are imported one at a time —
+  // the DS ships a sheet per component so an application carries styles only
+  // for what it renders.
+  "@yoltra/ds/styles": fromHere("../../../packages/ds/dist/styles"),
   "@yoltra/ds/client": fromHere("../../../packages/ds/dist/client.mjs"),
   "@yoltra/ds": fromHere("../../../packages/ds/dist/index.mjs"),
   "@yoltra/devtools-browser-agent": fromHere(

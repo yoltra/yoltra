@@ -1,133 +1,174 @@
+/* A heads-up panel floating over the canvas.
+ *
+ * It stays a dark surface whatever the page theme is, which is what the design system's *ink*
+ * roles are for: `bg-ink` is the dark surface, `fg-on-ink` and `border-on-ink` are the two things
+ * that have to stay legible on it. They were defined from the first release and used by nothing
+ * until this panel.
+ *
+ * The translucency is mixed from the role rather than written as an `rgba()`, so the panel follows
+ * a change to the theme instead of pinning a colour the theme no longer uses. */
+
 .config-panel {
+  /* 11px and 10px, below where the type scale starts. A heads-up panel is glanced at rather than
+     read, and naming the two sizes here is more honest than rounding them up to caption. */
+  --hud-label-size: 1.1rem;
+  --hud-note-size: 1rem;
+
   position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 100;
-  font-family: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
-  font-size: 12px;
-  color: #c8c8c8;
+  top: var(--yl-space-4);
+  right: var(--yl-space-4);
+  z-index: var(--yl-z-sticky);
+  font-family: var(--yl-font-mono);
+  font-size: var(--yl-text-caption-size);
+  color: var(--yl-color-fg-on-ink);
   user-select: none;
 }
 
 .config-panel__toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--yl-space-2);
   margin-left: auto;
   width: fit-content;
-  padding: 5px 10px;
-  background: rgba(30, 30, 30, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: #c8c8c8;
+  padding: var(--yl-space-1) var(--yl-space-3);
+  background: color-mix(in srgb, var(--yl-color-bg-elevated) 85%, transparent);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-on-ink);
+  border-radius: var(--yl-radius-sm);
+  color: var(--yl-color-fg-on-ink);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--yl-text-caption-size);
   font-family: inherit;
   backdrop-filter: blur(6px);
-  transition: background 0.15s;
+  transition: background var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
 }
 
 .config-panel__toggle:hover {
-  background: rgba(50, 50, 50, 0.9);
+  background: color-mix(in srgb, var(--yl-color-bg-elevated) 96%, transparent);
 }
 
 .config-panel__body {
-  margin-top: 6px;
-  padding: 14px 16px;
-  background: rgba(18, 18, 18, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  --hud-min-width: 24rem;
+
+  margin-top: var(--yl-space-2);
+  padding: var(--yl-space-4) var(--yl-space-4);
+  background: color-mix(in srgb, var(--yl-color-bg-ink) 92%, transparent);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-on-ink);
+  border-radius: var(--yl-radius-md);
   backdrop-filter: blur(8px);
-  min-width: 240px;
+  min-width: var(--hud-min-width);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--yl-space-4);
 }
 
+/* The section headings, labels and note were #666, #aaa and #555 on a near-black panel: 3.3:1 and
+   2.4:1 at 10px, well under the 4.5:1 small text has to clear. The muted role is 6.1:1 here. */
 .config-section h4 {
-  margin: 0 0 8px;
-  font-size: 10px;
+  margin: 0 0 var(--yl-space-2);
+  font-size: var(--hud-note-size);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #666;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  padding-bottom: 4px;
+  color: var(--yl-color-fg-muted);
+  border-bottom: var(--yl-border-width-thin) solid var(--yl-color-border-on-ink);
+  padding-bottom: var(--yl-space-1);
 }
 
 .config-row {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: var(--yl-space-2);
+  margin-bottom: var(--yl-space-2);
 }
 
 .config-row label {
-  color: #aaa;
-  font-size: 11px;
+  color: var(--yl-color-fg-secondary);
+  font-size: var(--hud-label-size);
 }
 
 .config-row .value {
-  font-size: 11px;
-  color: #e0e0e0;
+  --hud-value-min-width: 3.8rem;
+
+  font-size: var(--hud-label-size);
+  color: var(--yl-color-fg-on-ink);
   text-align: right;
-  min-width: 38px;
+  min-width: var(--hud-value-min-width);
+  /* The values change as the slider moves, so they must not shift the row's width as they do. */
+  font-variant-numeric: var(--yl-font-numeric);
 }
 
 .config-row input[type="range"] {
+  --hud-track-height: 0.3rem;
+
   grid-column: 1 / -1;
   width: 100%;
   appearance: none;
-  height: 3px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.15);
+  height: var(--hud-track-height);
+  border-radius: var(--yl-radius-xs);
+  background: var(--yl-color-border-strong);
   outline: none;
   cursor: pointer;
-  margin-top: 2px;
+  margin-top: 0.2rem;
 }
 
+/* The two vendor thumb selectors cannot be grouped: a browser that does not know one of them
+   drops the whole rule, so each needs its own. */
 .config-row input[type="range"]::-webkit-slider-thumb {
+  --hud-thumb-size: 1.2rem;
+
   appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--yl-color-brand, #4a9eff);
+  width: var(--hud-thumb-size);
+  height: var(--hud-thumb-size);
+  border-radius: var(--yl-radius-round);
+  background: var(--yl-color-interactive-bg);
   cursor: pointer;
 }
 
 .config-row input[type="range"]::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
+  --hud-thumb-size: 1.2rem;
+
+  width: var(--hud-thumb-size);
+  height: var(--hud-thumb-size);
   border: none;
-  border-radius: 50%;
-  background: var(--yl-color-brand, #4a9eff);
+  border-radius: var(--yl-radius-round);
+  background: var(--yl-color-interactive-bg);
   cursor: pointer;
 }
 
+/* A brand-tinted quiet button. The three hand-mixed `rgba(74, 158, 255, …)` steps were the info
+   role's background and border in all but name. */
 .config-restart-btn {
   width: 100%;
-  padding: 6px 0;
-  background: rgba(74, 158, 255, 0.15);
-  border: 1px solid rgba(74, 158, 255, 0.35);
-  border-radius: 5px;
-  color: var(--yl-color-brand, #4a9eff);
-  font-size: 11px;
+  padding: var(--yl-space-2) 0;
+  background: var(--yl-color-status-info-bg);
+  border: var(--yl-border-width-thin) solid var(--yl-color-status-info-border);
+  border-radius: var(--yl-radius-sm);
+  color: var(--yl-color-status-info-fg);
+  font-size: var(--hud-label-size);
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.15s;
-  margin-top: 4px;
+  transition: background var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
+  margin-top: var(--yl-space-1);
 }
 
 .config-restart-btn:hover {
-  background: rgba(74, 158, 255, 0.28);
+  background: color-mix(in srgb, var(--yl-color-status-info-solid) 28%, transparent);
 }
 
 .config-restart-btn:active {
-  background: rgba(74, 158, 255, 0.4);
+  background: color-mix(in srgb, var(--yl-color-status-info-solid) 40%, transparent);
 }
 
 .config-note {
-  font-size: 10px;
-  color: #555;
-  margin-top: 2px;
+  font-size: var(--hud-note-size);
+  color: var(--yl-color-fg-muted);
+  margin-top: 0.2rem;
+}
+
+/* The panel's hover transitions are decoration and carry nothing the labels do not. */
+@media (prefers-reduced-motion: reduce) {
+  .config-panel__toggle,
+  .config-restart-btn {
+    transition: none;
+  }
 }

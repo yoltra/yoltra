@@ -1,0 +1,38 @@
+@use "../../styles" as *;
+
+.yl-progress {
+  --progress-height: 0.6rem;
+  --progress-fraction: 0;
+
+  inline-size: 100%;
+  block-size: var(--progress-height);
+  border-radius: var(--yl-radius-round);
+  // The same role a switch's groove uses: the unfilled part of a control.
+  background: var(--yl-color-interactive-track);
+  overflow: hidden;
+
+  &__fill {
+    display: block;
+    block-size: 100%;
+    // A transform rather than a width, so the browser animates it without laying out again.
+    inline-size: 100%;
+    transform: scaleX(var(--progress-fraction));
+    // `transform-origin` has no logical keyword, so the right-to-left case needs saying. Without
+    // the second rule a bar in an Arabic or Hebrew interface fills away from the edge it started
+    // at, which reads as the progress running backwards.
+    transform-origin: left center;
+    border-radius: inherit;
+    background: var(--yl-color-interactive-bg);
+    @include transition(transform);
+  }
+
+  [dir="rtl"] &__fill {
+    transform-origin: right center;
+  }
+
+  @include reduced-motion {
+    &__fill {
+      transition: none;
+    }
+  }
+}

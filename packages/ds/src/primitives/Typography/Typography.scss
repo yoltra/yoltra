@@ -1,0 +1,97 @@
+@use "../../styles" as *;
+
+.yl-heading {
+  // The axes every level shares. They belong here rather than on each level because `Heading`
+  // emits *either* a level class or a size class, never both: `<Heading level={2} size="xs">`
+  // is `yl-heading yl-heading--xs`, so a heading given a size would otherwise inherit its
+  // weight and leading from whatever surrounds it.
+  font-family: var(--yl-text-h2-family);
+  font-weight: var(--yl-text-h2-weight);
+  line-height: var(--yl-text-h2-leading);
+  color: var(--yl-color-fg-default);
+  margin: 0;
+  text-wrap: balance;
+
+  // The six levels differ in size, and the top two in tracking. Each reads its own role, so
+  // the numbers live in one place rather than the two that had drifted apart.
+  &--h1 { font-size: var(--yl-text-h1-size); letter-spacing: var(--yl-text-h1-tracking); }
+  &--h2 { font-size: var(--yl-text-h2-size); letter-spacing: var(--yl-text-h2-tracking); }
+  &--h3 { font-size: var(--yl-text-h3-size); }
+  &--h4 { font-size: var(--yl-text-h4-size); }
+  &--h5 { font-size: var(--yl-text-h5-size); }
+  &--h6 { font-size: var(--yl-text-h6-size); }
+
+  // Appearance only, for when the outline and the look have to disagree.
+  &--lg { font-size: var(--yl-text-h3-size); }
+  &--md { font-size: var(--yl-text-h4-size); }
+  &--sm { font-size: var(--yl-text-h5-size); }
+  &--xs { font-size: var(--yl-text-label-size); }
+}
+
+.yl-text {
+  @include type(body);
+
+  color: var(--yl-color-fg-default);
+  margin: 0;
+
+  &--xs { font-size: var(--yl-text-caption-size); }
+  &--sm { font-size: var(--yl-text-label-size); }
+  &--md { font-size: var(--yl-text-body-size); }
+  &--lg { font-size: var(--yl-text-body-lg-size); }
+
+  &--secondary { color: var(--yl-color-fg-secondary); }
+  &--muted { color: var(--yl-color-fg-muted); }
+  &--brand { color: var(--yl-color-fg-brand); }
+  &--danger { color: var(--yl-color-status-error-fg); }
+
+  &--medium { font-weight: var(--yl-font-weight-semibold); }
+  &--bold { font-weight: var(--yl-font-weight-bold); }
+}
+
+.yl-link {
+  color: var(--yl-color-fg-link);
+  text-decoration: underline;
+  // Keeps descenders legible where a flat underline would cut through them. Relative to the
+  // text it underlines rather than a token, because it has to scale with whatever size the
+  // link inherits.
+  text-underline-offset: 0.2em;
+  border-radius: var(--yl-radius-xs);
+
+  &:hover {
+    color: var(--yl-color-fg-link-hover);
+    text-decoration-thickness: var(--yl-border-width-medium);
+  }
+
+  @include focus-ring;
+}
+
+.yl-inline-code {
+  // Sub-grid on purpose: 2px, where the spacing scale starts at 4px. Inline code has to sit on
+  // one line of running text without pushing the line box open, and a named local says that
+  // more honestly than snapping it to a step it does not belong on.
+  --inline-code-pad-y: 0.2rem;
+
+  font-family: var(--yl-font-mono);
+  // Relative on purpose: inline code sits inside running text and should track its size.
+  font-size: 0.9em;
+  padding: var(--inline-code-pad-y) var(--yl-space-1);
+  border-radius: var(--yl-radius-xs);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
+  background: var(--yl-color-bg-subtle);
+  color: var(--yl-color-fg-secondary);
+}
+
+.yl-kbd {
+  font-family: var(--yl-font-mono);
+  font-size: var(--yl-text-caption-size);
+  // A key cap is sized by its padding, so the line box must not add to it.
+  line-height: 1;
+  padding: var(--yl-space-1) var(--yl-space-2);
+  border-radius: var(--yl-radius-sm);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-strong);
+  // Thicker on the bottom edge, which is what makes it read as a key rather than a chip.
+  border-bottom-width: var(--yl-border-width-medium);
+  background: var(--yl-color-bg-subtle);
+  color: var(--yl-color-fg-secondary);
+  white-space: nowrap;
+}

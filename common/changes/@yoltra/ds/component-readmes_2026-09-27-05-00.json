@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Give every component its own README beside its source, with examples, props and the accessibility contract, and a test that fails if a new component arrives without one. Documents four gaps found while writing them: `Tabs` sets the ARIA tab roles but implements none of the keyboard pattern, `Menu` has no typeahead, `Table` has no responsive container or numeric alignment, and there is no accordion.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

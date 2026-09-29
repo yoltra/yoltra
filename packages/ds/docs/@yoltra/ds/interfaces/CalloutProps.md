@@ -8,7 +8,7 @@
 
 # Interface: CalloutProps
 
-Defined in: [primitives/Callout.tsx:13](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Callout.tsx#L13)
+Defined in: [primitives/Callout/Callout.tsx:13](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Callout/Callout.tsx#L13)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [primitives/Callout.tsx:13](https://github.com/yoltra/yoltra/blob/ma
 
 > **children**: `ReactNode`
 
-Defined in: [primitives/Callout.tsx:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Callout.tsx#L15)
+Defined in: [primitives/Callout/Callout.tsx:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Callout/Callout.tsx#L15)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [primitives/Callout.tsx:15](https://github.com/yoltra/yoltra/blob/ma
 
 > `optional` **kind**: [`CalloutKind`](../type-aliases/CalloutKind.md)
 
-Defined in: [primitives/Callout.tsx:14](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Callout.tsx#L14)
+Defined in: [primitives/Callout/Callout.tsx:14](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Callout/Callout.tsx#L14)

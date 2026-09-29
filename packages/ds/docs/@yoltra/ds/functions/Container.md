@@ -10,7 +10,7 @@
 
 > **Container**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Layout.tsx:253](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L253)
+Defined in: [primitives/Layout/Layout.tsx:253](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L253)
 
 Centres page content and steps its width up at each breakpoint.
 

@@ -8,15 +8,17 @@
 
 # Interface: SemanticColorTokens
 
-Defined in: [tokens/themes.ts:10](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L10)
+Defined in: [tokens/themes.ts:69](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L69)
 
 ## Properties
 
-### background
+### bg
 
-> **background**: `object`
+> **bg**: `object`
 
-Defined in: [tokens/themes.ts:12](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L12)
+Defined in: [tokens/themes.ts:80](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L80)
+
+Surfaces, from the page backwards. `ink` is the always-dark surface code sits on.
 
 #### canvas
 
@@ -25,6 +27,10 @@ Defined in: [tokens/themes.ts:12](https://github.com/yoltra/yoltra/blob/main/pac
 #### elevated
 
 > **elevated**: `string`
+
+#### ink
+
+> **ink**: `string`
 
 #### inset
 
@@ -48,7 +54,7 @@ Defined in: [tokens/themes.ts:12](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **border**: `object`
 
-Defined in: [tokens/themes.ts:14](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L14)
+Defined in: [tokens/themes.ts:83](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L83)
 
 #### divider
 
@@ -57,6 +63,10 @@ Defined in: [tokens/themes.ts:14](https://github.com/yoltra/yoltra/blob/main/pac
 #### focus
 
 > **focus**: `string`
+
+#### onInk
+
+> **onInk**: `string`
 
 #### strong
 
@@ -72,15 +82,9 @@ Defined in: [tokens/themes.ts:14](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **brand**: `object`
 
-Defined in: [tokens/themes.ts:11](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L11)
+Defined in: [tokens/themes.ts:78](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L78)
 
-#### error
-
-> **error**: `string`
-
-#### info
-
-> **info**: `string`
+The brand colours, for identity rather than for text.
 
 #### primary
 
@@ -90,41 +94,29 @@ Defined in: [tokens/themes.ts:11](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **secondary**: `string`
 
-#### success
+#### Remarks
 
-> **success**: `string`
-
-#### warning
-
-> **warning**: `string`
+`primary` is `#1A7FE2`, which is 4.06:1 on white: enough for a logo or display type under
+WCAG's large-text threshold, and **not** enough for body copy. Text that wants to look
+branded reads `fg.brand`, which is a step darker and passes.
 
 ***
 
-### code
+### fg
 
-> **code**: `object`
+> **fg**: `object`
 
-Defined in: [tokens/themes.ts:25](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L25)
+Defined in: [tokens/themes.ts:82](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L82)
 
-#### bg
+Text and icons. `onInk` is for content on the `ink` surface, which does not flip with the theme.
 
-> **bg**: `string`
+#### brand
 
-#### border
+> **brand**: `string`
 
-> **border**: `string`
+#### default
 
-#### fg
-
-> **fg**: `string`
-
-***
-
-### foreground
-
-> **foreground**: `object`
-
-Defined in: [tokens/themes.ts:13](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L13)
+> **default**: `string`
 
 #### disabled
 
@@ -146,9 +138,9 @@ Defined in: [tokens/themes.ts:13](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **muted**: `string`
 
-#### primary
+#### onInk
 
-> **primary**: `string`
+> **onInk**: `string`
 
 #### secondary
 
@@ -160,55 +152,114 @@ Defined in: [tokens/themes.ts:13](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **interactive**: `object`
 
-Defined in: [tokens/themes.ts:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L15)
+Defined in: [tokens/themes.ts:94](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L94)
 
-#### ghost
+The loud interactive surface: a primary button, a selected tab.
 
-> **ghost**: `object`
-
-##### ghost.bg
+#### bg
 
 > **bg**: `string`
 
-##### ghost.bgActive
+#### bgActive
 
 > **bgActive**: `string`
 
-##### ghost.bgHover
+#### bgHover
 
 > **bgHover**: `string`
 
-##### ghost.border
+#### border
 
 > **border**: `string`
 
-##### ghost.fg
+#### fg
 
 > **fg**: `string`
 
-#### primary
+#### track
 
-> **primary**: `object`
+> **track**: `string`
 
-##### primary.bg
+#### Remarks
+
+`track` is the *unfilled* part of a control, the groove a switch knob slides along or the
+remainder of a progress bar. It is a role rather than a switch-local value because a slider
+and a progress bar want the same surface, and it has to be dark enough that a pale knob is
+visible against it: WCAG 1.4.11 treats a knob's position as the state indicator, so it needs
+3:1. A switch knob was previously `fg.inverse` on `border.strong`, which is 1.48:1.
+
+***
+
+### interactiveDanger
+
+> **interactiveDanger**: `object`
+
+Defined in: [tokens/themes.ts:113](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L113)
+
+The destructive interactive surface: a delete, a revoke, a disconnect.
+
+#### bg
 
 > **bg**: `string`
 
-##### primary.bgActive
+#### bgActive
 
 > **bgActive**: `string`
 
-##### primary.bgHover
+#### bgHover
 
 > **bgHover**: `string`
 
-##### primary.border
+#### border
 
 > **border**: `string`
 
-##### primary.fg
+#### fg
 
 > **fg**: `string`
+
+#### Remarks
+
+Shaped like [SemanticColorTokens.interactive](#interactive) and inverted the same way between themes,
+because the reason is the same: a dark fill on a dark canvas reads as disabled. Light uses
+`error[600]`, where a white label is 4.83:1; `[500]` is 3.76:1 and would have failed, which is
+the same step-too-light mistake the brand colour made.
+
+***
+
+### interactiveQuiet
+
+> **interactiveQuiet**: `object`
+
+Defined in: [tokens/themes.ts:103](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L103)
+
+The quiet interactive surface: a ghost button, a menu item, a dialog's close control.
+
+#### bg
+
+> **bg**: `string`
+
+#### bgActive
+
+> **bgActive**: `string`
+
+#### bgHover
+
+> **bgHover**: `string`
+
+#### border
+
+> **border**: `string`
+
+#### fg
+
+> **fg**: `string`
+
+#### Remarks
+
+Shared rather than owned by `Button`, because three components already reach for it. It was
+called `ghost`, which named a button variant and left `Modal` and `Popover` borrowing a
+button's internals.
 
 ***
 
@@ -216,7 +267,9 @@ Defined in: [tokens/themes.ts:15](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **status**: `object`
 
-Defined in: [tokens/themes.ts:19](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L19)
+Defined in: [tokens/themes.ts:123](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/themes.ts#L123)
+
+Feedback colours. `solid` is the accent on its own.
 
 #### error
 
@@ -234,6 +287,10 @@ Defined in: [tokens/themes.ts:19](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **fg**: `string`
 
+##### error.solid
+
+> **solid**: `string`
+
 #### info
 
 > **info**: `object`
@@ -249,6 +306,10 @@ Defined in: [tokens/themes.ts:19](https://github.com/yoltra/yoltra/blob/main/pac
 ##### info.fg
 
 > **fg**: `string`
+
+##### info.solid
+
+> **solid**: `string`
 
 #### success
 
@@ -266,6 +327,10 @@ Defined in: [tokens/themes.ts:19](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **fg**: `string`
 
+##### success.solid
+
+> **solid**: `string`
+
 #### warning
 
 > **warning**: `object`
@@ -281,3 +346,14 @@ Defined in: [tokens/themes.ts:19](https://github.com/yoltra/yoltra/blob/main/pac
 ##### warning.fg
 
 > **fg**: `string`
+
+##### warning.solid
+
+> **solid**: `string`
+
+#### Remarks
+
+The `bg`/`fg`/`border` triad covers a filled callout and nothing else. Consumers that
+wanted a bare accent to tint or to draw a rule with reached for `--yl-color-success` and
+`--yl-color-danger`, neither of which existed, so both fell through to a hardcoded hex that
+did not flip with the theme.

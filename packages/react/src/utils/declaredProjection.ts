@@ -168,6 +168,33 @@ export function projectDeclared(
 }
 
 /**
+ * A shallow, extensible copy of a frozen object, for use as a proxy target.
+ *
+ * @remarks
+ * A `get` trap may not return a wrapper in place of an own data property that is non-writable
+ * *and* non-configurable, which is exactly the pair `Object.freeze` produces. The engine raises
+ * `TypeError: 'get' on proxy: property 'x' is a read-only and non-configurable data property on
+ * the proxy target but the proxy did not return its actual value` before any code here runs, so
+ * the stack trace names the component that read the property and nothing in this package.
+ *
+ * Frozen state is the ordinary case, not an exotic one: immer's `produce` auto-freezes what it
+ * returns, and `@yoltra/core` exports a `deepFreeze` for the same purpose. So the guard has to be
+ * built over a copy whose properties are configurable, and the copy is what makes returning a
+ * nested guard legal.
+ *
+ * Only reached when the object is frozen, and only in development, where this guard runs at all.
+ * The copy is shallow: nested values are still the frozen originals, each thawed in turn if a
+ * read goes through it.
+ *
+ * @internal
+ */
+function thaw(source: Record<string, unknown>): Record<string, unknown> {
+  // A spread rather than a descriptor copy: `getOwnPropertyDescriptors` would carry
+  // `writable: false, configurable: false` straight back onto the copy and change nothing.
+  return { ...source };
+}
+
+/**
  * Wraps a projection so an undeclared read throws instead of yielding `undefined`.
  *
  * @remarks
@@ -185,7 +212,11 @@ export function guardProjection(
   const describe = (): string =>
     declared.map((d) => `{ reducer: "${d.reducer}", property: "${d.property}" }`).join(", ");
 
-  return new Proxy(projection, {
+  // The target, not `projection` itself: see `thaw`. A frozen object read through this trap is a
+  // `TypeError` from the engine, and freezing is what any ordinary reducer does.
+  const base = Object.isFrozen(projection) ? thaw(projection) : projection;
+
+  return new Proxy(base, {
     get(target, key, receiver) {
       if (typeof key === "symbol" || key === "toJSON" || key === "constructor") {
         return Reflect.get(target, key, receiver);

@@ -8,7 +8,7 @@
 
 # Interface: CodeBlockProps
 
-Defined in: [primitives/CodeBlock.tsx:5](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/CodeBlock.tsx#L5)
+Defined in: [primitives/CodeBlock/CodeBlock.tsx:5](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/CodeBlock/CodeBlock.tsx#L5)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [primitives/CodeBlock.tsx:5](https://github.com/yoltra/yoltra/blob/m
 
 > `optional` **children**: `ReactNode`
 
-Defined in: [primitives/CodeBlock.tsx:16](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/CodeBlock.tsx#L16)
+Defined in: [primitives/CodeBlock/CodeBlock.tsx:16](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/CodeBlock/CodeBlock.tsx#L16)
 
 Pre-highlighted markup (e.g. Shiki output) to render instead of `code`.
 When set, `code` is still used as the copy source.
@@ -27,7 +27,7 @@ When set, `code` is still used as the copy source.
 
 > `optional` **code**: `string`
 
-Defined in: [primitives/CodeBlock.tsx:7](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/CodeBlock.tsx#L7)
+Defined in: [primitives/CodeBlock/CodeBlock.tsx:7](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/CodeBlock/CodeBlock.tsx#L7)
 
 Raw code as a string. When provided it is used verbatim for copying.
 
@@ -37,7 +37,7 @@ Raw code as a string. When provided it is used verbatim for copying.
 
 > `optional` **language**: `string`
 
-Defined in: [primitives/CodeBlock.tsx:9](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/CodeBlock.tsx#L9)
+Defined in: [primitives/CodeBlock/CodeBlock.tsx:9](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/CodeBlock/CodeBlock.tsx#L9)
 
 Optional language label shown in the header.
 
@@ -47,6 +47,6 @@ Optional language label shown in the header.
 
 > `optional` **title**: `string`
 
-Defined in: [primitives/CodeBlock.tsx:11](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/CodeBlock.tsx#L11)
+Defined in: [primitives/CodeBlock/CodeBlock.tsx:11](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/CodeBlock/CodeBlock.tsx#L11)
 
 Optional filename/title shown in the header.

@@ -4,6 +4,19 @@ import { enableMapSet } from "immer";
 import { themeCss } from "@yoltra/ds";
 import { ThemeProvider } from "@yoltra/ds/client";
 
+// The component stylesheets, one per component this application renders. Without them `Button`,
+// `Input`, `Select`, `Badge` and `Callout` render as bare elements carrying class names that
+// nothing defines: the tokens alone style nothing.
+//
+// `base` is not optional either. Every `--yl-*` length is a `rem` against a 10px root, which is
+// what `base.css` establishes; without it `--yl-space-2` is 12.8px rather than 8px and every
+// spacing in the application is out by the same factor.
+import "@yoltra/ds/styles/base.css";
+import "@yoltra/ds/styles/button.css";
+import "@yoltra/ds/styles/field.css";
+import "@yoltra/ds/styles/badge.css";
+import "@yoltra/ds/styles/callout.css";
+
 import "./index.css";
 import AppRouter from './App';
 

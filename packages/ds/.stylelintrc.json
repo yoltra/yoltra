@@ -1,0 +1,45 @@
+{
+  "$comment": "Encodes the rule M3 established: a literal is a defect wherever a token exists, and a named custom property is the answer wherever one does not. Only SCSS sources are linted; the compiled CSS in dist/ is output.",
+  "rules": {
+    "declaration-property-value-disallowed-list": {
+      "/^(color|fill|stroke|.*-color)$/": [
+        "/^#/",
+        "/^rgba?\\(/",
+        "/^hsla?\\(/"
+      ],
+      "/^(background|border|outline|box-shadow|text-decoration)/": [
+        "/#[0-9a-fA-F]{3,8}/",
+        "/rgba?\\(/",
+        "/hsla?\\(/"
+      ],
+      "font-size": [
+        "/^[0-9.]+(rem|px)$/"
+      ],
+      "font-weight": [
+        "/^[0-9]+$/"
+      ]
+    },
+    "declaration-property-unit-disallowed-list": {
+      "/^(border|outline)-.*width$/": [
+        "px",
+        "rem"
+      ],
+      "letter-spacing": [
+        "px",
+        "rem"
+      ]
+    },
+    "declaration-property-value-allowed-list": {
+      "font-family": [
+        "/^var\\(--yl-font-(sans|mono)\\)$/",
+        "/^var\\(--yl-text-[a-z0-9-]+-family\\)$/",
+        "/^var\\(--yl-text-#\\{\\$role\\}-family\\)$/"
+      ]
+    }
+  },
+  "ignoreFiles": [
+    "dist/**",
+    "coverage/**",
+    "node_modules/**"
+  ]
+}

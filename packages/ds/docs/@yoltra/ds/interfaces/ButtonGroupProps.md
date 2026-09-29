@@ -8,7 +8,7 @@
 
 # Interface: ButtonGroupProps
 
-Defined in: [primitives/Button.tsx:116](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L116)
+Defined in: [primitives/Button/Button.tsx:201](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L201)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [primitives/Button.tsx:116](https://github.com/yoltra/yoltra/blob/ma
 
 > **children**: `ReactNode`
 
-Defined in: [primitives/Button.tsx:125](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L125)
+Defined in: [primitives/Button/Button.tsx:210](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L210)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [primitives/Button.tsx:125](https://github.com/yoltra/yoltra/blob/ma
 
 > `optional` **className**: `string`
 
-Defined in: [primitives/Button.tsx:126](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L126)
+Defined in: [primitives/Button/Button.tsx:211](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L211)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [primitives/Button.tsx:126](https://github.com/yoltra/yoltra/blob/ma
 
 > **label**: `string`
 
-Defined in: [primitives/Button.tsx:124](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L124)
+Defined in: [primitives/Button/Button.tsx:209](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L209)
 
 Names the group.
 

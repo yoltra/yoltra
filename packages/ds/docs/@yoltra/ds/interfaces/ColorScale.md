@@ -8,7 +8,7 @@
 
 # Interface: ColorScale
 
-Defined in: [tokens/tokens.ts:23](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L23)
+Defined in: [tokens/tokens.ts:33](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L33)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [tokens/tokens.ts:23](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **100**: `string`
 
-Defined in: [tokens/tokens.ts:25](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L25)
+Defined in: [tokens/tokens.ts:35](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L35)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [tokens/tokens.ts:25](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **200**: `string`
 
-Defined in: [tokens/tokens.ts:26](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L26)
+Defined in: [tokens/tokens.ts:36](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L36)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [tokens/tokens.ts:26](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **300**: `string`
 
-Defined in: [tokens/tokens.ts:27](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L27)
+Defined in: [tokens/tokens.ts:37](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L37)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [tokens/tokens.ts:27](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **400**: `string`
 
-Defined in: [tokens/tokens.ts:28](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L28)
+Defined in: [tokens/tokens.ts:38](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L38)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [tokens/tokens.ts:28](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **50**: `string`
 
-Defined in: [tokens/tokens.ts:24](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L24)
+Defined in: [tokens/tokens.ts:34](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L34)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [tokens/tokens.ts:24](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **500**: `string`
 
-Defined in: [tokens/tokens.ts:29](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L29)
+Defined in: [tokens/tokens.ts:39](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L39)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [tokens/tokens.ts:29](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **600**: `string`
 
-Defined in: [tokens/tokens.ts:30](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L30)
+Defined in: [tokens/tokens.ts:40](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L40)
 
 ***
 
@@ -72,7 +72,7 @@ Defined in: [tokens/tokens.ts:30](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **700**: `string`
 
-Defined in: [tokens/tokens.ts:31](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L31)
+Defined in: [tokens/tokens.ts:41](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L41)
 
 ***
 
@@ -80,7 +80,7 @@ Defined in: [tokens/tokens.ts:31](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **800**: `string`
 
-Defined in: [tokens/tokens.ts:32](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L32)
+Defined in: [tokens/tokens.ts:42](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L42)
 
 ***
 
@@ -88,4 +88,4 @@ Defined in: [tokens/tokens.ts:32](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **900**: `string`
 
-Defined in: [tokens/tokens.ts:33](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L33)
+Defined in: [tokens/tokens.ts:43](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L43)

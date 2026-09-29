@@ -8,7 +8,7 @@
 
 # Interface: PaletteTokens
 
-Defined in: [tokens/tokens.ts:36](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L36)
+Defined in: [tokens/tokens.ts:46](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L46)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [tokens/tokens.ts:36](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **black**: `string`
 
-Defined in: [tokens/tokens.ts:45](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L45)
+Defined in: [tokens/tokens.ts:55](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L55)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [tokens/tokens.ts:45](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **error**: [`ColorScale`](ColorScale.md)
 
-Defined in: [tokens/tokens.ts:42](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L42)
+Defined in: [tokens/tokens.ts:52](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L52)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [tokens/tokens.ts:42](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **info**: [`ColorScale`](ColorScale.md)
 
-Defined in: [tokens/tokens.ts:39](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L39)
+Defined in: [tokens/tokens.ts:49](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L49)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [tokens/tokens.ts:39](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **neutral**: [`ColorScale`](ColorScale.md)
 
-Defined in: [tokens/tokens.ts:43](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L43)
+Defined in: [tokens/tokens.ts:53](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L53)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [tokens/tokens.ts:43](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **primary**: [`ColorScale`](ColorScale.md)
 
-Defined in: [tokens/tokens.ts:37](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L37)
+Defined in: [tokens/tokens.ts:47](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L47)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [tokens/tokens.ts:37](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **secondary**: [`ColorScale`](ColorScale.md)
 
-Defined in: [tokens/tokens.ts:38](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L38)
+Defined in: [tokens/tokens.ts:48](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L48)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [tokens/tokens.ts:38](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **success**: [`ColorScale`](ColorScale.md)
 
-Defined in: [tokens/tokens.ts:40](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L40)
+Defined in: [tokens/tokens.ts:50](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L50)
 
 ***
 
@@ -72,7 +72,7 @@ Defined in: [tokens/tokens.ts:40](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **warning**: [`ColorScale`](ColorScale.md)
 
-Defined in: [tokens/tokens.ts:41](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L41)
+Defined in: [tokens/tokens.ts:51](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L51)
 
 ***
 
@@ -80,4 +80,4 @@ Defined in: [tokens/tokens.ts:41](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **white**: `string`
 
-Defined in: [tokens/tokens.ts:44](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L44)
+Defined in: [tokens/tokens.ts:54](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L54)

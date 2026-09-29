@@ -10,7 +10,7 @@
 
 > **ButtonLink**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Button.tsx:65](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L65)
+Defined in: [primitives/Button/Button.tsx:140](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L140)
 
 An anchor that looks like a button.
 

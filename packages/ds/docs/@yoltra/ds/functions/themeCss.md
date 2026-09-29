@@ -10,7 +10,7 @@
 
 > **themeCss**(`options`): `string`
 
-Defined in: [tokens/css.ts:136](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/css.ts#L136)
+Defined in: [tokens/css.ts:187](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/css.ts#L187)
 
 The design tokens, as CSS custom properties.
 
@@ -39,16 +39,13 @@ application embedding Yoltra components inside a page it does not own.
 
 ## Remarks
 
-Variables only. Component styles are SASS, compiled to one stylesheet per component and
-imported by the consumers that use them — a single sheet carrying every component's rules
-is a cost every application pays regardless of what it imports, and unlike the JavaScript
-it cannot be tree-shaken.
-
-The same values ship as `@yoltra/ds/styles/tokens.css`, generated from this function at
-build time. Prefer the file; use this when the stylesheet has to be inlined, as in a server
-render.
+The same values ship as `@yoltra/ds/styles/tokens.css`, generated from this function at build
+time. Prefer the file; use this when the stylesheet has to be inlined, as in a server render.
 
 Pair it with `@yoltra/ds/styles/base.css`, which sets the 10px root these lengths assume.
+
+The palette is deliberately absent. It is a primitive, and a stylesheet that reaches for
+`primary[500]` has bypassed the semantic layer that makes a theme switch work.
 
 ## Example
 

@@ -1,0 +1,7 @@
+// The one thing a component stylesheet imports.
+//
+// `@use "../styles" as *;` and everything shared is in scope. A component should not have to
+// know that the focus ring lives in `_mixins.scss` and the surface treatment somewhere else,
+// and before this only six of fifteen sheets pulled the partial in at all, so the other nine
+// silently reimplemented whatever they needed.
+@forward "./mixins";

@@ -51,11 +51,26 @@ primitivos se renderizan en el servidor — solo los controles interactivos
 | --- | --- |
 | `foundationTokens` | Escala primitiva: paleta, tipografía, espaciado, radios, elevación, movimiento. |
 | `lightTheme` / `darkTheme` / `themes` | Mapeos semánticos de roles. |
-| `themeCss()` | Emite la hoja de estilos completa (variables `--yl-*` + estilos base). |
+| `themeCss()` | Emite las propiedades personalizadas `--yl-*` de ambos temas. **Solo propiedades**, sin reglas de componentes. |
 | `ThemeProvider` / `useTheme` / `applyTheme` | Controlador genérico de tema. |
-| `Button`, `ButtonLink`, `Badge`, `CodeBlock`, `Callout`, `Tabs`, `Table` | Componentes primitivos. |
+| `noFlashScript()` / `THEME_STORAGE_KEY` | El script en línea que restaura el tema antes del primer pintado, y la clave que comparte con el proveedor. |
+| `Heading`, `Text`, `Link`, `InlineCode`, `Kbd` | Tipografía. |
+| `Button`, `ButtonLink`, `IconButton`, `ButtonGroup` | Acciones. |
+| `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`, `RadioGroup`, `Switch`, `Slider`, `Label`, `FormField`, `Fieldset` | Controles de formulario y su etiquetado. |
+| `Card`, `Container`, `Stack`, `Inline`, `Grid`, `Divider`, `AuthCard` | Maquetación y composición. |
+| `Badge`, `Chip`, `Callout`, `Stat`, `StatGrid` | Estado y cifras. |
+| `Spinner`, `Skeleton`, `ProgressBar`, `EmptyState` | Retroalimentación: indeterminada, determinada, y cuando no hay nada que mostrar. |
+| `Table`, `TableScroll`, `THead`, `TBody`, `TR`, `TH`, `TD` | Partes presentacionales de tabla. |
+| `CodeBlock`, `Tabs`, `VisuallyHidden` | Todo lo demás. |
 | `Portal`, `Dialog`, `Drawer` | Overlays modales, renderizados fuera del árbol. Ver más abajo. |
 | `Popover`, `Menu`, `ContextMenu`, `Tooltip` | Overlays anclados, posicionados contra un trigger o un punto. |
+| `useFocusTrap`, `useDismiss`, `useReturnFocus`, `useScrollLock` | Los comportamientos con los que están hechos esos overlays, para una superficie que no cubren. |
+| `useControllableState` | Un valor que es del llamador o del componente, para construir un control propio. |
+
+Cada componente tiene su `README.md` al lado de su código, con ejemplos ejecutables y su
+contrato de accesibilidad: [`src/primitives/Button/README.md`](src/primitives/Button/README.md)
+y así con cada uno. Están en inglés, como el resto del código.
+
 
 ## Marca
 
@@ -211,10 +226,10 @@ verificado por `rush size` en cada build.
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ Button, Card, Stack, Text }` | 2.3 KB | 4 KB |
-| todo | 5.3 KB | 8 KB |
+| `{ Button, Card, Stack, Text }` | 0.9 KB | 1.2 KB |
+| todo | 6.4 KB | 8 KB |
 | `{ Dialog }` desde `/client` | 1.8 KB | 3 KB |
-| todo `/client` | 4.3 KB | 5.5 KB |
+| todo `/client` | 4.8 KB | 5.5 KB |
 <!-- size-table:end -->
 
 La distancia entre las filas de barrel y las de import nombrado es el tree-shaking funcionando —
@@ -227,11 +242,113 @@ Estos números son menores que antes de separar la hoja de estilos, y eso no es 
 CSS no encogió, salió del bundle de JavaScript hacia archivos que importas deliberadamente. Suma
 las hojas de los componentes que uses al comparar.
 
+
+## Tokens
+
+Tres niveles, y un componente solo puede leer el del medio.
+
+**Primitivos**: valores crudos, `--yl-space-4`, `--yl-radius-md`, `--yl-breakpoint-lg`,
+`--yl-text-h1-size`, `--yl-motion-duration-fast`. No cargan intención, así que sobreviven un
+cambio de tema porque no participan en él.
+
+**Roles semánticos**: dicen para *qué* sirve un color, y son los únicos colores que una hoja de
+estilos debería nombrar: `--yl-color-bg-canvas`, `--yl-color-fg-muted`,
+`--yl-color-interactive-bg`, `--yl-color-status-error-fg`. Cada uno tiene un valor claro y uno
+oscuro, así que un componente que lee un rol queda tematizado sin hacer nada más.
+
+**Locales del componente**: viven en la hoja del propio componente, sin el prefijo `--yl-`, y
+derivan de un rol. El ancho de un diálogo no le importa a nadie más.
+
+La paleta **no** se emite, deliberadamente. Una hoja de estilos que puede alcanzar `primary[500]`
+ya se saltó la capa que hace funcionar el tema, y toda pregunta que el CSS hace en realidad es
+"cuál azul *para qué*".
+
+### Los tokens que nadie usa
+
+La disciplina con el color suele cuidarse sola. Todo lo demás se reescribe a mano, así que vale
+la pena decir con claridad lo que ya existe:
+
+| En lugar de | Usa |
+| --- | --- |
+| `z-index: 10` | `--yl-z-base`, `--yl-z-sticky`, `--yl-z-overlay`, `--yl-z-popover`, `--yl-z-tooltip` |
+| `box-shadow: 0 12px 40px rgb(0 0 0 / 25%)` | `--yl-elevation-xs` … `--yl-elevation-xl` |
+| `transition: all 0.2s ease` | `--yl-motion-duration-{fast,normal,slow}` con `--yl-motion-ease-{standard,emphasized,decelerated}` |
+| `@media (min-width: 768px)` | `--yl-breakpoint-{sm,md,lg,xl}` |
+| `max-width: 720px` | `--yl-container-{md,lg,xl}` |
+| `font-variant-numeric: tabular-nums` | `--yl-font-numeric`, para que las cifras que cambian no muevan su propia columna |
+| `font-weight: 650` | `--yl-font-weight-{regular,medium,semibold,bold,extrabold}` |
+| `border: 1px solid` | `--yl-border-width-{thin,medium,thick}` |
+
+Un `z-index` elegido a mano es correcto hasta el día en que dos de ellos se encuentran. El resto
+es la misma historia en otra unidad.
+
+### La escala tipográfica
+
+Doce roles, cada uno emitido eje por eje para que quien lo use pueda tomar el tamaño sin heredar
+el peso:
+
+```css
+.title {
+  font-size: var(--yl-text-h2-size);
+  font-weight: var(--yl-text-h2-weight);
+  line-height: var(--yl-text-h2-leading);
+  letter-spacing: var(--yl-text-h2-tracking);
+}
+```
+
+Roles: `hero`, `h1`–`h4`, `body-lg`, `body`, `body-sm`, `label`, `button`, `caption`, `code`.
+Ejes: `size`, `weight`, `leading`, `tracking`, `family`, `transform`. Un eje que un rol no define
+no se emite, así que no puede sobrescribir un valor heredado con nada.
+
+### El tema oscuro es la marca
+
+Sus superficies no están elegidas a mano. Cada una se mezcla a partir del par de marca, carbón
+`#0F172A` y el azul de marca más profundo `#123F68`, para que una interfaz oscura se lea como
+negro azulado y no como gris neutro, y para que un cambio de marca mueva el tema completo en vez
+de dejarlo atrás:
+
+```
+panel    = carbón + 16% de azul de marca
+canvas   = eso, 34% hacia el negro
+subtle   = eso, 16% hacia el negro
+inset    = eso, 52% hacia el negro
+elevated = eso, 30% hacia neutral[800]
+```
+
+El tema claro lleva la marca en sus acentos, que es donde corresponde sobre una página blanca:
+rellenos interactivos, enlaces, anillos de foco y un lienzo teñido con `primary[50]`.
+
+### Color de marca y contraste
+
+`--yl-color-brand-primary` es `#1A7FE2`. Con 4.06:1 sobre blanco alcanza para un logo o
+tipografía de despliegue y **no** alcanza para texto corrido, así que el texto que debe verse de
+marca lee `--yl-color-fg-brand`, un paso más oscuro, con 5.38:1. Los rellenos de botón usan
+`--yl-color-interactive-bg`, que es el mismo paso.
+
+`tests/contrast.test.ts` calcula cada combinación en ambos temas y falla por debajo de 4.5:1 para
+texto o 3:1 para un anillo de foco o un acento de estado. El texto deshabilitado está exento, por
+WCAG 1.4.3, y se verifica que *siga* por debajo del umbral para que se siga viendo deshabilitado.
+
+### Migrar desde 0.3.x
+
+Treinta y ocho propiedades cambiaron de nombre. `scripts/token-rename-map.json` es el mapa
+completo y `scripts/codemod-tokens.mjs` lo aplica. Ambos se publican con el paquete, así que
+esto corre contra una copia instalada sin necesidad de clonar nada:
+
+```bash
+node node_modules/@yoltra/ds/scripts/codemod-tokens.mjs --write 'src/**/*.{css,scss,ts,tsx}'
+```
+
+Un cambio necesita criterio humano: `--yl-color-brand` se mapea mecánicamente a
+`--yl-color-brand-primary`, que es correcto para decoración e incorrecto para texto. El codemod
+imprime los lugares que tocó y qué usar en su lugar.
+
 ## Autoría de estilos
 
-Los estilos de los componentes son SASS, en `src/primitives/<Componente>.scss` y
-`src/overlay/<Componente>.scss`, compilados a un archivo por componente por
-`scripts/build-styles.mjs`.
+Los estilos de los componentes son SASS, en `src/primitives/<Componente>/<Componente>.scss` y
+`src/overlay/<Componente>/<Componente>.scss`, compilados a un archivo por componente por
+`scripts/build-styles.mjs`. El nombre compilado sale del basename, así que `Button/Button.scss`
+se sigue publicando como `button.css`.
 
 SASS nunca es dueño de un *valor*. Los colores, espaciados y radios se leen como `var(--yl-*)`,
 porque el tema es un cambio de atributo `data-theme` en tiempo de ejecución sobre la raíz del

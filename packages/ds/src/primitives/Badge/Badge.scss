@@ -1,0 +1,51 @@
+@use "../../styles" as *;
+
+.yl-badge {
+  // Sub-grid: 3px, where the scale starts at 4px. A pill this small needs less than a step.
+  --badge-pad-y: 0.3rem;
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yl-space-1);
+  font-family: var(--yl-font-sans);
+  font-size: var(--yl-text-caption-size);
+  font-weight: var(--yl-font-weight-semibold);
+  line-height: 1;
+  padding: var(--badge-pad-y) var(--yl-space-2);
+  border-radius: var(--yl-radius-round);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
+  color: var(--yl-color-fg-secondary);
+  background: var(--yl-color-bg-subtle);
+
+  &--brand {
+    color: var(--yl-color-fg-brand);
+    border-color: var(--yl-color-status-info-border);
+    background: var(--yl-color-status-info-bg);
+  }
+
+  // One rule per kind rather than a loop, so a reader can grep for the class they see in the
+  // inspector and land on the line that produced it.
+  &--info {
+    color: var(--yl-color-status-info-fg);
+    border-color: var(--yl-color-status-info-border);
+    background: var(--yl-color-status-info-bg);
+  }
+
+  &--success {
+    color: var(--yl-color-status-success-fg);
+    border-color: var(--yl-color-status-success-border);
+    background: var(--yl-color-status-success-bg);
+  }
+
+  &--warning {
+    color: var(--yl-color-status-warning-fg);
+    border-color: var(--yl-color-status-warning-border);
+    background: var(--yl-color-status-warning-bg);
+  }
+
+  &--error {
+    color: var(--yl-color-status-error-fg);
+    border-color: var(--yl-color-status-error-border);
+    background: var(--yl-color-status-error-bg);
+  }
+}

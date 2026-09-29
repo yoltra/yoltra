@@ -10,7 +10,7 @@
 
 > **Link**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Typography.tsx:114](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L114)
+Defined in: [primitives/Typography/Typography.tsx:114](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L114)
 
 A hyperlink.
 

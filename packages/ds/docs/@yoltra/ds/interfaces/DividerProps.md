@@ -8,7 +8,7 @@
 
 # Interface: DividerProps
 
-Defined in: [primitives/Layout.tsx:261](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L261)
+Defined in: [primitives/Layout/Layout.tsx:261](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L261)
 
 ## Extends
 
@@ -20,4 +20,4 @@ Defined in: [primitives/Layout.tsx:261](https://github.com/yoltra/yoltra/blob/ma
 
 > `optional` **orientation**: `"horizontal"` \| `"vertical"`
 
-Defined in: [primitives/Layout.tsx:262](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L262)
+Defined in: [primitives/Layout/Layout.tsx:262](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L262)

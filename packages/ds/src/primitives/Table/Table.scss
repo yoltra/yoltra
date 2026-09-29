@@ -1,0 +1,41 @@
+@use "../../styles" as *;
+
+.yl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--yl-text-body-sm-size);
+  margin: var(--yl-space-4) 0;
+
+  th,
+  td {
+    text-align: left;
+    padding: var(--yl-space-2) var(--yl-space-3);
+    border-bottom: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
+    vertical-align: top;
+  }
+
+  th {
+    font-weight: var(--yl-font-weight-semibold);
+    color: var(--yl-color-fg-secondary);
+    font-size: var(--yl-text-label-size);
+  }
+
+  code {
+    font-family: var(--yl-font-mono);
+    font-size: var(--yl-text-label-size);
+  }
+}
+
+// Figures, not prose: right-aligned so the digits line up, and tabular so the column does not
+// shuffle sideways when a value changes width.
+.yl-th--numeric,
+.yl-td--numeric {
+  text-align: right;
+  font-variant-numeric: var(--yl-font-numeric);
+}
+
+.yl-table-scroll {
+  overflow-x: auto;
+  // A focusable scroll region needs a visible ring when it is reached from the keyboard.
+  @include focus-ring;
+}

@@ -26,6 +26,7 @@ const yoltraDistAliases = {
   "@yoltra/react": fromHere("../../../packages/react/dist/index.mjs"),
   // Design system: the `/client` subpath must be aliased before the bare
   // specifier so the more specific match wins.
+  "@yoltra/ds/styles": fromHere("../../../packages/ds/dist/styles"),
   "@yoltra/ds/client": fromHere("../../../packages/ds/dist/client.mjs"),
   "@yoltra/ds": fromHere("../../../packages/ds/dist/index.mjs"),
   "@yoltra/devtools-browser-agent": fromHere(

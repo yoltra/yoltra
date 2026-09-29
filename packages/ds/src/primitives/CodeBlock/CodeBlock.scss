@@ -1,0 +1,62 @@
+@use "../../styles" as *;
+
+.yl-code {
+  // Derived from the ink roles rather than hand-copied from them. These were five `rgba()`
+  // literals lifted out of the palette, which meant the header and the copy button did not
+  // change with the theme while the surface under them did.
+  --code-head-fg: color-mix(in srgb, var(--yl-color-fg-on-ink) 70%, transparent);
+  --code-copy-fg: color-mix(in srgb, var(--yl-color-fg-on-ink) 85%, transparent);
+  // Both washes come from the ink foreground, so hover is a clear doubling rather than the
+  // two-hundredths of alpha that deriving them from the border role left it with.
+  --code-copy-bg: color-mix(in srgb, var(--yl-color-fg-on-ink) 8%, transparent);
+  --code-copy-bg-hover: color-mix(in srgb, var(--yl-color-fg-on-ink) 16%, transparent);
+  --code-copy-border: color-mix(in srgb, var(--yl-color-fg-on-ink) 20%, transparent);
+  // Sub-grid: 2px, where the spacing scale starts at 4px. A control this small inside a header
+  // row cannot afford a full step.
+  --code-copy-pad-y: 0.2rem;
+
+  position: relative;
+  margin: var(--yl-space-4) 0;
+  border-radius: var(--yl-radius-lg);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-on-ink);
+  background: var(--yl-color-bg-ink);
+  overflow: hidden;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--yl-space-2) var(--yl-space-3);
+    border-bottom: var(--yl-border-width-thin) solid var(--yl-color-border-on-ink);
+    font-family: var(--yl-font-mono);
+    font-size: var(--yl-text-caption-size);
+    color: var(--code-head-fg);
+  }
+
+  pre {
+    margin: 0;
+    padding: var(--yl-space-4);
+    overflow-x: auto;
+    font-family: var(--yl-font-mono);
+    font-size: var(--yl-text-code-size);
+    line-height: 1.6;
+    color: var(--yl-color-fg-on-ink);
+  }
+
+  &__copy {
+    font-family: var(--yl-font-sans);
+    font-size: var(--yl-text-caption-size);
+    font-weight: var(--yl-font-weight-semibold);
+    cursor: pointer;
+    color: var(--code-copy-fg);
+    background: var(--code-copy-bg);
+    border: var(--yl-border-width-thin) solid var(--code-copy-border);
+    border-radius: var(--yl-radius-sm);
+    padding: var(--code-copy-pad-y) var(--yl-space-2);
+    @include transition(background);
+
+    &:hover {
+      background: var(--code-copy-bg-hover);
+    }
+  }
+}

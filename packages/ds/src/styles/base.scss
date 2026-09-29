@@ -2,7 +2,7 @@
 //
 // Loaded once per application. Everything else is opt-in per component.
 
-@use "./mixins" as *;
+@use "./index" as *;
 
 /// **1rem is 10px.**
 ///
@@ -23,7 +23,7 @@ html {
 
 .yl-root {
   font-family: var(--yl-font-sans);
-  color: var(--yl-color-fg);
+  color: var(--yl-color-fg-default);
   background: var(--yl-color-bg-canvas);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -44,12 +44,34 @@ html {
     padding-inline: var(--yl-space-5);
   }
   @include media-up(md) {
-    max-width: 720px;
+    max-width: var(--yl-container-md);
   }
   @include media-up(lg) {
-    max-width: 960px;
+    max-width: var(--yl-container-lg);
   }
   @include media-up(xl) {
-    max-width: 1180px;
+    max-width: var(--yl-container-xl);
   }
+}
+
+// An in-content anchor, styled so it does not fall back to the user agent's blue.
+//
+// `--yl-color-fg-link` was defined from the first release and applied to nothing, so a link in
+// prose rendered in the browser default: readable on a white page and close to invisible on a dark
+// one. A consuming project patched it with `a:not(.yl-btn):not(.yl-link)`, and noted the trap in
+// that approach: `:not()` takes its argument's specificity, so the chain out-specifies a bare
+// `.yl-link` and every future classed anchor has to be added to it.
+//
+// `:not([class])` avoids the whole problem. It matches an anchor with no class at all, so anything
+// this design system styles by class is untouched no matter how many of those there come to be.
+.yl-root a:not([class]) {
+  color: var(--yl-color-fg-link);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+
+  &:hover {
+    color: var(--yl-color-fg-link-hover);
+  }
+
+  @include focus-ring;
 }

@@ -8,7 +8,7 @@
 
 # Interface: FontStyleToken
 
-Defined in: [tokens/tokens.ts:14](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L14)
+Defined in: [tokens/tokens.ts:24](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L24)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [tokens/tokens.ts:14](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **fontFamily**: `string`
 
-Defined in: [tokens/tokens.ts:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L15)
+Defined in: [tokens/tokens.ts:25](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L25)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [tokens/tokens.ts:15](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **fontSize**: [`CSSLength`](../type-aliases/CSSLength.md)
 
-Defined in: [tokens/tokens.ts:16](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L16)
+Defined in: [tokens/tokens.ts:26](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L26)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [tokens/tokens.ts:16](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **fontWeight**: `number`
 
-Defined in: [tokens/tokens.ts:17](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L17)
+Defined in: [tokens/tokens.ts:27](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L27)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [tokens/tokens.ts:17](https://github.com/yoltra/yoltra/blob/main/pac
 
 > `optional` **letterSpacing**: [`CSSLength`](../type-aliases/CSSLength.md)
 
-Defined in: [tokens/tokens.ts:19](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L19)
+Defined in: [tokens/tokens.ts:29](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L29)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [tokens/tokens.ts:19](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **lineHeight**: `string` \| `number`
 
-Defined in: [tokens/tokens.ts:18](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L18)
+Defined in: [tokens/tokens.ts:28](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L28)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [tokens/tokens.ts:18](https://github.com/yoltra/yoltra/blob/main/pac
 
 > `optional` **textTransform**: `"none"` \| `"uppercase"` \| `"lowercase"` \| `"capitalize"`
 
-Defined in: [tokens/tokens.ts:20](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L20)
+Defined in: [tokens/tokens.ts:30](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L30)

@@ -10,7 +10,7 @@
 
 > **Skeleton**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Feedback.tsx:65](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L65)
+Defined in: [primitives/Feedback/Feedback.tsx:65](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L65)
 
 A placeholder for content that has not arrived.
 

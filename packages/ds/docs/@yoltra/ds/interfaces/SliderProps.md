@@ -8,7 +8,7 @@
 
 # Interface: SliderProps
 
-Defined in: [primitives/Form.tsx:299](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L299)
+Defined in: [primitives/Form/Form.tsx:333](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L333)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Form.tsx:299](https://github.com/yoltra/yoltra/blob/main
 
 > `optional` **valueText**: `string`
 
-Defined in: [primitives/Form.tsx:307](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form.tsx#L307)
+Defined in: [primitives/Form/Form.tsx:341](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Form/Form.tsx#L341)
 
 Spoken form of the current value.
 

@@ -10,7 +10,7 @@
 
 > **Dialog**(`__namedParameters`): `Element`
 
-Defined in: [overlay/Modal.tsx:193](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Modal.tsx#L193)
+Defined in: [overlay/Modal/Modal.tsx:193](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Modal/Modal.tsx#L193)
 
 A modal dialog, centred over a scrim.
 

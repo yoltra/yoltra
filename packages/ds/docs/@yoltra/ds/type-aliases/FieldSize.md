@@ -10,6 +10,6 @@
 
 > **FieldSize** = `"md"` \| `"sm"`
 
-Defined in: [primitives/Field.tsx:9](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field.tsx#L9)
+Defined in: [primitives/Field/Field.tsx:9](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field/Field.tsx#L9)
 
 Field scale.

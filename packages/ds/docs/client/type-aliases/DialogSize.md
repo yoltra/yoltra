@@ -10,4 +10,4 @@
 
 > **DialogSize** = `"sm"` \| `"md"` \| `"lg"` \| `"full"`
 
-Defined in: [overlay/Modal.tsx:8](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Modal.tsx#L8)
+Defined in: [overlay/Modal/Modal.tsx:8](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Modal/Modal.tsx#L8)

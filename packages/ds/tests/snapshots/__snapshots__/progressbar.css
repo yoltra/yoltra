@@ -1,0 +1,27 @@
+.yl-progress {
+  --progress-height: 0.6rem;
+  --progress-fraction: 0;
+  inline-size: 100%;
+  block-size: var(--progress-height);
+  border-radius: var(--yl-radius-round);
+  background: var(--yl-color-interactive-track);
+  overflow: hidden;
+}
+.yl-progress__fill {
+  display: block;
+  block-size: 100%;
+  inline-size: 100%;
+  transform: scaleX(var(--progress-fraction));
+  transform-origin: left center;
+  border-radius: inherit;
+  background: var(--yl-color-interactive-bg);
+  transition: transform var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
+}
+[dir=rtl] .yl-progress__fill {
+  transform-origin: right center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .yl-progress__fill {
+    transition: none;
+  }
+}

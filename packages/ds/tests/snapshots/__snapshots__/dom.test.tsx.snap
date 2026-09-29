@@ -1,0 +1,1729 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`AuthCard > not the page's main landmark 1`] = `
+<div
+  class="yl-auth"
+>
+  <div
+    class="yl-card yl-auth__card"
+    style="--yl-card-padding: var(--yl-space-6); --yl-card-shadow: var(--yl-elevation-xs);"
+  >
+    <div
+      class="yl-stack"
+      style="--yl-stack-gap: var(--yl-space-4);"
+    >
+      <h1
+        class="yl-heading yl-heading--md"
+      >
+        Sign in
+      </h1>
+      form
+    </div>
+  </div>
+</div>
+`;
+
+exports[`AuthCard > title and children 1`] = `
+<main
+  class="yl-auth"
+>
+  <div
+    class="yl-card yl-auth__card"
+    style="--yl-card-padding: var(--yl-space-6); --yl-card-shadow: var(--yl-elevation-xs);"
+  >
+    <div
+      class="yl-stack"
+      style="--yl-stack-gap: var(--yl-space-4);"
+    >
+      <h1
+        class="yl-heading yl-heading--md"
+      >
+        Sign in
+      </h1>
+      <label
+        class="yl-label"
+        for="e"
+      >
+        Email
+      </label>
+      <input
+        class="yl-input"
+        id="e"
+      />
+    </div>
+  </div>
+</main>
+`;
+
+exports[`AuthCard > with a description and a footer 1`] = `
+<main
+  class="yl-auth"
+>
+  <div
+    class="yl-card yl-auth__card"
+    style="--yl-card-padding: var(--yl-space-6); --yl-card-shadow: var(--yl-elevation-xs);"
+  >
+    <div
+      class="yl-stack"
+      style="--yl-stack-gap: var(--yl-space-4);"
+    >
+      <h1
+        class="yl-heading yl-heading--md"
+      >
+        Sign in
+      </h1>
+      <p
+        class="yl-text yl-text--sm"
+      >
+        Use the address you registered with.
+      </p>
+      <input
+        class="yl-input"
+        id="e"
+      />
+      <a
+        class="yl-link"
+        href="/reset"
+      >
+        Forgot your password?
+      </a>
+    </div>
+  </div>
+</main>
+`;
+
+exports[`Badge > brand 1`] = `
+<span
+  class="yl-badge yl-badge--brand"
+>
+  New
+</span>
+`;
+
+exports[`Badge > error 1`] = `
+<span
+  class="yl-badge"
+>
+  error
+</span>
+`;
+
+exports[`Badge > info 1`] = `
+<span
+  class="yl-badge"
+>
+  info
+</span>
+`;
+
+exports[`Badge > neutral 1`] = `
+<span
+  class="yl-badge"
+>
+  Draft
+</span>
+`;
+
+exports[`Badge > success 1`] = `
+<span
+  class="yl-badge"
+>
+  success
+</span>
+`;
+
+exports[`Badge > warning 1`] = `
+<span
+  class="yl-badge"
+>
+  warning
+</span>
+`;
+
+exports[`Button > danger 1`] = `
+<button
+  class="yl-btn yl-btn--danger"
+>
+  Delete
+</button>
+`;
+
+exports[`Button > disabled 1`] = `
+<button
+  class="yl-btn yl-btn--primary"
+  disabled=""
+>
+  Save
+</button>
+`;
+
+exports[`Button > ghost md 1`] = `
+<button
+  class="yl-btn yl-btn--ghost"
+>
+  Save
+</button>
+`;
+
+exports[`Button > ghost sm 1`] = `
+<button
+  class="yl-btn yl-btn--ghost yl-btn--sm"
+>
+  Save
+</button>
+`;
+
+exports[`Button > loading 1`] = `
+<button
+  aria-busy="true"
+  aria-disabled="true"
+  class="yl-btn yl-btn--primary"
+>
+  <span
+    class="yl-btn__label"
+  >
+    Save
+  </span>
+  <span
+    aria-hidden="true"
+    class="yl-btn__spinner"
+  />
+</button>
+`;
+
+exports[`Button > not pressed 1`] = `
+<button
+  aria-pressed="false"
+  class="yl-btn yl-btn--primary"
+>
+  Bold
+</button>
+`;
+
+exports[`Button > pressed 1`] = `
+<button
+  aria-pressed="true"
+  class="yl-btn yl-btn--primary"
+>
+  Bold
+</button>
+`;
+
+exports[`Button > primary md 1`] = `
+<button
+  class="yl-btn yl-btn--primary"
+>
+  Save
+</button>
+`;
+
+exports[`Button > primary sm 1`] = `
+<button
+  class="yl-btn yl-btn--primary yl-btn--sm"
+>
+  Save
+</button>
+`;
+
+exports[`Button > submit 1`] = `
+<button
+  class="yl-btn yl-btn--primary"
+  type="submit"
+>
+  Save
+</button>
+`;
+
+exports[`Button > touch size 1`] = `
+<button
+  class="yl-btn yl-btn--primary yl-btn--lg"
+>
+  Sell
+</button>
+`;
+
+exports[`ButtonGroup > wraps its buttons with a label 1`] = `
+<div
+  aria-label="Text style"
+  class="yl-btn-group"
+  role="group"
+>
+  <button
+    class="yl-btn yl-btn--primary"
+  >
+    Bold
+  </button>
+  <button
+    class="yl-btn yl-btn--primary"
+  >
+    Italic
+  </button>
+</div>
+`;
+
+exports[`ButtonLink > ghost 1`] = `
+<a
+  class="yl-btn yl-btn--ghost"
+  href="/docs"
+>
+  Docs
+</a>
+`;
+
+exports[`ButtonLink > primary 1`] = `
+<a
+  class="yl-btn yl-btn--primary"
+  href="/docs"
+>
+  Docs
+</a>
+`;
+
+exports[`ButtonLink > small 1`] = `
+<a
+  class="yl-btn yl-btn--primary yl-btn--sm"
+  href="/docs"
+>
+  Docs
+</a>
+`;
+
+exports[`Callout > error 1`] = `
+<div
+  class="yl-callout yl-callout--error"
+  role="note"
+>
+  <span
+    aria-hidden="true"
+    class="yl-callout__icon"
+  >
+    ⛔
+  </span>
+  <div
+    class="yl-callout__body"
+  >
+    Something happened.
+  </div>
+</div>
+`;
+
+exports[`Callout > info 1`] = `
+<div
+  class="yl-callout"
+  role="note"
+>
+  <span
+    aria-hidden="true"
+    class="yl-callout__icon"
+  >
+    ℹ️
+  </span>
+  <div
+    class="yl-callout__body"
+  >
+    Something happened.
+  </div>
+</div>
+`;
+
+exports[`Callout > success 1`] = `
+<div
+  class="yl-callout yl-callout--success"
+  role="note"
+>
+  <span
+    aria-hidden="true"
+    class="yl-callout__icon"
+  >
+    ✅
+  </span>
+  <div
+    class="yl-callout__body"
+  >
+    Something happened.
+  </div>
+</div>
+`;
+
+exports[`Callout > warning 1`] = `
+<div
+  class="yl-callout yl-callout--warning"
+  role="note"
+>
+  <span
+    aria-hidden="true"
+    class="yl-callout__icon"
+  >
+    ⚠️
+  </span>
+  <div
+    class="yl-callout__body"
+  >
+    Something happened.
+  </div>
+</div>
+`;
+
+exports[`Card > as a section 1`] = `
+<section
+  class="yl-card"
+  style="--yl-card-shadow: var(--yl-elevation-xs);"
+>
+  Body
+</section>
+`;
+
+exports[`Card > bordered 1`] = `
+<div
+  class="yl-card"
+  style="--yl-card-shadow: var(--yl-elevation-xs);"
+>
+  Body
+</div>
+`;
+
+exports[`Card > default 1`] = `
+<div
+  class="yl-card"
+  style="--yl-card-shadow: var(--yl-elevation-xs);"
+>
+  Body
+</div>
+`;
+
+exports[`Card > elevation lg 1`] = `
+<div
+  class="yl-card"
+  style="--yl-card-shadow: var(--yl-elevation-lg);"
+>
+  Body
+</div>
+`;
+
+exports[`Card > elevation md 1`] = `
+<div
+  class="yl-card"
+  style="--yl-card-shadow: var(--yl-elevation-md);"
+>
+  Body
+</div>
+`;
+
+exports[`Card > elevation none 1`] = `
+<div
+  class="yl-card"
+  style="--yl-card-shadow: var(--yl-elevation-none);"
+>
+  Body
+</div>
+`;
+
+exports[`Card > elevation sm 1`] = `
+<div
+  class="yl-card"
+  style="--yl-card-shadow: var(--yl-elevation-sm);"
+>
+  Body
+</div>
+`;
+
+exports[`Card > elevation xl 1`] = `
+<div
+  class="yl-card"
+  style="--yl-card-shadow: var(--yl-elevation-xl);"
+>
+  Body
+</div>
+`;
+
+exports[`Card > elevation xs 1`] = `
+<div
+  class="yl-card"
+  style="--yl-card-shadow: var(--yl-elevation-xs);"
+>
+  Body
+</div>
+`;
+
+exports[`Card > padded 1`] = `
+<div
+  class="yl-card"
+  style="--yl-card-padding: var(--yl-space-4); --yl-card-shadow: var(--yl-elevation-xs);"
+>
+  Body
+</div>
+`;
+
+exports[`Card > subtle tone 1`] = `
+<div
+  class="yl-card yl-card--subtle"
+  style="--yl-card-shadow: var(--yl-elevation-xs);"
+>
+  Body
+</div>
+`;
+
+exports[`Chip > brand 1`] = `
+<span
+  class="yl-chip yl-chip--brand"
+>
+  featured
+</span>
+`;
+
+exports[`Chip > default 1`] = `
+<span
+  class="yl-chip yl-chip--neutral"
+>
+  gguf
+</span>
+`;
+
+exports[`Feedback > EmptyState at another heading level 1`] = `
+<div
+  class="yl-empty"
+>
+  <h3
+    class="yl-empty__title"
+  >
+    Nothing here
+  </h3>
+</div>
+`;
+
+exports[`Feedback > EmptyState fully populated 1`] = `
+<div
+  class="yl-empty"
+>
+  <div
+    aria-hidden="true"
+    class="yl-empty__icon"
+  >
+    empty
+  </div>
+  <h3
+    class="yl-empty__title"
+  >
+    Nothing here
+  </h3>
+  <p
+    class="yl-empty__body"
+  >
+    Add something to get started.
+  </p>
+  <div
+    class="yl-empty__action"
+  >
+    <button
+      class="yl-btn yl-btn--primary"
+    >
+      Add
+    </button>
+  </div>
+</div>
+`;
+
+exports[`Feedback > EmptyState with a title only 1`] = `
+<div
+  class="yl-empty"
+>
+  <h3
+    class="yl-empty__title"
+  >
+    Nothing here
+  </h3>
+</div>
+`;
+
+exports[`Feedback > Skeleton 1`] = `
+<span
+  aria-hidden="true"
+  class="yl-skeleton"
+/>
+`;
+
+exports[`Feedback > Skeleton circle 1`] = `
+<span
+  aria-hidden="true"
+  class="yl-skeleton yl-skeleton--circle"
+/>
+`;
+
+exports[`Feedback > Skeleton sized 1`] = `
+<span
+  aria-hidden="true"
+  class="yl-skeleton"
+  style="width: 20rem; height: 2rem;"
+/>
+`;
+
+exports[`Feedback > Spinner lg 1`] = `
+<span
+  class="yl-spinner yl-spinner--lg"
+  role="status"
+>
+  <span
+    aria-hidden="true"
+    class="yl-spinner__ring"
+  />
+  <span
+    class="yl-visually-hidden"
+  >
+    Loading
+  </span>
+</span>
+`;
+
+exports[`Feedback > Spinner md 1`] = `
+<span
+  class="yl-spinner yl-spinner--md"
+  role="status"
+>
+  <span
+    aria-hidden="true"
+    class="yl-spinner__ring"
+  />
+  <span
+    class="yl-visually-hidden"
+  >
+    Loading
+  </span>
+</span>
+`;
+
+exports[`Feedback > Spinner sm 1`] = `
+<span
+  class="yl-spinner yl-spinner--sm"
+  role="status"
+>
+  <span
+    aria-hidden="true"
+    class="yl-spinner__ring"
+  />
+  <span
+    class="yl-visually-hidden"
+  >
+    Loading
+  </span>
+</span>
+`;
+
+exports[`Feedback > Spinner with a label 1`] = `
+<span
+  class="yl-spinner yl-spinner--md"
+  role="status"
+>
+  <span
+    aria-hidden="true"
+    class="yl-spinner__ring"
+  />
+  <span
+    class="yl-visually-hidden"
+  >
+    Loading
+  </span>
+</span>
+`;
+
+exports[`Fields > Input block 1`] = `
+<input
+  class="yl-input yl-input--block"
+/>
+`;
+
+exports[`Fields > Input disabled 1`] = `
+<input
+  class="yl-input"
+  disabled=""
+/>
+`;
+
+exports[`Fields > Input md 1`] = `
+<input
+  class="yl-input"
+  value="host"
+/>
+`;
+
+exports[`Fields > Input sm 1`] = `
+<input
+  class="yl-input yl-input--sm"
+  value="host"
+/>
+`;
+
+exports[`Fields > Select block 1`] = `
+<select
+  class="yl-select yl-select--block"
+>
+  <option
+    value="a"
+  >
+    A
+  </option>
+</select>
+`;
+
+exports[`Fields > Select md 1`] = `
+<select
+  class="yl-select"
+>
+  <option
+    selected=""
+    value="a"
+  >
+    A
+  </option>
+</select>
+`;
+
+exports[`Fields > Select sm 1`] = `
+<select
+  class="yl-select yl-select--sm"
+>
+  <option
+    selected=""
+    value="a"
+  >
+    A
+  </option>
+</select>
+`;
+
+exports[`Fields > Textarea block 1`] = `
+<textarea
+  class="yl-textarea yl-textarea--block"
+/>
+`;
+
+exports[`Fields > Textarea md 1`] = `
+<textarea
+  class="yl-textarea"
+>
+  text
+</textarea>
+`;
+
+exports[`Fields > Textarea sm 1`] = `
+<textarea
+  class="yl-textarea yl-textarea--sm"
+>
+  text
+</textarea>
+`;
+
+exports[`Form > Checkbox 1`] = `
+<div
+  class="yl-toggle"
+>
+  <label
+    class="yl-toggle__label"
+  >
+    <input
+      class="yl-checkbox"
+      id="a"
+      type="checkbox"
+    />
+    <span>
+      Remember me
+    </span>
+  </label>
+</div>
+`;
+
+exports[`Form > Checkbox with a hint 1`] = `
+<div
+  class="yl-toggle"
+>
+  <label
+    class="yl-toggle__label"
+  >
+    <input
+      aria-describedby="a-hint"
+      class="yl-checkbox"
+      id="a"
+      type="checkbox"
+    />
+    <span>
+      Remember me
+    </span>
+  </label>
+  <p
+    class="yl-field__hint"
+    id="a-hint"
+  >
+    On this device.
+  </p>
+</div>
+`;
+
+exports[`Form > Fieldset 1`] = `
+<fieldset
+  class="yl-fieldset"
+>
+  <legend
+    class="yl-fieldset__legend"
+  >
+    Connection
+  </legend>
+  <p
+    class="yl-field__hint"
+  >
+    How to reach it.
+  </p>
+  <div
+    class="yl-fieldset__body"
+  >
+    <input
+      class="yl-input"
+    />
+  </div>
+</fieldset>
+`;
+
+exports[`Form > FormField required 1`] = `
+<div
+  class="yl-field"
+>
+  <label
+    class="yl-label"
+    for="host"
+  >
+    Hub host
+    <span
+      aria-hidden="true"
+      class="yl-field__required"
+    >
+      *
+    </span>
+  </label>
+  <input
+    class="yl-input"
+    id="host"
+  />
+  <p
+    class="yl-field__error"
+    role="alert"
+  />
+</div>
+`;
+
+exports[`Form > FormField with a hint 1`] = `
+<div
+  class="yl-field"
+>
+  <label
+    class="yl-label"
+    for="host"
+  >
+    Hub host
+  </label>
+  <input
+    aria-describedby="host-hint"
+    class="yl-input"
+    id="host"
+  />
+  <p
+    class="yl-field__hint"
+    id="host-hint"
+  >
+    Where the hub listens.
+  </p>
+  <p
+    class="yl-field__error"
+    role="alert"
+  />
+</div>
+`;
+
+exports[`Form > FormField with a label only 1`] = `
+<div
+  class="yl-field"
+>
+  <label
+    class="yl-label"
+    for="host"
+  >
+    Hub host
+  </label>
+  <input
+    class="yl-input"
+    id="host"
+  />
+  <p
+    class="yl-field__error"
+    role="alert"
+  />
+</div>
+`;
+
+exports[`Form > FormField with an error 1`] = `
+<div
+  class="yl-field"
+>
+  <label
+    class="yl-label"
+    for="host"
+  >
+    Hub host
+  </label>
+  <input
+    aria-describedby="host-error"
+    aria-invalid="true"
+    class="yl-input"
+    id="host"
+  />
+  <p
+    class="yl-field__error"
+    id="host-error"
+    role="alert"
+  >
+    That host is unreachable.
+  </p>
+</div>
+`;
+
+exports[`Form > Label 1`] = `
+<label
+  class="yl-label"
+  for="host"
+>
+  Hub host
+</label>
+`;
+
+exports[`Form > Radio 1`] = `
+<div
+  class="yl-toggle"
+>
+  <label
+    class="yl-toggle__label"
+  >
+    <input
+      class="yl-radio"
+      id="b"
+      name="r"
+      type="radio"
+    />
+    <span>
+      Daily
+    </span>
+  </label>
+</div>
+`;
+
+exports[`Form > RadioGroup 1`] = `
+<fieldset
+  class="yl-fieldset"
+  role="radiogroup"
+>
+  <legend
+    class="yl-fieldset__legend"
+  >
+    Cadence
+  </legend>
+  <div
+    class="yl-fieldset__body"
+  >
+    <div
+      class="yl-toggle"
+    >
+      <label
+        class="yl-toggle__label"
+      >
+        <input
+          class="yl-radio"
+          id="b"
+          name="r"
+          type="radio"
+        />
+        <span>
+          Daily
+        </span>
+      </label>
+    </div>
+  </div>
+</fieldset>
+`;
+
+exports[`Form > RadioGroup inline 1`] = `
+<fieldset
+  class="yl-fieldset"
+  role="radiogroup"
+>
+  <legend
+    class="yl-fieldset__legend"
+  >
+    Cadence
+  </legend>
+  <div
+    class="yl-fieldset__body yl-fieldset__body--inline"
+  >
+    <div
+      class="yl-toggle"
+    >
+      <label
+        class="yl-toggle__label"
+      >
+        <input
+          class="yl-radio"
+          id="b"
+          name="r"
+          type="radio"
+        />
+        <span>
+          Daily
+        </span>
+      </label>
+    </div>
+  </div>
+</fieldset>
+`;
+
+exports[`Form > Slider 1`] = `
+<input
+  class="yl-slider"
+  id="d"
+  max="10"
+  min="0"
+  type="range"
+  value="5"
+/>
+`;
+
+exports[`Form > Slider with value text 1`] = `
+<input
+  aria-valuetext="5 of 10"
+  class="yl-slider"
+  id="d"
+  type="range"
+  value="5"
+/>
+`;
+
+exports[`Form > Switch 1`] = `
+<div
+  class="yl-toggle"
+>
+  <label
+    class="yl-toggle__label yl-toggle__label--switch"
+  >
+    <input
+      class="yl-switch"
+      id="c"
+      role="switch"
+      type="checkbox"
+    />
+    <span>
+      Dark mode
+    </span>
+  </label>
+</div>
+`;
+
+exports[`IconButton > ghost 1`] = `
+<button
+  class="yl-icon-btn yl-btn yl-btn--ghost"
+>
+  <span
+    aria-hidden="true"
+  >
+    x
+  </span>
+  <span
+    class="yl-visually-hidden"
+  >
+    Close
+  </span>
+</button>
+`;
+
+exports[`IconButton > primary 1`] = `
+<button
+  class="yl-icon-btn yl-btn yl-btn--primary"
+>
+  <span
+    aria-hidden="true"
+  >
+    x
+  </span>
+  <span
+    class="yl-visually-hidden"
+  >
+    Close
+  </span>
+</button>
+`;
+
+exports[`IconButton > small 1`] = `
+<button
+  class="yl-icon-btn yl-btn yl-btn--ghost yl-btn--sm"
+>
+  <span
+    aria-hidden="true"
+  >
+    x
+  </span>
+  <span
+    class="yl-visually-hidden"
+  >
+    Close
+  </span>
+</button>
+`;
+
+exports[`Layout > Container 1`] = `
+<div
+  class="yl-container"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Divider horizontal 1`] = `
+<hr
+  class="yl-divider"
+/>
+`;
+
+exports[`Layout > Divider vertical 1`] = `
+<div
+  aria-orientation="vertical"
+  class="yl-divider yl-divider--vertical"
+  role="separator"
+/>
+`;
+
+exports[`Layout > Grid with a minimum item width 1`] = `
+<div
+  class="yl-grid"
+  style="grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Grid with columns 1`] = `
+<div
+  class="yl-grid"
+  style="grid-template-columns: repeat(3, minmax(0, 1fr));"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Inline as a nav 1`] = `
+<nav
+  class="yl-inline"
+  style="align-items: center;"
+>
+  child
+</nav>
+`;
+
+exports[`Layout > Inline justify around 1`] = `
+<div
+  class="yl-inline"
+  style="align-items: center; justify-content: space-around;"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Inline justify between 1`] = `
+<div
+  class="yl-inline"
+  style="align-items: center; justify-content: space-between;"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Inline justify center 1`] = `
+<div
+  class="yl-inline"
+  style="align-items: center; justify-content: center;"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Inline justify end 1`] = `
+<div
+  class="yl-inline"
+  style="align-items: center; justify-content: flex-end;"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Inline justify start 1`] = `
+<div
+  class="yl-inline"
+  style="align-items: center; justify-content: flex-start;"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Inline wrapping 1`] = `
+<div
+  class="yl-inline"
+  style="align-items: center;"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Stack align baseline 1`] = `
+<div
+  class="yl-stack"
+  style="align-items: baseline;"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Stack align center 1`] = `
+<div
+  class="yl-stack"
+  style="align-items: center;"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Stack align end 1`] = `
+<div
+  class="yl-stack"
+  style="align-items: flex-end;"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Stack align start 1`] = `
+<div
+  class="yl-stack"
+  style="align-items: flex-start;"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Stack align stretch 1`] = `
+<div
+  class="yl-stack"
+  style="align-items: stretch;"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Stack default 1`] = `
+<div
+  class="yl-stack"
+>
+  child
+</div>
+`;
+
+exports[`Layout > Stack with a gap 1`] = `
+<div
+  class="yl-stack"
+  style="--yl-stack-gap: var(--yl-space-4);"
+>
+  child
+</div>
+`;
+
+exports[`ProgressBar > at the start 1`] = `
+<div
+  aria-label="Downloading"
+  aria-valuemax="100"
+  aria-valuemin="0"
+  aria-valuenow="0"
+  class="yl-progress"
+  role="progressbar"
+  style="--progress-fraction: 0;"
+>
+  <span
+    class="yl-progress__fill"
+  />
+</div>
+`;
+
+exports[`ProgressBar > clamped past the end 1`] = `
+<div
+  aria-label="Downloading"
+  aria-valuemax="10"
+  aria-valuemin="0"
+  aria-valuenow="10"
+  class="yl-progress"
+  role="progressbar"
+  style="--progress-fraction: 1;"
+>
+  <span
+    class="yl-progress__fill"
+  />
+</div>
+`;
+
+exports[`ProgressBar > complete 1`] = `
+<div
+  aria-label="Downloading"
+  aria-valuemax="12"
+  aria-valuemin="0"
+  aria-valuenow="12"
+  class="yl-progress"
+  role="progressbar"
+  style="--progress-fraction: 1;"
+>
+  <span
+    class="yl-progress__fill"
+  />
+</div>
+`;
+
+exports[`ProgressBar > part way 1`] = `
+<div
+  aria-label="Downloading"
+  aria-valuemax="12"
+  aria-valuemin="0"
+  aria-valuenow="3"
+  class="yl-progress"
+  role="progressbar"
+  style="--progress-fraction: 0.25;"
+>
+  <span
+    class="yl-progress__fill"
+  />
+</div>
+`;
+
+exports[`ProgressBar > with a spoken value 1`] = `
+<div
+  aria-label="Downloading"
+  aria-valuemax="12"
+  aria-valuemin="0"
+  aria-valuenow="3"
+  aria-valuetext="3 of 12 files"
+  class="yl-progress"
+  role="progressbar"
+  style="--progress-fraction: 0.25;"
+>
+  <span
+    class="yl-progress__fill"
+  />
+</div>
+`;
+
+exports[`Stat > a real zero 1`] = `
+<div
+  class="yl-stat"
+>
+  <span
+    class="yl-stat__label"
+  >
+    Failed
+  </span>
+  <span
+    class="yl-stat__value"
+  >
+    0
+  </span>
+</div>
+`;
+
+exports[`Stat > a value that is not a number 1`] = `
+<div
+  class="yl-stat"
+>
+  <span
+    class="yl-stat__label"
+  >
+    Status
+  </span>
+  <span
+    class="yl-stat__value"
+  >
+    <span
+      class="yl-badge"
+    >
+      Live
+    </span>
+  </span>
+</div>
+`;
+
+exports[`Stat > in a grid 1`] = `
+<div
+  class="yl-stat-grid"
+>
+  <div
+    class="yl-stat"
+  >
+    <span
+      class="yl-stat__label"
+    >
+      Models
+    </span>
+    <span
+      class="yl-stat__value"
+    >
+      12
+    </span>
+  </div>
+  <div
+    class="yl-stat"
+  >
+    <span
+      class="yl-stat__label"
+    >
+      Failed
+    </span>
+    <span
+      class="yl-stat__value"
+    >
+      0
+    </span>
+  </div>
+</div>
+`;
+
+exports[`Stat > label and value 1`] = `
+<div
+  class="yl-stat"
+>
+  <span
+    class="yl-stat__label"
+  >
+    Models
+  </span>
+  <span
+    class="yl-stat__value"
+  >
+    12
+  </span>
+</div>
+`;
+
+exports[`Stat > with a hint 1`] = `
+<div
+  class="yl-stat"
+>
+  <span
+    class="yl-stat__label"
+  >
+    Disk
+  </span>
+  <span
+    class="yl-stat__value"
+  >
+    4.2 GB
+  </span>
+  <span
+    class="yl-stat__hint"
+  >
+    of 20 GB
+  </span>
+</div>
+`;
+
+exports[`Table > a full composition 1`] = `
+<table
+  class="yl-table"
+>
+  <thead>
+    <tr>
+      <th
+        scope="col"
+      >
+        Name
+      </th>
+      <th
+        scope="col"
+      >
+        Size
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        core
+      </td>
+      <td>
+        12 KB
+      </td>
+    </tr>
+  </tbody>
+</table>
+`;
+
+exports[`Table > inside a scroll region 1`] = `
+<div
+  aria-label="Published packages"
+  class="yl-table-scroll"
+  role="region"
+  tabindex="0"
+>
+  <table
+    class="yl-table"
+  >
+    <tbody>
+      <tr>
+        <td>
+          core
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+`;
+
+exports[`Table > numeric cells 1`] = `
+<table
+  class="yl-table"
+>
+  <thead>
+    <tr>
+      <th
+        scope="col"
+      >
+        Package
+      </th>
+      <th
+        class="yl-th--numeric"
+        scope="col"
+      >
+        Size
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        core
+      </td>
+      <td
+        class="yl-td--numeric"
+      >
+        12.5
+      </td>
+    </tr>
+  </tbody>
+</table>
+`;
+
+exports[`Typography > Heading level 1 1`] = `
+<h1
+  class="yl-heading yl-heading--h1"
+>
+  Title
+</h1>
+`;
+
+exports[`Typography > Heading level 2 1`] = `
+<h2
+  class="yl-heading yl-heading--h2"
+>
+  Title
+</h2>
+`;
+
+exports[`Typography > Heading level 3 1`] = `
+<h3
+  class="yl-heading yl-heading--h3"
+>
+  Title
+</h3>
+`;
+
+exports[`Typography > Heading level 4 1`] = `
+<h4
+  class="yl-heading yl-heading--h4"
+>
+  Title
+</h4>
+`;
+
+exports[`Typography > Heading level 5 1`] = `
+<h5
+  class="yl-heading yl-heading--h5"
+>
+  Title
+</h5>
+`;
+
+exports[`Typography > Heading level 6 1`] = `
+<h6
+  class="yl-heading yl-heading--h6"
+>
+  Title
+</h6>
+`;
+
+exports[`Typography > Heading with an explicit size 1`] = `
+<h2
+  class="yl-heading yl-heading--xs"
+>
+  Title
+</h2>
+`;
+
+exports[`Typography > InlineCode 1`] = `
+<code
+  class="yl-inline-code"
+>
+  npm i
+</code>
+`;
+
+exports[`Typography > Kbd 1`] = `
+<kbd
+  class="yl-kbd"
+>
+  Esc
+</kbd>
+`;
+
+exports[`Typography > Link 1`] = `
+<a
+  class="yl-link"
+  href="/docs"
+>
+  Docs
+</a>
+`;
+
+exports[`Typography > Link external 1`] = `
+<a
+  class="yl-link"
+  href="https://example.com"
+  rel="noopener noreferrer"
+  target="_blank"
+>
+  Example
+</a>
+`;
+
+exports[`Typography > Text as a span 1`] = `
+<span
+  class="yl-text yl-text--md"
+>
+  Body copy
+</span>
+`;
+
+exports[`Typography > Text size lg 1`] = `
+<p
+  class="yl-text yl-text--lg"
+>
+  Body copy
+</p>
+`;
+
+exports[`Typography > Text size md 1`] = `
+<p
+  class="yl-text yl-text--md"
+>
+  Body copy
+</p>
+`;
+
+exports[`Typography > Text size sm 1`] = `
+<p
+  class="yl-text yl-text--sm"
+>
+  Body copy
+</p>
+`;
+
+exports[`Typography > Text size xs 1`] = `
+<p
+  class="yl-text yl-text--xs"
+>
+  Body copy
+</p>
+`;
+
+exports[`Typography > Text tone brand 1`] = `
+<p
+  class="yl-text yl-text--md yl-text--brand"
+>
+  Body copy
+</p>
+`;
+
+exports[`Typography > Text tone danger 1`] = `
+<p
+  class="yl-text yl-text--md yl-text--danger"
+>
+  Body copy
+</p>
+`;
+
+exports[`Typography > Text tone default 1`] = `
+<p
+  class="yl-text yl-text--md"
+>
+  Body copy
+</p>
+`;
+
+exports[`Typography > Text tone muted 1`] = `
+<p
+  class="yl-text yl-text--md yl-text--muted"
+>
+  Body copy
+</p>
+`;
+
+exports[`Typography > Text tone secondary 1`] = `
+<p
+  class="yl-text yl-text--md yl-text--secondary"
+>
+  Body copy
+</p>
+`;
+
+exports[`Typography > Text weight bold 1`] = `
+<p
+  class="yl-text yl-text--md yl-text--bold"
+>
+  Body copy
+</p>
+`;
+
+exports[`Typography > Text weight medium 1`] = `
+<p
+  class="yl-text yl-text--md yl-text--medium"
+>
+  Body copy
+</p>
+`;
+
+exports[`Typography > Text weight regular 1`] = `
+<p
+  class="yl-text yl-text--md"
+>
+  Body copy
+</p>
+`;
+
+exports[`VisuallyHidden > as a div 1`] = `
+<div
+  class="yl-visually-hidden"
+>
+  Skip to content
+</div>
+`;
+
+exports[`VisuallyHidden > default 1`] = `
+<span
+  class="yl-visually-hidden"
+>
+  Skip to content
+</span>
+`;

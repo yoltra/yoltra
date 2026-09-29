@@ -10,7 +10,7 @@
 
 > **Popover**(`__namedParameters`): `Element`
 
-Defined in: [overlay/Popover.tsx:191](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L191)
+Defined in: [overlay/Popover/Popover.tsx:191](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L191)
 
 A non-modal panel anchored to a trigger.
 

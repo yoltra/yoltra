@@ -1,0 +1,161 @@
+@use "../../styles" as *;
+
+.yl-btn {
+  // One pixel of travel on press. A component decision rather than a system one, and
+  // deliberately not the hairline token: it is movement, not a border.
+  --btn-press-travel: 1px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--yl-space-2);
+  font-family: var(--yl-font-sans);
+  font-size: var(--yl-text-button-size);
+  font-weight: var(--yl-font-weight-semibold);
+  line-height: 1.2;
+  padding: var(--yl-space-2) var(--yl-space-4);
+  border-radius: var(--yl-radius-md);
+  border: var(--yl-border-width-thin) solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  @include transition(background, border-color, transform);
+
+  &:active {
+    transform: translateY(var(--btn-press-travel));
+  }
+
+  @include focus-ring;
+
+  &--primary {
+    background: var(--yl-color-interactive-bg);
+    color: var(--yl-color-interactive-fg);
+    border-color: var(--yl-color-interactive-bg);
+
+    &:hover {
+      background: var(--yl-color-interactive-bg-hover);
+      border-color: var(--yl-color-interactive-bg-hover);
+    }
+    &:active {
+      background: var(--yl-color-interactive-bg-active);
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--yl-color-fg-default);
+    border-color: var(--yl-color-interactive-quiet-border);
+
+    &:hover {
+      background: var(--yl-color-interactive-quiet-bg-hover);
+    }
+  }
+
+  &--danger {
+    background: var(--yl-color-interactive-danger-bg);
+    color: var(--yl-color-interactive-danger-fg);
+    border-color: var(--yl-color-interactive-danger-bg);
+
+    &:hover {
+      background: var(--yl-color-interactive-danger-bg-hover);
+      border-color: var(--yl-color-interactive-danger-bg-hover);
+    }
+    &:active {
+      background: var(--yl-color-interactive-danger-bg-active);
+    }
+  }
+
+  // A toggle that is on reads as a pressed surface rather than a different colour, so the set it
+  // sits in still looks like one control.
+  &[aria-pressed="true"] {
+    background: var(--yl-color-interactive-quiet-bg-active);
+    border-color: var(--yl-color-border-strong);
+  }
+
+  // `aria-disabled` rather than `disabled`, so a busy control keeps its focus. The appearance has
+  // to match the real thing or the two states look like different bugs.
+  &[aria-disabled="true"] {
+    @include disabled-control;
+  }
+
+  &[aria-busy="true"] {
+    position: relative;
+
+    // Zero opacity, not `visibility` or `display`: those remove the text from the accessibility
+    // tree, and a busy button with no accessible name is worse than a wide one.
+    .yl-btn__label {
+      opacity: 0;
+    }
+  }
+
+  &__spinner {
+    --btn-spinner-size: 1.4rem;
+
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    inline-size: var(--btn-spinner-size);
+    block-size: var(--btn-spinner-size);
+    margin-block-start: calc(var(--btn-spinner-size) / -2);
+    margin-inline-start: calc(var(--btn-spinner-size) / -2);
+    border: var(--yl-border-width-medium) solid currentColor;
+    border-top-color: transparent;
+    border-radius: var(--yl-radius-round);
+    animation: yl-btn-spin var(--yl-motion-duration-slow) linear infinite;
+  }
+
+  // Drawn here rather than borrowed from `Spinner`, so `button.css` stays self-sufficient: a
+  // consumer importing one stylesheet should not discover it needed a second one.
+  @include reduced-motion {
+    &__spinner {
+      animation: none;
+    }
+  }
+
+  &--lg {
+    // 44px, the size a finger needs. It is what `md` used to be before the density pass, which is
+    // why the numbers look familiar.
+    padding: var(--yl-space-3) var(--yl-space-5);
+  }
+
+  &--sm {
+    padding: var(--yl-space-1) var(--yl-space-3);
+    font-size: var(--yl-text-label-size);
+  }
+}
+
+.yl-icon-btn {
+  padding: var(--yl-space-2);
+  aspect-ratio: 1;
+  line-height: 1;
+
+  &.yl-btn--sm {
+    padding: var(--yl-space-1);
+  }
+}
+
+.yl-btn-group {
+  display: inline-flex;
+
+  // Joined: interior corners squared and borders collapsed, so the set reads as one control.
+  > .yl-btn:not(:first-child) {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+    margin-inline-start: calc(-1 * var(--yl-border-width-thin));
+  }
+  > .yl-btn:not(:last-child) {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  // A focused button must not be overlapped by the one after it.
+  > .yl-btn:focus-visible {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@keyframes yl-btn-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}

@@ -8,7 +8,7 @@
 
 # Interface: MenuItemProps
 
-Defined in: [overlay/Popover.tsx:224](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L224)
+Defined in: [overlay/Popover/Popover.tsx:224](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L224)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [overlay/Popover.tsx:224](https://github.com/yoltra/yoltra/blob/main
 
 > **children**: `ReactNode`
 
-Defined in: [overlay/Popover.tsx:236](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L236)
+Defined in: [overlay/Popover/Popover.tsx:236](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L236)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [overlay/Popover.tsx:236](https://github.com/yoltra/yoltra/blob/main
 
 > `optional` **className**: `string`
 
-Defined in: [overlay/Popover.tsx:237](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L237)
+Defined in: [overlay/Popover/Popover.tsx:237](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L237)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [overlay/Popover.tsx:237](https://github.com/yoltra/yoltra/blob/main
 
 > `optional` **disabled**: `boolean`
 
-Defined in: [overlay/Popover.tsx:235](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L235)
+Defined in: [overlay/Popover/Popover.tsx:235](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L235)
 
 Announced and skipped on activation, but still reachable with the arrow keys.
 
@@ -48,7 +48,7 @@ exists at all — which is worse than being told it is unavailable.
 
 > `optional` **onSelect**: () => `void`
 
-Defined in: [overlay/Popover.tsx:226](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L226)
+Defined in: [overlay/Popover/Popover.tsx:226](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L226)
 
 Runs when the item is chosen, by click or by Enter/Space.
 

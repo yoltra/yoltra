@@ -8,7 +8,7 @@
 
 # Interface: InputProps
 
-Defined in: [primitives/Field.tsx:18](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field.tsx#L18)
+Defined in: [primitives/Field/Field.tsx:18](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field/Field.tsx#L18)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Field.tsx:18](https://github.com/yoltra/yoltra/blob/main
 
 > `optional` **block**: `boolean`
 
-Defined in: [primitives/Field.tsx:22](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field.tsx#L22)
+Defined in: [primitives/Field/Field.tsx:22](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field/Field.tsx#L22)
 
 Stretch to fill the container (`display:block; width:100%`).
 
@@ -30,6 +30,6 @@ Stretch to fill the container (`display:block; width:100%`).
 
 > `optional` **size**: [`FieldSize`](../type-aliases/FieldSize.md)
 
-Defined in: [primitives/Field.tsx:20](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field.tsx#L20)
+Defined in: [primitives/Field/Field.tsx:20](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field/Field.tsx#L20)
 
 Visual size — distinct from the native numeric `size` attribute.

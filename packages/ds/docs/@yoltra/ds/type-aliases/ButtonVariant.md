@@ -8,8 +8,8 @@
 
 # Type Alias: ButtonVariant
 
-> **ButtonVariant** = `"primary"` \| `"ghost"`
+> **ButtonVariant** = `"primary"` \| `"ghost"` \| `"danger"`
 
-Defined in: [primitives/Button.tsx:6](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L6)
+Defined in: [primitives/Button/Button.tsx:6](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L6)
 
 Visual weight of a button.

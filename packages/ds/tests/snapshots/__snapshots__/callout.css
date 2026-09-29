@@ -1,0 +1,40 @@
+.yl-callout {
+  display: flex;
+  gap: var(--yl-space-3);
+  margin: var(--yl-space-4) 0;
+  padding: var(--yl-space-4);
+  border-radius: var(--yl-radius-md);
+  border: var(--yl-border-width-thin) solid var(--yl-color-status-info-border);
+  background: var(--yl-color-status-info-bg);
+  color: var(--yl-color-status-info-fg);
+}
+.yl-callout--success {
+  border-color: var(--yl-color-status-success-border);
+  background: var(--yl-color-status-success-bg);
+  color: var(--yl-color-status-success-fg);
+}
+.yl-callout--warning {
+  border-color: var(--yl-color-status-warning-border);
+  background: var(--yl-color-status-warning-bg);
+  color: var(--yl-color-status-warning-fg);
+}
+.yl-callout--error {
+  border-color: var(--yl-color-status-error-border);
+  background: var(--yl-color-status-error-bg);
+  color: var(--yl-color-status-error-fg);
+}
+.yl-callout__icon {
+  flex: 0 0 auto;
+  font-size: var(--yl-text-body-size);
+  line-height: 1.5;
+}
+.yl-callout__body {
+  font-size: var(--yl-text-body-sm-size);
+  line-height: 1.6;
+}
+.yl-callout__body > :first-child {
+  margin-top: 0;
+}
+.yl-callout__body > :last-child {
+  margin-bottom: 0;
+}

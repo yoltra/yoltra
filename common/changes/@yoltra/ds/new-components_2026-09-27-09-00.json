@@ -1,0 +1,15 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Five new exports, each one a component a consuming project had already built for itself: `Stat` and `StatGrid` for a labelled figure, which renders a real zero rather than a dash because \"unavailable\" and \"none\" are different facts; `Chip` for a compact tag, squared off so it does not read as a `Badge`; `ProgressBar`, the determinate counterpart to `Spinner`, which clamps its value, requires a `label` and fills from the inline start in both writing directions; and `AuthCard`, pure composition for a sign-in screen, rendering as `main` unless told otherwise. Plus `useControllableState`, for a value that is either the caller's or the component's, and `noFlashScript()`, the inline script that restores the theme before the first paint — documented since the first release and never shipped. It shares `THEME_STORAGE_KEY` with `ThemeProvider`, so the two cannot drift.",
+      "type": "minor"
+    },
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "`ThemeProvider` no longer breaks where storage does. Restoring a theme fell through to `data-theme=\"false\"` when `localStorage` was absent, threw outright when reading it was blocked, and applied a stored value verbatim even when it named no theme. Reading is now guarded and validated, and persisting is allowed to fail on its own: a theme the reader chose and can see is worth more than the promise of remembering it.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

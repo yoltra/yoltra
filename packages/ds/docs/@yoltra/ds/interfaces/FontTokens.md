@@ -8,7 +8,7 @@
 
 # Interface: FontTokens
 
-Defined in: [tokens/tokens.ts:48](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L48)
+Defined in: [tokens/tokens.ts:58](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L58)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [tokens/tokens.ts:48](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **family**: `object`
 
-Defined in: [tokens/tokens.ts:49](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L49)
+Defined in: [tokens/tokens.ts:59](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L59)
 
 #### mono
 
@@ -32,7 +32,9 @@ Defined in: [tokens/tokens.ts:49](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **text**: `object`
 
-Defined in: [tokens/tokens.ts:50](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L50)
+Defined in: [tokens/tokens.ts:70](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/tokens/tokens.ts#L70)
+
+The type scale, one entry per role.
 
 #### body
 
@@ -74,6 +76,14 @@ Defined in: [tokens/tokens.ts:50](https://github.com/yoltra/yoltra/blob/main/pac
 
 > **h4**: [`FontStyleToken`](FontStyleToken.md)
 
+#### h5
+
+> **h5**: [`FontStyleToken`](FontStyleToken.md)
+
+#### h6
+
+> **h6**: [`FontStyleToken`](FontStyleToken.md)
+
 #### hero
 
 > **hero**: [`FontStyleToken`](FontStyleToken.md)
@@ -81,3 +91,11 @@ Defined in: [tokens/tokens.ts:50](https://github.com/yoltra/yoltra/blob/main/pac
 #### label
 
 > **label**: [`FontStyleToken`](FontStyleToken.md)
+
+#### Remarks
+
+Every axis is emitted separately (`--yl-text-h1-size`, `-weight`, `-leading`, `-tracking`)
+rather than as a `font` shorthand. The shorthand resets properties it does not mention and
+cannot be read one axis at a time, so a heading that wants this size at a different weight
+would have to restate the whole thing, which is how the sizes came to be hardcoded in the
+first place.

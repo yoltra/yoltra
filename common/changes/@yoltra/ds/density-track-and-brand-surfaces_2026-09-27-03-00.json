@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Tighten the default density by one step on the 4px grid: a primary button is 36px tall rather than 44px, and card, modal, popover, table and the default layout gaps come down with it. The spacing scale itself is unchanged. Add an `interactive.track` role for the unfilled part of a control, and fix a switch whose white knob sat on a pale track at 1.48:1 when WCAG 1.4.11 wants 3:1. Derive the dark theme's surfaces from the brand pair, carbon and the deepest brand blue, instead of four hand-picked literals.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

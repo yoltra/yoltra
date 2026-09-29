@@ -49,13 +49,18 @@ write("base.css", base);
 write("base-no-root.css", base.replace(/html\s*\{[^}]*font-size:\s*62\.5%[^}]*\}\s*/, ""));
 
 // One per component, across every directory that holds them.
+// Recursive, because each component owns a directory: `src/primitives/Button/Button.scss`. The
+// published name still comes from the basename, so `button.css` is unchanged by the move.
+const scss = (dir) =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) return scss(full);
+    return entry.name.endsWith(".scss") ? [full] : [];
+  });
+
 const sourceDirs = ["primitives", "overlay"].map((d) => path.join(root, "src", d));
 const components = sourceDirs
-  .flatMap((dir) =>
-    readdirSync(dir)
-      .filter((f) => f.endsWith(".scss"))
-      .map((f) => path.join(dir, f)),
-  )
+  .flatMap(scss)
   .sort((a, b) => path.basename(a).localeCompare(path.basename(b)))
   .map((file) => write(cssName(file), compile(file)));
 

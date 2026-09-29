@@ -10,7 +10,7 @@
 
 > **Select**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Field.tsx:67](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field.tsx#L67)
+Defined in: [primitives/Field/Field.tsx:67](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field/Field.tsx#L67)
 
 A native select.
 

@@ -10,7 +10,7 @@
 
 > **Divider**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Layout.tsx:286](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L286)
+Defined in: [primitives/Layout/Layout.tsx:286](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L286)
 
 A rule between sections.
 

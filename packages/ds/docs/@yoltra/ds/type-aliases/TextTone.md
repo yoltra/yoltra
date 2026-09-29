@@ -10,6 +10,6 @@
 
 > **TextTone** = `"default"` \| `"secondary"` \| `"muted"` \| `"brand"` \| `"danger"`
 
-Defined in: [primitives/Typography.tsx:6](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L6)
+Defined in: [primitives/Typography/Typography.tsx:6](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L6)
 
 How much a piece of text should recede.

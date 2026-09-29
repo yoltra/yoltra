@@ -1,29 +1,47 @@
+/* The brand mark, pinned over the canvas.
+ *
+ * Another ink surface, same reasoning as the config panel: it floats over a near-black canvas and
+ * stays dark whatever the page theme is. Its colours were eyeballed from the design system's dark
+ * theme -- `#e5eef8` is `fg-on-ink` exactly, and `rgba(148, 163, 184, 0.22)` is a rounding of
+ * `border-strong` -- so naming the roles changes nothing about how it looks and everything about
+ * whether it follows a change to them. */
+
 .brand-chip {
   position: fixed;
-  top: 20px;
-  left: 24px;
-  z-index: 10;
+  top: var(--yl-space-5);
+  left: var(--yl-space-6);
+  z-index: var(--yl-z-base);
   display: inline-flex;
   align-items: center;
-  gap: var(--yl-space-2, 8px);
-  padding: 8px 14px 8px 10px;
-  border-radius: var(--yl-radius-round, 9999px);
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  background: rgba(18, 24, 38, 0.55);
+  gap: var(--yl-space-2);
+  padding: var(--yl-space-2) var(--yl-space-4) var(--yl-space-2) var(--yl-space-3);
+  border-radius: var(--yl-radius-round);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-strong);
+  background: color-mix(in srgb, var(--yl-color-bg-panel) 55%, transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: #e5eef8;
-  font-family: var(--yl-font-sans, system-ui, sans-serif);
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.01em;
+  color: var(--yl-color-fg-on-ink);
+  font-family: var(--yl-font-sans);
+  font-weight: var(--yl-font-weight-bold);
+  font-size: var(--yl-text-body-size);
+  letter-spacing: var(--yl-text-label-tracking);
   text-decoration: none;
-  transition: border-color 0.18s ease, background 0.18s ease;
+  transition:
+    border-color var(--yl-motion-duration-normal) var(--yl-motion-ease-standard),
+    background var(--yl-motion-duration-normal) var(--yl-motion-ease-standard);
 }
+
 .brand-chip:hover {
-  border-color: rgba(74, 157, 255, 0.5);
-  background: rgba(18, 24, 38, 0.72);
+  border-color: var(--yl-color-border-focus);
+  background: color-mix(in srgb, var(--yl-color-bg-panel) 72%, transparent);
 }
+
 .brand-chip img {
   display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-chip {
+    transition: none;
+  }
 }
