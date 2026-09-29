@@ -58,6 +58,14 @@ jobs:
       - name: Rush build
         run: node common/scripts/install-run-rush.js build --verbose
 
+      # Last gate before anything leaves the machine. This workflow publishes whatever versions
+      # the tagged commit happens to carry, and npm does not take a package back — so a suite
+      # split by the wrong bump command would be permanent. CI checks this too, on `main`, but a
+      # tag push can outrun it: the same `git push --follow-tags` starts both, and this job does
+      # not wait for that one.
+      - name: Verify lock-step versions
+        run: node tools/repo-tools/bin/check-lockstep-versions.mjs
+
       # Publish every `shouldPublish` project at its current (already-bumped)
       # version. Auth is via OIDC (see the id-token permission above); no token
       # flag. --set-access-level public is required for the first publish of

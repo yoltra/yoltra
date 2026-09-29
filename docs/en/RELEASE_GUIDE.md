@@ -99,6 +99,11 @@ rush version --bump
 #    yoltra lockstep (core / react / devtools-*):  minor by default, e.g. 0.1.0 → 0.2.0
 #    @yoltra/ds (its own policy):                   bumps per its own change files
 #    → consumes ALL change files, writes every CHANGELOG (files only — no git ops)
+#
+#    NOT `rush publish --apply`. It looks like the same step and bumps each package from its
+#    own change files without consulting the version policy, so a release where core has a
+#    `minor` entry and react only a `patch` one splits the suite: core 0.9.0, react 0.8.1.
+#    `check-lockstep-versions.mjs` (CI, and again before publish) fails on that state.
 
 # 3. Check what the tarballs actually contain, from a built tree:
 rush build

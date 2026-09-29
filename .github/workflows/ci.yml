@@ -75,3 +75,12 @@ jobs:
       # Fails if a changed project is missing a change file (keeps CHANGELOGs honest).
       - name: Verify change files
         run: node common/scripts/install-run-rush.js change --verify
+
+      # A lock-step policy is a promise that a set of packages moves as one, and until now nothing
+      # enforced it: the policy is a declaration, and what ships is whatever sits in each
+      # package.json. `rush version --bump` applies the policy; `rush publish --apply` bumps each
+      # package from its own change files and does not know the policy exists, so a release where
+      # one member has a `minor` entry and another only a `patch` one splits the suite — from a
+      # command that exits zero, in a commit called "chore(release)".
+      - name: Verify lock-step versions
+        run: node tools/repo-tools/bin/check-lockstep-versions.mjs

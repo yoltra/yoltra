@@ -71,6 +71,18 @@ consumes the change files that check requires, so it would fail the PR.
    To hold the suite on a patch release instead, use
    `rush version --bump --override-bump patch`.
 
+   > **Not `rush publish --apply`.** It looks like the same step and is not. `--apply` bumps each
+   > package from its own change files and does not consult the version policy, so a release where
+   > `@yoltra/core` has a `minor` entry and `@yoltra/react` has only a `patch` one puts core on
+   > `0.9.0` and react on `0.8.1` — a split suite, from a command that exits zero, in a commit
+   > nobody reads closely because it is called `chore(release)`. Only `rush version --bump` moves
+   > a lock-step set together.
+   >
+   > `node tools/repo-tools/bin/check-lockstep-versions.mjs` fails on the split state whatever
+   > caused it, and runs in CI and again in the release workflow before anything is published. If
+   > it ever fires, repair with
+   > `rush version --ensure-version-policy --version-policy yoltra`.
+
 3. **Check what the tarballs actually contain**, from a built tree:
 
    ```sh
