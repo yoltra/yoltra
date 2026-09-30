@@ -2,6 +2,58 @@
   "name": "@yoltra/core",
   "entries": [
     {
+      "version": "0.9.0",
+      "tag": "@yoltra/core_v0.9.0",
+      "date": "Wed, 30 Sep 2026 04:53:54 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "`isReplyTo` and `parseReply` no longer appear in the published declarations. They were `@internal` and absent from the barrel, but exported for a sibling module, so they reached `dist/types/store/call.d.ts` while TypeDoc's `excludeInternal` kept them out of the reference — the two disagreed, and a consumer reviewing the package read `isReplyTo` in the declarations and reasonably concluded it was public API. Both now live beside their only caller, unexported, so the declarations for the call surface carry exactly `ReplySpec`, `CallOptions`, `CallHandle`, `CallTimeoutError` and `CallAbortedError`. No runtime behaviour changes; if you need reply correlation as public API, ask rather than reaching for the declaration."
+          },
+          {
+            "comment": "Introspection no longer mangles a channel that contains `::`. The four paths that split the internal key back apart took the first separator, so an effect registered on `(\"bb::plan\", \"go\")` was reported as channel `bb`, type `plan`, with the remainder discarded — a registration against a channel that does not exist, and the real one missing. One of them built a `When` from the mis-split behind a cast that claimed a two-element tuple for a three-element array. They now split on the last separator, through one shared helper, which is correct because no path the store controls puts `::` in a type."
+          }
+        ],
+        "minor": [
+          {
+            "comment": "`registerReducer` is now generic over its spec, so a decoration can mount a slice whose channel the application's event map does not yet contain without a cast. It was typed against the store's own `EM`, and neither direction of assignability held: forward failed on `reducer`, a property rather than a method, so `strictFunctionTypes` checks its parameters contravariantly and bivariance cannot rescue it; reverse failed on `when`. It was the one member of the decoration family with this problem — `registerSlice`, `withSlice`, `registerMiddleware` and `withMiddleware` were already satisfiable — and the implementation already delegated to `registerSlice`, so the fix is the signature. The `Store` class's own public signatures also narrowed every decoration member back to the store's `EM`, so anyone typed against the exported class rather than `StoreInstance` lost castless decoration entirely; they now match the interface."
+          },
+          {
+            "comment": "`InstrumentedEvent` now carries `reason` and `vetoedBy`, the two fields `EmitResult` gained in 0.8.0. That release gave attribution to the emitter and not to the observer, so an instrumentation consumer could report `committed: false` and could not say whether a guard had refused the action, a double-click had been deduplicated, or a cascade had breached its ceiling — three things wanting three different responses, which is the argument 0.8.0 itself made for `EmitResult`. Instrumentation is the only seam that sees uncommitted events without the observer joining the pipeline, so there was nowhere else to gather it; the values were already computed and dropped. Documented with its honest limit: a deduplicated event never reaches instrumentation and neither does a cascade refusal, so `reason` reads `\"vetoed\"` or nothing today."
+          },
+          {
+            "comment": "Warns in development when two different `(channel, type)` pairs join to one internal key. The store keys dispatch, deduplication and introspection on `\"channel::type\"`, and nothing checked the join was unambiguous: `(\"a::b\", \"c\")` and `(\"a\", \"b::c\")` both become `\"a::b::c\"`, so a subscriber or effect registered for one was invoked for the other and a dedup window let one drop the other. Demonstrated against the published package, not theorised. The warning is on the collision and names both pairs, because either alone looks blameless — and deliberately not on `::` itself, which is how a federated peer's channel is namespaced, so warning on the separator would fire for correct code."
+          },
+          {
+            "comment": "`When` gains `{ channelPattern }`, where `*` stands for zero or more characters. The four existing forms compare exactly, so a guard whose channels arrive namespaced — a federated peer's `bb::plan` beside a local `plan` — could not use `when` at all, because the aliases are invented by whoever federates and no list can be written in advance. Such a guard had to match every event and filter in its own body, which costs the pre-call skip and misreports the middleware to every observer as matching the whole store. `*` is the only metacharacter and everything else is escaped, so a pattern cannot become an expression that backtracks; it stays a string rather than a predicate because a matcher is reported to observers and travels to a devtools panel, and a function would make every one of them opaque. The decoration guide records the trap beside it: a guard already filtering on a stripped base channel, converted to `when` as a free optimisation, silently stops guarding every namespaced channel and nothing fails."
+          },
+          {
+            "comment": "A keyed slice now reports the keys it matches. `RegistrationChange.when` is documented as the normalized matcher, and both producers read it from the map that holds only pattern-based slices — a keyed slice dispatches through the reducer bus and is deliberately absent from that map — so the most common slice form reported how it dispatches and nothing about what it matches, in `onRegistrationChange` and in `__devtoolsIntrospect` alike. Two consumers wanted this in order to publish a store's live topology. Function-form middleware also reported `undefined` where the effects path reports `{ any: true }` for the same meaning; the two now agree."
+          }
+        ],
+        "none": [
+          {
+            "comment": "The decoration guide gains a section on a decorator that must return something besides the store. Three independent libraries needed one — a `drain()` for a rolling deploy, a live suspend/resume handle, queue introspection — and all three returned `{ store, handle }` because `StoreDecorator` returns a store and nothing else. The guide stated the contract as absolute; it now states the pattern and what it costs, which is nesting and dependency-by-constraint, and says when not to reach for it."
+          },
+          {
+            "comment": "Corrects four pieces of documentation that contradicted the code. `__replayEvents` still promised replay runs \"reducers and event subscribers ONLY\" in both the interface and the implementation, which 0.8.0 removed in the same release that corrected the surrounding docs. `store.call()`'s correlation was described as matching anything \"causally descended\" when it tests the immediate parent only, and `CallOptions.correlationId` claimed to correlate \"instead of on causality\" eleven lines above a remark saying it also matches the parent link, which is what the code does: the option widens the match and cannot replace it. A consuming runtime read the first of these and re-derived a design request that had already been retired."
+          },
+          {
+            "comment": "States the slice boundary, which was a framework guarantee that no prose anywhere claimed. A reducer receives exactly one slice and returns exactly one slice: it is handed no `getState`, no store reference and no sibling, and the commit writes back only under the name it was mounted as, so it cannot reach another slice even by returning a whole-store-shaped object. The consequence is the part worth having in writing: inside one slice there is no second writer, so there is no authorisation question to solve. Two consumers built mechanisms around a problem core already answers."
+          },
+          {
+            "comment": "Makes `store.call()` findable. It arrived in 0.6.0 and has a dedicated guide, but the package README's own call section never linked it, `correlationId` appeared in no hand-written document, and the 0.8.0 upgrade guide listed `store.call` under \"nothing to do\" without saying where it is described — so a reader upgrading to 0.8.0 could conclude the primitive did not exist. The guide gains a section on replying when the reply cannot be a direct child, both READMEs name the exported surface and link onward, and the upgrade guide says plainly that the feature is unchanged rather than absent."
+          },
+          {
+            "comment": "The README describes the 0.9.0 surface it was missing, in both languages: `channelPattern` in the `When` section, `reason` and `vetoedBy` on instrumented events, the normalized `when` on each registration change, and castless `registerReducer`. The size prose under the table quoted 0.8.0-era deltas; it now matches the table, 1.3 KB for persistence and 2.7 KB for the whole barrel. The Spanish README gains the `EmitResult` attribution sentence and the first-row paragraph it had never been given. The Spanish README also receives the rest of what only the English one said: the `written` phase example and its rationale, the paced responder, the call table's notes, the wildcard `immediate` delivery, and the `parentId`/`depth` example. The decoration guide's channel-targeting section becomes a top-level heading in both languages."
+          },
+          {
+            "comment": "Measured size table refreshed. A typical import grows 0.2 KB across all three entries, which is the channel-pattern matcher, the development-only key-collision check and two fields on the instrumentation payload. Every entry stays well inside its budget."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.8.0",
       "tag": "@yoltra/core_v0.8.0",
       "date": "Sun, 27 Sep 2026 08:03:17 GMT",

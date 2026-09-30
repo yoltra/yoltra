@@ -2,6 +2,18 @@
   "name": "@yoltra/devtools-protocol",
   "entries": [
     {
+      "version": "0.9.0",
+      "tag": "@yoltra/devtools-protocol_v0.9.0",
+      "date": "Wed, 30 Sep 2026 04:53:54 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "`StoreEvent` carries `reason` and `vetoedBy` for an event that did not commit. Both optional, so an older agent and an older panel are unaffected."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.8.0",
       "tag": "@yoltra/devtools-protocol_v0.8.0",
       "date": "Sun, 27 Sep 2026 08:03:17 GMT",

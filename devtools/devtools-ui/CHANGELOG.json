@@ -2,6 +2,18 @@
   "name": "@yoltra/devtools-ui",
   "entries": [
     {
+      "version": "0.9.0",
+      "tag": "@yoltra/devtools-ui_v0.9.0",
+      "date": "Wed, 30 Sep 2026 04:53:54 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "`EventLogEntry` carries `reason` and `vetoedBy` from `STORE_EVENT`, for panels that want to show why an event was refused."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.8.0",
       "tag": "@yoltra/devtools-ui_v0.8.0",
       "date": "Sun, 27 Sep 2026 08:03:17 GMT",

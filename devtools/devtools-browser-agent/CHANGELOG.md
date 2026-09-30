@@ -1,6 +1,13 @@
 # Change Log - @yoltra/devtools-browser-agent
 
-This log was last generated on Sun, 27 Sep 2026 08:03:17 GMT and should not be manually modified.
+This log was last generated on Wed, 30 Sep 2026 04:53:54 GMT and should not be manually modified.
+
+## 0.9.0
+Wed, 30 Sep 2026 04:53:54 GMT
+
+### Minor changes
+
+- Forwards `reason` and `vetoedBy` from core's instrumentation onto `STORE_EVENT`, so the panel can say why an event did not commit rather than only that it did not.
 
 ## 0.8.0
 Sun, 27 Sep 2026 08:03:17 GMT

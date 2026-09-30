@@ -2,6 +2,18 @@
   "name": "@yoltra/devtools-storeview",
   "entries": [
     {
+      "version": "0.9.0",
+      "tag": "@yoltra/devtools-storeview_v0.9.0",
+      "date": "Wed, 30 Sep 2026 04:53:54 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "The event timeline now labels a bounced event with what stopped it and, where the middleware had a name, who. Previously a refusal, a deduplication and a cascade breach were one red dot."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.8.0",
       "tag": "@yoltra/devtools-storeview_v0.8.0",
       "date": "Sun, 27 Sep 2026 08:03:17 GMT",

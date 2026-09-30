@@ -2,6 +2,26 @@
   "name": "@yoltra/react",
   "entries": [
     {
+      "version": "0.9.0",
+      "tag": "@yoltra/react_v0.9.0",
+      "date": "Wed, 30 Sep 2026 04:53:54 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "`useAtomicProps` no longer throws when a selector reads a nested object out of frozen state. The development guard against undeclared reads wraps each nested value in a proxy, and a `get` trap may not return a wrapper in place of an own data property that is both non-writable and non-configurable — the pair `Object.freeze` produces. The engine raised `TypeError: 'get' on proxy: property 'x' is a read-only and non-configurable data property on the proxy target but the proxy did not return its actual value`, before any code in this package ran, so the stack trace named only the component that read the property. Frozen state is the ordinary case rather than an edge one: immer's `produce` auto-freezes what it returns and `@yoltra/core` exports a `deepFreeze`. The guard is now built over a shallow extensible copy when its subject is frozen, and still refuses an undeclared read at any depth. Every existing test built its state from an unfrozen object literal, which is why this held for two releases; there are now four that freeze it."
+          }
+        ],
+        "none": [
+          {
+            "comment": "The Spanish README's normalized collections section sat after Status; it now sits where the English one does, before React 18+ compatibility. Both READMEs now say that the development guard behind `useAtomicProps` throws on an undeclared read and works on frozen state."
+          },
+          {
+            "comment": "Regenerated reference only. `PathValue` is re-exported from core, so its page cites a line number in core's declarations, which moved when core gained documentation. No code and no types changed here."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.8.0",
       "tag": "@yoltra/react_v0.8.0",
       "date": "Sun, 27 Sep 2026 08:03:17 GMT",

@@ -1,6 +1,13 @@
 # Change Log - @yoltra/devtools-storeview
 
-This log was last generated on Sun, 27 Sep 2026 08:03:17 GMT and should not be manually modified.
+This log was last generated on Wed, 30 Sep 2026 04:53:54 GMT and should not be manually modified.
+
+## 0.9.0
+Wed, 30 Sep 2026 04:53:54 GMT
+
+### Minor changes
+
+- The event timeline now labels a bounced event with what stopped it and, where the middleware had a name, who. Previously a refusal, a deduplication and a cascade breach were one red dot.
 
 ## 0.8.0
 Sun, 27 Sep 2026 08:03:17 GMT

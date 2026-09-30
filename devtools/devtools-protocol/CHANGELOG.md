@@ -1,6 +1,13 @@
 # Change Log - @yoltra/devtools-protocol
 
-This log was last generated on Sun, 27 Sep 2026 08:03:17 GMT and should not be manually modified.
+This log was last generated on Wed, 30 Sep 2026 04:53:54 GMT and should not be manually modified.
+
+## 0.9.0
+Wed, 30 Sep 2026 04:53:54 GMT
+
+### Minor changes
+
+- `StoreEvent` carries `reason` and `vetoedBy` for an event that did not commit. Both optional, so an older agent and an older panel are unaffected.
 
 ## 0.8.0
 Sun, 27 Sep 2026 08:03:17 GMT
