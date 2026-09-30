@@ -348,6 +348,11 @@ Un cambio necesita criterio humano: `--yl-color-brand` se mapea mecánicamente a
 `--yl-color-brand-primary`, que es correcto para decoración e incorrecto para texto. El codemod
 imprime los lugares que tocó y qué usar en su lugar.
 
+La densidad por defecto es un paso más compacta sobre la retícula de 4px, y ningún codemod la
+toca: un botón `md` mide 36px de alto en vez de 44px, y las tarjetas, modales, popovers, tablas y
+los espacios por defecto del layout bajan con él. La escala de espaciado no cambia. Un layout que
+necesite el tamaño táctil anterior lo pide con `size="lg"`, que mide 44px.
+
 ## Autoría de estilos
 
 Los estilos de los componentes son SASS, en `src/primitives/<Componente>/<Componente>.scss` y

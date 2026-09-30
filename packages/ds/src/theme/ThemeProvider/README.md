@@ -36,8 +36,13 @@ applyTheme("dark"); // sets data-theme on <html>
 
 ## API
 
-`ThemeProvider` takes `children`. `useTheme()` returns `{ theme, setTheme }` and
-throws outside a provider. `applyTheme(id)` sets the attribute directly.
+`ThemeProvider` takes `children` and an optional `defaultTheme` (`"light"` unless
+given), which it renders with until the stored or system preference is read on mount.
+`useTheme()` returns `{ theme, setTheme }` and throws outside a provider.
+`applyTheme(id)` sets the attribute directly.
+
+From the default entry, `noFlashScript()` returns the inline script described below, and
+`THEME_STORAGE_KEY` is the `localStorage` key it shares with the provider.
 
 ## Notes
 
@@ -46,10 +51,21 @@ resolves through a custom property. That is what lets the primitives render on t
 server: only the toggle needs to be a client component.
 
 On mount the provider reads `localStorage["yoltra-theme"]`, then falls back to
-`prefers-color-scheme`. Before that it renders with whatever the document already
-says, so an application that cares about a flash of the wrong theme should set the
-attribute before first paint with a small inline script. The design system documents
-that and does not currently ship it, which a consuming project noticed and worked
-around by writing its own.
+`prefers-color-scheme`. That happens in an effect, after the browser has painted, so
+without help a reader who chose dark sees a white flash first. `noFlashScript()` sets the
+attribute before the body renders. Inline it in the document head, before any stylesheet:
+
+```tsx
+import { noFlashScript } from "@yoltra/ds";
+
+// app/layout.tsx
+<head>
+  <script dangerouslySetInnerHTML={{ __html: noFlashScript() }} />
+</head>
+```
+
+Storage is allowed to fail. When site data is blocked, when there is no `localStorage`,
+or when the stored value is not a theme, the provider falls back to the system
+preference, and `setTheme` still switches the theme even if it cannot remember it.
 
 The storage key is fixed. Two applications on one origin share it.

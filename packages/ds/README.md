@@ -338,6 +338,11 @@ One rename needs a human: `--yl-color-brand` maps mechanically to `--yl-color-br
 which is right for decoration and wrong for text. The codemod prints the sites it touched and
 what to use instead.
 
+The default density is one step tighter on the 4px grid, and no codemod touches it: a `md`
+button is 36px tall rather than 44px, and cards, modals, popovers, tables and the default layout
+gaps come down with it. The spacing scale itself is unchanged. A layout that needs the old touch
+target asks for it with `size="lg"`, which is 44px.
+
 ## Authoring
 
 Component styles are SASS, in `src/primitives/<Component>/<Component>.scss` and
