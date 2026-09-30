@@ -10,7 +10,7 @@
 
 > **Kbd**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Typography.tsx:161](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L161)
+Defined in: [primitives/Typography/Typography.tsx:161](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L161)
 
 A key on a keyboard.
 

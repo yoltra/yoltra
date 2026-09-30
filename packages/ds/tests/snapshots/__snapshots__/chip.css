@@ -1,0 +1,17 @@
+.yl-chip {
+  --chip-pad-y: 0.2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yl-space-1);
+  padding: var(--chip-pad-y) var(--yl-space-2);
+  border-radius: var(--yl-radius-sm);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
+  font-size: var(--yl-text-caption-size);
+  background: var(--yl-color-bg-subtle);
+  color: var(--yl-color-fg-secondary);
+}
+.yl-chip--brand {
+  color: var(--yl-color-fg-brand);
+  border-color: var(--yl-color-status-info-border);
+  background: var(--yl-color-status-info-bg);
+}

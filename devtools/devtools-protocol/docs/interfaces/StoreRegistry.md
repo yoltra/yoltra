@@ -8,7 +8,7 @@
 
 # Interface: StoreRegistry
 
-Defined in: [messages.ts:319](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L319)
+Defined in: [messages.ts:339](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L339)
 
 Registry of all connected stores, sent to extensions on connect
 and whenever the registry changes.
@@ -57,7 +57,7 @@ Role of the sender.
 
 > **stores**: `object`[]
 
-Defined in: [messages.ts:321](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L321)
+Defined in: [messages.ts:341](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L341)
 
 #### capabilities
 
@@ -99,7 +99,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"STORE_REGISTRY"`
 
-Defined in: [messages.ts:320](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L320)
+Defined in: [messages.ts:340](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L340)
 
 Discriminant field identifying the message type.
 

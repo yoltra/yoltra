@@ -46,6 +46,7 @@ import type {
   When,
 } from "../types";
 import { freezeState } from "../utils/immutability";
+import { warnOnKeyCollision } from "../utils/reservedSeparator";
 import { isRejected } from "./rejection";
 import type { CallHandle, CallOptions } from "./call";
 import { performCall } from "./performCall";
@@ -202,6 +203,28 @@ const now = (): number =>
   typeof performance !== "undefined" && typeof performance.now === "function"
     ? performance.now()
     : Date.now();
+
+/**
+ * Splits a `"channel::type"` key back into its two halves.
+ *
+ * @remarks
+ * On the **last** separator, not the first. A type never contains `::` in any code path the store
+ * controls, so the tail is the type and everything before it is the channel — which keeps a
+ * channel that does contain `::` readable instead of silently reported as a different channel
+ * entirely. `String.split("::")` yielded three parts for `"bb::plan::load"` and the destructuring
+ * took the first two, so the registration was reported as channel `bb`, type `plan`.
+ *
+ * `::` is reserved and warned about at `emit` (see `warnOnReservedSeparator`), so this is the
+ * belt to that braces: the warning tells an author, and this keeps introspection honest for
+ * anyone who has not read it yet.
+ *
+ * @internal
+ */
+function splitEventKey(key: string): [channel: string, type: string] {
+  const at = key.lastIndexOf("::");
+  if (at < 0) return [key, ""];
+  return [key.slice(0, at), key.slice(at + 2)];
+}
 
 export class Store<EM extends EventMapBase, R extends string, S extends Record<R, any>>
   implements StoreInstance<R, S, EM> {
@@ -362,6 +385,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private readonly patternReducers = new Map<R, When<EM>>();
+
+  /**
+   * Maps slice name to the matcher an observer is told about, for every slice.
+   *
+   * @remarks
+   * Separate from {@link patternReducers} on purpose. That map decides what the emit loop
+   * re-tests per event, so a keyed slice must stay out of it — it dispatches through
+   * `reducerBus` instead. But a keyed slice still *has* a matcher, and reporting `undefined`
+   * for it told an observer that the most common slice form matches nothing knowable.
+   *
+   * @internal
+   */
+  private readonly reportedSliceWhen = new Map<R, When<EM>>();
 
   /**
    * Where each mounted slice came from. See {@link Origin}.
@@ -786,6 +822,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.connectorBus.clear();
     this.reducerBus.clear();
     this.patternReducers.clear();
+    this.reportedSliceWhen.clear();
     this.sliceUnsubs.clear();
     this.sliceOrigin.clear();
     this.sliceOwner.clear();
@@ -1306,7 +1343,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   public __devtoolsIntrospect() {
     // Reducers
     const reducers = (Object.keys(this.reducers) as Array<R>).map((name) => {
-      const when = this.patternReducers.get(name);
+      const when = this.reportedSliceWhen.get(name);
       return {
         name: name as string,
         when,
@@ -1325,7 +1362,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }> = [];
     for (const [key, set] of this.effects) {
       if (set.size === 0) continue;
-      const [channel, type] = key.split("::");
+      const [channel, type] = splitEventKey(key);
       for (const entry of set) {
         const meta = this.effectMeta.get(entry.effect);
         effects.push({
@@ -1391,7 +1428,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     ): void => {
       for (const [key, set] of map) {
         if (set.size === 0) continue;
-        const [channel, type] = key.split("::");
+        const [channel, type] = splitEventKey(key);
         for (const entry of set) {
           event.push({ channel, type, phase, duringReplay: entry.duringReplay });
         }
@@ -1538,8 +1575,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
-   * Replays a sequence of events from a snapshot through reducers and event
-   * subscribers ONLY. Skips dedup, middleware, and effects.
+   * Replays a sequence of events from a snapshot through reducers ONLY. Skips dedup,
+   * middleware, effects, DevTools logging, and event subscribers.
+   *
+   * A subscriber that legitimately wants replayed events opts in per subscription with
+   * `{ duringReplay: true }`; see the note in the replay loop below for why the default is
+   * silence.
    *
    * This method is gated by the `devtools.allowReplay` runtime config.
    * If replay is not enabled, this method throws.
@@ -1707,6 +1748,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     payload: EM[C][T],
     opts?: EmitOptions,
   ): Promise<EmitResult> {
+    // Before anything keys on `${channel}::${type}`. Development only, and reports an actual
+    // ambiguity rather than the mere presence of a separator: `alias::channel` is how a federated
+    // peer's channel is namespaced, so warning on `::` itself would fire for correct code.
+    if (process.env.NODE_ENV !== "production") {
+      warnOnKeyCollision(channel as string, type as string);
+    }
+
     // Deduplication is OPT-IN (see EmitOptions / StoreSpec.dedupWindowMs).
     // Content-based dedup runs only when `dedupWindowMs > 0`; identity-based
     // dedup runs when an explicit `dedupKey` is supplied. By default neither is
@@ -2093,6 +2141,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // Present only when a reducer refused, so an observer can tell a refusal from a veto —
       // identical in state, entirely different in cause.
       ...(result.rejected !== undefined ? { rejected: result.rejected } : {}),
+      // 0.8.0 gave attribution to the emitter and not to the observer: `EmitResult` gained both of
+      // these and the instrumentation path dropped them, so a devtools panel or a trace could
+      // report `committed: false` and not say why. The values are already computed on `result`.
+      ...(result.reason !== undefined ? { reason: result.reason } : {}),
+      ...(result.vetoedBy !== undefined ? { vetoedBy: result.vetoedBy } : {}),
     };
     for (const observer of [...this.instrumentObservers]) {
       try {
@@ -2250,7 +2303,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         // exactly the registrations that were already there.
         origin: this.sliceOrigin.get(name) ?? "spec",
         owner: this.sliceOwner.get(name),
-        when: this.patternReducers.get(name as R),
+        when: this.reportedSliceWhen.get(name as R),
         // From this observer's point of view the state exists; it never saw a prior value.
         state: "initialized",
         dispatch: this.patternReducers.has(name as R) ? "pattern" : "keyed",
@@ -2264,12 +2317,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         name: meta?.name ?? (typeof entry.input === "function" ? entry.input.name : undefined),
         description: meta?.description,
         origin: entry.origin,
-        when: getMiddlewareWhen(entry.input),
+        // Normalized, so a function-form middleware reports what it actually matches instead of
+        // `undefined`. The effects path already does this; the two disagreed for the same meaning.
+        when: getMiddlewareWhen(entry.input) ?? ({ any: true } as When<EM>),
         dispatch: "pattern",
       });
     }
     for (const [key, set] of this.effects) {
-      const [channel, type] = key.split("::");
+      const [channel, type] = splitEventKey(key);
       for (const entry of set) {
         out.push({
           kind: "effect",
@@ -2583,7 +2638,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public registerMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): any {
+  public registerMiddleware(mw: MiddlewareInput<any, any>): any {
     const entry = { input: mw, origin: "dynamic" as Origin };
     this.middleware.push(entry);
     this.recordMiddlewareChange(entry, "mounted");
@@ -2627,7 +2682,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         name: meta?.name ?? (typeof entry.input === "function" ? entry.input.name : undefined),
         description: meta?.description,
         origin: entry.origin,
-        when: getMiddlewareWhen(entry.input),
+        // Normalized, so a function-form middleware reports what it actually matches instead of
+        // `undefined`. The effects path already does this; the two disagreed for the same meaning.
+        when: getMiddlewareWhen(entry.input) ?? ({ any: true } as When<EM>),
         dispatch: "pattern",
       };
     });
@@ -2712,7 +2769,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public registerReducer(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
+  public registerReducer(name: string, spec: ReducerSpec<any, any>, options?: { owner?: string }): any {
     return this.registerSlice(name, spec as any, options);
   }
 
@@ -2725,7 +2782,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public registerSlice(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
+  public registerSlice(name: string, spec: ReducerSpec<any, any>, options?: { owner?: string }): any {
     // One transaction, so observers are notified *after* the state broadcast below rather
     // than from inside `mountSlice`. The view layer should learn a fact before a library
     // gets to react to it; reversed, a library's own registration would publish before the
@@ -2780,7 +2837,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public withSlice(name: string, spec: ReducerSpec<any, EM>, options?: { owner?: string }): any {
+  public withSlice(name: string, spec: ReducerSpec<any, any>, options?: { owner?: string }): any {
     this.registerSlice(name, spec, options);
     return this.widened();
   }
@@ -2790,7 +2847,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public withMiddleware(mw: MiddlewareInput<DeepReadonly<S>, EM>): any {
+  public withMiddleware(mw: MiddlewareInput<any, any>): any {
     this.registerMiddleware(mw);
     return this.widened();
   }
@@ -2800,7 +2857,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public withEffect(spec: EffectSpec<DeepReadonly<S>, EM>): any {
+  public withEffect(spec: EffectSpec<any, any>): any {
     this.registerEffect(spec);
     return this.widened();
   }
@@ -2856,8 +2913,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * with the same two bugs: the subscription outlives the call, and a responder that forgets to
    * echo the id produces a timeout with nothing to point at. This is that, once.
    *
-   * **Correlation is causal.** The store stamps `parentId` on anything emitted while an event is
-   * being handled, so a responder that replies through the `emit` it was handed is already
+   * **Correlation is structural.** The store stamps `parentId` on anything emitted while an event
+   * is being handled, so a responder that replies through the `emit` it was handed is already
    * correlated. There is no id to mint, echo, or forget:
    *
    * ```ts
@@ -2868,6 +2925,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *   },
    * });
    * ```
+   *
+   * The match tests the **immediate** parent, not descent: a reply emitted a further hop down a
+   * cascade carries the intermediate event's id and will not be seen. A responder that cannot
+   * reply directly — because it answers later, on another turn, or across a transport — echoes
+   * {@link CallOptions.correlationId} instead, which widens the match rather than replacing it.
    *
    * **The reply carries its own discriminant.** A call resolves to the *event*, not the payload,
    * because a caller often cannot know which kind of reply it will get:
@@ -3178,7 +3240,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         }
         this.recordEffectChange(
           entry.effect,
-          { keys: [key.split("::") as [string, string]] } as When<EM>,
+          { keys: [splitEventKey(key)] } as When<EM>,
           entry.origin,
           "unmounted",
           "keyed",
@@ -3457,6 +3519,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (isPatternBased) {
       // Store as pattern-based reducer for runtime matching
       this.patternReducers.set(name, when);
+      this.reportedSliceWhen.set(name, when);
       // No unsubs needed for pattern reducers - they're called from emit loop
       this.sliceUnsubs.set(rName, []);
       return;
@@ -3468,9 +3531,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // If no targeting at all, treat as "all events" (pattern-based)
     if (eventKeys.length === 0 && !when) {
       this.patternReducers.set(name, { any: true });
+      this.reportedSliceWhen.set(name, { any: true });
       this.sliceUnsubs.set(rName, []);
       return;
     }
+
+    // Keyed: it dispatches through `reducerBus` rather than the emit loop, so it must not join
+    // `patternReducers` — but it has a matcher, and an observer is entitled to see it.
+    this.reportedSliceWhen.set(name, { keys: eventKeys } as When<EM>);
 
     // Wire reducerBus listeners and save disposers for HMR
     const unsubs: Array<() => void> = [];
@@ -3519,7 +3587,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       name: rName,
       origin: this.sliceOrigin.get(rName) ?? "spec",
       owner: this.sliceOwner.get(rName),
-      when: this.patternReducers.get(rName as R),
+      when: this.reportedSliceWhen.get(rName as R),
       state,
       dispatch: this.patternReducers.has(rName as R) ? "pattern" : "keyed",
     }));
@@ -3591,6 +3659,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     // Remove from pattern reducers if present
     this.patternReducers.delete(name);
+    this.reportedSliceWhen.delete(name);
     if (process.env.NODE_ENV !== "production") {
       const origin = this.sliceOrigin.get(rName);
       if (origin === "dynamic" || origin === "internal") {

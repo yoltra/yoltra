@@ -337,6 +337,21 @@ export interface EmitOptions {
   skipDedup?: boolean;
 }
 
+/**
+ * Emits an event.
+ *
+ * @remarks
+ * **Channel and type are joined into one key, `"channel::type"`,** and dispatch, deduplication and
+ * introspection all key on it. So two different pairs can collapse together: `("a::b", "c")` and
+ * `("a", "b::c")` both become `"a::b::c"`, and a subscriber registered for one is invoked for the
+ * other, while a dedup window lets one drop the other.
+ *
+ * A `::` in a channel is fine on its own — it is how a federated peer's channel is namespaced —
+ * so development builds warn on the **collision**, naming both pairs, rather than on the
+ * separator. Nothing throws.
+ *
+ * @public
+ */
 export type Emit<EM extends EventMapBase> = <
   C extends keyof EM & string,
   T extends keyof EM[C] & string,
@@ -390,6 +405,30 @@ export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
    * identical in state and are entirely different in cause.
    */
   rejected?: Rejection;
+  /**
+   * Why the event did not commit. Absent when it did.
+   *
+   * @remarks
+   * The same value {@link EmitResult.reason} carries, so an observer can tell a guard refusing an
+   * action from a double-click being deduplicated — a distinction `committed: false` alone cannot
+   * make, and the one an observer needs most, because instrumentation is the only seam that sees
+   * uncommitted events without participating in the pipeline.
+   *
+   * **In practice this reads `"vetoed"` or nothing.** A deduplicated event is dropped at `emit`
+   * before it is ever queued, and a cascade refusal returns before the drain reaches
+   * instrumentation, so neither is visible here at all. The type admits the other values because
+   * it is shared with `EmitResult`, not because they are currently reachable.
+   */
+  reason?: NotCommittedReason;
+  /**
+   * Which middleware vetoed, when one did and it had a name.
+   *
+   * @remarks
+   * The same value {@link EmitResult.vetoedBy} carries: a spec's `meta.name`, or a plain
+   * function's `name`. Absent for an anonymous function, and absent whenever the event committed.
+   * A middleware that throws is attributed too — a throw is treated as a veto.
+   */
+  vetoedBy?: string;
 }
 
 /**
@@ -834,12 +873,23 @@ export interface StoreInstance<
 
   /**
    * Dynamically add/remove a namespaced reducer slice at runtime.
+   *
+   * @remarks
+   * Generic over the spec for the same reason {@link StoreDecoration.registerSlice} is, and it
+   * matters for anyone writing a decorator. Typed as `ReducerSpec<any, EM>` — the store's *own*
+   * event map — a spec naming a channel the application's `EM` does not contain could not
+   * typecheck, and neither direction of assignability held: the forward direction failed on
+   * `reducer`, a property rather than a method, so `strictFunctionTypes` checks its parameters
+   * contravariantly and bivariance does not rescue it; the reverse failed on `when`. A decoration
+   * therefore had to keep a cast. With `Spec` inferred from the value, the concrete key tuple
+   * satisfies `ReducerSpec<any, any>` and the contributed event map is recovered from the brand,
+   * exactly as the `with*` family already did.
    */
-  registerReducer(
-    name: string,
-    spec: ReducerSpec<any, EM>,
+  registerReducer<N extends string, Spec extends ReducerSpec<any, any>>(
+    name: N,
+    spec: Spec,
     options?: { owner?: string },
-  ): Unsubscribe & { store: StoreInstance<string, Record<string, any>, EM>; dispose(): void };
+  ): Unsubscribe & { store: WidenedSlice<R, S, EM, N, Spec>; dispose(): void };
 
   /**
    * Cleanup resources (timers, etc.) when disposing the store.
@@ -1006,8 +1056,14 @@ export interface StoreInstance<
   }): void;
 
   /**
-   * Replays a sequence of events from a snapshot through reducers and event
-   * subscribers ONLY. Skips dedup, middleware, and effects.
+   * Replays a sequence of events from a snapshot through reducers ONLY. Skips dedup,
+   * middleware, effects, DevTools logging, and event subscribers.
+   *
+   * A subscriber that legitimately wants replayed events opts in per subscription with
+   * `onEvent(channel, type, handler, phase, { duringReplay: true })`. Without that opt-in,
+   * scrubbing a timeline would re-run every handler as though the events had happened again -
+   * publishing to peers, writing to sockets and firing analytics, with nothing available to
+   * detect it.
    *
    * Gated by `createStore({ devtools: { allowReplay: true } })`.
    * Throws if replay is not enabled.
@@ -1086,6 +1142,18 @@ export interface StoreInstance<
  * Use `when` for event targeting. An earlier `events` array was removed; this remark
  * outlived it and described a property that no longer exists.
  *
+ * **A reducer receives exactly one slice and returns exactly one slice.** `state` here is this
+ * reducer's own slice, not the store's state, and the value returned is written back only under
+ * this reducer's name. There is no path to a sibling: the reducer is handed no `getState`, no
+ * store reference, and no second argument beyond the event, and returning a whole-store-shaped
+ * object writes nothing extra because the commit is keyed by the name the reducer was mounted
+ * under.
+ *
+ * So cross-slice isolation is a **framework guarantee, not a convention**. There is no second
+ * writer to a slice and therefore no intra-slice authorisation question — only the ordinary
+ * question of whether this reducer's own code is correct. The one cross-slice effect available is
+ * a {@link Rejection}, which refuses the whole event rather than writing anywhere.
+ *
  * @example
  * Using `when` (recommended)
  * ```ts
@@ -1105,7 +1173,7 @@ export interface StoreInstance<
  */
 export interface ReducerSpec<S = any, EM extends EventMapBase = EventMapBase> {
   /**
-   * Initial state for this reducer.
+   * Initial state for this reducer's own slice.
    */
   state: S;
 
@@ -1115,7 +1183,8 @@ export interface ReducerSpec<S = any, EM extends EventMapBase = EventMapBase> {
   when?: When<EM>;
 
   /**
-   * Pure reducer function: `(state, event) => nextState`.
+   * Pure reducer function: `(state, event) => nextState`, where `state` is this reducer's slice
+   * and the return value replaces that slice and nothing else.
    */
   reducer: ReducerFunction<S, EM>;
 
@@ -1366,11 +1435,28 @@ export type EMFromReducersStrict<RM extends ReducersMapAny> = UnionToIntersectio
 /**
  * Matcher for event targeting across reducers, effects, middleware, and subscriptions.
  *
- * Supports four targeting modes:
+ * Supports five targeting modes:
  * - `{ any: true }` — match all events
  * - `{ keys: [...] }` — match specific `[channel, type]` pairs (correlated)
  * - `{ channel: 'x' }` — match all events in a channel
  * - `{ channels: ['x', 'y'] }` — match all events in multiple channels
+ * - `{ channelPattern: 'x' }` — match channels by pattern, with `*` standing for zero or more
+ *   characters. Untyped by construction: it exists to match channels the event map does not name.
+ *
+ * @remarks
+ * The first four compare exactly. `channelPattern` is for the case they cannot express: a channel
+ * that arrives namespaced, such as a federated peer's `alias::plan` beside a local `plan`, where a
+ * guard wants both and cannot know the aliases in advance.
+ *
+ * Without it such a guard has to match everything and filter in its own body, which costs the
+ * pre-call skip and — more quietly — misreports itself, because the matcher an observer sees
+ * through `onRegistrationChange` then says it matches the entire store.
+ *
+ * `*` stands for zero or more characters, so `"*plan"` covers `plan` and `bb::plan` with one rule,
+ * and `"*::plan"` covers only the namespaced forms. Everything else in the pattern is literal.
+ *
+ * **It stays a string rather than a predicate on purpose.** A matcher is reported to observers and
+ * travels to a devtools panel; a function would make every one of them opaque.
  *
  * @typeParam EM - Event map.
  *
@@ -1405,7 +1491,8 @@ export type When<EM extends EventMapBase> =
   | { any: true }
   | { keys: ReadonlyArray<EventKey<EM>> }
   | { channel: keyof EM & string }
-  | { channels: ReadonlyArray<keyof EM & string> };
+  | { channels: ReadonlyArray<keyof EM & string> }
+  | { channelPattern: string };
 
 /**
  * Helper to create type-safe EventKey arrays without requiring `as const`.

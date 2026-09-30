@@ -8,7 +8,7 @@
 
 # Interface: AnchoredTriggerProps
 
-Defined in: [overlay/Popover.tsx:29](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L29)
+Defined in: [overlay/Popover/Popover.tsx:29](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L29)
 
 What a trigger has to carry for the overlay to be announced correctly.
 
@@ -24,7 +24,7 @@ then describes a button that does nothing observable.
 
 > **aria-controls**: `undefined` \| `string`
 
-Defined in: [overlay/Popover.tsx:33](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L33)
+Defined in: [overlay/Popover/Popover.tsx:33](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L33)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [overlay/Popover.tsx:33](https://github.com/yoltra/yoltra/blob/main/
 
 > **aria-expanded**: `boolean`
 
-Defined in: [overlay/Popover.tsx:31](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L31)
+Defined in: [overlay/Popover/Popover.tsx:31](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L31)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [overlay/Popover.tsx:31](https://github.com/yoltra/yoltra/blob/main/
 
 > **aria-haspopup**: `"dialog"` \| `"menu"`
 
-Defined in: [overlay/Popover.tsx:32](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L32)
+Defined in: [overlay/Popover/Popover.tsx:32](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L32)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [overlay/Popover.tsx:32](https://github.com/yoltra/yoltra/blob/main/
 
 > **ref**: (`node`) => `void`
 
-Defined in: [overlay/Popover.tsx:30](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L30)
+Defined in: [overlay/Popover/Popover.tsx:30](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L30)
 
 #### Parameters
 

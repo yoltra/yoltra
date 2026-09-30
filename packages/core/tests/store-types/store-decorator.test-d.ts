@@ -114,3 +114,49 @@ describe("StoreDecorator describes the shape", () => {
     expectTypeOf(passthrough).not.toBeNever();
   });
 });
+
+describe("a decoration registers a reducer without a cast", () => {
+  /**
+   * `registerReducer` was the one member of the family that a decorator could not satisfy.
+   *
+   * It was typed `spec: ReducerSpec<any, EM>` — the store's *own* event map — so a spec naming a
+   * channel the application's `EM` does not contain could not typecheck, and neither direction of
+   * assignability held. Forward failed on `reducer`: it is a property holding a function type, not
+   * a method, so `strictFunctionTypes` checks its parameters contravariantly and bivariance does
+   * not rescue it. Reverse failed on `when`, whose `EventKey<EM>` is not assignable to a concrete
+   * key tuple. Different members, opposite directions, so no variance annotation could help and a
+   * cast was the only answer.
+   *
+   * A consuming project reported carrying exactly one named cast for this. These assert it is no
+   * longer needed.
+   */
+  type LibEM = { lib: { started: string } };
+  type LibState = { seen: number };
+
+  const libSlice = defineSlice<LibEM>()({
+    state: { seen: 0 } as LibState,
+    when: { keys: [["lib", "started"]] },
+    reducer: (s: LibState) => ({ seen: s.seen + 1 }),
+  });
+
+  it("registers a slice whose channel the store does not yet have", () => {
+    function decorate<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
+      s: StoreInstance<R, S, EM>,
+    ) {
+      // No `as any`, no `as never`: the whole point of the test.
+      return s.registerReducer("lib", libSlice).store;
+    }
+    expectTypeOf(decorate(store)).not.toBeNever();
+  });
+
+  it("widens the event map the same way registerSlice does", () => {
+    const viaReducer = store.registerReducer("lib", libSlice).store;
+    const viaSlice = store.registerSlice("lib", libSlice).store;
+    expectTypeOf(viaReducer).toEqualTypeOf(viaSlice);
+  });
+
+  it("reaches the new slice on the returned store", () => {
+    const grown = store.registerReducer("lib", libSlice).store;
+    expectTypeOf(grown.getState().lib).toEqualTypeOf<DeepReadonly<LibState>>();
+  });
+});

@@ -10,7 +10,7 @@
 
 > **VisuallyHidden**(`__namedParameters`): `Element`
 
-Defined in: [primitives/VisuallyHidden.tsx:29](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/VisuallyHidden.tsx#L29)
+Defined in: [primitives/VisuallyHidden/VisuallyHidden.tsx:29](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/VisuallyHidden/VisuallyHidden.tsx#L29)
 
 Text for assistive technology, invisible on screen.
 

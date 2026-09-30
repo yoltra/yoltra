@@ -1,0 +1,19 @@
+@use "../../styles" as *;
+
+.yl-auth {
+  display: flex;
+  // Centred on the cross axis always, and on the main axis only when there is room to spare, so a
+  // tall form scrolls from the top rather than having its heading pushed off the screen.
+  align-items: center;
+  justify-content: center;
+  min-block-size: 100%;
+  padding: var(--yl-space-4);
+
+  &__card {
+    // A measure: wide enough for a label and its field, narrow enough to read as a single column.
+    --auth-card-width: 40rem;
+
+    inline-size: 100%;
+    max-inline-size: var(--auth-card-width);
+  }
+}

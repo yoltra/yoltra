@@ -10,7 +10,7 @@
 
 > **Menu**(`__namedParameters`): `Element`
 
-Defined in: [overlay/Popover.tsx:350](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L350)
+Defined in: [overlay/Popover/Popover.tsx:350](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L350)
 
 A command menu anchored to a trigger, with arrow-key navigation.
 

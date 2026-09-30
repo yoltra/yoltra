@@ -8,7 +8,7 @@
 
 # Interface: EmptyStateProps
 
-Defined in: [primitives/Feedback.tsx:80](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L80)
+Defined in: [primitives/Feedback/Feedback.tsx:80](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L80)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Feedback.tsx:80](https://github.com/yoltra/yoltra/blob/m
 
 > `optional` **action**: `ReactNode`
 
-Defined in: [primitives/Feedback.tsx:95](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L95)
+Defined in: [primitives/Feedback/Feedback.tsx:95](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L95)
 
 A way out: usually a button that creates the missing thing.
 
@@ -30,7 +30,7 @@ A way out: usually a button that creates the missing thing.
 
 > `optional` **description**: `ReactNode`
 
-Defined in: [primitives/Feedback.tsx:93](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L93)
+Defined in: [primitives/Feedback/Feedback.tsx:93](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L93)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [primitives/Feedback.tsx:93](https://github.com/yoltra/yoltra/blob/m
 
 > `optional` **headingLevel**: `4` \| `6` \| `2` \| `3` \| `5`
 
-Defined in: [primitives/Feedback.tsx:104](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L104)
+Defined in: [primitives/Feedback/Feedback.tsx:104](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L104)
 
 Outline level for the title.
 
@@ -54,7 +54,7 @@ by.
 
 > `optional` **icon**: `ReactNode`
 
-Defined in: [primitives/Feedback.tsx:82](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L82)
+Defined in: [primitives/Feedback/Feedback.tsx:82](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L82)
 
 A glyph or small illustration. Decorative — it is hidden from assistive technology.
 
@@ -64,7 +64,7 @@ A glyph or small illustration. Decorative — it is hidden from assistive techno
 
 > **title**: `ReactNode`
 
-Defined in: [primitives/Feedback.tsx:92](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L92)
+Defined in: [primitives/Feedback/Feedback.tsx:92](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L92)
 
 The headline.
 

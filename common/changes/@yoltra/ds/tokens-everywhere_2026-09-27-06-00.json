@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Every component now reads tokens. 121 hardcoded values become 12, and each of those twelve is a deliberately relative `em`, a documented fallback, a test-pinned breakpoint or a SASS default argument. The type scale reaches CSS for the first time, reconciled to the sizes the components already rendered rather than the reverse, so nothing grows; `Typography.scss` alone drops from 26 literals to 4. A `type()` mixin applies a whole role. `CodeBlock`'s copy button derives from the ink roles instead of five hand-copied `rgba()` literals, so it finally changes with the theme. Bespoke geometry becomes named component-local properties rather than anonymous numbers. stylelint closes it: a hex, an `rgba()`, a literal font size or a literal font weight is now a lint error.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

@@ -10,7 +10,7 @@
 
 > **Grid**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Layout.tsx:200](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L200)
+Defined in: [primitives/Layout/Layout.tsx:200](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L200)
 
 A grid that reflows without media queries.
 

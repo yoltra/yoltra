@@ -204,6 +204,44 @@ unbounded buffer this replaced.
 
 ---
 
+## When the reply cannot be a direct child
+
+Everything above works because the store stamps `parentId` on whatever a responder emits while it
+is handling the request, so the reply is matched structurally and no id is ever written down.
+
+That link only exists **in one process**, and only for a reply emitted **directly** while handling
+the request. It is not descent: a reply emitted a further hop down a cascade carries the
+intermediate event's id and will not be seen. So three cases need an explicit id:
+
+- the responder is on another node, a worker, or the far side of any transport;
+- the responder answers on a later turn, having queued the request;
+- the reply is emitted by something the request caused, rather than by the handler itself.
+
+For those, pass `correlationId` and have the responder echo it on `meta`:
+
+```typescript
+const id = crypto.randomUUID();
+
+const answer = await store.call(
+  "rpc",
+  "ask",
+  { q: "who?" },
+  { reply: ["rpc", "answer"], correlationId: id },
+);
+```
+
+```typescript
+// The responder, wherever it lives, echoes the id it was given.
+await emit("rpc", "answer", result, { meta: { correlationId: id } });
+```
+
+**It widens the match rather than replacing it.** The parent check still runs first, so a local
+responder that knows nothing about the id keeps working — which is what lets the same call site
+serve a local and a remote responder without branching. There is deliberately no way to match on
+the echoed id alone.
+
+---
+
 ## Testing a call
 
 Nothing special is required — a responder is an ordinary effect:

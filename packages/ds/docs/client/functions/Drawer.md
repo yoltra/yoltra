@@ -10,7 +10,7 @@
 
 > **Drawer**(`__namedParameters`): `Element`
 
-Defined in: [overlay/Modal.tsx:216](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Modal.tsx#L216)
+Defined in: [overlay/Modal/Modal.tsx:216](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Modal/Modal.tsx#L216)
 
 A modal panel anchored to one edge of the viewport.
 

@@ -8,7 +8,7 @@
 
 # Interface: GridProps
 
-Defined in: [primitives/Layout.tsx:173](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L173)
+Defined in: [primitives/Layout/Layout.tsx:173](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L173)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Layout.tsx:173](https://github.com/yoltra/yoltra/blob/ma
 
 > `optional` **as**: `ElementType`
 
-Defined in: [primitives/Layout.tsx:179](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L179)
+Defined in: [primitives/Layout/Layout.tsx:179](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L179)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [primitives/Layout.tsx:179](https://github.com/yoltra/yoltra/blob/ma
 
 > `optional` **children**: `ReactNode`
 
-Defined in: [primitives/Layout.tsx:180](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L180)
+Defined in: [primitives/Layout/Layout.tsx:180](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L180)
 
 #### Overrides
 
@@ -40,7 +40,7 @@ Defined in: [primitives/Layout.tsx:180](https://github.com/yoltra/yoltra/blob/ma
 
 > `optional` **columns**: `number`
 
-Defined in: [primitives/Layout.tsx:176](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L176)
+Defined in: [primitives/Layout/Layout.tsx:176](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L176)
 
 Fixed column count. Ignored when `minItemWidth` is given.
 
@@ -50,7 +50,7 @@ Fixed column count. Ignored when `minItemWidth` is given.
 
 > `optional` **gap**: `number`
 
-Defined in: [primitives/Layout.tsx:174](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L174)
+Defined in: [primitives/Layout/Layout.tsx:174](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L174)
 
 ***
 
@@ -58,6 +58,6 @@ Defined in: [primitives/Layout.tsx:174](https://github.com/yoltra/yoltra/blob/ma
 
 > `optional` **minItemWidth**: `string`
 
-Defined in: [primitives/Layout.tsx:178](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L178)
+Defined in: [primitives/Layout/Layout.tsx:178](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L178)
 
 Narrowest a column may be before the grid drops one, e.g. `"24rem"`.

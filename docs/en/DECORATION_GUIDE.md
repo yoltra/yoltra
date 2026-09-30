@@ -203,6 +203,52 @@ store.onRegistrationChange(
 
 ---
 
+### When the decorator owns something the store must not hold
+
+Everything above assumes a decorator's only product is the store. Sometimes it is not. A
+decoration that owns a lifecycle, a connection, or a credential needs a way to hand that back,
+and it must not park it in reduced state: state is snapshotted, frozen, diffed and shipped to a
+devtools panel, so a token in a slice is a token in a transcript.
+
+Three independent libraries in this ecosystem hit the same wall — one needing `drain()` as a
+first-class call so a rolling deploy can announce departure and flush *without* tearing the store
+down, one needing `suspend()`/`resume()`/`reattach()` on a live handle, one needing queue
+introspection. All three returned a pair:
+
+```typescript
+export function withMesh<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
+  store: StoreInstance<R, S, EM>,
+  config: MeshConfig,
+) {
+  const grown = store.withSlice("mesh", meshSlice).withMiddleware(meshGuard);
+  const handle: MeshHandle = { drain, announce, close };
+  return { store: grown, handle };
+}
+```
+
+**Be clear about what that costs.** `StoreDecorator<D>` returns `Decorated<…>`, which is a store
+and nothing else, so a pair is not a `StoreDecorator` and the two properties this guide is built
+on both go:
+
+- **Nesting.** `withB(withA(store))` no longer typechecks, because the outer call's parameter is a
+  store. The caller destructures: `const { store: s1, handle } = withMesh(store); const s2 = withLog(s1);`
+  As `There is no pipe` explains, nesting is the only composition mechanism, so losing it means
+  composing by hand.
+- **Dependency by constraint.** The `EM extends EventMapBase & RequiredEM` trick above works
+  because the argument *is* a store. Against a pair the constraint has to be restated against
+  `typeof pair.store`, which is more machinery than it is worth.
+
+Widening itself survives: `.store` carries the grown type, so a chain still works if each step is
+threaded by hand.
+
+If you can avoid it, do. A decorator that only needs to clean up should return the store and keep
+its disposer private, as `Disposal, and the one thing types cannot express` describes. Reach for a
+handle when the thing you are handing back is genuinely not the store — and when you do, return
+`{ store, handle }` rather than a handle carrying `.store`, so the store stays the obvious thing
+to pass on.
+
+---
+
 ## Surviving a hot reload
 
 `replace*` replaces **what the application authored**. Anything registered after construction
@@ -252,6 +298,37 @@ Three things to know:
   cache is shared for the same reason: it keys on store identity.
 - **Free functions exist** for a library handed a `Yoltra` it did not create:
   `withSlice(yoltra, name, spec)`.
+
+---
+
+### Targeting a channel you cannot name in advance
+
+`when` compares exactly: `{ channel: "plan" }` matches `plan` and nothing else. That is a problem
+for a guard whose channels arrive namespaced — a federated peer's `bb::plan` beside a local `plan` —
+because the aliases are invented by whoever federates, so no list can be written ahead of time.
+
+`channelPattern` is for that, with `*` standing for zero or more characters:
+
+```typescript
+export const rateGuard: MiddlewareSpec<S, EM> = {
+  when: { channelPattern: "*plan" },   // `plan` and `bb::plan`
+  middleware: (state, event) => withinBudget(event.channel),
+};
+```
+
+**There is a trap here worth more than the feature.** A guard that already filters in its own body,
+on a stripped base channel, looks like it would be faster with `when` — and converting it to
+`{ channel: "plan" }` silently stops it seeing every namespaced channel. Nothing throws. The guard
+keeps running, keeps returning `true`, and no longer guards the traffic it was written for. A
+consuming runtime came within a review of shipping exactly that, on the one defence its design
+assigned to bounding peer traffic.
+
+So if a middleware filters on anything less than the whole channel string, it is not a candidate
+for `{ channel }`. Use `channelPattern`, or leave the filter in the body.
+
+Matching everything and filtering by hand has a second cost besides the pre-call skip: the matcher
+is what `onRegistrationChange` reports, so a guard written that way tells every observer it matches
+the entire store.
 
 ---
 

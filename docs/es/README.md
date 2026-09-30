@@ -315,7 +315,7 @@ Node, y viceversa.
 - **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** - store, middleware, efectos, matchers `When`, instrumentación
 - **[API de @yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** - hooks, accessors tipados, `createYoltra`, Suspense
 - **[Arquitectura del pipeline de eventos](https://github.com/yoltra/yoltra/blob/main/docs/es/design/event-queue-architecture.md)** - cómo funciona el pipeline de reducción síncrona / efectos asíncronos
-- **[Comparación de librerías](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)** - comparación arquitectónica honesta con Redux, Zustand, Jotai y otras
+- **[Comparación de librerías](https://github.com/yoltra/yoltra/blob/main/docs/es/design/state-management-library-comparison.md)** - comparación arquitectónica honesta con Redux, Zustand, Jotai y otras
 
 ---
 
@@ -339,7 +339,7 @@ rush test
 ```
 
 Consulta la
-**[Guía del desarrollador](https://github.com/yoltra/yoltra/blob/main/docs/en/DEVELOPER_GUIDE.md)**
+**[Guía del desarrollador](https://github.com/yoltra/yoltra/blob/main/docs/es/DEVELOPER_GUIDE.md)**
 para más detalles.
 
 ---

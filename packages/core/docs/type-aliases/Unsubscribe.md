@@ -10,7 +10,7 @@
 
 > **Unsubscribe** = () => `void`
 
-Defined in: [types.ts:355](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L355)
+Defined in: [types.ts:370](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L370)
 
 Basic unsubscribe handle.
 

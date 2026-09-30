@@ -86,7 +86,7 @@ export function MissionLog() {
             {lines.map((line) => (
               <Inline as="li" key={line.key} gap={2} justify="between">
                 <Inline gap={2}>
-                  <Badge variant={line.blocked ? "neutral" : "brand"}>{line.type}</Badge>
+                  <Badge variant={line.blocked ? "warning" : "brand"}>{line.type}</Badge>
                   <Text size="sm" tone="secondary">
                     {line.target}
                   </Text>

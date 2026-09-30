@@ -205,6 +205,46 @@ el buffer sin límite que esto reemplazo.
 
 ---
 
+## Cuando la respuesta no puede ser hija directa
+
+Todo lo anterior funciona porque el store marca con `parentId` lo que un `Quien Responde` emite
+mientras atiende la petición, así que la respuesta se correlaciona de forma estructural y nunca hay
+que anotar ningún id.
+
+Ese vínculo solo existe **dentro de un proceso**, y solo para una respuesta emitida
+**directamente** al atender la petición. No es descendencia: una respuesta emitida un salto más
+abajo en la cascada lleva el id del evento intermedio y no se verá. Así que hay tres casos que
+necesitan un id explícito:
+
+- el `Quien Responde` está en otro nodo, en un worker, o al otro lado de cualquier transporte;
+- el `Quien Responde` contesta en un turno posterior, tras encolar la petición;
+- la respuesta la emite algo que la petición causó, y no el manejador mismo.
+
+Para esos, pasa `correlationId` y haz que el `Quien Responde` lo devuelva en `meta`:
+
+```typescript
+const id = crypto.randomUUID();
+
+const answer = await store.call(
+  "rpc",
+  "ask",
+  { q: "quien?" },
+  { reply: ["rpc", "answer"], correlationId: id },
+);
+```
+
+```typescript
+// El Quien Responde, viva donde viva, devuelve el id que recibió.
+await emit("rpc", "answer", result, { meta: { correlationId: id } });
+```
+
+**Amplía la coincidencia, no la reemplaza.** La comprobación del padre se sigue ejecutando primero,
+así que un `Quien Responde` local que no sabe nada del id sigue funcionando — que es lo que permite
+que el mismo sitio de llamada sirva a un respondedor local y a uno remoto sin ramificar. A
+propósito no hay forma de correlacionar solo por el id devuelto.
+
+---
+
 ## Probar una llamada
 
 No hace falta nada especial - `Quien Responde` es un efecto normal:

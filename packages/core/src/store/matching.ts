@@ -32,6 +32,8 @@ import type {
  * - `{ keys: [...] }` matches if event's `[channel, type]` is in the array.
  * - `{ channel: 'x' }` matches if event's channel equals 'x'.
  * - `{ channels: ['x', 'y'] }` matches if event's channel is in the array.
+ * - `{ channelPattern: '*::plan' }` matches if event's channel matches the pattern, `*` standing
+ *   for one or more characters.
  *
  * @internal
  */
@@ -64,7 +66,43 @@ export function matchesWhen<EM extends EventMapBase>(
     return when.channels.includes(event.channel as keyof EM & string);
   }
 
+  // Match a channel pattern. For a channel that arrives namespaced — `alias::plan` beside a local
+  // `plan` — where the exact forms cannot help because the aliases are not known in advance.
+  if ("channelPattern" in when) {
+    return channelPatternMatches(when.channelPattern, event.channel);
+  }
+
   return false;
+}
+
+/** Compiled patterns, because a matcher runs once per middleware per event. */
+const patternCache = new Map<string, RegExp>();
+
+/**
+ * Whether `channel` matches `pattern`, where `*` stands for one or more characters.
+ *
+ * @remarks
+ * `*` is deliberately the only metacharacter and stands for **zero or more** characters; everything
+ * else is escaped, so a pattern cannot become an expression that backtracks.
+ *
+ * Zero rather than one, so that one rule can cover a channel and its namespaced forms together:
+ * `"*plan"` matches `plan` and `bb::plan`, which is the case this form exists for. The cost of
+ * that choice is the usual glob one — it also matches `replan` — so a store with both wants
+ * `"*::plan"` and a separate rule for the local channel.
+ *
+ * @internal
+ */
+export function channelPatternMatches(pattern: string, channel: string): boolean {
+  let re = patternCache.get(pattern);
+  if (re === undefined) {
+    const source = pattern
+      .split("*")
+      .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join(".*");
+    re = new RegExp(`^${source}$`);
+    patternCache.set(pattern, re);
+  }
+  return re.test(channel);
 }
 
 /**

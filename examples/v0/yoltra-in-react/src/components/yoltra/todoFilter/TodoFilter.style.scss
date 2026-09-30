@@ -3,7 +3,7 @@ div.todo-filter {
     margin-bottom: var(--yl-space-4);
 
     h3 {
-        font-size: 14px;
+        font-size: var(--yl-text-body-sm-size);
         font-weight: 600;
         color: var(--yl-color-fg-secondary);
         margin: 0 0 var(--yl-space-2);
@@ -17,14 +17,14 @@ div.todo-filter {
         label {
             display: flex;
             flex-direction: column;
-            gap: 4px;
-            font-size: 13px;
+            gap: var(--yl-space-1);
+            font-size: var(--yl-text-label-size);
             font-weight: 600;
             color: var(--yl-color-fg-secondary);
         }
     }
 
     .yl-select {
-        min-width: 160px;
+        min-width: 16rem;
     }
 }

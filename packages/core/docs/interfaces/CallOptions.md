@@ -24,20 +24,24 @@ Options for [StoreInstance.call](StoreInstance.md#call).
 
 > `readonly` `optional` **correlationId**: `string`
 
-Defined in: [store/call.ts:83](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L83)
+Defined in: [store/call.ts:87](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L87)
 
-Correlate on this id instead of on causality.
+Correlate on this id **in addition to** the parent link.
 
 #### Remarks
 
-Causal matching — a reply is correlated because the store stamped it as *caused by* the
-request — is free and cannot be forged, but only holds in one process. A reply arriving from
-another node, a worker, or any transport carries no causal link, so for those the responder
-echoes an id and both sides agree on it here.
+The default matching is structural: the store stamps `parentId` on anything emitted while an
+event is being handled, so a responder that answers through the `emit` it was handed is
+correlated without either side carrying an id. That is free and cannot be forged, but it only
+holds in one process and only for a **direct** reply — see [StoreInstance.call](StoreInstance.md#call).
 
-When set, the id is sent as `meta.correlationId` and a reply matches if it echoes the same
-value **or** is causally descended. Causality still wins where it applies, so a local
-responder needs no changes to be compatible with a remote one.
+A reply arriving from another node, a worker, or any transport carries no parent link, so for
+those the responder echoes an id and both sides agree on it here.
+
+When set, the id is sent as `meta.correlationId` and a reply matches if it echoes that value
+**or** is a direct child of the request. This option *widens* the match; it does not replace
+the parent check, which still runs first. There is deliberately no way to match on the echoed
+id alone: a local responder therefore needs no changes to be compatible with a remote one.
 
 ***
 

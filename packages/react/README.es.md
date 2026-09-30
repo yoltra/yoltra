@@ -476,9 +476,9 @@ function TodoItem({ index }: { index: number }) {
   Descripción general y configuración rápida
 - **[API de @yoltra/core](../core/README.md)**:
   Store, middleware, efectos, matchers `When`
-- **[Guia de Inicio Rápido](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**:
+- **[Guia de Inicio Rápido](https://github.com/yoltra/yoltra/blob/main/docs/es/QUICK_START_GUIDE.md)**:
   Cinco pasos hacia una app funcional
-- **[Comparación de Bibliotecas](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**:
+- **[Comparación de Bibliotecas](https://github.com/yoltra/yoltra/blob/main/docs/es/design/state-management-library-comparison.md)**:
   Comparación arquitectónica
 
 ---

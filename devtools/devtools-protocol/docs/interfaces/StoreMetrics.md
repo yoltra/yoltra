@@ -8,7 +8,7 @@
 
 # Interface: StoreMetrics
 
-Defined in: [messages.ts:132](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L132)
+Defined in: [messages.ts:152](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L152)
 
 Store performance metrics.
 
@@ -29,7 +29,7 @@ to render real-time dashboards.
 
 > **metrics**: `object`
 
-Defined in: [messages.ts:135](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L135)
+Defined in: [messages.ts:155](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L155)
 
 #### avgProcessingTimeMs
 
@@ -109,7 +109,7 @@ Role of the sender.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:134](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L134)
+Defined in: [messages.ts:154](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L154)
 
 ***
 
@@ -131,7 +131,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"STORE_METRICS"`
 
-Defined in: [messages.ts:133](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L133)
+Defined in: [messages.ts:153](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L153)
 
 Discriminant field identifying the message type.
 

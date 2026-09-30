@@ -166,3 +166,10 @@ Suspense, `store.call`, y cada sitio de llamada existente de `registerX`. Los m�
 registro ahora devuelven un objeto invocable en lugar de una función pelada, así que
 `const off = store.registerEffect(spec); off();` compila y se ejecuta exactamente igual que
 antes.
+
+> **`store.call` no cambió en 0.8.0; no es que no exista.** Llegó en **0.6.0** con
+> especificaciones de respuesta, progreso en streaming con contrapresión real, un timeout de
+> inactividad en lugar de total, `AbortSignal` y `cancel()`, y nada de eso se ha movido desde
+> entonces. Si te lo encuentras por primera vez al actualizar, está documentado por completo en la
+> [guía de Petición y Respuesta](./REQUEST_REPLY_GUIDE.md) — esta página guarda silencio sobre él
+> solo porque no hay nada que hacer.

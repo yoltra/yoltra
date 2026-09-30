@@ -10,7 +10,7 @@
 
 > **Portal**(`__namedParameters`): `null` \| `ReactPortal`
 
-Defined in: [overlay/Portal.tsx:42](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Portal.tsx#L42)
+Defined in: [overlay/Portal/Portal.tsx:42](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Portal/Portal.tsx#L42)
 
 Renders its children into a detached node under `document.body`.
 

@@ -8,7 +8,7 @@
 
 # Interface: CallHandle\<TReply, TProgress\>
 
-Defined in: [store/call.ts:112](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L112)
+Defined in: [store/call.ts:116](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L116)
 
 The result of [StoreInstance.call](StoreInstance.md#call): awaitable for the terminal reply, async-iterable for
 progress.
@@ -55,7 +55,7 @@ Non-terminal correlated events.
 
 > `readonly` **dropped**: `number`
 
-Defined in: [store/call.ts:121](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L121)
+Defined in: [store/call.ts:125](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L125)
 
 Progress events discarded because nothing was iterating.
 
@@ -71,7 +71,7 @@ caller chose not to read, and is worth logging rather than guessing at.
 
 > **cancel**(`reason?`): `void`
 
-Defined in: [store/call.ts:124](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L124)
+Defined in: [store/call.ts:128](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L128)
 
 Stops listening and settles the call. Safe to call more than once.
 

@@ -92,6 +92,25 @@ Defined in: [messages.ts:80](https://github.com/yoltra/yoltra/blob/main/devtools
 
 ***
 
+### reason?
+
+> `optional` **reason**: `"vetoed"` \| `"deduped"` \| `"cascade"`
+
+Defined in: [messages.ts:96](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L96)
+
+Why the event did not commit. Absent when it did.
+
+#### Remarks
+
+`committed: false` on its own tells a panel that an event vanished and nothing about the
+cause, so a guard refusing an action looked identical to a deduplication. Carried from
+`InstrumentedEvent.reason`.
+
+In practice the store can only report `"vetoed"` here today: a deduplicated event never
+reaches instrumentation, and neither does a cascade refusal. The wider type comes from core.
+
+***
+
 ### snapshotVersion
 
 > **snapshotVersion**: `number`
@@ -163,3 +182,18 @@ Discriminant field identifying the message type.
 #### Overrides
 
 [`BaseMessage`](BaseMessage.md).[`type`](BaseMessage.md#type)
+
+***
+
+### vetoedBy?
+
+> `optional` **vetoedBy**: `string`
+
+Defined in: [messages.ts:104](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L104)
+
+Which middleware vetoed, when one did and it had a name.
+
+#### Remarks
+
+Absent for an anonymous middleware, and absent whenever the event committed. Note that a
+bundler may rename a function, so this is a strong hint rather than an identifier.

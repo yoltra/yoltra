@@ -8,7 +8,7 @@
 
 # Interface: FlowProps
 
-Defined in: [primitives/Layout.tsx:64](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L64)
+Defined in: [primitives/Layout/Layout.tsx:64](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L64)
 
 ## Extends
 
@@ -24,7 +24,7 @@ Defined in: [primitives/Layout.tsx:64](https://github.com/yoltra/yoltra/blob/mai
 
 > `optional` **align**: [`Align`](../type-aliases/Align.md)
 
-Defined in: [primitives/Layout.tsx:67](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L67)
+Defined in: [primitives/Layout/Layout.tsx:67](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L67)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [primitives/Layout.tsx:67](https://github.com/yoltra/yoltra/blob/mai
 
 > `optional` **as**: `ElementType`
 
-Defined in: [primitives/Layout.tsx:70](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L70)
+Defined in: [primitives/Layout/Layout.tsx:70](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L70)
 
 Element to render. Use it to keep the document outline honest — `as="ul"`, `as="nav"`.
 
@@ -42,7 +42,7 @@ Element to render. Use it to keep the document outline honest — `as="ul"`, `as
 
 > `optional` **children**: `ReactNode`
 
-Defined in: [primitives/Layout.tsx:71](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L71)
+Defined in: [primitives/Layout/Layout.tsx:71](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L71)
 
 #### Overrides
 
@@ -54,7 +54,7 @@ Defined in: [primitives/Layout.tsx:71](https://github.com/yoltra/yoltra/blob/mai
 
 > `optional` **gap**: `number`
 
-Defined in: [primitives/Layout.tsx:66](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L66)
+Defined in: [primitives/Layout/Layout.tsx:66](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L66)
 
 Space between children, as a step on the spacing scale. Defaults to `4` (16px).
 
@@ -64,4 +64,4 @@ Space between children, as a step on the spacing scale. Defaults to `4` (16px).
 
 > `optional` **justify**: [`Justify`](../type-aliases/Justify.md)
 
-Defined in: [primitives/Layout.tsx:68](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L68)
+Defined in: [primitives/Layout/Layout.tsx:68](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L68)

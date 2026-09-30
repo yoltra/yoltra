@@ -68,17 +68,21 @@ export interface CallOptions<EM extends EventMapBase> {
   readonly highWaterMark?: number;
 
   /**
-   * Correlate on this id instead of on causality.
+   * Correlate on this id **in addition to** the parent link.
    *
    * @remarks
-   * Causal matching — a reply is correlated because the store stamped it as *caused by* the
-   * request — is free and cannot be forged, but only holds in one process. A reply arriving from
-   * another node, a worker, or any transport carries no causal link, so for those the responder
-   * echoes an id and both sides agree on it here.
+   * The default matching is structural: the store stamps `parentId` on anything emitted while an
+   * event is being handled, so a responder that answers through the `emit` it was handed is
+   * correlated without either side carrying an id. That is free and cannot be forged, but it only
+   * holds in one process and only for a **direct** reply — see {@link StoreInstance.call}.
    *
-   * When set, the id is sent as `meta.correlationId` and a reply matches if it echoes the same
-   * value **or** is causally descended. Causality still wins where it applies, so a local
-   * responder needs no changes to be compatible with a remote one.
+   * A reply arriving from another node, a worker, or any transport carries no parent link, so for
+   * those the responder echoes an id and both sides agree on it here.
+   *
+   * When set, the id is sent as `meta.correlationId` and a reply matches if it echoes that value
+   * **or** is a direct child of the request. This option *widens* the match; it does not replace
+   * the parent check, which still runs first. There is deliberately no way to match on the echoed
+   * id alone: a local responder therefore needs no changes to be compatible with a remote one.
    */
   readonly correlationId?: string;
 }
@@ -159,44 +163,4 @@ export class CallAbortedError extends Error {
     super(`[yoltra] call aborted: ${reason}`);
     this.name = "CallAbortedError";
   }
-}
-
-/**
- * Normalises a {@link ReplySpec} into a channel and a terminal-type test.
- *
- * @internal
- */
-export function parseReply<EM extends EventMapBase>(
-  reply: ReplySpec<EM>,
-): { channel: string; isTerminal: (type: string) => boolean } {
-  const [channel, types] = reply as readonly [string, (string | readonly string[])?];
-
-  // A channel on its own means every reply on it ends the call — the shape a responder with one
-  // kind of answer takes, and the one where naming the type would be noise.
-  if (types === undefined) return { channel, isTerminal: () => true };
-
-  if (typeof types === "string") return { channel, isTerminal: (t) => t === types };
-
-  const set = new Set(types);
-  return { channel, isTerminal: (t) => set.has(t) };
-}
-
-/**
- * Whether `event` is a reply to the request identified by `requestId` / `correlationId`.
- *
- * @remarks
- * Causality first: the store stamps `parentId` on anything emitted while handling an event, so a
- * responder that answers through the `emit` it was given is correlated without doing anything.
- * The explicit id is the fallback for replies that crossed a boundary causality cannot.
- *
- * @internal
- */
-export function isReplyTo<EM extends EventMapBase>(
-  event: EventUnion<EM>,
-  requestId: string,
-  correlationId: string | undefined,
-): boolean {
-  if (event.parentId === requestId) return true;
-  if (correlationId === undefined) return false;
-  return (event.meta as { correlationId?: unknown } | undefined)?.correlationId === correlationId;
 }

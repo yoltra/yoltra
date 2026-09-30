@@ -8,7 +8,7 @@
 
 # Interface: TooltipProps
 
-Defined in: [overlay/Tooltip.tsx:28](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L28)
+Defined in: [overlay/Tooltip/Tooltip.tsx:38](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L38)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [overlay/Tooltip.tsx:28](https://github.com/yoltra/yoltra/blob/main/
 
 > **children**: (`props`) => `ReactNode`
 
-Defined in: [overlay/Tooltip.tsx:32](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L32)
+Defined in: [overlay/Tooltip/Tooltip.tsx:42](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L42)
 
 Renders the described element, spreading the props that wire and open it.
 
@@ -36,7 +36,7 @@ Renders the described element, spreading the props that wire and open it.
 
 > `optional` **className**: `string`
 
-Defined in: [overlay/Tooltip.tsx:38](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L38)
+Defined in: [overlay/Tooltip/Tooltip.tsx:48](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L48)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [overlay/Tooltip.tsx:38](https://github.com/yoltra/yoltra/blob/main/
 
 > `optional` **container**: `null` \| `HTMLElement`
 
-Defined in: [overlay/Tooltip.tsx:37](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L37)
+Defined in: [overlay/Tooltip/Tooltip.tsx:47](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L47)
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: [overlay/Tooltip.tsx:37](https://github.com/yoltra/yoltra/blob/main/
 
 > **content**: `ReactNode`
 
-Defined in: [overlay/Tooltip.tsx:30](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L30)
+Defined in: [overlay/Tooltip/Tooltip.tsx:40](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L40)
 
 The text shown. Kept to a phrase; a tooltip is not a place for interactive content.
 
@@ -62,7 +62,7 @@ The text shown. Kept to a phrase; a tooltip is not a place for interactive conte
 
 > `optional` **delayMs**: `number`
 
-Defined in: [overlay/Tooltip.tsx:36](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L36)
+Defined in: [overlay/Tooltip/Tooltip.tsx:46](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L46)
 
 How long the pointer must rest before it appears, in ms. Keyboard focus shows it at once.
 
@@ -72,7 +72,7 @@ How long the pointer must rest before it appears, in ms. Keyboard focus shows it
 
 > `optional` **offset**: `number`
 
-Defined in: [overlay/Tooltip.tsx:34](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L34)
+Defined in: [overlay/Tooltip/Tooltip.tsx:44](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L44)
 
 ***
 
@@ -80,4 +80,4 @@ Defined in: [overlay/Tooltip.tsx:34](https://github.com/yoltra/yoltra/blob/main/
 
 > `optional` **placement**: [`Placement`](../type-aliases/Placement.md)
 
-Defined in: [overlay/Tooltip.tsx:33](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip.tsx#L33)
+Defined in: [overlay/Tooltip/Tooltip.tsx:43](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Tooltip/Tooltip.tsx#L43)

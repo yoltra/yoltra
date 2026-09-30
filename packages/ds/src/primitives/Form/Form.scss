@@ -1,0 +1,185 @@
+@use "../../styles" as *;
+
+// Standalone, not `.yl-field > .yl-label`. It was nested, so a label written outside a field
+// wrapper received nothing, and this package's own TSDoc showed exactly that usage.
+.yl-label {
+  font-size: var(--yl-text-label-size);
+  font-weight: var(--yl-font-weight-semibold);
+  color: var(--yl-color-fg-secondary);
+}
+
+.yl-field {
+  // Sub-grid: 2px of air before the required marker, where the scale starts at 4px.
+  --required-gap: 0.2rem;
+
+  // The wrapper, moved here from Field.scss. `FormField` renders this class, so the file that
+  // renders it owns it: previously a consumer importing `form.css` for `FormField` also needed
+  // `field.css` for the wrapper's layout, and nothing said so.
+  display: flex;
+  flex-direction: column;
+  gap: var(--yl-space-1);
+
+  &__required {
+    color: var(--yl-color-status-error-fg);
+    margin-inline-start: var(--required-gap);
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: var(--yl-text-caption-size);
+    line-height: 1.5;
+    color: var(--yl-color-fg-muted);
+  }
+
+  &__error {
+    margin: 0;
+    font-size: var(--yl-text-caption-size);
+    line-height: 1.5;
+    color: var(--yl-color-status-error-fg);
+
+    // The region is always in the document so a later message is an update to something the
+    // reader is already watching. Empty, it must take no space.
+    &:empty {
+      display: none;
+    }
+  }
+}
+
+.yl-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0; // `fieldset` defaults to min-content, which breaks flex children.
+
+  &__legend {
+    padding: 0;
+    font-family: var(--yl-font-sans);
+    font-size: var(--yl-text-label-size);
+    font-weight: var(--yl-font-weight-semibold);
+    color: var(--yl-color-fg-secondary);
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--yl-space-2);
+    margin-top: var(--yl-space-2);
+
+    &--inline {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--yl-space-4);
+    }
+  }
+}
+
+.yl-toggle {
+  // The control's box, shared by the checkbox, the radio, the switch knob and the hint's
+  // indent, so the four cannot drift apart.
+  --toggle-size: 1.6rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--yl-space-1);
+
+  &__label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--yl-space-2);
+    font-family: var(--yl-font-sans);
+    font-size: var(--yl-text-body-sm-size);
+    line-height: 1.4;
+    color: var(--yl-color-fg-default);
+    cursor: pointer;
+
+    &:has(input:disabled) {
+      @include disabled-text;
+    }
+  }
+
+  // The hint sits under the control, aligned with its label text rather than its box.
+  .yl-field__hint {
+    padding-inline-start: calc(var(--toggle-size) + var(--yl-space-2));
+  }
+}
+
+// Native controls, tinted rather than replaced. `accent-color` gets the platform's own
+// checkbox — with its keyboard handling, indeterminate state and assistive-technology
+// behaviour intact — in the design system's colour.
+.yl-checkbox,
+.yl-radio {
+  inline-size: var(--toggle-size);
+  block-size: var(--toggle-size);
+  margin: 0;
+  accent-color: var(--yl-color-interactive-bg);
+  cursor: pointer;
+
+  @include focus-ring;
+
+  &:disabled {
+    @include disabled-control;
+  }
+}
+
+.yl-switch {
+  --switch-track-width: 3.6rem;
+  --switch-track-height: 2rem;
+  --switch-knob-inset: 0.2rem;
+
+  appearance: none;
+  inline-size: var(--switch-track-width);
+  block-size: var(--switch-track-height);
+  margin: 0;
+  border-radius: var(--yl-radius-round);
+  background: var(--yl-color-interactive-track);
+  position: relative;
+  cursor: pointer;
+  @include transition(background);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset-block-start: var(--switch-knob-inset);
+    inset-inline-start: var(--switch-knob-inset);
+    inline-size: var(--toggle-size);
+    block-size: var(--toggle-size);
+    border-radius: var(--yl-radius-round);
+    background: var(--yl-color-bg-panel);
+    @include transition(translate);
+  }
+
+  &:checked {
+    background: var(--yl-color-interactive-bg);
+
+    &::after {
+      // Derived rather than measured: the knob travels the width it does not already occupy,
+      // so widening the track cannot leave it stopping short.
+      translate: calc(var(--switch-track-width) - var(--toggle-size) - 2 * var(--switch-knob-inset)) 0;
+    }
+  }
+
+  @include focus-ring;
+
+  &:disabled {
+    @include disabled-control;
+  }
+}
+
+.yl-slider {
+  inline-size: 100%;
+  accent-color: var(--yl-color-interactive-bg);
+  cursor: pointer;
+
+  @include focus-ring;
+
+  &:disabled {
+    @include disabled-control;
+  }
+}
+
+@include reduced-motion {
+  .yl-switch,
+  .yl-switch::after {
+    transition: none;
+  }
+}

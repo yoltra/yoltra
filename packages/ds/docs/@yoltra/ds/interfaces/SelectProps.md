@@ -8,7 +8,7 @@
 
 # Interface: SelectProps
 
-Defined in: [primitives/Field.tsx:46](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field.tsx#L46)
+Defined in: [primitives/Field/Field.tsx:46](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field/Field.tsx#L46)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Field.tsx:46](https://github.com/yoltra/yoltra/blob/main
 
 > `optional` **block**: `boolean`
 
-Defined in: [primitives/Field.tsx:49](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field.tsx#L49)
+Defined in: [primitives/Field/Field.tsx:49](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field/Field.tsx#L49)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [primitives/Field.tsx:49](https://github.com/yoltra/yoltra/blob/main
 
 > **children**: `ReactNode`
 
-Defined in: [primitives/Field.tsx:50](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field.tsx#L50)
+Defined in: [primitives/Field/Field.tsx:50](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field/Field.tsx#L50)
 
 #### Overrides
 
@@ -40,6 +40,6 @@ Defined in: [primitives/Field.tsx:50](https://github.com/yoltra/yoltra/blob/main
 
 > `optional` **size**: [`FieldSize`](../type-aliases/FieldSize.md)
 
-Defined in: [primitives/Field.tsx:48](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field.tsx#L48)
+Defined in: [primitives/Field/Field.tsx:48](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Field/Field.tsx#L48)
 
 Visual size — distinct from the native numeric `size` attribute.

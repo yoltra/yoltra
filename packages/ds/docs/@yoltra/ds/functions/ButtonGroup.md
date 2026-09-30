@@ -10,7 +10,7 @@
 
 > **ButtonGroup**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Button.tsx:142](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button.tsx#L142)
+Defined in: [primitives/Button/Button.tsx:227](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Button/Button.tsx#L227)
 
 Related buttons, joined into one control.
 

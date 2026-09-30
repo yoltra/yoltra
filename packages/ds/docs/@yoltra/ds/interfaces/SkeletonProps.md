@@ -8,7 +8,7 @@
 
 # Interface: SkeletonProps
 
-Defined in: [primitives/Feedback.tsx:41](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L41)
+Defined in: [primitives/Feedback/Feedback.tsx:41](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L41)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [primitives/Feedback.tsx:41](https://github.com/yoltra/yoltra/blob/m
 
 > `optional` **circle**: `boolean`
 
-Defined in: [primitives/Feedback.tsx:47](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L47)
+Defined in: [primitives/Feedback/Feedback.tsx:47](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L47)
 
 Round it fully, for an avatar placeholder.
 
@@ -30,7 +30,7 @@ Round it fully, for an avatar placeholder.
 
 > `optional` **height**: `string`
 
-Defined in: [primitives/Feedback.tsx:45](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L45)
+Defined in: [primitives/Feedback/Feedback.tsx:45](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L45)
 
 CSS height. Defaults to one line of text.
 
@@ -40,6 +40,6 @@ CSS height. Defaults to one line of text.
 
 > `optional` **width**: `string`
 
-Defined in: [primitives/Feedback.tsx:43](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback.tsx#L43)
+Defined in: [primitives/Feedback/Feedback.tsx:43](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Feedback/Feedback.tsx#L43)
 
 CSS width, e.g. `"12rem"` or `"100%"`.

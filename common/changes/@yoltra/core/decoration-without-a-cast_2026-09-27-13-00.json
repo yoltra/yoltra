@@ -1,0 +1,15 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "`registerReducer` is now generic over its spec, so a decoration can mount a slice whose channel the application's event map does not yet contain without a cast. It was typed against the store's own `EM`, and neither direction of assignability held: forward failed on `reducer`, a property rather than a method, so `strictFunctionTypes` checks its parameters contravariantly and bivariance cannot rescue it; reverse failed on `when`. It was the one member of the decoration family with this problem — `registerSlice`, `withSlice`, `registerMiddleware` and `withMiddleware` were already satisfiable — and the implementation already delegated to `registerSlice`, so the fix is the signature. The `Store` class's own public signatures also narrowed every decoration member back to the store's `EM`, so anyone typed against the exported class rather than `StoreInstance` lost castless decoration entirely; they now match the interface.",
+      "type": "minor"
+    },
+    {
+      "packageName": "@yoltra/core",
+      "comment": "The decoration guide gains a section on a decorator that must return something besides the store. Three independent libraries needed one — a `drain()` for a rolling deploy, a live suspend/resume handle, queue introspection — and all three returned `{ store, handle }` because `StoreDecorator` returns a store and nothing else. The guide stated the contract as absolute; it now states the pattern and what it costs, which is nesting and dependency-by-constraint, and says when not to reach for it.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

@@ -10,7 +10,7 @@
 
 > **ContextMenu**(`__namedParameters`): `Element`
 
-Defined in: [overlay/Popover.tsx:417](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L417)
+Defined in: [overlay/Popover/Popover.tsx:417](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L417)
 
 A command menu opened at a pointer position.
 

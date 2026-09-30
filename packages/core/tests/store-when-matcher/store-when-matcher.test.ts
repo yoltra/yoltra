@@ -501,3 +501,90 @@ describe("Store - createStore explicit generics", () => {
     store.dispose();
   });
 });
+
+describe("Store - channelPattern targeting", () => {
+  /**
+   * The case the four exact forms cannot express.
+   *
+   * A federated peer's channel arrives namespaced — `bb::plan` beside a local `plan` — so a guard
+   * that means "this channel, however it is namespaced" could not use `when` at all: `channel`
+   * and `channels` compare literally, and the aliases are invented by whoever federates. It had
+   * to match everything and filter in its own body, which costs the pre-call skip and makes the
+   * middleware report to every observer that it matches the whole store.
+   *
+   * A consuming runtime also reported the trap beside it, which is the more valuable half: a guard
+   * already filtering on a stripped base channel in its body, converted to `when` as a free
+   * optimisation, silently stops seeing every namespaced channel. Nothing fails; the guard simply
+   * stops guarding. That is what the last test here pins.
+   */
+  type PlanEM = { plan: { go: null }; "bb::plan": { go: null }; other: { go: null } };
+
+  function storeSeeing(pattern: string) {
+    const seen: string[] = [];
+    const store = createStore<{ n: { c: number } }, PlanEM>({
+      name: "PatternMatcher",
+      reducer: { n: { state: { c: 0 }, when: { any: true }, reducer: (s) => s } },
+      middleware: [
+        {
+          when: { channelPattern: pattern },
+          middleware: ((_s, event) => {
+            seen.push(event.channel);
+            return true;
+          }) as MiddlewareFunction<any, PlanEM>,
+        } as MiddlewareSpec<any, PlanEM>,
+      ],
+    });
+    return { store, seen };
+  }
+
+  async function emitAll(store: ReturnType<typeof storeSeeing>["store"]) {
+    await store.emit("plan", "go", null);
+    await store.emit("bb::plan", "go", null);
+    await store.emit("other", "go", null);
+  }
+
+  it("matches a channel and its namespaced forms with one rule", async () => {
+    const { store, seen } = storeSeeing("*plan");
+    await emitAll(store);
+    expect(seen).toEqual(["plan", "bb::plan"]);
+    store.dispose();
+  });
+
+  it("matches only the namespaced forms when the pattern requires a prefix", async () => {
+    const { store, seen } = storeSeeing("*::plan");
+    await emitAll(store);
+    expect(seen).toEqual(["bb::plan"]);
+    store.dispose();
+  });
+
+  it("treats everything but `*` as literal, so a dot is a dot", async () => {
+    // A pattern is not a regular expression. If it were, `a.b` would match `axb` and a consumer
+    // could hand the store an expression that backtracks.
+    const seen: string[] = [];
+    const store = createStore<{ n: { c: number } }, { "a.b": { go: null }; axb: { go: null } }>({
+      name: "PatternLiteral",
+      reducer: { n: { state: { c: 0 }, when: { any: true }, reducer: (s) => s } },
+      middleware: [
+        {
+          when: { channelPattern: "a.b" },
+          middleware: ((_s, event) => {
+            seen.push(event.channel);
+            return true;
+          }) as MiddlewareFunction<any, any>,
+        } as MiddlewareSpec<any, any>,
+      ],
+    });
+    await store.emit("a.b", "go", null);
+    await store.emit("axb", "go", null);
+    expect(seen).toEqual(["a.b"]);
+    store.dispose();
+  });
+
+  it("still guards the namespaced channel after a body filter becomes a `when`", async () => {
+    // The regression this form exists to prevent. `{ channel: "plan" }` would see one event here.
+    const { store, seen } = storeSeeing("*plan");
+    await store.emit("bb::plan", "go", null);
+    expect(seen).toContain("bb::plan");
+    store.dispose();
+  });
+});

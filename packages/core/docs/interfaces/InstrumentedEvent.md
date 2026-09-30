@@ -8,7 +8,7 @@
 
 # Interface: InstrumentedEvent\<EM\>
 
-Defined in: [types.ts:364](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L364)
+Defined in: [types.ts:379](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L379)
 
 A single observed event delivered to an [InstrumentationObserver](../type-aliases/InstrumentationObserver.md).
 
@@ -26,7 +26,7 @@ Event map.
 
 > **changedPaths**: `string`[]
 
-Defined in: [types.ts:377](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L377)
+Defined in: [types.ts:392](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L392)
 
 Dotted **leaf** paths that changed, prefixed with the slice name (e.g.
 `"todos.items.0.title"`). Empty when nothing changed. These are the exact
@@ -38,7 +38,7 @@ paths the store computed while reducing — no re-diff required.
 
 > **committed**: `boolean`
 
-Defined in: [types.ts:371](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L371)
+Defined in: [types.ts:386](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L386)
 
 `true` if the event passed middleware and ran reducers; `false` if vetoed.
 
@@ -48,7 +48,7 @@ Defined in: [types.ts:371](https://github.com/yoltra/yoltra/blob/main/packages/c
 
 > **event**: `object`
 
-Defined in: [types.ts:369](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L369)
+Defined in: [types.ts:384](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L384)
 
 The processed event, including its `id` and any [EventMeta](../type-aliases/EventMeta.md) the emitter attached.
 `meta` is absent unless it was supplied.
@@ -79,7 +79,7 @@ The processed event, including its `id` and any [EventMeta](../type-aliases/Even
 
 > **nextValues**: `Record`\<`string`, `unknown`\>
 
-Defined in: [types.ts:381](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L381)
+Defined in: [types.ts:396](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L396)
 
 New value at each changed path, keyed by path.
 
@@ -89,9 +89,31 @@ New value at each changed path, keyed by path.
 
 > **prevValues**: `Record`\<`string`, `unknown`\>
 
-Defined in: [types.ts:379](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L379)
+Defined in: [types.ts:394](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L394)
 
 Old value at each changed path, keyed by path.
+
+***
+
+### reason?
+
+> `optional` **reason**: [`NotCommittedReason`](../type-aliases/NotCommittedReason.md)
+
+Defined in: [types.ts:422](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L422)
+
+Why the event did not commit. Absent when it did.
+
+#### Remarks
+
+The same value [EmitResult.reason](EmitResult.md#reason) carries, so an observer can tell a guard refusing an
+action from a double-click being deduplicated — a distinction `committed: false` alone cannot
+make, and the one an observer needs most, because instrumentation is the only seam that sees
+uncommitted events without participating in the pipeline.
+
+**In practice this reads `"vetoed"` or nothing.** A deduplicated event is dropped at `emit`
+before it is ever queued, and a cascade refusal returns before the drain reaches
+instrumentation, so neither is visible here at all. The type admits the other values because
+it is shared with `EmitResult`, not because they are currently reachable.
 
 ***
 
@@ -99,7 +121,7 @@ Old value at each changed path, keyed by path.
 
 > **reduceTimeMs**: `number`
 
-Defined in: [types.ts:383](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L383)
+Defined in: [types.ts:398](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L398)
 
 Wall-clock milliseconds spent in the synchronous reduce phase for this event.
 
@@ -109,7 +131,7 @@ Wall-clock milliseconds spent in the synchronous reduce phase for this event.
 
 > `optional` **rejected**: [`Rejection`](Rejection.md)
 
-Defined in: [types.ts:392](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L392)
+Defined in: [types.ts:407](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L407)
 
 Present when a reducer refused the write, carrying its reason.
 
@@ -118,3 +140,19 @@ Present when a reducer refused the write, carrying its reason.
 Distinct from `committed: false`, which means middleware vetoed the event before any reducer
 saw it. This is a reducer having considered the write and declined it — the two look
 identical in state and are entirely different in cause.
+
+***
+
+### vetoedBy?
+
+> `optional` **vetoedBy**: `string`
+
+Defined in: [types.ts:431](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L431)
+
+Which middleware vetoed, when one did and it had a name.
+
+#### Remarks
+
+The same value [EmitResult.vetoedBy](EmitResult.md#vetoedby) carries: a spec's `meta.name`, or a plain
+function's `name`. Absent for an anonymous function, and absent whenever the event committed.
+A middleware that throws is attributed too — a throw is treated as a veto.

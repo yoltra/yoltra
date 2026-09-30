@@ -10,7 +10,7 @@
 
 > **TR**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Table.tsx:44](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table.tsx#L44)
+Defined in: [primitives/Table/Table.tsx:111](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table/Table.tsx#L111)
 
 A table row. See [Table](Table.md).
 

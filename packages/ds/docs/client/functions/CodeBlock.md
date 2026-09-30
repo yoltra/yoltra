@@ -10,7 +10,7 @@
 
 > **CodeBlock**(`__namedParameters`): `Element`
 
-Defined in: [primitives/CodeBlock.tsx:38](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/CodeBlock.tsx#L38)
+Defined in: [primitives/CodeBlock/CodeBlock.tsx:38](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/CodeBlock/CodeBlock.tsx#L38)
 
 A block of code, with a copy button.
 

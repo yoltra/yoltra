@@ -10,7 +10,7 @@
 
 > **Text**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Typography.tsx:66](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography.tsx#L66)
+Defined in: [primitives/Typography/Typography.tsx:66](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Typography/Typography.tsx#L66)
 
 Body text.
 

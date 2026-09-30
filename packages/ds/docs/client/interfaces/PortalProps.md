@@ -8,7 +8,7 @@
 
 # Interface: PortalProps
 
-Defined in: [overlay/Portal.tsx:6](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Portal.tsx#L6)
+Defined in: [overlay/Portal/Portal.tsx:6](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Portal/Portal.tsx#L6)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [overlay/Portal.tsx:6](https://github.com/yoltra/yoltra/blob/main/pa
 
 > **children**: `ReactNode`
 
-Defined in: [overlay/Portal.tsx:7](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Portal.tsx#L7)
+Defined in: [overlay/Portal/Portal.tsx:7](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Portal/Portal.tsx#L7)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [overlay/Portal.tsx:7](https://github.com/yoltra/yoltra/blob/main/pa
 
 > `optional` **container**: `null` \| `HTMLElement`
 
-Defined in: [overlay/Portal.tsx:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Portal.tsx#L15)
+Defined in: [overlay/Portal/Portal.tsx:15](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Portal/Portal.tsx#L15)
 
 Where to mount. Defaults to `document.body`.
 

@@ -103,6 +103,17 @@
   background: var(--devtools-bounced);
 }
 
+/* Why a bounced event bounced. Sits beside the status dot, which says only that it did. */
+.refusal {
+  color: var(--devtools-bounced);
+  border: 1px solid var(--devtools-bounced);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .channel {
   color: var(--devtools-info);
   min-width: 80px;

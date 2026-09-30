@@ -8,7 +8,7 @@
 
 # Interface: EventReplay
 
-Defined in: [messages.ts:271](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L271)
+Defined in: [messages.ts:291](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L291)
 
 Replay events from a snapshot through reducers only.
 
@@ -30,7 +30,7 @@ for debugging reducer logic in isolation. Requires
 
 > **events**: `object`[]
 
-Defined in: [messages.ts:277](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L277)
+Defined in: [messages.ts:297](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L297)
 
 Events to replay in order.
 
@@ -56,7 +56,7 @@ Events to replay in order.
 
 > **snapshot**: `unknown`
 
-Defined in: [messages.ts:275](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L275)
+Defined in: [messages.ts:295](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L295)
 
 Starting state to apply before replaying.
 
@@ -94,7 +94,7 @@ Role of the sender.
 
 > **storeId**: `string`
 
-Defined in: [messages.ts:273](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L273)
+Defined in: [messages.ts:293](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L293)
 
 ***
 
@@ -116,7 +116,7 @@ ISO 8601 timestamp of when the message was created.
 
 > **type**: `"EVENT_REPLAY"`
 
-Defined in: [messages.ts:272](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L272)
+Defined in: [messages.ts:292](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/messages.ts#L292)
 
 Discriminant field identifying the message type.
 

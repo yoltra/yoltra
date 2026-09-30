@@ -10,7 +10,7 @@
 
 > **Stack**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Layout.tsx:95](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L95)
+Defined in: [primitives/Layout/Layout.tsx:95](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L95)
 
 Stacks its children vertically.
 

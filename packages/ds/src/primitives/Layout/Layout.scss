@@ -1,0 +1,40 @@
+@use "../../styles" as *;
+
+.yl-stack {
+  display: flex;
+  flex-direction: column;
+  // Falls back to a scale step rather than 0: a Stack with no gap is almost never what the
+  // caller meant, and silently rendering one is harder to notice than a wrong-looking space.
+  gap: var(--yl-stack-gap, var(--yl-space-3));
+}
+
+.yl-inline {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--yl-inline-gap, var(--yl-space-2));
+
+  &--nowrap {
+    flex-wrap: nowrap;
+  }
+}
+
+.yl-grid {
+  display: grid;
+  gap: var(--yl-grid-gap, var(--yl-space-3));
+}
+
+.yl-divider {
+  border: 0;
+  background: var(--yl-color-border-subtle);
+  margin: var(--yl-space-4) 0;
+  height: var(--yl-border-width-thin);
+  width: 100%;
+
+  &--vertical {
+    height: auto;
+    width: var(--yl-border-width-thin);
+    margin: 0 var(--yl-space-3);
+    align-self: stretch;
+  }
+}

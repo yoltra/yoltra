@@ -2,8 +2,8 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ContextMenu, Menu, MenuItem, MenuSeparator, Popover } from "../src/overlay/Popover";
-import { Tooltip } from "../src/overlay/Tooltip";
+import { ContextMenu, Menu, MenuItem, MenuSeparator, Popover } from "../src/overlay/Popover/Popover";
+import { Tooltip } from "../src/overlay/Tooltip/Tooltip";
 
 /**
  * The anchored tier: what it announces, and how it behaves under the keyboard.

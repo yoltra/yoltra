@@ -47,13 +47,27 @@ tabs, copy button) are client components.
 
 | Export | Purpose |
 | --- | --- |
-| `foundationTokens` | Primitive scale: color palette, type, spacing, radius, elevation, motion. |
-| `lightTheme` / `darkTheme` / `themes` | Semantic role mappings (background/foreground/border/interactive/status). |
-| `themeCss()` | Emits the full stylesheet (`--yl-*` vars + component base styles). |
+| `foundationTokens` | Primitives: palette, type scale, spacing, radius, elevation, motion. Not themed. |
+| `lightTheme` / `darkTheme` / `themes` | Semantic roles (background/foreground/border/interactive/status). |
+| `themeCss()` | Emits the `--yl-*` custom properties for both themes. **Properties only**, no component rules. |
 | `ThemeProvider` / `useTheme` / `applyTheme` | Generic theme controller (reflects onto `data-theme`). |
-| `Button`, `ButtonLink`, `Badge`, `CodeBlock`, `Callout`, `Tabs`, `Table` | Primitive components. |
+| `noFlashScript()` / `THEME_STORAGE_KEY` | The inline script that restores the theme before the first paint, and the key it shares with the provider. |
+| `Heading`, `Text`, `Link`, `InlineCode`, `Kbd` | Typography. |
+| `Button`, `ButtonLink`, `IconButton`, `ButtonGroup` | Actions. |
+| `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`, `RadioGroup`, `Switch`, `Slider`, `Label`, `FormField`, `Fieldset` | Form controls and their labelling. |
+| `Card`, `Container`, `Stack`, `Inline`, `Grid`, `Divider`, `AuthCard` | Layout and composition. |
+| `Badge`, `Chip`, `Callout`, `Stat`, `StatGrid` | Status and figures. |
+| `Spinner`, `Skeleton`, `ProgressBar`, `EmptyState` | Feedback: indeterminate, determinate, and nothing-to-show. |
+| `Table`, `TableScroll`, `THead`, `TBody`, `TR`, `TH`, `TD` | Presentational table parts. |
+| `CodeBlock`, `Tabs`, `VisuallyHidden` | Everything else. |
 | `Portal`, `Dialog`, `Drawer` | Modal overlays, rendered outside the tree. See below. |
 | `Popover`, `Menu`, `ContextMenu`, `Tooltip` | Anchored overlays, positioned against a trigger or a point. |
+| `useFocusTrap`, `useDismiss`, `useReturnFocus`, `useScrollLock` | The behaviours those overlays are built from, for a surface they do not cover. |
+| `useControllableState` | One value that is either the caller's or the component's, for building a control of your own. |
+
+Every component keeps a `README.md` beside its source, with runnable examples and its
+accessibility contract: [`src/primitives/Button/README.md`](src/primitives/Button/README.md) and
+so on for each.
 
 > Consumers that own their state (like the Yoltra website, which drives the
 > theme through a Yoltra store) can skip `ThemeProvider` and set `data-theme`
@@ -209,10 +223,10 @@ Measured the way a consumer ships it — bundled, tree-shaken, minified, gzipped
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ Button, Card, Stack, Text }` | 2.3 KB | 4 KB |
-| everything | 5.3 KB | 8 KB |
+| `{ Button, Card, Stack, Text }` | 0.9 KB | 1.2 KB |
+| everything | 6.4 KB | 8 KB |
 | `{ Dialog }` from `/client` | 1.8 KB | 3 KB |
-| all of `/client` | 4.3 KB | 5.5 KB |
+| all of `/client` | 4.8 KB | 5.5 KB |
 <!-- size-table:end -->
 
 The gap between the barrel rows and the named-import rows is tree-shaking working — `{ Dialog }`
@@ -223,10 +237,112 @@ These numbers are lower than before the stylesheet was split out, and that is no
 improvement — the CSS did not get smaller, it left the JavaScript bundle for files you import
 deliberately. Add whichever component stylesheets you use when comparing.
 
+
+## Tokens
+
+Three tiers, and a component may only read the middle one.
+
+**Primitives** are raw values: `--yl-space-4`, `--yl-radius-md`, `--yl-breakpoint-lg`,
+`--yl-text-h1-size`, `--yl-motion-duration-fast`. They carry no intent, so they survive a theme
+switch by not participating in one.
+
+**Semantic roles** say what a colour is *for*, and are the only colours a stylesheet should
+name: `--yl-color-bg-canvas`, `--yl-color-fg-muted`, `--yl-color-interactive-bg`,
+`--yl-color-status-error-fg`. Each has a light and a dark value, so a component that reads a
+role is themed for free.
+
+**Component locals** stay in the component's own stylesheet, prefixed without `--yl-`, deriving
+from a role. A dialog's width is nobody else's business.
+
+The palette is deliberately **not** emitted. A stylesheet that can reach `primary[500]` has
+bypassed the layer that makes theming work, and every question CSS actually asks is "which blue
+*for what*".
+
+### The tokens nobody reaches for
+
+Colour discipline tends to look after itself. Everything else gets rewritten by hand, so it is
+worth saying plainly what is already here:
+
+| Instead of | Read |
+| --- | --- |
+| `z-index: 10` | `--yl-z-base`, `--yl-z-sticky`, `--yl-z-overlay`, `--yl-z-popover`, `--yl-z-tooltip` |
+| `box-shadow: 0 12px 40px rgb(0 0 0 / 25%)` | `--yl-elevation-xs` … `--yl-elevation-xl` |
+| `transition: all 0.2s ease` | `--yl-motion-duration-{fast,normal,slow}` with `--yl-motion-ease-{standard,emphasized,decelerated}` |
+| `@media (min-width: 768px)` | `--yl-breakpoint-{sm,md,lg,xl}` |
+| `max-width: 720px` | `--yl-container-{md,lg,xl}` |
+| `font-variant-numeric: tabular-nums` | `--yl-font-numeric`, so figures that tick do not shift their own column |
+| `font-weight: 650` | `--yl-font-weight-{regular,medium,semibold,bold,extrabold}` |
+| `border: 1px solid` | `--yl-border-width-{thin,medium,thick}` |
+
+A `z-index` picked by hand is right until the day two of them meet. The rest is the same story in
+a different unit.
+
+### The type scale
+
+Twelve roles, each emitted one axis at a time so a caller can take the size without inheriting
+the weight:
+
+```css
+.title {
+  font-size: var(--yl-text-h2-size);
+  font-weight: var(--yl-text-h2-weight);
+  line-height: var(--yl-text-h2-leading);
+  letter-spacing: var(--yl-text-h2-tracking);
+}
+```
+
+Roles: `hero`, `h1`–`h4`, `body-lg`, `body`, `body-sm`, `label`, `button`, `caption`, `code`.
+Axes: `size`, `weight`, `leading`, `tracking`, `family`, `transform`. An axis a role does not set
+is not emitted, so it cannot override an inherited value with nothing.
+
+### The dark theme is the brand
+
+Its surfaces are not hand-picked. Each one is mixed from the brand pair, carbon `#0F172A` and
+the deepest brand blue `#123F68`, so a dark interface reads as blue-black rather than neutral
+grey, and a brand change moves the whole theme instead of leaving it behind:
+
+```
+panel    = carbon + 16% brand blue
+canvas   = that, 34% toward black
+subtle   = that, 16% toward black
+inset    = that, 52% toward black
+elevated = that, 30% toward neutral[800]
+```
+
+The light theme carries the brand in its accents instead, where it belongs on a white page:
+interactive fills, links, focus rings, and a canvas tinted with `primary[50]`.
+
+### Brand colour and contrast
+
+`--yl-color-brand-primary` is `#1A7FE2`. At 4.06:1 on white that is enough for a logo or display
+type and **not** enough for body copy, so text that should look branded reads
+`--yl-color-fg-brand`, a step darker at 5.38:1. Button fills use `--yl-color-interactive-bg`,
+which is the same step.
+
+`tests/contrast.test.ts` computes every pairing in both themes and fails below 4.5:1 for text or
+3:1 for a focus ring or a status accent. Disabled text is exempt, per WCAG 1.4.3, and asserted
+to *stay* below the threshold so it keeps looking disabled.
+
+### Upgrading from 0.3.x
+
+Thirty-eight properties were renamed. `scripts/token-rename-map.json` is the full map and
+`scripts/codemod-tokens.mjs` applies it. Both ship in the package, so this runs against an
+installed copy with nothing to clone:
+
+```bash
+node node_modules/@yoltra/ds/scripts/codemod-tokens.mjs --write 'src/**/*.{css,scss,ts,tsx}'
+```
+
+One rename needs a human: `--yl-color-brand` maps mechanically to `--yl-color-brand-primary`,
+which is right for decoration and wrong for text. The codemod prints the sites it touched and
+what to use instead.
+
 ## Authoring
 
-Component styles are SASS, in `src/primitives/<Component>.scss` and `src/overlay/<Component>.scss`,
-compiled one file per component by `scripts/build-styles.mjs`.
+Component styles are SASS, in `src/primitives/<Component>/<Component>.scss` and
+`src/overlay/<Component>/<Component>.scss`, compiled one file per component by
+`scripts/build-styles.mjs`. The compiled name comes from the basename, so `Button/Button.scss`
+still publishes as `button.css`.
 
 SASS never owns a *value*. Colours, spacing and radii are read as `var(--yl-*)`, because
 theming is a runtime `data-theme` switch on the document root and a SASS variable compiles

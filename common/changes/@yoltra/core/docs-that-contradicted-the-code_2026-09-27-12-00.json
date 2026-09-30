@@ -1,0 +1,20 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Corrects four pieces of documentation that contradicted the code. `__replayEvents` still promised replay runs \"reducers and event subscribers ONLY\" in both the interface and the implementation, which 0.8.0 removed in the same release that corrected the surrounding docs. `store.call()`'s correlation was described as matching anything \"causally descended\" when it tests the immediate parent only, and `CallOptions.correlationId` claimed to correlate \"instead of on causality\" eleven lines above a remark saying it also matches the parent link, which is what the code does: the option widens the match and cannot replace it. A consuming runtime read the first of these and re-derived a design request that had already been retired.",
+      "type": "none"
+    },
+    {
+      "packageName": "@yoltra/core",
+      "comment": "States the slice boundary, which was a framework guarantee that no prose anywhere claimed. A reducer receives exactly one slice and returns exactly one slice: it is handed no `getState`, no store reference and no sibling, and the commit writes back only under the name it was mounted as, so it cannot reach another slice even by returning a whole-store-shaped object. The consequence is the part worth having in writing: inside one slice there is no second writer, so there is no authorisation question to solve. Two consumers built mechanisms around a problem core already answers.",
+      "type": "none"
+    },
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Makes `store.call()` findable. It arrived in 0.6.0 and has a dedicated guide, but the package README's own call section never linked it, `correlationId` appeared in no hand-written document, and the 0.8.0 upgrade guide listed `store.call` under \"nothing to do\" without saying where it is described — so a reader upgrading to 0.8.0 could conclude the primitive did not exist. The guide gains a section on replying when the reply cannot be a direct child, both READMEs name the exported surface and link onward, and the upgrade guide says plainly that the feature is unchanged rather than absent.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

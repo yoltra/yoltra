@@ -10,7 +10,7 @@
 
 > **Callout**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Callout.tsx:35](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Callout.tsx#L35)
+Defined in: [primitives/Callout/Callout.tsx:35](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Callout/Callout.tsx#L35)
 
 An aside that draws attention: a note, a warning, a consequence worth stating.
 

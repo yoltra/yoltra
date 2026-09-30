@@ -10,7 +10,7 @@
 
 > **MenuItem**(`__namedParameters`): `Element`
 
-Defined in: [overlay/Popover.tsx:245](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover.tsx#L245)
+Defined in: [overlay/Popover/Popover.tsx:245](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/overlay/Popover/Popover.tsx#L245)
 
 One command in a [Menu](Menu.md) or [ContextMenu](ContextMenu.md).
 

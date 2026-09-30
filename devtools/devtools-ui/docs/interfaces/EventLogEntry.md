@@ -80,6 +80,21 @@ JSON Patch operations produced by the event.
 
 ***
 
+### reason?
+
+> `optional` **reason**: `"vetoed"` \| `"deduped"` \| `"cascade"`
+
+Defined in: [devtools-ui/src/types.ts:129](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L129)
+
+Why the event did not commit, when it did not.
+
+#### Remarks
+
+`committed: false` says an event vanished; this says what happened to it. Absent when the
+event committed, and absent from an agent older than the field.
+
+***
+
 ### snapshotVersion
 
 > **snapshotVersion**: `number`
@@ -104,6 +119,16 @@ Identifier of the store that emitted the event.
 
 > **timestamp**: `string`
 
-Defined in: [devtools-ui/src/types.ts:123](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L123)
+Defined in: [devtools-ui/src/types.ts:133](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L133)
 
 ISO-8601 timestamp of the event.
+
+***
+
+### vetoedBy?
+
+> `optional` **vetoedBy**: `string`
+
+Defined in: [devtools-ui/src/types.ts:131](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L131)
+
+Which middleware vetoed, when one did and it had a name.

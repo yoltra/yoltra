@@ -82,6 +82,26 @@ export interface StoreEvent extends BaseMessage {
   snapshotVersion: number;
   /** `true` if the event passed middleware; `false` if bounced. */
   committed: boolean;
+  /**
+   * Why the event did not commit. Absent when it did.
+   *
+   * @remarks
+   * `committed: false` on its own tells a panel that an event vanished and nothing about the
+   * cause, so a guard refusing an action looked identical to a deduplication. Carried from
+   * `InstrumentedEvent.reason`.
+   *
+   * In practice the store can only report `"vetoed"` here today: a deduplicated event never
+   * reaches instrumentation, and neither does a cascade refusal. The wider type comes from core.
+   */
+  reason?: "vetoed" | "deduped" | "cascade";
+  /**
+   * Which middleware vetoed, when one did and it had a name.
+   *
+   * @remarks
+   * Absent for an anonymous middleware, and absent whenever the event committed. Note that a
+   * bundler may rename a function, so this is a strong hint rather than an identifier.
+   */
+  vetoedBy?: string;
 }
 
 /**

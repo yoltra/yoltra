@@ -176,3 +176,79 @@ describe("Store - instrumentation (B1)", () => {
     errorSpy.mockRestore();
   });
 });
+
+describe("an uncommitted event says why, and who", () => {
+  /**
+   * 0.8.0 gave attribution to the emitter and not to the observer.
+   *
+   * `EmitResult` gained `reason` and `vetoedBy`; the instrumentation path dropped them, so a
+   * devtools panel and a JSONL trace could report `committed: false` and could not distinguish a
+   * guard refusing an action from a deduplication, from a cascade breach, from no reducer
+   * matching. Instrumentation is the only seam that sees uncommitted events without the observer
+   * joining the pipeline, so there is nowhere else to gather it.
+   */
+  function instrumented(mw: MiddlewareFunction<any, EM>) {
+    const store = createStore<{ counter: CounterState }, EM>({
+      name: "InstrAttribution",
+      reducer: { counter: counterSpec },
+      middleware: [mw],
+    });
+    const seen: InstrumentedEvent[] = [];
+    store.instrument((info) => seen.push(info));
+    return { store, seen };
+  }
+
+  it("names the middleware that vetoed", async () => {
+    // Passed inline rather than through a same-named `const`: a named function expression
+    // assigned to a binding of its own name gets renamed by the bundler (`blockTheBlocked2`),
+    // which is a real caveat for anyone reading `vetoedBy` out of a minified build.
+    const { store, seen } = instrumented(function blockTheBlocked(_s, event) {
+      return event.type !== "blocked";
+    });
+
+    await store.emit("ui", "blocked", null);
+
+    expect(seen).toHaveLength(1);
+    expect(seen[0]!.committed).toBe(false);
+    expect(seen[0]!.reason).toBe("vetoed");
+    expect(seen[0]!.vetoedBy).toBe("blockTheBlocked");
+  });
+
+  it("reports a veto with no name as vetoed by nobody", async () => {
+    // An anonymous middleware has a reason and no author. Reporting `vetoedBy: ""` would be worse
+    // than reporting nothing, so the field is absent rather than empty.
+    const { store, seen } = instrumented((_s, event) => event.type !== "blocked");
+
+    await store.emit("ui", "blocked", null);
+
+    expect(seen[0]!.reason).toBe("vetoed");
+    expect(seen[0]!.vetoedBy).toBeUndefined();
+  });
+
+  it("attributes a middleware that throws, because a throw is treated as a veto", async () => {
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const { store, seen } = instrumented(function detonate() {
+        throw new Error("nope");
+      });
+
+      await store.emit("ui", "increment", 1);
+
+      expect(seen[0]!.committed).toBe(false);
+      expect(seen[0]!.reason).toBe("vetoed");
+      expect(seen[0]!.vetoedBy).toBe("detonate");
+    } finally {
+      quiet.mockRestore();
+    }
+  });
+
+  it("carries neither field when the event commits", async () => {
+    const { store, seen } = instrumented((_s, event) => event.type !== "blocked");
+
+    await store.emit("ui", "increment", 1);
+
+    expect(seen[0]!.committed).toBe(true);
+    expect(seen[0]).not.toHaveProperty("reason");
+    expect(seen[0]).not.toHaveProperty("vetoedBy");
+  });
+});

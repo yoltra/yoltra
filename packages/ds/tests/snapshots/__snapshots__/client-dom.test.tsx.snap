@@ -1,0 +1,1043 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CodeBlock > plain code 1`] = `
+<div
+  class="yl-code"
+>
+  <div
+    class="yl-code__head"
+  >
+    <span>
+      code
+    </span>
+    <button
+      aria-label="Copy code"
+      class="yl-code__copy"
+      type="button"
+    >
+      Copy
+    </button>
+  </div>
+  <pre>
+    <code>
+      npm i @yoltra/ds
+    </code>
+  </pre>
+</div>
+`;
+
+exports[`CodeBlock > with a language 1`] = `
+<div
+  class="yl-code"
+>
+  <div
+    class="yl-code__head"
+  >
+    <span>
+      bash
+    </span>
+    <button
+      aria-label="Copy code"
+      class="yl-code__copy"
+      type="button"
+    >
+      Copy
+    </button>
+  </div>
+  <pre>
+    <code>
+      npm i @yoltra/ds
+    </code>
+  </pre>
+</div>
+`;
+
+exports[`CodeBlock > with a title 1`] = `
+<div
+  class="yl-code"
+>
+  <div
+    class="yl-code__head"
+  >
+    <span>
+      Install
+    </span>
+    <button
+      aria-label="Copy code"
+      class="yl-code__copy"
+      type="button"
+    >
+      Copy
+    </button>
+  </div>
+  <pre>
+    <code>
+      npm i @yoltra/ds
+    </code>
+  </pre>
+</div>
+`;
+
+exports[`CodeBlock > with pre-highlighted markup 1`] = `
+<div
+  class="yl-code"
+>
+  <div
+    class="yl-code__head"
+  >
+    <span>
+      ts
+    </span>
+    <button
+      aria-label="Copy code"
+      class="yl-code__copy"
+      type="button"
+    >
+      Copy
+    </button>
+  </div>
+  <span
+    class="tok"
+  >
+    const
+  </span>
+</div>
+`;
+
+exports[`ContextMenu > open at a point 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    aria-label="Actions"
+    class="yl-menu"
+    data-placement="bottom-start"
+    id="«rh»"
+    role="menu"
+    style="left: 10px; top: 20px;"
+    tabindex="-1"
+  >
+    <button
+      class="yl-menu__item"
+      role="menuitem"
+      tabindex="-1"
+      type="button"
+    >
+      Rename
+    </button>
+  </div>
+</div>
+`;
+
+exports[`Dialog > size full 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«id0»-title"
+      aria-modal="true"
+      class="yl-dialog yl-dialog--full"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«id0»-title"
+          >
+            Confirm
+          </h2>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Dialog > size lg 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«id0»-title"
+      aria-modal="true"
+      class="yl-dialog yl-dialog--lg"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«id0»-title"
+          >
+            Confirm
+          </h2>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Dialog > size md 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«id0»-title"
+      aria-modal="true"
+      class="yl-dialog yl-dialog--md"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«id0»-title"
+          >
+            Confirm
+          </h2>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Dialog > size sm 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«id0»-title"
+      aria-modal="true"
+      class="yl-dialog yl-dialog--sm"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«id0»-title"
+          >
+            Confirm
+          </h2>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Dialog > with a custom close label 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«id0»-title"
+      aria-modal="true"
+      class="yl-dialog yl-dialog--md"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«id0»-title"
+          >
+            Confirm
+          </h2>
+        </div>
+        <button
+          aria-label="Dismiss"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Dialog > with a description 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-describedby="«id0»-description"
+      aria-labelledby="«id0»-title"
+      aria-modal="true"
+      class="yl-dialog yl-dialog--md"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«id0»-title"
+          >
+            Confirm
+          </h2>
+          <p
+            class="yl-modal__description"
+            id="«id0»-description"
+          >
+            This cannot be undone.
+          </p>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Dialog > with a footer 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«id0»-title"
+      aria-modal="true"
+      class="yl-dialog yl-dialog--md"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«id0»-title"
+          >
+            Confirm
+          </h2>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+      <footer
+        class="yl-modal__foot"
+      >
+        <button
+          class="yl-btn yl-btn--primary"
+        >
+          Confirm
+        </button>
+      </footer>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Dialog > without a close button 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«id0»-title"
+      aria-modal="true"
+      class="yl-dialog yl-dialog--md"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«id0»-title"
+          >
+            Confirm
+          </h2>
+        </div>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Drawer > side bottom 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«rd»-title"
+      aria-modal="true"
+      class="yl-drawer yl-drawer--bottom"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«rd»-title"
+          >
+            Filters
+          </h2>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Drawer > side left 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«ra»-title"
+      aria-modal="true"
+      class="yl-drawer yl-drawer--left"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«ra»-title"
+          >
+            Filters
+          </h2>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Drawer > side right 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«rb»-title"
+      aria-modal="true"
+      class="yl-drawer yl-drawer--right"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«rb»-title"
+          >
+            Filters
+          </h2>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Drawer > side top 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«rc»-title"
+      aria-modal="true"
+      class="yl-drawer yl-drawer--top"
+      role="dialog"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«rc»-title"
+          >
+            Filters
+          </h2>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Drawer > with an explicit size 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-modal"
+  >
+    <div
+      aria-hidden="true"
+      class="yl-modal__scrim"
+    />
+    <div
+      aria-labelledby="«re»-title"
+      aria-modal="true"
+      class="yl-drawer yl-drawer--right"
+      role="dialog"
+      style="--yl-drawer-size: 32rem;"
+      tabindex="-1"
+    >
+      <header
+        class="yl-modal__head"
+      >
+        <div
+          class="yl-modal__heading"
+        >
+          <h2
+            class="yl-modal__title"
+            id="«re»-title"
+          >
+            Filters
+          </h2>
+        </div>
+        <button
+          aria-label="Close"
+          class="yl-modal__close"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ×
+          </span>
+        </button>
+      </header>
+      <div
+        class="yl-modal__body"
+      >
+        <p>
+          Body
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Menu > open with items and a separator 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    aria-label="Actions"
+    class="yl-menu"
+    data-placement="bottom-start"
+    id="«rg»"
+    role="menu"
+    style="left: 8px; top: 8px;"
+    tabindex="-1"
+  >
+    <button
+      class="yl-menu__item"
+      role="menuitem"
+      tabindex="-1"
+      type="button"
+    >
+      Rename
+    </button>
+    <div
+      class="yl-menu__separator"
+      role="separator"
+    />
+    <button
+      aria-disabled="true"
+      class="yl-menu__item"
+      role="menuitem"
+      tabindex="-1"
+      type="button"
+    >
+      Delete
+    </button>
+  </div>
+</div>
+`;
+
+exports[`Popover > open against its trigger 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    aria-label="Details"
+    class="yl-popover"
+    data-placement="bottom-start"
+    id="«rf»"
+    role="dialog"
+    style="left: 8px; top: 8px;"
+    tabindex="-1"
+  >
+    <p>
+      Body
+    </p>
+  </div>
+</div>
+`;
+
+exports[`Portal > renders its children into a marked root 1`] = `
+<div
+  data-yl-portal=""
+>
+  <p>
+    Body
+  </p>
+</div>
+`;
+
+exports[`Tabs > defaults to the first tab 1`] = `
+<div
+  class="yl-tabs"
+>
+  <div
+    class="yl-tabs__list"
+    role="tablist"
+  >
+    <button
+      aria-controls="«id0»-panel-one"
+      aria-selected="true"
+      class="yl-tabs__tab"
+      data-active="true"
+      id="«id0»-tab-one"
+      role="tab"
+      tabindex="0"
+      type="button"
+    >
+      One
+    </button>
+    <button
+      aria-controls="«id0»-panel-two"
+      aria-selected="false"
+      class="yl-tabs__tab"
+      data-active="false"
+      id="«id0»-tab-two"
+      role="tab"
+      tabindex="-1"
+      type="button"
+    >
+      Two
+    </button>
+  </div>
+  <div
+    aria-labelledby="«id0»-tab-one"
+    class="yl-tabs__panel"
+    id="«id0»-panel-one"
+    role="tabpanel"
+    tabindex="0"
+  >
+    <p>
+      First
+    </p>
+  </div>
+</div>
+`;
+
+exports[`Tabs > honours defaultId 1`] = `
+<div
+  class="yl-tabs"
+>
+  <div
+    class="yl-tabs__list"
+    role="tablist"
+  >
+    <button
+      aria-controls="«id0»-panel-one"
+      aria-selected="false"
+      class="yl-tabs__tab"
+      data-active="false"
+      id="«id0»-tab-one"
+      role="tab"
+      tabindex="-1"
+      type="button"
+    >
+      One
+    </button>
+    <button
+      aria-controls="«id0»-panel-two"
+      aria-selected="true"
+      class="yl-tabs__tab"
+      data-active="true"
+      id="«id0»-tab-two"
+      role="tab"
+      tabindex="0"
+      type="button"
+    >
+      Two
+    </button>
+  </div>
+  <div
+    aria-labelledby="«id0»-tab-two"
+    class="yl-tabs__panel"
+    id="«id0»-panel-two"
+    role="tabpanel"
+    tabindex="0"
+  >
+    <p>
+      Second
+    </p>
+  </div>
+</div>
+`;
+
+exports[`ThemeProvider > renders its children untouched 1`] = `
+<p>
+  Body
+</p>
+`;
+
+exports[`Tooltip > records its surface once the trigger has focus 1`] = `
+<div
+  data-yl-portal=""
+>
+  <div
+    class="yl-tooltip"
+    data-placement="bottom"
+    id="«ri»"
+    role="tooltip"
+    style="left: 8px; top: 8px;"
+  >
+    Deploy the solar array
+  </div>
+</div>
+`;
+
+exports[`Tooltip > records the trigger it wires up 1`] = `
+<button
+  tabindex="0"
+>
+  Deploy
+</button>
+`;

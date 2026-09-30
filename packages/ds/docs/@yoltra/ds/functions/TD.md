@@ -10,7 +10,7 @@
 
 > **TD**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Table.tsx:63](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table.tsx#L63)
+Defined in: [primitives/Table/Table.tsx:139](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Table/Table.tsx#L139)
 
 A table cell. Accepts `colSpan`, `rowSpan` and the other native attributes. See [Table](Table.md).
 
@@ -18,7 +18,7 @@ A table cell. Accepts `colSpan`, `rowSpan` and the other native attributes. See 
 
 ### \_\_namedParameters
 
-`TdHTMLAttributes`\<`HTMLTableCellElement`\> & `object`
+`TdHTMLAttributes`\<`HTMLTableCellElement`\> & [`NumericCellProps`](../interfaces/NumericCellProps.md) & `object`
 
 ## Returns
 

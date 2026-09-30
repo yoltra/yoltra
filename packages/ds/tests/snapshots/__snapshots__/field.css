@@ -1,0 +1,61 @@
+.yl-input,
+.yl-select,
+.yl-textarea {
+  --textarea-min-height: 8rem;
+  font-family: var(--yl-font-sans);
+  font-size: var(--yl-text-body-sm-size);
+  line-height: 1.4;
+  color: var(--yl-color-fg-default);
+  background: var(--yl-color-bg-canvas);
+  border: var(--yl-border-width-thin) solid var(--yl-color-border-subtle);
+  border-radius: var(--yl-radius-md);
+  padding: var(--yl-space-2) var(--yl-space-3);
+  transition: border-color var(--yl-motion-duration-fast) var(--yl-motion-ease-standard), box-shadow var(--yl-motion-duration-fast) var(--yl-motion-ease-standard);
+}
+.yl-input:hover,
+.yl-select:hover,
+.yl-textarea:hover {
+  border-color: var(--yl-color-border-strong);
+}
+.yl-input:focus-visible,
+.yl-select:focus-visible,
+.yl-textarea:focus-visible {
+  outline: none;
+  border-color: var(--yl-color-border-focus);
+  box-shadow: 0 0 0 var(--yl-border-width-thick) color-mix(in srgb, var(--yl-color-border-focus) 24%, transparent);
+}
+.yl-input:disabled,
+.yl-select:disabled,
+.yl-textarea:disabled {
+  color: var(--yl-color-fg-disabled);
+  cursor: not-allowed;
+  background: var(--yl-color-bg-subtle);
+}
+
+.yl-input::placeholder,
+.yl-textarea::placeholder {
+  color: var(--yl-color-fg-muted);
+  opacity: 1;
+}
+
+.yl-select {
+  cursor: pointer;
+}
+
+.yl-textarea {
+  resize: vertical;
+  min-height: var(--textarea-min-height);
+}
+
+.yl-input--sm,
+.yl-select--sm {
+  padding: var(--yl-space-1) var(--yl-space-2);
+  font-size: var(--yl-text-label-size);
+}
+
+.yl-input--block,
+.yl-select--block,
+.yl-textarea--block {
+  display: block;
+  width: 100%;
+}

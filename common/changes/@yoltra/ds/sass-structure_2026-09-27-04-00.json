@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Restructure the SASS. Every component stylesheet now imports one shared entry partial rather than six of fifteen importing a mixins file directly, and the fragments that were copied between them become mixins: the reduced-motion media query, two disabled treatments, the house transition and the elevated-surface treatment the modal and anchored tiers each had a private copy of. `form.css` becomes self-sufficient: `.yl-field` moves to the file whose component renders it, so `FormField` no longer silently needs `field.css` as well. A disabled checkbox now fades like the switch and slider it sits beside.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

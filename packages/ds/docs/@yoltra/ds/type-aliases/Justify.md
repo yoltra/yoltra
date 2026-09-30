@@ -10,6 +10,6 @@
 
 > **Justify** = `"start"` \| `"center"` \| `"end"` \| `"between"` \| `"around"`
 
-Defined in: [primitives/Layout.tsx:44](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L44)
+Defined in: [primitives/Layout/Layout.tsx:44](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L44)
 
 Main-axis distribution.

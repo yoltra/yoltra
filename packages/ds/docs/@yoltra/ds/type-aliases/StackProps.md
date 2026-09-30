@@ -10,4 +10,4 @@
 
 > **StackProps** = [`FlowProps`](../interfaces/FlowProps.md)
 
-Defined in: [primitives/Layout.tsx:74](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout.tsx#L74)
+Defined in: [primitives/Layout/Layout.tsx:74](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Layout/Layout.tsx#L74)

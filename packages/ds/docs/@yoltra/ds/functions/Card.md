@@ -10,7 +10,7 @@
 
 > **Card**(`__namedParameters`): `Element`
 
-Defined in: [primitives/Card.tsx:42](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card.tsx#L42)
+Defined in: [primitives/Card/Card.tsx:56](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/primitives/Card/Card.tsx#L56)
 
 A surface that groups related content.
 

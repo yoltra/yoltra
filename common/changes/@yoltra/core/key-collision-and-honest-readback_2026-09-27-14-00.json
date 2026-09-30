@@ -1,0 +1,15 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Warns in development when two different `(channel, type)` pairs join to one internal key. The store keys dispatch, deduplication and introspection on `\"channel::type\"`, and nothing checked the join was unambiguous: `(\"a::b\", \"c\")` and `(\"a\", \"b::c\")` both become `\"a::b::c\"`, so a subscriber or effect registered for one was invoked for the other and a dedup window let one drop the other. Demonstrated against the published package, not theorised. The warning is on the collision and names both pairs, because either alone looks blameless — and deliberately not on `::` itself, which is how a federated peer's channel is namespaced, so warning on the separator would fire for correct code.",
+      "type": "minor"
+    },
+    {
+      "packageName": "@yoltra/core",
+      "comment": "Introspection no longer mangles a channel that contains `::`. The four paths that split the internal key back apart took the first separator, so an effect registered on `(\"bb::plan\", \"go\")` was reported as channel `bb`, type `plan`, with the remainder discarded — a registration against a channel that does not exist, and the real one missing. One of them built a `When` from the mis-split behind a cast that claimed a two-element tuple for a three-element array. They now split on the last separator, through one shared helper, which is correct because no path the store controls puts `::` in a type.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}
