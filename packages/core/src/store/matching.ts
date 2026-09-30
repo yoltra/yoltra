@@ -33,7 +33,7 @@ import type {
  * - `{ channel: 'x' }` matches if event's channel equals 'x'.
  * - `{ channels: ['x', 'y'] }` matches if event's channel is in the array.
  * - `{ channelPattern: '*::plan' }` matches if event's channel matches the pattern, `*` standing
- *   for one or more characters.
+ *   for zero or more characters.
  *
  * @internal
  */
@@ -79,7 +79,7 @@ export function matchesWhen<EM extends EventMapBase>(
 const patternCache = new Map<string, RegExp>();
 
 /**
- * Whether `channel` matches `pattern`, where `*` stands for one or more characters.
+ * Whether `channel` matches `pattern`, where `*` stands for zero or more characters.
  *
  * @remarks
  * `*` is deliberately the only metacharacter and stands for **zero or more** characters; everything

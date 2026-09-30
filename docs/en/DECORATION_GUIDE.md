@@ -27,6 +27,13 @@ Two casts, and a third at every place the application later touched the slice, b
 `registerReducer` took a plain `string` and returned nothing but a disposer. Nothing
 downstream knew `transfers` existed, what shape it had, or which channels it answered to.
 
+0.8.0 removed the middleware cast and most of the rest. `registerReducer` kept its cast through
+0.8.x: it was typed against the store's own event map, so a spec naming a channel the application
+had never heard of could not typecheck. As of 0.9.0 it is generic over its spec, like
+`registerSlice`, and returns the same `{ store, dispose }`. The exported `Store` class now carries
+the same decoration signatures as `StoreInstance`, so code typed against the class decorates
+without a cast too.
+
 And then the developer saved a file:
 
 ```typescript
@@ -307,7 +314,12 @@ Three things to know:
 for a guard whose channels arrive namespaced — a federated peer's `bb::plan` beside a local `plan` —
 because the aliases are invented by whoever federates, so no list can be written ahead of time.
 
-`channelPattern` is for that, with `*` standing for zero or more characters:
+`channelPattern` is for that, with `*` standing for zero or more characters. `*` is the only
+metacharacter; everything else in the pattern is literal, so `"*::plan"` covers only the namespaced
+forms, and no pattern can turn into an expression that backtracks. It stays a string rather than a
+predicate because a matcher is reported to observers and travels to a devtools panel, where a
+function would be opaque. It is also untyped by construction: it exists to match channels the event
+map does not name.
 
 ```typescript
 export const rateGuard: MiddlewareSpec<S, EM> = {
@@ -342,7 +354,7 @@ const off = store.onRegistrationChange(
   (changes) => {
     for (const c of changes) {
       if (c.origin === "internal") continue;   // the store's own machinery
-      console.log(c.op, c.kind, c.name, c.owner);
+      console.log(c.op, c.kind, c.name, c.owner, c.when);
     }
   },
   { emitCurrent: true },
@@ -360,6 +372,10 @@ const off = store.onRegistrationChange(
   unmount as destruction will tear down a subscription you are about to need.
 - **Registering from inside an observer is fine.** It is queued, not delivered re-entrantly,
   so nobody ever sees a half-built topology.
+- **`when` is the normalized matcher**, what will actually match rather than what the spec
+  said. A keyed slice reports `{ keys }`, and middleware registered as a plain function reports
+  `{ any: true }`, as an untargeted effect always has. Both reported nothing useful before 0.9.0.
+  `__devtoolsIntrospect` reports the same matchers.
 - Replay produces no changes. It alters state, never topology.
 
 ---

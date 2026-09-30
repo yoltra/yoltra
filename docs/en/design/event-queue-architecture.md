@@ -4,8 +4,8 @@
 
 > 👉 English &nbsp;|&nbsp; [🇲🇽 Español](../../es/design/event-queue-architecture.md)
 
-**Applies to:** `@yoltra/core` 0.6.0
-**Last Updated:** August 2026
+**Applies to:** `@yoltra/core` 0.9.0
+**Last Updated:** September 2026
 **Status:** Stable
 
 ## Overview
@@ -166,12 +166,12 @@ private applyEventSync(event): EmitResult {
     try {
       ok = mw(this.state, event, this.emit);   // ← boolean, not a Promise
     } catch (err) {
-      console.error("Middleware error:", err);
-      ok = false;
+      console.error("Middleware threw; the event was vetoed:", err);
+      ok = false;                                // a guard that crashed has not approved
     }
-    if (!ok) {
+    if (ok === false) {                          // only an explicit `false` vetoes
       this.notifyEventSubscribers(event, "uncommitted"); // vetoed → uncommitted subs
-      return NOT_COMMITTED;                              // do not commit
+      return { committed: false, written: false, reason: "vetoed", vetoedBy: mw.name };
     }
   }
 
@@ -278,13 +278,19 @@ useEffect(() => {
 Identity-based dedup is the correct tool for Strict Mode's development-only double-invocation of
 effects: the same logical emit reuses the key, while two genuine user actions do not.
 
+Dispatch, deduplication and introspection all key on `"channel::type"`, so two different pairs can
+join to one key: `("a::b", "c")` and `("a", "b::c")` both become `"a::b::c"`, and a dedup window
+would then drop one for the other. Development builds warn on such a **collision**, naming both
+pairs. A `::` on its own is not warned about, because it is how a federated peer's channel is
+namespaced.
+
 ## The `emit()` promise contract
 
 `emit()` returns a `Promise<EmitResult>` that resolves **when that specific event's effects
 complete**:
 
 ```typescript
-const { committed, written, rejected } = await emit("api", "save", payload);
+const { committed, written, rejected, reason, vetoedBy } = await emit("api", "save", payload);
 // ← resolves after save's effects have finished (state was already updated synchronously)
 ```
 
@@ -293,6 +299,8 @@ const { committed, written, rejected } = await emit("api", "save", payload);
 | `committed`| Middleware allowed it - it reached the reducers                              |
 | `written`  | State actually changed. `false` for an event no reducer answered, and for a store with no reducers at all |
 | `rejected` | The `Rejection` a reducer returned, when one refused                         |
+| `reason`   | Why it did not commit: `"vetoed"`, `"deduped"` or `"cascade"`. Absent when it did |
+| `vetoedBy` | The vetoing middleware's name (`meta.name`, or a plain function's `name`), when it has one |
 
 The two are distinct on purpose. `committed` is `true` for every event middleware allows, which is
 what a notification or analytics bus depends on; `written` is the stricter fact a caller needs when
@@ -340,8 +348,10 @@ Subscriber errors are caught and logged so one throwing subscriber never stops t
 ### Middleware veto
 
 A middleware returning `false` vetoes the event: reducers and effects never see it, uncommitted
-subscribers fire, and the event does not commit. Middleware is synchronous - do authorization and
-validation here, not I/O.
+subscribers fire, and the event does not commit. Only an explicit `false` vetoes; a middleware that
+returns nothing allows the event. A middleware that throws vetoes too, with a console error saying
+so. The caller learns `reason: "vetoed"` and, when the middleware has a name, `vetoedBy`.
+Middleware is synchronous - do authorization and validation here, not I/O.
 
 ```typescript
 const auth: MiddlewareFunction = (state, event) => {
@@ -379,6 +389,11 @@ which is indistinguishable from "this event did not concern me", and throwing, w
 A reducer that throws is isolated and its siblings still commit; a reducer that refuses has made a
 decision the event as a whole respects. Refusals also reach `onRejected` for logging and
 `InstrumentedEvent.rejected` for DevTools.
+
+Instrumentation carries a veto's attribution too: since 0.9.0 an `InstrumentedEvent` that did not
+commit has `reason` and, where known, `vetoedBy`, the same values `EmitResult` returns. In practice
+`reason` reads `"vetoed"` there: a deduplicated event is dropped at `emit` before it is queued, and a
+cascade refusal returns before the drain reaches instrumentation, so neither is ever instrumented.
 
 ### Runaway re-emission
 
@@ -474,7 +489,7 @@ The synchronous drain and the async effect task, condensed:
 public async emit(channel, type, payload, opts?): Promise<EmitResult> {
   // 1. Opt-in dedup (content window or explicit dedupKey); off by default.
   if (this.dedupConfig.windowMs > 0 || opts?.dedupKey !== undefined) {
-    if (this.shouldDedupe(/* fingerprint or #dedupKey */)) return NOT_COMMITTED;
+    if (this.shouldDedupe(/* fingerprint or #dedupKey */)) return DEDUPED;   // reason: "deduped"
   }
 
   // 2. Causal position. A root event has neither field, so it stays byte-identical to one
@@ -483,7 +498,7 @@ public async emit(channel, type, payload, opts?): Promise<EmitResult> {
   const depth = cause ? cause.depth + 1 : 0;
   if (cause && depth > this.maxReduceDepth) {
     this.reportCascade("maxReduceDepth", /* … */);  // veto this emit; do not throw
-    return NOT_COMMITTED;
+    return CASCADE_REFUSED;                         // reason: "cascade"
   }
 
   // 3. id + per-event completion deferred.
@@ -551,6 +566,8 @@ what stops a cascade from becoming a hung process.
 
 | `@yoltra/core` | Date | Changes                                                                                                                                                                                                                 |
 | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.9.0   | 2026-09 | `InstrumentedEvent` carries `reason` and `vetoedBy`; development warning when two `(channel, type)` pairs join to one internal key; `When` gains `{ channelPattern }`; introspection keeps channels that contain `::` intact |
+| 0.8.0   | 2026-09 | `EmitResult` gains `reason` (`"vetoed"`, `"deduped"`, `"cascade"`) and `vetoedBy`; middleware vetoes only on an explicit `false`; replay no longer notifies `onEvent` subscribers; content dedup fingerprints through the codec |
 | 0.6.0   | 2026-08 | Cascades bounded by causal depth (`maxReduceDepth`, on by default; `parentId`/`depth` on every caused event); commits staged and applied atomically across slices; `Rejected(reason)` from a reducer; `emit()` resolves to an `EmitResult`; new `written` event phase |
 | 0.2.0   | 2026-07 | Two-phase pipeline: synchronous reduce (sync middleware, reducers commit before `emit()` returns) + independent async effects; honest per-event completion promise; opt-in deduplication (`dedupWindowMs` / `dedupKey`) |
 | pre-rename | 2026-01 | Event subscriptions (committed/uncommitted/all phases)                                                                                                                                                                  |

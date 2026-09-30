@@ -28,6 +28,13 @@ Dos casts, y un tercero en cada lugar donde la aplicación tocara después la sl
 `registerReducer` recibía un `string` y no devolvía más que un disposer. Nada aguas abajo
 sabía que `transfers` existía, qué forma tenía, ni a qué canales respondía.
 
+0.8.0 eliminó el cast del middleware y casi todo lo demás. `registerReducer` conservó su cast
+durante 0.8.x: estaba tipado contra el mapa de eventos del propio store, así que un spec que
+nombraba un canal que la aplicación nunca había visto no podía pasar el chequeo de tipos. Desde
+0.9.0 es genérico sobre su spec, como `registerSlice`, y devuelve el mismo `{ store, dispose }`. La
+clase `Store` exportada ahora tiene las mismas firmas de decoración que `StoreInstance`, así que el
+código tipado contra la clase también decora sin cast.
+
 Y entonces la persona guardaba un archivo:
 
 ```typescript
@@ -313,7 +320,12 @@ problema para un guard cuyos canales llegan con namespace — el `bb::plan` de u
 un `plan` local — porque los alias los inventa quien federa, así que ninguna lista se puede escribir
 por adelantado.
 
-`channelPattern` existe para eso, donde `*` representa cero o más caracteres:
+`channelPattern` existe para eso, donde `*` representa cero o más caracteres. `*` es el único
+metacarácter; todo lo demás en el patrón es literal, así que `"*::plan"` cubre solo las formas con
+namespace, y ningún patrón puede convertirse en una expresión que haga backtracking. Sigue siendo una
+cadena y no un predicado porque un matcher se reporta a los observadores y viaja hasta un panel de
+devtools, donde una función sería opaca. Además no tiene tipos por construcción: existe para
+coincidir con canales que el mapa de eventos no nombra.
 
 ```typescript
 export const rateGuard: MiddlewareSpec<S, EM> = {
@@ -349,7 +361,7 @@ const off = store.onRegistrationChange(
   (changes) => {
     for (const c of changes) {
       if (c.origin === "internal") continue;   // maquinaria propia del store
-      console.log(c.op, c.kind, c.name, c.owner);
+      console.log(c.op, c.kind, c.name, c.owner, c.when);
     }
   },
   { emitCurrent: true },
@@ -368,6 +380,10 @@ const off = store.onRegistrationChange(
   necesitar.
 - **Registrar desde dentro de un observer está bien.** Se encola, no se entrega de forma
   reentrante, así que nadie ve nunca una topología a medio construir.
+- **`when` es el matcher normalizado**, lo que de verdad va a coincidir y no lo que decía el
+  spec. Una slice con claves reporta `{ keys }`, y un middleware registrado como función simple
+  reporta `{ any: true }`, como siempre lo hizo un efecto sin filtro. Antes de 0.9.0 ninguno de
+  los dos reportaba nada útil. `__devtoolsIntrospect` reporta los mismos matchers.
 - El replay no produce cambios. Altera el estado, nunca la topología.
 
 ---

@@ -4,8 +4,8 @@
 
 > [🇺🇸 English](../../en/design/event-queue-architecture.md) &nbsp;|&nbsp; 👉 Español
 
-**Aplica a:** `@yoltra/core` 0.6.0
-**Última actualización:** Agosto 2026
+**Aplica a:** `@yoltra/core` 0.9.0
+**Última actualización:** Septiembre 2026
 **Estado:** Estable
 
 ## Descripción General
@@ -172,12 +172,12 @@ private applyEventSync(event): EmitResult {
     try {
       ok = mw(this.state, event, this.emit);   // ← boolean, no una Promise
     } catch (err) {
-      console.error("Middleware error:", err);
-      ok = false;
+      console.error("Middleware threw; the event was vetoed:", err);
+      ok = false;                                // un guard que falló no ha aprobado nada
     }
-    if (!ok) {
+    if (ok === false) {                          // solo un `false` explícito veta
       this.notifyEventSubscribers(event, "uncommitted"); // vetado → subs no confirmados
-      return NOT_COMMITTED;                              // no confirmar
+      return { committed: false, written: false, reason: "vetoed", vetoedBy: mw.name };
     }
   }
 
@@ -288,13 +288,19 @@ La dedup por identidad es la herramienta correcta para la doble-invocación (sol
 efectos de Strict Mode: el mismo emit lógico reutiliza la clave, mientras que dos acciones reales
 del usuario no.
 
+El despacho, la deduplicación y la introspección se indexan por `"canal::tipo"`, así que dos pares
+distintos pueden unirse en una sola clave: `("a::b", "c")` y `("a", "b::c")` se convierten los dos en
+`"a::b::c"`, y una ventana de dedup descartaría uno por el otro. Las builds de desarrollo avisan de
+esa **colisión**, nombrando ambos pares. Un `::` por sí solo no genera aviso, porque es como se le da
+namespace al canal de un par federado.
+
 ## El contrato de la promesa de `emit()`
 
 `emit()` devuelve una `Promise<EmitResult>` que se resuelve **cuando los efectos de ese evento en
 concreto terminan**:
 
 ```typescript
-const { committed, written, rejected } = await emit("api", "save", payload);
+const { committed, written, rejected, reason, vetoedBy } = await emit("api", "save", payload);
 // ← se resuelve tras terminar los efectos de save (el estado ya se actualizo sincronamente)
 ```
 
@@ -303,6 +309,8 @@ const { committed, written, rejected } = await emit("api", "save", payload);
 | `committed` | El middleware lo permitió - llegó a los reducers                             |
 | `written`   | El estado cambió de verdad. Es `false` para un evento que ningún reducer atendió, y para un store sin reducers |
 | `rejected`  | El `Rejection` que devolvió un reducer, cuando alguno rechazó                 |
+| `reason`    | Por qué no se confirmó: `"vetoed"`, `"deduped"` o `"cascade"`. Ausente si se confirmó |
+| `vetoedBy`  | El nombre del middleware que vetó (`meta.name`, o el `name` de una función simple), si lo tiene |
 
 Los dos son distintos a propósito. `committed` es `true` para todo evento que el middleware
 permite, que es de lo que depende un bus de notificaciones o de analíticas; `written` es el hecho
@@ -352,8 +360,10 @@ a los demás.
 ### Veto del middleware
 
 Un middleware que devuelve `false` veta el evento: los reducers y efectos nunca lo ven, se disparan
-los suscriptores no confirmados, y el evento no se confirma. El middleware es síncrono - haz aquí la
-autorización y validación, no I/O.
+los suscriptores no confirmados, y el evento no se confirma. Solo un `false` explícito veta; un
+middleware que no devuelve nada permite el evento. Un middleware que lanza también veta, con un error
+en consola que lo dice. Quien llama recibe `reason: "vetoed"` y, cuando el middleware tiene nombre,
+`vetoedBy`. El middleware es síncrono - haz aquí la autorización y validación, no I/O.
 
 ```typescript
 const auth: MiddlewareFunction = (state, event) => {
@@ -392,6 +402,12 @@ se sitúa - devolver el estado sin cambios, que es indistinguible de "este event
 lanzar, que es un bug. Un reducer que lanza queda aislado y sus hermanos igual confirman; un reducer
 que rechaza ha tomado una decisión que el evento entero respeta. Los rechazos también llegan a
 `onRejected` para logging y a `InstrumentedEvent.rejected` para las DevTools.
+
+La instrumentación también lleva la atribución de un veto: desde 0.9.0 un `InstrumentedEvent` que no
+se confirmó tiene `reason` y, cuando se conoce, `vetoedBy`, los mismos valores que devuelve
+`EmitResult`. En la práctica ahí `reason` vale `"vetoed"`: un evento deduplicado se descarta en
+`emit` antes de encolarse, y un rechazo por cascada retorna antes de que el drenado llegue a la
+instrumentación, así que ninguno de los dos se instrumenta nunca.
 
 ### Re-emisión descontrolada
 
@@ -490,7 +506,7 @@ El drenado síncrono y la tarea de efectos asíncrona, condensados:
 public async emit(channel, type, payload, opts?): Promise<EmitResult> {
   // 1. Dedup opt-in (ventana de contenido o dedupKey explicito); desactivada por defecto.
   if (this.dedupConfig.windowMs > 0 || opts?.dedupKey !== undefined) {
-    if (this.shouldDedupe(/* fingerprint o #dedupKey */)) return NOT_COMMITTED;
+    if (this.shouldDedupe(/* fingerprint o #dedupKey */)) return DEDUPED;   // reason: "deduped"
   }
 
   // 2. Posicion causal. Un evento raiz no lleva ninguno de los dos campos, asi que queda
@@ -499,7 +515,7 @@ public async emit(channel, type, payload, opts?): Promise<EmitResult> {
   const depth = cause ? cause.depth + 1 : 0;
   if (cause && depth > this.maxReduceDepth) {
     this.reportCascade("maxReduceDepth", /* … */);  // veta este emit; no lanza
-    return NOT_COMMITTED;
+    return CASCADE_REFUSED;                         // reason: "cascade"
   }
 
   // 3. id + deferred de finalizacion por-evento.
@@ -568,6 +584,8 @@ evento raíz. Acotarla es lo que impide que una cascada se convierta en un proce
 
 | `@yoltra/core` | Fecha   | Cambios                                                                                                                                                                                                                                                |
 | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0.9.0   | 2026-09 | `InstrumentedEvent` lleva `reason` y `vetoedBy`; aviso en desarrollo cuando dos pares `(channel, type)` se unen en una sola clave interna; `When` gana `{ channelPattern }`; la introspección conserva intactos los canales que contienen `::` |
+| 0.8.0   | 2026-09 | `EmitResult` gana `reason` (`"vetoed"`, `"deduped"`, `"cascade"`) y `vetoedBy`; el middleware veta solo con un `false` explícito; el replay ya no notifica a los suscriptores de `onEvent`; la dedup por contenido calcula la huella con el codec |
 | 0.6.0   | 2026-08 | Cascadas acotadas por profundidad causal (`maxReduceDepth`, activo por defecto; `parentId`/`depth` en cada evento causado); confirmaciones preparadas y aplicadas atómicamente entre slices; `Rejected(reason)` desde un reducer; `emit()` resuelve a un `EmitResult`; nueva fase de evento `written` |
 | 0.2.0   | 2026-07 | Pipeline de dos fases: reducción síncrona (middleware síncrono, reducers confirman antes de que `emit()` retorne) + efectos asíncronos independientes; promesa de finalización por-evento honesta; deduplicación opt-in (`dedupWindowMs` / `dedupKey`) |
 | previo al cambio de nombre | 2026-01 | Suscripciones de eventos (fases confirmado/no confirmado/todos)                                                                                                                                                                                        |
