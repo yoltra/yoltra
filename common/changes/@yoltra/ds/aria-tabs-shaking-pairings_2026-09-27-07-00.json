@@ -2,7 +2,7 @@
   "changes": [
     {
       "packageName": "@yoltra/ds",
-      "comment": "`Tabs` now implements the ARIA tabs pattern: one tab stop with a roving `tabIndex`, arrow keys that follow the writing direction and wrap, `Home` and `End`, `aria-controls` and `aria-labelledby` tying each tab to its panel, and a focusable panel. A new `activation` prop selects between selection-follows-focus, the default, and manual activation for panels expensive enough that arrowing past them should not render them. **A typical import drops from 2.8 KB to 0.7 KB**: a member expression at module scope made the theme objects unconditional side effects, so an application importing one component shipped both themes and the whole palette. The typical-import budget is tightened to 1 KB so the regression cannot return unnoticed.",
+      "comment": "`Tabs` now implements the ARIA tabs pattern: one tab stop with a roving `tabIndex`, arrow keys that follow the writing direction and wrap, `Home` and `End`, `aria-controls` and `aria-labelledby` tying each tab to its panel, and a focusable panel. A new `activation` prop selects between selection-follows-focus, the default, and manual activation for panels expensive enough that arrowing past them should not render them. **A typical import drops from 2.8 KB to 0.9 KB**: a member expression at module scope made the theme objects unconditional side effects, so an application importing one component shipped both themes and the whole palette. The typical-import budget is tightened to 1.2 KB, between the shakeable 0.9 KB and the 1.5 KB a hoisted member expression costs, so the regression cannot return unnoticed.",
       "type": "minor"
     }
   ],

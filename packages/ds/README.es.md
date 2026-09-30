@@ -63,14 +63,17 @@ primitivos se renderizan en el servidor — solo los controles interactivos
 | `Table`, `TableScroll`, `THead`, `TBody`, `TR`, `TH`, `TD` | Partes presentacionales de tabla. |
 | `CodeBlock`, `Tabs`, `VisuallyHidden` | Todo lo demás. |
 | `Portal`, `Dialog`, `Drawer` | Overlays modales, renderizados fuera del árbol. Ver más abajo. |
-| `Popover`, `Menu`, `ContextMenu`, `Tooltip` | Overlays anclados, posicionados contra un trigger o un punto. |
-| `useFocusTrap`, `useDismiss`, `useReturnFocus`, `useScrollLock` | Los comportamientos con los que están hechos esos overlays, para una superficie que no cubren. |
+| `Popover`, `Menu`, `MenuItem`, `MenuSeparator`, `ContextMenu`, `Tooltip` | Overlays anclados, posicionados contra un trigger o un punto. |
+| `useFocusTrap`, `useDismiss`, `useReturnFocus`, `useScrollLock`, `focusableWithin`, `resolvePlacement` | Los comportamientos con los que están hechos esos overlays, para una superficie que no cubren. |
 | `useControllableState` | Un valor que es del llamador o del componente, para construir un control propio. |
 
 Cada componente tiene su `README.md` al lado de su código, con ejemplos ejecutables y su
 contrato de accesibilidad: [`src/primitives/Button/README.md`](src/primitives/Button/README.md)
 y así con cada uno. Están en inglés, como el resto del código.
 
+> Quien ya es dueño de su estado (como el sitio de Yoltra, que maneja el tema desde un store de
+> Yoltra) puede prescindir de `ThemeProvider` y fijar `data-theme` por su cuenta: el contrato con
+> el DOM es el mismo.
 
 ## Marca
 
@@ -255,6 +258,8 @@ cambio de tema porque no participan en él.
 estilos debería nombrar: `--yl-color-bg-canvas`, `--yl-color-fg-muted`,
 `--yl-color-interactive-bg`, `--yl-color-status-error-fg`. Cada uno tiene un valor claro y uno
 oscuro, así que un componente que lee un rol queda tematizado sin hacer nada más.
+`--yl-color-interactive-track` es la parte sin llenar de un control, el carril por el que se
+desliza la perilla de un switch, y mantiene 3:1 contra la perilla en ambos temas.
 
 **Locales del componente**: viven en la hoja del propio componente, sin el prefijo `--yl-`, y
 derivan de un rol. El ancho de un diálogo no le importa a nadie más.
@@ -353,9 +358,13 @@ se sigue publicando como `button.css`.
 SASS nunca es dueño de un *valor*. Los colores, espaciados y radios se leen como `var(--yl-*)`,
 porque el tema es un cambio de atributo `data-theme` en tiempo de ejecución sobre la raíz del
 documento, y una variable SASS se compila mucho antes de que ese cambio ocurra. Lo que SASS
-aporta es anidamiento, archivos por componente y los mixins de `src/styles/_mixins.scss` — anillo
-de foco, oculto-visualmente, breakpoints — que antes eran fragmentos repetidos dentro de un
-template literal.
+aporta es anidamiento, archivos por componente y los mixins compartidos. Un componente empieza con
+`@use "../styles" as *;` y los tiene todos a mano: `focus-ring`, `focus-field`, `visually-hidden`,
+`media-up`, `reduced-motion`, `disabled-text`, `disabled-control`, `transition`, `surface`, y
+`type()`, que aplica un rol tipográfico completo de una vez.
+
+stylelint lo hace cumplir: un hex, un `rgba()`, un tamaño de fuente literal o un peso de fuente
+literal en la hoja de un componente es un error de lint. Usa un rol o un token en su lugar.
 
 ## Licencia
 

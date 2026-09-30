@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "The README names every export: `MenuItem`, `MenuSeparator`, `focusableWithin` and `resolvePlacement` join the inventory. Authoring describes the shared SASS entry and all ten mixins instead of the three that predate it, and states the stylelint rule against hardcoded colours and type. The tokens section introduces the interactive track role. The Spanish README gains the `ThemeProvider` note it was missing.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

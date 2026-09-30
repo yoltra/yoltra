@@ -61,8 +61,8 @@ tabs, copy button) are client components.
 | `Table`, `TableScroll`, `THead`, `TBody`, `TR`, `TH`, `TD` | Presentational table parts. |
 | `CodeBlock`, `Tabs`, `VisuallyHidden` | Everything else. |
 | `Portal`, `Dialog`, `Drawer` | Modal overlays, rendered outside the tree. See below. |
-| `Popover`, `Menu`, `ContextMenu`, `Tooltip` | Anchored overlays, positioned against a trigger or a point. |
-| `useFocusTrap`, `useDismiss`, `useReturnFocus`, `useScrollLock` | The behaviours those overlays are built from, for a surface they do not cover. |
+| `Popover`, `Menu`, `MenuItem`, `MenuSeparator`, `ContextMenu`, `Tooltip` | Anchored overlays, positioned against a trigger or a point. |
+| `useFocusTrap`, `useDismiss`, `useReturnFocus`, `useScrollLock`, `focusableWithin`, `resolvePlacement` | The behaviours those overlays are built from, for a surface they do not cover. |
 | `useControllableState` | One value that is either the caller's or the component's, for building a control of your own. |
 
 Every component keeps a `README.md` beside its source, with runnable examples and its
@@ -249,7 +249,8 @@ switch by not participating in one.
 **Semantic roles** say what a colour is *for*, and are the only colours a stylesheet should
 name: `--yl-color-bg-canvas`, `--yl-color-fg-muted`, `--yl-color-interactive-bg`,
 `--yl-color-status-error-fg`. Each has a light and a dark value, so a component that reads a
-role is themed for free.
+role is themed for free. `--yl-color-interactive-track` is the unfilled part of a control, the
+groove a switch knob slides along, and holds 3:1 against the knob in both themes.
 
 **Component locals** stay in the component's own stylesheet, prefixed without `--yl-`, deriving
 from a role. A dialog's width is nobody else's business.
@@ -347,8 +348,13 @@ still publishes as `button.css`.
 SASS never owns a *value*. Colours, spacing and radii are read as `var(--yl-*)`, because
 theming is a runtime `data-theme` switch on the document root and a SASS variable compiles
 away long before that switch happens. What SASS contributes is nesting, per-component files,
-and the mixins in `src/styles/_mixins.scss` — focus ring, visually-hidden, breakpoints — which
-were previously repeated fragments inside a template literal.
+and the shared mixins. A component starts with `@use "../styles" as *;` and has all of them in
+scope: `focus-ring`, `focus-field`, `visually-hidden`, `media-up`, `reduced-motion`,
+`disabled-text`, `disabled-control`, `transition`, `surface`, and `type()`, which applies a whole
+type role at once.
+
+stylelint holds the line: a hex, an `rgba()`, a literal font size or a literal font weight in a
+component stylesheet is a lint error. Reach for a role or a token instead.
 
 ## License
 
