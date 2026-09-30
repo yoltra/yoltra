@@ -75,7 +75,7 @@ so on for each.
 
 ## Brand
 
-Primary blue `#1A7FE2`, ink `#0F172A`. Type: **Inter** + **JetBrains Mono**.
+Primary blue `#1A7FE2`, carbon `#0F172A`. Type: **Inter** + **JetBrains Mono**.
 
 ## Installing styles
 

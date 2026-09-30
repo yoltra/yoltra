@@ -16,7 +16,7 @@
  * the coupling the layer exists to prevent. `tests/styles.test.ts` asserts the omission is
  * deliberate rather than an oversight.
  *
- * Brand: primary blue `#1A7FE2`, ink `#0F172A`. Type: Inter + JetBrains Mono.
+ * Brand: primary blue `#1A7FE2`, carbon `#0F172A`. Type: Inter + JetBrains Mono.
  */
 
 export type CSSLength = number | string;

@@ -12,7 +12,15 @@
 export const THEME_STORAGE_KEY = "yoltra-theme";
 
 export interface NoFlashScriptOptions {
-  /** The `localStorage` key. Must match whatever {@link client!ThemeProvider | ThemeProvider} was given. */
+  /**
+   * The `localStorage` key. Defaults to {@link THEME_STORAGE_KEY}.
+   *
+   * @remarks
+   * {@link client!ThemeProvider | ThemeProvider} always reads and writes {@link THEME_STORAGE_KEY}
+   * and takes no key of its own, so alongside the provider leave this unset: a script that reads
+   * a different key restores nothing, silently. Set it only when the application persists the
+   * theme itself, with {@link client!applyTheme | applyTheme} and a key of its own.
+   */
   storageKey?: string;
 }
 

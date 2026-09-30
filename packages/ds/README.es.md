@@ -77,7 +77,7 @@ y así con cada uno. Están en inglés, como el resto del código.
 
 ## Marca
 
-Azul primario `#1A7FE2`, tinta `#0F172A`. Tipografía: **Inter** + **JetBrains Mono**.
+Azul primario `#1A7FE2`, carbón `#0F172A`. Tipografía: **Inter** + **JetBrains Mono**.
 
 ## Instalando los estilos
 

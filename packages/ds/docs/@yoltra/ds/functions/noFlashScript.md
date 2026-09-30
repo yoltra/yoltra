@@ -10,7 +10,7 @@
 
 > **noFlashScript**(`__namedParameters`): `string`
 
-Defined in: [theme/noFlashScript.ts:47](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/noFlashScript.ts#L47)
+Defined in: [theme/noFlashScript.ts:55](https://github.com/yoltra/yoltra/blob/main/packages/ds/src/theme/noFlashScript.ts#L55)
 
 The script that sets the theme before the first paint.
 
