@@ -227,6 +227,11 @@ const filtered = useAtomicProps(
 );
 ```
 
+En desarrollo, el selector lee a través de una guarda que lanza un error, nombrando la ruta,
+cuando lee estado que no declaraste en `specs`. También funciona con estado congelado, a cualquier profundidad: `produce` de immer y
+`deepFreeze` de core le pasan al selector objetos que la guarda no puede envolver en el sitio, así
+que lee una copia superficial.
+
 ---
 
 ### `useEvent(channel, type, handler, phase?, options?)`

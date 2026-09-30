@@ -225,6 +225,11 @@ const filtered = useAtomicProps(
 );
 ```
 
+In development, the selector reads through a guard that throws, naming the path, when it reads
+state you did not declare in `specs`. It works on frozen state too, at any depth: immer's `produce` and core's `deepFreeze`
+both hand the selector objects it cannot wrap in place, so the guard reads a shallow copy
+instead.
+
 ---
 
 ### `useEvent(channel, type, handler, phase?, options?)`
