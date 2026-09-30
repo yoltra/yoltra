@@ -49,7 +49,10 @@ La fase de reducción (1–4) es **síncrona**, así que `getState()` es correct
 `emit()` retorna, incluso con middleware. Los efectos (5) corren después como una tarea async
 independiente; la promesa de `emit()` se resuelve cuando terminan los efectos de ese evento. Cada
 etapa es interceptable, y `store.instrument()` expone todo el flujo (rutas hoja cambiadas, tiempos
-de reducción, fase confirmado/rechazado) a las DevTools sin ningún `as any`. Ver la
+de reducción, fase confirmado/rechazado) a las DevTools sin ningún `as any`. Un evento que no se
+confirmó también lleva `reason` y, cuando lo vetó un middleware con nombre, `vetoedBy`, la misma
+atribución que devuelve `emit`. En la práctica `reason` ahí vale `"vetoed"`: un evento deduplicado
+o rechazado por la cascada nunca llega a la instrumentación. Ver la
 [Arquitectura del Pipeline de Eventos](../../docs/es/design/event-queue-architecture.md) para el
 modelo completo.
 
@@ -217,7 +220,21 @@ const globalLogger = {
     return true;
   },
 };
+
+// Coincidir con canales por patrón: `*` representa cero o más caracteres
+const rateGuard = {
+  when: { channelPattern: "*::plan" }, // `bb::plan`, `peer::plan`, pero no `plan`
+  middleware: (state, event) => withinBudget(event.channel),
+};
 ```
+
+Las primeras cuatro formas comparan de forma exacta. `channelPattern` es para canales que no se
+pueden nombrar de antemano, como el `bb::plan` con namespace de un par federado. `*` es el único
+metacarácter, y coincide como en cualquier glob: `"*plan"` también coincide con `replan`, así que un
+store que tiene un `plan` local y otros con namespace necesita `"*::plan"` más una regla aparte para
+el canal local. La
+[Guía de Decoración](../../docs/es/DECORATION_GUIDE.md#apuntar-a-un-canal-que-no-puedes-nombrar-por-adelantado)
+explica la trampa de reducir a `{ channel }` un guard que filtra a mano.
 
 ---
 
@@ -225,7 +242,10 @@ const globalLogger = {
 
 El middleware se ejecuta **sincronamente, antes** de los reducers y puede cancelar la propagación
 de eventos (devolver `false` para rechazar → evento "no confirmado"). El trabajo async va en los
-efectos, no en el middleware. Soporta tanto funciones directas (legacy) como objetos
+efectos, no en el middleware. Cuando un evento no se confirma, `emit` dice por qué: `reason` vale
+`"vetoed"`, `"deduped"` o `"cascade"`, y un veto nombra al middleware en `vetoedBy`, así que un
+guard que rechaza una acción se distingue de un doble clic colapsado. Soporta tanto funciones
+directas (legacy) como objetos
 `MiddlewareSpec` con targeting:
 
 ```typescript
@@ -811,7 +831,7 @@ store.registerEffect({
 | `store.subscribe(listener)`                     | Suscripción gruesa (cualquier cambio de estado)       |
 | `store.connect(spec, handler)`                  | Suscripción de grano fino por ruta con wildcards      |
 | `store.onEvent(channel, type, handler, phase?, options?)` | Suscripción a eventos (committed/uncommitted/written/all). Silenciosa durante el replay salvo `{ duringReplay: true }` |
-| `store.onRegistrationChange(observer, opts?)` | Avisa cuando el store gana o pierde un reducer, middleware o efecto |
+| `store.onRegistrationChange(observer, opts?)` | Avisa cuando el store gana o pierde un reducer, middleware o efecto. Cada cambio lleva `when`, el matcher normalizado: `{ keys }` para un slice con claves, `{ any: true }` para middleware sin filtro |
 | `store.onEffect(channel, type, handler)`        | Shorthand de efecto para un solo evento               |
 | `store.dispose()`                               | Limpiar timers y recursos                             |
 
@@ -823,7 +843,7 @@ store.registerEffect({
 | `store.withSlice(name, spec, opts?)` | Igual, devolviendo el store re-tipado para encadenar |
 | `store.withMiddleware(mw)`, `store.withEffect(spec)` | Registra y amplía el mapa de eventos |
 | `defineSlice<EM>()`, `defineMiddleware<EM>()`, `defineEffect<EM>()` | Declara el mapa de eventos que aporta un spec |
-| `store.registerReducer(name, spec)` | Agregar un slice en tiempo de ejecución   |
+| `store.registerReducer(name, spec)` | Agregar un slice en tiempo de ejecución. Es genérico sobre su spec, así que una decoración puede montar un slice en un canal que el mapa de eventos de la app no tiene, sin cast |
 | `store.registerMiddleware(fn)`      | Agregar middleware en tiempo de ejecución |
 | `store.registerEffect(spec)`        | Agregar un efecto en tiempo de ejecución  |
 
@@ -963,7 +983,7 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 | todo | 14.4 KB | 18 KB |
 <!-- size-table:end -->
 
-Estas son cifras de **producción**: lo que públicas una vez que tu empaquetador define
+Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define
 `NODE_ENV=production` y las guardas exclusivas de desarrollo desaparecen. La columna de
 presupuesto es el techo que `rush size` impone, y se verifica contra un build de desarrollo,
 que es el mayor de los dos: el código exclusivo de desarrollo no puede crecer sin que nadie lo
@@ -971,9 +991,14 @@ note solo porque nunca llega a un usuario. Por eso el margen que se infiere aqu�
 deliberadamente conservador.
 
 La **distancia entre filas** es la afirmación de tree-shaking, y es lo que hay que vigilar: la
-persistencia añade 1.5 KB a quienes la importan y nada a los demás, y el barrel completo está
-2.9 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
+persistencia añade 1.3 KB a quienes la importan y nada a los demás, y el barrel completo está
+2.7 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
 es algo que nadie escriba.
+
+La primera fila solo se mueve cuando crece el store en sí, y ha crecido: acotar las cascadas,
+preparar los commits para que se apliquen de forma atómica y `store.call()` son maquinaria del
+store, no módulos opcionales, así que los paga todo el mundo. Es el intercambio honesto por un
+comportamiento por defecto que impide que un desbocado cuelgue la pestaña.
 
 ---
 

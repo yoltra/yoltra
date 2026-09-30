@@ -247,7 +247,7 @@ El ensanchamiento en sí sobrevive: `.store` lleva el tipo crecido, así que una
 funcionando si cada paso se enhebra a mano.
 
 Si puedes evitarlo, evítalo. Un decorador que solo necesita limpiar debería devolver el store y
-mantener su disposer privado, como describe `La eliminación, y lo único que los tipos no pueden
+mantener su disposer privado, como describe `Disposición, y lo único que los tipos no pueden
 expresar`. Recurre a un handle cuando lo que devuelves genuinamente no es el store — y cuando lo
 hagas, devuelve `{ store, handle }` en lugar de un handle con `.store`, para que el store siga
 siendo lo obvio que pasar adelante.
@@ -310,7 +310,7 @@ Tres cosas que conviene saber:
 
 `when` compara de forma exacta: `{ channel: "plan" }` coincide con `plan` y con nada más. Eso es un
 problema para un guard cuyos canales llegan con namespace — el `bb::plan` de un par federado junto a
-un `plan` local — porque los alias los invienta quien federa, así que ninguna lista se puede escribir
+un `plan` local — porque los alias los inventa quien federa, así que ninguna lista se puede escribir
 por adelantado.
 
 `channelPattern` existe para eso, donde `*` representa cero o más caracteres:

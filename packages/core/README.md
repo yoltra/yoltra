@@ -49,7 +49,10 @@ The reduce phase (1–4) is **synchronous**, so `getState()` is correct the inst
 even with middleware. Effects (5) run afterward as an independent async task; the promise from
 `emit()` resolves when that event's effects finish. Every stage is hook-able, and
 `store.instrument()` exposes the whole flow (changed leaf paths, reduce timing, committed/rejected
-phase) to the DevTools with no `as any`. See the
+phase) to the DevTools with no `as any`. An event that did not commit also carries `reason` and,
+when a named middleware vetoed it, `vetoedBy`, the same attribution `emit` returns. In practice
+`reason` reads `"vetoed"` there: a deduplicated or cascade-refused event never reaches
+instrumentation. See the
 [Event Pipeline Architecture](../../docs/en/design/event-queue-architecture.md) for the full model.
 
 ---
@@ -214,7 +217,20 @@ const globalLogger = {
     return true;
   },
 };
+
+// Match channels by pattern: `*` stands for zero or more characters
+const rateGuard = {
+  when: { channelPattern: "*::plan" }, // `bb::plan`, `peer::plan`, but not `plan`
+  middleware: (state, event) => withinBudget(event.channel),
+};
 ```
+
+The first four forms compare exactly. `channelPattern` is for channels that cannot be named in
+advance, such as a federated peer's namespaced `bb::plan`. `*` is the only metacharacter, and it
+matches the usual glob way: `"*plan"` also matches `replan`, so a store that has both a local
+`plan` and namespaced ones wants `"*::plan"` plus a separate rule for the local channel. The
+[Decoration Guide](../../docs/en/DECORATION_GUIDE.md#targeting-a-channel-you-cannot-name-in-advance)
+covers the trap of narrowing a hand-filtered guard to `{ channel }`.
 
 ---
 
@@ -834,7 +850,7 @@ store.registerEffect({
 | `store.subscribe(listener)`                     | Coarse subscription (any state change)         |
 | `store.connect(spec, handler)`                  | Fine-grained path subscription with wildcards  |
 | `store.onEvent(channel, type, handler, phase?, options?)` | Event subscription (committed/uncommitted/written/all). Silent during replay unless `{ duringReplay: true }` |
-| `store.onRegistrationChange(observer, opts?)` | Fires when the store gains or loses a reducer, middleware or effect |
+| `store.onRegistrationChange(observer, opts?)` | Fires when the store gains or loses a reducer, middleware or effect. Each change carries `when`, the normalized matcher: `{ keys }` for a keyed slice, `{ any: true }` for unfiltered middleware |
 | `store.onEffect(channel, type, handler)`        | Single-event effect shorthand                  |
 | `store.dispose()`                               | Cleanup timers and resources                   |
 
@@ -846,7 +862,7 @@ store.registerEffect({
 | `store.withSlice(name, spec, opts?)` | Same, returning the widened store for chaining |
 | `store.withMiddleware(mw)`, `store.withEffect(spec)` | Register and widen the event map |
 | `defineSlice<EM>()`, `defineMiddleware<EM>()`, `defineEffect<EM>()` | Declare the event map a spec contributes |
-| `store.registerReducer(name, spec)` | Add a slice at runtime    |
+| `store.registerReducer(name, spec)` | Add a slice at runtime. Generic over its spec, so a decoration can mount a slice on a channel the app's event map lacks without a cast |
 | `store.registerMiddleware(fn)`      | Add middleware at runtime |
 | `store.registerEffect(spec)`        | Add an effect at runtime  |
 
@@ -986,7 +1002,7 @@ the larger of the two: dev-only code cannot grow unnoticed just because it never
 user. So the headroom implied here is deliberately conservative.
 
 The **gap between rows** is the tree-shaking claim, and it is what to watch: persistence adds
-1.5 KB to the people who import it and nothing to anyone else, and the whole barrel is 2.9 KB
+1.3 KB to the people who import it and nothing to anyone else, and the whole barrel is 2.7 KB
 past the store. The last row is a growth tripwire; `import * as all` is not something anybody
 writes.
 
