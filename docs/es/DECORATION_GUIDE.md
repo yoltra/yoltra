@@ -306,7 +306,7 @@ Tres cosas que conviene saber:
 
 ---
 
-### Apuntar a un canal que no puedes nombrar por adelantado
+## Apuntar a un canal que no puedes nombrar por adelantado
 
 `when` compara de forma exacta: `{ channel: "plan" }` coincide con `plan` y con nada más. Eso es un
 problema para un guard cuyos canales llegan con namespace — el `bb::plan` de un par federado junto a

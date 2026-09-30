@@ -301,7 +301,7 @@ Three things to know:
 
 ---
 
-### Targeting a channel you cannot name in advance
+## Targeting a channel you cannot name in advance
 
 `when` compares exactly: `{ channel: "plan" }` matches `plan` and nothing else. That is a problem
 for a guard whose channels arrive namespaced — a federated peer's `bb::plan` beside a local `plan` —

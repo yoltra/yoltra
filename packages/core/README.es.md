@@ -351,7 +351,17 @@ store.onEvent(
   "uncommitted",
 );
 
-// Todos los eventos: tanto confirmados como no confirmados
+// Eventos escritos: el estado cambió de verdad. Se dispara tras el commit, así que getState() está al día.
+store.onEvent(
+  "plan",
+  "patch",
+  (event, getState) => {
+    console.log("applied:", getState().plan);
+  },
+  "written",
+);
+
+// Todos los eventos: tanto confirmados como no confirmados (no los escritos; ver abajo)
 store.onEvent(
   "ui",
   "action",
@@ -361,6 +371,12 @@ store.onEvent(
   "all",
 );
 ```
+
+`committed` significa **no vetado**, y siempre lo ha significado: se dispara con cada evento que
+el middleware dejó pasar, lo haya escrito un reducer o no, incluido cada evento de un store sin
+reducers. `written` es el hecho más estricto, agregado en vez de sustituido, así que los toasts y
+la analítica siguen funcionando sin cambios. `all` sigue siendo `committed | uncommitted`; meter
+`written` ahí le daría a los suscriptores existentes una segunda notificación por evento.
 
 ### Suscriptores de eventos y viaje en el tiempo
 
@@ -514,22 +530,31 @@ const { payload } = await call;
 
 La contrapresión es real, no un buffer con límite. `emit` resuelve solo cuando terminan sus
 efectos, y el colector es un efecto que no retorna hasta que el consumidor tomo el elemento, así
-que un `Quien Responde` que escribe `await emit("job", "tick", chunk)` **va al ritmo del lector**.
+que un `Quien Responde` que escribe `await emit("job", "tick", chunk)` **va al ritmo del lector**:
+
+```typescript
+effect: async (_event, _get, emit) => {
+  for (const chunk of chunks) {
+    await emit("job", "tick", chunk); // espera aquí mientras el consumidor va atrasado
+  }
+  await emit("job", "done", { ok: true });
+}
+```
 
 La contrapresión entra en juego **cuando empiezas a iterar**. Una llamada que solo se espera con
 `await` nunca extrae nada, así que bloquear a su productor causaría un interbloqueo de la propia
 llamada: el progreso que nadie lee impediría que se enviara el evento terminal. Por eso el
 progreso no iterado se almacena hasta `highWaterMark` y después se cuenta en `call.dropped`.
 
-### Retroceso
+### Rendirse
 
 | | |
 |---|---|
-| `timeoutMs` | **Inactividad**, no total: todo evento correlacionado lo reinicia, incluido el progreso. Por defecto 30s. |
+| `timeoutMs` | **Inactividad**, no total: todo evento correlacionado lo reinicia, incluido el progreso. Un trabajo que transmite durante dos minutos no hace fallar una llamada de treinta segundos. Por defecto 30s. |
 | `signal` | Un `AbortSignal`, para una fecha límite real o una acción cancelada. |
-| `call.cancel(reason)` | Deja de escuchar y liquida la llamada. |
+| `call.cancel(reason)` | Deja de escuchar y liquida la llamada. Llamarla dos veces es seguro. |
 
-Termine como termine, la suscripción se elimina y se libera cualquier productor detenido por la
+Termine como termine, ya sea resuelta, por timeout o abortada, la suscripción se elimina y se libera cualquier productor detenido por la
 contrapresión. Un `Quien Responde` atascado es peor que el buffer sin límite que esto reemplazo.
 
 ### Para profundizar
@@ -555,7 +580,10 @@ store.connect({ reducer: "todos", property: "items.0.title" }, render, { immedia
 ```
 
 El primer cambio sintético trae `oldValue: undefined` y **sin procedencia**, porque ningún evento
-lo causó. React no lo necesita: `useSyncExternalStore` ya lee una instantánea al montar.
+lo causó. Para un patrón con wildcard, que no tiene un único valor actual, se entrega la raíz de la
+slice con `path: ""`.
+
+React no lo necesita: `useSyncExternalStore` ya lee una instantánea al montar.
 
 ---
 
@@ -626,17 +654,27 @@ const store = createStore({
 ```
 
 Un evento emitido mientras se atiende otro está un nivel más abajo que su causa, y lleva
-`parentId` y `depth` para que el ciclo sea legible después. Ambos campos están **ausentes** en un
-evento raíz, así que los eventos que emite tu aplicación siguen siendo idénticos byte a byte.
+`parentId` y `depth` para que el ciclo sea legible después:
+
+```typescript
+store.onEvent("plan", "patch", (event) => {
+  event.depth;     // 0 para un evento emitido por código de la aplicación
+  event.parentId;  // undefined en profundidad 0; debajo, el id del evento que lo causó
+});
+```
+
+Ambos campos están **ausentes** en un evento raíz, en vez de presentes como `0`/`undefined`, así
+que los eventos que emite tu aplicación siguen siendo idénticos byte a byte a como eran antes.
 
 Superar el tope no lanza. El emit ofensor se rechaza, lo ya confirmado se mantiene, y `onCascade`
 (más un error en consola) lo nombra. Lanzar aparecería en el suscriptor o efecto que casualmente
 estuviera emitiendo, que es justo el fallo inatribuible que el tope existe para evitar.
 
-**Una rafaga ancha no es una cascada.** Un evento cuyo suscriptor emite quinientos hermanos es una
+**Una ráfaga ancha no es una cascada.** Un evento cuyo suscriptor emite quinientos hermanos es una
 forma legítima; la profundidad es lo que la distingue de un ciclo, y un bucle normal de
-`store.emit` nunca acumula profundidad. `maxTransitionsPerDrain` acota el *ancho* y por eso viene
-desactivado.
+`store.emit` nunca acumula profundidad, porque cada llamada se drena por completo antes de la
+siguiente, así que cada una es una raíz. `maxTransitionsPerDrain` acota el *ancho* de la ráfaga y
+por eso viene desactivado; el evento que inicia un drenado nunca es rechazado por él.
 
 ---
 

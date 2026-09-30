@@ -556,6 +556,8 @@ The exported surface is `ReplySpec`, `CallOptions`, `CallHandle`, `CallTimeoutEr
 - **Testing a call**, and the rest of the detail, in the
   [Request & Reply guide](https://github.com/yoltra/yoltra/blob/main/docs/en/REQUEST_REPLY_GUIDE.md).
 
+---
+
 ## Reading a value as you subscribe
 
 `connect` starts at "from now on", so a subscriber's first read had to repeat the path elsewhere:
@@ -924,6 +926,8 @@ on those, it silently destroys them.
 For a server render, `dehydrate(store, { version })` produces the payload and
 `hydrate({ source, version })` consumes it.
 
+---
+
 ## Lists that reorder
 
 Path notification is positional for arrays. `items.0.title` names a *slot*, not a thing, so
@@ -970,6 +974,8 @@ work rather than a property of normalising as such.
 
 So: normalise collections that reorder or churn. A large collection that only ever has
 individual fields edited is better off as an array today.
+
+---
 
 ## Performance
 
@@ -1052,7 +1058,7 @@ stops a runaway from hanging the tab.
 
 ## Status
 
-**Release Candidate**. APIs are stable, used in production, minor changes possible before v1.0.
+**Release Candidate**. APIs are stable, used in production, minor changes possible before v1.0.0.
 
 ---
 
