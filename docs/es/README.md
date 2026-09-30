@@ -265,7 +265,7 @@ de bundle que el CI hace cumplir.
 | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[@yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.es.md)**   | Store agnóstico de framework: reducers, middleware, efectos, detección de cambios de grano fino, instrumentación tipada, entity adapter, persistencia + hidratación     |
 | **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.es.md)** | Hooks de React: suscripciones de grano fino, accessors de ruta tipados, `createYoltra`, hooks de entidades, Suspense                                                    |
-| **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md)**          | Sistema de diseño: primitivas de React accesibles (formularios, tablas, overlays), tokens de diseño `--yl-*`, temas claro/oscuro - independiente, usable sin el store |
+| **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md)**          | Sistema de diseño: primitivas de React accesibles (formularios, tablas, overlays, menús, pestañas), tokens de diseño `--yl-*` en tres niveles, temas claro/oscuro con el contraste verificado en ambos - independiente, usable sin el store |
 | **@yoltra/devtools-\***                                                                     | Suite de DevTools: protocolo, servidor hub, agentes de navegador/node y la UI del panel (extensión de navegador + CLI)                                                  |
 
 ---
@@ -279,7 +279,8 @@ de bundle que el CI hace cumplir.
 El store de Yoltra expone una costura de instrumentación tipada (`store.instrument(...)`) que los
 agentes consumen con cero casts `as any`. Un pequeño hub retransmite los eventos de tu app en
 ejecución hacia el panel; el panel renderiza el log de eventos, el árbol de estado en vivo, los
-parches precisos por evento, las métricas y el viaje en el tiempo. Los agentes de navegador y de node
+parches precisos por evento, las métricas y el viaje en el tiempo. Un evento que no se confirmó
+dice por qué, y nombra al middleware que lo vetó cuando ese middleware tiene nombre. Los agentes de navegador y de node
 son paquetes deliberadamente separados para que un bundle web nunca arrastre un WebSocket exclusivo de
 Node, y viceversa.
 
@@ -308,12 +309,14 @@ Node, y viceversa.
 - **[Guía de inicio rápido](https://github.com/yoltra/yoltra/blob/main/docs/es/QUICK_START_GUIDE.md)** - cinco pasos hacia una app funcional
 - **[Guía de migración](https://github.com/yoltra/yoltra/blob/main/docs/es/MIGRATION_GUIDE.md)** - si vienes de Redux, Zustand o Jotai
 - **[Actualizar a 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/es/UPGRADE_0.8.md)** - qué cambió, cómo lo notarías, y qué hacer
+- **[Actualizar @yoltra/ds a 0.4.0](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.es.md#migrar-desde-03x)** - 38 tokens renombrados, el codemod que viene en el paquete, y un tamaño por defecto más compacto
 - **[Guía de decoración](https://github.com/yoltra/yoltra/blob/main/docs/es/DECORATION_GUIDE.md)** - agregar una slice, middleware o efecto al store de alguien más, con los tipos
 - **[Petición y respuesta](https://github.com/yoltra/yoltra/blob/main/docs/es/REQUEST_REPLY_GUIDE.md)** - `store.call()`: correlación sin ids, progreso en streaming con backpressure real
 - **[Guía de testing](https://github.com/yoltra/yoltra/blob/main/docs/es/TESTING_GUIDE.md)** - prueba stores, efectos, middleware y componentes
 - **[Guía de Next.js](https://github.com/yoltra/yoltra/blob/main/docs/es/NEXTJS_GUIDE.md)** - uso en cliente con Pages y App Router
 - **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** - store, middleware, efectos, matchers `When`, instrumentación
 - **[API de @yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** - hooks, accessors tipados, `createYoltra`, Suspense
+- **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.es.md)** - componentes, tokens, temas y el contrato con SSR
 - **[Arquitectura del pipeline de eventos](https://github.com/yoltra/yoltra/blob/main/docs/es/design/event-queue-architecture.md)** - cómo funciona el pipeline de reducción síncrona / efectos asíncronos
 - **[Comparación de librerías](https://github.com/yoltra/yoltra/blob/main/docs/es/design/state-management-library-comparison.md)** - comparación arquitectónica honesta con Redux, Zustand, Jotai y otras
 

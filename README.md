@@ -255,7 +255,7 @@ reads. All inside the bundle-size budgets CI enforces.
 | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[@yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)**   | Framework-agnostic store: reducers, middleware, effects, fine-grained change tracking, typed instrumentation, entity adapter, persistence + hydration   |
 | **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** | React hooks: fine-grained subscriptions, typed path accessors, `createYoltra`, entity hooks, Suspense                                                   |
-| **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md)**       | Design system: accessible React primitives (forms, tables, overlays), `--yl-*` design tokens, light/dark theming. Standalone, usable without the store |
+| **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md)**       | Design system: accessible React primitives (forms, tables, overlays, menus, tabs), three-tier `--yl-*` design tokens, light/dark theming with contrast checked in both. Standalone, usable without the store |
 | **@yoltra/devtools-\***                                                                  | DevTools suite: protocol, hub server, browser/node agents, and the panel UI (browser extension + CLI)                                                   |
 
 ---
@@ -269,7 +269,8 @@ reads. All inside the bundle-size budgets CI enforces.
 Yoltra's store exposes a typed instrumentation seam (`store.instrument(...)`) that the agents
 consume with zero `as any` casts. A small hub relays events from your running app to the panel;
 the panel renders the event log, the live state tree, precise per-event patches, metrics, and
-time-travel. The browser and node agents are deliberately separate packages so a web bundle never
+time-travel. An event that did not commit says why, and names the middleware that vetoed it when
+that middleware has a name. The browser and node agents are deliberately separate packages so a web bundle never
 pulls in a Node-only WebSocket, and vice versa.
 
 ---
@@ -297,11 +298,13 @@ pulls in a Node-only WebSocket, and vice versa.
 - **[Migration Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/MIGRATION_GUIDE.md)**: coming from Redux, Zustand, or Jotai
 - **[Request & Reply Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/REQUEST_REPLY_GUIDE.md)**: `store.call()`: correlation without ids, streaming progress with real backpressure
 - **[Upgrading to 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/en/UPGRADE_0.8.md)**: what changed, how you would notice, and what to do
+- **[Upgrading @yoltra/ds to 0.4.0](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md#upgrading-from-03x)**: 38 renamed tokens, the codemod that ships in the package, and a denser default size
 - **[Decoration Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/DECORATION_GUIDE.md)**: adding a slice, middleware or effect to somebody else's store, with the types
 - **[Testing Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/TESTING_GUIDE.md)**: unit-test stores, effects, middleware, and components
 - **[Next.js Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/NEXTJS_GUIDE.md)**: client-side usage in the Pages and App Router
 - **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)**: store, middleware, effects, `When` matchers, instrumentation
 - **[@yoltra/react API](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)**: hooks, typed accessors, `createYoltra`, Suspense
+- **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md)**: components, tokens, theming, and the SSR contract
 - **[Event Pipeline Architecture](https://github.com/yoltra/yoltra/blob/main/docs/en/design/event-queue-architecture.md)**: how the synchronous reduce / async effect pipeline works
 - **[Library Comparison](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**: honest architectural comparison with Redux, Zustand, Jotai, and others
 
