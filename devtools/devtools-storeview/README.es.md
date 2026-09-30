@@ -65,7 +65,7 @@ La app ofrece cuatro pestañas, cada una respaldada por hooks de `@yoltra/devtoo
 
 | Panel           | Descripción                                                                                                                                                        |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Inspector**   | Línea de tiempo de eventos (filtrable por canal/tipo y por estado confirmado/no confirmado) con detalle por evento — rutas cambiadas, parches — más un compositor **Emit** ad-hoc |
+| **Inspector**   | Línea de tiempo de eventos (filtrable por canal/tipo y por estado confirmado/no confirmado; un evento que no se confirmó se etiqueta con su motivo, como `vetoed: authGuard`, nombrando al middleware cuando tiene nombre) con detalle por evento — rutas cambiadas, parches — más un compositor **Emit** ad-hoc |
 | **State**       | Explorador interactivo del árbol JSON, con actualización en vivo y refresco manual                                                                                 |
 | **Time Travel** | Recorre el historial de eventos, salta a cualquier índice y vuelve al modo en vivo                                                                                  |
 | **Metrics**     | Panel de métricas del store (tiempos de reducción, aciertos de dedup, profundidad de cola) más el inventario de **suscripciones** de reducers, efectos y middleware  |

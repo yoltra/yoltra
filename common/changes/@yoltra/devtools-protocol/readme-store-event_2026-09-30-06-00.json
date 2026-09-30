@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-protocol",
+      "comment": "The README lists what `STORE_EVENT` carries for an event that did not commit, and gives `PROTOCOL_VERSION` as the `\"0.1.0\"` the package exports rather than `\"1.0.0\"`.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-protocol"
+}

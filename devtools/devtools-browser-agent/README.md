@@ -60,8 +60,12 @@ await store.emit("todos", "add", { title: "Buy milk" });
 
 ## How It Works
 
-1. **Registers a `when: { any: true }` effect** on the store to intercept every event
-2. **Computes JSON Patch diffs** between previous and next state
+1. **Attaches to the typed instrumentation seam**, `store.instrument(observer)`. The store reports
+   each event with its exact changed leaf paths, previous and next values, commit status and
+   reduce timing, and for an event that did not commit, `reason` and `vetoedBy`. There is no
+   interceptor effect and no state diffing, and the seam costs nothing while no observer is attached.
+2. **Maps the reported paths to RFC-6902 patches** with `patchesFromChange`, and forwards
+   `reason` and `vetoedBy` on `STORE_EVENT` so the panel can say why an event did not commit
 3. **Sends `STORE_EVENT` messages** with patches to the hub
 4. **Buffers messages** (up to 100) while disconnected, flushes on reconnect
 5. **Handles incoming commands** from extensions:

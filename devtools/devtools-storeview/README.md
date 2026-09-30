@@ -65,7 +65,7 @@ The app provides four tabs, each backed by hooks from `@yoltra/devtools-ui`:
 
 | Panel           | Description                                                                                                                          |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **Inspector**   | Event timeline (filter by channel/type and committed/uncommitted status) with per-event detail — changed paths, patches — plus an ad-hoc **Emit** composer |
+| **Inspector**   | Event timeline (filter by channel/type and committed/uncommitted status; an event that did not commit is labelled with its reason, such as `vetoed: authGuard`, naming the middleware when it has a name) with per-event detail — changed paths, patches — plus an ad-hoc **Emit** composer |
 | **State**       | Interactive JSON tree explorer with live state updates and manual refresh                                                            |
 | **Time Travel** | Step through event history, jump to any index, resume live mode                                                                      |
 | **Metrics**     | Store metrics dashboard (reduce timing, dedup hits, queue depth) plus the reducer/effect/middleware **subscriptions** inventory       |

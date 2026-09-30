@@ -37,7 +37,7 @@ una versión mayor incompatible.
 ```typescript
 import { PROTOCOL_VERSION } from "@yoltra/devtools-protocol";
 
-console.log(PROTOCOL_VERSION); // "1.0.0"
+console.log(PROTOCOL_VERSION); // "0.1.0"
 ```
 
 ### Roles
@@ -59,7 +59,7 @@ por tipo:
 
 | Dirección           | Mensaje                 | Descripción                               |
 | ------------------- | ----------------------- | ----------------------------------------- |
-| Store → Extensiones | `STORE_EVENT`           | Evento con delta en JSON Patch            |
+| Store → Extensiones | `STORE_EVENT`           | Evento con delta en JSON Patch, `committed` y, para un evento que no se confirmó, `reason` y `vetoedBy` opcionales |
 | Store → Extensiones | `STATE_SNAPSHOT`        | Árbol de estado completo en versión       |
 | Store → Extensiones | `STORE_METRICS`         | Contadores de rendimiento                 |
 | Store → Extensiones | `STORE_SUBSCRIPTIONS`   | Inventario de reducers/effects/middleware |
@@ -158,7 +158,7 @@ Cliente (Store/Extensión)              Hub
 
 | Export             | Descripción                                        |
 | ------------------ | -------------------------------------------------- |
-| `PROTOCOL_VERSION` | Cadena de versión actual del protocolo (`"1.0.0"`) |
+| `PROTOCOL_VERSION` | Cadena de versión actual del protocolo (`"0.1.0"`) |
 | `DevtoolsRole`     | Enum de roles participantes del protocolo          |
 
 ### Funciones

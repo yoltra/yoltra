@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "comment": "The README described the agent as registering a `when: { any: true }` effect and diffing state. It has attached to `store.instrument()` and built patches from the reported paths since 0.4.0, and an effect could never have seen an uncommitted event; it now says so, and that `reason` and `vetoedBy` are forwarded.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-browser-agent"
+}

@@ -63,7 +63,8 @@ await store.emit("counter", "increment", null);
    diferenciar, sin clonar el estado completo — cuando no hay ningún observador adjunto, la
    costura no cuesta nada.
 2. **Traduce las rutas reportadas a parches RFC-6902** con `patchesFromChange` (sin diferenciar
-   estado)
+   estado), y reenvía `reason` y `vetoedBy` de un evento que no se confirmó, para que el panel
+   pueda decir por qué
 3. **Envía mensajes `STORE_EVENT`** con los parches al hub
 4. **Atiende los comandos entrantes** de las extensiones:
    - `REQUEST_STATE` → responde con un `STATE_SNAPSHOT` completo

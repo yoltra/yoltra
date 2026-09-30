@@ -60,8 +60,13 @@ await store.emit("todos", "add", { title: "Comprar leche" });
 
 ## Cómo funciona
 
-1. **Registra un efecto `when: { any: true }`** en el store para interceptar cada evento
-2. **Calcula diferencias en JSON Patch** entre el estado anterior y el siguiente
+1. **Se engancha a la costura tipada de instrumentación**, `store.instrument(observer)`. El store
+   reporta cada evento con sus rutas hoja cambiadas exactas, los valores anterior y siguiente, el
+   estado de confirmación y los tiempos de reducción, y para un evento que no se confirmó, `reason`
+   y `vetoedBy`. No hay efecto interceptor ni diferenciación de estado, y la costura no cuesta nada
+   mientras no hay ningún observador adjunto.
+2. **Traduce las rutas reportadas a parches RFC-6902** con `patchesFromChange`, y reenvía `reason`
+   y `vetoedBy` en `STORE_EVENT` para que el panel pueda decir por qué un evento no se confirmó
 3. **Envía mensajes `STORE_EVENT`** con los parches al hub
 4. **Almacena mensajes en un búfer** (hasta 100) mientras está desconectado, y los vacía al
    reconectar

@@ -60,7 +60,8 @@ await store.emit("counter", "increment", null);
    reports each event with its exact **changed leaf paths**, previous/next values, commit
    status, and reduce timing. No interceptor effect, no re-diffing, no full-state clone —
    when no observer is attached the seam costs nothing.
-2. **Maps the reported paths to RFC-6902 patches** with `patchesFromChange` (no state diffing)
+2. **Maps the reported paths to RFC-6902 patches** with `patchesFromChange` (no state diffing),
+   and forwards `reason` and `vetoedBy` for an event that did not commit, so the panel can say why
 3. **Sends `STORE_EVENT` messages** with patches to the hub
 4. **Handles incoming commands** from extensions:
    - `REQUEST_STATE` → responds with full `STATE_SNAPSHOT`

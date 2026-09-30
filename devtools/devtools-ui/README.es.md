@@ -211,7 +211,7 @@ function TimeTravelControls({ storeId, entries }) {
 | `HubConnectionStatus` | `"disconnected" \| "connecting" \| "connected"` |
 | `HubContextValue`     | Forma completa del valor de contexto            |
 | `RegisteredStore`     | Entrada de store en el registro                 |
-| `EventLogEntry`       | Un único evento del registro                    |
+| `EventLogEntry`       | Un único evento del registro, con `reason` y `vetoedBy` cuando no se confirmó |
 
 ---
 
