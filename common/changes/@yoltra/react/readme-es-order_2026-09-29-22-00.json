@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "The Spanish README's normalized collections section sat after Status; it now sits where the English one does, before React 18+ compatibility.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

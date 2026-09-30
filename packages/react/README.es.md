@@ -451,6 +451,25 @@ function TodoItem({ index }: { index: number }) {
 
 ---
 
+## Colecciones normalizadas
+
+`useEntityIds`, `useEntity` y `useEntityField` se emparejan con `createEntityAdapter` de
+`@yoltra/core`. Son envoltorios delgados sobre `useAtomicProp`; el valor está en que la ruta viene
+del adapter en vez de escribirse a mano en un componente, donde nada la verifica.
+
+```tsx
+function List() {
+  const ids = useEntityIds('todos', todos);
+  return <>{ids.map((id) => <Row key={id} id={id} />)}</>;
+}
+
+function Row({ id }: { id: string }) {
+  // Despierta cuando cambia este titulo, y no cuando cambia el de otra fila.
+  const title = useEntityField('todos', todos, id, 'title');
+  return <li>{title}</li>;
+}
+```
+
 ## Compatibilidad con React 18+
 
 - **Concurrent Mode:** Totalmente compatible. Todos los hooks usan `useSyncExternalStore`.
@@ -496,25 +515,6 @@ function TodoItem({ index }: { index: number }) {
 antes de v1.0.0.
 
 ---
-
-## Colecciones normalizadas
-
-`useEntityIds`, `useEntity` y `useEntityField` se emparejan con `createEntityAdapter` de
-`@yoltra/core`. Son envoltorios delgados sobre `useAtomicProp`; el valor está en que la ruta viene
-del adapter en vez de escribirse a mano en un componente, donde nada la verifica.
-
-```tsx
-function List() {
-  const ids = useEntityIds('todos', todos);
-  return <>{ids.map((id) => <Row key={id} id={id} />)}</>;
-}
-
-function Row({ id }: { id: string }) {
-  // Despierta cuando cambia este titulo, y no cuando cambia el de otra fila.
-  const title = useEntityField('todos', todos, id, 'title');
-  return <li>{title}</li>;
-}
-```
 
 ## Licencia
 
