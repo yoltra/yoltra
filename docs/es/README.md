@@ -308,6 +308,7 @@ Node, y viceversa.
 
 - **[Guía de inicio rápido](https://github.com/yoltra/yoltra/blob/main/docs/es/QUICK_START_GUIDE.md)** - cinco pasos hacia una app funcional
 - **[Guía de migración](https://github.com/yoltra/yoltra/blob/main/docs/es/MIGRATION_GUIDE.md)** - si vienes de Redux, Zustand o Jotai
+- **[Actualizar a 0.10.0](https://github.com/yoltra/yoltra/blob/main/docs/es/UPGRADE_0.10.md)** - qué cambió, cómo lo notarías, y qué hacer
 - **[Actualizar a 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/es/UPGRADE_0.8.md)** - qué cambió, cómo lo notarías, y qué hacer
 - **[Actualizar @yoltra/ds a 0.4.0](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.es.md#migrar-desde-03x)** - 38 tokens renombrados, el codemod que viene en el paquete, y un tamaño por defecto más compacto
 - **[Guía de decoración](https://github.com/yoltra/yoltra/blob/main/docs/es/DECORATION_GUIDE.md)** - agregar una slice, middleware o efecto al store de alguien más, con los tipos

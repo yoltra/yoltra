@@ -1032,6 +1032,8 @@ stops a runaway from hanging the tab.
   React hooks and Suspense
 - **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**:
   Five steps to a working app
+- **[Upgrading to 0.10.0](https://github.com/yoltra/yoltra/blob/main/docs/en/UPGRADE_0.10.md)**:
+  A matcher that could never match now throws, and four smaller fixes
 - **[Upgrading to 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/en/UPGRADE_0.8.md)**:
   Five behaviour changes, and one hazard if you roll back
 - **[Decoration Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/DECORATION_GUIDE.md)**:

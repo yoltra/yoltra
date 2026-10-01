@@ -4,8 +4,8 @@
 
 > 👉 English &nbsp;|&nbsp; [🇲🇽 Español](../../es/design/event-queue-architecture.md)
 
-**Applies to:** `@yoltra/core` 0.9.0
-**Last Updated:** September 2026
+**Applies to:** `@yoltra/core` 0.10.0
+**Last Updated:** October 2026
 **Status:** Stable
 
 ## Overview

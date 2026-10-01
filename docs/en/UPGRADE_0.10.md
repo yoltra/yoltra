@@ -4,8 +4,12 @@
 
 > 👉 🇺🇸 English Version&nbsp; | &nbsp;[ 🇲🇽 Versión en Español](../es/UPGRADE_0.10.md)
 
-What changed, how you would notice, and what to do. Pre-1.0, so this is a MINOR bump by
-[the repository's policy](../../CONTRIBUTING.md).
+One change can surface at startup: a reducer or an effect with a matcher that could never match
+now throws when it is registered. Read that section first. The rest is a warning that now names
+its store, two type fixes, and one new option on `store.call()`. Most applications need no code
+changes.
+
+Pre-1.0, so this is a MINOR bump by [the repository's policy](../../CONTRIBUTING.md).
 
 ---
 

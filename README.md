@@ -297,6 +297,7 @@ pulls in a Node-only WebSocket, and vice versa.
 - **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**: 3 steps to a working app
 - **[Migration Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/MIGRATION_GUIDE.md)**: coming from Redux, Zustand, or Jotai
 - **[Request & Reply Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/REQUEST_REPLY_GUIDE.md)**: `store.call()`: correlation without ids, streaming progress with real backpressure
+- **[Upgrading to 0.10.0](https://github.com/yoltra/yoltra/blob/main/docs/en/UPGRADE_0.10.md)**: what changed, how you would notice, and what to do
 - **[Upgrading to 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/en/UPGRADE_0.8.md)**: what changed, how you would notice, and what to do
 - **[Upgrading @yoltra/ds to 0.4.0](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md#upgrading-from-03x)**: 38 renamed tokens, the codemod that ships in the package, and a denser default size
 - **[Decoration Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/DECORATION_GUIDE.md)**: adding a slice, middleware or effect to somebody else's store, with the types

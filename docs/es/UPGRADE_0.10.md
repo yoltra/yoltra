@@ -4,8 +4,12 @@
 
 > 👉 🇲🇽 Versión en Español&nbsp; | &nbsp;[ 🇺🇸 English Version](../en/UPGRADE_0.10.md)
 
-Qué cambió, cómo lo notarías, y qué hacer. Antes de 1.0, así que es un incremento MINOR según
-[la política del repositorio](../CONTRIBUTING.md).
+Un cambio puede aparecer al arrancar: un reducer o un efecto con un matcher que nunca podría
+coincidir ahora lanza al registrarse. Lee esa sección primero. Lo demás es un aviso que ahora nombra
+su store, dos arreglos de tipos y una opción nueva en `store.call()`. La mayoría de las aplicaciones
+no necesitan cambiar código.
+
+Antes de 1.0, así que es un incremento MINOR según [la política del repositorio](../CONTRIBUTING.md).
 
 ---
 

@@ -1053,6 +1053,8 @@ comportamiento por defecto que impide que un desbocado cuelgue la pestaña.
   Hooks de React y Suspense
 - **[Guia de Inicio Rápido](https://github.com/yoltra/yoltra/blob/main/docs/es/QUICK_START_GUIDE.md)**:
   Cinco pasos hacia una app funcional
+- **[Actualizar a 0.10.0](https://github.com/yoltra/yoltra/blob/main/docs/es/UPGRADE_0.10.md)**:
+  Un matcher que nunca podría coincidir ahora lanza, y cuatro arreglos menores
 - **[Actualizar a 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/es/UPGRADE_0.8.md)**:
   Cinco cambios de comportamiento, y un riesgo si haces rollback
 - **[Guía de Decoración](https://github.com/yoltra/yoltra/blob/main/docs/es/DECORATION_GUIDE.md)**:
