@@ -84,5 +84,10 @@ what a middleware handler receives, instead of `never`.
 **`ExactWhen<EM>`**, the `When` forms a reducer or an effect accepts (`When` without
 `channelPattern`). Use it to type a helper that builds reducer or effect specs.
 
+**`correlation` on `store.call()`.** `"either"` (the default, unchanged), `"causal"` or `"id"`. Use
+`"id"` when a responder's protocol carries its own request id and keeps several requests in flight
+on one channel: there, the parent link can point at the wrong request. See the
+[request and reply guide](./REQUEST_REPLY_GUIDE.md).
+
 **`ReducerReplacement<R, S, EM>`**, the argument `replaceReducers` takes, for typing an HMR handler
 that builds the map before calling it.

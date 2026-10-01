@@ -2950,7 +2950,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * The match tests the **immediate** parent, not descent: a reply emitted a further hop down a
    * cascade carries the intermediate event's id and will not be seen. A responder that cannot
    * reply directly — because it answers later, on another turn, or across a transport — echoes
-   * {@link CallOptions.correlationId} instead, which widens the match rather than replacing it.
+   * {@link CallOptions.correlationId} instead, which widens the match by default and replaces it
+   * under `correlation: "id"` (see {@link CallOptions.correlation}).
    *
    * **The reply carries its own discriminant.** A call resolves to the *event*, not the payload,
    * because a caller often cannot know which kind of reply it will get:

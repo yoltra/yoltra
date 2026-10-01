@@ -86,5 +86,10 @@ que es lo que recibe un handler de middleware, en lugar de `never`.
 **`ExactWhen<EM>`**, las formas de `When` que aceptan un reducer o un efecto (`When` sin
 `channelPattern`). Úsalo para tipar un helper que construye specs de reducers o efectos.
 
+**`correlation` en `store.call()`.** `"either"` (por defecto, sin cambios), `"causal"` o `"id"`.
+Usa `"id"` cuando el protocolo de un `Quien Responde` lleva su propio id de petición y tiene varias
+peticiones en curso en un canal: ahí, el vínculo con el padre puede apuntar a la petición
+equivocada. Consulta la [guía de Petición y Respuesta](./REQUEST_REPLY_GUIDE.md).
+
 **`ReducerReplacement<R, S, EM>`**, el argumento que toma `replaceReducers`, para tipar un handler
 de HMR que construye el mapa antes de llamarlo.

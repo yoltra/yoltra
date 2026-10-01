@@ -53,6 +53,7 @@
 
 ## Type Aliases
 
+- [CallCorrelation](type-aliases/CallCorrelation.md)
 - [DecoratableStore](type-aliases/DecoratableStore.md)
 - [Decorated](type-aliases/Decorated.md)
 - [DeepReadonly](type-aliases/DeepReadonly.md)

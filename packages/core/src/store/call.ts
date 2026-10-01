@@ -24,6 +24,24 @@ export type ReplySpec<EM extends EventMapBase> =
   | readonly [channel: keyof EM & string, types: readonly string[]];
 
 /**
+ * Which link correlates a reply with its {@link StoreInstance.call | call}.
+ *
+ * @remarks
+ * - `"either"`: the parent link, or an echoed {@link CallOptions.correlationId}. The default.
+ * - `"causal"`: the parent link only. An echoed id is ignored, even when one is set.
+ * - `"id"`: the echoed `correlationId` only. Requires `correlationId`.
+ *
+ * `"id"` exists for a responder whose protocol already carries its own request id, typically one
+ * that answers across a transport and keeps several requests in flight on one channel. There, the
+ * parent link can point at the wrong request: a reply emitted while a *different* request is
+ * being handled descends from that one, and under `"either"` it would settle whichever call
+ * matched first.
+ *
+ * @public
+ */
+export type CallCorrelation = "either" | "causal" | "id";
+
+/**
  * Options for {@link StoreInstance.call}.
  *
  * @public
@@ -79,12 +97,23 @@ export interface CallOptions<EM extends EventMapBase> {
    * A reply arriving from another node, a worker, or any transport carries no parent link, so for
    * those the responder echoes an id and both sides agree on it here.
    *
-   * When set, the id is sent as `meta.correlationId` and a reply matches if it echoes that value
-   * **or** is a direct child of the request. This option *widens* the match; it does not replace
-   * the parent check, which still runs first. There is deliberately no way to match on the echoed
-   * id alone: a local responder therefore needs no changes to be compatible with a remote one.
+   * When set, the id is sent as `meta.correlationId`. By default a reply then matches if it
+   * echoes that value **or** is a direct child of the request: the id *widens* the match, so a
+   * local responder needs no changes to be compatible with a remote one. To match on the echoed
+   * id **alone**, set {@link CallOptions.correlation} to `"id"`.
    */
   readonly correlationId?: string;
+
+  /**
+   * Which link correlates a reply. See {@link CallCorrelation}.
+   *
+   * @remarks
+   * `"id"` without a {@link CallOptions.correlationId} throws when the call is made, before
+   * anything is emitted: it could never match.
+   *
+   * @default "either"
+   */
+  readonly correlation?: CallCorrelation;
 }
 
 /**

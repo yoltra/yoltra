@@ -8,7 +8,7 @@
 
 # Interface: CallOptions\<EM\>
 
-Defined in: [store/call.ts:31](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L31)
+Defined in: [store/call.ts:49](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L49)
 
 Options for [StoreInstance.call](StoreInstance.md#call).
 
@@ -20,11 +20,32 @@ Options for [StoreInstance.call](StoreInstance.md#call).
 
 ## Properties
 
+### correlation?
+
+> `readonly` `optional` **correlation**: [`CallCorrelation`](../type-aliases/CallCorrelation.md)
+
+Defined in: [store/call.ts:116](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L116)
+
+Which link correlates a reply. See [CallCorrelation](../type-aliases/CallCorrelation.md).
+
+#### Remarks
+
+`"id"` without a [CallOptions.correlationId](#correlationid) throws when the call is made, before
+anything is emitted: it could never match.
+
+#### Default
+
+```ts
+"either"
+```
+
+***
+
 ### correlationId?
 
 > `readonly` `optional` **correlationId**: `string`
 
-Defined in: [store/call.ts:87](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L87)
+Defined in: [store/call.ts:105](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L105)
 
 Correlate on this id **in addition to** the parent link.
 
@@ -38,10 +59,10 @@ holds in one process and only for a **direct** reply — see [StoreInstance.call
 A reply arriving from another node, a worker, or any transport carries no parent link, so for
 those the responder echoes an id and both sides agree on it here.
 
-When set, the id is sent as `meta.correlationId` and a reply matches if it echoes that value
-**or** is a direct child of the request. This option *widens* the match; it does not replace
-the parent check, which still runs first. There is deliberately no way to match on the echoed
-id alone: a local responder therefore needs no changes to be compatible with a remote one.
+When set, the id is sent as `meta.correlationId`. By default a reply then matches if it
+echoes that value **or** is a direct child of the request: the id *widens* the match, so a
+local responder needs no changes to be compatible with a remote one. To match on the echoed
+id **alone**, set [CallOptions.correlation](#correlation) to `"id"`.
 
 ***
 
@@ -49,7 +70,7 @@ id alone: a local responder therefore needs no changes to be compatible with a r
 
 > `readonly` `optional` **highWaterMark**: `number`
 
-Defined in: [store/call.ts:68](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L68)
+Defined in: [store/call.ts:86](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L86)
 
 How many progress events may buffer before the producer is made to wait.
 
@@ -70,7 +91,7 @@ backpressure means here and when it engages.
 
 > `readonly` **reply**: [`ReplySpec`](../type-aliases/ReplySpec.md)\<`EM`\>
 
-Defined in: [store/call.ts:33](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L33)
+Defined in: [store/call.ts:51](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L51)
 
 Which reply events end the call. See [ReplySpec](../type-aliases/ReplySpec.md).
 
@@ -80,7 +101,7 @@ Which reply events end the call. See [ReplySpec](../type-aliases/ReplySpec.md).
 
 > `readonly` `optional` **signal**: `AbortSignal`
 
-Defined in: [store/call.ts:57](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L57)
+Defined in: [store/call.ts:75](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L75)
 
 Aborts the call. The returned promise rejects and the iterator ends.
 
@@ -95,7 +116,7 @@ user-cancelled action, or a component unmounting.
 
 > `readonly` `optional` **timeoutMs**: `number`
 
-Defined in: [store/call.ts:48](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L48)
+Defined in: [store/call.ts:66](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L66)
 
 How long the call may sit **idle** before it gives up, in milliseconds.
 

@@ -567,8 +567,9 @@ La superficie exportada es `ReplySpec`, `CallOptions`, `CallHandle`, `CallTimeou
 `CallAbortedError`. Dos cosas que esta sección no cubre:
 
 - **`correlationId`**, para un `Quien Responde` que no puede contestar directamente — porque lo hace
-  en un turno posterior, o a través de un worker o de la red. Amplía la coincidencia para incluir un
-  id devuelto; la comprobación del padre se sigue ejecutando primero.
+  en un turno posterior, o a través de un worker o de la red. Por defecto amplía la coincidencia para
+  incluir un id devuelto y la comprobación del padre se sigue ejecutando primero; `correlation: "id"`
+  correlaciona solo por el id devuelto.
 - **Cómo probar una llamada**, y el resto del detalle, en la
   [guía de Petición y Respuesta](https://github.com/yoltra/yoltra/blob/main/docs/es/REQUEST_REPLY_GUIDE.md).
 
@@ -1020,9 +1021,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 12.2 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 13.4 KB | 16 KB |
-| todo | 14.9 KB | 18 KB |
+| `{ createStore }` | 12.3 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 13.5 KB | 16 KB |
+| todo | 15.0 KB | 18 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define

@@ -174,7 +174,7 @@ registries and returns a plain-object summary matching the
 
 > **call**\<`C`, `T`\>(`channel`, `type`, `payload`, `opts`): [`CallHandle`](../interfaces/CallHandle.md)\<[`EventUnion`](../type-aliases/EventUnion.md)\<`EM`\>, [`EventUnion`](../type-aliases/EventUnion.md)\<`EM`\>\>
 
-Defined in: [store/Store.ts:3002](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3002)
+Defined in: [store/Store.ts:3003](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3003)
 
 Sends a request and waits for the reply, correlating the two automatically.
 
@@ -249,7 +249,8 @@ store.registerEffect({
 The match tests the **immediate** parent, not descent: a reply emitted a further hop down a
 cascade carries the intermediate event's id and will not be seen. A responder that cannot
 reply directly — because it answers later, on another turn, or across a transport — echoes
-[CallOptions.correlationId](../interfaces/CallOptions.md#correlationid) instead, which widens the match rather than replacing it.
+[CallOptions.correlationId](../interfaces/CallOptions.md#correlationid) instead, which widens the match by default and replaces it
+under `correlation: "id"` (see [CallOptions.correlation](../interfaces/CallOptions.md#correlation)).
 
 **The reply carries its own discriminant.** A call resolves to the *event*, not the payload,
 because a caller often cannot know which kind of reply it will get:
@@ -517,7 +518,7 @@ console.log(state.counter.value);
 
 > **hotReplace**(`partial`): `void`
 
-Defined in: [store/Store.ts:3453](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3453)
+Defined in: [store/Store.ts:3454](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3454)
 
 Convenience API to replace **any subset** of store parts (HMR patterns).
 
@@ -596,7 +597,7 @@ Registers an instrumentation observer. See [StoreInstance.instrument](../interfa
 
 > **onEffect**\<`C`, `T`\>(`channel`, `type`, `handler`): () => `void`
 
-Defined in: [store/Store.ts:3144](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3144)
+Defined in: [store/Store.ts:3145](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3145)
 
 Convenience helper to register an **effect** filtered by a single `(channel, type)` pair.
 
@@ -826,7 +827,7 @@ off();
 
 > **registerEffect**(`spec`): `any`
 
-Defined in: [store/Store.ts:3025](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3025)
+Defined in: [store/Store.ts:3026](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3026)
 
 Register a post-reducer effect (sees final state). Returns an unsubscribe.
 
@@ -998,7 +999,7 @@ The name `registerSlice` is what the guide uses; `registerReducer` keeps its bro
 
 > **replaceEffects**(`next`, `opts`): `void`
 
-Defined in: [store/Store.ts:3241](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3241)
+Defined in: [store/Store.ts:3242](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3242)
 
 Replaces all registered **effects** (HMR-friendly).
 
@@ -1040,7 +1041,7 @@ if (import.meta.hot) {
 
 > **replaceMiddleware**(`next`, `opts`): `void`
 
-Defined in: [store/Store.ts:3186](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3186)
+Defined in: [store/Store.ts:3187](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3187)
 
 Replaces the **entire** middleware pipeline (HMR-friendly).
 
@@ -1082,7 +1083,7 @@ if (import.meta.hot) {
 
 > **replaceReducers**(`next`, `opts`): `void`
 
-Defined in: [store/Store.ts:3321](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3321)
+Defined in: [store/Store.ts:3322](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3322)
 
 Replaces the entire **reducer set** (HMR-friendly).
 
@@ -1271,7 +1272,7 @@ the documented rule is that a disposer stays library-private.
 
 > `static` **buildAncestorPaths**(`path`): `string`[]
 
-Defined in: [store/Store.ts:3761](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3761)
+Defined in: [store/Store.ts:3762](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3762)
 
 Builds ancestor paths for a dotted path.
 

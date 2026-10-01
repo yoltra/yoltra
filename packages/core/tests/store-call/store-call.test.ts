@@ -93,6 +93,107 @@ describe("correlation", () => {
   });
 });
 
+describe("correlation modes", () => {
+  /**
+   * The parent link and the echoed id can disagree. A responder whose protocol carries its own
+   * request id may answer request N from whatever turn is current, which may be request N+1's:
+   * that reply descends from the wrong request. Under the default it matches by parentage and
+   * settles the wrong call; `correlation: "id"` matches on the echoed id alone.
+   */
+  function misroutingResponder(store: ReturnType<typeof bus>) {
+    store.registerEffect({
+      when: { keys: [["rpc", "ask"]] },
+      effect: async (_event, _get, emit) => {
+        // Emitted through the handed `emit`, so it descends from this request, but it answers
+        // a different one.
+        await emit("rpc", "answer", { text: "wrong" }, { meta: { correlationId: "someone-else" } });
+      },
+    });
+    store.onEvent("rpc", "ask", (event) => {
+      const id = (event.meta as { correlationId?: string } | undefined)?.correlationId;
+      setTimeout(() => {
+        void store.emit("rpc", "answer", { text: "right" }, { meta: { correlationId: id } });
+      }, 0);
+    });
+  }
+
+  it("settles on the first related reply by default, which may be the wrong one", async () => {
+    const store = bus();
+    misroutingResponder(store);
+    const res = await store.call(
+      "rpc",
+      "ask",
+      { q: "?" },
+      { reply: ["rpc", "answer"], correlationId: "mine" },
+    );
+    expect((res.payload as { text: string }).text).toBe("wrong");
+  });
+
+  it('matches on the echoed id alone under correlation: "id"', async () => {
+    const store = bus();
+    misroutingResponder(store);
+    const res = await store.call(
+      "rpc",
+      "ask",
+      { q: "?" },
+      { reply: ["rpc", "answer"], correlationId: "mine", correlation: "id" },
+    );
+    expect((res.payload as { text: string }).text).toBe("right");
+  });
+
+  it('ignores an echoed id under correlation: "causal"', async () => {
+    const store = bus();
+    store.onEvent("rpc", "ask", (event) => {
+      const id = (event.meta as { correlationId: string }).correlationId;
+      setTimeout(() => {
+        void store.emit("rpc", "answer", { text: "from afar" }, { meta: { correlationId: id } });
+      }, 0);
+    });
+    await expect(
+      store.call(
+        "rpc",
+        "ask",
+        { q: "?" },
+        { reply: ["rpc", "answer"], correlationId: "mine", correlation: "causal", timeoutMs: 30 },
+      ),
+    ).rejects.toBeInstanceOf(CallTimeoutError);
+  });
+
+  it('still matches a direct reply under correlation: "causal"', async () => {
+    const store = bus();
+    store.registerEffect({
+      when: { keys: [["rpc", "ask"]] },
+      effect: async (_event, _get, emit) => {
+        await emit("rpc", "answer", { text: "direct" });
+      },
+    });
+    const res = await store.call(
+      "rpc",
+      "ask",
+      { q: "?" },
+      { reply: ["rpc", "answer"], correlation: "causal" },
+    );
+    expect((res.payload as { text: string }).text).toBe("direct");
+  });
+
+  it('refuses correlation: "id" without an id, before anything is emitted', () => {
+    const store = bus();
+    const asked = vi.fn();
+    store.onEvent("rpc", "ask", asked);
+    expect(() =>
+      store.call("rpc", "ask", { q: "?" }, { reply: ["rpc", "answer"], correlation: "id" }),
+    ).toThrow(/correlation "id" needs a correlationId/);
+    expect(asked).not.toHaveBeenCalled();
+  });
+
+  it("refuses an unknown correlation mode", () => {
+    const store = bus();
+    expect(() =>
+      store.call("rpc", "ask", { q: "?" }, { reply: ["rpc", "answer"], correlation: "both" as never }),
+    ).toThrow(/correlation must be "either", "causal" or "id", got "both"/);
+  });
+});
+
 describe("terminal types", () => {
   it("resolves on any listed terminal, carrying its own discriminant", async () => {
     const store = bus();

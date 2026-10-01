@@ -235,10 +235,27 @@ const answer = await store.call(
 await emit("rpc", "answer", result, { meta: { correlationId: id } });
 ```
 
-**It widens the match rather than replacing it.** The parent check still runs first, so a local
-responder that knows nothing about the id keeps working — which is what lets the same call site
-serve a local and a remote responder without branching. There is deliberately no way to match on
-the echoed id alone.
+**By default it widens the match rather than replacing it.** The parent check still runs first, so
+a local responder that knows nothing about the id keeps working, which is what lets the same call
+site serve a local and a remote responder without branching.
+
+**When the parent link can point at the wrong request, match on the id alone.** A responder whose
+protocol carries its own request id may keep several requests in flight on one channel and answer
+one of them while handling another. That reply descends from the wrong request, and under the
+default it settles whichever call it descends from. `correlation: "id"` matches on the echoed id
+only:
+
+```ts
+const res = await store.call(
+  "rpc",
+  "ask",
+  { q },
+  { reply: ["rpc", "answer"], correlationId: id, correlation: "id" },
+);
+```
+
+`correlation` is `"either"` by default; `"causal"` ignores the echoed id; `"id"` without a
+`correlationId` throws when the call is made, because it could never match.
 
 ---
 

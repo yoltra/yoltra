@@ -23,6 +23,7 @@ import type {
 import {
   CallAbortedError,
   CallTimeoutError,
+  type CallCorrelation,
   type CallHandle,
   type CallOptions,
   type ReplySpec,
@@ -65,6 +66,15 @@ export function performCall<
   payload: EM[C][T],
   opts: CallOptions<EM>,
 ): CallHandle<EventUnion<EM>, EventUnion<EM>> {
+  const correlation: CallCorrelation = opts.correlation ?? "either";
+  // Before anything is registered or emitted: either mistake would leave a call that can only
+  // time out, thirty seconds later and far from the line that caused it.
+  if (correlation !== "either" && correlation !== "causal" && correlation !== "id") {
+    throw new Error(`[yoltra] call: correlation must be "either", "causal" or "id", got ${JSON.stringify(correlation)}`);
+  }
+  if (correlation === "id" && opts.correlationId === undefined) {
+    throw new Error(`[yoltra] call: correlation "id" needs a correlationId to match on`);
+  }
   const { channel: replyChannel, isTerminal } = parseReply<EM>(opts.reply);
   const idleMs = opts.timeoutMs ?? DEFAULT_CALL_TIMEOUT_MS;
   const queue = new CallQueue<EventUnion<EM>>(opts.highWaterMark ?? DEFAULT_CALL_WATERMARK);
@@ -125,7 +135,7 @@ export function performCall<
     when: { channel: replyChannel as keyof EM & string },
     effect: async (event) => {
       if (settled) return;
-      if (!isReplyTo<EM>(event, requestId, opts.correlationId)) return;
+      if (!isReplyTo<EM>(event, requestId, opts.correlationId, correlation)) return;
 
       arm();
 
@@ -214,10 +224,10 @@ function parseReply<EM extends EventMapBase>(
  * Whether `event` is a reply to the request identified by `requestId` / `correlationId`.
  *
  * @remarks
- * The parent link first: the store stamps `parentId` on anything emitted while handling an event,
- * so a responder that answers through the `emit` it was given is correlated without doing
- * anything. The explicit id is the fallback for replies that crossed a boundary the parent link
- * cannot.
+ * Under `"either"`, the parent link first: the store stamps `parentId` on anything emitted while
+ * handling an event, so a responder that answers through the `emit` it was given is correlated
+ * without doing anything. The explicit id is the fallback for replies that crossed a boundary the
+ * parent link cannot. `"causal"` and `"id"` each use one link and ignore the other.
  *
  * Note this tests the **immediate** parent, not descent. A reply emitted a further hop down a
  * cascade carries the intermediate event's id as its `parentId` and does not match; such a
@@ -229,8 +239,9 @@ function isReplyTo<EM extends EventMapBase>(
   event: EventUnion<EM>,
   requestId: string,
   correlationId: string | undefined,
+  correlation: CallCorrelation,
 ): boolean {
-  if (event.parentId === requestId) return true;
-  if (correlationId === undefined) return false;
+  if (correlation !== "id" && event.parentId === requestId) return true;
+  if (correlation === "causal" || correlationId === undefined) return false;
   return (event.meta as { correlationId?: unknown } | undefined)?.correlationId === correlationId;
 }

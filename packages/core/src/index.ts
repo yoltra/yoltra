@@ -12,7 +12,7 @@ export { Reducer } from "./reducer/Reducer";
 export { Store, createStore, typedEvents } from "./store/Store";
 export { Rejected, isRejected } from "./store/rejection";
 export { CallAbortedError, CallTimeoutError } from "./store/call";
-export type { CallHandle, CallOptions, ReplySpec } from "./store/call";
+export type { CallCorrelation, CallHandle, CallOptions, ReplySpec } from "./store/call";
 export type { Rejection } from "./store/rejection";
 export { detectChangedProps } from "./utils/detectChangedProps";
 export { freezeState } from "./utils/immutability";

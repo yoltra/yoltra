@@ -8,7 +8,7 @@
 
 # Class: CallAbortedError
 
-Defined in: [store/call.ts:161](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L161)
+Defined in: [store/call.ts:190](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L190)
 
 Raised when a call is cancelled, or its [CallOptions.signal](../interfaces/CallOptions.md#signal) aborts.
 
@@ -22,7 +22,7 @@ Raised when a call is cancelled, or its [CallOptions.signal](../interfaces/CallO
 
 > **new CallAbortedError**(`reason`): `CallAbortedError`
 
-Defined in: [store/call.ts:162](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L162)
+Defined in: [store/call.ts:191](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L191)
 
 #### Parameters
 

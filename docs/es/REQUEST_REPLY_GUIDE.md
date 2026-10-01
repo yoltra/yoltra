@@ -238,10 +238,28 @@ const answer = await store.call(
 await emit("rpc", "answer", result, { meta: { correlationId: id } });
 ```
 
-**Amplía la coincidencia, no la reemplaza.** La comprobación del padre se sigue ejecutando primero,
-así que un `Quien Responde` local que no sabe nada del id sigue funcionando — que es lo que permite
-que el mismo sitio de llamada sirva a un respondedor local y a uno remoto sin ramificar. A
-propósito no hay forma de correlacionar solo por el id devuelto.
+**Por defecto amplía la coincidencia, no la reemplaza.** La comprobación del padre se sigue
+ejecutando primero, así que un `Quien Responde` local que no sabe nada del id sigue funcionando, que
+es lo que permite que el mismo sitio de llamada sirva a un respondedor local y a uno remoto sin
+ramificar.
+
+**Cuando el vínculo con el padre puede apuntar a la petición equivocada, correlaciona solo por el
+id.** Un `Quien Responde` cuyo protocolo lleva su propio id de petición puede tener varias peticiones
+en curso en un canal y contestar una mientras atiende otra. Esa respuesta desciende de la petición
+equivocada, y con el comportamiento por defecto resuelve la llamada de la que desciende.
+`correlation: "id"` correlaciona solo por el id devuelto:
+
+```ts
+const res = await store.call(
+  "rpc",
+  "ask",
+  { q },
+  { reply: ["rpc", "answer"], correlationId: id, correlation: "id" },
+);
+```
+
+`correlation` es `"either"` por defecto; `"causal"` ignora el id devuelto; `"id"` sin un
+`correlationId` lanza al hacer la llamada, porque nunca podría coincidir.
 
 ---
 
