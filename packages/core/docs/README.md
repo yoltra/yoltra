@@ -85,6 +85,7 @@
 - [Prettify](type-aliases/Prettify.md)
 - [Primitive](type-aliases/Primitive.md)
 - [ReducerFunction](type-aliases/ReducerFunction.md)
+- [ReducerReplacement](type-aliases/ReducerReplacement.md)
 - [RegistrationObserver](type-aliases/RegistrationObserver.md)
 - [ReplaceScope](type-aliases/ReplaceScope.md)
 - [ReplySpec](type-aliases/ReplySpec.md)

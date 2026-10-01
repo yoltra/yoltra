@@ -12,7 +12,7 @@
 
 > **createStore**\<`S`, `EM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `S` & `string`, `S`, `EM`\>
 
-Defined in: [store/Store.ts:3806](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3806)
+Defined in: [store/Store.ts:3807](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3807)
 
 Creates a store with explicit State and EventMap types.
 
@@ -137,7 +137,7 @@ const store = createStore<AppState, AppEM>({
 
 > **createStore**\<`RM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, `StateFromReducers`\<`RM`\>, `EMFromReducersStrict`\<`RM`\>\>
 
-Defined in: [store/Store.ts:3854](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3854)
+Defined in: [store/Store.ts:3855](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3855)
 
 Creates a store with types inferred from the reducers map.
 

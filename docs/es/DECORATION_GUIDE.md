@@ -275,7 +275,7 @@ store.getState().transfers;                    // sigue ahí
 No lo declaras tú ni lo declara la librería. La procedencia se registra internamente, porque
 la corrección no debe depender de que alguien recuerde pasar una cadena.
 
-De ahí se siguen tres detalles:
+De ahí se siguen cuatro detalles:
 
 - **`{ scope: "all" }`** restaura exactamente el comportamiento previo a 0.8.0, para un arnés
   de pruebas que reinicia un store entre casos. `hotReplace` lo reenvía a los tres.
@@ -284,6 +284,9 @@ De ahí se siguen tres detalles:
   apropiación silenciosa dejaría a la librería con un disposer de algo que ya no es suyo.
 - **Una línea de debug** dice qué se preservó, en desarrollo, para que "por qué sigue
   disparándose ese efecto tras la recarga" tenga respuesta.
+- **Los tipos coinciden.** Desde 0.10.0 `replaceReducers` y `hotReplace({ reducer })` toman un
+  `ReducerReplacement`: cada slice es opcional y se tipa con el estado de su propia slice. Omitir
+  la slice de la librería compila, que es la llamada que espera el runtime.
 
 ---
 

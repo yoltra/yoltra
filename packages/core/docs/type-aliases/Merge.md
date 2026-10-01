@@ -10,7 +10,7 @@
 
 > **Merge**\<`A`, `B`\> = \[keyof `B`\] *extends* \[`never`\] ? `A` : [`Prettify`](Prettify.md)\<`A` & `B`\>
 
-Defined in: [types.ts:2035](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2035)
+Defined in: [types.ts:2073](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2073)
 
 Merges `B` into `A`, flattening the result. An empty `B` leaves `A` untouched, so a
 decoration that adds no events costs nothing at the type level.

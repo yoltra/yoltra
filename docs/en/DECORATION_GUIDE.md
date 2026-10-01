@@ -270,7 +270,7 @@ store.getState().transfers;                    // still here
 You do not declare this and neither does the library. Provenance is recorded internally,
 because correctness must not depend on anyone remembering to pass a string.
 
-Three details follow from it:
+Four details follow from it:
 
 - **`{ scope: "all" }`** restores the pre-0.8.0 behaviour exactly, for a test harness
   resetting a store between cases. `hotReplace` forwards it to all three.
@@ -279,6 +279,9 @@ Three details follow from it:
   takeover would leave the library holding a disposer for something no longer its own.
 - **A debug line** says what was preserved, in development, so "why is that effect still
   firing after a reload" has an answer.
+- **The types agree.** Since 0.10.0 `replaceReducers` and `hotReplace({ reducer })` take a
+  `ReducerReplacement`: every slice optional, each typed with its own slice's state. Leaving out
+  the library's slice typechecks, which is the call the runtime expects.
 
 ---
 

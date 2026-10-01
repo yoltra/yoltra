@@ -87,6 +87,7 @@ export type {
   // Event targeting (When matcher)
   When,
   ExactWhen,
+  ReducerReplacement,
   EventFromWhen,
   // Metadata for debugging
   EventConsumerType,

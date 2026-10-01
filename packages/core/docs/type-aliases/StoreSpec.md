@@ -439,7 +439,7 @@ A throwing subscriber never stops the others, with or without this hook.
 
 ### reducer
 
-> **reducer**: `Record`\<`R`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
+> **reducer**: `{ [K in R]: ReducerSpec<S[K], EM> }`
 
 Defined in: [types.ts:543](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L543)
 

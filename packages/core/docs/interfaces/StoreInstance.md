@@ -201,7 +201,7 @@ Read the full state (already readonly).
 
 > **hotReplace**(`partial`): `void`
 
-Defined in: [types.ts:1050](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1050)
+Defined in: [types.ts:1052](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1052)
 
 Convenience API to replace any subset of store parts (HMR patterns).
 
@@ -225,7 +225,7 @@ Partial replacement set.
 
 ###### reducer?
 
-`Record`\<`R`, [`ReducerSpec`](ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
+[`ReducerReplacement`](../type-aliases/ReducerReplacement.md)\<`R`, `S`, `EM`\>
 
 ###### scope?
 
@@ -241,7 +241,7 @@ Partial replacement set.
 
 > **instrument**(`observer`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: [types.ts:1121](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1121)
+Defined in: [types.ts:1123](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1123)
 
 Registers an instrumentation observer, called once per emitted event
 (committed or vetoed) after the synchronous reduce phase, with the exact
@@ -586,7 +586,7 @@ exactly as the `with*` family already did.
 
 > **registerSlice**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
 
-Defined in: [types.ts:2271](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2271)
+Defined in: [types.ts:2309](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2309)
 
 Mounts a slice and hands back both the widened store and a disposer.
 
@@ -690,7 +690,7 @@ New middleware array.
 
 > **replaceReducers**(`next`, `opts?`): `void`
 
-Defined in: [types.ts:1040](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1040)
+Defined in: [types.ts:1042](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1042)
 
 Replaces the entire reducer set (HMR-friendly).
 
@@ -698,9 +698,11 @@ Replaces the entire reducer set (HMR-friendly).
 
 ##### next
 
-`Record`\<`R`, [`ReducerSpec`](ReducerSpec.md)\<`S`\[`R`\], `EM`\>\>
+[`ReducerReplacement`](../type-aliases/ReducerReplacement.md)\<`R`, `S`, `EM`\>
 
-Map of slice specs keyed by slice name.
+Slice specs keyed by slice name, each typed with its own slice's state. Every
+  key is optional: an omitted slice this call owns is removed, and an omitted slice mounted
+  at runtime is kept. See [ReducerReplacement](../type-aliases/ReducerReplacement.md).
 
 ##### opts?
 
@@ -744,7 +746,7 @@ Coarse subscription: runs after any state change (once per committed event).
 
 > **withEffect**\<`Spec`\>(`spec`): [`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`Spec`\>\>\>
 
-Defined in: [types.ts:2296](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2296)
+Defined in: [types.ts:2334](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2334)
 
 Registers an effect and returns the store widened by whatever event map it declares.
 
@@ -774,7 +776,7 @@ Registers an effect and returns the store widened by whatever event map it decla
 
 > **withMiddleware**\<`M`\>(`mw`): [`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`M`\>\>\>
 
-Defined in: [types.ts:2291](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2291)
+Defined in: [types.ts:2329](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2329)
 
 Registers middleware and returns the store widened by whatever event map it declares.
 
@@ -808,7 +810,7 @@ therefore contributes `{}`.
 
 > **withSlice**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`WidenedSlice`](../type-aliases/WidenedSlice.md)\<`R`, `S`, `EM`, `N`, `Spec`\>
 
-Defined in: [types.ts:2278](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2278)
+Defined in: [types.ts:2316](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2316)
 
 Mounts a slice and returns the widened store, for chaining.
 

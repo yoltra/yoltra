@@ -62,7 +62,27 @@ change is needed; you may see a warning that was previously suppressed, or lose 
 
 ---
 
+## `replaceReducers` and `hotReplace` type each slice on its own
+
+**You will notice if:** you call `replaceReducers` or `hotReplace({ reducer })` on a store with two
+or more slices, or on a store a library decorated.
+
+The argument used to require every slice name and type each reducer with the union of every
+slice's state. An annotated reducer failed to compile on any store with two slices, a reducer for
+one slice could return another's state, and on a decorated store the only call that compiled named
+the library's slice, which the runtime refuses. It is now `ReducerReplacement`: every key optional,
+each typed with its own slice's state, which is what the runtime has done since 0.8.0. Code that
+compiled before still compiles unless a reducer returned the wrong slice's state.
+
+`EventFromWhen` also gains its `channelPattern` arm: it resolves to the whole event union, which is
+what a middleware handler receives, instead of `never`.
+
+---
+
 ## Additions you may want
 
 **`ExactWhen<EM>`**, the `When` forms a reducer or an effect accepts (`When` without
 `channelPattern`). Use it to type a helper that builds reducer or effect specs.
+
+**`ReducerReplacement<R, S, EM>`**, the argument `replaceReducers` takes, for typing an HMR handler
+that builds the map before calling it.

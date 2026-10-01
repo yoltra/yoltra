@@ -11,13 +11,17 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import { createStore } from "../../src/store/Store";
+import { defineSlice } from "../../src/types";
 import type {
   DeepReadonly,
   Dotted,
   EffectSpec,
+  EventFromWhen,
+  EventUnion,
   ExactWhen,
   MiddlewareSpec,
   PathValue,
+  ReducerReplacement,
   ReducerSpec,
   When,
 } from "../../src/types";
@@ -249,5 +253,75 @@ describe("Reducers and effects take exact matchers only", () => {
     expectTypeOf<ExactWhen<EM>>().toEqualTypeOf<Exclude<When<EM>, { channelPattern: string }>>();
     expectTypeOf<{ channel: "plan" }>().toMatchTypeOf<ExactWhen<EM>>();
     expectTypeOf<{ channelPattern: string }>().not.toMatchTypeOf<ExactWhen<EM>>();
+  });
+});
+
+describe("replaceReducers and hotReplace type each slice on its own", () => {
+  /**
+   * The argument was `Record<R, ReducerSpec<S[R], EM>>`: every slice required, each typed with the
+   * union of all slice states. An annotated reducer failed on any store with two slices, a reducer
+   * for one slice could return another's state, and on a decorated store the only call that
+   * typechecked named the runtime slice, which the runtime then refuses.
+   */
+  type EM = { a: { inc: number }; b: { set: string } };
+  const store = createStore<{ a: number; b: string }, EM>({
+    name: "ReplaceTyping",
+    reducer: {
+      a: { state: 0, when: { keys: [["a", "inc"]] }, reducer: (s) => s },
+      b: { state: "", when: { keys: [["b", "set"]] }, reducer: (s) => s },
+    },
+  });
+
+  it("types each entry with its own slice's state", () => {
+    store.replaceReducers({
+      a: { state: 0, when: { keys: [["a", "inc"]] }, reducer: (s: number) => s + 1 },
+      b: { state: "", when: { keys: [["b", "set"]] }, reducer: (s: string) => s },
+    });
+    store.replaceReducers({
+      // @ts-expect-error a reducer for `a` cannot return `b`'s state
+      a: { state: 0, when: { keys: [["a", "inc"]] }, reducer: () => "not a number" },
+    });
+  });
+
+  it("lets every key be omitted, which the runtime handles", () => {
+    store.replaceReducers({ a: { state: 0, when: { keys: [["a", "inc"]] }, reducer: (s) => s } });
+    store.hotReplace({ reducer: {} });
+  });
+
+  it("lets a decorated store omit the slice a library mounted", () => {
+    type LibEM = { lib: { ping: null } };
+    const lib = defineSlice<LibEM>()({
+      state: { n: 0 },
+      when: { keys: [["lib", "ping"]] },
+      reducer: (s) => s,
+    });
+    const decorated = store.withSlice("lib", lib);
+    decorated.replaceReducers({
+      a: { state: 0, when: { keys: [["a", "inc"]] }, reducer: (s) => s },
+      b: { state: "", when: { keys: [["b", "set"]] }, reducer: (s) => s },
+    });
+    decorated.hotReplace({
+      reducer: { a: { state: 0, when: { keys: [["a", "inc"]] }, reducer: (s) => s } },
+    });
+  });
+
+  it("is the mapped optional form", () => {
+    expectTypeOf<ReducerReplacement<"a" | "b", { a: number; b: string }, EM>>().toEqualTypeOf<{
+      a?: ReducerSpec<number, EM>;
+      b?: ReducerSpec<string, EM>;
+    }>();
+  });
+});
+
+describe("EventFromWhen covers every form", () => {
+  type EM = { plan: { go: null }; other: { stop: number } };
+
+  it("resolves a pattern to the whole union a middleware receives, not never", () => {
+    expectTypeOf<EventFromWhen<EM, { channelPattern: string }>>().toEqualTypeOf<EventUnion<EM>>();
+    expectTypeOf<EventFromWhen<EM, { channelPattern: string }>>().not.toBeNever();
+  });
+
+  it("still narrows the exact forms", () => {
+    expectTypeOf<EventFromWhen<EM, { channel: "other" }>["payload"]>().toEqualTypeOf<number>();
   });
 });

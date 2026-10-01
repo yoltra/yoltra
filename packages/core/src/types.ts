@@ -540,7 +540,7 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * Map of slice name → reducer spec.
    * Each entry declares initial state, the reducer function, and the event targeting.
    */
-  reducer: Record<R, ReducerSpec<S[R], EM>>;
+  reducer: { [K in R]: ReducerSpec<S[K], EM> };
 
   /**
    * Middleware chain executed before reducers/effects.
@@ -1034,11 +1034,13 @@ export interface StoreInstance<
   /**
    * Replaces the entire reducer set (HMR-friendly).
    *
-   * @param next - Map of slice specs keyed by slice name.
+   * @param next - Slice specs keyed by slice name, each typed with its own slice's state. Every
+   *   key is optional: an omitted slice this call owns is removed, and an omitted slice mounted
+   *   at runtime is kept. See {@link ReducerReplacement}.
    * @param opts - `{ preserveState?: boolean }` (default `true`).
    */
   replaceReducers(
-    next: Record<R, ReducerSpec<S[R], EM>>,
+    next: ReducerReplacement<R, S, EM>,
     opts?: { preserveState?: boolean; scope?: ReplaceScope },
   ): void;
 
@@ -1048,7 +1050,7 @@ export interface StoreInstance<
    * @param partial - Partial replacement set.
    */
   hotReplace(partial: {
-    reducer?: Record<R, ReducerSpec<S[R], EM>>;
+    reducer?: ReducerReplacement<R, S, EM>;
     middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
     effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
     preserveState?: boolean;
@@ -1528,6 +1530,36 @@ export type When<EM extends EventMapBase> =
 export type ExactWhen<EM extends EventMapBase> = Exclude<When<EM>, { channelPattern: string }>;
 
 /**
+ * What `replaceReducers` and `hotReplace({ reducer })` take: slice specs keyed by slice name,
+ * each typed with **its own** slice's state, and every key optional.
+ *
+ * @remarks
+ * Optional because the runtime treats an omitted slice in two ways, both legitimate: a slice the
+ * replaced set owned is removed, and a slice mounted at runtime (`registerSlice`, `withSlice`, a
+ * decorating library) is kept along with its state. Requiring every name made the only call that
+ * typechecked on a decorated store one the runtime refuses, because naming a runtime slice
+ * without `{ scope: "all" }` throws.
+ *
+ * Per slice because a reducer for one slice must not be able to return another's state. Typing
+ * each entry with the union of every slice's state allowed exactly that, and refused an
+ * annotated reducer on any store with two slices.
+ *
+ * Naming a slice mounted at runtime still typechecks and throws: telling the two kinds apart in
+ * the type would need the store to track them separately, and the throw already says what to do.
+ *
+ * @typeParam R  - Slice names.
+ * @typeParam S  - State by slice name.
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export type ReducerReplacement<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+> = { [K in R]?: ReducerSpec<S[K], EM> };
+
+/**
  * Helper to create type-safe EventKey arrays without requiring `as const`.
  * Preserves literal tuple types for proper type correlation in handlers.
  *
@@ -1559,8 +1591,12 @@ export const eventKeys =
     keys;
 
 /**
- * Extracts the event union from a `When` matcher.
- * Used internally to narrow handler `event` parameter types based on the matcher.
+ * Extracts the event union from a `When` matcher, for typing a handler from its matcher.
+ *
+ * @remarks
+ * `{ channelPattern }` resolves to the whole {@link EventUnion}: a pattern is untyped by
+ * construction, and the whole union is exactly what a middleware handler receives, which is the
+ * only consumer a pattern can reach. It used to fall through to `never`.
  *
  * @typeParam EM - Event map.
  * @typeParam W  - When matcher type.
@@ -1585,7 +1621,9 @@ export type EventFromWhen<EM extends EventMapBase, W extends When<EM>> = W exten
         ? C extends keyof EM & string
           ? { [T in keyof EM[C] & string]: Event<EM, C, T> }[keyof EM[C] & string]
           : never
-        : never;
+        : W extends { channelPattern: string }
+          ? EventUnion<EM>
+          : never;
 
 // ============================================
 // Path Value Resolution

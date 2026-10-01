@@ -21,6 +21,7 @@ import type {
   MiddlewareInput,
   MiddlewareSpec,
   ReducersMapAny,
+  ReducerReplacement,
   ReducerSpec,
   StateFromReducers,
   StoreInstance,
@@ -3318,7 +3319,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public replaceReducers(
-    next: Record<R, ReducerSpec<S[R], EM>>,
+    next: ReducerReplacement<R, S, EM>,
     opts: { preserveState?: boolean; scope?: ReplaceScope } = {},
   ): void {
     this.inRegistrationTransaction(() => this.replaceReducersInner(next, opts));
@@ -3326,7 +3327,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
   /** @internal */
   private replaceReducersInner(
-    next: Record<R, ReducerSpec<S[R], EM>>,
+    next: ReducerReplacement<R, S, EM>,
     opts: { preserveState?: boolean; scope?: ReplaceScope } = {},
   ): void {
     const preserveState = opts.preserveState !== false; // default true
@@ -3450,7 +3451,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public hotReplace(partial: {
-    reducer?: Record<R, ReducerSpec<S[R], EM>>;
+    reducer?: ReducerReplacement<R, S, EM>;
     middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
     effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
     preserveState?: boolean;

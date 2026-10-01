@@ -10,7 +10,7 @@
 
 > **ExactWhen**\<`EM`\> = `Exclude`\<[`When`](When.md)\<`EM`\>, \{ `channelPattern`: `string`; \}\>
 
-Defined in: [types.ts:1528](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1528)
+Defined in: [types.ts:1530](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1530)
 
 The exact forms of [When](When.md): every form but `channelPattern`. What reducers and effects
 accept.
