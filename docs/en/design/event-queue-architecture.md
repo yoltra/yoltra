@@ -280,9 +280,10 @@ effects: the same logical emit reuses the key, while two genuine user actions do
 
 Dispatch, deduplication and introspection all key on `"channel::type"`, so two different pairs can
 join to one key: `("a::b", "c")` and `("a", "b::c")` both become `"a::b::c"`, and a dedup window
-would then drop one for the other. Development builds warn on such a **collision**, naming both
-pairs. A `::` on its own is not warned about, because it is how a federated peer's channel is
-namespaced.
+would then drop one for the other. Development builds warn on such a **collision**, naming the
+store and both pairs. The record is kept per store, because keys only collide inside one store's
+maps: two stores that each use one of the pairs cannot interfere and are not warned about. A `::`
+on its own is not warned about either, because it is how a federated peer's channel is namespaced.
 
 ## The `emit()` promise contract
 
@@ -566,7 +567,7 @@ what stops a cascade from becoming a hung process.
 
 | `@yoltra/core` | Date | Changes                                                                                                                                                                                                                 |
 | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0.10.0  | 2026-10 | A reducer or effect given `{ channelPattern }`, or any `when` of none of the five forms, throws at registration instead of matching nothing; `ExactWhen` names the forms reducers and effects accept |
+| 0.10.0  | 2026-10 | A reducer or effect given `{ channelPattern }`, or any `when` of none of the five forms, throws at registration instead of matching nothing; `ExactWhen` names the forms reducers and effects accept; the key-collision warning is kept per store and names it |
 | 0.9.0   | 2026-09 | `InstrumentedEvent` carries `reason` and `vetoedBy`; development warning when two `(channel, type)` pairs join to one internal key; `When` gains `{ channelPattern }`; introspection keeps channels that contain `::` intact |
 | 0.8.0   | 2026-09 | `EmitResult` gains `reason` (`"vetoed"`, `"deduped"`, `"cascade"`) and `vetoedBy`; middleware vetoes only on an explicit `false`; replay no longer notifies `onEvent` subscribers; content dedup fingerprints through the codec |
 | 0.6.0   | 2026-08 | Cascades bounded by causal depth (`maxReduceDepth`, on by default; `parentId`/`depth` on every caused event); commits staged and applied atomically across slices; `Rejected(reason)` from a reducer; `emit()` resolves to an `EmitResult`; new `written` event phase |

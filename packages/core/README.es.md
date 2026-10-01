@@ -167,9 +167,9 @@ state.counter.value = 999; // TypeError: Cannot assign to read-only property
 > **El canal y el tipo se unen en una sola clave, `"canal::tipo"`.** El despacho, la deduplicación
 > y la introspección se indexan por ella, así que dos pares distintos pueden colapsar juntos:
 > `("a::b", "c")` y `("a", "b::c")` se convierten los dos en `"a::b::c"`, y un suscriptor de uno se
-> dispara con el otro. Un `::` en un canal está bien por sí solo — es como se le da namespace al
-> canal de un par federado — así que las builds de desarrollo avisan de la **colisión**, nombrando
-> ambos pares, no del separador.
+> dispara con el otro. Un `::` en un canal está bien por sí solo (es como se le da namespace al
+> canal de un par federado), así que las builds de desarrollo avisan de la **colisión**, no del
+> separador, nombrando el store y ambos pares, una vez por store.
 
 
 Los reducers, efectos y middleware usan un matcher `When` unificado para declarar a cuales
@@ -1020,9 +1020,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 12.1 KB | 14 KB |
+| `{ createStore }` | 12.2 KB | 14 KB |
 | `{ createStore, hydrate, persist }` | 13.4 KB | 16 KB |
-| todo | 14.8 KB | 18 KB |
+| todo | 14.9 KB | 18 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define

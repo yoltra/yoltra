@@ -49,6 +49,20 @@ funcionando los reducers, efectos y middleware anteriores.
 
 ---
 
+## El aviso de colisión de claves se lleva por store
+
+**Lo notarás si:** un proceso ejecuta varios stores en desarrollo, como una suite de pruebas o un
+servidor que renderiza más de uno, y dos pares `(channel, type)` de un mismo store se unen en la misma
+clave interna.
+
+El aviso se recordaba para todo el proceso. Una vez que un store había reportado una clave, un segundo
+store con la misma colisión no decía nada; y dos stores que usaban cada uno *uno* de los pares, que
+no pueden interferir, se reportaban como en colisión. Ahora se lleva por store y nombra el store. No
+hace falta cambiar código; quizá veas un aviso que antes se suprimía, o dejes de ver uno que era
+incorrecto.
+
+---
+
 ## Adiciones que podrías querer
 
 **`ExactWhen<EM>`**, las formas de `When` que aceptan un reducer o un efecto (`When` sin

@@ -46,7 +46,8 @@ import type {
   When,
 } from "../types";
 import { freezeState } from "../utils/immutability";
-import { warnOnKeyCollision } from "../utils/reservedSeparator";
+import { createKeyCollisionCheck } from "../utils/reservedSeparator";
+import type { KeyCollisionCheck } from "../utils/reservedSeparator";
 import { isRejected } from "./rejection";
 import type { CallHandle, CallOptions } from "./call";
 import { performCall } from "./performCall";
@@ -216,7 +217,7 @@ const now = (): number =>
  * took the first two, so the registration was reported as channel `bb`, type `plan`.
  *
  * `::` is not reserved, but two pairs that join to the same key are warned about at `emit` (see
- * `warnOnKeyCollision`), so this is the belt to that braces: the warning tells an author, and
+ * `createKeyCollisionCheck`), so this is the belt to that braces: the warning tells an author, and
  * this keeps introspection honest for anyone who has not read it yet.
  *
  * @internal
@@ -386,6 +387,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private readonly patternReducers = new Map<R, When<EM>>();
+
+  /**
+   * This store's `channel::type` collision check. Per store because the keys only collide inside
+   * one store's maps; assigned in the constructor, once the name is known, since the warning
+   * names it.
+   *
+   * @internal
+   */
+  private readonly checkKeyCollision: KeyCollisionCheck;
 
   /**
    * Maps slice name to the matcher an observer is told about, for every slice.
@@ -689,6 +699,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   constructor(spec: StoreSpec<R, S, EM>) {
     this.name = spec.name ?? "yoltra Store";
+    this.checkKeyCollision = createKeyCollisionCheck(this.name);
     this.reducerBus = new EventBus<EM>();
     this.connectorBus = new LooseEventBus();
     // Tagged `spec`, not left bare. If this tag is missing, `replaceMiddleware` silently
@@ -1759,7 +1770,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // ambiguity rather than the mere presence of a separator: `alias::channel` is how a federated
     // peer's channel is namespaced, so warning on `::` itself would fire for correct code.
     if (process.env.NODE_ENV !== "production") {
-      warnOnKeyCollision(channel as string, type as string);
+      this.checkKeyCollision(channel as string, type as string);
     }
 
     // Deduplication is OPT-IN (see EmitOptions / StoreSpec.dedupWindowMs).

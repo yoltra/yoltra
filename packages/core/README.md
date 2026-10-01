@@ -165,8 +165,9 @@ state.counter.value = 999; // TypeError: Cannot assign to read-only property
 > **Channel and type are joined into one key, `"channel::type"`.** Dispatch, deduplication and
 > introspection all key on it, so two different pairs can collapse together: `("a::b", "c")` and
 > `("a", "b::c")` both become `"a::b::c"`, and a subscriber for one is invoked for the other. A
-> `::` in a channel is fine on its own — it is how a federated peer's channel is namespaced — so
-> development builds warn on the **collision**, naming both pairs, not on the separator.
+> `::` in a channel is fine on its own (it is how a federated peer's channel is namespaced), so
+> development builds warn on the **collision**, not on the separator, naming the store and both
+> pairs, once per store.
 
 
 Reducers, effects, and middleware use a unified `When` matcher to declare which events they
@@ -1000,9 +1001,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 12.1 KB | 14 KB |
+| `{ createStore }` | 12.2 KB | 14 KB |
 | `{ createStore, hydrate, persist }` | 13.4 KB | 16 KB |
-| everything | 14.8 KB | 18 KB |
+| everything | 14.9 KB | 18 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines

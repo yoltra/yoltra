@@ -49,6 +49,19 @@ middleware installed and running.
 
 ---
 
+## The key-collision warning is kept per store
+
+**You will notice if:** a process runs several stores in development, such as a test suite or a
+server rendering more than one, and two `(channel, type)` pairs in one store join to the same
+internal key.
+
+The warning used to be remembered for the whole process. Once one store had reported a key, a second
+store with the same collision stayed silent; and two stores that each used *one* of the pairs, which
+cannot interfere, were reported as colliding. It is now kept per store and names the store. No code
+change is needed; you may see a warning that was previously suppressed, or lose one that was wrong.
+
+---
+
 ## Additions you may want
 
 **`ExactWhen<EM>`**, the `When` forms a reducer or an effect accepts (`When` without

@@ -291,8 +291,10 @@ del usuario no.
 El despacho, la deduplicación y la introspección se indexan por `"canal::tipo"`, así que dos pares
 distintos pueden unirse en una sola clave: `("a::b", "c")` y `("a", "b::c")` se convierten los dos en
 `"a::b::c"`, y una ventana de dedup descartaría uno por el otro. Las builds de desarrollo avisan de
-esa **colisión**, nombrando ambos pares. Un `::` por sí solo no genera aviso, porque es como se le da
-namespace al canal de un par federado.
+esa **colisión**, nombrando el store y ambos pares. El registro se lleva por store, porque las claves
+solo colisionan dentro de los mapas de un mismo store: dos stores que usan cada uno uno de los pares
+no pueden interferir y no generan aviso. Un `::` por sí solo tampoco genera aviso, porque es como se
+le da namespace al canal de un par federado.
 
 ## El contrato de la promesa de `emit()`
 
@@ -584,7 +586,7 @@ evento raíz. Acotarla es lo que impide que una cascada se convierta en un proce
 
 | `@yoltra/core` | Fecha   | Cambios                                                                                                                                                                                                                                                |
 | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0.10.0  | 2026-10 | Un reducer o efecto con `{ channelPattern }`, o cualquier `when` que no sea una de las cinco formas, lanza al registrarse en lugar de no coincidir con nada; `ExactWhen` nombra las formas que aceptan reducers y efectos |
+| 0.10.0  | 2026-10 | Un reducer o efecto con `{ channelPattern }`, o cualquier `when` que no sea una de las cinco formas, lanza al registrarse en lugar de no coincidir con nada; `ExactWhen` nombra las formas que aceptan reducers y efectos; el aviso de colisión de claves se lleva por store y lo nombra |
 | 0.9.0   | 2026-09 | `InstrumentedEvent` lleva `reason` y `vetoedBy`; aviso en desarrollo cuando dos pares `(channel, type)` se unen en una sola clave interna; `When` gana `{ channelPattern }`; la introspección conserva intactos los canales que contienen `::` |
 | 0.8.0   | 2026-09 | `EmitResult` gana `reason` (`"vetoed"`, `"deduped"`, `"cascade"`) y `vetoedBy`; el middleware veta solo con un `false` explícito; el replay ya no notifica a los suscriptores de `onEvent`; la dedup por contenido calcula la huella con el codec |
 | 0.6.0   | 2026-08 | Cascadas acotadas por profundidad causal (`maxReduceDepth`, activo por defecto; `parentId`/`depth` en cada evento causado); confirmaciones preparadas y aplicadas atómicamente entre slices; `Rejected(reason)` desde un reducer; `emit()` resuelve a un `EmitResult`; nueva fase de evento `written` |
