@@ -221,7 +221,7 @@ const globalLogger = {
   },
 };
 
-// Coincidir con canales por patrón: `*` representa cero o más caracteres
+// Coincidir con canales por patrón (solo middleware): `*` representa cero o más caracteres
 const rateGuard = {
   when: { channelPattern: "*::plan" }, // `bb::plan`, `peer::plan`, pero no `plan`
   middleware: (state, event) => withinBudget(event.channel),
@@ -235,6 +235,10 @@ store que tiene un `plan` local y otros con namespace necesita `"*::plan"` más 
 el canal local. La
 [Guía de Decoración](../../docs/es/DECORATION_GUIDE.md#apuntar-a-un-canal-que-no-puedes-nombrar-por-adelantado)
 explica la trampa de reducir a `{ channel }` un guard que filtra a mano.
+
+`channelPattern` es solo para middleware. Los reducers y los efectos toman las cuatro formas
+exactas (`ExactWhen`), y registrar uno con un patrón lanza, igual que un `when` que no es ninguna
+de las cinco formas. Antes de 0.10.0 ambos se aceptaban y no coincidían con nada.
 
 ---
 
@@ -1016,9 +1020,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 11.7 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 13.0 KB | 16 KB |
-| todo | 14.4 KB | 18 KB |
+| `{ createStore }` | 12.1 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 13.4 KB | 16 KB |
+| todo | 14.8 KB | 18 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define

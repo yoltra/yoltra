@@ -10,7 +10,7 @@
 
 > **When**\<`EM`\> = \{ `any`: `true`; \} \| \{ `keys`: `ReadonlyArray`\<[`EventKey`](EventKey.md)\<`EM`\>\>; \} \| \{ `channel`: keyof `EM` & `string`; \} \| \{ `channels`: `ReadonlyArray`\<keyof `EM` & `string`\>; \} \| \{ `channelPattern`: `string`; \}
 
-Defined in: [types.ts:1490](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1490)
+Defined in: [types.ts:1508](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1508)
 
 Matcher for event targeting across reducers, effects, middleware, and subscriptions.
 
@@ -42,6 +42,15 @@ through `onRegistrationChange` then says it matches the entire store.
 
 `*` stands for zero or more characters, so `"*plan"` covers `plan` and `bb::plan` with one rule,
 and `"*::plan"` covers only the namespaced forms. Everything else in the pattern is literal.
+
+**`channelPattern` is for middleware only.** Reducers and effects take [ExactWhen](ExactWhen.md), and
+registering one with a pattern throws. A reducer's input set has to be closed and readable from
+its spec, or replaying the same log against the same code could fold a different set of events
+once something adds a channel; and a pattern on an effect would enlist it, unseen, in the
+sequential chain of every channel it matched.
+
+A matcher of none of the five forms (`{}`, `{ any: false }`, `{ keys: "x" }`) also throws at
+registration, on every seam: it used to be accepted and match nothing.
 
 **It stays a string rather than a predicate on purpose.** A matcher is reported to observers and
 travels to a devtools panel; a function would make every one of them opaque.

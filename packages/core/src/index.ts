@@ -86,6 +86,7 @@ export type {
   NarrowedEventHandler,
   // Event targeting (When matcher)
   When,
+  ExactWhen,
   EventFromWhen,
   // Metadata for debugging
   EventConsumerType,

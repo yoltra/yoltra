@@ -218,7 +218,7 @@ const globalLogger = {
   },
 };
 
-// Match channels by pattern: `*` stands for zero or more characters
+// Match channels by pattern (middleware only): `*` stands for zero or more characters
 const rateGuard = {
   when: { channelPattern: "*::plan" }, // `bb::plan`, `peer::plan`, but not `plan`
   middleware: (state, event) => withinBudget(event.channel),
@@ -231,6 +231,10 @@ matches the usual glob way: `"*plan"` also matches `replan`, so a store that has
 `plan` and namespaced ones wants `"*::plan"` plus a separate rule for the local channel. The
 [Decoration Guide](../../docs/en/DECORATION_GUIDE.md#targeting-a-channel-you-cannot-name-in-advance)
 covers the trap of narrowing a hand-filtered guard to `{ channel }`.
+
+`channelPattern` is for middleware only. Reducers and effects take the four exact forms
+(`ExactWhen`), and registering one with a pattern throws, as does a `when` of none of the five
+forms. Before 0.10.0 both were accepted and matched nothing.
 
 ---
 
@@ -996,9 +1000,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 11.7 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 13.0 KB | 16 KB |
-| everything | 14.4 KB | 18 KB |
+| `{ createStore }` | 12.1 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 13.4 KB | 16 KB |
+| everything | 14.8 KB | 18 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines

@@ -70,6 +70,7 @@
 - [EventPhase](type-aliases/EventPhase.md)
 - [EventSubscriptionHandler](type-aliases/EventSubscriptionHandler.md)
 - [EventUnion](type-aliases/EventUnion.md)
+- [ExactWhen](type-aliases/ExactWhen.md)
 - [InstrumentationObserver](type-aliases/InstrumentationObserver.md)
 - [Merge](type-aliases/Merge.md)
 - [MiddlewareFunction](type-aliases/MiddlewareFunction.md)

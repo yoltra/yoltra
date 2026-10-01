@@ -50,6 +50,7 @@ import { warnOnKeyCollision } from "../utils/reservedSeparator";
 import { isRejected } from "./rejection";
 import type { CallHandle, CallOptions } from "./call";
 import { performCall } from "./performCall";
+import { assertRegistrable } from "./matching";
 import type { Rejection } from "./rejection";
 import type { AliasWatch } from "../utils/immutability";
 import {
@@ -214,9 +215,9 @@ const now = (): number =>
  * entirely. `String.split("::")` yielded three parts for `"bb::plan::load"` and the destructuring
  * took the first two, so the registration was reported as channel `bb`, type `plan`.
  *
- * `::` is reserved and warned about at `emit` (see `warnOnReservedSeparator`), so this is the
- * belt to that braces: the warning tells an author, and this keeps introspection honest for
- * anyone who has not read it yet.
+ * `::` is not reserved, but two pairs that join to the same key are warned about at `emit` (see
+ * `warnOnKeyCollision`), so this is the belt to that braces: the warning tells an author, and
+ * this keeps introspection honest for anyone who has not read it yet.
  *
  * @internal
  */
@@ -694,6 +695,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // becomes a no-op: it would find nothing of `spec` provenance to remove and preserve
     // everything instead. No test notices unless one asserts that spec registrations ARE
     // still replaced, which is why that test exists.
+    // Before anything is wired, so a refused spec never yields a half-built store.
+    assertRegistrable({
+      reducers: spec.reducer as Record<string, ReducerSpec<any, any>>,
+      effects: spec.effects as ReadonlyArray<EffectSpec<any, any>> | undefined,
+      middleware: spec.middleware as ReadonlyArray<MiddlewareInput<any, any>> | undefined,
+    });
     this.middleware = (spec.middleware ?? []).map((input) => ({
       input: input as MiddlewareInput<DeepReadonly<S>, EM>,
       origin: "spec" as Origin,
@@ -2639,6 +2646,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public registerMiddleware(mw: MiddlewareInput<any, any>): any {
+    assertRegistrable({ middleware: [mw] });
     const entry = { input: mw, origin: "dynamic" as Origin };
     this.middleware.push(entry);
     this.recordMiddlewareChange(entry, "mounted");
@@ -2803,6 +2811,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (Object.prototype.hasOwnProperty.call(this.reducers, name)) {
       throw new Error(`Reducer ${name} already exists`);
     }
+    assertRegistrable({ reducers: { [name]: spec } });
 
     this.mountSlice(name as R, spec as ReducerSpec<S[R], EM>, {
       preserveState: false,
@@ -3018,6 +3027,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     spec: EffectSpec<DeepReadonly<S>, EM>,
     origin: Origin,
   ): () => void {
+    assertRegistrable({ effects: [spec] });
     const { effect, meta, when } = spec;
     const unsubs: Array<() => void> = [];
 
@@ -3176,6 +3186,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // Accepts either form. Taking only the bare function meant a hot reload silently discarded
     // the `when` targeting and `meta` of every spec-form middleware, so after an HMR pass a
     // middleware scoped to one channel began running on all of them.
+    assertRegistrable({ middleware: next });
     const scope = opts.scope ?? "spec";
     const retained = this.middleware.filter((e) =>
       scope === "all" ? e.origin === "internal" : e.origin !== "spec",
@@ -3227,6 +3238,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     next: Array<EffectSpec<DeepReadonly<S>, EM>>,
     opts: { scope?: ReplaceScope } = {},
   ): void {
+    assertRegistrable({ effects: next });
     const scope = opts.scope ?? "spec";
     const keeps = (origin: Origin): boolean =>
       scope === "all" ? origin === "internal" : origin !== "spec";
@@ -3314,6 +3326,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const nextKeys = new Set(nextEntries.map(([k]) => k));
 
     this.assertNoSliceCollision(next, scope);
+    assertRegistrable({ reducers: next as Record<string, ReducerSpec<any, any>> });
 
     const rootBefore = this.state;
 
@@ -3443,6 +3456,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // reducers, which is a worse state than either before or after. A partial hot reload is
     // harder to diagnose than a refused one.
     if (partial.reducer) this.assertNoSliceCollision(partial.reducer, scope ?? "spec");
+    assertRegistrable({
+      reducers: partial.reducer as Record<string, ReducerSpec<any, any>> | undefined,
+      effects: partial.effects,
+      middleware: partial.middleware,
+    });
 
     // One transaction across all three, so a hot reload produces a single batch rather than
     // three snapshots of a topology mid-rebuild.

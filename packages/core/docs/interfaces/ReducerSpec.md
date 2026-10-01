@@ -65,7 +65,7 @@ Event map.
 
 > `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"reducer"`\>
 
-Defined in: [types.ts:1194](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1194)
+Defined in: [types.ts:1198](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1198)
 
 Optional metadata for debugging tools and DevTools integration.
 
@@ -75,7 +75,7 @@ Optional metadata for debugging tools and DevTools integration.
 
 > **reducer**: [`ReducerFunction`](../type-aliases/ReducerFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:1189](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1189)
+Defined in: [types.ts:1193](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1193)
 
 Pure reducer function: `(state, event) => nextState`, where `state` is this reducer's slice
 and the return value replaces that slice and nothing else.
@@ -94,8 +94,13 @@ Initial state for this reducer's own slice.
 
 ### when?
 
-> `optional` **when**: [`When`](../type-aliases/When.md)\<`EM`\>
+> `optional` **when**: [`ExactWhen`](../type-aliases/ExactWhen.md)\<`EM`\>
 
-Defined in: [types.ts:1183](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1183)
+Defined in: [types.ts:1187](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1187)
 
-Event targeting using the unified `When` matcher.
+Event targeting: one of the exact forms of the `When` matcher.
+
+#### Remarks
+
+`channelPattern` is not accepted here, by the type and at registration: a reducer's input
+set has to be closed and readable from its spec. See [ExactWhen](../type-aliases/ExactWhen.md).

@@ -328,6 +328,15 @@ export const rateGuard: MiddlewareSpec<S, EM> = {
 };
 ```
 
+**Middleware only.** Reducers and effects take the four exact forms, typed as `ExactWhen`, and
+since 0.10.0 registering either with a `channelPattern` throws and names it. Before that it was
+accepted and handled nothing: the reducer never ran, and the effect was not even reported to
+`onRegistrationChange`. A reducer's input set has to stay closed, so that replaying a log against
+the same code folds the same events whatever a decoration adds later; and every effect for an event
+runs in sequence, so a pattern would enlist one in the chain of every channel it matched. Name the
+channels instead, or keep the pattern on a middleware. A `when` of none of the five forms, such as
+`{}` or `{ any: false }`, throws on every seam for the same reason: it used to match nothing.
+
 **There is a trap here worth more than the feature.** A guard that already filters in its own body,
 on a stripped base channel, looks like it would be faster with `when` — and converting it to
 `{ channel: "plan" }` silently stops it seeing every namespaced channel. Nothing throws. The guard

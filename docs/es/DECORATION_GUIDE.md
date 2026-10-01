@@ -334,6 +334,17 @@ export const rateGuard: MiddlewareSpec<S, EM> = {
 };
 ```
 
+**Solo para middleware.** Los reducers y los efectos toman las cuatro formas exactas, tipadas como
+`ExactWhen`, y desde 0.10.0 registrar cualquiera de ellos con un `channelPattern` lanza un error que
+lo nombra. Antes se aceptaba y no manejaba nada: el reducer nunca se ejecutaba, y el efecto ni
+siquiera se reportaba a `onRegistrationChange`. El conjunto de entrada de un reducer tiene que
+seguir cerrado, para que reproducir un log con el mismo código pliegue los mismos eventos sin
+importar lo que una decoración agregue después; y todos los efectos de un evento se ejecutan en
+secuencia, así que un patrón enrolaría a uno en la cadena de cada canal que coincidiera. Nombra los
+canales, o deja el patrón en un middleware. Un `when` que no es ninguna de las cinco formas, como
+`{}` o `{ any: false }`, lanza en todas las costuras por la misma razón: antes no coincidía con
+nada.
+
 **Aquí hay una trampa que vale más que la función.** Un guard que ya filtra en su propio cuerpo,
 sobre un canal base sin el namespace, parece que iría más rápido con `when` — y convertirlo a
 `{ channel: "plan" }` deja de ver en silencio todos los canales con namespace. Nada lanza. El guard

@@ -1178,9 +1178,13 @@ export interface ReducerSpec<S = any, EM extends EventMapBase = EventMapBase> {
   state: S;
 
   /**
-   * Event targeting using the unified `When` matcher.
+   * Event targeting: one of the exact forms of the `When` matcher.
+   *
+   * @remarks
+   * `channelPattern` is not accepted here, by the type and at registration: a reducer's input
+   * set has to be closed and readable from its spec. See {@link ExactWhen}.
    */
-  when?: When<EM>;
+  when?: ExactWhen<EM>;
 
   /**
    * Pure reducer function: `(state, event) => nextState`, where `state` is this reducer's slice
@@ -1245,9 +1249,14 @@ export type ReducerFunction<S = any, EM extends EventMapBase = EventMapBase> = (
  */
 export interface EffectSpec<S = any, EM extends EventMapBase = EventMapBase> {
   /**
-   * Event targeting using the unified `When` matcher.
+   * Event targeting: one of the exact forms of the `When` matcher.
+   *
+   * @remarks
+   * `channelPattern` is not accepted here, by the type and at registration: every effect for
+   * an event runs in sequence, and a pattern would hide which chains an effect joins. See
+   * {@link ExactWhen}.
    */
-  when?: When<EM>;
+  when?: ExactWhen<EM>;
 
   /**
    * Async effect handler: `(event, getState, emit) => void | Promise<void>`.
@@ -1455,6 +1464,15 @@ export type EMFromReducersStrict<RM extends ReducersMapAny> = UnionToIntersectio
  * `*` stands for zero or more characters, so `"*plan"` covers `plan` and `bb::plan` with one rule,
  * and `"*::plan"` covers only the namespaced forms. Everything else in the pattern is literal.
  *
+ * **`channelPattern` is for middleware only.** Reducers and effects take {@link ExactWhen}, and
+ * registering one with a pattern throws. A reducer's input set has to be closed and readable from
+ * its spec, or replaying the same log against the same code could fold a different set of events
+ * once something adds a channel; and a pattern on an effect would enlist it, unseen, in the
+ * sequential chain of every channel it matched.
+ *
+ * A matcher of none of the five forms (`{}`, `{ any: false }`, `{ keys: "x" }`) also throws at
+ * registration, on every seam: it used to be accepted and match nothing.
+ *
  * **It stays a string rather than a predicate on purpose.** A matcher is reported to observers and
  * travels to a devtools panel; a function would make every one of them opaque.
  *
@@ -1493,6 +1511,21 @@ export type When<EM extends EventMapBase> =
   | { channel: keyof EM & string }
   | { channels: ReadonlyArray<keyof EM & string> }
   | { channelPattern: string };
+
+/**
+ * The exact forms of {@link When}: every form but `channelPattern`. What reducers and effects
+ * accept.
+ *
+ * @remarks
+ * Exact rather than pattern-matched on purpose, and refused rather than ignored: before 0.10.0 a
+ * reducer or effect given a `channelPattern` registered without complaint and then handled
+ * nothing at all.
+ *
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export type ExactWhen<EM extends EventMapBase> = Exclude<When<EM>, { channelPattern: string }>;
 
 /**
  * Helper to create type-safe EventKey arrays without requiring `as const`.

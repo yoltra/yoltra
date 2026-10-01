@@ -14,9 +14,12 @@ import { createStore } from "../../src/store/Store";
 import type {
   DeepReadonly,
   Dotted,
+  EffectSpec,
+  ExactWhen,
   MiddlewareSpec,
   PathValue,
   ReducerSpec,
+  When,
 } from "../../src/types";
 
 type Doc = { id: string; title: string };
@@ -217,5 +220,34 @@ describe("PathValue agrees with the code that reads the path", () => {
     // subscription to a root-value slice was typed as nothing at all.
     expectTypeOf<PathValue<number, "">>().toEqualTypeOf<number>();
     expectTypeOf<PathValue<CatalogState, "">>().toEqualTypeOf<CatalogState>();
+  });
+});
+
+describe("Reducers and effects take exact matchers only", () => {
+  type EM = { plan: { go: null } };
+
+  it("refuses channelPattern on a reducer or an effect spec, and keeps it on middleware", () => {
+    const reducer: ReducerSpec<number, EM> = {
+      state: 0,
+      // @ts-expect-error channelPattern is middleware-only
+      when: { channelPattern: "*plan" },
+      reducer: (s) => s,
+    };
+    const effect: EffectSpec<unknown, EM> = {
+      // @ts-expect-error channelPattern is middleware-only
+      when: { channelPattern: "*plan" },
+      effect: () => {},
+    };
+    const middleware: MiddlewareSpec<unknown, EM> = {
+      when: { channelPattern: "*plan" },
+      middleware: () => true,
+    };
+    void [reducer, effect, middleware];
+  });
+
+  it("is When without its pattern form", () => {
+    expectTypeOf<ExactWhen<EM>>().toEqualTypeOf<Exclude<When<EM>, { channelPattern: string }>>();
+    expectTypeOf<{ channel: "plan" }>().toMatchTypeOf<ExactWhen<EM>>();
+    expectTypeOf<{ channelPattern: string }>().not.toMatchTypeOf<ExactWhen<EM>>();
   });
 });
