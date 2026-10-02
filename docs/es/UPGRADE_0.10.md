@@ -5,12 +5,14 @@
 > 👉 🇲🇽 Versión en Español&nbsp; | &nbsp;[ 🇺🇸 English Version](../en/UPGRADE_0.10.md)
 
 Un cambio puede aparecer al arrancar: un reducer o un efecto con un matcher que nunca podría
-coincidir ahora lanza al registrarse. Lee esa sección primero. Lo demás es un aviso que ahora nombra
-su store, dos arreglos de tipos, los typed arrays que ahora cambian como un solo valor y una opción
-nueva en `store.call()`. La mayoría de las aplicaciones
-no necesitan cambiar código.
+coincidir ahora lanza al registrarse. Lee esa sección primero. Otros tres cambian el
+comportamiento en los bordes: un store liberado es inerte, la persistencia nunca escribe un estado
+parcial, y un typed array en el estado cambia como un solo valor. Después vienen un aviso que ahora
+nombra su store, dos arreglos de tipos, y las adiciones: tiempo y timers inyectables, una sola
+costura de diagnósticos, `store.signal` y `ctx.signal`, cancelación para `store.call()`, canales
+efímeros y una revisión de tamaños. La mayoría de las aplicaciones no necesitan cambiar código.
 
-Antes de 1.0, así que es un incremento MINOR según [la política del repositorio](../CONTRIBUTING.md).
+Antes de 1.0, así que es un incremento MINOR según [la política del repositorio](./CONTRIBUTING.md).
 
 ---
 
@@ -51,38 +53,6 @@ porque están bien formados y una lista puede estar vacía legítimamente.
 **Una llamada rechazada no cambia nada.** Cada punto de entrada verifica el lote completo antes de
 tocar el store, así que un `replaceReducers` o `hotReplace` que lanza deja instalados y
 funcionando los reducers, efectos y middleware anteriores.
-
----
-
-## El aviso de colisión de claves se lleva por store
-
-**Lo notarás si:** un proceso ejecuta varios stores en desarrollo, como una suite de pruebas o un
-servidor que renderiza más de uno, y dos pares `(channel, type)` de un mismo store se unen en la misma
-clave interna.
-
-El aviso se recordaba para todo el proceso. Una vez que un store había reportado una clave, un segundo
-store con la misma colisión no decía nada; y dos stores que usaban cada uno *uno* de los pares, que
-no pueden interferir, se reportaban como en colisión. Ahora se lleva por store y nombra el store. No
-hace falta cambiar código; quizá veas un aviso que antes se suprimía, o dejes de ver uno que era
-incorrecto.
-
----
-
-## `replaceReducers` y `hotReplace` tipan cada slice por separado
-
-**Lo notarás si:** llamas `replaceReducers` o `hotReplace({ reducer })` en un store con dos o más
-slices, o en un store que una librería decoró.
-
-El argumento exigía todos los nombres de slice y tipaba cada reducer con la unión de los estados de
-todas las slices. Un reducer anotado no compilaba en ningún store con dos slices, un reducer de una
-slice podía devolver el estado de otra, y en un store decorado la única llamada que compilaba
-nombraba la slice de la librería, que el runtime rechaza. Ahora es `ReducerReplacement`: toda clave
-opcional, cada una tipada con el estado de su propia slice, que es lo que el runtime hace desde
-0.8.0. El código que compilaba sigue compilando, salvo que un reducer devolviera el estado de otra
-slice.
-
-`EventFromWhen` gana además su rama para `channelPattern`: resuelve a la unión completa de eventos,
-que es lo que recibe un handler de middleware, en lugar de `never`.
 
 ---
 
@@ -155,6 +125,38 @@ puede congelar, así que el mensaje anterior ("it is now frozen ... will throw")
 nada lanza, y una escritura posterior en el buffer cambia el slice en su lugar, sin que los
 suscriptores se enteren. Ahora el aviso dice eso, y también detecta un buffer conservado desde un
 campo del payload, como hace `{ ...payload }`.
+
+---
+
+## El aviso de colisión de claves se lleva por store
+
+**Lo notarás si:** un proceso ejecuta varios stores en desarrollo, como una suite de pruebas o un
+servidor que renderiza más de uno, y dos pares `(channel, type)` de un mismo store se unen en la misma
+clave interna.
+
+El aviso se recordaba para todo el proceso. Una vez que un store había reportado una clave, un segundo
+store con la misma colisión no decía nada; y dos stores que usaban cada uno *uno* de los pares, que
+no pueden interferir, se reportaban como en colisión. Ahora se lleva por store y nombra el store. No
+hace falta cambiar código; quizá veas un aviso que antes se suprimía, o dejes de ver uno que era
+incorrecto.
+
+---
+
+## `replaceReducers` y `hotReplace` tipan cada slice por separado
+
+**Lo notarás si:** llamas `replaceReducers` o `hotReplace({ reducer })` en un store con dos o más
+slices, o en un store que una librería decoró.
+
+El argumento exigía todos los nombres de slice y tipaba cada reducer con la unión de los estados de
+todas las slices. Un reducer anotado no compilaba en ningún store con dos slices, un reducer de una
+slice podía devolver el estado de otra, y en un store decorado la única llamada que compilaba
+nombraba la slice de la librería, que el runtime rechaza. Ahora es `ReducerReplacement`: toda clave
+opcional, cada una tipada con el estado de su propia slice, que es lo que el runtime hace desde
+0.8.0. El código que compilaba sigue compilando, salvo que un reducer devolviera el estado de otra
+slice.
+
+`EventFromWhen` gana además su rama para `channelPattern`: resuelve a la unión completa de eventos,
+que es lo que recibe un handler de middleware, en lugar de `never`.
 
 ---
 

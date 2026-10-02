@@ -10,7 +10,7 @@
 
 > **warnOnLargeValues**(`store`, `limits`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: diagnostics/warnOnLargeValues.ts:112
+Defined in: [diagnostics/warnOnLargeValues.ts:112](https://github.com/yoltra/yoltra/blob/main/packages/core/src/diagnostics/warnOnLargeValues.ts#L112)
 
 Warns, in development, when an event payload or a slice grows past a limit.
 

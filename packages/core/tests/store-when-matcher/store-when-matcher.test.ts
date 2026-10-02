@@ -625,7 +625,7 @@ describe("Store - a matcher that would match nothing is refused", () => {
       const named = { when: { channelPattern: "*" }, effect: () => {}, meta: { name: "audit" } } as any;
       expect(() =>
         createStore<S, EM>({ name: "E", reducer: { n: keyed }, effects: [named] }),
-      ).toThrow(/effect "audit": channelPattern is middleware-only/);
+      ).toThrow(/effect "audit": channelPattern is middleware-only; an effect takes/);
 
       function relay() {}
       expect(() =>

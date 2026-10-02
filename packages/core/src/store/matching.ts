@@ -122,7 +122,9 @@ export function describeWhenProblem(
   const isObject = w !== null && typeof w === "object" && !Array.isArray(w);
 
   if (isObject && "channelPattern" in w && consumer !== "middleware") {
-    return `channelPattern is middleware-only; a ${consumer} takes ${EXACT}. Name the channels, or move the pattern to a middleware`;
+    // "an effect", not "a effect": the consumer is a reducer or an effect here.
+    const article = consumer === "effect" ? "an" : "a";
+    return `channelPattern is middleware-only; ${article} ${consumer} takes ${EXACT}. Name the channels, or move the pattern to a middleware`;
   }
 
   const wellFormed =

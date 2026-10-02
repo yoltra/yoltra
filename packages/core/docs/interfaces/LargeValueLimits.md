@@ -8,7 +8,7 @@
 
 # Interface: LargeValueLimits
 
-Defined in: diagnostics/warnOnLargeValues.ts:33
+Defined in: [diagnostics/warnOnLargeValues.ts:33](https://github.com/yoltra/yoltra/blob/main/packages/core/src/diagnostics/warnOnLargeValues.ts#L33)
 
 Limits for [warnOnLargeValues](../functions/warnOnLargeValues.md). A value warns when it exceeds either of its limits.
 
@@ -24,7 +24,7 @@ number as 8, a typed array or `ArrayBuffer` by its `byteLength`, plus object key
 
 > `readonly` `optional` **maxPayloadBytes**: `number`
 
-Defined in: diagnostics/warnOnLargeValues.ts:37
+Defined in: [diagnostics/warnOnLargeValues.ts:37](https://github.com/yoltra/yoltra/blob/main/packages/core/src/diagnostics/warnOnLargeValues.ts#L37)
 
 #### Default Value
 
@@ -38,7 +38,7 @@ Defined in: diagnostics/warnOnLargeValues.ts:37
 
 > `readonly` `optional` **maxPayloadNodes**: `number`
 
-Defined in: diagnostics/warnOnLargeValues.ts:35
+Defined in: [diagnostics/warnOnLargeValues.ts:35](https://github.com/yoltra/yoltra/blob/main/packages/core/src/diagnostics/warnOnLargeValues.ts#L35)
 
 #### Default Value
 
@@ -52,7 +52,7 @@ Defined in: diagnostics/warnOnLargeValues.ts:35
 
 > `readonly` `optional` **maxSliceBytes**: `number`
 
-Defined in: diagnostics/warnOnLargeValues.ts:44
+Defined in: [diagnostics/warnOnLargeValues.ts:44](https://github.com/yoltra/yoltra/blob/main/packages/core/src/diagnostics/warnOnLargeValues.ts#L44)
 
 #### Default Value
 
@@ -66,7 +66,7 @@ Defined in: diagnostics/warnOnLargeValues.ts:44
 
 > `readonly` `optional` **maxSliceNodes**: `number`
 
-Defined in: diagnostics/warnOnLargeValues.ts:42
+Defined in: [diagnostics/warnOnLargeValues.ts:42](https://github.com/yoltra/yoltra/blob/main/packages/core/src/diagnostics/warnOnLargeValues.ts#L42)
 
 #### Default Value
 
@@ -79,7 +79,7 @@ would refuse to write it.
 
 > `readonly` `optional` **warn**: (`message`, `detail`) => `void`
 
-Defined in: diagnostics/warnOnLargeValues.ts:46
+Defined in: [diagnostics/warnOnLargeValues.ts:46](https://github.com/yoltra/yoltra/blob/main/packages/core/src/diagnostics/warnOnLargeValues.ts#L46)
 
 Receives each warning. Defaults to `console.warn`.
 

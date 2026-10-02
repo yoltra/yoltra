@@ -5,10 +5,12 @@
 > 👉 🇺🇸 English Version&nbsp; | &nbsp;[ 🇲🇽 Versión en Español](../es/UPGRADE_0.10.md)
 
 One change can surface at startup: a reducer or an effect with a matcher that could never match
-now throws when it is registered. Read that section first. The rest is a warning that now names
-its store, two type fixes, typed arrays that now change as one value, and one new option on
-`store.call()`. Most applications need no code
-changes.
+now throws when it is registered. Read that section first. Three more change behaviour at the
+edges: a disposed store is inert, persistence never writes a partial state, and a typed array in
+state changes as one value. After those come a warning that now names its store, two type fixes,
+and the additions: injectable time and timers, one diagnostics seam, `store.signal` and
+`ctx.signal`, cancellation for `store.call()`, ephemeral channels, and a size check. Most
+applications need no code changes.
 
 Pre-1.0, so this is a MINOR bump by [the repository's policy](../../CONTRIBUTING.md).
 
@@ -51,36 +53,6 @@ well-formed and a list can legitimately be empty.
 **A refused call changes nothing.** Each entry point checks the whole batch before it touches the
 store, so a `replaceReducers` or `hotReplace` that throws leaves the previous reducers, effects and
 middleware installed and running.
-
----
-
-## The key-collision warning is kept per store
-
-**You will notice if:** a process runs several stores in development, such as a test suite or a
-server rendering more than one, and two `(channel, type)` pairs in one store join to the same
-internal key.
-
-The warning used to be remembered for the whole process. Once one store had reported a key, a second
-store with the same collision stayed silent; and two stores that each used *one* of the pairs, which
-cannot interfere, were reported as colliding. It is now kept per store and names the store. No code
-change is needed; you may see a warning that was previously suppressed, or lose one that was wrong.
-
----
-
-## `replaceReducers` and `hotReplace` type each slice on its own
-
-**You will notice if:** you call `replaceReducers` or `hotReplace({ reducer })` on a store with two
-or more slices, or on a store a library decorated.
-
-The argument used to require every slice name and type each reducer with the union of every
-slice's state. An annotated reducer failed to compile on any store with two slices, a reducer for
-one slice could return another's state, and on a decorated store the only call that compiled named
-the library's slice, which the runtime refuses. It is now `ReducerReplacement`: every key optional,
-each typed with its own slice's state, which is what the runtime has done since 0.8.0. Code that
-compiled before still compiles unless a reducer returned the wrong slice's state.
-
-`EventFromWhen` also gains its `channelPattern` arm: it resolves to the whole event union, which is
-what a middleware handler receives, instead of `never`.
 
 ---
 
@@ -147,6 +119,36 @@ The by-reference warning also tells binary data apart. A view cannot be frozen, 
 ("it is now frozen ... will throw") was false for it: nothing throws, and a later write into the
 buffer changes the slice in place, unseen by subscribers. The warning now says that, and it also
 catches a buffer kept from a field of the payload, as `{ ...payload }` does.
+
+---
+
+## The key-collision warning is kept per store
+
+**You will notice if:** a process runs several stores in development, such as a test suite or a
+server rendering more than one, and two `(channel, type)` pairs in one store join to the same
+internal key.
+
+The warning used to be remembered for the whole process. Once one store had reported a key, a second
+store with the same collision stayed silent; and two stores that each used *one* of the pairs, which
+cannot interfere, were reported as colliding. It is now kept per store and names the store. No code
+change is needed; you may see a warning that was previously suppressed, or lose one that was wrong.
+
+---
+
+## `replaceReducers` and `hotReplace` type each slice on its own
+
+**You will notice if:** you call `replaceReducers` or `hotReplace({ reducer })` on a store with two
+or more slices, or on a store a library decorated.
+
+The argument used to require every slice name and type each reducer with the union of every
+slice's state. An annotated reducer failed to compile on any store with two slices, a reducer for
+one slice could return another's state, and on a decorated store the only call that compiled named
+the library's slice, which the runtime refuses. It is now `ReducerReplacement`: every key optional,
+each typed with its own slice's state, which is what the runtime has done since 0.8.0. Code that
+compiled before still compiles unless a reducer returned the wrong slice's state.
+
+`EventFromWhen` also gains its `channelPattern` arm: it resolves to the whole event union, which is
+what a middleware handler receives, instead of `never`.
 
 ---
 

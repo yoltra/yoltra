@@ -8,7 +8,7 @@
 
 # Interface: SizeWatchedStore
 
-Defined in: diagnostics/warnOnLargeValues.ts:17
+Defined in: [diagnostics/warnOnLargeValues.ts:17](https://github.com/yoltra/yoltra/blob/main/packages/core/src/diagnostics/warnOnLargeValues.ts#L17)
 
 The store surface the helper needs.
 
@@ -18,7 +18,7 @@ The store surface the helper needs.
 
 > `readonly` `optional` **name**: `string`
 
-Defined in: diagnostics/warnOnLargeValues.ts:18
+Defined in: [diagnostics/warnOnLargeValues.ts:18](https://github.com/yoltra/yoltra/blob/main/packages/core/src/diagnostics/warnOnLargeValues.ts#L18)
 
 ## Methods
 
@@ -26,7 +26,7 @@ Defined in: diagnostics/warnOnLargeValues.ts:18
 
 > **getState**(): `unknown`
 
-Defined in: diagnostics/warnOnLargeValues.ts:19
+Defined in: [diagnostics/warnOnLargeValues.ts:19](https://github.com/yoltra/yoltra/blob/main/packages/core/src/diagnostics/warnOnLargeValues.ts#L19)
 
 #### Returns
 
@@ -38,7 +38,7 @@ Defined in: diagnostics/warnOnLargeValues.ts:19
 
 > **instrument**(`observer`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md)
 
-Defined in: diagnostics/warnOnLargeValues.ts:20
+Defined in: [diagnostics/warnOnLargeValues.ts:20](https://github.com/yoltra/yoltra/blob/main/packages/core/src/diagnostics/warnOnLargeValues.ts#L20)
 
 #### Parameters
 
