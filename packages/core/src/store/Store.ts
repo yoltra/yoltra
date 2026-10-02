@@ -12,6 +12,7 @@ import { EventBus } from "../eventBus/EventBus";
 import { LooseEventBus } from "../eventBus/LooseEventBus";
 import type {
   Clock,
+  EffectContext,
   Diagnostic,
   DiagnosticCode,
   DiagnosticSink,
@@ -243,6 +244,35 @@ function binaryFieldsOf(payload: object): ReadonlySet<object> | undefined {
 }
 
 /**
+ * One effect registration's {@link EffectContext}.
+ *
+ * @remarks
+ * The `AbortController` is created only when an effect reads `signal`, so registrations that
+ * never ask cost one small object. Ended at most once; read after ending, the signal is already
+ * aborted.
+ *
+ * @internal
+ */
+class EffectLifetime implements EffectContext {
+  private controller: AbortController | undefined;
+  private ended: string | undefined;
+
+  get signal(): AbortSignal {
+    if (this.controller === undefined) {
+      this.controller = new AbortController();
+      if (this.ended !== undefined) this.controller.abort(this.ended);
+    }
+    return this.controller.signal;
+  }
+
+  end(reason: string): void {
+    if (this.ended !== undefined) return;
+    this.ended = reason;
+    this.controller?.abort(reason);
+  }
+}
+
+/**
  * Splits a `"channel::type"` key back into its two halves.
  *
  * @remarks
@@ -346,7 +376,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private readonly effects = new Map<
     string,
-    Set<{ effect: EffectFunction<DeepReadonly<S>, EM>; origin: Origin }>
+    Set<{ effect: EffectFunction<DeepReadonly<S>, EM>; origin: Origin; ctx: EffectLifetime }>
   >();
 
   /**
@@ -360,6 +390,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     effect: EffectFunction<DeepReadonly<S>, EM>;
     when: When<EM>;
     origin: Origin;
+    ctx: EffectLifetime;
   }>();
 
   /**
@@ -984,6 +1015,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }
 
     this.processedEvents.clear();
+    // Every effect's signal aborts with the store, before its registration is dropped.
+    for (const set of this.effects.values()) for (const entry of set) entry.ctx.end("store disposed");
+    for (const entry of this.patternEffects) entry.ctx.end("store disposed");
     this.effects.clear();
     this.patternEffects.clear();
     this.effectMeta = new WeakMap();
@@ -1209,7 +1243,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (effectSet && effectSet.size > 0) {
       for (const h of [...effectSet]) {
         try {
-          await h.effect(event, this.getState, emit);
+          await h.effect(event, this.getState, emit, h.ctx);
         } catch (e) {
           this.reportEffectError(e, event);
           this.onEffectError?.(e, event);
@@ -1218,10 +1252,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     }
 
     // 2. Call pattern-based effects (runtime matching)
-    for (const { effect, when } of this.patternEffects) {
+    for (const { effect, when, ctx } of this.patternEffects) {
       if (matchesWhen(when, event)) {
         try {
-          await effect(event, this.getState, emit);
+          await effect(event, this.getState, emit, ctx);
         } catch (e) {
           this.reportEffectError(e, event);
           this.onEffectError?.(e, event);
@@ -3375,6 +3409,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     assertRegistrable({ effects: [spec] });
     const { effect, meta, when } = spec;
     const unsubs: Array<() => void> = [];
+    // One per registration, shared by every key it is filed under.
+    const ctx = new EffectLifetime();
 
     // Record metadata in a store-owned map keyed by the effect function, rather
     // than mutating the caller's function (which would bleed across stores).
@@ -3392,7 +3428,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     if (isPatternBased) {
       // Store as pattern-based effect for runtime matching
-      const entry = { effect, when: when!, origin };
+      const entry = { effect, when: when!, origin, ctx };
       this.patternEffects.add(entry);
       this.recordEffectChange(effect, when!, origin, "mounted", "pattern");
 
@@ -3400,6 +3436,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         this.recordEffectChange(effect, when!, origin, "unmounted", "pattern");
         this.patternEffects.delete(entry);
         this.releaseEffectMeta(effect);
+        ctx.end("effect unregistered");
       };
     }
 
@@ -3412,7 +3449,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // Normalized, not raw: no targeting at all means "every event", and an observer told
       // `undefined` would have to re-derive that for itself.
       const normalized = { any: true } as When<EM>;
-      const entry = { effect, when: normalized, origin };
+      const entry = { effect, when: normalized, origin, ctx };
       this.patternEffects.add(entry);
       this.recordEffectChange(effect, normalized, origin, "mounted", "pattern");
 
@@ -3420,6 +3457,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         this.recordEffectChange(effect, normalized, origin, "unmounted", "pattern");
         this.patternEffects.delete(entry);
         this.releaseEffectMeta(effect);
+        ctx.end("effect unregistered");
       };
     }
 
@@ -3429,7 +3467,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       if (!this.effects.has(key)) {
         this.effects.set(key, new Set());
       }
-      const entry = { effect, origin };
+      const entry = { effect, origin, ctx };
       this.effects.get(key)!.add(entry);
       const keyedWhen = { keys: [[channel, type]] } as When<EM>;
       this.recordEffectChange(effect, keyedWhen, origin, "mounted", "keyed");
@@ -3448,6 +3486,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     return () => {
       for (const u of unsubs) u();
       this.releaseEffectMeta(effect);
+      ctx.end("effect unregistered");
     };
   }
 
@@ -3485,13 +3524,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       getState: () => DeepReadonly<S>,
       emit: Emit<EM>,
       event: Event<EM, C, T>,
+      ctx: EffectContext,
     ) => void | Promise<void>,
   ): () => void {
-    const effect: EffectFunction<DeepReadonly<S>, EM> = async (evt, getState, emit) => {
+    const effect: EffectFunction<DeepReadonly<S>, EM> = async (evt, getState, emit, ctx) => {
       if (evt.channel !== channel || evt.type !== type) return;
 
       const typed = evt as Event<EM, C, T>;
-      return handler(typed.payload, getState, emit, typed);
+      return handler(typed.payload, getState, emit, typed, ctx);
     };
 
     return this.registerEffect({
@@ -3605,6 +3645,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           "keyed",
         );
         set.delete(entry);
+        entry.ctx.end("effect replaced");
         // Pruned per dropped function rather than wholesale. `effectMeta` was never cleared
         // here at all, so it grew stale entries forever; clearing all of it would instead
         // strip the metadata of every effect being preserved.
@@ -3620,6 +3661,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       this.recordEffectChange(entry.effect, entry.when, entry.origin, "unmounted", "pattern");
       this.patternEffects.delete(entry);
       this.releaseEffectMeta(entry.effect);
+      entry.ctx.end("effect replaced");
     }
 
     for (const spec of next) {

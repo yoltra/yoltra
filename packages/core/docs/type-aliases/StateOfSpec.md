@@ -10,7 +10,7 @@
 
 > **StateOfSpec**\<`X`\> = `X` *extends* [`ReducerSpec`](../interfaces/ReducerSpec.md)\<infer St, `any`\> ? `St` : `never`
 
-Defined in: [types.ts:2370](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2370)
+Defined in: [types.ts:2397](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2397)
 
 Reads a reducer spec's state type.
 

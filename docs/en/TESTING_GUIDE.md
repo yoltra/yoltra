@@ -116,6 +116,10 @@ it("loads todos and reduces the result", async () => {
 Test the **failure** path the same way — have the effect emit a `loadFailure`
 event and assert the reduced error state.
 
+To test cancellation, unregister the effect (or `store.dispose()`) while its work is pending and
+assert on `ctx.signal`: it aborts with `"effect unregistered"` (or `"store disposed"`), and an
+effect that checks `ctx.signal.aborted` emits nothing afterwards.
+
 ---
 
 ## Testing middleware (rejection)

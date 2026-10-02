@@ -8,7 +8,7 @@
 
 # Interface: Decoration\<AddS, AddEM\>
 
-Defined in: [types.ts:2386](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2386)
+Defined in: [types.ts:2413](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2413)
 
 What a decoration contributes to a store: some slices, some events, either possibly empty.
 
@@ -39,7 +39,7 @@ type FlagsDecoration = Decoration<{ flags: FlagsState }, FlagsEM>;
 
 > `readonly` **events**: `AddEM`
 
-Defined in: [types.ts:2391](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2391)
+Defined in: [types.ts:2418](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2418)
 
 ***
 
@@ -47,4 +47,4 @@ Defined in: [types.ts:2391](https://github.com/yoltra/yoltra/blob/main/packages/
 
 > `readonly` **slices**: `AddS`
 
-Defined in: [types.ts:2390](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2390)
+Defined in: [types.ts:2417](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2417)

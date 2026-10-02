@@ -347,6 +347,26 @@ efectos de cada evento corren como una tarea propia. Para trabajo que debe arran
 correr en paralelo, usa [`onEvent`](#suscripciones-a-eventos), cuyos handlers se llaman sin
 esperarlos.
 
+Un efecto también recibe un cuarto argumento, su contexto. `ctx.signal` se aborta cuando el efecto
+deja de estar registrado: corre su disposer, una recarga en caliente lo reemplaza, o el store se
+libera. Pásalo al trabajo que el efecto inicia:
+
+```typescript
+store.registerEffect({
+  when: { keys: [["search", "query"]] },
+  effect: async (event, getState, emit, ctx) => {
+    const res = await fetch(`/api/search?q=${event.payload}`, { signal: ctx.signal });
+    if (ctx.signal.aborted) return;
+    await emit("search", "results", await res.json());
+  },
+});
+```
+
+Un aborto no detiene a un efecto que ya está corriendo, y sus emisiones posteriores no se
+descartan: desregistrar un efecto no es el fin del store. Revisa `ctx.signal.aborted` antes de
+emitir un resultado que solo tenía sentido mientras el efecto estaba instalado. Los efectos escritos
+con tres parámetros no cambian.
+
 ---
 
 ## Suscripciones a Eventos
@@ -1150,9 +1170,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 13.5 KB | 15 KB |
-| `{ createStore, hydrate, persist }` | 14.9 KB | 17 KB |
-| todo | 16.5 KB | 18 KB |
+| `{ createStore }` | 13.6 KB | 16 KB |
+| `{ createStore, hydrate, persist }` | 15.0 KB | 17 KB |
+| todo | 16.6 KB | 19 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define
@@ -1173,11 +1193,12 @@ store, no módulos opcionales, así que los paga todo el mundo. Es el intercambi
 comportamiento por defecto que impide que un desbocado cuelgue la pestaña.
 
 Un presupuesto solo se mueve por lo que se midió, y dice por qué. En 0.10.0 el presupuesto de
-`createStore` pasó de 14 KB a 15 KB por la costura de diagnósticos
-([Errores y diagnósticos](#errores-y-diagnósticos)), que midió 0.6 KB: un helper de enrutamiento
-y una frase por cada fallo que el store contiene. La fila de persistencia, que incluye al store,
-pasó de 16 KB a 17 KB por esos mismos 0.6 KB más 0.2 KB propios: `PersistEncodeError`, y rechazar
-una escritura parcial.
+`createStore` pasó de 14 KB a 16 KB: la costura de diagnósticos
+([Errores y diagnósticos](#errores-y-diagnósticos)) midió 0.6 KB, un helper de enrutamiento y una
+frase por cada fallo que el store contiene; un store liberado inerte con `store.signal` midió
+0.4 KB; y `ctx.signal` para los efectos 0.1 KB. La fila de persistencia, que incluye al store,
+pasó de 16 KB a 17 KB por la costura de diagnósticos más 0.2 KB propios: `PersistEncodeError`, y
+rechazar una escritura parcial. El barrel pasó de 18 KB a 19 KB junto con el store.
 
 ---
 

@@ -28,6 +28,7 @@
 - [ConnectOptions](interfaces/ConnectOptions.md)
 - [Decoration](interfaces/Decoration.md)
 - [Diagnostic](interfaces/Diagnostic.md)
+- [EffectContext](interfaces/EffectContext.md)
 - [EffectSpec](interfaces/EffectSpec.md)
 - [EmitOptions](interfaces/EmitOptions.md)
 - [EmitResult](interfaces/EmitResult.md)

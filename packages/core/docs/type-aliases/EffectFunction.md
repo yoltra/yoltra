@@ -8,9 +8,9 @@
 
 # Type Alias: EffectFunction()\<S, EM\>
 
-> **EffectFunction**\<`S`, `EM`\> = (`event`, `getState`, `emit`) => `void` \| `Promise`\<`void`\>
+> **EffectFunction**\<`S`, `EM`\> = (`event`, `getState`, `emit`, `ctx`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [types.ts:1574](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1574)
+Defined in: [types.ts:1600](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1600)
 
 Effect handler: runs AFTER reducers, sees the final state.
 
@@ -42,6 +42,15 @@ Event map.
 
 [`Emit`](Emit.md)\<`EM`\>
 
+### ctx
+
+[`EffectContext`](../interfaces/EffectContext.md)
+
 ## Returns
 
 `void` \| `Promise`\<`void`\>
+
+## Remarks
+
+The fourth argument is optional to declare, so an effect written with three parameters is still
+an `EffectFunction`.

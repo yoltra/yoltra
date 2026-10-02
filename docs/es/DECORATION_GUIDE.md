@@ -287,6 +287,9 @@ De ahí se siguen cuatro detalles:
 - **Los tipos coinciden.** Desde 0.10.0 `replaceReducers` y `hotReplace({ reducer })` toman un
   `ReducerReplacement`: cada slice es opcional y se tipa con el estado de su propia slice. Omitir
   la slice de la librería compila, que es la llamada que espera el runtime.
+- **Un efecto reemplazado se entera.** Su `ctx.signal` se aborta con `"effect replaced"`, así que
+  una petición que inició antes de la recarga puede cancelarse en lugar de llegar después. Los
+  efectos preservados conservan su signal.
 
 ---
 

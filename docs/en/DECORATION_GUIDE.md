@@ -282,6 +282,9 @@ Four details follow from it:
 - **The types agree.** Since 0.10.0 `replaceReducers` and `hotReplace({ reducer })` take a
   `ReducerReplacement`: every slice optional, each typed with its own slice's state. Leaving out
   the library's slice typechecks, which is the call the runtime expects.
+- **A replaced effect is told.** Its `ctx.signal` aborts with `"effect replaced"`, so a request it
+  started before the reload can be cancelled instead of landing afterwards. Preserved effects keep
+  their signal.
 
 ---
 

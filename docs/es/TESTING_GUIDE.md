@@ -116,6 +116,10 @@ it("carga todos y reduce el resultado", async () => {
 Prueba la ruta de **fallo** igual — haz que el effect emita un evento
 `loadFailure` y valida el estado de error reducido.
 
+Para probar la cancelación, desregistra el efecto (o `store.dispose()`) mientras su trabajo está
+pendiente y valida `ctx.signal`: se aborta con `"effect unregistered"` (o `"store disposed"`), y
+un efecto que revisa `ctx.signal.aborted` no emite nada después.
+
 ---
 
 ## Probar middleware (rechazo)

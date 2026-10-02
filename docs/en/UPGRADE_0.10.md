@@ -183,3 +183,9 @@ diagnostics without silencing anything. The existing hooks still fire. See
 
 `EventBus` and `LooseEventBus` take an optional handler-error callback in their constructor. It
 defaults to the console, as before.
+
+**`ctx` for effects, with `ctx.signal`.** An effect receives a fourth argument, an `EffectContext`
+(new), whose `signal` aborts when the effect stops being registered: its disposer runs,
+`replaceEffects` or `hotReplace` removes it, or the store is disposed. `onEffect` handlers receive
+it as their fifth argument. Effects written with three parameters are unaffected. If you call an
+`EffectFunction` yourself, in a test, pass a context: `{ signal: new AbortController().signal }`.

@@ -340,6 +340,26 @@ same event, and anything awaiting that `emit()`, but not other events: each even
 as a task of their own. For work that should start at once and run alongside, use
 [`onEvent`](#event-subscriptions), whose handlers are called without being awaited.
 
+An effect also receives a fourth argument, its context. `ctx.signal` aborts when the effect stops
+being registered: its disposer runs, a hot reload replaces it, or the store is disposed. Hand it to
+the work the effect starts:
+
+```typescript
+store.registerEffect({
+  when: { keys: [["search", "query"]] },
+  effect: async (event, getState, emit, ctx) => {
+    const res = await fetch(`/api/search?q=${event.payload}`, { signal: ctx.signal });
+    if (ctx.signal.aborted) return;
+    await emit("search", "results", await res.json());
+  },
+});
+```
+
+An abort does not stop an effect that is already running, and its later emits are not dropped:
+unregistering an effect is not the end of the store. Check `ctx.signal.aborted` before emitting a
+result that only made sense while the effect was installed. Effects written with three parameters
+are unchanged.
+
 ---
 
 ## Event Subscriptions
@@ -1125,9 +1145,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 13.5 KB | 15 KB |
-| `{ createStore, hydrate, persist }` | 14.9 KB | 17 KB |
-| everything | 16.5 KB | 18 KB |
+| `{ createStore }` | 13.6 KB | 16 KB |
+| `{ createStore, hydrate, persist }` | 15.0 KB | 17 KB |
+| everything | 16.6 KB | 19 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines
@@ -1147,10 +1167,12 @@ opt-in modules, so they are paid by everyone. That is the honest trade for a def
 stops a runaway from hanging the tab.
 
 A budget moves only by what was measured, and says why. In 0.10.0 the `createStore` budget went
-from 14 KB to 15 KB for the diagnostics seam ([Errors and diagnostics](#errors-and-diagnostics)),
-which measured 0.6 KB: one routing helper and a sentence for every failure the store contains.
-The persistence row, which includes the store, went from 16 KB to 17 KB for the same 0.6 KB plus
-0.2 KB of its own: `PersistEncodeError`, and refusing a partial write.
+from 14 KB to 16 KB: the diagnostics seam ([Errors and diagnostics](#errors-and-diagnostics))
+measured 0.6 KB, one routing helper and a sentence for every failure the store contains; an inert
+disposed store with `store.signal` measured 0.4 KB; and `ctx.signal` for effects 0.1 KB. The
+persistence row, which includes the store, went from 16 KB to 17 KB for the diagnostics seam plus
+0.2 KB of its own: `PersistEncodeError`, and refusing a partial write. The barrel went from 18 KB
+to 19 KB with the store.
 
 ---
 

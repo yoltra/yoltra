@@ -1025,6 +1025,7 @@ export interface StoreInstance<
       getState: () => DeepReadonly<S>,
       emit: Emit<EM>,
       event: Event<EM, C, T>,
+      ctx: EffectContext,
     ) => void | Promise<void>,
   ): Unsubscribe;
 
@@ -1564,7 +1565,32 @@ export interface MiddlewareSpec<S = any, EM extends EventMapBase = EventMapBase>
 }
 
 /**
+ * What an effect receives about its own registration.
+ *
+ * @public
+ */
+export interface EffectContext {
+  /**
+   * Aborted when this effect stops being registered: its disposer ran, `replaceEffects` or
+   * `hotReplace` removed it, or the store was disposed.
+   *
+   * @remarks
+   * Hand it to work the effect starts, such as a `fetch`, so a reload or an unmount cancels the
+   * request instead of letting it land in a store that no longer wants it. Created on first
+   * read, and shared by every event the registration handles. An effect that is still running
+   * when it aborts is not stopped, and what it emits afterwards is not dropped: unregistering an
+   * effect is not the end of the store. Check `signal.aborted` before emitting a result that only
+   * made sense while the effect was installed.
+   */
+  readonly signal: AbortSignal;
+}
+
+/**
  * Effect handler: runs AFTER reducers, sees the final state.
+ *
+ * @remarks
+ * The fourth argument is optional to declare, so an effect written with three parameters is still
+ * an `EffectFunction`.
  *
  * @typeParam S  - Store state (readonly).
  * @typeParam EM - Event map.
@@ -1575,6 +1601,7 @@ export type EffectFunction<S = any, EM extends EventMapBase = EventMapBase> = (
   event: EventUnion<EM>,
   getState: () => S,
   emit: Emit<EM>,
+  ctx: EffectContext,
 ) => void | Promise<void>;
 
 /**

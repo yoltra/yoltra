@@ -14,6 +14,8 @@ import { createStore } from "../../src/store/Store";
 import { defineSlice, eventKeys } from "../../src/types";
 import type {
   Clock,
+  EffectContext,
+  EffectFunction,
   DeepReadonly,
   DiagnosticSink,
   Dotted,
@@ -395,5 +397,19 @@ describe("DiagnosticSink accepts the sink shapes other libraries already use", (
     const sink: DiagnosticSink = () => undefined;
     const store = createStore({ name: "Diag", reducer: {}, diagnostics: sink });
     expectTypeOf(store.onDiagnostic).parameter(0).toEqualTypeOf<DiagnosticSink>();
+  });
+});
+
+describe("EffectFunction gained a context without breaking older effects", () => {
+  type EM = { ui: { go: number } };
+
+  it("still accepts an effect written with three parameters", () => {
+    const old = (_event: unknown, _getState: () => unknown, _emit: unknown): void => undefined;
+    expectTypeOf(old).toMatchTypeOf<EffectFunction<unknown, EM>>();
+  });
+
+  it("types the fourth parameter as the effect's context", () => {
+    expectTypeOf<Parameters<EffectFunction<unknown, EM>>[3]>().toEqualTypeOf<EffectContext>();
+    expectTypeOf<EffectContext["signal"]>().toEqualTypeOf<AbortSignal>();
   });
 });

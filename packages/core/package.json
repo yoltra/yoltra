@@ -90,7 +90,7 @@
     {
       "name": "createStore",
       "import": "{ createStore }",
-      "limitKb": 15
+      "limitKb": 16
     },
     {
       "name": "with persistence",
@@ -99,7 +99,7 @@
     },
     {
       "name": "barrel",
-      "limitKb": 18
+      "limitKb": 19
     }
   ]
 }
