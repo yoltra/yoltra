@@ -208,3 +208,7 @@ accept the new optional second argument to `instrument`.
 **`warnOnLargeValues(store, limits?)`**, a development-only check for payloads and slices that grew
 too large, as a separate import. See
 [Values that grew too large](../../packages/core/README.md#values-that-grew-too-large).
+
+**`matchesWhen` and `describeWhenProblem`**, the store's own matcher and validator, with the
+`WhenConsumer` type, for code that filters events by a `When` outside the store. See
+[Matching outside the store](../../packages/core/README.md#matching-outside-the-store).

@@ -11,6 +11,8 @@ export { LooseEventBus } from "./eventBus/LooseEventBus";
 export { Reducer } from "./reducer/Reducer";
 export { Store, createStore, typedEvents } from "./store/Store";
 export { Rejected, isRejected } from "./store/rejection";
+export { describeWhenProblem, matchesWhen } from "./store/matching";
+export type { WhenConsumer } from "./store/matching";
 export { CallAbortedError, CallTimeoutError } from "./store/call";
 export type {
   CallCancellation,

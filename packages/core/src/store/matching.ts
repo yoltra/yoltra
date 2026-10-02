@@ -37,11 +37,23 @@ import type {
  * - `{ channelPattern: '*::plan' }` matches if event's channel matches the pattern, `*` standing
  *   for zero or more characters.
  *
- * @internal
+ * This is the matcher every seam of the store uses. It is exported so code that filters events by
+ * the same `When` a consumer would declare (a capture filter, a router, a test helper) gets the
+ * store's semantics exactly instead of a copy that can drift. It reads only `channel` and `type`,
+ * so an {@link InstrumentedEvent}'s `event`, or any `{ channel, type }`, can be passed as is.
+ *
+ * @example
+ * ```ts
+ * store.instrument((info) => {
+ *   if (matchesWhen({ channels: ["orders", "billing"] }, info.event)) record(info);
+ * });
+ * ```
+ *
+ * @public
  */
 export function matchesWhen<EM extends EventMapBase>(
   when: When<EM> | undefined,
-  event: EventUnion<EM>,
+  event: Pick<EventUnion<EM>, "channel" | "type">,
 ): boolean {
   // No targeting = match all events
   if (!when) return true;
@@ -83,7 +95,7 @@ export function matchesWhen<EM extends EventMapBase>(
  * What kind of consumer a `when` matcher is being registered for. Reducers and effects take
  * exact matchers only; middleware also takes `channelPattern`.
  *
- * @internal
+ * @public
  */
 export type WhenConsumer = "reducer" | "effect" | "middleware";
 
@@ -111,7 +123,16 @@ const EXACT = "{ keys }, { channel }, { channels } or { any: true }";
  * `{ channels: [] }` are well-formed, and a caller may build them from a list that happens to
  * be empty.
  *
- * @internal
+ * Exported so code that accepts a `when` from configuration can refuse a malformed one with the
+ * store's own message, before handing it to a store or to {@link matchesWhen}.
+ *
+ * @example
+ * ```ts
+ * const problem = describeWhenProblem(config.capture, "middleware");
+ * if (problem !== undefined) throw new Error(`capture: ${problem}`);
+ * ```
+ *
+ * @public
  */
 export function describeWhenProblem(
   when: unknown,

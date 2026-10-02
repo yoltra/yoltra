@@ -295,6 +295,28 @@ off(); // Remove later
 
 ---
 
+### Matching outside the store
+
+`matchesWhen(when, event)` is the matcher every seam uses, and `describeWhenProblem(when, consumer)`
+is the check that refuses a malformed one. Both are exported, so code that filters events by a
+`When` (a capture filter, a router, a test helper) applies the store's rules exactly, `*` and `::`
+included, instead of a copy that drifts:
+
+```typescript
+import { describeWhenProblem, matchesWhen } from "@yoltra/core";
+
+const problem = describeWhenProblem(config.capture, "middleware");
+if (problem !== undefined) throw new Error(`capture: ${problem}`);
+
+store.instrument((info) => {
+  if (matchesWhen(config.capture, info.event)) record(info);
+});
+```
+
+`matchesWhen` reads only `channel` and `type`, so an instrumented event's `event` is accepted as is.
+
+---
+
 ## Effects
 
 Effects run **after** reducers and see the final state. They are keyed by event for O(1) lookup:

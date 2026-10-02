@@ -218,3 +218,7 @@ implementes tú mismo debe aceptar el nuevo segundo argumento opcional de `instr
 **`warnOnLargeValues(store, limits?)`**, una revisión solo de desarrollo para payloads y slices que
 crecieron demasiado, como un import aparte. Consulta
 [Valores que crecieron demasiado](../../packages/core/README.es.md#valores-que-crecieron-demasiado).
+
+**`matchesWhen` y `describeWhenProblem`**, el matcher y el validador del propio store, con el tipo
+`WhenConsumer`, para código que filtra eventos con un `When` fuera del store. Consulta
+[Coincidir fuera del store](../../packages/core/README.es.md#coincidir-fuera-del-store).

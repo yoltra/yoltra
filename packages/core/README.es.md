@@ -300,6 +300,29 @@ off(); // Remover despues
 
 ---
 
+### Coincidir fuera del store
+
+`matchesWhen(when, event)` es el matcher que usa cada costura, y `describeWhenProblem(when, consumer)`
+es la revisión que rechaza uno mal formado. Ambos se exportan, así que el código que filtra eventos
+con un `When` (un filtro de captura, un enrutador, un helper de tests) aplica las reglas del store
+exactamente, `*` y `::` incluidos, en lugar de una copia que se desvía:
+
+```typescript
+import { describeWhenProblem, matchesWhen } from "@yoltra/core";
+
+const problem = describeWhenProblem(config.capture, "middleware");
+if (problem !== undefined) throw new Error(`capture: ${problem}`);
+
+store.instrument((info) => {
+  if (matchesWhen(config.capture, info.event)) record(info);
+});
+```
+
+`matchesWhen` lee solo `channel` y `type`, así que el `event` de un evento instrumentado se acepta
+tal cual.
+
+---
+
 ## Efectos
 
 Los efectos se ejecutan **después** de los reducers y ven el estado final. Están indexados por
