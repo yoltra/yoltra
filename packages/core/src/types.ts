@@ -470,6 +470,25 @@ export type InstrumentationObserver<EM extends EventMapBase = EventMapBase> = (
 ) => void;
 
 /**
+ * Options for {@link StoreInstance.instrument}.
+ *
+ * @public
+ */
+export interface InstrumentOptions {
+  /**
+   * Also receive events on {@link StoreSpec.ephemeral} channels.
+   *
+   * @remarks
+   * Off by default, so an observer that records history (a devtools timeline, an audit trail)
+   * never pays for traffic. Turn it on for an observer that must see every state change whatever
+   * caused it, such as persistence.
+   *
+   * @default false
+   */
+  readonly ephemeral?: boolean;
+}
+
+/**
  * Store spec - what you feed into the constructor / factory.
  *
  * @typeParam R  - Reducer name union (string literal union).
@@ -580,7 +599,8 @@ export interface Scheduler {
  *
  * Development warnings, never sent in production: `key-collision`, `payload-by-reference`,
  * `dotted-key`, `snapshot-missing-slice`, `middleware-promise`, `observer-promise`,
- * `use-after-dispose` (an `emit` or `call` on a disposed store).
+ * `use-after-dispose` (an `emit` or `call` on a disposed store), `ephemeral-write` (an event on
+ * an ephemeral channel wrote state).
  *
  * @public
  */
@@ -602,7 +622,8 @@ export type DiagnosticCode =
   | "snapshot-missing-slice"
   | "middleware-promise"
   | "observer-promise"
-  | "use-after-dispose";
+  | "use-after-dispose"
+  | "ephemeral-write";
 
 /**
  * Something a store has to say: a failure it contained, a refusal, or a development warning.
@@ -894,6 +915,21 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * @param slice - Name of the slice whose reducer refused.
    */
   onRejected?: (rejection: Rejection, event: EventUnion<EM>, slice: string) => void;
+
+  /**
+   * Channels whose events are traffic, not history.
+   *
+   * @remarks
+   * Reducers, subscribers and effects handle them as usual. What changes is everything that
+   * records: they reach only instrumentation observers registered with `{ ephemeral: true }`, so
+   * a devtools timeline or an audit log skips them and the store does no instrumentation work for
+   * them while nobody opted in, and replay skips them. Use it for high-frequency signals such as
+   * presence, cursor positions, typing indicators or progress ticks.
+   *
+   * An ephemeral event that writes state is warned about once in development (the
+   * `ephemeral-write` diagnostic): replay would skip it, so a replayed history would diverge.
+   */
+  ephemeral?: readonly (keyof EM & string)[];
 
   /**
    * Where the store sends its diagnostics: every failure it contained, every refusal, and its
@@ -1299,7 +1335,7 @@ export interface StoreInstance<
    * @param observer - Receives an {@link InstrumentedEvent} per emit.
    * @returns Unsubscribe function.
    */
-  instrument(observer: InstrumentationObserver<EM>): Unsubscribe;
+  instrument(observer: InstrumentationObserver<EM>, options?: InstrumentOptions): Unsubscribe;
 
   /**
    * Observes the store's diagnostics: the failures it contained, its refusals and its

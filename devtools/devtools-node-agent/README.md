@@ -71,6 +71,9 @@ await store.emit("counter", "increment", null);
    - `EVENT_REPLAY` → calls `__replayEvents()` on the store
    - `EMIT_TO_STORE` → calls `store.emit()` with the provided event
 
+Events on the store's `ephemeral` channels are not reported: the agent registers its observer
+without `{ ephemeral: true }`, so that traffic never reaches the timeline and costs it nothing.
+
 The wrapper is **transparent** — it returns the same store instance. No API changes required.
 
 ---

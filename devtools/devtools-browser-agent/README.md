@@ -76,6 +76,9 @@ await store.emit("todos", "add", { title: "Buy milk" });
    - `EVENT_REPLAY` → replay events through reducers only
    - `EMIT_TO_STORE` → inject a synthetic event
 
+Events on the store's `ephemeral` channels are not reported: the agent registers its observer
+without `{ ephemeral: true }`, so that traffic never reaches the timeline and costs it nothing.
+
 The wrapper is **transparent** — it returns the same store instance.
 
 ---

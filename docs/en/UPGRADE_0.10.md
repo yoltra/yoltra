@@ -194,3 +194,11 @@ it as their fifth argument. Effects written with three parameters are unaffected
 and the call emits it, with the request's id and the reason, when it is cancelled, aborted or times
 out, so the responder can stop working. See the
 [request and reply guide](./REQUEST_REPLY_GUIDE.md#telling-the-responder-you-gave-up).
+
+**`ephemeral` channels, and `store.instrument(observer, { ephemeral })`.** Events on an ephemeral
+channel are handled as usual but reach only instrumentation observers that opt in, and replay
+skips them. Devtools agents do not opt in; `persist` does. The README's
+[Traffic that is not history](../../packages/core/README.md#traffic-that-is-not-history) and
+[Values that change many times a second](../../packages/core/README.md#values-that-change-many-times-a-second)
+describe the pattern for high-frequency values. A `PersistableStore` you implement yourself should
+accept the new optional second argument to `instrument`.

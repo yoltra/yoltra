@@ -237,7 +237,10 @@ export function withHydration<R extends Record<string, { state: unknown }>>(
 /** The store surface persistence needs, which is two methods wide. */
 export interface PersistableStore {
   getState(): unknown;
-  instrument(observer: (info: { changedPaths?: readonly string[] }) => void): () => void;
+  instrument(
+    observer: (info: { changedPaths?: readonly string[] }) => void,
+    options?: { ephemeral?: boolean },
+  ): () => void;
 }
 
 /**
@@ -341,7 +344,8 @@ export function persist(store: PersistableStore, options: PersistOptions): () =>
     ) {
       schedule();
     }
-  });
+    // Opted into ephemeral events: storage must follow every change to state, whatever caused it.
+  }, { ephemeral: true });
 
   return () => {
     stop();

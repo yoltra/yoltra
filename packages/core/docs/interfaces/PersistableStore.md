@@ -28,7 +28,7 @@ Defined in: [persistence/persist.ts:239](https://github.com/yoltra/yoltra/blob/m
 
 ### instrument()
 
-> **instrument**(`observer`): () => `void`
+> **instrument**(`observer`, `options?`): () => `void`
 
 Defined in: [persistence/persist.ts:240](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L240)
 
@@ -37,6 +37,12 @@ Defined in: [persistence/persist.ts:240](https://github.com/yoltra/yoltra/blob/m
 ##### observer
 
 (`info`) => `void`
+
+##### options?
+
+###### ephemeral?
+
+`boolean`
 
 #### Returns
 

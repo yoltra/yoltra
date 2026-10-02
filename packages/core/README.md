@@ -655,6 +655,92 @@ await store.emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page
 
 ---
 
+## Traffic that is not history
+
+Some events are traffic: a presence ping, a pointer position, a progress tick, a typing indicator.
+They are handled like any event, but recording them is waste. A devtools timeline of ten thousand
+pointer moves hides the three events that mattered, and every observer pays for each one. Name
+those channels `ephemeral`:
+
+```typescript
+const store = createStore({
+  name: "app",
+  reducer: { /* ... */ },
+  ephemeral: ["presence"],
+});
+```
+
+Reducers, subscribers and effects handle an ephemeral event exactly as before. What changes is
+everything that records:
+
+- **Instrumentation** delivers it only to observers registered with
+  `store.instrument(observer, { ephemeral: true })`. While none is, the store does no
+  instrumentation work for it at all. The devtools agents do not opt in; `persist` does, because
+  storage must follow every change to state.
+- **Replay** skips it, so a replayed history is the history of what mattered.
+- **Writing state** from an ephemeral event is warned about once per event in development
+  (`ephemeral-write`): replay skips the event, so a replayed history would not reproduce the write.
+
+---
+
+## Values that change many times a second
+
+A store is a log of facts, and every fact is diffed, frozen in development, delivered to
+subscribers and, unless its channel is ephemeral, recorded. That is the right cost for "the user
+joined" and the wrong one for a value that changes sixty times a second. Split the two:
+
+- **Keep per-frame values outside the store**, behind the producer's own subscribable handle: a
+  pointer position, a scroll offset, a sensor reading, the latest sample of a live chart. React
+  reads them with `useSyncExternalStore`, which needs only `subscribe` and `getSnapshot`.
+- **Put only discrete facts in state**: started, paused, finished, selection changed, threshold
+  crossed.
+- **Throttle anything that does enter state in the producer**, by time **and** by how far the
+  value moved, so a quiet value costs nothing and a busy one is bounded.
+- **Mark such channels `ephemeral`**, so observability does not pay per event.
+
+A producer that does all four:
+
+```typescript
+function createProgress(store: AppStore, scheduler: Scheduler) {
+  let latest = 0;
+  let reported = 0;
+  let pending: TimerHandle | null = null;
+  const readers = new Set<() => void>();
+
+  return {
+    set(value: number) {
+      latest = value;
+      for (const read of readers) read(); // per-frame readers, outside the store
+      if (pending !== null || Math.abs(value - reported) < 0.01) return;
+      pending = scheduler.setTimeout(() => {
+        pending = null;
+        reported = latest;
+        void store.emit("job", "progress", latest); // at most every 100 ms, on an ephemeral channel
+      }, 100);
+    },
+    get: () => latest,
+    subscribe(read: () => void) {
+      readers.add(read);
+      return () => readers.delete(read);
+    },
+  };
+}
+
+// In a component: every frame, without the store.
+const value = useSyncExternalStore(progress.subscribe, progress.get);
+```
+
+Pass the store's own `scheduler` and a test drives the throttle as it drives the store
+([Time and timers](#time-and-timers)).
+
+**Why `emit` does not coalesce for you.** By the time `emit()` returns, reducers have run and state
+is updated; every subscriber, effect and caused event relies on that. Coalescing inside `emit` would
+mean an event that returned without having happened yet, or one that silently replaced another, and
+causality (`parentId`, `depth`, cascade bounds) would no longer describe what ran. The producer
+knows which values are disposable; the store does not.
+
+---
+
 ## Time and timers
 
 A store reads the time through one port and arms timers through another, and both can be
@@ -1147,9 +1233,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 13.7 KB | 16 KB |
-| `{ createStore, hydrate, persist }` | 15.1 KB | 17 KB |
-| everything | 16.7 KB | 19 KB |
+| `{ createStore }` | 13.9 KB | 16 KB |
+| `{ createStore, hydrate, persist }` | 15.3 KB | 17 KB |
+| everything | 16.9 KB | 19 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines

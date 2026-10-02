@@ -8,7 +8,7 @@
 
 # Interface: EffectContext
 
-Defined in: [types.ts:1572](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1572)
+Defined in: [types.ts:1608](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1608)
 
 What an effect receives about its own registration.
 
@@ -18,7 +18,7 @@ What an effect receives about its own registration.
 
 > `readonly` **signal**: `AbortSignal`
 
-Defined in: [types.ts:1585](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1585)
+Defined in: [types.ts:1621](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1621)
 
 Aborted when this effect stops being registered: its disposer ran, `replaceEffects` or
 `hotReplace` removed it, or the store was disposed.

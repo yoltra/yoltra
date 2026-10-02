@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-node-agent",
+      "comment": "Documentation only: the README (en, es) says that events on a store's ephemeral channels are not reported. No code change: the agent registers its observer without opting in.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-node-agent"
+}

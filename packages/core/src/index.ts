@@ -66,6 +66,7 @@ export type {
   InstrumentedEvent,
   CascadeInfo,
   InstrumentationObserver,
+  InstrumentOptions,
   Unsubscribe,
   StoreSpec,
   Diagnostic,

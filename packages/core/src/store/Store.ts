@@ -12,6 +12,7 @@ import { EventBus } from "../eventBus/EventBus";
 import { LooseEventBus } from "../eventBus/LooseEventBus";
 import type {
   Clock,
+  InstrumentOptions,
   EffectContext,
   Diagnostic,
   DiagnosticCode,
@@ -714,6 +715,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private readonly instrumentObservers = new Set<InstrumentationObserver<EM>>();
 
+  /** The observers in {@link instrumentObservers} that opted into ephemeral events. @internal */
+  private readonly ephemeralObservers = new Set<InstrumentationObserver<EM>>();
+
+  /** {@link StoreSpec.ephemeral}. @internal */
+  private readonly ephemeralChannels: ReadonlySet<string>;
+
+  /** `channel::type` of ephemeral events already warned about for writing state. @internal */
+  private readonly warnedEphemeralWrites = new Set<string>();
+
   /** The owner's sink. See {@link StoreSpec.diagnostics}. @internal */
   private readonly diagnosticSink: DiagnosticSink | undefined;
 
@@ -871,6 +881,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   constructor(spec: StoreSpec<R, S, EM>) {
     this.name = spec.name ?? "yoltra Store";
     this.diagnosticSink = spec.diagnostics;
+    this.ephemeralChannels = new Set<string>(spec.ephemeral ?? []);
     this.checkKeyCollision = createKeyCollisionCheck(this.name, (message, detail) =>
       this.report("warn", "key-collision", message, detail, message),
     );
@@ -1038,6 +1049,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.writtenEventSubscribers.clear();
     this.allEventSubscribers.clear();
     this.instrumentObservers.clear();
+    this.ephemeralObservers.clear();
     this.diagnosticObservers.clear();
     this.connectorBus.clear();
     this.reducerBus.clear();
@@ -1912,6 +1924,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // 2. Replay each event through reducers + event subscribers only
     for (const evt of events) {
       const event = evt as EventUnion<EM>;
+      // Traffic, not history: an ephemeral event is not part of what a replay reproduces.
+      if (this.ephemeralChannels.has(evt.channel)) continue;
 
       // Staged and committed exactly as a live event is, so a replay reproduces the same state
       // by the same path — including a reducer that refuses, which must refuse identically or
@@ -2193,8 +2207,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         };
 
         // Instrumentation: capture prev state, collect changed paths, and time
-        // the synchronous reduce — all skipped entirely when no observers.
-        const instrumenting = this.instrumentObservers.size > 0;
+        // the synchronous reduce, all skipped entirely when no observers. An ephemeral event
+        // counts only the observers that opted in, so traffic costs nothing while nobody does.
+        const ephemeral = this.ephemeralChannels.has(event.channel as string);
+        const observers = ephemeral ? this.ephemeralObservers : this.instrumentObservers;
+        const instrumenting = observers.size > 0;
         const prevState = instrumenting ? this.state : undefined;
         const sink: string[] | undefined = instrumenting ? [] : undefined;
         if (sink !== undefined) this.changedPathSink = sink;
@@ -2220,8 +2237,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           this.currentEvent = null;
         }
 
+        if (ephemeral && result.written) this.warnEphemeralWrite(event);
+
         if (instrumenting) {
           this.emitInstrumentation(
+            observers,
             event,
             result,
             sink ?? [],
@@ -2456,11 +2476,30 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public instrument(observer: InstrumentationObserver<EM>): Unsubscribe {
+  public instrument(observer: InstrumentationObserver<EM>, options?: InstrumentOptions): Unsubscribe {
     this.instrumentObservers.add(observer);
+    if (options?.ephemeral === true) this.ephemeralObservers.add(observer);
     return () => {
       this.instrumentObservers.delete(observer);
+      this.ephemeralObservers.delete(observer);
     };
+  }
+
+  /**
+   * Says once per event key, in development, that an ephemeral event wrote state.
+   *
+   * @internal
+   */
+  private warnEphemeralWrite(event: EventUnion<EM>): void {
+    const key = `${event.channel}::${event.type}`;
+    if (process.env.NODE_ENV === "production" || this.warnedEphemeralWrites.has(key)) return;
+    this.warnedEphemeralWrites.add(key);
+    const message =
+      `[yoltra] Store "${this.name}": "${event.channel}/${event.type}" is on an ephemeral channel ` +
+      `but wrote state. Replay skips ephemeral events, so a replayed history will not reproduce ` +
+      `this change. Keep per-frame values outside the store, or take the channel out of ` +
+      `"ephemeral".`;
+    this.report("warn", "ephemeral-write", message, { event }, message);
   }
 
   /**
@@ -2472,6 +2511,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private emitInstrumentation(
+    observers: ReadonlySet<InstrumentationObserver<EM>>,
     event: EventUnion<EM>,
     result: EmitResult,
     changedPaths: string[],
@@ -2512,7 +2552,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       ...(result.reason !== undefined ? { reason: result.reason } : {}),
       ...(result.vetoedBy !== undefined ? { vetoedBy: result.vetoedBy } : {}),
     };
-    for (const observer of [...this.instrumentObservers]) {
+    for (const observer of [...observers]) {
       try {
         observer(info);
       } catch (e) {
@@ -4206,6 +4246,7 @@ export function createStore<
   clock?: Clock;
   scheduler?: Scheduler;
   diagnostics?: DiagnosticSink;
+  ephemeral?: readonly (keyof EM & string)[];
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
   onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
@@ -4257,6 +4298,7 @@ export function createStore<RM extends ReducersMapAny>(cfg: {
   clock?: Clock;
   scheduler?: Scheduler;
   diagnostics?: DiagnosticSink;
+  ephemeral?: readonly (keyof EMFromReducersStrict<RM> & string)[];
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EMFromReducersStrict<RM>>) => void;
   onReducerError?: (

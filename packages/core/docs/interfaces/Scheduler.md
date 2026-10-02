@@ -8,7 +8,7 @@
 
 # Interface: Scheduler
 
-Defined in: [types.ts:560](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L560)
+Defined in: [types.ts:579](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L579)
 
 Where a store arms its timers.
 
@@ -23,7 +23,7 @@ Called as methods, so a class instance keeps its `this`. `clearTimeout` receives
 
 > **clearTimeout**(`handle`): `void`
 
-Defined in: [types.ts:564](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L564)
+Defined in: [types.ts:583](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L583)
 
 Cancels a timer that has not fired yet.
 
@@ -43,7 +43,7 @@ Cancels a timer that has not fired yet.
 
 > **setTimeout**(`callback`, `delayMs`): [`TimerHandle`](../type-aliases/TimerHandle.md)
 
-Defined in: [types.ts:562](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L562)
+Defined in: [types.ts:581](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L581)
 
 Runs `callback` once, after `delayMs` milliseconds.
 

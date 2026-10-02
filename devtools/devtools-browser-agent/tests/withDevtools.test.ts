@@ -97,6 +97,26 @@ describe("withDevtools integration", () => {
     expect(storeEvent.patches).toEqual([{ op: "replace", path: "/counter/value", value: 5 }]);
   });
 
+  it("does not report events on an ephemeral channel", async () => {
+    type PEM = EM & { presence: { ping: string } };
+    const store = createStore<{ counter: CounterState }, PEM>({
+      name: "App",
+      reducer: { counter: counterSpec as unknown as ReducerSpec<CounterState, PEM> },
+      ephemeral: ["presence"],
+    });
+    withDevtools(store, { port: 9999 });
+
+    // Traffic: handled by the store, but not history, so the agent never sees it.
+    await store.emit("presence", "ping", "ana");
+    await store.emit("counter", "increment", 1);
+
+    await vi.waitFor(() => {
+      expect(FakeWebSocket.last!.parsed("STORE_EVENT").length).toBeGreaterThan(0);
+    });
+    const channels = FakeWebSocket.last!.parsed("STORE_EVENT").map((m) => m.event.channel);
+    expect(channels).toEqual(["counter"]);
+  });
+
   it("answers REQUEST_METRICS with real reduce timing and typed introspection", async () => {
     const store = createStore({ name: "MetricsApp", reducer: { counter: counterSpec } });
     withDevtools(store, { port: 9999 });

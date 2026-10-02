@@ -10,7 +10,7 @@
 
 > **persist**(`store`, `options`): () => `void`
 
-Defined in: [persistence/persist.ts:292](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L292)
+Defined in: [persistence/persist.ts:295](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L295)
 
 Writes state as it changes.
 

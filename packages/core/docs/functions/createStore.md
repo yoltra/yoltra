@@ -12,7 +12,7 @@
 
 > **createStore**\<`S`, `EM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `S` & `string`, `S`, `EM`\>
 
-Defined in: [store/Store.ts:4196](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L4196)
+Defined in: [store/Store.ts:4236](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L4236)
 
 Creates a store with explicit State and EventMap types.
 
@@ -64,6 +64,10 @@ Configuration with `name`, optional `reducer`, optional `middleware`, optional `
 ##### effects?
 
 [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`S`\>, `EM`\>[]
+
+##### ephemeral?
+
+readonly keyof `EM` & `string`[]
 
 ##### idFactory?
 
@@ -149,7 +153,7 @@ const store = createStore<AppState, AppEM>({
 
 > **createStore**\<`RM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, [`StateFromReducers`](../type-aliases/StateFromReducers.md)\<`RM`\>, [`EMFromReducersStrict`](../type-aliases/EMFromReducersStrict.md)\<`RM`\>\>
 
-Defined in: [store/Store.ts:4247](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L4247)
+Defined in: [store/Store.ts:4288](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L4288)
 
 Creates a store with types inferred from the reducers map.
 
@@ -193,6 +197,10 @@ Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
 ##### effects?
 
 [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<[`StateFromReducers`](../type-aliases/StateFromReducers.md)\<`RM`\>\>, [`EMFromReducersStrict`](../type-aliases/EMFromReducersStrict.md)\<`RM`\>\>[]
+
+##### ephemeral?
+
+readonly keyof [`EMFromReducersStrict`](../type-aliases/EMFromReducersStrict.md)\<`RM`\> & `string`[]
 
 ##### idFactory?
 

@@ -204,3 +204,11 @@ afectados. Si llamas un `EffectFunction` tú mismo, en un test, pásale un conte
 la llamada lo emite, con el id de la petición y la razón, cuando se cancela, se aborta o expira,
 para que `Quien Responde` pueda dejar de trabajar. Consulta la
 [guía de Petición y Respuesta](./REQUEST_REPLY_GUIDE.md#avisarle-a-quien-responde-que-te-rendiste).
+
+**Canales `ephemeral`, y `store.instrument(observer, { ephemeral })`.** Los eventos de un canal
+efímero se manejan como siempre pero llegan solo a los observadores de instrumentación que se
+suscriben a ellos, y el replay los omite. Los agentes de devtools no se suscriben; `persist` sí.
+[Tráfico que no es historia](../../packages/core/README.es.md#tráfico-que-no-es-historia) y
+[Valores que cambian muchas veces por segundo](../../packages/core/README.es.md#valores-que-cambian-muchas-veces-por-segundo)
+en el README describen el patrón para valores de alta frecuencia. Un `PersistableStore` que
+implementes tú mismo debe aceptar el nuevo segundo argumento opcional de `instrument`.

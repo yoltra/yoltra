@@ -45,6 +45,7 @@
 - [EventMapCarrier](interfaces/EventMapCarrier.md)
 - [Hydration](interfaces/Hydration.md)
 - [InstrumentedEvent](interfaces/InstrumentedEvent.md)
+- [InstrumentOptions](interfaces/InstrumentOptions.md)
 - [MiddlewareSpec](interfaces/MiddlewareSpec.md)
 - [PersistableStore](interfaces/PersistableStore.md)
 - [PersistenceAdapter](interfaces/PersistenceAdapter.md)

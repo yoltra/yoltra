@@ -426,3 +426,13 @@ describe("CallOptions.cancel accepts only events that can carry a cancellation",
     void store.call("rpc", "ask", null, { reply: ["rpc", "answer"], cancel: ["rpc", "count"] }).catch(() => undefined);
   });
 });
+
+describe("StoreSpec.ephemeral names channels of the store's event map", () => {
+  type EM = { presence: { ping: null }; doc: { edit: string } };
+
+  it("accepts a channel and refuses an unknown one", () => {
+    createStore<Record<string, never>, EM>({ name: "Eph", ephemeral: ["presence"] });
+    // @ts-expect-error not a channel of EM
+    createStore<Record<string, never>, EM>({ name: "Eph", ephemeral: ["cursor"] });
+  });
+});

@@ -10,7 +10,7 @@
 
 > **DiagnosticSink** = (`diagnostic`) => `void`
 
-Defined in: [types.ts:633](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L633)
+Defined in: [types.ts:654](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L654)
 
 Receives a store's [Diagnostic](../interfaces/Diagnostic.md)s. See [StoreSpec.diagnostics](StoreSpec.md#diagnostics).
 

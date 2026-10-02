@@ -670,6 +670,94 @@ await store.emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page
 
 ---
 
+## Tráfico que no es historia
+
+Algunos eventos son tráfico: un ping de presencia, la posición de un puntero, un avance de
+progreso, un indicador de escritura. Se manejan como cualquier evento, pero registrarlos es
+desperdicio. Una línea de tiempo de devtools con diez mil movimientos de puntero esconde los tres
+eventos que importaban, y cada observador paga por cada uno. Nombra esos canales `ephemeral`:
+
+```typescript
+const store = createStore({
+  name: "app",
+  reducer: { /* ... */ },
+  ephemeral: ["presence"],
+});
+```
+
+Los reducers, suscriptores y efectos manejan un evento efímero exactamente igual que antes. Lo que
+cambia es todo lo que registra:
+
+- **La instrumentación** lo entrega solo a los observadores registrados con
+  `store.instrument(observer, { ephemeral: true })`. Mientras no haya ninguno, el store no hace
+  ningún trabajo de instrumentación para él. Los agentes de devtools no se suscriben; `persist` sí,
+  porque el almacenamiento debe seguir cada cambio del estado.
+- **El replay** lo omite, así que una historia reproducida es la historia de lo que importó.
+- **Escribir estado** desde un evento efímero se avisa una vez por evento en desarrollo
+  (`ephemeral-write`): el replay omite el evento, así que una historia reproducida no repetiría la
+  escritura.
+
+---
+
+## Valores que cambian muchas veces por segundo
+
+Un store es un registro de hechos, y cada hecho se compara, se congela en desarrollo, se entrega a
+los suscriptores y, salvo que su canal sea efímero, se registra. Ese es el costo correcto para "el
+usuario se unió" y el equivocado para un valor que cambia sesenta veces por segundo. Separa ambos:
+
+- **Mantén los valores por cuadro fuera del store**, detrás de un handle suscribible del propio
+  productor: la posición de un puntero, un desplazamiento de scroll, la lectura de un sensor, la
+  última muestra de una gráfica en vivo. React los lee con `useSyncExternalStore`, que solo
+  necesita `subscribe` y `getSnapshot`.
+- **Pon en el estado solo hechos discretos**: inició, se pausó, terminó, cambió la selección, se
+  cruzó un umbral.
+- **Limita en el productor todo lo que sí entre al estado**, por tiempo **y** por cuánto se movió
+  el valor, para que un valor quieto no cueste nada y uno activo quede acotado.
+- **Marca esos canales como `ephemeral`**, para que la observabilidad no pague por evento.
+
+Un productor que hace las cuatro cosas:
+
+```typescript
+function createProgress(store: AppStore, scheduler: Scheduler) {
+  let latest = 0;
+  let reported = 0;
+  let pending: TimerHandle | null = null;
+  const readers = new Set<() => void>();
+
+  return {
+    set(value: number) {
+      latest = value;
+      for (const read of readers) read(); // lectores por cuadro, fuera del store
+      if (pending !== null || Math.abs(value - reported) < 0.01) return;
+      pending = scheduler.setTimeout(() => {
+        pending = null;
+        reported = latest;
+        void store.emit("job", "progress", latest); // como mucho cada 100 ms, en un canal efímero
+      }, 100);
+    },
+    get: () => latest,
+    subscribe(read: () => void) {
+      readers.add(read);
+      return () => readers.delete(read);
+    },
+  };
+}
+
+// En un componente: cada cuadro, sin el store.
+const value = useSyncExternalStore(progress.subscribe, progress.get);
+```
+
+Pasa el `scheduler` del propio store y un test maneja el límite igual que maneja el store
+([Tiempo y timers](#tiempo-y-timers)).
+
+**Por qué `emit` no agrupa por ti.** Para cuando `emit()` regresa, los reducers ya corrieron y el
+estado está actualizado; cada suscriptor, efecto y evento causado depende de eso. Agrupar dentro de
+`emit` significaría un evento que regresó sin haber ocurrido todavía, o uno que reemplazó a otro en
+silencio, y la causalidad (`parentId`, `depth`, los límites de cascada) dejaría de describir lo que
+corrió. El productor sabe qué valores son desechables; el store no.
+
+---
+
 ## Tiempo y timers
 
 Un store lee la hora a través de un puerto y arma sus timers a través de otro, y ambos se pueden
@@ -1172,9 +1260,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 13.7 KB | 16 KB |
-| `{ createStore, hydrate, persist }` | 15.1 KB | 17 KB |
-| todo | 16.7 KB | 19 KB |
+| `{ createStore }` | 13.9 KB | 16 KB |
+| `{ createStore, hydrate, persist }` | 15.3 KB | 17 KB |
+| todo | 16.9 KB | 19 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define

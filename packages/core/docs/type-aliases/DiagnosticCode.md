@@ -8,9 +8,9 @@
 
 # Type Alias: DiagnosticCode
 
-> **DiagnosticCode** = `"effect-error"` \| `"reducer-error"` \| `"subscriber-error"` \| `"connect-error"` \| `"middleware-error"` \| `"observer-error"` \| `"emit-error"` \| `"slice-teardown-error"` \| `"cascade"` \| `"rejected"` \| `"registration-cascade"` \| `"key-collision"` \| `"payload-by-reference"` \| `"dotted-key"` \| `"snapshot-missing-slice"` \| `"middleware-promise"` \| `"observer-promise"` \| `"use-after-dispose"`
+> **DiagnosticCode** = `"effect-error"` \| `"reducer-error"` \| `"subscriber-error"` \| `"connect-error"` \| `"middleware-error"` \| `"observer-error"` \| `"emit-error"` \| `"slice-teardown-error"` \| `"cascade"` \| `"rejected"` \| `"registration-cascade"` \| `"key-collision"` \| `"payload-by-reference"` \| `"dotted-key"` \| `"snapshot-missing-slice"` \| `"middleware-promise"` \| `"observer-promise"` \| `"use-after-dispose"` \| `"ephemeral-write"`
 
-Defined in: [types.ts:587](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L587)
+Defined in: [types.ts:607](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L607)
 
 The stable identifier of a [Diagnostic](../interfaces/Diagnostic.md), for routing and filtering.
 
@@ -28,4 +28,5 @@ write; level `info`, since a refusal is a normal outcome), `registration-cascade
 
 Development warnings, never sent in production: `key-collision`, `payload-by-reference`,
 `dotted-key`, `snapshot-missing-slice`, `middleware-promise`, `observer-promise`,
-`use-after-dispose` (an `emit` or `call` on a disposed store).
+`use-after-dispose` (an `emit` or `call` on a disposed store), `ephemeral-write` (an event on
+an ephemeral channel wrote state).
