@@ -65,13 +65,13 @@ missing, and still composes, because TypeScript infers `EM` and then checks the 
 ## Example
 
 ```ts
-export function withTransfers<
+export function withFlags<
   R extends string,
   S extends Record<R, any>,
   EM extends EventMapBase,
->(store: StoreInstance<R, S, EM>, config: TransfersConfig) {
-  return store.withSlice("transfers", defineSlice<TransfersEM>()({ ... }), {
-    owner: "@scope/transfers",
+>(store: StoreInstance<R, S, EM>, config: FlagsConfig) {
+  return store.withSlice("flags", defineSlice<FlagsEM>()({ ... }), {
+    owner: "@scope/flags",
   });
 }
 ```

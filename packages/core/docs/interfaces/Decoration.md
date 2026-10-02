@@ -20,7 +20,7 @@ its contribution once and have [Decorated](../type-aliases/Decorated.md) and [St
 ## Example
 
 ```ts
-type TransfersDecoration = Decoration<{ transfers: TransferState }, TransfersEM>;
+type FlagsDecoration = Decoration<{ flags: FlagsState }, FlagsEM>;
 ```
 
 ## Type Parameters

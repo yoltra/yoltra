@@ -165,7 +165,7 @@ state.counter.value = 999; // TypeError: Cannot assign to read-only property
 > **Channel and type are joined into one key, `"channel::type"`.** Dispatch, deduplication and
 > introspection all key on it, so two different pairs can collapse together: `("a::b", "c")` and
 > `("a", "b::c")` both become `"a::b::c"`, and a subscriber for one is invoked for the other. A
-> `::` in a channel is fine on its own (it is how a federated peer's channel is namespaced), so
+> `::` in a channel is fine on its own (it is how a peer's channel is namespaced), so
 > development builds warn on the **collision**, not on the separator, naming the store and both
 > pairs, once per store.
 
@@ -227,7 +227,7 @@ const rateGuard = {
 ```
 
 The first four forms compare exactly. `channelPattern` is for channels that cannot be named in
-advance, such as a federated peer's namespaced `bb::plan`. `*` is the only metacharacter, and it
+advance, such as a peer's namespaced `bb::plan`. `*` is the only metacharacter, and it
 matches the usual glob way: `"*plan"` also matches `replan`, so a store that has both a local
 `plan` and namespaced ones wants `"*::plan"` plus a separate rule for the local channel. The
 [Decoration Guide](../../docs/en/DECORATION_GUIDE.md#targeting-a-channel-you-cannot-name-in-advance)
@@ -693,33 +693,33 @@ plain `string` and returned a bare disposer, so nothing downstream knew the slic
 what shape it had. `withSlice` returns **the same store, re-typed**:
 
 ```typescript
-type TransferEM = { transfer: { granted: { id: string } } };
+type FlagsEM = { flag: { enabled: { id: string } } };
 
-const transfers = defineSlice<TransferEM>()({
-  state: { granted: [] as string[] },
-  when: { keys: [["transfer", "granted"]] },
-  reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+const flags = defineSlice<FlagsEM>()({
+  state: { enabled: [] as string[] },
+  when: { keys: [["flag", "enabled"]] },
+  reducer: (s, e) => (e.type === "enabled" ? { enabled: [...s.enabled, e.payload.id] } : s),
 });
 
-const app = store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+const app = store.withSlice("flags", flags, { owner: "@scope/flags" });
 
-app.getState().transfers.granted; // string[]
-app.emit("transfer", "granted", { id: "a1" }); // the new channel is emittable
+app.getState().flags.enabled; // string[]
+app.emit("flag", "enabled", { id: "a1" }); // the new channel is emittable
 ```
 
 `withMiddleware` and `withEffect` do the same for the event map. Calls chain, and a library
 publishes a decorator by taking a store and returning one:
 
 ```typescript
-export function withTransfers<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
+export function withFlags<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
   store: StoreInstance<R, S, EM>,
-  config: TransfersConfig,
+  config: FlagsConfig,
 ) {
-  return store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+  return store.withSlice("flags", flags, { owner: "@scope/flags" });
 }
 
 // Decorators nest, in any order.
-const decorated = withTransfers(withDevtools(store, dtConfig), config);
+const decorated = withFlags(withDevtools(store, dtConfig), config);
 ```
 
 **Why the builders.** A spec's `when` carries channel and type strings and no payload types,

@@ -151,12 +151,12 @@ import { defineSlice } from "@yoltra/core";
 
 // Ámbito de módulo, una sola vez, antes del primer render.
 export const app = createYoltra({ name: "App", reducer: { counter } })
-  .withSlice("transfers", defineSlice<TransferEM>()({ ... }));
+  .withSlice("flags", defineSlice<FlagsEM>()({ ... }));
 
 export const { useAtomicProp, useEmit } = app;
 
 // Tipado, sobre una slice que la aplicación nunca declaró.
-const granted = useAtomicProp({ reducer: "transfers", property: "granted" });
+const enabled = useAtomicProp({ reducer: "flags", property: "enabled" });
 ```
 
 Tres cosas que conviene saber:

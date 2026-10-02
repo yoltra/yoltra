@@ -506,9 +506,9 @@ describe("Store - channelPattern targeting", () => {
   /**
    * The case the four exact forms cannot express.
    *
-   * A federated peer's channel arrives namespaced — `bb::plan` beside a local `plan` — so a guard
+   * A peer's channel arrives namespaced (`bb::plan` beside a local `plan`), so a guard
    * that means "this channel, however it is namespaced" could not use `when` at all: `channel`
-   * and `channels` compare literally, and the aliases are invented by whoever federates. It had
+   * and `channels` compare literally, and the aliases are chosen by whoever connects the peers. It had
    * to match everything and filter in its own body, which costs the pre-call skip and makes the
    * middleware report to every observer that it matches the whole store.
    *

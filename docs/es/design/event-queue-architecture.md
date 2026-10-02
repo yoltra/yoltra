@@ -294,7 +294,7 @@ distintos pueden unirse en una sola clave: `("a::b", "c")` y `("a", "b::c")` se 
 esa **colisión**, nombrando el store y ambos pares. El registro se lleva por store, porque las claves
 solo colisionan dentro de los mapas de un mismo store: dos stores que usan cada uno uno de los pares
 no pueden interferir y no generan aviso. Un `::` por sí solo tampoco genera aviso, porque es como se
-le da namespace al canal de un par federado.
+le da namespace al canal de un par.
 
 ## El contrato de la promesa de `emit()`
 

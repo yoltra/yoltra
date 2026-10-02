@@ -283,7 +283,7 @@ join to one key: `("a::b", "c")` and `("a", "b::c")` both become `"a::b::c"`, an
 would then drop one for the other. Development builds warn on such a **collision**, naming the
 store and both pairs. The record is kept per store, because keys only collide inside one store's
 maps: two stores that each use one of the pairs cannot interfere and are not warned about. A `::`
-on its own is not warned about either, because it is how a federated peer's channel is namespaced.
+on its own is not warned about either, because it is how a peer's channel is namespaced.
 
 ## The `emit()` promise contract
 

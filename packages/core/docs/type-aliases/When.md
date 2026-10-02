@@ -33,7 +33,7 @@ Event map.
 ## Remarks
 
 The first four compare exactly. `channelPattern` is for the case they cannot express: a channel
-that arrives namespaced, such as a federated peer's `alias::plan` beside a local `plan`, where a
+that arrives namespaced, such as a peer's `alias::plan` beside a local `plan`, where a
 guard wants both and cannot know the aliases in advance.
 
 Without it such a guard has to match everything and filter in its own body, which costs the

@@ -346,8 +346,8 @@ export interface EmitOptions {
  * `("a", "b::c")` both become `"a::b::c"`, and a subscriber registered for one is invoked for the
  * other, while a dedup window lets one drop the other.
  *
- * A `::` in a channel is fine on its own — it is how a federated peer's channel is namespaced —
- * so development builds warn on the **collision**, naming both pairs, rather than on the
+ * A `::` in a channel is fine on its own (it is how a peer's channel is namespaced), so
+ * development builds warn on the **collision**, naming both pairs, rather than on the
  * separator. Nothing throws.
  *
  * @public
@@ -1456,7 +1456,7 @@ export type EMFromReducersStrict<RM extends ReducersMapAny> = UnionToIntersectio
  *
  * @remarks
  * The first four compare exactly. `channelPattern` is for the case they cannot express: a channel
- * that arrives namespaced, such as a federated peer's `alias::plan` beside a local `plan`, where a
+ * that arrives namespaced, such as a peer's `alias::plan` beside a local `plan`, where a
  * guard wants both and cannot know the aliases in advance.
  *
  * Without it such a guard has to match everything and filter in its own body, which costs the
@@ -2164,7 +2164,7 @@ export type StateOfSpec<X> = X extends ReducerSpec<infer St, any> ? St : never;
  *
  * @example
  * ```ts
- * type TransfersDecoration = Decoration<{ transfers: TransferState }, TransfersEM>;
+ * type FlagsDecoration = Decoration<{ flags: FlagsState }, FlagsEM>;
  * ```
  *
  * @public
@@ -2213,13 +2213,13 @@ export type Decorated<R extends string, S extends Record<R, any>, EM extends Eve
  *
  * @example
  * ```ts
- * export function withTransfers<
+ * export function withFlags<
  *   R extends string,
  *   S extends Record<R, any>,
  *   EM extends EventMapBase,
- * >(store: StoreInstance<R, S, EM>, config: TransfersConfig) {
- *   return store.withSlice("transfers", defineSlice<TransfersEM>()({ ... }), {
- *     owner: "@scope/transfers",
+ * >(store: StoreInstance<R, S, EM>, config: FlagsConfig) {
+ *   return store.withSlice("flags", defineSlice<FlagsEM>()({ ... }), {
+ *     owner: "@scope/flags",
  *   });
  * }
  * ```
@@ -2345,16 +2345,16 @@ export interface StoreDecoration<
  *
  * @example
  * ```ts
- * type LibEM = { "lib.transfer": { granted: { id: string } } };
+ * type LibEM = { "lib.flag": { enabled: { id: string } } };
  *
- * const transfers = defineSlice<LibEM>()({
- *   state: { granted: [] as string[] },
- *   when: { keys: [["lib.transfer", "granted"]] },
- *   reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+ * const flags = defineSlice<LibEM>()({
+ *   state: { enabled: [] as string[] },
+ *   when: { keys: [["lib.flag", "enabled"]] },
+ *   reducer: (s, e) => (e.type === "enabled" ? { enabled: [...s.enabled, e.payload.id] } : s),
  * });
  *
- * const widened = store.withSlice("transfers", transfers);
- * // widened.getState().transfers.granted is string[], and `lib.transfer` is emittable
+ * const widened = store.withSlice("flags", flags);
+ * // widened.getState().flags.enabled is string[], and `lib.flag` is emittable
  * ```
  *
  * @public

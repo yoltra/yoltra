@@ -150,12 +150,12 @@ import { defineSlice } from "@yoltra/core";
 
 // Module scope, once, before the first render.
 export const app = createYoltra({ name: "App", reducer: { counter } })
-  .withSlice("transfers", defineSlice<TransferEM>()({ ... }));
+  .withSlice("flags", defineSlice<FlagsEM>()({ ... }));
 
 export const { useAtomicProp, useEmit } = app;
 
 // Typed, on a slice the application never declared.
-const granted = useAtomicProp({ reducer: "transfers", property: "granted" });
+const enabled = useAtomicProp({ reducer: "flags", property: "enabled" });
 ```
 
 Three things to know:

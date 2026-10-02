@@ -4,8 +4,8 @@
 
 > 👉 🇲🇽 Versión en Español&nbsp; | &nbsp;[ 🇺🇸 English Version](../en/DECORATION_GUIDE.md)
 
-Un store lo crea una aplicación. Una capacidad a menudo la escribe alguien más: una
-transferencia de archivos, una tubería de telemetría, una sesión de medios. Esa librería
+Un store lo crea una aplicación. Una capacidad a menudo la escribe alguien más: feature
+flags, un historial de deshacer, un validador de formularios. Esa librería
 necesita agregar una slice, vetar algunos eventos y reaccionar a otros, sobre un store que no
 creó y cuya definición no puede cambiar.
 
@@ -20,13 +20,13 @@ Antes de 0.8.0, decorar un store se veía así:
 
 ```typescript
 // Ya no escribas esto.
-store.registerReducer("transfers", transfersSpec as any);
+store.registerReducer("flags", flagsSpec as any);
 store.registerMiddleware(guard as any);
 ```
 
 Dos casts, y un tercero en cada lugar donde la aplicación tocara después la slice, porque
 `registerReducer` recibía un `string` y no devolvía más que un disposer. Nada aguas abajo
-sabía que `transfers` existía, qué forma tenía, ni a qué canales respondía.
+sabía que `flags` existía, qué forma tenía, ni a qué canales respondía.
 
 0.8.0 eliminó el cast del middleware y casi todo lo demás. `registerReducer` conservó su cast
 durante 0.8.x: estaba tipado contra el mapa de eventos del propio store, así que un spec que
@@ -58,7 +58,7 @@ explica la forma completa de la API.
 El `when` de un spec lleva *cadenas* de canal y tipo:
 
 ```typescript
-when: { keys: [["transfer", "granted"]] }
+when: { keys: [["flag", "enabled"]] }
 ```
 
 Cadenas, sin tipos de payload. Ahí no hay nada de lo que inferir un mapa de eventos. Y
@@ -72,14 +72,14 @@ funciona:
 ```typescript
 import { defineSlice } from "@yoltra/core";
 
-type TransferEM = {
-  transfer: { granted: { id: string }; revoked: { id: string } };
+type FlagsEM = {
+  flag: { enabled: { id: string }; disabled: { id: string } };
 };
 
-export const transfers = defineSlice<TransferEM>()({
-  state: { granted: [] as string[] },
-  when: { keys: [["transfer", "granted"]] },
-  reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+export const flags = defineSlice<FlagsEM>()({
+  state: { enabled: [] as string[] },
+  when: { keys: [["flag", "enabled"]] },
+  reducer: (s, e) => (e.type === "enabled" ? { enabled: [...s.enabled, e.payload.id] } : s),
 });
 ```
 
@@ -94,8 +94,8 @@ eventos.**
 store.withMiddleware((state, event) => true);
 
 // Aporta sus canales.
-store.withMiddleware(defineMiddleware<TransferEM>()({
-  when: { channel: "transfer" },
+store.withMiddleware(defineMiddleware<FlagsEM>()({
+  when: { channel: "flag" },
   middleware: () => true,
 }));
 ```
@@ -108,10 +108,10 @@ se puede inferir nada de vuelta. Solo la forma de spec lleva el mapa.
 ## Hacer crecer el tipo del store
 
 ```typescript
-const app = store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+const app = store.withSlice("flags", flags, { owner: "@scope/flags" });
 
-app.getState().transfers.granted;               // string[]
-app.emit("transfer", "granted", { id: "a1" });  // el canal nuevo ya es emitible
+app.getState().flags.enabled;               // string[]
+app.emit("flag", "enabled", { id: "a1" });  // el canal nuevo ya es emitible
 ```
 
 `withSlice`, `withMiddleware` y `withEffect` devuelven el store con sus tipos ampliados, así
@@ -119,7 +119,7 @@ que las llamadas se encadenan:
 
 ```typescript
 const app = store
-  .withSlice("transfers", transfers)
+  .withSlice("flags", flags)
   .withMiddleware(quota)
   .withEffect(uploader);
 ```
@@ -129,7 +129,7 @@ ningún estado se mueve, la caché de deduplicación queda intacta y una `store.
 continúa. Solo cambia el tipo.
 
 ```typescript
-store.withSlice("transfers", transfers) === store; // true
+store.withSlice("flags", flags) === store; // true
 ```
 
 ---
@@ -141,12 +141,12 @@ Una librería exporta una función que recibe un store y devuelve otro:
 ```typescript
 import type { EventMapBase, StoreInstance } from "@yoltra/core";
 
-export function withTransfers<
+export function withFlags<
   R extends string,
   S extends Record<R, any>,
   EM extends EventMapBase,
->(store: StoreInstance<R, S, EM>, config: TransfersConfig) {
-  return store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+>(store: StoreInstance<R, S, EM>, config: FlagsConfig) {
+  return store.withSlice("flags", flags, { owner: "@scope/flags" });
 }
 ```
 
@@ -155,9 +155,9 @@ inferencia, así que toman lo que quien llama realmente tiene, y los decoradores
 anidándose en cualquier orden:
 
 ```typescript
-const decorated = withTransfers(withTelemetry(store, tConfig), config);
+const decorated = withFlags(withUndo(store, undoConfig), config);
 // o
-const decorated = withTelemetry(withTransfers(store, config), tConfig);
+const decorated = withUndo(withFlags(store, config), undoConfig);
 ```
 
 Ambos llegan al mismo tipo. Un decorador que solo agrega eventos, envolviendo a uno que además
@@ -189,7 +189,7 @@ Restringe la entrada. Sin registro y sin tabla de orden:
 export function withAudit<
   R extends string,
   S extends Record<R, any>,
-  EM extends EventMapBase & TransferEM,   // ← la dependencia
+  EM extends EventMapBase & FlagsEM,   // ← la dependencia
 >(store: StoreInstance<R, S, EM>) {
   return store.withEffect(auditor);
 }
@@ -267,9 +267,9 @@ siendo lo obvio que pasar adelante.
 construcción sobrevive, junto con su estado:
 
 ```typescript
-store.registerSlice("transfers", transfers);   // la slice de una librería
+store.registerSlice("flags", flags);   // la slice de una librería
 store.replaceReducers(appReducers);            // la recarga de la app
-store.getState().transfers;                    // sigue ahí
+store.getState().flags;                    // sigue ahí
 ```
 
 No lo declaras tú ni lo declara la librería. La procedencia se registra internamente, porque
@@ -295,12 +295,12 @@ De ahí se siguen cuatro detalles:
 ```typescript
 // state/yoltra.ts - ámbito de módulo, una sola vez.
 export const app = createYoltra({ name: "App", reducer: { counter } })
-  .withSlice("transfers", transfers);
+  .withSlice("flags", flags);
 
 export const { useAtomicProp, useEmit, useEvent } = app;
 ```
 
-`useAtomicProp({ reducer: "transfers", property: "granted" })` queda tipado, sobre una slice
+`useAtomicProp({ reducer: "flags", property: "enabled" })` queda tipado, sobre una slice
 que la aplicación nunca declaró.
 
 Tres cosas que conviene saber:
@@ -319,9 +319,9 @@ Tres cosas que conviene saber:
 ## Apuntar a un canal que no puedes nombrar por adelantado
 
 `when` compara de forma exacta: `{ channel: "plan" }` coincide con `plan` y con nada más. Eso es un
-problema para un guard cuyos canales llegan con namespace — el `bb::plan` de un par federado junto a
-un `plan` local — porque los alias los inventa quien federa, así que ninguna lista se puede escribir
-por adelantado.
+problema para un guard cuyos canales llegan con namespace, como el `bb::plan` de un par junto a un
+`plan` local, porque los alias los elige quien conecta los pares, así que ninguna lista se puede
+escribir por adelantado.
 
 `channelPattern` existe para eso, donde `*` representa cero o más caracteres. `*` es el único
 metacarácter; todo lo demás en el patrón es literal, así que `"*::plan"` cubre solo las formas con
@@ -413,7 +413,7 @@ encadenamiento no entrega uno, y el riesgo queda fuera del camino que la mayorí
 Cuando la slice es tuya y necesitas desmontarla, usa `registerSlice`:
 
 ```typescript
-const reg = store.registerSlice("transfers", transfers, { owner: "@scope/transfers" });
+const reg = store.registerSlice("flags", flags, { owner: "@scope/flags" });
 reg.store;      // el store re-tipado
 reg.dispose();  // privado a la librería: no lo exportes
 ```
@@ -424,7 +424,7 @@ de invalidar tipos de los que la aplicación sigue dependiendo.
 Leer una slice desmontada lanza un error con nombre en desarrollo, en lugar de devolver
 `undefined` desde un tipo que prometía un valor:
 
-> `[yoltra] Slice "transfers" was unmounted by its owner (@scope/transfers). Hooks and
+> `[yoltra] Slice "flags" was unmounted by its owner (@scope/flags). Hooks and
 > subscriptions widened for it are no longer valid.`
 
 ---

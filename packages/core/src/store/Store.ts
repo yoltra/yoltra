@@ -1768,8 +1768,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     opts?: EmitOptions,
   ): Promise<EmitResult> {
     // Before anything keys on `${channel}::${type}`. Development only, and reports an actual
-    // ambiguity rather than the mere presence of a separator: `alias::channel` is how a federated
-    // peer's channel is namespaced, so warning on `::` itself would fire for correct code.
+    // ambiguity rather than the mere presence of a separator: `alias::channel` is how a peer's
+    // channel is namespaced, so warning on `::` itself would fire for correct code.
     if (process.env.NODE_ENV !== "production") {
       this.checkKeyCollision(channel as string, type as string);
     }

@@ -59,6 +59,6 @@ introspection all key on it. So two different pairs can collapse together: `("a:
 `("a", "b::c")` both become `"a::b::c"`, and a subscriber registered for one is invoked for the
 other, while a dedup window lets one drop the other.
 
-A `::` in a channel is fine on its own — it is how a federated peer's channel is namespaced —
-so development builds warn on the **collision**, naming both pairs, rather than on the
+A `::` in a channel is fine on its own (it is how a peer's channel is namespaced), so
+development builds warn on the **collision**, naming both pairs, rather than on the
 separator. Nothing throws.

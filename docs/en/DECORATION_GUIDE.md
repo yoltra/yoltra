@@ -4,8 +4,8 @@
 
 > 👉 🇺🇸 English Version&nbsp; | &nbsp;[ 🇲🇽 Versión en Español](../es/DECORATION_GUIDE.md)
 
-A store is created by an application. A capability is often written by somebody else: a file
-transfer, a telemetry pipeline, a media session. That library needs to add a slice, guard some
+A store is created by an application. A capability is often written by somebody else: feature
+flags, an undo history, a form validator. That library needs to add a slice, guard some
 events and react to others, on a store it did not create and cannot change the definition of.
 
 Yoltra already had the seams for that. What it did not have was types that survived using
@@ -19,13 +19,13 @@ Before 0.8.0, decorating a store looked like this:
 
 ```typescript
 // Don't write this any more.
-store.registerReducer("transfers", transfersSpec as any);
+store.registerReducer("flags", flagsSpec as any);
 store.registerMiddleware(guard as any);
 ```
 
 Two casts, and a third at every place the application later touched the slice, because
 `registerReducer` took a plain `string` and returned nothing but a disposer. Nothing
-downstream knew `transfers` existed, what shape it had, or which channels it answered to.
+downstream knew `flags` existed, what shape it had, or which channels it answered to.
 
 0.8.0 removed the middleware cast and most of the rest. `registerReducer` kept its cast through
 0.8.x: it was typed against the store's own event map, so a spec naming a channel the application
@@ -57,7 +57,7 @@ because it explains the whole shape of the API.
 A spec's `when` carries channel and type *strings*:
 
 ```typescript
-when: { keys: [["transfer", "granted"]] }
+when: { keys: [["flag", "enabled"]] }
 ```
 
 Strings, and no payload types. There is nothing there to infer an event map from. And
@@ -70,14 +70,14 @@ type any time you wanted to name the event map.
 ```typescript
 import { defineSlice } from "@yoltra/core";
 
-type TransferEM = {
-  transfer: { granted: { id: string }; revoked: { id: string } };
+type FlagsEM = {
+  flag: { enabled: { id: string }; disabled: { id: string } };
 };
 
-export const transfers = defineSlice<TransferEM>()({
-  state: { granted: [] as string[] },
-  when: { keys: [["transfer", "granted"]] },
-  reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+export const flags = defineSlice<FlagsEM>()({
+  state: { enabled: [] as string[] },
+  when: { keys: [["flag", "enabled"]] },
+  reducer: (s, e) => (e.type === "enabled" ? { enabled: [...s.enabled, e.payload.id] } : s),
 });
 ```
 
@@ -91,8 +91,8 @@ it surprises you: a bare middleware function can never widen the event map.**
 store.withMiddleware((state, event) => true);
 
 // Contributes its channels.
-store.withMiddleware(defineMiddleware<TransferEM>()({
-  when: { channel: "transfer" },
+store.withMiddleware(defineMiddleware<FlagsEM>()({
+  when: { channel: "flag" },
   middleware: () => true,
 }));
 ```
@@ -105,10 +105,10 @@ inferred back out of. Only the spec form carries the map.
 ## Growing the store's type
 
 ```typescript
-const app = store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+const app = store.withSlice("flags", flags, { owner: "@scope/flags" });
 
-app.getState().transfers.granted;          // string[]
-app.emit("transfer", "granted", { id: "a1" });  // the new channel is emittable
+app.getState().flags.enabled;          // string[]
+app.emit("flag", "enabled", { id: "a1" });  // the new channel is emittable
 ```
 
 `withSlice`, `withMiddleware` and `withEffect` all return the store with its types widened,
@@ -116,7 +116,7 @@ so calls chain:
 
 ```typescript
 const app = store
-  .withSlice("transfers", transfers)
+  .withSlice("flags", flags)
   .withMiddleware(quota)
   .withEffect(uploader);
 ```
@@ -126,7 +126,7 @@ state moves, the dedup cache is untouched, and an in-flight `store.call()` carri
 the type changes.
 
 ```typescript
-store.withSlice("transfers", transfers) === store; // true
+store.withSlice("flags", flags) === store; // true
 ```
 
 ---
@@ -138,12 +138,12 @@ A library exports a function that takes a store and returns one:
 ```typescript
 import type { EventMapBase, StoreInstance } from "@yoltra/core";
 
-export function withTransfers<
+export function withFlags<
   R extends string,
   S extends Record<R, any>,
   EM extends EventMapBase,
->(store: StoreInstance<R, S, EM>, config: TransfersConfig) {
-  return store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+>(store: StoreInstance<R, S, EM>, config: FlagsConfig) {
+  return store.withSlice("flags", flags, { owner: "@scope/flags" });
 }
 ```
 
@@ -152,9 +152,9 @@ inference sites, so they take whatever the caller actually has, and decorators c
 nesting in any order:
 
 ```typescript
-const decorated = withTransfers(withTelemetry(store, tConfig), config);
+const decorated = withFlags(withUndo(store, undoConfig), config);
 // or
-const decorated = withTelemetry(withTransfers(store, config), tConfig);
+const decorated = withUndo(withFlags(store, config), undoConfig);
 ```
 
 Both reach the same type. A decorator that adds only events, wrapped around one that also
@@ -186,7 +186,7 @@ Constrain the input. No registry, no ordering table:
 export function withAudit<
   R extends string,
   S extends Record<R, any>,
-  EM extends EventMapBase & TransferEM,   // ← the dependency
+  EM extends EventMapBase & FlagsEM,   // ← the dependency
 >(store: StoreInstance<R, S, EM>) {
   return store.withEffect(auditor);
 }
@@ -262,9 +262,9 @@ to pass on.
 survives, along with its state:
 
 ```typescript
-store.registerSlice("transfers", transfers);   // a library's slice
+store.registerSlice("flags", flags);   // a library's slice
 store.replaceReducers(appReducers);            // the app's hot reload
-store.getState().transfers;                    // still here
+store.getState().flags;                    // still here
 ```
 
 You do not declare this and neither does the library. Provenance is recorded internally,
@@ -290,12 +290,12 @@ Four details follow from it:
 ```typescript
 // state/yoltra.ts - module scope, once.
 export const app = createYoltra({ name: "App", reducer: { counter } })
-  .withSlice("transfers", transfers);
+  .withSlice("flags", flags);
 
 export const { useAtomicProp, useEmit, useEvent } = app;
 ```
 
-`useAtomicProp({ reducer: "transfers", property: "granted" })` is typed, on a slice the
+`useAtomicProp({ reducer: "flags", property: "enabled" })` is typed, on a slice the
 application never declared.
 
 Three things to know:
@@ -314,8 +314,8 @@ Three things to know:
 ## Targeting a channel you cannot name in advance
 
 `when` compares exactly: `{ channel: "plan" }` matches `plan` and nothing else. That is a problem
-for a guard whose channels arrive namespaced — a federated peer's `bb::plan` beside a local `plan` —
-because the aliases are invented by whoever federates, so no list can be written ahead of time.
+for a guard whose channels arrive namespaced, such as a peer's `bb::plan` beside a local `plan`,
+because the aliases are chosen by whoever connects the peers, so no list can be written ahead of time.
 
 `channelPattern` is for that, with `*` standing for zero or more characters. `*` is the only
 metacharacter; everything else in the pattern is literal, so `"*::plan"` covers only the namespaced
@@ -403,7 +403,7 @@ footgun stays off the path most people take.
 When you own the slice and need teardown, use `registerSlice`:
 
 ```typescript
-const reg = store.registerSlice("transfers", transfers, { owner: "@scope/transfers" });
+const reg = store.registerSlice("flags", flags, { owner: "@scope/flags" });
 reg.store;      // the widened store
 reg.dispose();  // library-private: do not export this
 ```
@@ -414,7 +414,7 @@ ability to invalidate types the application is still relying on.
 Reading a disposed slice throws a named error in development rather than returning
 `undefined` from a type that promised a value:
 
-> `[yoltra] Slice "transfers" was unmounted by its owner (@scope/transfers). Hooks and
+> `[yoltra] Slice "flags" was unmounted by its owner (@scope/flags). Hooks and
 > subscriptions widened for it are no longer valid.`
 
 ---

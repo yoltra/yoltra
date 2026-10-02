@@ -168,7 +168,7 @@ state.counter.value = 999; // TypeError: Cannot assign to read-only property
 > y la introspección se indexan por ella, así que dos pares distintos pueden colapsar juntos:
 > `("a::b", "c")` y `("a", "b::c")` se convierten los dos en `"a::b::c"`, y un suscriptor de uno se
 > dispara con el otro. Un `::` en un canal está bien por sí solo (es como se le da namespace al
-> canal de un par federado), así que las builds de desarrollo avisan de la **colisión**, no del
+> canal de un par), así que las builds de desarrollo avisan de la **colisión**, no del
 > separador, nombrando el store y ambos pares, una vez por store.
 
 
@@ -229,7 +229,7 @@ const rateGuard = {
 ```
 
 Las primeras cuatro formas comparan de forma exacta. `channelPattern` es para canales que no se
-pueden nombrar de antemano, como el `bb::plan` con namespace de un par federado. `*` es el único
+pueden nombrar de antemano, como el `bb::plan` con namespace de un par. `*` es el único
 metacarácter, y coincide como en cualquier glob: `"*plan"` también coincide con `replan`, así que un
 store que tiene un `plan` local y otros con namespace necesita `"*::plan"` más una regla aparte para
 el canal local. La
@@ -705,33 +705,33 @@ recibía un `string` y devolvía un disposer, así que nada aguas abajo sabía q
 existía ni qué forma tenía. `withSlice` devuelve **el mismo store, re-tipado**:
 
 ```typescript
-type TransferEM = { transfer: { granted: { id: string } } };
+type FlagsEM = { flag: { enabled: { id: string } } };
 
-const transfers = defineSlice<TransferEM>()({
-  state: { granted: [] as string[] },
-  when: { keys: [["transfer", "granted"]] },
-  reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+const flags = defineSlice<FlagsEM>()({
+  state: { enabled: [] as string[] },
+  when: { keys: [["flag", "enabled"]] },
+  reducer: (s, e) => (e.type === "enabled" ? { enabled: [...s.enabled, e.payload.id] } : s),
 });
 
-const app = store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+const app = store.withSlice("flags", flags, { owner: "@scope/flags" });
 
-app.getState().transfers.granted; // string[]
-app.emit("transfer", "granted", { id: "a1" }); // el canal nuevo ya es emitible
+app.getState().flags.enabled; // string[]
+app.emit("flag", "enabled", { id: "a1" }); // el canal nuevo ya es emitible
 ```
 
 `withMiddleware` y `withEffect` hacen lo mismo para el mapa de eventos. Las llamadas se
 encadenan, y una librería publica un decorador tomando un store y devolviendo otro:
 
 ```typescript
-export function withTransfers<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
+export function withFlags<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
   store: StoreInstance<R, S, EM>,
-  config: TransfersConfig,
+  config: FlagsConfig,
 ) {
-  return store.withSlice("transfers", transfers, { owner: "@scope/transfers" });
+  return store.withSlice("flags", flags, { owner: "@scope/flags" });
 }
 
 // Los decoradores se anidan, en cualquier orden.
-const decorated = withTransfers(withDevtools(store, dtConfig), config);
+const decorated = withFlags(withDevtools(store, dtConfig), config);
 ```
 
 **Por qué los builders.** El `when` de un spec lleva cadenas de canal y tipo, no tipos de

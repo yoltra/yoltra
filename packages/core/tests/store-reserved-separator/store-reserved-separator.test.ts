@@ -9,7 +9,7 @@
  *
  * The warning is on the collision, not on `::`. A consuming runtime asserted the store
  * "structurally forbids `::` in a local channel name"; it does not, and must not, because `::` is
- * how a federated peer's channel is namespaced. Warning on the separator would fire for correct
+ * how a peer's channel is namespaced. Warning on the separator would fire for correct
  * code, and a warning nobody can act on is one everybody mutes.
  */
 
@@ -67,7 +67,7 @@ describe("a colliding key warns", () => {
   });
 
   it("stays silent for a namespaced channel that collides with nothing", async () => {
-    // The case that must not warn. `alias::channel` is how a federated peer's channel is
+    // The case that must not warn. `alias::channel` is how a peer's channel is
     // namespaced, so a store bridging peers is full of legitimate `::`.
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const s = store("NamespacedQuiet");

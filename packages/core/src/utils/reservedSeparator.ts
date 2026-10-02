@@ -17,7 +17,7 @@
  *
  * **Why this warns on the collision rather than on `::` itself.** A consuming runtime asserted that
  * the store "structurally forbids `::` in a local channel name". It does not, and it must not:
- * `::` is the established way a federated peer's channel is namespaced, `alias::channel`, so a
+ * `::` is the established way a peer's channel is namespaced, `alias::channel`, so a
  * store bridging peers is full of legitimate `::` and a warning on the separator would fire
  * constantly for correct code. A warning nobody can act on is a warning everybody mutes.
  *

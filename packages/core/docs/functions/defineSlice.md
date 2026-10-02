@@ -48,14 +48,14 @@ registration site stay free of type arguments. Identity at runtime.
 ## Example
 
 ```ts
-type LibEM = { "lib.transfer": { granted: { id: string } } };
+type LibEM = { "lib.flag": { enabled: { id: string } } };
 
-const transfers = defineSlice<LibEM>()({
-  state: { granted: [] as string[] },
-  when: { keys: [["lib.transfer", "granted"]] },
-  reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+const flags = defineSlice<LibEM>()({
+  state: { enabled: [] as string[] },
+  when: { keys: [["lib.flag", "enabled"]] },
+  reducer: (s, e) => (e.type === "enabled" ? { enabled: [...s.enabled, e.payload.id] } : s),
 });
 
-const widened = store.withSlice("transfers", transfers);
-// widened.getState().transfers.granted is string[], and `lib.transfer` is emittable
+const widened = store.withSlice("flags", flags);
+// widened.getState().flags.enabled is string[], and `lib.flag` is emittable
 ```
