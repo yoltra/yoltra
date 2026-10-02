@@ -8,7 +8,7 @@
 
 # Interface: Clock
 
-Defined in: [types.ts:565](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L565)
+Defined in: [types.ts:611](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L611)
 
 Where a store reads the time.
 
@@ -23,7 +23,7 @@ more members is accepted as it is.
 
 > **now**(): `number`
 
-Defined in: [types.ts:567](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L567)
+Defined in: [types.ts:613](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L613)
 
 Milliseconds since the epoch.
 

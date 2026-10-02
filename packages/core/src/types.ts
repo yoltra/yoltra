@@ -470,6 +470,52 @@ export type InstrumentationObserver<EM extends EventMapBase = EventMapBase> = (
 ) => void;
 
 /**
+ * One effect's part in {@link InstrumentedEffects}.
+ *
+ * @public
+ */
+export interface InstrumentedEffect {
+  /** `EffectSpec.meta.name`, else the function's own name, when it has one. */
+  readonly name?: string;
+  /**
+   * How the effect was registered. `internal` is the store's own machinery, such as the reply
+   * listener behind `store.call()`.
+   */
+  readonly origin: Origin;
+  /** From its start to its settlement, measured with `performance.now()`. */
+  readonly durationMs: number;
+  /** Whether it threw or rejected. The error itself reaches the diagnostics seam as `effect-error`. */
+  readonly failed: boolean;
+}
+
+/**
+ * What {@link StoreInstance.instrumentEffects} reports once every effect for an event has settled.
+ *
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export interface InstrumentedEffects<EM extends EventMapBase = EventMapBase> {
+  /** The event, as {@link InstrumentedEvent.event} describes it. */
+  readonly event: InstrumentedEvent<EM>["event"];
+  /** Clock time ({@link StoreSpec.clock}) when the last effect settled. */
+  readonly at: number;
+  /** The whole effect phase, from the first effect's start to the last one's settlement. */
+  readonly durationMs: number;
+  /** One entry per effect, in the order they ran. */
+  readonly effects: readonly InstrumentedEffect[];
+}
+
+/**
+ * Receives an {@link InstrumentedEffects} per event whose effects ran.
+ *
+ * @public
+ */
+export type EffectsObserver<EM extends EventMapBase = EventMapBase> = (
+  info: InstrumentedEffects<EM>,
+) => void;
+
+/**
  * Options for {@link StoreInstance.instrument}.
  *
  * @public
@@ -1336,6 +1382,23 @@ export interface StoreInstance<
    * @returns Unsubscribe function.
    */
   instrument(observer: InstrumentationObserver<EM>, options?: InstrumentOptions): Unsubscribe;
+
+  /**
+   * Observes the effect phase: once every effect for an event has settled, reports how long each
+   * took, whether it failed, and what it is called.
+   *
+   * @remarks
+   * {@link StoreInstance.instrument} reports an event after its reducers ran, before its
+   * effects. This is the other half, for tracing and timing: effect spans, slow handlers, failure
+   * rates by effect. Called only for an event whose effects ran at least one effect, and only
+   * while an observer is registered is any timing taken. Events on an ephemeral channel reach it
+   * only with `{ ephemeral: true }`, as with `instrument`. An observer that throws is reported
+   * as `observer-error` and does not affect the store.
+   *
+   * @param observer - Called once per event whose effects ran.
+   * @returns Unsubscribe function.
+   */
+  instrumentEffects(observer: EffectsObserver<EM>, options?: InstrumentOptions): Unsubscribe;
 
   /**
    * Observes the store's diagnostics: the failures it contained, its refusals and its

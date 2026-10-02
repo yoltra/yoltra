@@ -212,3 +212,8 @@ too large, as a separate import. See
 **`matchesWhen` and `describeWhenProblem`**, the store's own matcher and validator, with the
 `WhenConsumer` type, for code that filters events by a `When` outside the store. See
 [Matching outside the store](../../packages/core/README.md#matching-outside-the-store).
+
+**`store.instrumentEffects(observer, options?)`**, with the `InstrumentedEffects`,
+`InstrumentedEffect` and `EffectsObserver` types: once every effect for an event has settled, each
+effect's name, origin, duration and whether it failed. See
+[Observing the effect phase](../../packages/core/README.md#observing-the-effect-phase).

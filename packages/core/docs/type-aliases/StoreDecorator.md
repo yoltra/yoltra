@@ -10,7 +10,7 @@
 
 > **StoreDecorator**\<`D`\> = \<`R`, `S`, `EM`\>(`store`) => [`Decorated`](Decorated.md)\<`R`, `S`, `EM`, `D`\>
 
-Defined in: [types.ts:2506](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2506)
+Defined in: [types.ts:2569](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2569)
 
 The shape a `withX(store, config)` decorator conforms to, with `config` curried away.
 

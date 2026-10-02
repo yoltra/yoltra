@@ -222,3 +222,8 @@ crecieron demasiado, como un import aparte. Consulta
 **`matchesWhen` y `describeWhenProblem`**, el matcher y el validador del propio store, con el tipo
 `WhenConsumer`, para código que filtra eventos con un `When` fuera del store. Consulta
 [Coincidir fuera del store](../../packages/core/README.es.md#coincidir-fuera-del-store).
+
+**`store.instrumentEffects(observer, options?)`**, con los tipos `InstrumentedEffects`,
+`InstrumentedEffect` y `EffectsObserver`: cuando todos los efectos de un evento terminaron, el
+nombre, el origen, la duración de cada efecto y si falló. Consulta
+[Observar la fase de efectos](../../packages/core/README.es.md#observar-la-fase-de-efectos).

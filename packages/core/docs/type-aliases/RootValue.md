@@ -10,7 +10,7 @@
 
 > **RootValue** = [`Primitive`](Primitive.md) \| `ReadonlyMap`\<`unknown`, `unknown`\> \| `ReadonlySet`\<`unknown`\>
 
-Defined in: [types.ts:2032](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2032)
+Defined in: [types.ts:2095](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2095)
 
 A value with **no addressable interior**: its changes are reported at the slice root rather
 than at a path beneath it.

@@ -382,6 +382,25 @@ unregistering an effect is not the end of the store. Check `ctx.signal.aborted` 
 result that only made sense while the effect was installed. Effects written with three parameters
 are unchanged.
 
+### Observing the effect phase
+
+`store.instrument` reports an event after its reducers, before its effects. `store.instrumentEffects`
+reports the rest, once every effect for the event has settled:
+
+```typescript
+store.instrumentEffects(({ event, durationMs, effects }) => {
+  for (const effect of effects) {
+    span(`${event.channel}/${event.type} > ${effect.name ?? "effect"}`, effect.durationMs, effect.failed);
+  }
+});
+```
+
+Each entry has the effect's `name` (its `meta.name`, else the function's own name), its `origin`
+(`internal` for the store's own machinery, such as `store.call()`'s reply listener), its
+`durationMs` and whether it `failed`; the error itself goes to the diagnostics seam. Nothing is timed
+while no observer is registered, and events on an ephemeral channel are reported only to observers
+registered with `{ ephemeral: true }`.
+
 ---
 
 ## Event Subscriptions
@@ -1125,6 +1144,8 @@ use it ships none of it, and in production it watches nothing.
 | `store.onDiagnostic(observer)`                  | Observe failures, refusals and development warnings. See [Errors and diagnostics](#errors-and-diagnostics) |
 | `store.dispose()`                               | Release the store; it is inert afterwards. See [Tying resources to the store](#tying-resources-to-the-store) |
 | `store.signal`                                  | An `AbortSignal` aborted by `dispose()`        |
+| `store.instrument(observer, opts?)`             | Observe each event after its reducers          |
+| `store.instrumentEffects(observer, opts?)`      | Observe each event's effect phase once it settles |
 
 ### Dynamic Registration
 
@@ -1277,9 +1298,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 13.9 KB | 16 KB |
-| `{ createStore, hydrate, persist }` | 15.3 KB | 17 KB |
-| everything | 17.1 KB | 20 KB |
+| `{ createStore }` | 14.1 KB | 16 KB |
+| `{ createStore, hydrate, persist }` | 15.5 KB | 18 KB |
+| everything | 17.4 KB | 20 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines
@@ -1289,7 +1310,7 @@ the larger of the two: dev-only code cannot grow unnoticed just because it never
 user. So the headroom implied here is deliberately conservative.
 
 The **gap between rows** is the tree-shaking claim, and it is what to watch: persistence adds
-1.4 KB to the people who import it and nothing to anyone else, and the whole barrel is 3.2 KB
+1.4 KB to the people who import it and nothing to anyone else, and the whole barrel is 3.3 KB
 past the store. The last row is a growth tripwire; `import * as all` is not something anybody
 writes.
 
@@ -1302,8 +1323,9 @@ A budget moves only by what was measured, and says why. In 0.10.0 the `createSto
 from 14 KB to 16 KB: the diagnostics seam ([Errors and diagnostics](#errors-and-diagnostics))
 measured 0.6 KB, one routing helper and a sentence for every failure the store contains; an inert
 disposed store with `store.signal` measured 0.4 KB; and `ctx.signal` for effects 0.1 KB. The
-persistence row, which includes the store, went from 16 KB to 17 KB for the diagnostics seam plus
-0.2 KB of its own: `PersistEncodeError`, and refusing a partial write. The barrel went from 18 KB
+persistence row, which includes the store, went from 16 KB to 18 KB: the diagnostics seam, 0.2 KB of
+its own (`PersistEncodeError`, and refusing a partial write), and the effect-phase observation
+(`instrumentEffects`, 0.2 KB). The barrel went from 18 KB
 to 20 KB: 1 KB with the store, and 0.6 KB for `warnOnLargeValues`, which only the barrel and its
 own importers carry.
 

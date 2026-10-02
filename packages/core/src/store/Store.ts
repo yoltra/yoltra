@@ -12,6 +12,8 @@ import { EventBus } from "../eventBus/EventBus";
 import { LooseEventBus } from "../eventBus/LooseEventBus";
 import type {
   Clock,
+  EffectsObserver,
+  InstrumentedEffect,
   InstrumentOptions,
   EffectContext,
   Diagnostic,
@@ -718,6 +720,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   /** The observers in {@link instrumentObservers} that opted into ephemeral events. @internal */
   private readonly ephemeralObservers = new Set<InstrumentationObserver<EM>>();
 
+  /** Effect-phase observers. See {@link StoreInstance.instrumentEffects}. @internal */
+  private readonly effectObservers = new Set<EffectsObserver<EM>>();
+
+  /** The observers in {@link effectObservers} that opted into ephemeral events. @internal */
+  private readonly ephemeralEffectObservers = new Set<EffectsObserver<EM>>();
+
   /** {@link StoreSpec.ephemeral}. @internal */
   private readonly ephemeralChannels: ReadonlySet<string>;
 
@@ -1050,6 +1058,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.allEventSubscribers.clear();
     this.instrumentObservers.clear();
     this.ephemeralObservers.clear();
+    this.effectObservers.clear();
+    this.ephemeralEffectObservers.clear();
     this.diagnosticObservers.clear();
     this.connectorBus.clear();
     this.reducerBus.clear();
@@ -1241,7 +1251,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     );
   }
 
-  private async notifyEffects(event: EventUnion<EM>) {
+  private async notifyEffects(event: EventUnion<EM>, records?: InstrumentedEffect[]) {
     // Effects resume in their own task, after the drain that produced this event has ended, so
     // `currentEvent` is null by the time they run and cannot speak for them. This closure is how
     // an effect's emits stay attached to the event that triggered them — which is what bounds a
@@ -1252,27 +1262,35 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const key = `${String(event.channel)}::${String(event.type)}`;
     const effectSet = this.effects.get(key);
 
-    if (effectSet && effectSet.size > 0) {
-      for (const h of [...effectSet]) {
-        try {
-          await h.effect(event, this.getState, emit, h.ctx);
-        } catch (e) {
-          this.reportEffectError(e, event);
-          this.onEffectError?.(e, event);
-        }
+    // One effect, timed only when the effect phase is being observed.
+    const run = async (
+      effect: EffectFunction<DeepReadonly<S>, EM>,
+      ctx: EffectLifetime,
+      origin: Origin,
+    ): Promise<void> => {
+      const start = records !== undefined ? now() : 0;
+      let failed = false;
+      try {
+        await effect(event, this.getState, emit, ctx);
+      } catch (e) {
+        failed = true;
+        this.reportEffectError(e, event);
+        this.onEffectError?.(e, event);
       }
+      if (records !== undefined) {
+        const name = this.effectMeta.get(effect)?.name ?? (effect.name || undefined);
+        const durationMs = now() - start;
+        records.push({ ...(name !== undefined ? { name } : {}), origin, durationMs, failed });
+      }
+    };
+
+    if (effectSet && effectSet.size > 0) {
+      for (const h of [...effectSet]) await run(h.effect, h.ctx, h.origin);
     }
 
     // 2. Call pattern-based effects (runtime matching)
-    for (const { effect, when, ctx } of this.patternEffects) {
-      if (matchesWhen(when, event)) {
-        try {
-          await effect(event, this.getState, emit, ctx);
-        } catch (e) {
-          this.reportEffectError(e, event);
-          this.onEffectError?.(e, event);
-        }
-      }
+    for (const { effect, when, ctx, origin } of this.patternEffects) {
+      if (matchesWhen(when, event)) await run(effect, ctx, origin);
     }
   }
 
@@ -2406,12 +2424,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     resolve: (result: EmitResult) => void,
   ): Promise<void> {
     this.inFlightEffects++;
+    // The effect phase is timed only while someone observes it, and an ephemeral event only for
+    // observers that opted in, as with `instrument`.
+    const observers = this.ephemeralChannels.has(event.channel as string)
+      ? this.ephemeralEffectObservers
+      : this.effectObservers;
+    const records: InstrumentedEffect[] | undefined = observers.size > 0 ? [] : undefined;
+    const t0 = records !== undefined ? now() : 0;
     try {
-      if (result.committed) await this.notifyEffects(event);
+      if (result.committed) await this.notifyEffects(event, records);
     } catch (err) {
       this.reportEffectError(err, event);
     } finally {
       this.inFlightEffects--;
+      if (records !== undefined && records.length > 0) {
+        this.emitEffectInstrumentation(observers, event, records, now() - t0);
+      }
       resolve(result);
     }
   }
@@ -2486,6 +2514,44 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
+   * Registers an effect-phase observer. See {@link StoreInstance.instrumentEffects}.
+   *
+   * @public
+   */
+  public instrumentEffects(observer: EffectsObserver<EM>, options?: InstrumentOptions): Unsubscribe {
+    this.effectObservers.add(observer);
+    if (options?.ephemeral === true) this.ephemeralEffectObservers.add(observer);
+    return () => {
+      this.effectObservers.delete(observer);
+      this.ephemeralEffectObservers.delete(observer);
+    };
+  }
+
+  /** @internal */
+  private emitEffectInstrumentation(
+    observers: ReadonlySet<EffectsObserver<EM>>,
+    event: EventUnion<EM>,
+    effects: InstrumentedEffect[],
+    durationMs: number,
+  ): void {
+    const info = { event: this.describeEvent(event), at: this.clock.now(), durationMs, effects };
+    for (const observer of [...observers]) {
+      try {
+        observer(info);
+      } catch (e) {
+        this.report(
+          "error",
+          "observer-error",
+          "An effect-phase observer threw.",
+          { observer: "effects", error: e },
+          "Instrumentation observer error:",
+          e,
+        );
+      }
+    }
+  }
+
+  /**
    * Says once per event key, in development, that an ephemeral event wrote state.
    *
    * @internal
@@ -2500,6 +2566,26 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       `this change. Keep per-frame values outside the store, or take the channel out of ` +
       `"ephemeral".`;
     this.report("warn", "ephemeral-write", message, { event }, message);
+  }
+
+  /**
+   * The event as observers see it, shared by both instrumentation seams.
+   *
+   * @internal
+   */
+  private describeEvent(event: EventUnion<EM>): InstrumentedEvent<EM>["event"] {
+    return {
+      id: event.id,
+      channel: event.channel as string,
+      type: event.type as string,
+      payload: event.payload,
+      // Conditional, so an event without metadata produces an observer payload
+      // byte-identical to the pre-`meta` shape. Causality likewise: an observer rebuilding a
+      // trace needs the parent, and a root event has none to report.
+      ...(event.meta !== undefined ? { meta: event.meta } : {}),
+      ...(event.parentId !== undefined ? { parentId: event.parentId } : {}),
+      ...(event.depth !== undefined ? { depth: event.depth } : {}),
+    };
   }
 
   /**
@@ -2525,18 +2611,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       nextValues[path] = this.getAtPath(this.state, path);
     }
     const info: InstrumentedEvent<EM> = {
-      event: {
-        id: event.id,
-        channel: event.channel as string,
-        type: event.type as string,
-        payload: event.payload,
-        // Conditional, so an event without metadata produces an observer payload
-        // byte-identical to the pre-`meta` shape. Causality likewise: an observer rebuilding a
-        // trace needs the parent, and a root event has none to report.
-        ...(event.meta !== undefined ? { meta: event.meta } : {}),
-        ...(event.parentId !== undefined ? { parentId: event.parentId } : {}),
-        ...(event.depth !== undefined ? { depth: event.depth } : {}),
-      },
+      event: this.describeEvent(event),
       committed: result.committed,
       changedPaths,
       prevValues,

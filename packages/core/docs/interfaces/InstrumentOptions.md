@@ -8,7 +8,7 @@
 
 # Interface: InstrumentOptions
 
-Defined in: [types.ts:477](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L477)
+Defined in: [types.ts:523](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L523)
 
 Options for [StoreInstance.instrument](StoreInstance.md#instrument).
 
@@ -18,7 +18,7 @@ Options for [StoreInstance.instrument](StoreInstance.md#instrument).
 
 > `readonly` `optional` **ephemeral**: `boolean`
 
-Defined in: [types.ts:488](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L488)
+Defined in: [types.ts:534](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L534)
 
 Also receive events on [StoreSpec.ephemeral](../type-aliases/StoreSpec.md#ephemeral) channels.
 

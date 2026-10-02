@@ -10,7 +10,7 @@
 
 > **WidenState**\<`S`, `N`, `St`\> = `string` *extends* `N` ? `S` : [`Prettify`](Prettify.md)\<`S` & `Record`\<`N`, `St`\>\>
 
-Defined in: [types.ts:2371](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2371)
+Defined in: [types.ts:2434](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2434)
 
 The state record after adding slice `N` with state `St`. Degrades to `S` when `N` is not a
 string literal, for the reason given on [WidenNames](WidenNames.md).

@@ -8,7 +8,7 @@
 
 # Interface: CascadeInfo\<EM\>
 
-Defined in: [types.ts:956](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L956)
+Defined in: [types.ts:1002](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1002)
 
 What [StoreSpec.onCascade](../type-aliases/StoreSpec.md#oncascade) receives when a ceiling is breached.
 
@@ -26,7 +26,7 @@ Event map.
 
 > `readonly` **chain**: readonly `string`[]
 
-Defined in: [types.ts:972](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L972)
+Defined in: [types.ts:1018](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1018)
 
 Ids from the root of the chain to the refused event's parent, newest last.
 
@@ -41,7 +41,7 @@ the cycle at the end rather than the thousand identical hops before it.
 
 > `readonly` **depth**: `number`
 
-Defined in: [types.ts:964](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L964)
+Defined in: [types.ts:1010](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1010)
 
 Causal depth the refused event would have had.
 
@@ -51,7 +51,7 @@ Causal depth the refused event would have had.
 
 > `readonly` **event**: [`EventUnion`](../type-aliases/EventUnion.md)\<`EM`\>
 
-Defined in: [types.ts:962](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L962)
+Defined in: [types.ts:1008](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1008)
 
 The event that was refused — the one that would have extended the chain.
 
@@ -61,7 +61,7 @@ The event that was refused — the one that would have extended the chain.
 
 > `readonly` **limit**: `"maxReduceDepth"` \| `"maxTransitionsPerDrain"`
 
-Defined in: [types.ts:958](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L958)
+Defined in: [types.ts:1004](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1004)
 
 Which ceiling was hit.
 
@@ -71,6 +71,6 @@ Which ceiling was hit.
 
 > `readonly` **limitValue**: `number`
 
-Defined in: [types.ts:960](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L960)
+Defined in: [types.ts:1006](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1006)
 
 The configured value that was exceeded.

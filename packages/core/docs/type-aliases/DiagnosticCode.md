@@ -10,7 +10,7 @@
 
 > **DiagnosticCode** = `"effect-error"` \| `"reducer-error"` \| `"subscriber-error"` \| `"connect-error"` \| `"middleware-error"` \| `"observer-error"` \| `"emit-error"` \| `"slice-teardown-error"` \| `"cascade"` \| `"rejected"` \| `"registration-cascade"` \| `"key-collision"` \| `"payload-by-reference"` \| `"dotted-key"` \| `"snapshot-missing-slice"` \| `"middleware-promise"` \| `"observer-promise"` \| `"use-after-dispose"` \| `"ephemeral-write"`
 
-Defined in: [types.ts:607](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L607)
+Defined in: [types.ts:653](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L653)
 
 The stable identifier of a [Diagnostic](../interfaces/Diagnostic.md), for routing and filtering.
 

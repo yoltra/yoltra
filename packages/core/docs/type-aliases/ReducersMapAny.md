@@ -10,7 +10,7 @@
 
 > **ReducersMapAny** = `Record`\<`string`, [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`any`, `any`\>\>
 
-Defined in: [types.ts:1652](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1652)
+Defined in: [types.ts:1715](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1715)
 
 Any map of slice names to reducer specs.
 

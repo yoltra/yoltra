@@ -10,7 +10,7 @@
 
 > **EventFromWhen**\<`EM`, `W`\> = `W` *extends* `object` ? [`EventUnion`](EventUnion.md)\<`EM`\> : `W` *extends* `object` ? `K` *extends* readonly \[infer C, infer T\] ? `C` *extends* keyof `EM` & `string` ? `T` *extends* keyof `EM`\[`C`\] & `string` ? [`Event`](../interfaces/Event.md)\<`EM`, `C`, `T`\> : `never` : `never` : `never` : `W` *extends* `object` ? `C` *extends* keyof `EM` & `string` ? `{ [T in keyof EM[C] & string]: Event<EM, C, T> }`\[keyof `EM`\[`C`\] & `string`\] : `never` : `W` *extends* `object` ? `C` *extends* keyof `EM` & `string` ? `{ [T in keyof EM[C] & string]: Event<EM, C, T> }`\[keyof `EM`\[`C`\] & `string`\] : `never` : `W` *extends* `object` ? [`EventUnion`](EventUnion.md)\<`EM`\> : `never`
 
-Defined in: [types.ts:1883](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1883)
+Defined in: [types.ts:1946](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1946)
 
 Extracts the event union from a `When` matcher, for typing a handler from its matcher.
 

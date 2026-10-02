@@ -10,7 +10,7 @@
 
 > **StoreSpec**\<`R`, `S`, `EM`\> = `object`
 
-Defined in: [types.ts:685](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L685)
+Defined in: [types.ts:731](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L731)
 
 Store configuration object passed to the [Store](../classes/Store.md) constructor or [createStore](../functions/createStore.md).
 
@@ -61,7 +61,7 @@ Event map.
 
 > `optional` **clock**: [`Clock`](../interfaces/Clock.md)
 
-Defined in: [types.ts:760](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L760)
+Defined in: [types.ts:806](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L806)
 
 Where the store reads the time: deduplication windows and [InstrumentedEvent.at](../interfaces/InstrumentedEvent.md#at).
 
@@ -82,7 +82,7 @@ with `performance.now()` either way.
 
 > `optional` **dedupWindowMs**: `number`
 
-Defined in: [types.ts:726](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L726)
+Defined in: [types.ts:772](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L772)
 
 Time window in milliseconds for **content-based** event deduplication.
 When greater than 0, events with identical fingerprints
@@ -106,7 +106,7 @@ emit (e.g. React Strict Mode), prefer the per-emit [EmitOptions.dedupKey](../int
 
 > `optional` **devtools**: `object`
 
-Defined in: [types.ts:781](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L781)
+Defined in: [types.ts:827](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L827)
 
 DevTools configuration options.
 
@@ -133,7 +133,7 @@ These options control runtime DevTools capabilities such as event replay.
 
 > `optional` **diagnostics**: [`DiagnosticSink`](DiagnosticSink.md)
 
-Defined in: [types.ts:946](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L946)
+Defined in: [types.ts:992](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L992)
 
 Where the store sends its diagnostics: every failure it contained, every refusal, and its
 development warnings. See [Diagnostic](../interfaces/Diagnostic.md).
@@ -153,7 +153,7 @@ A sink that throws is ignored; it cannot break the store. Observers added later 
 
 > `optional` **effects**: [`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:711](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L711)
+Defined in: [types.ts:757](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L757)
 
 Optional side-effect handlers registered at construction time.
 Runs after reducers for every propagated event.
@@ -164,7 +164,7 @@ Runs after reducers for every propagated event.
 
 > `optional` **ephemeral**: readonly keyof `EM` & `string`[]
 
-Defined in: [types.ts:932](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L932)
+Defined in: [types.ts:978](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L978)
 
 Channels whose events are traffic, not history.
 
@@ -185,7 +185,7 @@ An ephemeral event that writes state is warned about once in development (the
 
 > `optional` **idFactory**: () => `string`
 
-Defined in: [types.ts:747](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L747)
+Defined in: [types.ts:793](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L793)
 
 Generates the `id` for each emitted event. Defaults to `crypto.randomUUID()`.
 
@@ -221,7 +221,7 @@ const store = createStore({ name: 'Test', reducer, idFactory: () => `evt-${++n}`
 
 > `optional` **maxReduceDepth**: `number`
 
-Defined in: [types.ts:861](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L861)
+Defined in: [types.ts:907](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L907)
 
 Maximum causal depth of an event chain before the store refuses to extend it.
 
@@ -251,7 +251,7 @@ Breaching does not throw — see [StoreSpec.onCascade](#oncascade).
 
 > `optional` **maxTransitionsPerDrain**: `number`
 
-Defined in: [types.ts:883](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L883)
+Defined in: [types.ts:929](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L929)
 
 Maximum number of events one synchronous drain will process before refusing more.
 
@@ -283,7 +283,7 @@ undefined (no limit)
 
 > `optional` **middleware**: [`MiddlewareInput`](MiddlewareInput.md)\<[`DeepReadonly`](DeepReadonly.md)\<`S`\>, `EM`\>[]
 
-Defined in: [types.ts:705](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L705)
+Defined in: [types.ts:751](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L751)
 
 Middleware chain executed before reducers/effects.
 Accepts either functions (legacy) or MiddlewareSpec objects (recommended).
@@ -298,7 +298,7 @@ throws. Returning nothing allows it. Middleware is synchronous: a `Promise` is n
 
 > **name**: `string`
 
-Defined in: [types.ts:689](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L689)
+Defined in: [types.ts:735](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L735)
 
 Store name (used by DevTools to identify the instance).
 
@@ -308,7 +308,7 @@ Store name (used by DevTools to identify the instance).
 
 > `optional` **onCascade**: (`info`) => `void`
 
-Defined in: [types.ts:898](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L898)
+Defined in: [types.ts:944](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L944)
 
 Called when a ceiling is breached, instead of throwing.
 
@@ -339,7 +339,7 @@ is where the wiring gets named.
 
 > `optional` **onEffectError**: (`error`, `event`) => `void`
 
-Defined in: [types.ts:804](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L804)
+Defined in: [types.ts:850](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L850)
 
 Called when an effect throws or its returned promise rejects.
 
@@ -375,7 +375,7 @@ report to a service or emit a failure event. Other effects still run.
 
 > `optional` **onReducerError**: (`error`, `event`, `slice`) => `void`
 
-Defined in: [types.ts:824](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L824)
+Defined in: [types.ts:870](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L870)
 
 Invoked when a reducer throws.
 
@@ -421,7 +421,7 @@ so this hook is how a caller observes one.
 
 > `optional` **onRejected**: (`rejection`, `event`, `slice`) => `void`
 
-Defined in: [types.ts:917](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L917)
+Defined in: [types.ts:963](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L963)
 
 Called when a reducer refuses a write by returning [Rejected](../functions/Rejected.md).
 
@@ -466,7 +466,7 @@ whole, so no slice writes.
 
 > `optional` **onSubscriberError**: (`error`, `event`, `phase`) => `void`
 
-Defined in: [types.ts:837](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L837)
+Defined in: [types.ts:883](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L883)
 
 Called when an `onEvent` subscriber throws, or rejects.
 
@@ -503,7 +503,7 @@ A throwing subscriber never stops the others, with or without this hook.
 
 > **reducer**: `{ [K in R]: ReducerSpec<S[K], EM> }`
 
-Defined in: [types.ts:695](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L695)
+Defined in: [types.ts:741](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L741)
 
 Map of slice name → reducer spec.
 Each entry declares initial state, the reducer function, and the event targeting.
@@ -514,7 +514,7 @@ Each entry declares initial state, the reducer function, and the event targeting
 
 > `optional` **scheduler**: [`Scheduler`](../interfaces/Scheduler.md)
 
-Defined in: [types.ts:773](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L773)
+Defined in: [types.ts:819](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L819)
 
 Where the store arms its timers: the deduplication cache prune and the idle timeout of
 `store.call()`.

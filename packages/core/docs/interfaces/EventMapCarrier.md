@@ -8,7 +8,7 @@
 
 # Interface: EventMapCarrier\<EMAdd\>
 
-Defined in: [types.ts:2396](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2396)
+Defined in: [types.ts:2459](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2459)
 
 Phantom carrier for the event map a spec contributes.
 
@@ -41,7 +41,7 @@ inference exact rather than widening to a supertype.
 
 > `readonly` **~yoltraEventMap**: (`em`) => `EMAdd`
 
-Defined in: [types.ts:2398](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2398)
+Defined in: [types.ts:2461](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2461)
 
 Phantom. Never present at runtime, and never read.
 

@@ -10,7 +10,7 @@
 
 > **Dotted**\<`Slice`\> = `Slice` *extends* [`RootValue`](RootValue.md) ? `""` : keyof `Slice` & `string` \| [`Path`](Path.md)\<`Slice`\>
 
-Defined in: [types.ts:2077](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2077)
+Defined in: [types.ts:2140](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2140)
 
 Dotted keys of a slice: top-level keys or any nested path.
 

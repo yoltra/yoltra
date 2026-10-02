@@ -390,6 +390,25 @@ descartan: desregistrar un efecto no es el fin del store. Revisa `ctx.signal.abo
 emitir un resultado que solo tenía sentido mientras el efecto estaba instalado. Los efectos escritos
 con tres parámetros no cambian.
 
+### Observar la fase de efectos
+
+`store.instrument` reporta un evento después de sus reducers, antes de sus efectos.
+`store.instrumentEffects` reporta el resto, cuando todos los efectos del evento terminaron:
+
+```typescript
+store.instrumentEffects(({ event, durationMs, effects }) => {
+  for (const effect of effects) {
+    span(`${event.channel}/${event.type} > ${effect.name ?? "effect"}`, effect.durationMs, effect.failed);
+  }
+});
+```
+
+Cada entrada tiene el `name` del efecto (su `meta.name`, o el nombre propio de la función), su
+`origin` (`internal` para la maquinaria del propio store, como el listener de respuesta de
+`store.call()`), su `durationMs` y si `failed`; el error en sí va a la costura de diagnósticos. Nada
+se mide mientras no haya un observador registrado, y los eventos de un canal efímero se reportan
+solo a los observadores registrados con `{ ephemeral: true }`.
+
 ---
 
 ## Suscripciones a Eventos
@@ -1149,6 +1168,8 @@ aparte: una aplicación que no lo usa no envía nada de él, y en producción no
 | `store.onDiagnostic(observer)`                  | Observa fallos, rechazos y avisos de desarrollo. Ver [Errores y diagnósticos](#errores-y-diagnósticos) |
 | `store.dispose()`                               | Libera el store; después es inerte. Ver [Atar recursos al store](#atar-recursos-al-store) |
 | `store.signal`                                  | Un `AbortSignal` que aborta `dispose()`               |
+| `store.instrument(observer, opts?)`             | Observa cada evento después de sus reducers           |
+| `store.instrumentEffects(observer, opts?)`      | Observa la fase de efectos de cada evento al terminar |
 
 ### Registro Dinámico
 
@@ -1305,9 +1326,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 13.9 KB | 16 KB |
-| `{ createStore, hydrate, persist }` | 15.3 KB | 17 KB |
-| todo | 17.1 KB | 20 KB |
+| `{ createStore }` | 14.1 KB | 16 KB |
+| `{ createStore, hydrate, persist }` | 15.5 KB | 18 KB |
+| todo | 17.4 KB | 20 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define
@@ -1319,7 +1340,7 @@ deliberadamente conservador.
 
 La **distancia entre filas** es la afirmación de tree-shaking, y es lo que hay que vigilar: la
 persistencia añade 1.4 KB a quienes la importan y nada a los demás, y el barrel completo está
-3.2 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
+3.3 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
 es algo que nadie escriba.
 
 La primera fila solo se mueve cuando crece el store en sí, y ha crecido: acotar las cascadas,
@@ -1332,8 +1353,8 @@ Un presupuesto solo se mueve por lo que se midió, y dice por qué. En 0.10.0 el
 ([Errores y diagnósticos](#errores-y-diagnósticos)) midió 0.6 KB, un helper de enrutamiento y una
 frase por cada fallo que el store contiene; un store liberado inerte con `store.signal` midió
 0.4 KB; y `ctx.signal` para los efectos 0.1 KB. La fila de persistencia, que incluye al store,
-pasó de 16 KB a 17 KB por la costura de diagnósticos más 0.2 KB propios: `PersistEncodeError`, y
-rechazar una escritura parcial. El barrel pasó de 18 KB a 20 KB: 1 KB junto con el store, y 0.6 KB por `warnOnLargeValues`, que
+pasó de 16 KB a 18 KB: la costura de diagnósticos, 0.2 KB propios (`PersistEncodeError`, y rechazar
+una escritura parcial), y la observación de la fase de efectos (`instrumentEffects`, 0.2 KB). El barrel pasó de 18 KB a 20 KB: 1 KB junto con el store, y 0.6 KB por `warnOnLargeValues`, que
 solo cargan el barrel y quienes lo importan.
 
 ---
