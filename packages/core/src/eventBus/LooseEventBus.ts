@@ -94,6 +94,12 @@ export class LooseEventBus<C extends string = string, T extends string = string,
   private patternIndex = new Map<C, PatternIndex>();
 
   /**
+   * @param onHandlerError - Receives what a handler threw. The remaining handlers still run.
+   *   Defaults to `console.error`.
+   */
+  constructor(private readonly onHandlerError: (error: unknown) => void = (error) => console.error(error)) {}
+
+  /**
    * Subscribes a handler to either an **exact** type or a **pattern**.
    *
    * @param channel - Channel to subscribe on.
@@ -276,7 +282,7 @@ export class LooseEventBus<C extends string = string, T extends string = string,
         try {
           h(payload);
         } catch (exc) {
-          console.error(exc);
+          this.onHandlerError(exc);
           continue;
         }
       }
@@ -323,7 +329,7 @@ export class LooseEventBus<C extends string = string, T extends string = string,
         try {
           h(payload);
         } catch (exc) {
-          console.error(exc);
+          this.onHandlerError(exc);
           continue;
         }
       }

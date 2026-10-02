@@ -885,6 +885,49 @@ store.registerEffect({
 
 ---
 
+## Errors and diagnostics
+
+A store contains every failure in the code it runs: a reducer, effect, subscriber or middleware
+that throws is reported, and the rest of the event goes on. It also refuses things (a cascade, a
+reducer declining a write) and, in development, warns about mistakes it can see. All of it is one
+`Diagnostic`:
+
+```typescript
+type Diagnostic = {
+  level: "info" | "warn" | "error";
+  code: DiagnosticCode;          // stable: "effect-error", "reducer-error", "cascade", ...
+  message: string;               // for a person; may be reworded
+  detail?: Record<string, unknown>; // the event, the error, the slice
+};
+```
+
+**The store's owner sets where they go**, once:
+
+```typescript
+const store = createStore({
+  name: "app",
+  reducer: { /* ... */ },
+  diagnostics: (d) => logger[d.level](d.code, d.message, d.detail),
+});
+```
+
+Without `diagnostics`, the store writes to the console exactly as it always has. With it, the sink
+replaces that output. The `onEffectError`, `onReducerError`, `onSubscriberError`, `onCascade` and
+`onRejected` hooks are still called either way.
+
+**Anyone else observes**, at any time, without silencing anything:
+
+```typescript
+const off = store.onDiagnostic((d) => {
+  if (d.level === "error") metrics.count(d.code);
+});
+```
+
+This is the seam for code attached to a store it did not create, which cannot set the hooks.
+Development warnings are never sent in production, and a sink or observer that throws is ignored.
+
+---
+
 ## API Overview
 
 ### Store Creation
@@ -900,6 +943,7 @@ store.registerEffect({
 | `store.onEvent(channel, type, handler, phase?, options?)` | Event subscription (committed/uncommitted/written/all). Silent during replay unless `{ duringReplay: true }` |
 | `store.onRegistrationChange(observer, opts?)` | Fires when the store gains or loses a reducer, middleware or effect. Each change carries `when`, the normalized matcher: `{ keys }` for a keyed slice, `{ any: true }` for unfiltered middleware |
 | `store.onEffect(channel, type, handler)`        | Single-event effect shorthand                  |
+| `store.onDiagnostic(observer)`                  | Observe failures, refusals and development warnings. See [Errors and diagnostics](#errors-and-diagnostics) |
 | `store.dispose()`                               | Cleanup timers and resources                   |
 
 ### Dynamic Registration
@@ -1043,9 +1087,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 12.7 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 13.9 KB | 16 KB |
-| everything | 15.4 KB | 18 KB |
+| `{ createStore }` | 13.2 KB | 15 KB |
+| `{ createStore, hydrate, persist }` | 14.5 KB | 16 KB |
+| everything | 16.0 KB | 18 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines
@@ -1055,7 +1099,7 @@ the larger of the two: dev-only code cannot grow unnoticed just because it never
 user. So the headroom implied here is deliberately conservative.
 
 The **gap between rows** is the tree-shaking claim, and it is what to watch: persistence adds
-1.3 KB to the people who import it and nothing to anyone else, and the whole barrel is 2.7 KB
+1.3 KB to the people who import it and nothing to anyone else, and the whole barrel is 2.8 KB
 past the store. The last row is a growth tripwire; `import * as all` is not something anybody
 writes.
 
@@ -1063,6 +1107,10 @@ The first row moves only when the store itself grows, and it has: bounding casca
 commits so they apply atomically, and `store.call()` are all store machinery rather than
 opt-in modules, so they are paid by everyone. That is the honest trade for a default that
 stops a runaway from hanging the tab.
+
+A budget moves only by what was measured, and says why. In 0.10.0 the `createStore` budget went
+from 14 KB to 15 KB for the diagnostics seam ([Errors and diagnostics](#errors-and-diagnostics)),
+which measured 0.6 KB: one routing helper and a sentence for every failure the store contains.
 
 ---
 

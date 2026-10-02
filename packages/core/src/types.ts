@@ -565,6 +565,72 @@ export interface Scheduler {
 }
 
 /**
+ * The stable identifier of a {@link Diagnostic}, for routing and filtering.
+ *
+ * @remarks
+ * Failures the store contained:
+ * - `effect-error`, `reducer-error`, `subscriber-error` (an `onEvent` handler), `connect-error`
+ *   (a `connect` handler), `middleware-error` (a middleware threw, which vetoes the event)
+ * - `observer-error`: an instrumentation or registration observer, or a hook, threw
+ * - `emit-error`: the reduce phase failed outside any one consumer
+ * - `slice-teardown-error`: a disposer threw while a slice was unregistered
+ *
+ * Refusals: `cascade` (a causal chain exceeded its ceiling), `rejected` (a reducer declined the
+ * write; level `info`, since a refusal is a normal outcome), `registration-cascade`.
+ *
+ * Development warnings, never sent in production: `key-collision`, `payload-by-reference`,
+ * `dotted-key`, `snapshot-missing-slice`, `middleware-promise`, `observer-promise`.
+ *
+ * @public
+ */
+export type DiagnosticCode =
+  | "effect-error"
+  | "reducer-error"
+  | "subscriber-error"
+  | "connect-error"
+  | "middleware-error"
+  | "observer-error"
+  | "emit-error"
+  | "slice-teardown-error"
+  | "cascade"
+  | "rejected"
+  | "registration-cascade"
+  | "key-collision"
+  | "payload-by-reference"
+  | "dotted-key"
+  | "snapshot-missing-slice"
+  | "middleware-promise"
+  | "observer-promise";
+
+/**
+ * Something a store has to say: a failure it contained, a refusal, or a development warning.
+ *
+ * @remarks
+ * `code` is stable, for a program; `message` is for a person and may be reworded. `detail` holds
+ * the values involved, such as `event`, `error` and `slice`, so a sink can forward them without
+ * parsing the message.
+ *
+ * @public
+ */
+export interface Diagnostic {
+  /** How serious it is. A sink that also accepts other levels is still accepted. */
+  readonly level: "info" | "warn" | "error";
+  /** What happened, stably. See {@link DiagnosticCode}. */
+  readonly code: DiagnosticCode;
+  /** A sentence for a person. May be reworded between versions; route on `code`. */
+  readonly message: string;
+  /** The values involved. */
+  readonly detail?: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * Receives a store's {@link Diagnostic}s. See {@link StoreSpec.diagnostics}.
+ *
+ * @public
+ */
+export type DiagnosticSink = (diagnostic: Diagnostic) => void;
+
+/**
  * Store configuration object passed to the {@link Store} constructor or {@link createStore}.
  *
  * @typeParam R  - Reducer name union (string literal union).
@@ -826,6 +892,20 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * @param slice - Name of the slice whose reducer refused.
    */
   onRejected?: (rejection: Rejection, event: EventUnion<EM>, slice: string) => void;
+
+  /**
+   * Where the store sends its diagnostics: every failure it contained, every refusal, and its
+   * development warnings. See {@link Diagnostic}.
+   *
+   * @remarks
+   * Without a sink the store writes to the console exactly as it always has. With one, the sink
+   * replaces that output: the store's owner decides where its diagnostics go, and the store
+   * itself writes nothing. The `on*` hooks above are still called either way.
+   *
+   * A sink that throws is ignored; it cannot break the store. Observers added later with
+   * {@link StoreInstance.onDiagnostic} receive the same diagnostics, in addition to this sink.
+   */
+  diagnostics?: DiagnosticSink;
 };
 
 /**
@@ -1210,6 +1290,21 @@ export interface StoreInstance<
    * @returns Unsubscribe function.
    */
   instrument(observer: InstrumentationObserver<EM>): Unsubscribe;
+
+  /**
+   * Observes the store's diagnostics: the failures it contained, its refusals and its
+   * development warnings, as {@link Diagnostic}s.
+   *
+   * @remarks
+   * For code attached to a store it did not create, such as a library that decorates one, which
+   * cannot set {@link StoreSpec.diagnostics} or the `on*` hooks. An observer is additive: it
+   * does not silence the console output a store without a sink produces, and it receives what a
+   * sink receives. One that throws is ignored.
+   *
+   * @param observer - Called once per diagnostic.
+   * @returns Unsubscribe function.
+   */
+  onDiagnostic(observer: DiagnosticSink): Unsubscribe;
 
   /**
    * Applies an externally-provided whole-state snapshot (DevTools time-travel),

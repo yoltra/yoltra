@@ -132,3 +132,13 @@ reloj a la que el store procesó el evento, y `event.parentId` y `event.depth` l
 causal, ausentes en un evento raíz como lo están en `Event`. Un observador que registra o traza
 eventos ya no tiene que tomar su propia marca de tiempo ni perder la cadena. Si construyes valores
 `InstrumentedEvent` tú mismo, para alimentar un observador falso en un test, agrega `at`.
+
+**`diagnostics` en `createStore`, y `store.onDiagnostic`.** Cada fallo que el store contiene, cada
+rechazo y cada aviso de desarrollo es ahora un `Diagnostic` con un `code` estable. El sink
+`diagnostics` del dueño reemplaza la salida a consola; sin él, la salida a consola no cambia.
+`store.onDiagnostic` permite que código conectado después, como una decoración, observe los mismos
+diagnósticos sin silenciar nada. Los hooks existentes se siguen disparando. Consulta
+[Errores y diagnósticos](../../packages/core/README.es.md#errores-y-diagnósticos).
+
+`EventBus` y `LooseEventBus` aceptan un callback opcional para errores de handlers en su
+constructor. Usa la consola por defecto, como antes.

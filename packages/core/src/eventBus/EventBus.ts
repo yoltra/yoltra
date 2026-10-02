@@ -53,6 +53,15 @@ export class EventBus<EM extends EventMapBase> {
   private handlers: Map<string, Map<string, Set<(payload: any, event?: any) => void>>> = new Map();
 
   /**
+   * @param onHandlerError - Receives what a handler threw. The remaining handlers still run.
+   *   Defaults to logging it to the console.
+   */
+  constructor(
+    private readonly onHandlerError: (error: unknown) => void = (error) =>
+      console.error("EventBus handler error:", error),
+  ) {}
+
+  /**
    * Subscribes a handler to an exact `(channel, type)`.
    *
    * @typeParam C - Channel key (must be a string key of `EM`).
@@ -181,7 +190,7 @@ export class EventBus<EM extends EventMapBase> {
       try {
         (h as any)(payload, event);
       } catch (err) {
-        console.error("EventBus handler error:", err);
+        this.onHandlerError(err);
       }
     }
   }

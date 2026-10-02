@@ -44,6 +44,7 @@ export type KeyCollisionCheck = (channel: string, type: string) => void;
  *
  * @param storeName - Named in the warning, because a process with several stores otherwise
  *   leaves the reader to guess which one.
+ * @param warn - Receives the warning and the pairs involved. Defaults to `console.warn`.
  *
  * @remarks
  * **Per store, not per process.** The keys only collide inside one store's maps, so what was seen
@@ -57,7 +58,11 @@ export type KeyCollisionCheck = (channel: string, type: string) => void;
  *
  * @internal
  */
-export function createKeyCollisionCheck(storeName: string): KeyCollisionCheck {
+export function createKeyCollisionCheck(
+  storeName: string,
+  warn: (message: string, detail: Readonly<Record<string, unknown>>) => void = (message) =>
+    console.warn(message),
+): KeyCollisionCheck {
   /** First pair seen for each joined key, so a second one that collides can be named against it. */
   const firstSeen = new Map<string, readonly [channel: string, type: string]>();
   /** Keys already reported, so alternating emits of the two colliding pairs warn once. */
@@ -81,12 +86,13 @@ export function createKeyCollisionCheck(storeName: string): KeyCollisionCheck {
     // The first pair stays recorded and the key is marked reported, so the two pairs alternating
     // warn once between them rather than on every emit.
     reported.add(key);
-    console.warn(
+    warn(
       `[yoltra] Store "${storeName}": two different events share one internal key. ` +
         `("${prior[0]}", "${prior[1]}") and ("${channel}", "${type}") both join to "${key}", ` +
         `because the store keys dispatch and deduplication on "channel${RESERVED_SEPARATOR}type". ` +
         `A subscriber or effect registered for one will be invoked for the other, and a dedup ` +
         `window will let one drop the other. Rename one of them.`,
+      { key, first: prior, second: [channel, type] },
     );
   };
 }

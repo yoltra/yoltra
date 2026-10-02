@@ -392,6 +392,33 @@ const off = store.onRegistrationChange(
 
 ---
 
+## Observing a store you did not build
+
+A decoration runs against a store someone else created, so it cannot set `onEffectError`,
+`onReducerError` or any other hook: those belong to `createStore`. `store.onDiagnostic` is the
+seam it can use. It receives every failure the store contains, every refusal and every development
+warning, as a `Diagnostic` with a stable `code`:
+
+```typescript
+export function withErrorCounts<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+>(store: StoreInstance<R, S, EM>) {
+  const counts = new Map<string, number>();
+  const off = store.onDiagnostic((d) => {
+    if (d.level === "error") counts.set(d.code, (counts.get(d.code) ?? 0) + 1);
+  });
+  return { counts, dispose: off };
+}
+```
+
+An observer is additive. It does not silence the console output of a store without a sink, and it
+receives what the owner's `diagnostics` sink receives, so the decoration and the application never
+compete for the same output. Return its unsubscribe from your decoration's disposer.
+
+---
+
 ## Disposal, and the one thing types cannot express
 
 `withSlice` returns no disposer. That is deliberate.

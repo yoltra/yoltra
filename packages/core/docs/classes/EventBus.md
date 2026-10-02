@@ -60,7 +60,18 @@ type EM = {
 
 ### Constructor
 
-> **new EventBus**\<`EM`\>(): `EventBus`\<`EM`\>
+> **new EventBus**\<`EM`\>(`onHandlerError`): `EventBus`\<`EM`\>
+
+Defined in: [eventBus/EventBus.ts:59](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L59)
+
+#### Parameters
+
+##### onHandlerError
+
+(`error`) => `void`
+
+Receives what a handler threw. The remaining handlers still run.
+  Defaults to logging it to the console.
 
 #### Returns
 
@@ -72,7 +83,7 @@ type EM = {
 
 > **clear**(): `void`
 
-Defined in: [eventBus/EventBus.ts:202](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L202)
+Defined in: [eventBus/EventBus.ts:211](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L211)
 
 Clears **all** listeners across all channels/types.
 
@@ -95,7 +106,7 @@ afterEach(() => bus.clear());
 
 > **emit**\<`C`, `T`\>(`channel`, `type`, `payload`, `event?`): `void`
 
-Defined in: [eventBus/EventBus.ts:168](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L168)
+Defined in: [eventBus/EventBus.ts:177](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L177)
 
 Emits an event to all subscribers of the exact `(channel, type)`.
 
@@ -160,7 +171,7 @@ bus.emit('ui', 'toggle', false);
 
 > **off**\<`C`, `T`\>(`channel`, `type`, `handler`): `void`
 
-Defined in: [eventBus/EventBus.ts:129](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L129)
+Defined in: [eventBus/EventBus.ts:138](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L138)
 
 Removes a specific handler previously added with [\`on\`](#on).
 
@@ -218,7 +229,7 @@ bus.off('math', 'inc', h);
 
 > **on**\<`C`, `T`\>(`channel`, `type`, `handler`): () => `void`
 
-Defined in: [eventBus/EventBus.ts:87](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L87)
+Defined in: [eventBus/EventBus.ts:96](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/EventBus.ts#L96)
 
 Subscribes a handler to an exact `(channel, type)`.
 

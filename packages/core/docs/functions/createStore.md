@@ -12,7 +12,7 @@
 
 > **createStore**\<`S`, `EM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `S` & `string`, `S`, `EM`\>
 
-Defined in: [store/Store.ts:3913](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3913)
+Defined in: [store/Store.ts:4071](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L4071)
 
 Creates a store with explicit State and EventMap types.
 
@@ -56,6 +56,10 @@ Configuration with `name`, optional `reducer`, optional `middleware`, optional `
 ##### devtools.allowReplay?
 
 `boolean`
+
+##### diagnostics?
+
+[`DiagnosticSink`](../type-aliases/DiagnosticSink.md)
 
 ##### effects?
 
@@ -145,7 +149,7 @@ const store = createStore<AppState, AppEM>({
 
 > **createStore**\<`RM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, [`StateFromReducers`](../type-aliases/StateFromReducers.md)\<`RM`\>, [`EMFromReducersStrict`](../type-aliases/EMFromReducersStrict.md)\<`RM`\>\>
 
-Defined in: [store/Store.ts:3963](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3963)
+Defined in: [store/Store.ts:4122](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L4122)
 
 Creates a store with types inferred from the reducers map.
 
@@ -181,6 +185,10 @@ Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
 ##### devtools.allowReplay?
 
 `boolean`
+
+##### diagnostics?
+
+[`DiagnosticSink`](../type-aliases/DiagnosticSink.md)
 
 ##### effects?
 

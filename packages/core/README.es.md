@@ -906,6 +906,49 @@ store.registerEffect({
 
 ---
 
+## Errores y diagnósticos
+
+Un store contiene cada fallo del código que ejecuta: un reducer, efecto, suscriptor o middleware
+que lanza se reporta, y el resto del evento sigue su curso. También rechaza cosas (una cascada, un
+reducer que declina una escritura) y, en desarrollo, avisa de errores que puede ver. Todo eso es un
+`Diagnostic`:
+
+```typescript
+type Diagnostic = {
+  level: "info" | "warn" | "error";
+  code: DiagnosticCode;          // estable: "effect-error", "reducer-error", "cascade", ...
+  message: string;               // para una persona; puede cambiar de redacción
+  detail?: Record<string, unknown>; // el evento, el error, el slice
+};
+```
+
+**Quien es dueño del store decide a dónde van**, una sola vez:
+
+```typescript
+const store = createStore({
+  name: "app",
+  reducer: { /* ... */ },
+  diagnostics: (d) => logger[d.level](d.code, d.message, d.detail),
+});
+```
+
+Sin `diagnostics`, el store escribe en la consola exactamente como siempre. Con él, el sink
+reemplaza esa salida. Los hooks `onEffectError`, `onReducerError`, `onSubscriberError`, `onCascade`
+y `onRejected` se siguen llamando en ambos casos.
+
+**Cualquier otro observa**, en cualquier momento, sin silenciar nada:
+
+```typescript
+const off = store.onDiagnostic((d) => {
+  if (d.level === "error") metrics.count(d.code);
+});
+```
+
+Esta es la costura para código conectado a un store que no creó, que no puede fijar los hooks.
+Los avisos de desarrollo nunca se envían en producción, y un sink u observador que lanza se ignora.
+
+---
+
 ## Resumen de API
 
 ### Creación del Store
@@ -921,6 +964,7 @@ store.registerEffect({
 | `store.onEvent(channel, type, handler, phase?, options?)` | Suscripción a eventos (committed/uncommitted/written/all). Silenciosa durante el replay salvo `{ duringReplay: true }` |
 | `store.onRegistrationChange(observer, opts?)` | Avisa cuando el store gana o pierde un reducer, middleware o efecto. Cada cambio lleva `when`, el matcher normalizado: `{ keys }` para un slice con claves, `{ any: true }` para middleware sin filtro |
 | `store.onEffect(channel, type, handler)`        | Shorthand de efecto para un solo evento               |
+| `store.onDiagnostic(observer)`                  | Observa fallos, rechazos y avisos de desarrollo. Ver [Errores y diagnósticos](#errores-y-diagnósticos) |
 | `store.dispose()`                               | Limpiar timers y recursos                             |
 
 ### Registro Dinámico
@@ -1068,9 +1112,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 12.7 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 13.9 KB | 16 KB |
-| todo | 15.4 KB | 18 KB |
+| `{ createStore }` | 13.2 KB | 15 KB |
+| `{ createStore, hydrate, persist }` | 14.5 KB | 16 KB |
+| todo | 16.0 KB | 18 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define
@@ -1082,13 +1126,18 @@ deliberadamente conservador.
 
 La **distancia entre filas** es la afirmación de tree-shaking, y es lo que hay que vigilar: la
 persistencia añade 1.3 KB a quienes la importan y nada a los demás, y el barrel completo está
-2.7 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
+2.8 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
 es algo que nadie escriba.
 
 La primera fila solo se mueve cuando crece el store en sí, y ha crecido: acotar las cascadas,
 preparar los commits para que se apliquen de forma atómica y `store.call()` son maquinaria del
 store, no módulos opcionales, así que los paga todo el mundo. Es el intercambio honesto por un
 comportamiento por defecto que impide que un desbocado cuelgue la pestaña.
+
+Un presupuesto solo se mueve por lo que se midió, y dice por qué. En 0.10.0 el presupuesto de
+`createStore` pasó de 14 KB a 15 KB por la costura de diagnósticos
+([Errores y diagnósticos](#errores-y-diagnósticos)), que midió 0.6 KB: un helper de enrutamiento
+y una frase por cada fallo que el store contiene.
 
 ---
 

@@ -15,6 +15,7 @@ import { defineSlice, eventKeys } from "../../src/types";
 import type {
   Clock,
   DeepReadonly,
+  DiagnosticSink,
   Dotted,
   EffectSpec,
   EMFromReducersStrict,
@@ -376,5 +377,23 @@ describe("Clock and Scheduler accept the port shapes other libraries already use
     const clock: Clock = { now: () => 0 };
     const scheduler: Scheduler = { setTimeout: () => 0, clearTimeout: () => undefined };
     createStore({ name: "Ports", reducer: {}, clock, scheduler });
+  });
+});
+
+describe("DiagnosticSink accepts the sink shapes other libraries already use", () => {
+  it("accepts a sink that takes more levels and any code", () => {
+    type WiderSink = (diagnostic: {
+      readonly level: "debug" | "info" | "warn" | "error";
+      readonly code: string;
+      readonly message: string;
+      readonly detail?: Readonly<Record<string, unknown>>;
+    }) => void;
+    expectTypeOf<WiderSink>().toMatchTypeOf<DiagnosticSink>();
+  });
+
+  it("is accepted by createStore", () => {
+    const sink: DiagnosticSink = () => undefined;
+    const store = createStore({ name: "Diag", reducer: {}, diagnostics: sink });
+    expectTypeOf(store.onDiagnostic).parameter(0).toEqualTypeOf<DiagnosticSink>();
   });
 });

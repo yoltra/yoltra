@@ -10,7 +10,7 @@
 
 > **ReducerReplacement**\<`R`, `S`, `EM`\> = `{ [K in R]?: ReducerSpec<S[K], EM> }`
 
-Defined in: [types.ts:1659](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1659)
+Defined in: [types.ts:1754](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1754)
 
 What `replaceReducers` and `hotReplace({ reducer })` take: slice specs keyed by slice name,
 each typed with **its own** slice's state, and every key optional.

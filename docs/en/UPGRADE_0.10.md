@@ -127,3 +127,13 @@ at which the store processed the event, and `event.parentId` and `event.depth` c
 position, absent on a root event as they are on `Event`. An observer that records or traces events
 no longer has to take its own timestamp or lose the chain. If you build `InstrumentedEvent` values
 yourself, for a fake observer feed in a test, add `at`.
+
+**`diagnostics` on `createStore`, and `store.onDiagnostic`.** Every failure the store contains,
+every refusal and every development warning is now a `Diagnostic` with a stable `code`. The
+owner's `diagnostics` sink replaces the console output; without one, the console output is
+unchanged. `store.onDiagnostic` lets code attached later, such as a decoration, observe the same
+diagnostics without silencing anything. The existing hooks still fire. See
+[Errors and diagnostics](../../packages/core/README.md#errors-and-diagnostics).
+
+`EventBus` and `LooseEventBus` take an optional handler-error callback in their constructor. It
+defaults to the console, as before.

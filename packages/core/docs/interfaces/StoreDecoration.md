@@ -8,7 +8,7 @@
 
 # Interface: StoreDecoration\<R, S, EM\>
 
-Defined in: [types.ts:2407](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2407)
+Defined in: [types.ts:2502](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2502)
 
 The registration surface whose return types carry the widening.
 
@@ -46,7 +46,7 @@ site needs a type argument or a cast.
 
 > **registerSlice**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
 
-Defined in: [types.ts:2419](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2419)
+Defined in: [types.ts:2514](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2514)
 
 Mounts a slice and hands back both the widened store and a disposer.
 
@@ -90,7 +90,7 @@ instead, which returns no disposer at all.
 
 > **withEffect**\<`Spec`\>(`spec`): [`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`Spec`\>\>\>
 
-Defined in: [types.ts:2444](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2444)
+Defined in: [types.ts:2539](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2539)
 
 Registers an effect and returns the store widened by whatever event map it declares.
 
@@ -116,7 +116,7 @@ Registers an effect and returns the store widened by whatever event map it decla
 
 > **withMiddleware**\<`M`\>(`mw`): [`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`M`\>\>\>
 
-Defined in: [types.ts:2439](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2439)
+Defined in: [types.ts:2534](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2534)
 
 Registers middleware and returns the store widened by whatever event map it declares.
 
@@ -146,7 +146,7 @@ therefore contributes `{}`.
 
 > **withSlice**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`WidenedSlice`](../type-aliases/WidenedSlice.md)\<`R`, `S`, `EM`, `N`, `Spec`\>
 
-Defined in: [types.ts:2426](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2426)
+Defined in: [types.ts:2521](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2521)
 
 Mounts a slice and returns the widened store, for chaining.
 

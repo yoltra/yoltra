@@ -90,7 +90,7 @@
     {
       "name": "createStore",
       "import": "{ createStore }",
-      "limitKb": 14
+      "limitKb": 15
     },
     {
       "name": "with persistence",

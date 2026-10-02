@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "One diagnostics seam. `createStore` takes `diagnostics`, a `DiagnosticSink` (new exports `Diagnostic`, `DiagnosticCode`, `DiagnosticSink`), and stores gain `onDiagnostic(observer)`. Every failure the store contains (effect, reducer, subscriber, connect handler, middleware, observer), every refusal (cascade, rejected write) and every development warning (key collision, payload by reference, dotted key, missing snapshot slice) is reported as a `Diagnostic` with a stable `code`. The sink replaces the console output; without one the console output is unchanged. Runtime observers are additive and never silence the console. The `on*` hooks still fire. `EventBus` and `LooseEventBus` take an optional handler-error callback, defaulting to the console.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

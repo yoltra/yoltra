@@ -10,7 +10,7 @@
 
 > **NotifiedPhase** = `Exclude`\<[`EventPhase`](EventPhase.md), `"all"`\>
 
-Defined in: [types.ts:1985](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1985)
+Defined in: [types.ts:2080](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2080)
 
 The phases a handler is actually *told about*.
 

@@ -12,6 +12,9 @@ import { EventBus } from "../eventBus/EventBus";
 import { LooseEventBus } from "../eventBus/LooseEventBus";
 import type {
   Clock,
+  Diagnostic,
+  DiagnosticCode,
+  DiagnosticSink,
   Scheduler,
   TimerHandle,
   Event,
@@ -605,7 +608,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       const seen = `${slice}:${path ? `${path}.${key}` : key}`;
       if (this.warnedDottedKeys.has(seen)) return;
       this.warnedDottedKeys.add(seen);
-      console.warn(dottedKeyMessage(path, key, `Store "${this.name}", slice "${slice}": `));
+      const message = dottedKeyMessage(path, key, `Store "${this.name}", slice "${slice}": `);
+      this.report("warn", "dotted-key", message, { slice, path, key }, message);
     };
   }
 
@@ -678,6 +682,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private readonly instrumentObservers = new Set<InstrumentationObserver<EM>>();
+
+  /** The owner's sink. See {@link StoreSpec.diagnostics}. @internal */
+  private readonly diagnosticSink: DiagnosticSink | undefined;
+
+  /** Observers added at runtime. See {@link StoreInstance.onDiagnostic}. @internal */
+  private readonly diagnosticObservers = new Set<DiagnosticSink>();
 
   /**
    * Scratch array collecting slice-prefixed changed leaf paths during an
@@ -776,9 +786,23 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   constructor(spec: StoreSpec<R, S, EM>) {
     this.name = spec.name ?? "yoltra Store";
-    this.checkKeyCollision = createKeyCollisionCheck(this.name);
-    this.reducerBus = new EventBus<EM>();
-    this.connectorBus = new LooseEventBus();
+    this.diagnosticSink = spec.diagnostics;
+    this.checkKeyCollision = createKeyCollisionCheck(this.name, (message, detail) =>
+      this.report("warn", "key-collision", message, detail, message),
+    );
+    this.reducerBus = new EventBus<EM>((error) =>
+      this.report(
+        "error",
+        "emit-error",
+        "A reducer handler threw.",
+        { error },
+        "EventBus handler error:",
+        error,
+      ),
+    );
+    this.connectorBus = new LooseEventBus((error) =>
+      this.report("error", "connect-error", "A connect() handler threw.", { error }, error),
+    );
     // Tagged `spec`, not left bare. If this tag is missing, `replaceMiddleware` silently
     // becomes a no-op: it would find nothing of `spec` provenance to remove and preserve
     // everything instead. No test notices unless one asserts that spec registrations ARE
@@ -917,6 +941,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.writtenEventSubscribers.clear();
     this.allEventSubscribers.clear();
     this.instrumentObservers.clear();
+    this.diagnosticObservers.clear();
     this.connectorBus.clear();
     this.reducerBus.clear();
     this.patternReducers.clear();
@@ -1054,19 +1079,32 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     depth: number,
     chain: readonly string[],
   ): void {
-    console.error(
+    const message =
       `[yoltra] Cascade stopped: "${event.channel}/${event.type}" would exceed ${limit} ` +
-        `(${limitValue}). This event was refused and the chain ends here. A chain this long is ` +
-        `almost always two consumers emitting into each other — check what reacts to ` +
-        `"${event.channel}/${event.type}" and what that emits in turn.` +
-        (chain.length > 0 ? ` Recent causal chain: ${chain.join(" → ")} → (refused).` : ""),
+      `(${limitValue}). This event was refused and the chain ends here. A chain this long is ` +
+      `almost always two consumers emitting into each other; check what reacts to ` +
+      `"${event.channel}/${event.type}" and what that emits in turn.` +
+      (chain.length > 0 ? ` Recent causal chain: ${chain.join(" → ")} → (refused).` : "");
+    this.report(
+      "error",
+      "cascade",
+      message,
+      { limit, limitValue, event, depth, chain },
+      message,
     );
 
     try {
       this.onCascade?.({ limit, limitValue, event, depth, chain });
     } catch (err) {
       // A throwing diagnostic must not become the failure it was reporting.
-      console.error("onCascade handler error:", err);
+      this.report(
+        "error",
+        "observer-error",
+        "onCascade threw.",
+        { hook: "onCascade", error: err },
+        "onCascade handler error:",
+        err,
+      );
     }
   }
 
@@ -1078,6 +1116,18 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @param event - The event that was reduced.
    * @internal
    */
+  /** @internal */
+  private reportEffectError(error: unknown, event: EventUnion<EM>): void {
+    this.report(
+      "error",
+      "effect-error",
+      `An effect for "${event.channel}/${event.type}" threw.`,
+      { event, error },
+      "Effect error:",
+      error,
+    );
+  }
+
   private async notifyEffects(event: EventUnion<EM>) {
     // Effects resume in their own task, after the drain that produced this event has ended, so
     // `currentEvent` is null by the time they run and cannot speak for them. This closure is how
@@ -1094,7 +1144,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         try {
           await h.effect(event, this.getState, emit);
         } catch (e) {
-          console.error("Effect error:", e);
+          this.reportEffectError(e, event);
           this.onEffectError?.(e, event);
         }
       }
@@ -1106,7 +1156,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         try {
           await effect(event, this.getState, emit);
         } catch (e) {
-          console.error("Effect error:", e);
+          this.reportEffectError(e, event);
           this.onEffectError?.(e, event);
         }
       }
@@ -1194,7 +1244,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     phase: "committed" | "uncommitted" | "written",
   ): void {
     const report = (e: unknown): void => {
-      console.error("Event subscription error:", e);
+      this.report(
+        "error",
+        "subscriber-error",
+        `An event subscriber for "${event.channel}/${event.type}" (${phase}) threw.`,
+        { event, phase, error: e },
+        "Event subscription error:",
+        e,
+      );
       // Reported as well as logged, so an application can route this to whatever it uses for
       // errors. Reducers, effects, rejections and cascades all had a hook; subscribers had
       // the console and nothing else.
@@ -1272,7 +1329,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // Reported through a hook as well as the console: a reducer throwing is a bug in
       // application code, and until now the only trace of it was a console line in one case and
       // an exception surfacing somewhere unrelated in the other.
-      console.error(`Reducer error in slice "${rName as string}":`, err);
+      this.report(
+        "error",
+        "reducer-error",
+        `The reducer of slice "${rName as string}" threw on "${event.channel}/${event.type}".`,
+        { event, slice: rName, error: err },
+        `Reducer error in slice "${rName as string}":`,
+        err,
+      );
       this.onReducerError?.(err, event as EventUnion<EM>, rName as string);
       return null;
     }
@@ -1347,13 +1411,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
               if (this.warnedPayloadAliases.has(key)) return;
               this.warnedPayloadAliases.add(key);
               const where = `[yoltra] Slice "${rName as string}" stored ${node === payload ? "the payload" : "binary data from the payload"} of "${event.channel}/${event.type}" by reference.`;
-              console.warn(
-                ArrayBuffer.isView(node) || node instanceof ArrayBuffer
-                  ? `${where} Binary data cannot be frozen, so a later write into it changes this ` +
-                      `slice in place, unseen by subscribers. Copy it in the reducer (\`.slice()\`).`
-                  : `${where} It is now frozen along with the rest of the state, so the emitter ` +
-                      `mutating it later will throw in development and silently corrupt state in ` +
-                      `production. Copy the payload in the reducer instead.`,
+              const binary = ArrayBuffer.isView(node) || node instanceof ArrayBuffer;
+              const message = binary
+                ? `${where} Binary data cannot be frozen, so a later write into it changes this ` +
+                  `slice in place, unseen by subscribers. Copy it in the reducer (\`.slice()\`).`
+                : `${where} It is now frozen along with the rest of the state, so the emitter ` +
+                  `mutating it later will throw in development and silently corrupt state in ` +
+                  `production. Copy the payload in the reducer instead.`;
+              this.report(
+                "warn",
+                "payload-by-reference",
+                message,
+                { slice: rName, event, binary },
+                message,
               );
             },
           }
@@ -1635,11 +1705,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           process.env.NODE_ENV !== "production" &&
           (this.sliceOrigin.get(rName) ?? "spec") === "spec"
         ) {
-          console.warn(
-            `[yoltra] External state is missing slice "${String(
-              rName,
-            )}"; retaining its current value. Time-travel snapshots should contain all slices.`,
-          );
+          const message =
+            `[yoltra] External state is missing slice "${String(rName)}"; retaining its current ` +
+            `value. Time-travel snapshots should contain all slices.`;
+          this.report("warn", "snapshot-missing-slice", message, { slice: rName }, message);
         }
         return;
       }
@@ -2027,7 +2096,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         try {
           result = this.applyEventSync(event);
         } catch (err) {
-          console.error("Emit reduce error:", err);
+          this.report(
+            "error",
+            "emit-error",
+            `Reducing "${event.channel}/${event.type}" failed.`,
+            { event, error: err },
+            "Emit reduce error:",
+            err,
+          );
         } finally {
           if (instrumenting) this.changedPathSink = null;
           // Cleared before effects are scheduled. Effects resume in a later task, when this
@@ -2084,22 +2160,21 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           // commits while the middleware is still deciding, and the veto it was written to
           // perform can never fire. Caught here because the symptom — a rule that simply does
           // not apply — looks nothing like its cause.
-          console.error(
+          const message =
             `[yoltra] Middleware for "${event.channel}/${event.type}" returned a Promise. ` +
-              `Middleware is synchronous: a Promise is truthy, so this event was allowed ` +
-              `without waiting and a "return false" inside it can never veto. Do the check ` +
-              `synchronously, and put anything that must await in an effect.`,
-          );
+            `Middleware is synchronous: a Promise is truthy, so this event was allowed ` +
+            `without waiting and a "return false" inside it can never veto. Do the check ` +
+            `synchronously, and put anything that must await in an effect.`;
+          this.report("error", "middleware-promise", message, { event }, message);
         }
       } catch (err) {
         // A throw is still a veto: middleware guards things, and a guard that crashed has
         // not decided the event is safe. But say so, because "the event vanished" and "the
         // middleware threw" look nothing alike from the outside.
-        console.error(
+        const message =
           `[yoltra] Middleware threw for "${event.channel}/${event.type}"; the event was ` +
-            `vetoed and did not reach any reducer.`,
-          err,
-        );
+          `vetoed and did not reach any reducer.`;
+        this.report("error", "middleware-error", message, { event, error: err }, message, err);
         ok = false;
       }
       // Only an explicit `false` vetoes. Middleware that does its work and falls off the end
@@ -2164,6 +2239,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // "rejected" must not find half of its event applied.
     if (rejection !== null) {
       this.onRejected?.(rejection, event, rejectedBy);
+      // Info, and never written to the console: a refusal is a normal outcome. Reported so an
+      // observer attached later can count refusals as a hook set at creation can.
+      this.report(
+        "info",
+        "rejected",
+        `Slice "${rejectedBy}" refused "${event.channel}/${event.type}".`,
+        { rejection, event, slice: rejectedBy },
+      );
       this.notifyEventSubscribers(event, "committed");
       return { committed: true, written: false, rejected: rejection };
     }
@@ -2198,11 +2281,66 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     try {
       if (result.committed) await this.notifyEffects(event);
     } catch (err) {
-      console.error("Effect error:", err);
+      this.reportEffectError(err, event);
     } finally {
       this.inFlightEffects--;
       resolve(result);
     }
+  }
+
+  /**
+   * Sends one diagnostic to the owner's sink, or to the console when there is none, and to every
+   * runtime observer.
+   *
+   * @param detail - The values involved, or `undefined` for none.
+   * @param consoleArgs - What the console receives when no sink is set: exactly what the store
+   *   wrote before diagnostics existed. Empty for a diagnostic that was never logged, such as a
+   *   rejection.
+   *
+   * @remarks
+   * One helper for every site, so the routing rule cannot drift between them. A sink or an
+   * observer that throws is ignored: a diagnostic must not become the failure it reports.
+   *
+   * @internal
+   */
+  private report(
+    level: Diagnostic["level"],
+    code: DiagnosticCode,
+    message: string,
+    detail: Diagnostic["detail"],
+    ...consoleArgs: unknown[]
+  ): void {
+    const diagnostic: Diagnostic =
+      detail === undefined ? { level, code, message } : { level, code, message, detail };
+    const sink = this.diagnosticSink;
+    if (sink === undefined) {
+      if (consoleArgs.length > 0) console[level](...consoleArgs);
+    } else {
+      try {
+        sink(diagnostic);
+      } catch {
+        // Ignored, as documented on StoreSpec.diagnostics.
+      }
+    }
+    for (const observer of [...this.diagnosticObservers]) {
+      try {
+        observer(diagnostic);
+      } catch {
+        // Ignored, as documented on StoreInstance.onDiagnostic.
+      }
+    }
+  }
+
+  /**
+   * Observes the store's diagnostics. See {@link StoreInstance.onDiagnostic}.
+   *
+   * @public
+   */
+  public onDiagnostic(observer: DiagnosticSink): Unsubscribe {
+    this.diagnosticObservers.add(observer);
+    return () => {
+      this.diagnosticObservers.delete(observer);
+    };
   }
 
   /**
@@ -2270,7 +2408,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       try {
         observer(info);
       } catch (e) {
-        console.error("Instrumentation observer error:", e);
+        this.report(
+          "error",
+          "observer-error",
+          "An instrumentation observer threw.",
+          { observer: "instrument", error: e },
+          "Instrumentation observer error:",
+          e,
+        );
       }
     }
   }
@@ -2539,11 +2684,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     let drained = 0;
     while (this.queuedRegistrationBatches.length > 0) {
       if (drained >= MAX_REGISTRATION_CASCADE) {
-        console.error(
+        const message =
           `[yoltra] Registration notifications exceeded ${MAX_REGISTRATION_CASCADE} rounds; ` +
-            `dropping the rest. Two observers are most likely registering in response to ` +
-            `each other.`,
-        );
+          `dropping the rest. Two observers are most likely registering in response to ` +
+          `each other.`;
+        this.report("error", "registration-cascade", message, undefined, message);
         this.queuedRegistrationBatches.length = 0;
         break;
       }
@@ -2576,15 +2721,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         // adopting this promise. Registration notification is synchronous, so by the time it
         // resolves the store has moved on and anything it does lands at an unpredictable
         // point relative to everything else.
-        console.error(
+        const message =
           "[yoltra] A registration observer returned a Promise. Registration notifications " +
-            "are synchronous: the store has already moved on by the time it resolves. Do the " +
-            "work synchronously, or schedule it yourself and accept that the topology may " +
-            "have changed again.",
-        );
+          "are synchronous: the store has already moved on by the time it resolves. Do the " +
+          "work synchronously, or schedule it yourself and accept that the topology may " +
+          "have changed again.";
+        this.report("error", "observer-promise", message, undefined, message);
       }
     } catch (e) {
-      console.error("Registration observer error:", e);
+      this.report(
+        "error",
+        "observer-error",
+        "A registration observer threw.",
+        { observer: "registration", error: e },
+        "Registration observer error:",
+        e,
+      );
     }
   }
 
@@ -3816,7 +3968,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         try {
           u();
         } catch (e) {
-          console.error(`[Store error]: ${e}`);
+          this.report(
+            "error",
+            "slice-teardown-error",
+            `A disposer threw while slice "${rName as string}" was unregistered.`,
+            { slice: rName, error: e },
+            `[Store error]: ${e}`,
+          );
         }
 
       this.sliceUnsubs.delete(rName);
@@ -3922,6 +4080,7 @@ export function createStore<
   idFactory?: () => string;
   clock?: Clock;
   scheduler?: Scheduler;
+  diagnostics?: DiagnosticSink;
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
   onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
@@ -3972,6 +4131,7 @@ export function createStore<RM extends ReducersMapAny>(cfg: {
   idFactory?: () => string;
   clock?: Clock;
   scheduler?: Scheduler;
+  diagnostics?: DiagnosticSink;
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EMFromReducersStrict<RM>>) => void;
   onReducerError?: (
