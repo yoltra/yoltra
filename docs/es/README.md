@@ -315,6 +315,7 @@ Node, y viceversa.
 - **[Petición y respuesta](https://github.com/yoltra/yoltra/blob/main/docs/es/REQUEST_REPLY_GUIDE.md)** - `store.call()`: correlación sin ids, progreso en streaming con backpressure real
 - **[Guía de testing](https://github.com/yoltra/yoltra/blob/main/docs/es/TESTING_GUIDE.md)** - prueba stores, efectos, middleware y componentes
 - **[Guía de Next.js](https://github.com/yoltra/yoltra/blob/main/docs/es/NEXTJS_GUIDE.md)** - uso en cliente con Pages y App Router
+- **[Servicio de Node](https://github.com/yoltra/yoltra/blob/main/docs/es/NODE_SERVICE_GUIDE.md)** - un store como proceso de larga vida con PM2: disponibilidad, apagado ordenado, métricas
 - **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** - store, middleware, efectos, matchers `When`, instrumentación
 - **[API de @yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** - hooks, accessors tipados, `createYoltra`, Suspense
 - **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.es.md)** - componentes, tokens, temas y el contrato con SSR

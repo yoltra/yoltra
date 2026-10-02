@@ -8,9 +8,9 @@
 
 # Function: persist()
 
-> **persist**(`store`, `options`): () => `void`
+> **persist**(`store`, `options`): () => `Promise`\<`void`\>
 
-Defined in: [persistence/persist.ts:295](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L295)
+Defined in: [persistence/persist.ts:298](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L298)
 
 Writes state as it changes.
 
@@ -26,13 +26,16 @@ Writes state as it changes.
 
 ## Returns
 
-A function that stops persisting and flushes anything pending.
+A function that stops persisting, flushes anything pending, and returns a promise
+  that resolves once the last write has settled. Await it before a process exits: with an
+  asynchronous adapter the final write is otherwise still in flight. It never rejects; a
+  failed write is reported through `onError`.
 
-> (): `void`
+> (): `Promise`\<`void`\>
 
 ### Returns
 
-`void`
+`Promise`\<`void`\>
 
 ## Remarks
 

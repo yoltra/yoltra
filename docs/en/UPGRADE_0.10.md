@@ -221,3 +221,8 @@ effect's name, origin, duration and whether it failed. See
 **`store.metrics()` and `store.whenIdle()`**, with the `StoreMetrics` type: the store's current
 load, and a promise that resolves when no event waits to be reduced and no effect runs, for a
 graceful shutdown. See [Load, and waiting for it to finish](../../packages/core/README.md#load-and-waiting-for-it-to-finish).
+
+**`persist()`'s stop function returns a promise** that resolves once the last write has settled,
+so a process can await its final write before exiting. It never rejects. Code that ignored the
+return value is unaffected. The [Node Service Guide](./NODE_SERVICE_GUIDE.md) shows the whole
+graceful shutdown under PM2.

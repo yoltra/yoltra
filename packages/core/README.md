@@ -854,6 +854,9 @@ A `call()` waiting for its reply and a pending timer are not work the store is d
 not delay it. It resolves at once on an idle or disposed store, and every wait resolves on
 `dispose()`. Never await it from an effect: that effect is part of the work it waits for.
 
+The [Node Service Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/NODE_SERVICE_GUIDE.md)
+puts this together for a process run by PM2: readiness, signals, the final write, and metrics.
+
 ---
 
 ## Cascade protection (on by default)
@@ -1243,6 +1246,11 @@ default). State past that is not written at all: storage keeps its previous, com
 state no reducer produced. A value with no faithful representation, such as a class instance, is
 different: the rest of the state is intact, so it is written, with the error's `unsupported`
 naming each path and `written: true`.
+
+`persist` returns a function that stops it, flushes what is pending and returns a promise that
+resolves once the last write has landed. Await it before a process exits: with an asynchronous
+adapter the final write is otherwise still in flight. It never rejects; a failed write goes to
+`onError`.
 
 For a server render, `dehydrate(store, { version })` produces the payload and
 `hydrate({ source, version })` consumes it. A state past `maxNodes` dehydrates to `""`, which

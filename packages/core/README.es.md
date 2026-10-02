@@ -874,6 +874,10 @@ Un `call()` esperando su respuesta y un timer pendiente no son trabajo que el st
 así que no lo retrasan. Se resuelve de inmediato en un store ocioso o liberado, y toda espera se
 resuelve en `dispose()`. Nunca lo esperes desde un efecto: ese efecto es parte del trabajo que espera.
 
+La [guía de servicio de Node](https://github.com/yoltra/yoltra/blob/main/docs/es/NODE_SERVICE_GUIDE.md)
+lo junta todo para un proceso que corre bajo PM2: disponibilidad, señales, la escritura final y
+métricas.
+
 ---
 
 ## Protección contra cascadas (activada por defecto)
@@ -1267,6 +1271,11 @@ su valor anterior, completo, y `onError` recibe un `PersistEncodeError` con `tru
 buena por una que se hidrata en un estado que ningún reducer produjo. Un valor sin representación
 fiel, como una instancia de clase, es distinto: el resto del estado está intacto, así que se
 escribe, con `unsupported` del error nombrando cada ruta y `written: true`.
+
+`persist` devuelve una función que lo detiene, vacía lo pendiente y devuelve una promesa que se
+resuelve cuando la última escritura terminó. Espérala antes de que un proceso salga: con un
+adaptador asíncrono la escritura final sigue en curso de otro modo. Nunca se rechaza; una escritura
+fallida va a `onError`.
 
 Para un render en servidor, `dehydrate(store, { version })` produce el payload y
 `hydrate({ source, version })` lo consume. Un estado más allá de `maxNodes` se deshidrata como

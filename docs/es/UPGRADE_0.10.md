@@ -231,3 +231,8 @@ nombre, el origen, la duración de cada efecto y si falló. Consulta
 **`store.metrics()` y `store.whenIdle()`**, con el tipo `StoreMetrics`: la carga actual del store, y
 una promesa que se resuelve cuando ningún evento espera a ser reducido y ningún efecto corre, para un
 apagado ordenado. Consulta [Carga, y esperar a que termine](../../packages/core/README.es.md#carga-y-esperar-a-que-termine).
+
+**La función que detiene `persist()` devuelve una promesa** que se resuelve cuando la última
+escritura terminó, para que un proceso espere su escritura final antes de salir. Nunca se rechaza.
+El código que ignoraba el valor de retorno no se ve afectado. La
+[guía de servicio de Node](./NODE_SERVICE_GUIDE.md) muestra el apagado ordenado completo con PM2.

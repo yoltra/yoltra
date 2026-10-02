@@ -10,7 +10,7 @@
 
 > **dehydrate**(`store`, `options`): `string`
 
-Defined in: [persistence/persist.ts:369](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L369)
+Defined in: [persistence/persist.ts:375](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L375)
 
 Serializes a store for handoff, for example from a server render to the client.
 

@@ -284,7 +284,10 @@ function encodeEnvelope(
 /**
  * Writes state as it changes.
  *
- * @returns A function that stops persisting and flushes anything pending.
+ * @returns A function that stops persisting, flushes anything pending, and returns a promise
+ *   that resolves once the last write has settled. Await it before a process exits: with an
+ *   asynchronous adapter the final write is otherwise still in flight. It never rejects; a
+ *   failed write is reported through `onError`.
  *
  * @remarks
  * Driven by `instrument` rather than the coarse subscription, so a change confined to a slice
@@ -292,12 +295,14 @@ function encodeEnvelope(
  *
  * @public
  */
-export function persist(store: PersistableStore, options: PersistOptions): () => void {
+export function persist(store: PersistableStore, options: PersistOptions): () => Promise<void> {
   const throttleMs = options.throttleMs ?? 250;
   const watched = options.slices;
   const scheduler = options.scheduler ?? globalScheduler;
   let timer: TimerHandle | null = null;
   let pending = false;
+  // The most recent asynchronous write, settled or not, so stopping can wait for it.
+  let lastWrite: Promise<void> = Promise.resolve();
 
   const flush = (): void => {
     if (!pending) return;
@@ -308,7 +313,7 @@ export function persist(store: PersistableStore, options: PersistOptions): () =>
       if (payload === null) return;
       const written = options.adapter.write(options.key, payload);
       if (written instanceof Promise) {
-        void written.catch((error: unknown) => report(options, error, "write"));
+        lastWrite = written.catch((error: unknown) => report(options, error, "write"));
       }
     } catch (error) {
       // Storage being full, or unavailable in private mode, must not surface to the caller.
@@ -354,6 +359,7 @@ export function persist(store: PersistableStore, options: PersistOptions): () =>
       timer = null;
     }
     flush();
+    return lastWrite;
   };
 }
 

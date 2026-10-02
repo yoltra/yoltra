@@ -379,3 +379,66 @@ describe("a write follows only an event that changed state", () => {
     stop();
   });
 });
+
+describe("stopping waits for the last write", () => {
+  type StopEM = { ui: { set: number } };
+  const spec: ReducerSpec<{ n: number }, StopEM> = {
+    state: { n: 0 },
+    when: { keys: [["ui", "set"]] },
+    reducer: (_s, event) => ({ n: event.payload as number }),
+  };
+
+  it("resolves only once an asynchronous adapter has finished writing", async () => {
+    let finish!: () => void;
+    const stored: string[] = [];
+    const adapter: PersistenceAdapter = {
+      read: () => null,
+      write: (_k, value) =>
+        new Promise<void>((resolve) => {
+          finish = () => {
+            stored.push(value);
+            resolve();
+          };
+        }),
+      remove: () => undefined,
+    };
+    const store = createStore<{ c: { n: number } }, StopEM>({ name: "Stop", reducer: { c: spec } });
+    const stop = persist(store, { key: "k", adapter, version: 1, throttleMs: 50 });
+    await store.emit("ui", "set", 7);
+
+    let stopped = false;
+    const stopping = stop().then(() => (stopped = true));
+    await Promise.resolve();
+    // The pending write was flushed, and is still in flight.
+    expect(stopped).toBe(false);
+
+    finish();
+    await stopping;
+    expect(stored).toHaveLength(1);
+    expect(stored[0]).toContain('"n":7');
+  });
+
+  it("never rejects: a failed final write is reported through onError", async () => {
+    const onError = vi.fn();
+    const adapter: PersistenceAdapter = {
+      read: () => null,
+      write: () => Promise.reject(new Error("disk gone")),
+      remove: () => undefined,
+    };
+    const store = createStore<{ c: { n: number } }, StopEM>({ name: "Stop", reducer: { c: spec } });
+    const stop = persist(store, { key: "k", adapter, version: 1, throttleMs: 50, onError });
+    await store.emit("ui", "set", 1);
+
+    await expect(stop()).resolves.toBeUndefined();
+    expect(onError).toHaveBeenCalledWith(expect.any(Error), "write");
+  });
+
+  it("resolves at once with a synchronous adapter, or with nothing to write", async () => {
+    const write = vi.fn();
+    const store = createStore<{ c: { n: number } }, StopEM>({ name: "Stop", reducer: { c: spec } });
+    const stop = persist(store, { key: "k", adapter: { read: () => null, write, remove: () => undefined }, version: 1 });
+
+    await expect(stop()).resolves.toBeUndefined();
+    expect(write).not.toHaveBeenCalled();
+  });
+});
