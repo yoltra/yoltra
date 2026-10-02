@@ -1770,24 +1770,6 @@ export type StateFromReducers<R> = {
 };
 
 /**
- * Helper: turn a union into an intersection.
- *
- * @internal
- */
-export type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends (
-  k: infer I,
-) => void
-  ? I
-  : never;
-
-/**
- * Helper: the event map of a single reducer spec.
- *
- * @internal
- */
-export type EMOfSpec<Spec> = Spec extends ReducerSpec<any, infer EM> ? EM : never;
-
-/**
  * The event map a reducers map produces, merged across its slices.
  *
  * @remarks
@@ -1799,9 +1781,15 @@ export type EMOfSpec<Spec> = Spec extends ReducerSpec<any, infer EM> ? EM : neve
  *
  * @public
  */
-export type EMFromReducersStrict<RM extends ReducersMapAny> = UnionToIntersection<
-  EMOfSpec<RM[keyof RM]>
-> extends infer Merged
+export type EMFromReducersStrict<RM extends ReducersMapAny> = (
+  // Each slice's event map as a function parameter, distributed over the union of specs; inferring
+  // one parameter back from that union of functions intersects the maps.
+  RM[keyof RM] extends infer Spec
+    ? Spec extends ReducerSpec<any, infer EM>
+      ? (k: EM) => void
+      : never
+    : never
+) extends (k: infer Merged) => void
   ? Merged extends EventMapBase
     ? Merged
     : EventMapBase

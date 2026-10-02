@@ -10,7 +10,7 @@
 
 > **EventSubscriptionHandler**\<`S`, `EM`\> = (`event`, `getState`, `emit`, `phase`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [types.ts:2280](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2280)
+Defined in: [types.ts:2268](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2268)
 
 Handler function for event subscriptions (receives full event union).
 

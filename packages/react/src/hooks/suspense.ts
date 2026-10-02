@@ -187,7 +187,7 @@ class SuspenseCache {
     load: () => T | Promise<T>,
     staleTime: number | null,
     errorTtlMs: number | null | undefined,
-    source?: CacheSource,
+    source?: readonly unknown[],
   ): T {
     const now = Date.now();
     let entry = this.store.get(key);

@@ -10,7 +10,7 @@
 
 > **eventKeys**\<`EM`\>(): \<`K`\>(`keys`) => `K`
 
-Defined in: [types.ts:1957](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1957)
+Defined in: [types.ts:1945](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1945)
 
 Helper to create type-safe EventKey arrays without requiring `as const`.
 Preserves literal tuple types for proper type correlation in handlers.

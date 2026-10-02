@@ -687,7 +687,7 @@ exactly as the `with*` family already did.
 
 > **registerSlice**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`Unsubscribe`](../type-aliases/Unsubscribe.md) & `object`
 
-Defined in: [types.ts:2684](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2684)
+Defined in: [types.ts:2672](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2672)
 
 Mounts a slice and hands back both the widened store and a disposer.
 
@@ -870,7 +870,7 @@ itself the work it would wait for.
 
 > **withEffect**\<`Spec`\>(`spec`): [`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`Spec`\>\>\>
 
-Defined in: [types.ts:2709](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2709)
+Defined in: [types.ts:2697](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2697)
 
 Registers an effect and returns the store widened by whatever event map it declares.
 
@@ -900,7 +900,7 @@ Registers an effect and returns the store widened by whatever event map it decla
 
 > **withMiddleware**\<`M`\>(`mw`): [`DecoratableStore`](../type-aliases/DecoratableStore.md)\<`R`, `S`, [`Merge`](../type-aliases/Merge.md)\<`EM`, [`EMAddOf`](../type-aliases/EMAddOf.md)\<`M`\>\>\>
 
-Defined in: [types.ts:2704](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2704)
+Defined in: [types.ts:2692](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2692)
 
 Registers middleware and returns the store widened by whatever event map it declares.
 
@@ -934,7 +934,7 @@ therefore contributes `{}`.
 
 > **withSlice**\<`N`, `Spec`\>(`name`, `spec`, `options?`): [`WidenedSlice`](../type-aliases/WidenedSlice.md)\<`R`, `S`, `EM`, `N`, `Spec`\>
 
-Defined in: [types.ts:2691](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2691)
+Defined in: [types.ts:2679](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2679)
 
 Mounts a slice and returns the widened store, for chaining.
 

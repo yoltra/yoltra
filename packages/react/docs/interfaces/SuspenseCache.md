@@ -100,7 +100,7 @@ Returns the value cached under `key`, or starts `load` and throws its promise.
 
 ##### source?
 
-`CacheSource`
+readonly `unknown`[]
 
 The state values the load reads, compared element by element with
   `Object.is`. An entry loaded from different values is discarded and loaded again, so a

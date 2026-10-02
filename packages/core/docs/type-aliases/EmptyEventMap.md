@@ -10,7 +10,7 @@
 
 > **EmptyEventMap** = `Record`\<`never`, `never`\>
 
-Defined in: [types.ts:2524](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2524)
+Defined in: [types.ts:2512](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2512)
 
 The event map a spec contributes when it declares none.
 

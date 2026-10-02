@@ -8,9 +8,9 @@
 
 # Type Alias: EMFromReducersStrict\<RM\>
 
-> **EMFromReducersStrict**\<`RM`\> = `UnionToIntersection`\<`EMOfSpec`\<`RM`\[keyof `RM`\]\>\> *extends* infer Merged ? `Merged` *extends* [`EventMapBase`](EventMapBase.md) ? `Merged` : [`EventMapBase`](EventMapBase.md) : [`EventMapBase`](EventMapBase.md)
+> **EMFromReducersStrict**\<`RM`\> = `RM`\[keyof `RM`\] *extends* infer Spec ? `Spec` *extends* [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`any`, infer EM\> ? (`k`) => `void` : `never` : `never` *extends* (`k`) => `void` ? `Merged` *extends* [`EventMapBase`](EventMapBase.md) ? `Merged` : [`EventMapBase`](EventMapBase.md) : [`EventMapBase`](EventMapBase.md)
 
-Defined in: [types.ts:1802](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1802)
+Defined in: [types.ts:1784](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1784)
 
 The event map a reducers map produces, merged across its slices.
 
