@@ -254,7 +254,9 @@ describe("exotic values survive the trip", () => {
         missing: undefined,
       },
       when: { any: true } as never,
-      reducer: (s: unknown) => s,
+      // A real change: persist writes only after an event that changed state, so returning `s`
+      // itself would write nothing at all.
+      reducer: (s: Record<string, unknown>) => ({ ...s, index: new Map([["a", 1]]) }),
     } as never;
 
     const store = createStore({ name: "Rich", reducer: { rich } });

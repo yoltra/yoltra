@@ -117,7 +117,13 @@ export type {
   EncodeResult,
 } from "./serialize/codec";
 
-export { dehydrate, hydrate, persist, withHydration } from "./persistence/persist";
+export {
+  PersistEncodeError,
+  dehydrate,
+  hydrate,
+  persist,
+  withHydration,
+} from "./persistence/persist";
 export type {
   Hydration,
   PersistableStore,

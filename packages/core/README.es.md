@@ -1030,12 +1030,22 @@ instantánea escrita contra una forma anterior puede no ser estado válido para 
 absoluto. Aporta `migrate` para actualizarla, o se descarta.
 
 Las escrituras las dirige la instrumentación, así que un cambio confinado a una slice que no
-estás persistiendo no cuesta nada, y una ráfaga se agrupa en una sola escritura. `Map`, `Set`,
+estás persistiendo no cuesta nada, un evento que no cambió nada (vetado, rechazado, o un reducer
+que devuelve su entrada) no escribe nada, y una ráfaga se agrupa en una sola escritura. `Map`, `Set`,
 `Date`, `BigInt`, `undefined` y las referencias circulares sobreviven al viaje de ida y vuelta:
 `JSON.stringify` no falla con eso, los destruye en silencio.
 
+**Nunca se escribe una instantánea parcial.** La codificación se detiene en `maxNodes` valores
+(100 000 por defecto). Un estado más grande no se escribe en absoluto: el almacenamiento conserva
+su valor anterior, completo, y `onError` recibe un `PersistEncodeError` con `truncated: true` y
+`written: false` en la fase `"encode"`. Escribir lo que cupo habría reemplazado una instantánea
+buena por una que se hidrata en un estado que ningún reducer produjo. Un valor sin representación
+fiel, como una instancia de clase, es distinto: el resto del estado está intacto, así que se
+escribe, con `unsupported` del error nombrando cada ruta y `written: true`.
+
 Para un render en servidor, `dehydrate(store, { version })` produce el payload y
-`hydrate({ source, version })` lo consume.
+`hydrate({ source, version })` lo consume. Un estado más allá de `maxNodes` se deshidrata como
+`""`, que se hidrata como nada que restaurar.
 
 ---
 
@@ -1113,8 +1123,8 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
 | `{ createStore }` | 13.2 KB | 15 KB |
-| `{ createStore, hydrate, persist }` | 14.5 KB | 16 KB |
-| todo | 16.0 KB | 18 KB |
+| `{ createStore, hydrate, persist }` | 14.6 KB | 17 KB |
+| todo | 16.2 KB | 18 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define
@@ -1125,8 +1135,8 @@ note solo porque nunca llega a un usuario. Por eso el margen que se infiere aqu�
 deliberadamente conservador.
 
 La **distancia entre filas** es la afirmación de tree-shaking, y es lo que hay que vigilar: la
-persistencia añade 1.3 KB a quienes la importan y nada a los demás, y el barrel completo está
-2.8 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
+persistencia añade 1.4 KB a quienes la importan y nada a los demás, y el barrel completo está
+3.0 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
 es algo que nadie escriba.
 
 La primera fila solo se mueve cuando crece el store en sí, y ha crecido: acotar las cascadas,
@@ -1137,7 +1147,9 @@ comportamiento por defecto que impide que un desbocado cuelgue la pestaña.
 Un presupuesto solo se mueve por lo que se midió, y dice por qué. En 0.10.0 el presupuesto de
 `createStore` pasó de 14 KB a 15 KB por la costura de diagnósticos
 ([Errores y diagnósticos](#errores-y-diagnósticos)), que midió 0.6 KB: un helper de enrutamiento
-y una frase por cada fallo que el store contiene.
+y una frase por cada fallo que el store contiene. La fila de persistencia, que incluye al store,
+pasó de 16 KB a 17 KB por esos mismos 0.6 KB más 0.2 KB propios: `PersistEncodeError`, y rechazar
+una escritura parcial.
 
 ---
 

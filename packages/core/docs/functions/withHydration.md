@@ -10,7 +10,7 @@
 
 > **withHydration**\<`R`\>(`reducers`, `hydration`): `R`
 
-Defined in: [persistence/persist.ts:176](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L176)
+Defined in: [persistence/persist.ts:223](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L223)
 
 Replaces each reducer's initial state with what was restored for it.
 

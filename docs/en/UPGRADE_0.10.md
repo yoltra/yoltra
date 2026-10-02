@@ -84,6 +84,27 @@ what a middleware handler receives, instead of `never`.
 
 ---
 
+## Persistence never writes a partial state
+
+**You will notice if:** a persisted state can grow past 100 000 values, or you assert on what
+`onError` receives under the `"encode"` phase, or on how many times an adapter is written.
+
+`persist` encoded state up to a node budget and wrote whatever fit, replacing a complete earlier
+snapshot with one cut off part-way. That snapshot then hydrated into state no reducer produced. A
+state past the budget is now **not written**: storage keeps its previous value, and `onError`
+receives a `PersistEncodeError` (new) with `truncated: true` and `written: false`. The budget is
+`maxNodes`, new on `PersistOptions`, defaulting to the 100 000 it always was. `dehydrate` returns
+`""` in that case, which hydrates as nothing to restore.
+
+A value with no faithful representation is still written, as before, and is now reported as a
+`PersistEncodeError` with `written: true` and its paths in `unsupported`, instead of a plain
+`Error`. Its message still names the paths.
+
+`persist` also writes only after an event that changed state. A vetoed or refused event, or a
+reducer returning its input, used to schedule a rewrite of what storage already held.
+
+---
+
 ## A typed array in state changes as one value
 
 **You will notice if:** state holds a typed array, a `DataView` or an `ArrayBuffer`, and you read

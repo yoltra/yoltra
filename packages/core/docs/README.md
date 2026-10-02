@@ -12,6 +12,7 @@
 - [CallTimeoutError](classes/CallTimeoutError.md)
 - [EventBus](classes/EventBus.md)
 - [LooseEventBus](classes/LooseEventBus.md)
+- [PersistEncodeError](classes/PersistEncodeError.md)
 - [Reducer](classes/Reducer.md)
 - [Store](classes/Store.md)
 

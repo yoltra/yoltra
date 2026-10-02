@@ -86,6 +86,30 @@ que es lo que recibe un handler de middleware, en lugar de `never`.
 
 ---
 
+## La persistencia nunca escribe un estado parcial
+
+**Lo notarás si:** un estado persistido puede crecer más allá de 100 000 valores, o haces
+aserciones sobre lo que recibe `onError` en la fase `"encode"`, o sobre cuántas veces se escribe un
+adaptador.
+
+`persist` codificaba el estado hasta un presupuesto de nodos y escribía lo que cupiera,
+reemplazando una instantánea anterior completa por una cortada a la mitad. Esa instantánea se
+hidrataba después en un estado que ningún reducer produjo. Un estado más allá del presupuesto
+ahora **no se escribe**: el almacenamiento conserva su valor anterior, y `onError` recibe un
+`PersistEncodeError` (nuevo) con `truncated: true` y `written: false`. El presupuesto es
+`maxNodes`, nuevo en `PersistOptions`, con el valor de 100 000 que siempre tuvo. `dehydrate`
+devuelve `""` en ese caso, que se hidrata como nada que restaurar.
+
+Un valor sin representación fiel se sigue escribiendo, como antes, y ahora se reporta como un
+`PersistEncodeError` con `written: true` y sus rutas en `unsupported`, en lugar de un `Error`
+simple. Su mensaje sigue nombrando las rutas.
+
+`persist` además escribe solo después de un evento que cambió el estado. Un evento vetado o
+rechazado, o un reducer que devuelve su entrada, programaba antes una reescritura de lo que el
+almacenamiento ya tenía.
+
+---
+
 ## Un typed array en el estado cambia como un solo valor
 
 **Lo notarás si:** el estado guarda un typed array, un `DataView` o un `ArrayBuffer`, y lees

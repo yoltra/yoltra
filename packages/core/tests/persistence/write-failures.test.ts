@@ -6,7 +6,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import { createStore, hydrate, persist } from "../../src/index";
+import { PersistEncodeError, Rejected, createStore, dehydrate, hydrate, persist } from "../../src/index";
 import type { PersistenceAdapter, ReducerSpec } from "../../src/index";
 
 type EM = { ui: { poke: null } };
@@ -113,9 +113,12 @@ describe("encode losses are reported, not swallowed", () => {
     // A distinct phase from "write": a serialization loss and a full disk need different
     // responses, and telling them apart is what onError exists for.
     expect(String(encodeCalls[0]?.[0])).toContain("/slices/wallet/price");
+    // Unsupported, not truncated: the rest of the state is intact, so it was written.
+    expect(encodeCalls[0]?.[0]).toBeInstanceOf(PersistEncodeError);
+    expect(encodeCalls[0]?.[0]).toMatchObject({ truncated: false, written: true, unsupported: ["/slices/wallet/price"] });
   });
 
-  it("still writes: a partial payload beats none", async () => {
+  it("still writes when a value is unsupported, and says it did", async () => {
     const { adapter, written } = adapterSpy();
 
     const store = createStore({
@@ -244,5 +247,135 @@ describe("an encode that is both truncated and lossy", () => {
       .map(([e]) => String(e));
     expect(encodeErrors.length).toBeGreaterThan(0);
     expect(encodeErrors[0]).toContain("/slices/big/price");
+  });
+});
+
+describe("a truncated encode is never written", () => {
+  type GrowEM = { list: { grow: number } };
+  const grows: ReducerSpec<{ items: number[] }, GrowEM> = {
+    state: { items: [] },
+    when: { keys: [["list", "grow"]] },
+    reducer: (_s, event) => ({ items: Array.from({ length: event.payload as number }, (_, i) => i) }),
+  };
+
+  function memory(): { adapter: PersistenceAdapter; stored: () => string | undefined; writes: () => number } {
+    let value: string | undefined;
+    let count = 0;
+    return {
+      stored: () => value,
+      writes: () => count,
+      adapter: {
+        read: () => value ?? null,
+        write: (_k, v) => {
+          value = v;
+          count++;
+        },
+        remove: () => {
+          value = undefined;
+        },
+      },
+    };
+  }
+
+  it("keeps the last complete snapshot and reports a PersistEncodeError", async () => {
+    const storage = memory();
+    const onError = vi.fn();
+    const store = createStore<{ list: { items: number[] } }, GrowEM>({ name: "Grow", reducer: { list: grows } });
+    const stop = persist(store, { key: "k", adapter: storage.adapter, version: 1, throttleMs: 0, maxNodes: 50, onError });
+
+    await store.emit("list", "grow", 3);
+    const complete = storage.stored();
+    expect(complete).toBeDefined();
+
+    await store.emit("list", "grow", 500);
+
+    // Writing what fit would have replaced a complete snapshot with a partial one.
+    expect(storage.stored()).toBe(complete);
+    expect(storage.writes()).toBe(1);
+    const [error, phase] = onError.mock.calls[0]!;
+    expect(phase).toBe("encode");
+    expect(error).toBeInstanceOf(PersistEncodeError);
+    expect(error).toMatchObject({ truncated: true, written: false, unsupported: [] });
+    expect(String((error as Error).message)).toContain("Nothing was written");
+
+    const back = await hydrate({ key: "k", adapter: storage.adapter, version: 1 });
+    expect(back.slices).toEqual({ list: { items: [0, 1, 2] } });
+    stop();
+  });
+
+  it("names both losses when a truncated state also holds an unsupported value", async () => {
+    class Opaque {
+      constructor(public n: number) {}
+    }
+    const onError = vi.fn();
+    const store = createStore({
+      name: "Both",
+      reducer: {
+        s: {
+          state: { first: null as Opaque | null, rest: [] as number[] },
+          when: { any: true },
+          reducer: () => ({ first: new Opaque(1), rest: Array.from({ length: 200 }, (_, i) => i) }),
+        } satisfies ReducerSpec<{ first: Opaque | null; rest: number[] }, EM>,
+      },
+    });
+    const stop = persist(store, { key: "k", adapter: memory().adapter, version: 1, throttleMs: 0, maxNodes: 50, onError });
+
+    await store.emit("ui", "poke", null);
+
+    const error = onError.mock.calls[0]![0] as PersistEncodeError;
+    expect(error.truncated).toBe(true);
+    expect(error.unsupported).toEqual(["/slices/s/first"]);
+    expect(error.written).toBe(false);
+    stop();
+  });
+
+  it("dehydrates to an empty handoff, which hydrates as nothing to restore", async () => {
+    const onError = vi.fn();
+    const store = createStore<{ list: { items: number[] } }, GrowEM>({ name: "Handoff", reducer: { list: grows } });
+    await store.emit("list", "grow", 500);
+
+    const payload = dehydrate(store, { version: 1, maxNodes: 50, onError });
+
+    expect(payload).toBe("");
+    expect(onError.mock.calls[0]![0]).toMatchObject({ truncated: true, written: false });
+    const back = await hydrate({ key: "k", adapter: memory().adapter, version: 1, source: payload });
+    expect(back.restored).toBe(false);
+  });
+
+  it("dehydrates in full under the default budget", () => {
+    const store = createStore<{ list: { items: number[] } }, GrowEM>({ name: "Default", reducer: { list: grows } });
+    expect(dehydrate(store, { version: 1 })).toContain('"version":1');
+  });
+});
+
+describe("a write follows only an event that changed state", () => {
+  type GateEM = { ui: { set: number; same: null; refuse: null; blocked: null } };
+  const spec: ReducerSpec<{ n: number }, GateEM> = {
+    state: { n: 0 },
+    when: { keys: [["ui", "set"], ["ui", "same"], ["ui", "refuse"], ["ui", "blocked"]] },
+    reducer(state, event) {
+      if (event.type === "set") return { n: event.payload as number };
+      if (event.type === "refuse") return Rejected("no");
+      return state;
+    },
+  };
+
+  it("writes nothing for a no-op, a refused or a vetoed event", async () => {
+    const write = vi.fn();
+    const store = createStore<{ c: { n: number } }, GateEM>({
+      name: "Gate",
+      reducer: { c: spec },
+      middleware: [(_state, event) => event.type !== "blocked"],
+    });
+    const stop = persist(store, { key: "k", adapter: { read: () => null, write, remove: () => undefined }, version: 1, throttleMs: 0 });
+
+    await store.emit("ui", "same", null);
+    await store.emit("ui", "refuse", null);
+    await store.emit("ui", "blocked", null);
+    expect(write).not.toHaveBeenCalled();
+
+    await store.emit("ui", "set", 2);
+    expect(write).toHaveBeenCalledOnce();
+    stop();
   });
 });

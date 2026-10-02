@@ -1009,12 +1009,22 @@ against an older shape may not be valid state for this build at all. Supply `mig
 upgrade it, or it is discarded.
 
 Writes are driven by instrumentation, so a change confined to a slice you are not persisting
-costs nothing, and a burst is coalesced into one write. `Map`, `Set`, `Date`, `BigInt`,
+costs nothing, an event that changed nothing (vetoed, refused, or a reducer returning its input)
+writes nothing, and a burst is coalesced into one write. `Map`, `Set`, `Date`, `BigInt`,
 `undefined` and circular references all survive the round trip: `JSON.stringify` does not fail
 on those, it silently destroys them.
 
+**A partial snapshot is never written.** Encoding stops at `maxNodes` values (100 000 by
+default). State past that is not written at all: storage keeps its previous, complete value, and
+`onError` receives a `PersistEncodeError` with `truncated: true` and `written: false` under the
+`"encode"` phase. Writing what fit would have replaced a good snapshot with one that hydrates into
+state no reducer produced. A value with no faithful representation, such as a class instance, is
+different: the rest of the state is intact, so it is written, with the error's `unsupported`
+naming each path and `written: true`.
+
 For a server render, `dehydrate(store, { version })` produces the payload and
-`hydrate({ source, version })` consumes it.
+`hydrate({ source, version })` consumes it. A state past `maxNodes` dehydrates to `""`, which
+hydrates as nothing to restore.
 
 ---
 
@@ -1088,8 +1098,8 @@ The number that matters is what you import, not what the package exports:
 | Import | Size | Budget |
 | --- | --- | --- |
 | `{ createStore }` | 13.2 KB | 15 KB |
-| `{ createStore, hydrate, persist }` | 14.5 KB | 16 KB |
-| everything | 16.0 KB | 18 KB |
+| `{ createStore, hydrate, persist }` | 14.6 KB | 17 KB |
+| everything | 16.2 KB | 18 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines
@@ -1099,7 +1109,7 @@ the larger of the two: dev-only code cannot grow unnoticed just because it never
 user. So the headroom implied here is deliberately conservative.
 
 The **gap between rows** is the tree-shaking claim, and it is what to watch: persistence adds
-1.3 KB to the people who import it and nothing to anyone else, and the whole barrel is 2.8 KB
+1.4 KB to the people who import it and nothing to anyone else, and the whole barrel is 3.0 KB
 past the store. The last row is a growth tripwire; `import * as all` is not something anybody
 writes.
 
@@ -1111,6 +1121,8 @@ stops a runaway from hanging the tab.
 A budget moves only by what was measured, and says why. In 0.10.0 the `createStore` budget went
 from 14 KB to 15 KB for the diagnostics seam ([Errors and diagnostics](#errors-and-diagnostics)),
 which measured 0.6 KB: one routing helper and a sentence for every failure the store contains.
+The persistence row, which includes the store, went from 16 KB to 17 KB for the same 0.6 KB plus
+0.2 KB of its own: `PersistEncodeError`, and refusing a partial write.
 
 ---
 

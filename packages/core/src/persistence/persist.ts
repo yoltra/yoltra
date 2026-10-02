@@ -47,6 +47,16 @@ export interface PersistOptions {
   /** Coalescing window for writes, in milliseconds. Defaults to 250. */
   readonly throttleMs?: number;
   /**
+   * Largest number of values encoded in one write. Defaults to 100 000.
+   *
+   * @remarks
+   * State larger than this is **not written**: the previous stored value stays, and a
+   * {@link PersistEncodeError} with `truncated: true` reaches {@link PersistOptions.onError}.
+   * Writing the part that fit would replace a complete earlier snapshot with a partial one,
+   * which hydrates into state no reducer ever produced.
+   */
+  readonly maxNodes?: number;
+  /**
    * Where the coalescing timer is armed. Defaults to the global `setTimeout` and `clearTimeout`,
    * looked up when the timer is armed, so fake timers installed later still apply.
    *
@@ -69,6 +79,43 @@ export interface PersistOptions {
    * disk should not take down a page.
    */
   readonly onError?: (error: unknown, phase: PersistencePhase) => void;
+}
+
+/**
+ * What an encode had to give up, reported under the `"encode"` phase.
+ *
+ * @remarks
+ * Two different losses, with two different outcomes. A **truncated** encode (state past
+ * {@link PersistOptions.maxNodes}) is never written, so `written` is `false` and storage keeps its
+ * previous value. **Unsupported** values (functions, symbols, class instances the codec cannot
+ * represent) are written as markers, so `written` is `true` and `unsupported` names their paths.
+ *
+ * @public
+ */
+export class PersistEncodeError extends Error {
+  /** The state exceeded the node budget. */
+  readonly truncated: boolean;
+  /** Paths of values written as markers because they have no faithful representation. */
+  readonly unsupported: readonly string[];
+  /** Whether anything was written. */
+  readonly written: boolean;
+
+  constructor(truncated: boolean, unsupported: readonly string[], written: boolean) {
+    const parts: string[] = [];
+    // Both, when both: "too large" says retry with less, a named path says which value to change.
+    if (truncated) parts.push("state was too large to encode in full");
+    if (unsupported.length > 0) {
+      parts.push(`values with no faithful representation at: ${unsupported.join(", ")}`);
+    }
+    super(
+      `[yoltra] Persisted state is incomplete: ${parts.join("; ")}. ` +
+        (written ? "It was written anyway." : "Nothing was written; storage keeps its previous value."),
+    );
+    this.name = "PersistEncodeError";
+    this.truncated = truncated;
+    this.unsupported = unsupported;
+    this.written = written;
+  }
 }
 
 /** What {@link hydrate} recovered. */
@@ -194,49 +241,41 @@ export interface PersistableStore {
 }
 
 /**
- * Serializes the slices being persisted.
+ * Serializes the slices being persisted, or refuses to.
+ *
+ * @returns The payload, or `null` when the state was truncated and must not be written.
  *
  * @remarks
- * The encode report used to be dropped on the floor, so a value the codec could not
- * represent was written as a lossy stand-in and **nothing anywhere said so** - the loss only
- * surfaced later, as a slice that came back wrong. It is now reported through
- * {@link PersistOptions.onError} under the `"encode"` phase. Its own phase rather than
- * `"write"`: a serialization loss and an adapter failure need different responses, and
- * telling them apart is what `onError` is for.
+ * Every loss is reported through {@link PersistOptions.onError} under the `"encode"` phase, as a
+ * {@link PersistEncodeError}. Its own phase rather than `"write"`: a serialization loss and an
+ * adapter failure need different responses.
  *
- * Reporting never blocks the write. Partial state is better than none, and the caller is the
- * one who decides what a loss means.
+ * A truncated encode is refused. It used to be written, replacing a complete earlier snapshot
+ * with one cut off at the node budget, which then hydrated into state no reducer produced.
+ * Unsupported values still write: the rest of the state is intact, and each marker names its
+ * path.
  */
 function encodeEnvelope(
   state: unknown,
-  options: Pick<PersistOptions, "version" | "slices" | "onError">,
-): string {
+  options: Pick<PersistOptions, "version" | "slices" | "onError" | "maxNodes">,
+): string | null {
   const all = (state ?? {}) as Record<string, unknown>;
   const slices: Record<string, unknown> =
     options.slices === undefined
       ? all
       : Object.fromEntries(options.slices.filter((s) => s in all).map((s) => [s, all[s]]));
 
-  const { value, report: encodeReport } = encodeState({ version: options.version, slices });
+  const { value, report: encodeReport } = encodeState(
+    { version: options.version, slices },
+    { maxNodes: options.maxNodes ?? 100_000 },
+  );
+  const { truncated, unsupported } = encodeReport;
 
-  if (encodeReport.truncated || encodeReport.unsupported.length > 0) {
-    // Both, when both. A ternary reported only the truncation and threw away the paths,
-    // which are the actionable half: "too large" says retry with less, a named path says
-    // which value to change.
-    const parts: string[] = [];
-    if (encodeReport.truncated) parts.push("state was too large to encode in full");
-    if (encodeReport.unsupported.length > 0) {
-      parts.push(`values with no faithful representation at: ${encodeReport.unsupported.join(", ")}`);
-    }
-    const detail = parts.join("; ");
-    report(
-      options,
-      new Error(`[yoltra] Persisted state is incomplete - ${detail}.`),
-      "encode",
-    );
+  if (truncated || unsupported.length > 0) {
+    report(options, new PersistEncodeError(truncated, unsupported, !truncated), "encode");
   }
 
-  return JSON.stringify(value);
+  return truncated ? null : JSON.stringify(value);
 }
 
 /**
@@ -261,7 +300,10 @@ export function persist(store: PersistableStore, options: PersistOptions): () =>
     if (!pending) return;
     pending = false;
     try {
-      const written = options.adapter.write(options.key, encodeEnvelope(store.getState(), options));
+      const payload = encodeEnvelope(store.getState(), options);
+      // Refused and already reported: storage keeps the last complete snapshot.
+      if (payload === null) return;
+      const written = options.adapter.write(options.key, payload);
       if (written instanceof Promise) {
         void written.catch((error: unknown) => report(options, error, "write"));
       }
@@ -288,15 +330,17 @@ export function persist(store: PersistableStore, options: PersistOptions): () =>
   };
 
   const stop = store.instrument((info) => {
-    if (watched === undefined) {
-      schedule();
-      return;
-    }
+    // Only an event that changed state is worth a write. A vetoed, refused or no-op event used
+    // to schedule one too, rewriting storage with what it already held.
+    const changed = info.changedPaths ?? [];
+    if (changed.length === 0) return;
     // A changed path is `slice.rest`; only a watched slice is worth a write.
-    const touched = (info.changedPaths ?? []).some((path) =>
-      watched.some((slice) => path === slice || path.startsWith(`${slice}.`)),
-    );
-    if (touched) schedule();
+    if (
+      watched === undefined ||
+      changed.some((path) => watched.some((slice) => path === slice || path.startsWith(`${slice}.`)))
+    ) {
+      schedule();
+    }
   });
 
   return () => {
@@ -312,11 +356,15 @@ export function persist(store: PersistableStore, options: PersistOptions): () =>
 /**
  * Serializes a store for handoff, for example from a server render to the client.
  *
+ * @returns The payload, or `""` when the state exceeded {@link PersistOptions.maxNodes}. An empty
+ *   handoff hydrates as "nothing to restore", so the client starts from its defaults rather than
+ *   from part of the server's state. The loss is reported through `onError` either way.
+ *
  * @public
  */
 export function dehydrate(
   store: Pick<PersistableStore, "getState">,
-  options: Pick<PersistOptions, "version" | "slices" | "onError">,
+  options: Pick<PersistOptions, "version" | "slices" | "onError" | "maxNodes">,
 ): string {
-  return encodeEnvelope(store.getState(), options);
+  return encodeEnvelope(store.getState(), options) ?? "";
 }

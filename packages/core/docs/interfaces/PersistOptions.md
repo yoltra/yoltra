@@ -32,11 +32,28 @@ Storage key.
 
 ***
 
+### maxNodes?
+
+> `readonly` `optional` **maxNodes**: `number`
+
+Defined in: [persistence/persist.ts:58](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L58)
+
+Largest number of values encoded in one write. Defaults to 100 000.
+
+#### Remarks
+
+State larger than this is **not written**: the previous stored value stays, and a
+[PersistEncodeError](../classes/PersistEncodeError.md) with `truncated: true` reaches [PersistOptions.onError](#onerror).
+Writing the part that fit would replace a complete earlier snapshot with a partial one,
+which hydrates into state no reducer ever produced.
+
+***
+
 ### migrate()?
 
 > `readonly` `optional` **migrate**: (`persisted`, `from`) => `null` \| `Record`\<`string`, `unknown`\>
 
-Defined in: [persistence/persist.ts:62](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L62)
+Defined in: [persistence/persist.ts:72](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L72)
 
 Upgrades a payload written by an older version.
 
@@ -62,7 +79,7 @@ The slices to restore, or `null` to start fresh.
 
 > `readonly` `optional` **onError**: (`error`, `phase`) => `void`
 
-Defined in: [persistence/persist.ts:71](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L71)
+Defined in: [persistence/persist.ts:81](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L81)
 
 Called on any failure.
 
@@ -92,7 +109,7 @@ disk should not take down a page.
 
 > `readonly` `optional` **scheduler**: [`Scheduler`](Scheduler.md)
 
-Defined in: [persistence/persist.ts:56](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L56)
+Defined in: [persistence/persist.ts:66](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L66)
 
 Where the coalescing timer is armed. Defaults to the global `setTimeout` and `clearTimeout`,
 looked up when the timer is armed, so fake timers installed later still apply.

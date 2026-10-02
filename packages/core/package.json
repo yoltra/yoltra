@@ -95,7 +95,7 @@
     {
       "name": "with persistence",
       "import": "{ createStore, hydrate, persist }",
-      "limitKb": 16
+      "limitKb": 17
     },
     {
       "name": "barrel",

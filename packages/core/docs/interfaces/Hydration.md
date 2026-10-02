@@ -8,7 +8,7 @@
 
 # Interface: Hydration
 
-Defined in: [persistence/persist.ts:75](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L75)
+Defined in: [persistence/persist.ts:122](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L122)
 
 What [hydrate](../functions/hydrate.md) recovered.
 
@@ -18,7 +18,7 @@ What [hydrate](../functions/hydrate.md) recovered.
 
 > `readonly` **restored**: `boolean`
 
-Defined in: [persistence/persist.ts:79](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L79)
+Defined in: [persistence/persist.ts:126](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L126)
 
 `true` when a payload was found, decoded and accepted.
 
@@ -28,6 +28,6 @@ Defined in: [persistence/persist.ts:79](https://github.com/yoltra/yoltra/blob/ma
 
 > `readonly` **slices**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
 
-Defined in: [persistence/persist.ts:77](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L77)
+Defined in: [persistence/persist.ts:124](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L124)
 
 Slice states to start from. Empty when there was nothing usable to restore.
