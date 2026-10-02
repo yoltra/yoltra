@@ -141,4 +141,6 @@ export type {
   PersistOptions,
 } from "./persistence/persist";
 export { createMemoryAdapter, createWebStorageAdapter } from "./persistence/adapters";
+export { warnOnLargeValues } from "./diagnostics/warnOnLargeValues";
+export type { LargeValueLimits, SizeWatchedStore } from "./diagnostics/warnOnLargeValues";
 export type { WebStorageLike } from "./persistence/adapters";

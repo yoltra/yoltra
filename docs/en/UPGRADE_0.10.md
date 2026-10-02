@@ -202,3 +202,7 @@ skips them. Devtools agents do not opt in; `persist` does. The README's
 [Values that change many times a second](../../packages/core/README.md#values-that-change-many-times-a-second)
 describe the pattern for high-frequency values. A `PersistableStore` you implement yourself should
 accept the new optional second argument to `instrument`.
+
+**`warnOnLargeValues(store, limits?)`**, a development-only check for payloads and slices that grew
+too large, as a separate import. See
+[Values that grew too large](../../packages/core/README.md#values-that-grew-too-large).

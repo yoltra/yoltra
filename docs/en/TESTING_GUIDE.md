@@ -270,6 +270,8 @@ idle timeout of `store.call()`, so a timeout test can fire it instead of waiting
 - **Dedup / timing:** dedup is off by default, so identical rapid emits are *not*
   coalesced — no fake timers needed unless you set `dedupWindowMs`. If you do,
   inject a `clock` or use `vi.useFakeTimers()` (see [Controlling time](#controlling-time)).
+- **Catch growth early:** `warnOnLargeValues(store, { warn })` with a `warn` that throws turns a
+  payload or slice past its limit into a failing test.
 - **No `await` for reads:** only `await emit()` when you need the event's effects
   to have finished; `getState()` is already up to date for reducer results.
 - **Prefer store-level tests** for logic and reserve component tests for wiring —

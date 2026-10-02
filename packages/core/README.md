@@ -1061,6 +1061,28 @@ const off = store.onDiagnostic((d) => {
 This is the seam for code attached to a store it did not create, which cannot set the hooks.
 Development warnings are never sent in production, and a sink or observer that throws is ignored.
 
+### Values that grew too large
+
+Nothing in the store refuses a large value. But every event is copied to devtools and may be
+fingerprinted for deduplication, and every slice is diffed, frozen in development and persisted.
+`warnOnLargeValues` finds the payload or slice that grew past what anyone intended, in development
+only:
+
+```typescript
+import { warnOnLargeValues } from "@yoltra/core";
+
+if (import.meta.env.DEV) {
+  warnOnLargeValues(store, { maxPayloadNodes: 5_000, maxSliceNodes: 50_000 });
+}
+```
+
+It warns once per event key and once per slice, naming the store, the value and the limit. Values
+are counted as the codec counts them, bytes are estimated (a typed array by its `byteLength`), and
+each measurement stops as soon as a limit is passed, so checking an enormous slice costs no more
+than its limit. The defaults are 5 000 values or 256 KB for a payload, and 50 000 values or 4 MB
+for a slice, half of what `persist` accepts. It is a separate import: an application that does not
+use it ships none of it, and in production it watches nothing.
+
 ---
 
 ## API Overview
@@ -1235,7 +1257,7 @@ The number that matters is what you import, not what the package exports:
 | --- | --- | --- |
 | `{ createStore }` | 13.9 KB | 16 KB |
 | `{ createStore, hydrate, persist }` | 15.3 KB | 17 KB |
-| everything | 16.9 KB | 19 KB |
+| everything | 17.1 KB | 20 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines
@@ -1245,7 +1267,7 @@ the larger of the two: dev-only code cannot grow unnoticed just because it never
 user. So the headroom implied here is deliberately conservative.
 
 The **gap between rows** is the tree-shaking claim, and it is what to watch: persistence adds
-1.4 KB to the people who import it and nothing to anyone else, and the whole barrel is 3.0 KB
+1.4 KB to the people who import it and nothing to anyone else, and the whole barrel is 3.2 KB
 past the store. The last row is a growth tripwire; `import * as all` is not something anybody
 writes.
 
@@ -1260,7 +1282,8 @@ measured 0.6 KB, one routing helper and a sentence for every failure the store c
 disposed store with `store.signal` measured 0.4 KB; and `ctx.signal` for effects 0.1 KB. The
 persistence row, which includes the store, went from 16 KB to 17 KB for the diagnostics seam plus
 0.2 KB of its own: `PersistEncodeError`, and refusing a partial write. The barrel went from 18 KB
-to 19 KB with the store.
+to 20 KB: 1 KB with the store, and 0.6 KB for `warnOnLargeValues`, which only the barrel and its
+own importers carry.
 
 ---
 

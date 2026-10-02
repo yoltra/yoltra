@@ -1084,6 +1084,28 @@ const off = store.onDiagnostic((d) => {
 Esta es la costura para código conectado a un store que no creó, que no puede fijar los hooks.
 Los avisos de desarrollo nunca se envían en producción, y un sink u observador que lanza se ignora.
 
+### Valores que crecieron demasiado
+
+Nada en el store rechaza un valor grande. Pero cada evento se copia a devtools y puede tomarse su
+huella para deduplicar, y cada slice se compara, se congela en desarrollo y se persiste.
+`warnOnLargeValues` encuentra el payload o la slice que creció más de lo que nadie pretendía, solo
+en desarrollo:
+
+```typescript
+import { warnOnLargeValues } from "@yoltra/core";
+
+if (import.meta.env.DEV) {
+  warnOnLargeValues(store, { maxPayloadNodes: 5_000, maxSliceNodes: 50_000 });
+}
+```
+
+Avisa una vez por clave de evento y una vez por slice, nombrando el store, el valor y el límite.
+Los valores se cuentan como los cuenta el codec, los bytes se estiman (un typed array por su
+`byteLength`), y cada medición se detiene en cuanto se pasa un límite, así que revisar una slice
+enorme no cuesta más que su límite. Los valores por defecto son 5 000 valores o 256 KB para un
+payload, y 50 000 valores o 4 MB para una slice, la mitad de lo que acepta `persist`. Es un import
+aparte: una aplicación que no lo usa no envía nada de él, y en producción no vigila nada.
+
 ---
 
 ## Resumen de API
@@ -1262,7 +1284,7 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 | --- | --- | --- |
 | `{ createStore }` | 13.9 KB | 16 KB |
 | `{ createStore, hydrate, persist }` | 15.3 KB | 17 KB |
-| todo | 16.9 KB | 19 KB |
+| todo | 17.1 KB | 20 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define
@@ -1274,7 +1296,7 @@ deliberadamente conservador.
 
 La **distancia entre filas** es la afirmación de tree-shaking, y es lo que hay que vigilar: la
 persistencia añade 1.4 KB a quienes la importan y nada a los demás, y el barrel completo está
-3.0 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
+3.2 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
 es algo que nadie escriba.
 
 La primera fila solo se mueve cuando crece el store en sí, y ha crecido: acotar las cascadas,
@@ -1288,7 +1310,8 @@ Un presupuesto solo se mueve por lo que se midió, y dice por qué. En 0.10.0 el
 frase por cada fallo que el store contiene; un store liberado inerte con `store.signal` midió
 0.4 KB; y `ctx.signal` para los efectos 0.1 KB. La fila de persistencia, que incluye al store,
 pasó de 16 KB a 17 KB por la costura de diagnósticos más 0.2 KB propios: `PersistEncodeError`, y
-rechazar una escritura parcial. El barrel pasó de 18 KB a 19 KB junto con el store.
+rechazar una escritura parcial. El barrel pasó de 18 KB a 20 KB: 1 KB junto con el store, y 0.6 KB por `warnOnLargeValues`, que
+solo cargan el barrel y quienes lo importan.
 
 ---
 

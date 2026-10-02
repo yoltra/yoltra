@@ -212,3 +212,7 @@ suscriben a ellos, y el replay los omite. Los agentes de devtools no se suscribe
 [Valores que cambian muchas veces por segundo](../../packages/core/README.es.md#valores-que-cambian-muchas-veces-por-segundo)
 en el README describen el patrón para valores de alta frecuencia. Un `PersistableStore` que
 implementes tú mismo debe aceptar el nuevo segundo argumento opcional de `instrument`.
+
+**`warnOnLargeValues(store, limits?)`**, una revisión solo de desarrollo para payloads y slices que
+crecieron demasiado, como un import aparte. Consulta
+[Valores que crecieron demasiado](../../packages/core/README.es.md#valores-que-crecieron-demasiado).

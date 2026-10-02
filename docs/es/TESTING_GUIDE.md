@@ -272,6 +272,8 @@ dispararlo en lugar de esperar.
   idénticas rápidas *no* se fusionan — no necesitas fake timers salvo que uses
   `dedupWindowMs`. Si lo usas, inyecta un `clock` o aplica `vi.useFakeTimers()` (ver
   [Controlar el tiempo](#controlar-el-tiempo)).
+- **Detecta el crecimiento a tiempo:** `warnOnLargeValues(store, { warn })` con un `warn` que
+  lanza convierte un payload o una slice más allá de su límite en un test que falla.
 - **Sin `await` para leer:** usa `await emit()` solo cuando necesites que los
   effects del evento hayan terminado; `getState()` ya está al día para los
   resultados del reducer.
