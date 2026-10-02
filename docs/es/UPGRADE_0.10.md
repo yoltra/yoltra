@@ -86,6 +86,32 @@ que es lo que recibe un handler de middleware, en lugar de `never`.
 
 ---
 
+## Un store liberado es inerte
+
+**Lo notarás si:** algo emite, llama o registra en un store después de `dispose()`, o una llamada
+sigue esperando respuesta cuando su store se libera.
+
+`dispose()` vaciaba los registros del store y dejaba lo demás funcionando. Un `emit` posterior
+seguía ejecutando el middleware y los reducers que quedaran, un `call` pendiente esperaba hasta su
+timeout de inactividad, y nada avisaba al trabajo atado al store de que ya no existía. Ahora:
+
+- `emit()` se resuelve con `{ committed: false, written: false }` sin ejecutar nada.
+- `call()` se rechaza de inmediato con `CallAbortedError("store disposed")`, y una llamada todavía
+  pendiente cuando el store se libera se rechaza igual.
+- `registerReducer`, `registerSlice`, `registerMiddleware`, `registerEffect`, los helpers `with*` y
+  `onEffect`, `replace*` y `hotReplace` lanzan un `Error` que nombra el store.
+- Un `emit` o un `call` tardío se reporta una vez por método en desarrollo, como
+  `use-after-dispose`.
+- `dispose()` es idempotente.
+
+Nuevo: `store.signal`, un `AbortSignal` que se aborta al final de `dispose()`, para atar recursos a
+la vida del store. Consulta [Atar recursos al store](../../packages/core/README.es.md#atar-recursos-al-store).
+
+Un `call()` cuyo propio `signal` ya está abortado tampoco envía su petición ni arma un timer: antes
+se rechazaba y la enviaba de todos modos.
+
+---
+
 ## La persistencia nunca escribe un estado parcial
 
 **Lo notarás si:** un estado persistido puede crecer más allá de 100 000 valores, o haces

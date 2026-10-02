@@ -84,6 +84,31 @@ what a middleware handler receives, instead of `never`.
 
 ---
 
+## A disposed store is inert
+
+**You will notice if:** anything emits to, calls, or registers on a store after `dispose()`, or a
+call is still waiting for a reply when its store is disposed.
+
+`dispose()` cleared the store's registries and left the rest running. An `emit` afterwards still
+ran middleware and whatever reducers were left, a pending `call` waited out its idle timeout, and
+nothing told work tied to the store that it was gone. Now:
+
+- `emit()` resolves `{ committed: false, written: false }` without running anything.
+- `call()` rejects at once with `CallAbortedError("store disposed")`, and a call still pending
+  when the store is disposed rejects the same way.
+- `registerReducer`, `registerSlice`, `registerMiddleware`, `registerEffect`, the `with*` and
+  `onEffect` helpers, `replace*` and `hotReplace` throw an `Error` naming the store.
+- A late `emit` or `call` is reported once per method in development, as `use-after-dispose`.
+- `dispose()` is idempotent.
+
+New: `store.signal`, an `AbortSignal` aborted last in `dispose()`, for tying resources to the
+store's lifetime. See [Tying resources to the store](../../packages/core/README.md#tying-resources-to-the-store).
+
+A `call()` whose own `signal` is already aborted also no longer sends its request or arms a timer:
+it used to reject and send anyway.
+
+---
+
 ## Persistence never writes a partial state
 
 **You will notice if:** a persisted state can grow past 100 000 values, or you assert on what

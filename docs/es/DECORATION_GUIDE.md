@@ -456,6 +456,23 @@ Leer una slice desmontada lanza un error con nombre en desarrollo, en lugar de d
 
 ---
 
+### Cuando el store mismo se libera
+
+Los recursos propios de una decoración (un socket, un timer, una suscripción a algo fuera del
+store) deberían terminar con el store, no con el disposer de la decoración, que la aplicación
+quizá nunca llame. Átalos a `store.signal`:
+
+```typescript
+const socket = connect(config.url);
+store.signal.addEventListener("abort", () => socket.close(), { once: true });
+```
+
+Después de liberarse, el store es inerte: `emit()` se resuelve sin confirmar, `call()` se rechaza
+y cada método de registro lanza. Una decoración que reacciona al aborto no debe intentar registrar
+ni emitir para salir; para entonces no queda nada que lo reciba.
+
+---
+
 ## Orden
 
 Decora en el ámbito del módulo, al importar, antes del primer render. Entre `createStore` y la

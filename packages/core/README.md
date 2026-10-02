@@ -661,6 +661,33 @@ methods, so a class instance works.
 
 ---
 
+## Tying resources to the store
+
+`store.signal` is an `AbortSignal` that aborts when the store is disposed. Hand it to anything
+that should live exactly as long as the store:
+
+```typescript
+const store = createStore({ name: "session", reducer: { /* ... */ } });
+
+const socket = new WebSocket(url);
+store.signal.addEventListener("abort", () => socket.close());
+
+await fetch("/api/profile", { signal: store.signal });
+```
+
+It is created on first read, so a store nobody asks carries no `AbortController`, and read after
+disposal it is already aborted. It aborts last in `dispose()`, after every subscription and
+registration is released.
+
+**A disposed store is inert.** `emit()` resolves `{ committed: false }` without running anything.
+`call()` rejects with `CallAbortedError("store disposed")`, and so does every call still waiting
+for a reply. `register*`, `with*`, `replace*` and `hotReplace` throw, naming the store. In
+development, a late `emit` or `call` is reported once per method as `use-after-dispose`, because
+something still holding the store after its owner released it is a leak worth finding.
+`dispose()` itself can be called again safely.
+
+---
+
 ## Cascade protection (on by default)
 
 Two consumers wired into each other, whether a subscriber that emits what its own reducer answers or
@@ -944,7 +971,8 @@ Development warnings are never sent in production, and a sink or observer that t
 | `store.onRegistrationChange(observer, opts?)` | Fires when the store gains or loses a reducer, middleware or effect. Each change carries `when`, the normalized matcher: `{ keys }` for a keyed slice, `{ any: true }` for unfiltered middleware |
 | `store.onEffect(channel, type, handler)`        | Single-event effect shorthand                  |
 | `store.onDiagnostic(observer)`                  | Observe failures, refusals and development warnings. See [Errors and diagnostics](#errors-and-diagnostics) |
-| `store.dispose()`                               | Cleanup timers and resources                   |
+| `store.dispose()`                               | Release the store; it is inert afterwards. See [Tying resources to the store](#tying-resources-to-the-store) |
+| `store.signal`                                  | An `AbortSignal` aborted by `dispose()`        |
 
 ### Dynamic Registration
 
@@ -1097,9 +1125,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 13.2 KB | 15 KB |
-| `{ createStore, hydrate, persist }` | 14.6 KB | 17 KB |
-| everything | 16.2 KB | 18 KB |
+| `{ createStore }` | 13.5 KB | 15 KB |
+| `{ createStore, hydrate, persist }` | 14.9 KB | 17 KB |
+| everything | 16.5 KB | 18 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines

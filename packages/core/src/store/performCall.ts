@@ -42,13 +42,15 @@ const DEFAULT_CALL_WATERMARK = 16;
  * What `performCall` needs from the store.
  *
  * @remarks
- * Four members, named rather than structural over the whole class, because four is few enough
+ * Five members, named rather than structural over the whole class, because five is few enough
  * that naming them documents the coupling instead of hiding it.
  */
 export interface CallDeps<St, EM extends EventMapBase> {
   readonly idFactory: () => string;
   /** Arms the idle timeout: the store's `StoreSpec.scheduler`. */
   readonly scheduler: Scheduler;
+  /** The store's lifetime. A call still pending when it aborts is rejected. */
+  readonly signal: AbortSignal;
   readonly registerEffect: (spec: EffectSpec<DeepReadonly<St>, EM>) => () => void;
   readonly emit: <C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
@@ -116,11 +118,26 @@ export function performCall<
     if (graceful) queue.end();
     else queue.close();
     opts.signal?.removeEventListener("abort", onAbort);
+    deps.signal.removeEventListener("abort", onStoreDisposed);
     fn();
   };
 
   function onAbort(): void {
     finish(() => fail(new CallAbortedError(String(opts.signal?.reason ?? "signal aborted"))));
+  }
+
+  function onStoreDisposed(): void {
+    finish(() => fail(new CallAbortedError("store disposed")));
+  }
+
+  // Before anything is registered, armed or sent. A store already disposed, or a signal already
+  // aborted, settles the call here, and nothing after this point runs: the request used to go
+  // out and an idle timer was armed for a call that had already failed.
+  if (deps.signal.aborted) onStoreDisposed();
+  else deps.signal.addEventListener("abort", onStoreDisposed, { once: true });
+  if (opts.signal !== undefined) {
+    if (opts.signal.aborted) onAbort();
+    else if (!settled) opts.signal.addEventListener("abort", onAbort, { once: true });
   }
 
   const arm = (): void => {
@@ -134,7 +151,7 @@ export function performCall<
     timer = handle;
   };
 
-  unregister = deps.registerEffect({
+  if (!settled) unregister = deps.registerEffect({
     // A pattern effect on the reply channel: which types are terminal is known, which are
     // progress is not, so the filter cannot be a key list.
     when: { channel: replyChannel as keyof EM & string },
@@ -155,19 +172,15 @@ export function performCall<
     },
   });
 
-  if (opts.signal !== undefined) {
-    if (opts.signal.aborted) onAbort();
-    else opts.signal.addEventListener("abort", onAbort, { once: true });
+  if (!settled) {
+    arm();
+    void deps.emit(channel, type, payload, {
+      id: requestId,
+      ...(opts.correlationId !== undefined
+        ? { meta: { correlationId: opts.correlationId } }
+        : {}),
+    });
   }
-
-  arm();
-
-  void deps.emit(channel, type, payload, {
-    id: requestId,
-    ...(opts.correlationId !== undefined
-      ? { meta: { correlationId: opts.correlationId } }
-      : {}),
-  });
 
   const handle = {
     then: (onOk?: never, onErr?: never) => terminal.then(onOk, onErr),

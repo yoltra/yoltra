@@ -579,7 +579,8 @@ export interface Scheduler {
  * write; level `info`, since a refusal is a normal outcome), `registration-cascade`.
  *
  * Development warnings, never sent in production: `key-collision`, `payload-by-reference`,
- * `dotted-key`, `snapshot-missing-slice`, `middleware-promise`, `observer-promise`.
+ * `dotted-key`, `snapshot-missing-slice`, `middleware-promise`, `observer-promise`,
+ * `use-after-dispose` (an `emit` or `call` on a disposed store).
  *
  * @public
  */
@@ -600,7 +601,8 @@ export type DiagnosticCode =
   | "dotted-key"
   | "snapshot-missing-slice"
   | "middleware-promise"
-  | "observer-promise";
+  | "observer-promise"
+  | "use-after-dispose";
 
 /**
  * Something a store has to say: a failure it contained, a refusal, or a development warning.
@@ -1061,10 +1063,17 @@ export interface StoreInstance<
   ): Unsubscribe & { store: WidenedSlice<R, S, EM, N, Spec>; dispose(): void };
 
   /**
-   * Cleanup resources (timers, etc.) when disposing the store.
-   * Call this if you're dynamically creating/destroying stores.
+   * Releases the store. Afterwards it is inert: `emit()` resolves `{ committed: false }` without
+   * running anything, `call()` rejects with `CallAbortedError` (as does every pending call), and
+   * registration methods throw. {@link StoreInstance.signal} aborts last. Idempotent.
    */
   dispose(): void;
+
+  /**
+   * Aborted when the store is disposed. Created on first read; already aborted when read after
+   * disposal. Tie work that should live exactly as long as the store to it.
+   */
+  readonly signal: AbortSignal;
 
   /**
    * Subscribe to events by channel and type.

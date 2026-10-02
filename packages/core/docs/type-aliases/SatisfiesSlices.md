@@ -10,7 +10,7 @@
 
 > **SatisfiesSlices**\<`T`, `K`\> = [`Prettify`](Prettify.md)\<`T` & `Record`\<`K`, `unknown`\>\>
 
-Defined in: [types.ts:2469](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2469)
+Defined in: [types.ts:2478](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2478)
 
 Proves to the compiler that a widened state record still covers every slice name.
 

@@ -678,6 +678,33 @@ funciona.
 
 ---
 
+## Atar recursos al store
+
+`store.signal` es un `AbortSignal` que se aborta cuando el store se libera. Pásalo a todo lo que
+deba vivir exactamente lo mismo que el store:
+
+```typescript
+const store = createStore({ name: "session", reducer: { /* ... */ } });
+
+const socket = new WebSocket(url);
+store.signal.addEventListener("abort", () => socket.close());
+
+await fetch("/api/profile", { signal: store.signal });
+```
+
+Se crea en la primera lectura, así que un store al que nadie se lo pide no lleva ningún
+`AbortController`, y leído después de liberarlo ya está abortado. Se aborta al final de
+`dispose()`, después de soltar cada suscripción y registro.
+
+**Un store liberado es inerte.** `emit()` se resuelve con `{ committed: false }` sin ejecutar
+nada. `call()` se rechaza con `CallAbortedError("store disposed")`, y también cada llamada que
+siga esperando respuesta. `register*`, `with*`, `replace*` y `hotReplace` lanzan, nombrando el
+store. En desarrollo, un `emit` o un `call` tardío se reporta una vez por método como
+`use-after-dispose`, porque algo que sigue sosteniendo el store después de que su dueño lo soltó
+es una fuga que vale la pena encontrar. Llamar `dispose()` otra vez es seguro.
+
+---
+
 ## Protección contra cascadas (activada por defecto)
 
 Dos consumidores conectados entre sí, ya sea un suscriptor que emite lo que su propio reducer atiende o
@@ -965,7 +992,8 @@ Los avisos de desarrollo nunca se envían en producción, y un sink u observador
 | `store.onRegistrationChange(observer, opts?)` | Avisa cuando el store gana o pierde un reducer, middleware o efecto. Cada cambio lleva `when`, el matcher normalizado: `{ keys }` para un slice con claves, `{ any: true }` para middleware sin filtro |
 | `store.onEffect(channel, type, handler)`        | Shorthand de efecto para un solo evento               |
 | `store.onDiagnostic(observer)`                  | Observa fallos, rechazos y avisos de desarrollo. Ver [Errores y diagnósticos](#errores-y-diagnósticos) |
-| `store.dispose()`                               | Limpiar timers y recursos                             |
+| `store.dispose()`                               | Libera el store; después es inerte. Ver [Atar recursos al store](#atar-recursos-al-store) |
+| `store.signal`                                  | Un `AbortSignal` que aborta `dispose()`               |
 
 ### Registro Dinámico
 
@@ -1122,9 +1150,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 13.2 KB | 15 KB |
-| `{ createStore, hydrate, persist }` | 14.6 KB | 17 KB |
-| todo | 16.2 KB | 18 KB |
+| `{ createStore }` | 13.5 KB | 15 KB |
+| `{ createStore, hydrate, persist }` | 14.9 KB | 17 KB |
+| todo | 16.5 KB | 18 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define

@@ -8,7 +8,7 @@
 
 # Interface: Diagnostic
 
-Defined in: [types.ts:615](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L615)
+Defined in: [types.ts:617](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L617)
 
 Something a store has to say: a failure it contained, a refusal, or a development warning.
 
@@ -24,7 +24,7 @@ parsing the message.
 
 > `readonly` **code**: [`DiagnosticCode`](../type-aliases/DiagnosticCode.md)
 
-Defined in: [types.ts:619](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L619)
+Defined in: [types.ts:621](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L621)
 
 What happened, stably. See [DiagnosticCode](../type-aliases/DiagnosticCode.md).
 
@@ -34,7 +34,7 @@ What happened, stably. See [DiagnosticCode](../type-aliases/DiagnosticCode.md).
 
 > `readonly` `optional` **detail**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
 
-Defined in: [types.ts:623](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L623)
+Defined in: [types.ts:625](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L625)
 
 The values involved.
 
@@ -44,7 +44,7 @@ The values involved.
 
 > `readonly` **level**: `"info"` \| `"warn"` \| `"error"`
 
-Defined in: [types.ts:617](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L617)
+Defined in: [types.ts:619](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L619)
 
 How serious it is. A sink that also accepts other levels is still accepted.
 
@@ -54,6 +54,6 @@ How serious it is. A sink that also accepts other levels is still accepted.
 
 > `readonly` **message**: `string`
 
-Defined in: [types.ts:621](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L621)
+Defined in: [types.ts:623](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L623)
 
 A sentence for a person. May be reworded between versions; route on `code`.

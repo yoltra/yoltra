@@ -689,6 +689,59 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   /** Observers added at runtime. See {@link StoreInstance.onDiagnostic}. @internal */
   private readonly diagnosticObservers = new Set<DiagnosticSink>();
 
+  /** Set by {@link dispose}. A disposed store is inert. @internal */
+  private disposed = false;
+
+  /** Backs {@link signal}, created only when someone reads it. @internal */
+  private lifetime: AbortController | undefined;
+
+  /** Calls already warned about on a disposed store, once each. @internal */
+  private readonly warnedAfterDispose = new Set<string>();
+
+  /**
+   * Aborted when the store is disposed.
+   *
+   * @remarks
+   * Tie anything that should live exactly as long as the store to it: a fetch, a socket, a
+   * listener on something the store does not own. Created on first read, so a store nobody
+   * asks has no `AbortController` at all; read after disposal, it is already aborted. It aborts
+   * last in {@link dispose}, after every registry is cleared.
+   *
+   * @public
+   */
+  public get signal(): AbortSignal {
+    if (this.lifetime === undefined) {
+      this.lifetime = new AbortController();
+      if (this.disposed) this.lifetime.abort("store disposed");
+    }
+    return this.lifetime.signal;
+  }
+
+  /**
+   * Says once, in development, that something was asked of a disposed store.
+   *
+   * @internal
+   */
+  private warnDisposed(method: string): void {
+    if (process.env.NODE_ENV === "production" || this.warnedAfterDispose.has(method)) return;
+    this.warnedAfterDispose.add(method);
+    const message =
+      `[yoltra] Store "${this.name}" is disposed, so ${method}() does nothing. Something still ` +
+      `holds the store after its owner released it; tie its work to store.signal.`;
+    this.report("warn", "use-after-dispose", message, { method }, message);
+  }
+
+  /**
+   * Refuses a registration on a disposed store.
+   *
+   * @internal
+   */
+  private assertLive(method: string): void {
+    if (this.disposed) {
+      throw new Error(`[yoltra] Store "${this.name}" is disposed: ${method}() cannot register anything.`);
+    }
+  }
+
   /**
    * Scratch array collecting slice-prefixed changed leaf paths during an
    * instrumented reduce. Set by {@link drainReduce} while observers are active;
@@ -902,8 +955,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
-   * Cleanup resources (timers, etc.) when disposing the store.
-   * Call this if you're dynamically creating/destroying stores.
+   * Releases the store: its timers, subscriptions, observers and registrations.
+   *
+   * @remarks
+   * Afterwards the store is inert. `emit()` resolves `{ committed: false }` without running
+   * anything, `call()` rejects with `CallAbortedError`, as does every call still pending, and the
+   * `register*`, `with*` and `replace*` methods throw. Development builds warn once per method
+   * about an `emit` or a `call` that arrives late. {@link signal} aborts last. Calling `dispose()`
+   * again does nothing.
    *
    * @example
    * ```ts
@@ -915,6 +974,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public dispose(): void {
+    // Once. A second call has nothing left to release, and must not abort a signal twice.
+    if (this.disposed) return;
+    this.disposed = true;
+
     if (this.eventCleanupTimer !== null) {
       this.scheduler.clearTimeout(this.eventCleanupTimer);
       this.eventCleanupTimer = null;
@@ -959,6 +1022,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.queuedRegistrationBatches.length = 0;
     (this.middleware as unknown as unknown[]).length = 0;
     this.changedPathSink = null;
+
+    // Last, so a listener reacting to it finds the store already empty. Pending calls listen
+    // here and reject with "store disposed".
+    this.lifetime?.abort("store disposed");
   }
 
   /**
@@ -1931,6 +1998,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     payload: EM[C][T],
     opts?: EmitOptions,
   ): Promise<EmitResult> {
+    // A disposed store runs nothing. Not committed, without a reason: the reasons describe what
+    // the pipeline decided, and no pipeline ran.
+    if (this.disposed) {
+      this.warnDisposed("emit");
+      return NOT_COMMITTED;
+    }
+
     // Before anything keys on `${channel}::${type}`. Development only, and reports an actual
     // ambiguity rather than the mere presence of a separator: `alias::channel` is how a peer's
     // channel is namespaced, so warning on `::` itself would fire for correct code.
@@ -2910,6 +2984,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public registerMiddleware(mw: MiddlewareInput<any, any>): any {
+    this.assertLive("registerMiddleware");
     assertRegistrable({ middleware: [mw] });
     const entry = { input: mw, origin: "dynamic" as Origin };
     this.middleware.push(entry);
@@ -3055,6 +3130,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public registerSlice(name: string, spec: ReducerSpec<any, any>, options?: { owner?: string }): any {
+    this.assertLive("registerSlice");
     // One transaction, so observers are notified *after* the state broadcast below rather
     // than from inside `mountSlice`. The view layer should learn a fact before a library
     // gets to react to it; reversed, a library's own registration would publish before the
@@ -3258,10 +3334,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     payload: EM[C][T],
     opts: CallOptions<EM>,
   ): CallHandle<EventUnion<EM>, EventUnion<EM>> {
+    if (this.disposed) this.warnDisposed("call");
     return performCall<S, EM, C, T>(
       {
         idFactory: this.idFactory,
         scheduler: this.scheduler,
+        signal: this.signal,
         // `internal`, so an in-flight call survives even `replaceEffects(next, { scope: "all" })`.
         // A test harness resetting a store between cases never means "and abandon the call
         // that is currently awaiting a reply", and the symptom would be a hang to the idle
@@ -3277,6 +3355,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   public registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): any {
+    this.assertLive("registerEffect");
     return this.asRegistration(this.registerEffectWithOrigin(spec, "dynamic"));
   }
 
@@ -3441,6 +3520,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     next: MiddlewareInput<DeepReadonly<S>, EM>[],
     opts: { scope?: ReplaceScope } = {},
   ): void {
+    this.assertLive("replaceMiddleware");
     this.inRegistrationTransaction(() => this.replaceMiddlewareInner(next, opts));
   }
 
@@ -3496,6 +3576,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     next: Array<EffectSpec<DeepReadonly<S>, EM>>,
     opts: { scope?: ReplaceScope } = {},
   ): void {
+    this.assertLive("replaceEffects");
     this.inRegistrationTransaction(() => this.replaceEffectsInner(next, opts));
   }
 
@@ -3576,6 +3657,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     next: ReducerReplacement<R, S, EM>,
     opts: { preserveState?: boolean; scope?: ReplaceScope } = {},
   ): void {
+    this.assertLive("replaceReducers");
     this.inRegistrationTransaction(() => this.replaceReducersInner(next, opts));
   }
 
@@ -3711,6 +3793,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     preserveState?: boolean;
     scope?: ReplaceScope;
   }): void {
+    this.assertLive("hotReplace");
     // `scope` is forwarded to all three rather than living on `replaceReducers` alone: this
     // is the documented HMR entry point, and a harness that wants the old wholesale
     // semantics should need one flag, not three.

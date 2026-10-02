@@ -202,6 +202,9 @@ However a call ends — resolved, timed out, aborted, cancelled — the subscrip
 any producer parked on backpressure is released. A wedged responder would be worse than the
 unbounded buffer this replaced.
 
+Disposing the store ends every pending call too, with `CallAbortedError("store disposed")`, and a
+call made on a disposed store, or with a signal already aborted, rejects without sending anything.
+
 The idle timer is armed on the store's `scheduler`, the same port its other timers use, so a test
 can fire it rather than wait for it (see [Testing a call](#testing-a-call)).
 

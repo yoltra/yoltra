@@ -10,7 +10,7 @@
 
 > **typedEvents**\<`EM`\>(`_`): \<`C`, `Evt`\>(`channel`, `events`) => readonly [`EventKey`](../type-aliases/EventKey.md)\<`EM`\>[]
 
-Defined in: [store/Store.ts:4192](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L4192)
+Defined in: [store/Store.ts:4275](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L4275)
 
 Utility to define **typed** `(channel, events[])` definitions for reducer specs.
 

@@ -10,6 +10,6 @@
 
 > **EventConsumerType** = `"reducer"` \| `"middleware"` \| `"effect"`
 
-Defined in: [types.ts:1886](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1886)
+Defined in: [types.ts:1895](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1895)
 
 Type discriminator for event consumers.

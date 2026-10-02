@@ -8,7 +8,7 @@
 
 # Interface: EffectSpec\<S, EM\>
 
-Defined in: [types.ts:1436](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1436)
+Defined in: [types.ts:1445](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1445)
 
 Effect specification (stateless async event consumer).
 
@@ -61,7 +61,7 @@ Event map.
 
 > **effect**: [`EffectFunction`](../type-aliases/EffectFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:1450](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1450)
+Defined in: [types.ts:1459](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1459)
 
 Async effect handler: `(event, getState, emit) => void | Promise<void>`.
 
@@ -71,7 +71,7 @@ Async effect handler: `(event, getState, emit) => void | Promise<void>`.
 
 > `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"effect"`\>
 
-Defined in: [types.ts:1455](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1455)
+Defined in: [types.ts:1464](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1464)
 
 Optional metadata for debugging tools and DevTools integration.
 
@@ -81,7 +81,7 @@ Optional metadata for debugging tools and DevTools integration.
 
 > `optional` **when**: [`ExactWhen`](../type-aliases/ExactWhen.md)\<`EM`\>
 
-Defined in: [types.ts:1445](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1445)
+Defined in: [types.ts:1454](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1454)
 
 Event targeting: one of the exact forms of the `When` matcher.
 

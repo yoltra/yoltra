@@ -203,6 +203,10 @@ Termine como termine - resuelta, expirada, abortada, cancelada - la suscripción
 libera cualquier productor detenido por la contrapresión. Si `Quien Responde` queda atascado sería peor que
 el buffer sin límite que esto reemplazo.
 
+Liberar el store también termina cada llamada pendiente, con `CallAbortedError("store disposed")`,
+y una llamada hecha sobre un store liberado, o con un signal ya abortado, se rechaza sin enviar
+nada.
+
 El timer de inactividad se arma en el `scheduler` del store, el mismo puerto que usan sus otros
 timers, así que un test puede dispararlo en lugar de esperarlo (ver
 [Probar una llamada](#probar-una-llamada)).

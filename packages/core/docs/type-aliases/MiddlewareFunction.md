@@ -10,7 +10,7 @@
 
 > **MiddlewareFunction**\<`S`, `EM`\> = (`state`, `event`, `emit`) => `boolean` \| `void`
 
-Defined in: [types.ts:1497](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1497)
+Defined in: [types.ts:1506](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1506)
 
 Middleware function: log, guard, or veto an event **synchronously**.
 

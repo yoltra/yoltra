@@ -446,6 +446,23 @@ Reading a disposed slice throws a named error in development rather than returni
 
 ---
 
+### When the store itself is disposed
+
+A decoration's own resources (a socket, a timer, a subscription to something outside the store)
+should end with the store, not with the decoration's disposer, which the application may never
+call. Tie them to `store.signal`:
+
+```typescript
+const socket = connect(config.url);
+store.signal.addEventListener("abort", () => socket.close(), { once: true });
+```
+
+After disposal the store is inert: `emit()` resolves not committed, `call()` rejects, and every
+registration method throws. A decoration that reacts to the abort must not try to register or
+emit its way out; by then there is nothing left to receive it.
+
+---
+
 ## Ordering
 
 Decorate at module scope, at import time, before the first render. Between `createStore` and
