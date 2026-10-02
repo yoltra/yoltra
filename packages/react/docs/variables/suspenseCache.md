@@ -10,4 +10,4 @@
 
 > `const` **suspenseCache**: [`SuspenseCache`](../interfaces/SuspenseCache.md)
 
-Defined in: [react/src/hooks/suspense.ts:265](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L265)
+Defined in: [react/src/hooks/suspense.ts:314](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L314)

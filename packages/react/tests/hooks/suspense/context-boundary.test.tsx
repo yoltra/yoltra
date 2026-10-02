@@ -220,3 +220,118 @@ describe("the package-level Suspense hooks still read the package-level context"
     await waitFor(() => expect(screen.getByTestId("out").textContent).toBe("2"));
   });
 });
+
+describe("a change the subscription could not see", () => {
+  /**
+   * `useSyncExternalStore` subscribes after commit, so a change landing between a render and its
+   * subscription reaches no listener. The cache used to be keyed by path alone and invalidated
+   * only by that listener, so the value loaded from the old state was served for good. This is
+   * what failed intermittently in CI as "expected '2' to be '10'": the gap is normally tiny, and
+   * a slow runner widened it. Here it is made wide on purpose, by changing the store while the
+   * first load is still pending, before anything has subscribed.
+   */
+  function gated() {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    return { gate, release };
+  }
+
+  it("reloads the single-path hook from the current value", async () => {
+    const { store, useSuspenseAtomicProp: useBound } = build(1);
+    const { gate, release } = gated();
+
+    function Reader() {
+      const doubled = useBound(
+        { reducer: "counter", property: "value" },
+        {
+          load: async (value) => {
+            await gate;
+            return (value as number) * 2;
+          },
+        },
+      );
+      return <span data-testid="out">{doubled}</span>;
+    }
+
+    render(
+      <Suspense fallback="loading">
+        <Reader />
+      </Suspense>,
+    );
+    await act(async () => {
+      await store.emit("ui", "bump", 4);
+    });
+    await act(async () => release());
+
+    await waitFor(() => expect(screen.getByTestId("out").textContent).toBe("10"));
+  });
+
+  it("reloads the multi-path hook from the current values", async () => {
+    const { store, useSuspenseAtomicProps: useBoundMany } = build(1);
+    const { gate, release } = gated();
+
+    function Reader() {
+      const summary = useBoundMany([{ reducer: "counter", property: "value" }], {
+        load: async (state) => {
+          await gate;
+          return `v=${state.counter.value}`;
+        },
+      });
+      return <span data-testid="out">{summary}</span>;
+    }
+
+    render(
+      <Suspense fallback="loading">
+        <Reader />
+      </Suspense>,
+    );
+    await act(async () => {
+      await store.emit("ui", "bump", 4);
+    });
+    await act(async () => release());
+
+    await waitFor(() => expect(screen.getByTestId("out").textContent).toBe("v=5"));
+  });
+});
+
+describe("the cache's source check", () => {
+  /** Reads `key` until it stops throwing a promise, awaiting each one. */
+  async function settle<T>(read: () => T): Promise<T> {
+    for (;;) {
+      try {
+        return read();
+      } catch (thrown) {
+        if (!(thrown instanceof Promise)) throw thrown;
+        await thrown;
+      }
+    }
+  }
+
+  it("serves an entry while its source is unchanged, without loading again", async () => {
+    const load = vi.fn(() => Promise.resolve("A"));
+    await settle(() => suspenseCache.read("src::same", load, 0, undefined, [1, "x"]));
+    expect(await settle(() => suspenseCache.read("src::same", load, 0, undefined, [1, "x"]))).toBe("A");
+    expect(load).toHaveBeenCalledOnce();
+  });
+
+  it("does not let a load overtaken by a newer source overwrite it", async () => {
+    let finishOld!: (v: string) => void;
+    const old = vi.fn(() => new Promise<string>((resolve) => (finishOld = resolve)));
+    const current = vi.fn(() => Promise.resolve("new"));
+
+    let oldPending: unknown;
+    try {
+      suspenseCache.read("src::race", old, 0, undefined, [1]);
+    } catch (thrown) {
+      oldPending = thrown;
+    }
+    await Promise.resolve();
+    expect(await settle(() => suspenseCache.read("src::race", current, 0, undefined, [2]))).toBe("new");
+
+    finishOld("old");
+    await oldPending;
+
+    expect(await settle(() => suspenseCache.read("src::race", current, 0, undefined, [2]))).toBe("new");
+    expect(current).toHaveBeenCalledOnce();
+  });
+});

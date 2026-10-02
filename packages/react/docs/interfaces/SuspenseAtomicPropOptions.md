@@ -8,7 +8,7 @@
 
 # Interface: SuspenseAtomicPropOptions\<T, S\>
 
-Defined in: [react/src/hooks/suspense.ts:332](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L332)
+Defined in: [react/src/hooks/suspense.ts:381](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L381)
 
 Options for `useSuspenseAtomicProp`.
 
@@ -42,7 +42,7 @@ Store state record.
 
 > `optional` **errorTtlMs**: `null` \| `number`
 
-Defined in: [react/src/hooks/suspense.ts:354](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L354)
+Defined in: [react/src/hooks/suspense.ts:403](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L403)
 
 How long a **failed** load is remembered, in milliseconds.
 
@@ -62,7 +62,7 @@ otherwise be re-attempted on every reset. `null` holds the failure until somethi
 
 > `optional` **key**: `string`
 
-Defined in: [react/src/hooks/suspense.ts:356](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L356)
+Defined in: [react/src/hooks/suspense.ts:405](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L405)
 
 Optional extra key to differentiate cache entries for the same path.
 
@@ -72,7 +72,7 @@ Optional extra key to differentiate cache entries for the same path.
 
 > **load**: (`valueAtPath`, `slice`) => `T` \| `Promise`\<`T`\>
 
-Defined in: [react/src/hooks/suspense.ts:334](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L334)
+Defined in: [react/src/hooks/suspense.ts:383](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L383)
 
 Async loader that receives the value at the path and the full slice.
 
@@ -96,7 +96,7 @@ Async loader that receives the value at the path and the full slice.
 
 > `optional` **staleTime**: `number`
 
-Defined in: [react/src/hooks/suspense.ts:341](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L341)
+Defined in: [react/src/hooks/suspense.ts:390](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L390)
 
 Extra wall-clock TTL (ms) for a resolved value. `0` (the default) or omitted
 means the cached value is served until the subscribed path changes or you

@@ -8,7 +8,7 @@
 
 # Interface: SuspenseCache
 
-Defined in: [react/src/hooks/suspense.ts:114](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L114)
+Defined in: [react/src/hooks/suspense.ts:137](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L137)
 
 Backing store for the `useSuspense*` hooks.
 
@@ -26,7 +26,7 @@ Its internals stay private; what is documented is what a consumer can actually c
 
 > **get** **size**(): `number`
 
-Defined in: [react/src/hooks/suspense.ts:150](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L150)
+Defined in: [react/src/hooks/suspense.ts:173](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L173)
 
 Number of entries currently held.
 
@@ -40,7 +40,7 @@ Number of entries currently held.
 
 > **clear**(): `void`
 
-Defined in: [react/src/hooks/suspense.ts:250](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L250)
+Defined in: [react/src/hooks/suspense.ts:299](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L299)
 
 #### Returns
 
@@ -52,7 +52,7 @@ Defined in: [react/src/hooks/suspense.ts:250](https://github.com/yoltra/yoltra/b
 
 > **invalidate**(`key`): `void`
 
-Defined in: [react/src/hooks/suspense.ts:212](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L212)
+Defined in: [react/src/hooks/suspense.ts:261](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L261)
 
 #### Parameters
 
@@ -68,9 +68,11 @@ Defined in: [react/src/hooks/suspense.ts:212](https://github.com/yoltra/yoltra/b
 
 ### read()
 
-> **read**\<`T`\>(`key`, `load`, `staleTime`, `errorTtlMs`): `T`
+> **read**\<`T`\>(`key`, `load`, `staleTime`, `errorTtlMs`, `source?`): `T`
 
-Defined in: [react/src/hooks/suspense.ts:154](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L154)
+Defined in: [react/src/hooks/suspense.ts:185](https://github.com/yoltra/yoltra/blob/main/packages/react/src/hooks/suspense.ts#L185)
+
+Returns the value cached under `key`, or starts `load` and throws its promise.
 
 #### Type Parameters
 
@@ -95,6 +97,15 @@ Defined in: [react/src/hooks/suspense.ts:154](https://github.com/yoltra/yoltra/b
 ##### errorTtlMs
 
 `undefined` | `null` | `number`
+
+##### source?
+
+`CacheSource`
+
+The state values the load reads, compared element by element with
+  `Object.is`. An entry loaded from different values is discarded and loaded again, so a
+  read always describes the current state even when an invalidation was missed. Omit it to
+  rely on invalidation alone.
 
 #### Returns
 
