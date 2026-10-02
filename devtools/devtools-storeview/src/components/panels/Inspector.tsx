@@ -168,7 +168,7 @@ function EventDetail({ entry }: { entry: EventLogEntry }) {
         <span
           className={`${styles.badge} ${committed ? styles.badgeCommitted : styles.badgeBounced}`}
         >
-          {committed ? "committed" : "vetoed"}
+          {committed ? "committed" : "uncommitted"}
         </span>
       </div>
       <div className={styles.detailMeta}>

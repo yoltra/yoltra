@@ -12,7 +12,7 @@
 
 > **createStore**\<`S`, `EM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `S` & `string`, `S`, `EM`\>
 
-Defined in: [store/Store.ts:3841](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3841)
+Defined in: [store/Store.ts:3888](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3888)
 
 Creates a store with explicit State and EventMap types.
 
@@ -135,9 +135,9 @@ const store = createStore<AppState, AppEM>({
 
 ## Call Signature
 
-> **createStore**\<`RM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, `StateFromReducers`\<`RM`\>, `EMFromReducersStrict`\<`RM`\>\>
+> **createStore**\<`RM`\>(`cfg`): [`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, [`StateFromReducers`](../type-aliases/StateFromReducers.md)\<`RM`\>, [`EMFromReducersStrict`](../type-aliases/EMFromReducersStrict.md)\<`RM`\>\>
 
-Defined in: [store/Store.ts:3889](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3889)
+Defined in: [store/Store.ts:3936](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/Store.ts#L3936)
 
 Creates a store with types inferred from the reducers map.
 
@@ -148,7 +148,7 @@ both the state shape and the event map.
 
 #### RM
 
-`RM` *extends* `ReducersMapAny`
+`RM` *extends* [`ReducersMapAny`](../type-aliases/ReducersMapAny.md)
 
 Reducers map object with each slice's `ReducerSpec`.
 
@@ -172,7 +172,7 @@ Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
 
 ##### effects?
 
-[`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`StateFromReducers`\<`RM`\>\>, `EMFromReducersStrict`\<`RM`\>\>[]
+[`EffectSpec`](../interfaces/EffectSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<[`StateFromReducers`](../type-aliases/StateFromReducers.md)\<`RM`\>\>, [`EMFromReducersStrict`](../type-aliases/EMFromReducersStrict.md)\<`RM`\>\>[]
 
 ##### idFactory?
 
@@ -188,7 +188,7 @@ Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
 
 ##### middleware?
 
-[`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`StateFromReducers`\<`RM`\>\>, `EMFromReducersStrict`\<`RM`\>\>[]
+[`MiddlewareInput`](../type-aliases/MiddlewareInput.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<[`StateFromReducers`](../type-aliases/StateFromReducers.md)\<`RM`\>\>, [`EMFromReducersStrict`](../type-aliases/EMFromReducersStrict.md)\<`RM`\>\>[]
 
 ##### name
 
@@ -220,7 +220,7 @@ Configuration with `name`, `reducer`, optional `middleware`, optional `effects`.
 
 ### Returns
 
-[`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, `StateFromReducers`\<`RM`\>, `EMFromReducersStrict`\<`RM`\>\>
+[`StoreInstance`](../interfaces/StoreInstance.md)\<keyof `RM` & `string`, [`StateFromReducers`](../type-aliases/StateFromReducers.md)\<`RM`\>, [`EMFromReducersStrict`](../type-aliases/EMFromReducersStrict.md)\<`RM`\>\>
 
 A typed [StoreInstance](../interfaces/StoreInstance.md).
 

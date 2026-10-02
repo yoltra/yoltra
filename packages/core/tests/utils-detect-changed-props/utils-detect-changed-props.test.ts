@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { createStore } from "../../src/store/Store";
 import { detectChangedProps } from "../../src/utils/detectChangedProps";
 
 describe("detectChangedProps", () => {
@@ -281,6 +282,76 @@ describe("keys that dotted paths cannot express", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     detectChangedProps({ user: { name: "Ada" } }, { user: { name: "Grace" } });
     expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
+
+describe("dotted keys in a store's state", () => {
+  type Events = { cfg: { set: number } };
+  type Cfg = { "release.version": number };
+
+  const build = (name: string) =>
+    createStore<{ cfg: Cfg }, Events>({
+      name,
+      reducer: {
+        cfg: {
+          state: { "release.version": 0 },
+          when: { keys: [["cfg", "set"]] },
+          reducer: (_state, event) => ({ "release.version": event.payload as number }),
+        },
+      },
+    });
+
+  const dotted = (warn: { mock: { calls: unknown[][] } }) =>
+    warn.mock.calls.map((c) => String(c[0])).filter((m) => m.includes("contains a dot"));
+
+  it("names the store and the slice, once per store", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const store = build("Settings");
+
+    await store.emit("cfg", "set", 1);
+    await store.emit("cfg", "set", 2);
+
+    expect(dotted(warn)).toHaveLength(1);
+    expect(dotted(warn)[0]).toContain('Store "Settings", slice "cfg"');
+    expect(dotted(warn)[0]).toContain('"release.version"');
+    warn.mockRestore();
+  });
+
+  it("is not silenced by another store having reported the same key", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    // The latch used to be kept for the whole process: the second store, which may be the one
+    // whose author needed telling, stayed quiet.
+    await build("First").emit("cfg", "set", 1);
+    await build("Second").emit("cfg", "set", 1);
+
+    expect(dotted(warn)).toHaveLength(2);
+    expect(dotted(warn)[1]).toContain('Store "Second"');
+    warn.mockRestore();
+  });
+
+  it("warns again for a store built after the first was disposed", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const first = build("Route");
+    await first.emit("cfg", "set", 1);
+    first.dispose();
+
+    await build("Route").emit("cfg", "set", 1);
+
+    expect(dotted(warn)).toHaveLength(2);
+    warn.mockRestore();
+  });
+
+  it("stays silent in production", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.stubEnv("NODE_ENV", "production");
+    try {
+      await build("Prod").emit("cfg", "set", 1);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    expect(dotted(warn)).toHaveLength(0);
     warn.mockRestore();
   });
 });

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-storeview",
+      "comment": "The event status toggle reads Uncommitted instead of Bounced, and the event detail badge reads uncommitted instead of vetoed, matching the store, which reports events that did not commit for reasons other than a veto too.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-storeview"
+}

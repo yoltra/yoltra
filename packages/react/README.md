@@ -208,6 +208,11 @@ const allTitles = useAtomicProp(
 - `"items.*.title"`: `*` matches one segment
 - `"items.**"`: `**` matches zero or more segments
 
+With a wildcard, `map` receives the **whole slice**, not the values the pattern matched: the
+pattern decides when the hook re-renders, and `map` decides what it returns. Without a `map`, a
+wildcard path returns the slice itself. Pass one, plus an `isEqual` such as `shallowEqual` when it
+builds a new array.
+
 ---
 
 ### `useAtomicProps(specs, selector, isEqual?)`

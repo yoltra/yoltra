@@ -89,7 +89,7 @@ developer machine, where the hub warns at startup that it is open.
 
 > `optional` **autoReconnect**: `boolean`
 
-Defined in: [types.ts:150](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L150)
+Defined in: [types.ts:155](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L155)
 
 Automatically reconnect to the hub on disconnect.
 
@@ -103,7 +103,7 @@ Automatically reconnect to the hub on disconnect.
 
 > `optional` **baseDelay**: `number`
 
-Defined in: [types.ts:162](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L162)
+Defined in: [types.ts:167](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L167)
 
 Base delay for exponential reconnection backoff (ms).
 
@@ -131,7 +131,7 @@ Hub server host.
 
 > `optional` **maxDelay**: `number`
 
-Defined in: [types.ts:168](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L168)
+Defined in: [types.ts:173](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L173)
 
 Maximum delay cap for reconnection backoff (ms).
 
@@ -167,7 +167,7 @@ dropping the message, so one large emit used to end the session.
 
 > `optional` **maxReconnectAttempts**: `number`
 
-Defined in: [types.ts:156](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L156)
+Defined in: [types.ts:161](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L161)
 
 Maximum number of reconnection attempts before giving up.
 
@@ -214,13 +214,18 @@ Hub server port. Required.
 
 > `optional` **sampling**: `SamplingConfig`
 
-Defined in: [types.ts:144](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L144)
+Defined in: [types.ts:149](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L149)
 
-Sampling configuration (protocol v1 design, implementation deferred).
+Which events the agent forwards to the hub.
 
 #### Remarks
 
-When provided, advertised to the hub as part of the store's capabilities.
+Applied by the agent before an event is sent, in this order: `ignore` drops every matching
+event; the first matching `throttle` rule forwards at most one event per `intervalMs` for each
+event key; the first matching `skip` rule forwards every `every`th one. `"*"` in a key matches
+any channel or any type. The store itself still processes every event; only what the hub sees
+changes, so its timeline, and any state it rebuilds from events, misses the ones dropped. Also
+advertised to the hub as part of the store's capabilities.
 
 ***
 
@@ -273,7 +278,7 @@ production or on a shared machine.
 
 > `optional` **socketFactory**: `DevtoolsSocketFactory`
 
-Defined in: [types.ts:177](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L177)
+Defined in: [types.ts:182](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L182)
 
 Custom socket factory (advanced). By default the agent opens a native
 browser `WebSocket`. Inject a different transport — e.g. an in-memory
@@ -321,7 +326,7 @@ Throttle interval for DevTools updates (ms). `0` disables throttling.
 
 > `optional` **transport**: `"auto"` \| `"bridge"` \| `"websocket"`
 
-Defined in: [types.ts:193](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L193)
+Defined in: [types.ts:198](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L198)
 
 How the agent reaches the panel.
 

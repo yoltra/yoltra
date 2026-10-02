@@ -92,7 +92,7 @@ developer machine, where the hub warns at startup that it is open.
 
 > `optional` **autoReconnect**: `boolean`
 
-Defined in: [types.ts:141](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L141)
+Defined in: [types.ts:146](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L146)
 
 Whether to automatically reconnect after an unexpected disconnect.
 
@@ -106,7 +106,7 @@ Whether to automatically reconnect after an unexpected disconnect.
 
 > `optional` **baseDelay**: `number`
 
-Defined in: [types.ts:145](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L145)
+Defined in: [types.ts:150](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L150)
 
 Base delay (ms) for exponential backoff between reconnection attempts.
 
@@ -134,7 +134,7 @@ Hub server hostname or IP address.
 
 > `optional` **maxDelay**: `number`
 
-Defined in: [types.ts:147](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L147)
+Defined in: [types.ts:152](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L152)
 
 Maximum delay cap (ms) for exponential backoff.
 
@@ -170,7 +170,7 @@ dropping the message, so one large emit used to end the session.
 
 > `optional` **maxReconnectAttempts**: `number`
 
-Defined in: [types.ts:143](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L143)
+Defined in: [types.ts:148](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L148)
 
 Maximum number of reconnection attempts before giving up.
 
@@ -217,14 +217,19 @@ Hub server port number. Required -- there is no default.
 
 > `optional` **sampling**: [`SamplingConfig`](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/docs/interfaces/SamplingConfig.md)
 
-Defined in: [types.ts:139](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L139)
+Defined in: [types.ts:144](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-node-agent/src/types.ts#L144)
 
-Sampling configuration defined by the DevTools protocol.
+Which events the agent forwards to the hub.
 
 #### Remarks
 
-Part of the protocol v1 design; actual enforcement is deferred.
-See [@yoltra/devtools-protocol!SamplingConfig](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/docs/interfaces/SamplingConfig.md) for shape details.
+Applied by the agent before an event is sent, in this order: `ignore` drops every matching
+event; the first matching `throttle` rule forwards at most one event per `intervalMs` for each
+event key; the first matching `skip` rule forwards every `every`th one. `"*"` in a key matches
+any channel or any type. The store itself still processes every event; only what the hub sees
+changes, so its timeline, and any state it rebuilds from events, misses the ones dropped. Also
+advertised to the hub as part of the store's capabilities. See
+[@yoltra/devtools-protocol!SamplingConfig](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/docs/interfaces/SamplingConfig.md) for the shape.
 
 ***
 

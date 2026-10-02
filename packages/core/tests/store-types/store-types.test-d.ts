@@ -11,11 +11,13 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import { createStore } from "../../src/store/Store";
-import { defineSlice } from "../../src/types";
+import { defineSlice, eventKeys } from "../../src/types";
 import type {
   DeepReadonly,
   Dotted,
   EffectSpec,
+  EMFromReducersStrict,
+  Event,
   EventFromWhen,
   EventUnion,
   ExactWhen,
@@ -23,6 +25,7 @@ import type {
   PathValue,
   ReducerReplacement,
   ReducerSpec,
+  StateFromReducers,
   When,
 } from "../../src/types";
 
@@ -323,5 +326,30 @@ describe("EventFromWhen covers every form", () => {
 
   it("still narrows the exact forms", () => {
     expectTypeOf<EventFromWhen<EM, { channel: "other" }>["payload"]>().toEqualTypeOf<number>();
+  });
+
+  it("narrows keys built with eventKeys, as its documented example does", () => {
+    type AppEM = { ui: { increment: number; reset: null; rename: string } };
+    const when = { keys: eventKeys<AppEM>()([["ui", "increment"], ["ui", "reset"]]) };
+    expectTypeOf<EventFromWhen<AppEM, typeof when>>().toEqualTypeOf<
+      Event<AppEM, "ui", "increment"> | Event<AppEM, "ui", "reset">
+    >();
+  });
+});
+
+describe("StateFromReducers and EMFromReducersStrict name an inferred store", () => {
+  type A = { a: { inc: number } };
+  type B = { b: { set: string } };
+  const reducer = {
+    counter: { state: 0, when: { keys: [["a", "inc"]] }, reducer: (s: number) => s } as ReducerSpec<number, A>,
+    label: { state: "", when: { keys: [["b", "set"]] }, reducer: (s: string) => s } as ReducerSpec<string, B>,
+  };
+
+  it("maps each slice to its state", () => {
+    expectTypeOf<StateFromReducers<typeof reducer>>().toEqualTypeOf<{ counter: number; label: string }>();
+  });
+
+  it("merges the slices' event maps", () => {
+    expectTypeOf<EMFromReducersStrict<typeof reducer>>().toEqualTypeOf<A & B>();
   });
 });

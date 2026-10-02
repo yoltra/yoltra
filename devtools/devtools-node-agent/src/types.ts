@@ -130,11 +130,16 @@ export interface DevtoolsWrapperConfig {
    */
   throttleMs?: number;
   /**
-   * Sampling configuration defined by the DevTools protocol.
+   * Which events the agent forwards to the hub.
    *
    * @remarks
-   * Part of the protocol v1 design; actual enforcement is deferred.
-   * See {@link @yoltra/devtools-protocol!SamplingConfig} for shape details.
+   * Applied by the agent before an event is sent, in this order: `ignore` drops every matching
+   * event; the first matching `throttle` rule forwards at most one event per `intervalMs` for each
+   * event key; the first matching `skip` rule forwards every `every`th one. `"*"` in a key matches
+   * any channel or any type. The store itself still processes every event; only what the hub sees
+   * changes, so its timeline, and any state it rebuilds from events, misses the ones dropped. Also
+   * advertised to the hub as part of the store's capabilities. See
+   * {@link @yoltra/devtools-protocol!SamplingConfig} for the shape.
    */
   sampling?: SamplingConfig;
   /** Whether to automatically reconnect after an unexpected disconnect. @defaultValue `true` */

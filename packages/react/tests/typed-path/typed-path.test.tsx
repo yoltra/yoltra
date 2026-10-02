@@ -112,3 +112,23 @@ describe("useAtomicProp typed accessor form (C4)", () => {
     expect(renders).toBeGreaterThan(rendersAfterMount);
   });
 });
+
+describe("useAtomicProp called with a slice name and no accessor", () => {
+  it("throws a sentence naming the hook and both forms, not a raw TypeError from inside", () => {
+    const { useAtomicProp } = createYoltra({ name: "Board", reducer: { board: boardSpec } });
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    function NoAccessor() {
+      const value = (useAtomicProp as unknown as (r: string, p?: unknown) => unknown)("board");
+      return <span>{String(value)}</span>;
+    }
+    function PathString() {
+      const value = (useAtomicProp as unknown as (r: string, p?: unknown) => unknown)("board", "items.0.title");
+      return <span>{String(value)}</span>;
+    }
+
+    expect(() => render(<NoAccessor />)).toThrow(/useAtomicProp\("board", \.\.\.\) takes a path accessor/);
+    expect(() => render(<PathString />)).toThrow(/property: "items\.0\.title"/);
+    error.mockRestore();
+  });
+});

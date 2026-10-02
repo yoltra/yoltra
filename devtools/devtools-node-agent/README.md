@@ -89,7 +89,7 @@ interface DevtoolsWrapperConfig {
   allowReplay?: boolean;
   /** Allow extensions to emit events to this store. @default false */
   allowEmit?: boolean;
-  /** Sampling configuration (v1 design, implementation deferred). */
+  /** Which events reach the hub: ignore, then throttle, then skip. The store still processes all of them. */
   sampling?: SamplingConfig;
   /** Auto-reconnect on disconnect. @default true */
   autoReconnect?: boolean;

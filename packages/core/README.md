@@ -334,6 +334,12 @@ const off2 = store.onEffect("ui", "save", async (payload, getState, emit) => {
 });
 ```
 
+Effects for one event run **one after another**, and the promise `emit()` returns settles only
+when the last of them has finished. A slow effect therefore delays the effects after it for the
+same event, and anything awaiting that `emit()`, but not other events: each event's effects run
+as a task of their own. For work that should start at once and run alongside, use
+[`onEvent`](#event-subscriptions), whose handlers are called without being awaited.
+
 ---
 
 ## Event Subscriptions
@@ -974,15 +980,16 @@ adapter is for collections that reorder, or that are large enough for the differ
 
 ### What it costs, measured
 
-At 1000 rows, diffing after an insert at the front costs 1200 µs for an array and 371 µs
+At 1000 rows, diffing after an insert at the front costs about 890 µs for an array and 77 µs
 normalised, and the array reports roughly a thousand changed paths against two. That is the
 case the adapter is for.
 
-A single-field update runs the other way: 20 µs for the array against 470 µs normalised.
-`detectChangedProps` indexes an array but enumerates an object's keys, building two key
-arrays and a `Set` per comparison, so a wide entity map is more expensive to walk even when
-almost nothing in it moved. The numbers are in `benchmarks/`, and closing that gap is tracked
-work rather than a property of normalising as such.
+A single-field update runs the other way: about 2 µs for the array against 83 µs normalised.
+`detectChangedProps` reaches an array's changed row by index, but for an object it has to read
+both key lists and confirm the shape is unchanged before it can skip the entities that did not
+move, so a wide entity map costs in proportion to its width even when one field changed. The
+figures come from `benchmarks/detect-changed-props.bench.ts` on one machine: compare them with
+each other, not with your hardware.
 
 So: normalise collections that reorder or churn. A large collection that only ever has
 individual fields edited is better off as an array today.
@@ -1008,9 +1015,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 12.3 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 13.5 KB | 16 KB |
-| everything | 15.0 KB | 18 KB |
+| `{ createStore }` | 12.5 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 13.8 KB | 16 KB |
+| everything | 15.3 KB | 18 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines

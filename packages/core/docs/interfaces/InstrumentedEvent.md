@@ -99,7 +99,7 @@ Old value at each changed path, keyed by path.
 
 > `optional` **reason**: [`NotCommittedReason`](../type-aliases/NotCommittedReason.md)
 
-Defined in: [types.ts:422](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L422)
+Defined in: [types.ts:428](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L428)
 
 Why the event did not commit. Absent when it did.
 
@@ -121,9 +121,14 @@ it is shared with `EmitResult`, not because they are currently reachable.
 
 > **reduceTimeMs**: `number`
 
-Defined in: [types.ts:398](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L398)
+Defined in: [types.ts:404](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L404)
 
-Wall-clock milliseconds spent in the synchronous reduce phase for this event.
+Milliseconds spent in the synchronous reduce phase for this event.
+
+#### Remarks
+
+A duration, measured with `performance.now()` (falling back to `Date.now()` where it is
+missing), so it is unaffected by changes to the system clock. It is not a time of day.
 
 ***
 
@@ -131,7 +136,7 @@ Wall-clock milliseconds spent in the synchronous reduce phase for this event.
 
 > `optional` **rejected**: [`Rejection`](Rejection.md)
 
-Defined in: [types.ts:407](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L407)
+Defined in: [types.ts:413](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L413)
 
 Present when a reducer refused the write, carrying its reason.
 
@@ -147,7 +152,7 @@ identical in state and are entirely different in cause.
 
 > `optional` **vetoedBy**: `string`
 
-Defined in: [types.ts:431](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L431)
+Defined in: [types.ts:437](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L437)
 
 Which middleware vetoed, when one did and it had a name.
 

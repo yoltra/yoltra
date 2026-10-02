@@ -10,19 +10,59 @@
 
 Defined in: [eventBus/LooseEventBus.ts:64](https://github.com/yoltra/yoltra/blob/main/packages/core/src/eventBus/LooseEventBus.ts#L64)
 
+Flexible, synchronous pub/sub bus that supports **exact** and **pattern** event subscriptions.
+
+## Remarks
+
+- **Exact handlers** subscribe to a specific `(channel, type)` pair. Type keys are **normalized** by stripping a single leading dot (`".foo"` → `"foo"`).
+- **Pattern handlers** subscribe using wildcards over dot-separated segments:
+  - `*`   matches **one** segment.
+  - `**`  matches **zero or more** segments (greedy).
+- On [\`emit\`](#emit), exact handlers fire first, then any matching pattern handlers.
+- Handlers are **de-duplicated**: if the same function is both exact and pattern-registered, it is called **once**.
+- Handler invocation is **synchronous**. Exceptions are caught and logged; remaining handlers still run.
+
+## Example
+
+```ts
+type C = 'ui' | 'data';
+type T = string;
+type P = unknown;
+
+const bus = new LooseEventBus<C, T, P>();
+
+// Exact
+const offA = bus.on('ui', 'panel.open', () => console.log('panel opened'));
+
+// Patterns
+const offB = bus.on('ui', 'panel.*', () => console.log('any single sub-event under panel'));
+const offC = bus.on('ui', 'panel.**', () => console.log('any depth under panel'));
+
+bus.emit('ui', 'panel.open', null);
+// => exact fires, then 'panel.*', then 'panel.**'
+
+offA(); offB(); offC(); // unsubscribe
+```
+
 ## Type Parameters
 
 ### C
 
 `C` *extends* `string` = `string`
 
+Channel name type (defaults to `string`).
+
 ### T
 
 `T` *extends* `string` = `string`
 
+Event type name type (defaults to `string`). Types are treated as **dot-separated paths** (e.g. `"a.b.c"`).
+
 ### P
 
 `P` = `any`
+
+Payload type for all events (defaults to `any`).
 
 ## Constructors
 

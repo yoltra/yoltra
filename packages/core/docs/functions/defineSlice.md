@@ -10,7 +10,7 @@
 
 > **defineSlice**\<`EMAdd`\>(): \<`St`\>(`spec`) => [`ReducerSpec`](../interfaces/ReducerSpec.md)\<`St`, `EMAdd`\> & [`EventMapCarrier`](../interfaces/EventMapCarrier.md)\<`EMAdd`\>
 
-Defined in: [types.ts:2363](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2363)
+Defined in: [types.ts:2390](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2390)
 
 Declares a reducer spec together with the event map it contributes.
 

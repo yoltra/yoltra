@@ -210,6 +210,11 @@ const allTitles = useAtomicProp(
 - `"items.*.title"`: `*` coincide con un segmento
 - `"items.**"`: `**` coincide con cero o más segmentos
 
+Con un comodín, `map` recibe el **slice completo**, no los valores que coincidieron con el patrón:
+el patrón decide cuándo se vuelve a renderizar el hook, y `map` decide qué devuelve. Sin `map`, una
+ruta con comodín devuelve el slice mismo. Pasa uno, junto con un `isEqual` como `shallowEqual`
+cuando construye un arreglo nuevo.
+
 ---
 
 ### `useAtomicProps(specs, selector, isEqual?)`

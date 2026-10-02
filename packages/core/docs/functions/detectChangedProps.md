@@ -10,7 +10,7 @@
 
 > **detectChangedProps**(`oldState`, `newState`, `path`, `ancestors`): `string`[]
 
-Defined in: [utils/detectChangedProps.ts:100](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/detectChangedProps.ts#L100)
+Defined in: [utils/detectChangedProps.ts:128](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/detectChangedProps.ts#L128)
 
 Computes the list of **dotted leaf paths** that changed between two values.
 
@@ -20,8 +20,9 @@ The algorithm performs a deep structural comparison with special handling for:
 - **RegExp** → compares `source` and `flags`
 - **`Map`, `Set` and binary values** (typed arrays, `DataView`, `ArrayBuffer`) → one value at their
   own path, compared by reference
-- **Arrays** → if lengths differ, the whole array path is marked changed; otherwise compares
-  element-by-element producing paths like `"items.0.title"`
+- **Arrays** → compared element by element, producing paths like `"items.0.title"`; when the
+  lengths differ, the array path itself is reported too, along with each index present on one
+  side only
 - **Objects** → compares by the **union of keys**, recursing into shared keys and marking
   added/removed keys as changed at their **full path**
 
@@ -85,7 +86,9 @@ detectChangedProps(
 
 ```ts
 detectChangedProps({ nums: [1,2] }, { nums: [1,2,3] });
-// => ['nums']
+// => ['nums', 'nums.2']
+detectChangedProps({ nums: [1,2,3] }, { nums: [0,2] });
+// => ['nums', 'nums.0', 'nums.2']
 ```
 
 ```ts
@@ -106,4 +109,4 @@ detectChangedProps(/a/i, /a/g, 'pattern');                      // => ['pattern'
   primitive once silently refused every update it was given.
 - For objects, only **own enumerable** keys are compared (via `Object.keys`).
 - Returned paths are **leaf paths** where a primitive/terminal difference was detected; for arrays,
-  a length change is treated as a leaf change at the array path.
+  a length change also reports the array path, so a subscriber on the array hears it.

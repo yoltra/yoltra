@@ -340,6 +340,13 @@ const off2 = store.onEffect("ui", "save", async (payload, getState, emit) => {
 });
 ```
 
+Los efectos de un mismo evento se ejecutan **uno tras otro**, y la promesa que devuelve `emit()`
+se resuelve solo cuando el último ha terminado. Un efecto lento retrasa entonces a los efectos que
+le siguen para ese evento, y a lo que esté esperando ese `emit()`, pero no a otros eventos: los
+efectos de cada evento corren como una tarea propia. Para trabajo que debe arrancar de inmediato y
+correr en paralelo, usa [`onEvent`](#suscripciones-a-eventos), cuyos handlers se llaman sin
+esperarlos.
+
 ---
 
 ## Suscripciones a Eventos
@@ -995,15 +1002,17 @@ diferencia se note.
 
 ### Lo que cuesta, medido
 
-Con 1000 filas, hacer el diff después de una inserción al principio cuesta 1200 µs para un array
-y 371 µs normalizado, y el array reporta alrededor de mil rutas cambiadas frente a dos. Ese es
-el caso para el que existe el adapter.
+Con 1000 filas, hacer el diff después de una inserción al principio cuesta unos 890 µs para un
+array y 77 µs normalizado, y el array reporta alrededor de mil rutas cambiadas frente a dos. Ese
+es el caso para el que existe el adapter.
 
-Una actualización de un solo campo va al revés: 20 µs para el array frente a 470 µs normalizado.
-`detectChangedProps` indexa un array pero enumera las claves de un objeto, construyendo dos
-arrays de claves y un `Set` por comparación, así que un mapa de entidades ancho es más caro de
-recorrer aunque casi nada dentro se haya movido. Los números están en `benchmarks/`, y cerrar
-esa brecha es trabajo con seguimiento, no una propiedad de normalizar como tal.
+Una actualización de un solo campo va al revés: unos 2 µs para el array frente a 83 µs
+normalizado. `detectChangedProps` llega a la fila cambiada de un array por su índice, pero en un
+objeto tiene que leer las dos listas de claves y confirmar que la forma no cambió antes de poder
+saltarse las entidades que no se movieron, así que un mapa de entidades ancho cuesta en
+proporción a su ancho aunque solo haya cambiado un campo. Las cifras salen de
+`benchmarks/detect-changed-props.bench.ts` en una sola máquina: compáralas entre sí, no con tu
+hardware.
 
 Así que: normaliza las colecciones que se reordenan o que rotan mucho. Una colección grande a la
 que solo se le editan campos individuales está mejor como array hoy.
@@ -1029,9 +1038,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 12.3 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 13.5 KB | 16 KB |
-| todo | 15.0 KB | 18 KB |
+| `{ createStore }` | 12.5 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 13.8 KB | 16 KB |
+| todo | 15.3 KB | 18 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define

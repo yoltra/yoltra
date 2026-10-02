@@ -15,7 +15,7 @@ Defined in: [devtools-storeview/src/components/shared/FilterBar.tsx:37](https://
 Filter bar with text input and optional toggle buttons.
 
 Provides a text field for `channel::type` filtering and optional
-Committed / Bounced toggle buttons for event status filtering.
+Committed / Uncommitted toggle buttons for event status filtering.
 
 ## Parameters
 

@@ -307,6 +307,16 @@ export function createHooks<
     //  - useAtomicProp({ reducer, property }, map?, isEqual?)  (dotted-path string)
     //  - useAtomicProp(reducer, p => p.a.b, isEqual?)          (typed accessor)
     const accessorForm = typeof specOrReducer === "string";
+    // A slice name with no accessor, or with a dotted path where the accessor goes, would
+    // otherwise fail inside the path recorder as "accessor is not a function", which names
+    // neither the hook nor the fix.
+    if (accessorForm && typeof mapOrAccessor !== "function") {
+      throw new TypeError(
+        `[yoltra] useAtomicProp("${specOrReducer}", ...) takes a path accessor such as ` +
+          "`p => p.items[0].title` as its second argument. To subscribe by a dotted path, pass a " +
+          `spec instead: useAtomicProp({ reducer: "${specOrReducer}", property: "items.0.title" }).`,
+      );
+    }
     const reducer = (accessorForm ? specOrReducer : specOrReducer.reducer) as R;
     const rawProperty = accessorForm
       ? toDottedPath(mapOrAccessor as (p: any) => any)

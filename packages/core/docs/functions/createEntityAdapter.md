@@ -10,7 +10,7 @@
 
 > **createEntityAdapter**\<`T`, `Id`\>(`options`): [`EntityAdapter`](../interfaces/EntityAdapter.md)\<`T`, `Id`\>
 
-Defined in: [entity/entityAdapter.ts:163](https://github.com/yoltra/yoltra/blob/main/packages/core/src/entity/entityAdapter.ts#L163)
+Defined in: [entity/entityAdapter.ts:168](https://github.com/yoltra/yoltra/blob/main/packages/core/src/entity/entityAdapter.ts#L168)
 
 Builds an adapter for one entity type.
 

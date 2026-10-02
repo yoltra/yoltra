@@ -394,7 +394,13 @@ export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
   prevValues: Record<string, unknown>;
   /** New value at each changed path, keyed by path. */
   nextValues: Record<string, unknown>;
-  /** Wall-clock milliseconds spent in the synchronous reduce phase for this event. */
+  /**
+   * Milliseconds spent in the synchronous reduce phase for this event.
+   *
+   * @remarks
+   * A duration, measured with `performance.now()` (falling back to `Date.now()` where it is
+   * missing), so it is unaffected by changes to the system clock. It is not a time of day.
+   */
   reduceTimeMs: number;
   /**
    * Present when a reducer refused the write, carrying its reason.
@@ -1385,16 +1391,31 @@ export type EffectFunction<S = any, EM extends EventMapBase = EventMapBase> = (
 ) => void | Promise<void>;
 
 /**
- * Helper: extract state shape from a reducers map.
+ * Any map of slice names to reducer specs.
  *
- * @internal
+ * @remarks
+ * The constraint for a helper that takes a store's `reducer` option and infers from it, as
+ * {@link StateFromReducers} and {@link EMFromReducersStrict} do.
+ *
+ * @public
  */
 export type ReducersMapAny = Record<string, ReducerSpec<any, any>>;
 
 /**
- * Helper: derive state type from a reducers map.
+ * The state a reducers map produces: each slice name mapped to its spec's state type.
  *
- * @internal
+ * @remarks
+ * This is the state `createStore` infers when it is given only `reducer`. Use it to name that
+ * state without writing it out a second time.
+ *
+ * @example
+ * ```ts
+ * const reducer = { counter: counterSpec, todos: todosSpec };
+ * type AppState = StateFromReducers<typeof reducer>;
+ * // { counter: CounterState; todos: TodosState }
+ * ```
+ *
+ * @public
  */
 export type StateFromReducers<R> = {
   [K in keyof R]: R[K] extends ReducerSpec<infer S, any> ? S : never;
@@ -1419,17 +1440,16 @@ export type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never
 export type EMOfSpec<Spec> = Spec extends ReducerSpec<any, infer EM> ? EM : never;
 
 /**
- * Helper: derive the combined event map from a reducers map (strict).
- * Used by the createStore inference overload.
+ * The event map a reducers map produces, merged across its slices.
  *
- * Each slice contributes its own event map; those maps are **merged** (channels,
- * and each channel's `type → payload` entries, combined across slices) rather
- * than collapsed to a single slice's map. `EMOfSpec` distributes over the union
- * of specs to yield the union of per-slice event maps, and `UnionToIntersection`
- * merges them — so a store whose slices declare divergent event maps still types
- * `emit` against the union of every slice's channels/types.
+ * @remarks
+ * This is the event map the `createStore` inference overload derives. Each slice contributes its
+ * own event map, and those maps are **merged** (channels, and each channel's `type → payload`
+ * entries, combined across slices) rather than collapsed to one slice's map, so a store whose
+ * slices declare different event maps still types `emit` against every slice's channels and
+ * types. Pair it with {@link StateFromReducers} to name both halves of an inferred store.
  *
- * @internal
+ * @public
  */
 export type EMFromReducersStrict<RM extends ReducersMapAny> = UnionToIntersection<
   EMOfSpec<RM[keyof RM]>
@@ -1601,7 +1621,14 @@ export const eventKeys =
  * @typeParam EM - Event map.
  * @typeParam W  - When matcher type.
  *
- * @internal
+ * @example
+ * ```ts
+ * const when = { keys: eventKeys<AppEM>()([["ui", "increment"], ["ui", "reset"]]) };
+ * type Handled = EventFromWhen<AppEM, typeof when>;
+ * // Event<AppEM, "ui", "increment"> | Event<AppEM, "ui", "reset">
+ * ```
+ *
+ * @public
  */
 export type EventFromWhen<EM extends EventMapBase, W extends When<EM>> = W extends { any: true }
   ? EventUnion<EM>

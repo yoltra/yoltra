@@ -3,7 +3,11 @@
  */
 
 import { Reducer } from "../reducer/Reducer";
-import { detectChangedProps } from "../utils/detectChangedProps";
+import {
+  detectChangedPropsReporting,
+  dottedKeyMessage,
+  type DottedKeyReporter,
+} from "../utils/detectChangedProps";
 import { EventBus } from "../eventBus/EventBus";
 import { LooseEventBus } from "../eventBus/LooseEventBus";
 import type {
@@ -253,6 +257,21 @@ function splitEventKey(key: string): [channel: string, type: string] {
   return [key.slice(0, at), key.slice(at + 2)];
 }
 
+/**
+ * A store: its state, the event pipeline that changes it, and the subscriptions it notifies.
+ *
+ * @remarks
+ * Create one with {@link createStore}, which infers the type parameters from the spec; the class
+ * is exported for typing. Each event emitted runs through middleware, is reduced by every slice
+ * whose `when` matches it, is committed as one state change, and then reaches subscribers and
+ * effects. {@link StoreInstance} describes the whole surface.
+ *
+ * @typeParam EM - The event map: channel, then type, then payload.
+ * @typeParam R - The slice names.
+ * @typeParam S - The state, keyed by slice name.
+ *
+ * @public
+ */
 export class Store<EM extends EventMapBase, R extends string, S extends Record<R, any>>
   implements StoreInstance<R, S, EM> {
   /**
@@ -558,6 +577,29 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   private readonly warnedPayloadAliases = new Set<string>();
 
   /**
+   * `slice:path` of dotted state keys already warned about.
+   *
+   * @remarks
+   * Per store for the reason the key-collision latch is: kept for the whole process, one store
+   * reporting a key silenced every other store holding the same one.
+   */
+  private readonly warnedDottedKeys = new Set<string>();
+
+  /**
+   * The dotted-key reporter for one slice's diff: names this store and the slice, once each.
+   *
+   * @internal
+   */
+  private dottedKeysIn(slice: string): DottedKeyReporter {
+    return (path, key) => {
+      const seen = `${slice}:${path ? `${path}.${key}` : key}`;
+      if (this.warnedDottedKeys.has(seen)) return;
+      this.warnedDottedKeys.add(seen);
+      console.warn(dottedKeyMessage(path, key, `Store "${this.name}", slice "${slice}": `));
+    };
+  }
+
+  /**
    * Pending events awaiting the **synchronous** reduce phase (middleware +
    * reducers + subscribers + coarse listeners). Drained by {@link drainReduce}.
    *
@@ -852,6 +894,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // inherits the suppression and stays quiet about aliasing in code that has never been warned
     // about. The latch exists to stop a hot path becoming a log, not to silence the next store.
     this.warnedPayloadAliases.clear();
+    this.warnedDottedKeys.clear();
 
     // Release every subscription and observer. Without this, the closures they
     // hold (React fibers, DevTools sockets, effect handlers) pin the store and
@@ -1256,7 +1299,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // length check below read "nothing changed", so the write path returned before assigning
     // `this.state`: the reducer ran, its result was thrown away, and nothing said so. A store
     // holding `state: 0` could never leave `0`.
-    const leafPaths = detectChangedProps(prev, next);
+    const leafPaths = detectChangedPropsReporting(prev, next, this.dottedKeysIn(rName as string));
 
     // if nothing actually changed at the leaves, treat as a no-op
     if (leafPaths.length === 0) return null;
@@ -1595,7 +1638,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // `stageSlice`: `""` is a genuine root-level change, not an absent one. Time travel
       // onto a primitive slice committed the state here but emitted nothing, so a component
       // subscribed through `connect` kept rendering the value it had before the jump.
-      const leafPaths = detectChangedProps(prevSlice, nextSlice);
+      const leafPaths = detectChangedPropsReporting(prevSlice, nextSlice, this.dottedKeysIn(rName as string));
       if (leafPaths.length === 0) return;
 
       // emit every leaf AND its ancestors once
@@ -3684,7 +3727,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // x)` reports only `""`, the root, so a subscriber watching `"n"` inside the new slice
     // would hear nothing at all - which is the very failure this method exists to fix.
     const isObjectLike = typeof nextSlice === "object" && nextSlice !== null;
-    const leafPaths = detectChangedProps(isObjectLike ? {} : undefined, nextSlice);
+    const leafPaths = detectChangedPropsReporting(
+      isObjectLike ? {} : undefined,
+      nextSlice,
+      this.dottedKeysIn(rName as string),
+    );
 
     // The root always appears: a whole-slice subscription (`property: ""`) is watching for
     // exactly this, and a slice that *is* one value has no leaf to report.

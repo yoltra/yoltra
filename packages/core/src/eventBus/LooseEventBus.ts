@@ -3,6 +3,26 @@
  */
 
 /**
+ * One registered pattern, kept pre-split.
+ * @internal
+ */
+interface PatternEntry {
+  readonly pattern: string;
+  readonly segments: readonly string[];
+}
+
+/**
+ * The patterns on one channel, arranged by what a subject's first segment can match.
+ * @internal
+ */
+interface PatternIndex {
+  /** Keyed by a literal first segment. */
+  readonly byHead: Map<string, PatternEntry[]>;
+  /** Patterns beginning with `*` or `**`, which every subject has to test. */
+  readonly anyHead: PatternEntry[];
+}
+
+/**
  * Flexible, synchronous pub/sub bus that supports **exact** and **pattern** event subscriptions.
  *
  * @typeParam C - Channel name type (defaults to `string`).
@@ -41,26 +61,6 @@
  *
  * @public
  */
-/**
- * One registered pattern, kept pre-split.
- * @internal
- */
-interface PatternEntry {
-  readonly pattern: string;
-  readonly segments: readonly string[];
-}
-
-/**
- * The patterns on one channel, arranged by what a subject's first segment can match.
- * @internal
- */
-interface PatternIndex {
-  /** Keyed by a literal first segment. */
-  readonly byHead: Map<string, PatternEntry[]>;
-  /** Patterns beginning with `*` or `**`, which every subject has to test. */
-  readonly anyHead: PatternEntry[];
-}
-
 export class LooseEventBus<C extends string = string, T extends string = string, P = any> {
   /**
    * Exact handlers: `channel → type → [handlers]`.

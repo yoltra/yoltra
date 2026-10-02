@@ -40,7 +40,7 @@ Callback when the filter text changes.
 
 Defined in: [devtools-storeview/src/components/shared/FilterBar.tsx:26](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/shared/FilterBar.tsx#L26)
 
-Callback to toggle bounced visibility.
+Callback to toggle the visibility of events that did not commit.
 
 #### Returns
 
@@ -78,7 +78,7 @@ Placeholder string for the text input.
 
 Defined in: [devtools-storeview/src/components/shared/FilterBar.tsx:22](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/components/shared/FilterBar.tsx#L22)
 
-Whether the Bounced toggle is active.
+Whether the Uncommitted toggle is active.
 
 ***
 
