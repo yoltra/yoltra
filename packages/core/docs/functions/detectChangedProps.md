@@ -10,7 +10,7 @@
 
 > **detectChangedProps**(`oldState`, `newState`, `path`, `ancestors`): `string`[]
 
-Defined in: [utils/detectChangedProps.ts:98](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/detectChangedProps.ts#L98)
+Defined in: [utils/detectChangedProps.ts:100](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/detectChangedProps.ts#L100)
 
 Computes the list of **dotted leaf paths** that changed between two values.
 
@@ -18,6 +18,8 @@ The algorithm performs a deep structural comparison with special handling for:
 - **Primitives / null** → treated as leafs (change = current `path`; two `NaN`s are equal)
 - **Date** → compares `getTime()`
 - **RegExp** → compares `source` and `flags`
+- **`Map`, `Set` and binary values** (typed arrays, `DataView`, `ArrayBuffer`) → one value at their
+  own path, compared by reference
 - **Arrays** → if lengths differ, the whole array path is marked changed; otherwise compares
   element-by-element producing paths like `"items.0.title"`
 - **Objects** → compares by the **union of keys**, recursing into shared keys and marking

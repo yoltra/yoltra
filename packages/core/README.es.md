@@ -160,6 +160,14 @@ const state = store.getState();
 state.counter.value = 999; // TypeError: Cannot assign to read-only property
 ```
 
+Los valores binarios son la excepción. Un typed array, un `DataView` o un `ArrayBuffer` no se
+pueden congelar, así que se guardan tal cual y se tratan como un solo valor en su propia ruta,
+comparado por referencia, igual que un `Map` o un `Set`. Reemplazarlo notifica su ruta una vez;
+escribir dentro de él no notifica a nadie. Para cambiarlo, guarda una vista nueva (`bytes.slice()`,
+o un arreglo nuevo); nunca escribas dentro de la que está en el estado. Las builds de desarrollo
+avisan cuando un reducer conserva un buffer del payload del evento, incluido uno que cuelga de un
+campo del payload, porque quien emitió todavía puede escribir en él.
+
 ---
 
 ## Consumo de Eventos con Matchers `When`

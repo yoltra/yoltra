@@ -195,6 +195,136 @@ describe("payload stored by reference", () => {
   });
 });
 
+describe("binary data stored by reference", () => {
+  type BinEvents = { image: { decoded: { pixels: Uint8Array }; raw: Uint8Array } };
+  type BinState = { last: Uint8Array | null };
+
+  /** Spreads the payload, which copies the object and keeps the buffer. */
+  const keepsBuffer: ReducerSpec<BinState, BinEvents> = {
+    state: { last: null },
+    when: { keys: [["image", "decoded"], ["image", "raw"]] } as never,
+    reducer: (_state, event) => ({
+      last: event.type === "raw" ? (event.payload as Uint8Array) : { ...(event.payload as { pixels: Uint8Array }) }.pixels,
+    }),
+  };
+
+  /** Copies the bytes, which is what a reducer should do. */
+  const copiesBuffer: ReducerSpec<BinState, BinEvents> = {
+    state: { last: null },
+    when: { keys: [["image", "decoded"]] } as never,
+    reducer: (_state, event) => ({ last: (event.payload as { pixels: Uint8Array }).pixels.slice() }),
+  };
+
+  const build = (spec: ReducerSpec<BinState, BinEvents>) =>
+    createStore<{ thumbs: BinState }, BinEvents>({ name: "Binary", reducer: { thumbs: spec } });
+
+  it("detects a buffer one level inside the payload, and says it cannot be frozen", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const store = build(keepsBuffer);
+
+    await store.emit("image", "decoded", { pixels: new Uint8Array([1, 2]) });
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    const message = warn.mock.calls[0]![0] as string;
+    expect(message).toContain('"thumbs"');
+    expect(message).toContain("image/decoded");
+    expect(message).toContain("binary data from the payload");
+    expect(message).toContain("cannot be frozen");
+    // The usual wording would be false here: nothing throws, the buffer stays writable.
+    expect(message).not.toContain("will throw");
+    expect(Object.isFrozen(store.getState().thumbs.last)).toBe(false);
+  });
+
+  it("detects a payload that is itself a view", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const store = build(keepsBuffer);
+
+    await store.emit("image", "raw", new Uint8Array([1]));
+
+    const message = warn.mock.calls[0]![0] as string;
+    expect(message).toContain("stored the payload");
+    expect(message).toContain("cannot be frozen");
+  });
+
+  it("warns once per slice and event", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const store = build(keepsBuffer);
+
+    await store.emit("image", "decoded", { pixels: new Uint8Array([1]) });
+    await store.emit("image", "decoded", { pixels: new Uint8Array([2]) });
+
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays quiet when the reducer copies the bytes", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const store = build(copiesBuffer);
+
+    await store.emit("image", "decoded", { pixels: new Uint8Array([1, 2]) });
+
+    expect(warn).not.toHaveBeenCalled();
+    expect([...store.getState().thumbs.last!]).toEqual([1, 2]);
+  });
+
+  it("never calls a payload getter, so a throwing one is not turned into a reducer error", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const reducerError = vi.fn();
+    const getter = vi.fn((): never => {
+      throw new Error("nope");
+    });
+    const store = createStore<{ thumbs: BinState }, BinEvents>({
+      name: "Binary",
+      reducer: { thumbs: copiesBuffer },
+      onReducerError: reducerError,
+    });
+    const payload = Object.defineProperty({ pixels: new Uint8Array([3]) }, "boom", { get: getter, enumerable: true });
+
+    const result = await store.emit("image", "decoded", payload);
+
+    expect(getter).not.toHaveBeenCalled();
+    expect(reducerError).not.toHaveBeenCalled();
+    expect(result.committed).toBe(true);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("gives no watch to a payload that refuses introspection, and still commits", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const reducerError = vi.fn();
+    const store = createStore<{ thumbs: BinState }, BinEvents>({
+      name: "Binary",
+      reducer: { thumbs: copiesBuffer },
+      onReducerError: reducerError,
+    });
+    const payload = new Proxy(
+      { pixels: new Uint8Array([4]) },
+      {
+        ownKeys() {
+          throw new Error("no keys");
+        },
+      },
+    );
+
+    const result = await store.emit("image", "decoded", payload);
+
+    expect(reducerError).not.toHaveBeenCalled();
+    expect(result.committed).toBe(true);
+    expect([...store.getState().thumbs.last!]).toEqual([4]);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("stays silent in production", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.stubEnv("NODE_ENV", "production");
+    try {
+      const store = build(keepsBuffer);
+      await store.emit("image", "decoded", { pixels: new Uint8Array([1]) });
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    expect(warn).not.toHaveBeenCalled();
+  });
+});
+
 describe("middleware that returns a promise", () => {
   type MwEvents = { app: { act: null } };
   type MwState = { n: number };

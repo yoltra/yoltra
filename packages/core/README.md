@@ -158,6 +158,13 @@ const state = store.getState();
 state.counter.value = 999; // TypeError: Cannot assign to read-only property
 ```
 
+Binary values are the exception. A typed array, a `DataView` or an `ArrayBuffer` cannot be frozen,
+so it is stored as it is and treated as one value at its own path, compared by reference, like a
+`Map` or a `Set`. Replacing it notifies its path once; writing into it notifies nobody. To change
+one, store a new view (`bytes.slice()`, or a fresh array), never write into the one in state.
+Development builds warn when a reducer keeps a buffer from the event payload, including one held by
+a field of the payload, because the emitter can still write into it.
+
 ---
 
 ## Event Targeting with `When` Matchers

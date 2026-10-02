@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "A typed array, `DataView` or `ArrayBuffer` in state is now one value at its own path, compared by reference like `Map` and `Set`. Replacing a 4-byte `Uint8Array` used to report four paths, one per byte, in `changedPaths`, `prevValues` and `nextValues`; it now reports the view's path once, and a subscription to an index inside a view is no longer notified. The development warning for a payload kept by reference now says that binary data cannot be frozen, so a later write changes the slice unseen, and it also catches a buffer kept from a field of the payload.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

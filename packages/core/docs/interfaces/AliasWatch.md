@@ -8,7 +8,7 @@
 
 # Interface: AliasWatch
 
-Defined in: [utils/immutability.ts:117](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L117)
+Defined in: [utils/immutability.ts:119](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L119)
 
 Watches the freeze walk for one specific reference.
 
@@ -27,13 +27,34 @@ at the moment it happens.
 
 ## Properties
 
+### also?
+
+> `readonly` `optional` **also**: `ReadonlySet`\<`object`\>
+
+Defined in: [utils/immutability.ts:129](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L129)
+
+Further references to look for, such as binary values held one level inside `watch`.
+
+#### Remarks
+
+A reducer that copies the payload object but keeps its buffer, `{ ...payload }`, stores the
+buffer by reference without storing `watch`. Listing such values here reports that too.
+
+***
+
 ### onFound()
 
-> `readonly` **onFound**: () => `void`
+> `readonly` **onFound**: (`node`) => `void`
 
-Defined in: [utils/immutability.ts:121](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L121)
+Defined in: [utils/immutability.ts:131](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L131)
 
-Called if `watch` is reachable from the value being frozen.
+Called with the reference found, `watch` or one of `also`, when it is reachable from the value being frozen.
+
+#### Parameters
+
+##### node
+
+`object`
 
 #### Returns
 
@@ -45,6 +66,6 @@ Called if `watch` is reachable from the value being frozen.
 
 > `readonly` **watch**: `object`
 
-Defined in: [utils/immutability.ts:119](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L119)
+Defined in: [utils/immutability.ts:121](https://github.com/yoltra/yoltra/blob/main/packages/core/src/utils/immutability.ts#L121)
 
 The reference to look for while freezing.

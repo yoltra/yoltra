@@ -284,3 +284,39 @@ describe("keys that dotted paths cannot express", () => {
     warn.mockRestore();
   });
 });
+
+describe("detectChangedProps: binary values are one value", () => {
+  /**
+   * A typed array's indices are its own enumerable keys, so the object walk used to report one path
+   * per changed byte. A view is now compared by reference and reported once at its own path, like a
+   * `Map`: a view cannot be frozen, so a new reference is the only change the store can see.
+   */
+  it("reports a replaced typed array once, at its own path", () => {
+    const before = { buf: new Uint8Array([1, 2, 3, 4]) };
+    const after = { buf: new Uint8Array([9, 9, 9, 9]) };
+    expect(detectChangedProps(before, after, "s")).toEqual(["s.buf"]);
+  });
+
+  it("reports a replacement with equal bytes too, because the reference changed", () => {
+    expect(detectChangedProps({ buf: new Uint8Array([1]) }, { buf: new Uint8Array([1]) }, "s")).toEqual(["s.buf"]);
+  });
+
+  it("reports nothing for the same view returned again", () => {
+    const buf = new Uint8Array([1, 2]);
+    expect(detectChangedProps({ buf }, { buf }, "s")).toEqual([]);
+  });
+
+  it("reports a typed array replaced by a plain array as one change", () => {
+    expect(detectChangedProps({ buf: new Uint8Array([1]) }, { buf: [1] }, "s")).toEqual(["s.buf"]);
+  });
+
+  it("treats DataView, ArrayBuffer and other typed arrays the same way", () => {
+    expect(detectChangedProps({ v: new DataView(new ArrayBuffer(4)) }, { v: new DataView(new ArrayBuffer(4)) }, "s")).toEqual(["s.v"]);
+    expect(detectChangedProps({ v: new ArrayBuffer(2) }, { v: new ArrayBuffer(2) }, "s")).toEqual(["s.v"]);
+    expect(detectChangedProps({ v: new Float32Array(3) }, { v: new Float32Array(5) }, "s")).toEqual(["s.v"]);
+  });
+
+  it("reports a slice that is itself a view at the slice root", () => {
+    expect(detectChangedProps(new Uint8Array(2), new Uint8Array(2), "s")).toEqual(["s"]);
+  });
+});

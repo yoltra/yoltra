@@ -6,7 +6,8 @@
 
 Un cambio puede aparecer al arrancar: un reducer o un efecto con un matcher que nunca podría
 coincidir ahora lanza al registrarse. Lee esa sección primero. Lo demás es un aviso que ahora nombra
-su store, dos arreglos de tipos y una opción nueva en `store.call()`. La mayoría de las aplicaciones
+su store, dos arreglos de tipos, los typed arrays que ahora cambian como un solo valor y una opción
+nueva en `store.call()`. La mayoría de las aplicaciones
 no necesitan cambiar código.
 
 Antes de 1.0, así que es un incremento MINOR según [la política del repositorio](../CONTRIBUTING.md).
@@ -82,6 +83,28 @@ slice.
 
 `EventFromWhen` gana además su rama para `channelPattern`: resuelve a la unión completa de eventos,
 que es lo que recibe un handler de middleware, en lugar de `never`.
+
+---
+
+## Un typed array en el estado cambia como un solo valor
+
+**Lo notarás si:** el estado guarda un typed array, un `DataView` o un `ArrayBuffer`, y lees
+`changedPaths`, `prevValues` o `nextValues` desde `store.instrument()`, o te conectas a una ruta
+dentro de uno.
+
+Los índices de un typed array son sus propias llaves, así que el detector de cambios lo recorría
+como un objeto: reemplazar un `Uint8Array` de 4 bytes reportaba cuatro rutas, una por byte, y un
+observador de instrumentación copiaba cada byte distinto. Ahora una vista es un solo valor en su
+propia ruta, comparado por referencia, que es como ya se trataban `Map` y `Set`. Reemplazarla
+reporta su ruta una vez, con la vista vieja y la nueva como valores; devolver la misma vista no es
+un cambio. Una suscripción a un índice dentro de una vista, como `buf.0`, ya no se notifica;
+suscríbete a la ruta de la vista.
+
+El aviso de payload guardado por referencia también distingue los datos binarios. Una vista no se
+puede congelar, así que el mensaje anterior ("it is now frozen ... will throw") era falso para ella:
+nada lanza, y una escritura posterior en el buffer cambia el slice en su lugar, sin que los
+suscriptores se enteren. Ahora el aviso dice eso, y también detecta un buffer conservado desde un
+campo del payload, como hace `{ ...payload }`.
 
 ---
 

@@ -6,7 +6,8 @@
 
 One change can surface at startup: a reducer or an effect with a matcher that could never match
 now throws when it is registered. Read that section first. The rest is a warning that now names
-its store, two type fixes, and one new option on `store.call()`. Most applications need no code
+its store, two type fixes, typed arrays that now change as one value, and one new option on
+`store.call()`. Most applications need no code
 changes.
 
 Pre-1.0, so this is a MINOR bump by [the repository's policy](../../CONTRIBUTING.md).
@@ -80,6 +81,26 @@ compiled before still compiles unless a reducer returned the wrong slice's state
 
 `EventFromWhen` also gains its `channelPattern` arm: it resolves to the whole event union, which is
 what a middleware handler receives, instead of `never`.
+
+---
+
+## A typed array in state changes as one value
+
+**You will notice if:** state holds a typed array, a `DataView` or an `ArrayBuffer`, and you read
+`changedPaths`, `prevValues` or `nextValues` from `store.instrument()`, or connect to a path inside
+one.
+
+A typed array's indices are its own keys, so the change detector used to walk it like an object:
+replacing a 4-byte `Uint8Array` reported four paths, one per byte, and an instrumentation observer
+copied every byte that differed. A view is now one value at its own path, compared by reference,
+which is how `Map` and `Set` were already treated. Replacing it reports its path once, with the old
+and new views as the values; returning the same view is no change. A subscription to an index inside
+a view, such as `buf.0`, is no longer notified; subscribe to the view's path instead.
+
+The by-reference warning also tells binary data apart. A view cannot be frozen, so the old message
+("it is now frozen ... will throw") was false for it: nothing throws, and a later write into the
+buffer changes the slice in place, unseen by subscribers. The warning now says that, and it also
+catches a buffer kept from a field of the payload, as `{ ...payload }` does.
 
 ---
 

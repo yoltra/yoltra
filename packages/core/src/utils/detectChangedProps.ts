@@ -30,6 +30,8 @@ function warnDottedKey(path: string, key: string): void {
  * - **Primitives / null** → treated as leafs (change = current `path`; two `NaN`s are equal)
  * - **Date** → compares `getTime()`
  * - **RegExp** → compares `source` and `flags`
+ * - **`Map`, `Set` and binary values** (typed arrays, `DataView`, `ArrayBuffer`) → one value at their
+ *   own path, compared by reference
  * - **Arrays** → if lengths differ, the whole array path is marked changed; otherwise compares
  *   element-by-element producing paths like `"items.0.title"`
  * - **Objects** → compares by the **union of keys**, recursing into shared keys and marking
@@ -163,6 +165,21 @@ function walk(
     return;
   }
   if (oldState instanceof Set || newState instanceof Set) {
+    out.push(path);
+    return;
+  }
+
+  // Binary values, for the same reason and one more. A typed array's indices are its own enumerable
+  // keys, so the object walk below reported one path per changed byte: replacing a 1 MB buffer
+  // produced up to a million changed paths, a million path notifications and, when instrumented, a
+  // million entries in `prevValues`/`nextValues`. A view is one value, like a `Map`.
+  //
+  // By reference rather than by bytes: a view cannot be frozen, so writing into the same view in
+  // place is invisible to any comparison of references, and comparing bytes would cost a full scan
+  // of every buffer on every commit to report what immutable updates already say. A new view is a
+  // change; the same view is not. `ArrayBuffer` and `DataView` already landed on the "no enumerable
+  // keys" rule below and stay one value; this makes the rule explicit for all of them.
+  if (ArrayBuffer.isView(oldState) || ArrayBuffer.isView(newState)) {
     out.push(path);
     return;
   }

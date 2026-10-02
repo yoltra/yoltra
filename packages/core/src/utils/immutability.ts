@@ -59,7 +59,9 @@ export function freezeState<T>(
 
   // Reported before the early-exit on already-frozen values, so a payload stored twice is still
   // named the second time.
-  if (alias !== undefined && obj === alias.watch) alias.onFound();
+  if (alias !== undefined && (obj === alias.watch || alias.also?.has(obj) === true)) {
+    alias.onFound(obj);
+  }
 
   if (Object.isFrozen(obj)) return obj as any;
 
@@ -117,6 +119,14 @@ export function freezeState<T>(
 export interface AliasWatch {
   /** The reference to look for while freezing. */
   readonly watch: object;
-  /** Called if `watch` is reachable from the value being frozen. */
-  readonly onFound: () => void;
+  /**
+   * Further references to look for, such as binary values held one level inside `watch`.
+   *
+   * @remarks
+   * A reducer that copies the payload object but keeps its buffer, `{ ...payload }`, stores the
+   * buffer by reference without storing `watch`. Listing such values here reports that too.
+   */
+  readonly also?: ReadonlySet<object>;
+  /** Called with the reference found, `watch` or one of `also`, when it is reachable from the value being frozen. */
+  readonly onFound: (node: object) => void;
 }

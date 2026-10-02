@@ -208,6 +208,30 @@ const now = (): number =>
     : Date.now();
 
 /**
+ * The binary values held directly by an event payload, for the by-reference warning.
+ *
+ * @remarks
+ * Reads data properties through their descriptors and never calls a getter: this feeds a
+ * development warning, and a warning must not run the caller's code or turn its throw into a
+ * reducer error. A payload that refuses introspection (a revoked proxy, a throwing trap) gets no
+ * watch at all.
+ *
+ * @internal
+ */
+function binaryFieldsOf(payload: object): ReadonlySet<object> | undefined {
+  let found: Set<object> | undefined;
+  try {
+    for (const key of Object.keys(payload)) {
+      const value: unknown = Object.getOwnPropertyDescriptor(payload, key)?.value;
+      if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer) (found ??= new Set()).add(value);
+    }
+  } catch {
+    return undefined;
+  }
+  return found;
+}
+
+/**
  * Splits a `"channel::type"` key back into its two halves.
  *
  * @remarks
@@ -1244,21 +1268,30 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // the caller still holds the object, mutating it later throws from an unrelated stack, and
     // the same code works in production because the freeze is compiled out. Warned once per
     // slice and event so a hot path does not become a log.
+    //
+    // Binary values get their own message, because the usual one would be false for them: a
+    // typed array or DataView cannot be frozen, so nothing throws, in development or production.
+    // A write into it changes the slice in place and no subscriber is told. Binary fields one
+    // level inside the payload are watched too, since `{ ...payload }` copies the object and keeps
+    // the buffer.
     const payload = (event as { payload?: unknown }).payload;
     const alias: AliasWatch | undefined =
       process.env.NODE_ENV !== "production" && payload !== null && typeof payload === "object"
         ? {
             watch: payload,
-            onFound: () => {
+            also: binaryFieldsOf(payload),
+            onFound: (node) => {
               const key = `${rName as string}:${event.channel}:${event.type}`;
               if (this.warnedPayloadAliases.has(key)) return;
               this.warnedPayloadAliases.add(key);
+              const where = `[yoltra] Slice "${rName as string}" stored ${node === payload ? "the payload" : "binary data from the payload"} of "${event.channel}/${event.type}" by reference.`;
               console.warn(
-                `[yoltra] Slice "${rName as string}" stored the payload of ` +
-                  `"${event.channel}/${event.type}" by reference. It is now frozen along with ` +
-                  `the rest of the state, so the emitter mutating it later will throw in ` +
-                  `development and silently corrupt state in production. Copy the payload in ` +
-                  `the reducer instead.`,
+                ArrayBuffer.isView(node) || node instanceof ArrayBuffer
+                  ? `${where} Binary data cannot be frozen, so a later write into it changes this ` +
+                      `slice in place, unseen by subscribers. Copy it in the reducer (\`.slice()\`).`
+                  : `${where} It is now frozen along with the rest of the state, so the emitter ` +
+                      `mutating it later will throw in development and silently corrupt state in ` +
+                      `production. Copy the payload in the reducer instead.`,
               );
             },
           }
