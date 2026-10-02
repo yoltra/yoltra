@@ -210,6 +210,64 @@ can fire it rather than wait for it (see [Testing a call](#testing-a-call)).
 
 ---
 
+## Telling the responder you gave up
+
+A call that is cancelled, aborted or times out stops listening, but the responder does not know:
+it finishes its work for nobody. Name an event for the call to emit when it gives up:
+
+```typescript
+type EM = {
+  job: {
+    start: { id: string };
+    done: { ok: boolean };
+    cancel: CallCancellation; // { requestId, reason, detail? }
+  };
+};
+
+const call = store.call("job", "start", { id }, {
+  reply: ["job", "done"],
+  cancel: ["job", "cancel"],
+});
+```
+
+The payload's `requestId` is the `id` of the request event the responder received, and `reason`
+is `"cancelled"`, `"aborted"` or `"timeout"`, with `detail` carrying the reason given to
+`cancel()` or the signal's abort reason. `cancel` is typed to the events whose payload can hold a
+`CallCancellation`, so a mismatch is a compile error.
+
+It is emitted only when the request was actually sent, and never after a terminal reply or when
+the store is disposed. Emitting it never throws into the caller. With a `correlationId`, the
+cancellation carries it as `meta.correlationId` too, for a responder across a transport.
+
+A responder keeps a controller per request and combines it with its own `ctx.signal`, so the work
+also stops if the responder itself is unregistered:
+
+```typescript
+const inFlight = new Map<string, AbortController>();
+
+store.registerEffect({
+  when: { keys: [["job", "start"]] },
+  effect: async (event, _get, emit, ctx) => {
+    const mine = new AbortController();
+    inFlight.set(event.id, mine);
+    try {
+      const signal = AbortSignal.any([mine.signal, ctx.signal]);
+      const ok = await runJob(event.payload.id, { signal });
+      if (!signal.aborted) await emit("job", "done", { ok });
+    } finally {
+      inFlight.delete(event.id);
+    }
+  },
+});
+
+store.registerEffect({
+  when: { keys: [["job", "cancel"]] },
+  effect: (event) => inFlight.get(event.payload.requestId)?.abort(event.payload.reason),
+});
+```
+
+---
+
 ## When the reply cannot be a direct child
 
 Everything above works because the store stamps `parentId` on whatever a responder emits while it

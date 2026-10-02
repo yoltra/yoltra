@@ -189,3 +189,8 @@ defaults to the console, as before.
 `replaceEffects` or `hotReplace` removes it, or the store is disposed. `onEffect` handlers receive
 it as their fifth argument. Effects written with three parameters are unaffected. If you call an
 `EffectFunction` yourself, in a test, pass a context: `{ signal: new AbortController().signal }`.
+
+**`cancel` on `store.call()`**, with the `CallCancellation` and `CancelKey` types. Name an event
+and the call emits it, with the request's id and the reason, when it is cancelled, aborted or times
+out, so the responder can stop working. See the
+[request and reply guide](./REQUEST_REPLY_GUIDE.md#telling-the-responder-you-gave-up).

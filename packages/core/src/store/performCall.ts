@@ -25,6 +25,7 @@ import type {
 import {
   CallAbortedError,
   CallTimeoutError,
+  type CallCancellation,
   type CallCorrelation,
   type CallHandle,
   type CallOptions,
@@ -122,8 +123,38 @@ export function performCall<
     fn();
   };
 
+  // Whether the request went out. A call that settles before sending it has no responder to tell.
+  let sent = false;
+
+  /**
+   * Tells the responder that this call gave up, through {@link CallOptions.cancel}. After the
+   * call has settled, so the cancellation cannot be mistaken for progress, and never throwing:
+   * the caller is already being told why the call ended.
+   */
+  const tellResponder = (reason: CallCancellation["reason"], detail?: string): void => {
+    if (!sent || opts.cancel === undefined) return;
+    const [cancelChannel, cancelType] = opts.cancel;
+    const payload: CallCancellation =
+      detail === undefined ? { requestId, reason } : { requestId, reason, detail };
+    const emitOpts =
+      opts.correlationId !== undefined ? { meta: { correlationId: opts.correlationId } } : undefined;
+    try {
+      void deps.emit(cancelChannel, cancelType, payload as never, emitOpts).catch(() => undefined);
+    } catch {
+      // Ignored: see above.
+    }
+  };
+
+  /** Settles the call as given up, then tells the responder, unless it had already settled. */
+  const giveUp = (error: Error, reason: CallCancellation["reason"], detail?: string): void => {
+    if (settled) return;
+    finish(() => fail(error));
+    tellResponder(reason, detail);
+  };
+
   function onAbort(): void {
-    finish(() => fail(new CallAbortedError(String(opts.signal?.reason ?? "signal aborted"))));
+    const why = String(opts.signal?.reason ?? "signal aborted");
+    giveUp(new CallAbortedError(why), "aborted", why);
   }
 
   function onStoreDisposed(): void {
@@ -145,7 +176,7 @@ export function performCall<
     // Idle: every correlated event pushes the deadline out, so a streaming responder is not
     // punished for having a lot to say.
     const handle = deps.scheduler.setTimeout(() => {
-      finish(() => fail(new CallTimeoutError(channel, type, idleMs)));
+      giveUp(new CallTimeoutError(channel, type, idleMs), "timeout");
     }, idleMs);
     (handle as { unref?: () => void }).unref?.();
     timer = handle;
@@ -174,6 +205,7 @@ export function performCall<
 
   if (!settled) {
     arm();
+    sent = true;
     void deps.emit(channel, type, payload, {
       id: requestId,
       ...(opts.correlationId !== undefined
@@ -190,7 +222,7 @@ export function performCall<
       return queue.droppedCount;
     },
     cancel: (reason = "cancelled") => {
-      finish(() => fail(new CallAbortedError(reason)));
+      giveUp(new CallAbortedError(reason), "cancelled", reason);
     },
     [Symbol.asyncIterator]: (): AsyncIterator<EventUnion<EM>> => {
       queue.beginConsuming();

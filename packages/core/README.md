@@ -585,12 +585,14 @@ replaced.
 
 ### Going further
 
-The exported surface is `ReplySpec`, `CallOptions`, `CallHandle`, `CallTimeoutError` and
-`CallAbortedError`. Two things this section does not cover:
+The exported surface is `ReplySpec`, `CallOptions`, `CallHandle`, `CallCancellation`,
+`CancelKey`, `CallTimeoutError` and `CallAbortedError`. Three things this section does not cover:
 
 - **`correlationId`**, for a responder that cannot reply directly — because it answers on a later
   turn, or across a worker or a network. By default it widens the match to include an echoed id
   and the parent check still runs first; `correlation: "id"` matches on the echoed id alone.
+- **`cancel`**, an event the call emits when it gives up (cancelled, aborted or timed out), so a
+  responder doing long work can stop it.
 - **Testing a call**, and the rest of the detail, in the
   [Request & Reply guide](https://github.com/yoltra/yoltra/blob/main/docs/en/REQUEST_REPLY_GUIDE.md).
 
@@ -1145,9 +1147,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 13.6 KB | 16 KB |
-| `{ createStore, hydrate, persist }` | 15.0 KB | 17 KB |
-| everything | 16.6 KB | 19 KB |
+| `{ createStore }` | 13.7 KB | 16 KB |
+| `{ createStore, hydrate, persist }` | 15.1 KB | 17 KB |
+| everything | 16.7 KB | 19 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines

@@ -20,6 +20,7 @@
 
 - [AliasWatch](interfaces/AliasWatch.md)
 - [BoundedEncodeResult](interfaces/BoundedEncodeResult.md)
+- [CallCancellation](interfaces/CallCancellation.md)
 - [CallHandle](interfaces/CallHandle.md)
 - [CallOptions](interfaces/CallOptions.md)
 - [CascadeInfo](interfaces/CascadeInfo.md)
@@ -59,6 +60,7 @@
 ## Type Aliases
 
 - [CallCorrelation](type-aliases/CallCorrelation.md)
+- [CancelKey](type-aliases/CancelKey.md)
 - [DecoratableStore](type-aliases/DecoratableStore.md)
 - [Decorated](type-aliases/Decorated.md)
 - [DeepReadonly](type-aliases/DeepReadonly.md)

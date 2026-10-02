@@ -213,6 +213,65 @@ timers, así que un test puede dispararlo en lugar de esperarlo (ver
 
 ---
 
+## Avisarle a `Quien Responde` que te rendiste
+
+Una llamada cancelada, abortada o expirada deja de escuchar, pero `Quien Responde` no lo sabe:
+termina su trabajo para nadie. Nombra un evento que la llamada emita cuando se rinde:
+
+```typescript
+type EM = {
+  job: {
+    start: { id: string };
+    done: { ok: boolean };
+    cancel: CallCancellation; // { requestId, reason, detail? }
+  };
+};
+
+const call = store.call("job", "start", { id }, {
+  reply: ["job", "done"],
+  cancel: ["job", "cancel"],
+});
+```
+
+El `requestId` del payload es el `id` del evento de petición que recibió `Quien Responde`, y
+`reason` es `"cancelled"`, `"aborted"` o `"timeout"`, con `detail` llevando la razón dada a
+`cancel()` o la razón de aborto del signal. `cancel` está tipado a los eventos cuyo payload puede
+contener un `CallCancellation`, así que un desajuste es un error de compilación.
+
+Se emite solo cuando la petición de verdad se envió, y nunca después de una respuesta terminal ni
+cuando el store se libera. Emitirlo nunca lanza hacia quien llama. Con un `correlationId`, la
+cancelación también lo lleva como `meta.correlationId`, para un `Quien Responde` al otro lado de un
+transporte.
+
+`Quien Responde` guarda un controlador por petición y lo combina con su propio `ctx.signal`, así
+que el trabajo también se detiene si el propio `Quien Responde` se desregistra:
+
+```typescript
+const inFlight = new Map<string, AbortController>();
+
+store.registerEffect({
+  when: { keys: [["job", "start"]] },
+  effect: async (event, _get, emit, ctx) => {
+    const mine = new AbortController();
+    inFlight.set(event.id, mine);
+    try {
+      const signal = AbortSignal.any([mine.signal, ctx.signal]);
+      const ok = await runJob(event.payload.id, { signal });
+      if (!signal.aborted) await emit("job", "done", { ok });
+    } finally {
+      inFlight.delete(event.id);
+    }
+  },
+});
+
+store.registerEffect({
+  when: { keys: [["job", "cancel"]] },
+  effect: (event) => inFlight.get(event.payload.requestId)?.abort(event.payload.reason),
+});
+```
+
+---
+
 ## Cuando la respuesta no puede ser hija directa
 
 Todo lo anterior funciona porque el store marca con `parentId` lo que un `Quien Responde` emite

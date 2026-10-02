@@ -413,3 +413,16 @@ describe("EffectFunction gained a context without breaking older effects", () =>
     expectTypeOf<EffectContext["signal"]>().toEqualTypeOf<AbortSignal>();
   });
 });
+
+describe("CallOptions.cancel accepts only events that can carry a cancellation", () => {
+  type CEM = {
+    rpc: { ask: null; answer: null; cancel: { requestId: string; reason: "cancelled" | "aborted" | "timeout"; detail?: string }; count: number };
+  };
+
+  it("accepts a matching event and refuses one whose payload cannot hold it", () => {
+    const store = createStore<Record<string, never>, CEM>({ name: "CancelTypes" });
+    void store.call("rpc", "ask", null, { reply: ["rpc", "answer"], cancel: ["rpc", "cancel"] }).catch(() => undefined);
+    // @ts-expect-error a number payload cannot carry a CallCancellation
+    void store.call("rpc", "ask", null, { reply: ["rpc", "answer"], cancel: ["rpc", "count"] }).catch(() => undefined);
+  });
+});

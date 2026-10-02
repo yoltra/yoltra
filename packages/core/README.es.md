@@ -598,13 +598,15 @@ contrapresión. Un `Quien Responde` atascado es peor que el buffer sin límite q
 
 ### Para profundizar
 
-La superficie exportada es `ReplySpec`, `CallOptions`, `CallHandle`, `CallTimeoutError` y
-`CallAbortedError`. Dos cosas que esta sección no cubre:
+La superficie exportada es `ReplySpec`, `CallOptions`, `CallHandle`, `CallCancellation`,
+`CancelKey`, `CallTimeoutError` y `CallAbortedError`. Tres cosas que esta sección no cubre:
 
 - **`correlationId`**, para un `Quien Responde` que no puede contestar directamente — porque lo hace
   en un turno posterior, o a través de un worker o de la red. Por defecto amplía la coincidencia para
   incluir un id devuelto y la comprobación del padre se sigue ejecutando primero; `correlation: "id"`
   correlaciona solo por el id devuelto.
+- **`cancel`**, un evento que la llamada emite cuando se rinde (cancelada, abortada o expirada),
+  para que un `Quien Responde` que hace trabajo largo pueda detenerlo.
 - **Cómo probar una llamada**, y el resto del detalle, en la
   [guía de Petición y Respuesta](https://github.com/yoltra/yoltra/blob/main/docs/es/REQUEST_REPLY_GUIDE.md).
 
@@ -1170,9 +1172,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 13.6 KB | 16 KB |
-| `{ createStore, hydrate, persist }` | 15.0 KB | 17 KB |
-| todo | 16.6 KB | 19 KB |
+| `{ createStore }` | 13.7 KB | 16 KB |
+| `{ createStore, hydrate, persist }` | 15.1 KB | 17 KB |
+| todo | 16.7 KB | 19 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define

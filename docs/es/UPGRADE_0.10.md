@@ -199,3 +199,8 @@ su disposer, `replaceEffects` o `hotReplace` lo quitan, o el store se libera. Lo
 `onEffect` lo reciben como quinto argumento. Los efectos escritos con tres parámetros no se ven
 afectados. Si llamas un `EffectFunction` tú mismo, en un test, pásale un contexto:
 `{ signal: new AbortController().signal }`.
+
+**`cancel` en `store.call()`**, con los tipos `CallCancellation` y `CancelKey`. Nombra un evento y
+la llamada lo emite, con el id de la petición y la razón, cuando se cancela, se aborta o expira,
+para que `Quien Responde` pueda dejar de trabajar. Consulta la
+[guía de Petición y Respuesta](./REQUEST_REPLY_GUIDE.md#avisarle-a-quien-responde-que-te-rendiste).

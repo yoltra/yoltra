@@ -8,7 +8,7 @@
 
 # Interface: CallOptions\<EM\>
 
-Defined in: [store/call.ts:49](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L49)
+Defined in: [store/call.ts:81](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L81)
 
 Options for [StoreInstance.call](StoreInstance.md#call).
 
@@ -20,11 +20,31 @@ Options for [StoreInstance.call](StoreInstance.md#call).
 
 ## Properties
 
+### cancel?
+
+> `readonly` `optional` **cancel**: [`CancelKey`](../type-aliases/CancelKey.md)\<`EM`\>
+
+Defined in: [store/call.ts:151](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L151)
+
+The event to emit when the call gives up, so the responder can stop working.
+
+#### Remarks
+
+Emitted with a [CallCancellation](CallCancellation.md) payload when the call is cancelled, aborted by its
+`signal`, or times out, and only if the request was sent. Never after a terminal reply, and
+never when the store is disposed, since nothing would be left to receive it. When the call has
+a [CallOptions.correlationId](#correlationid), the cancellation carries it as `meta.correlationId` too.
+Emitting it never throws into the caller.
+
+Typed to the events whose payload accepts a `CallCancellation`.
+
+***
+
 ### correlation?
 
 > `readonly` `optional` **correlation**: [`CallCorrelation`](../type-aliases/CallCorrelation.md)
 
-Defined in: [store/call.ts:116](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L116)
+Defined in: [store/call.ts:162](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L162)
 
 Which link correlates a reply. See [CallCorrelation](../type-aliases/CallCorrelation.md).
 
@@ -45,7 +65,7 @@ anything is emitted: it could never match.
 
 > `readonly` `optional` **correlationId**: `string`
 
-Defined in: [store/call.ts:105](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L105)
+Defined in: [store/call.ts:137](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L137)
 
 Correlate on this id **in addition to** the parent link.
 
@@ -70,7 +90,7 @@ id **alone**, set [CallOptions.correlation](#correlation) to `"id"`.
 
 > `readonly` `optional` **highWaterMark**: `number`
 
-Defined in: [store/call.ts:86](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L86)
+Defined in: [store/call.ts:118](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L118)
 
 How many progress events may buffer before the producer is made to wait.
 
@@ -91,7 +111,7 @@ backpressure means here and when it engages.
 
 > `readonly` **reply**: [`ReplySpec`](../type-aliases/ReplySpec.md)\<`EM`\>
 
-Defined in: [store/call.ts:51](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L51)
+Defined in: [store/call.ts:83](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L83)
 
 Which reply events end the call. See [ReplySpec](../type-aliases/ReplySpec.md).
 
@@ -101,7 +121,7 @@ Which reply events end the call. See [ReplySpec](../type-aliases/ReplySpec.md).
 
 > `readonly` `optional` **signal**: `AbortSignal`
 
-Defined in: [store/call.ts:75](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L75)
+Defined in: [store/call.ts:107](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L107)
 
 Aborts the call. The returned promise rejects and the iterator ends.
 
@@ -116,7 +136,7 @@ user-cancelled action, or a component unmounting.
 
 > `readonly` `optional` **timeoutMs**: `number`
 
-Defined in: [store/call.ts:66](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L66)
+Defined in: [store/call.ts:98](https://github.com/yoltra/yoltra/blob/main/packages/core/src/store/call.ts#L98)
 
 How long the call may sit **idle** before it gives up, in milliseconds.
 

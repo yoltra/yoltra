@@ -42,6 +42,38 @@ export type ReplySpec<EM extends EventMapBase> =
 export type CallCorrelation = "either" | "causal" | "id";
 
 /**
+ * What a responder is told when a {@link StoreInstance.call | call} gives up on it.
+ *
+ * @remarks
+ * Sent as the payload of the event named by {@link CallOptions.cancel}, so a responder doing long
+ * work can stop it instead of finishing for nobody.
+ *
+ * @public
+ */
+export interface CallCancellation {
+  /** The `id` of the request event being abandoned, which the responder saw as `event.id`. */
+  readonly requestId: string;
+  /**
+   * Why: `"cancelled"` by `call.cancel()`, `"aborted"` by the call's `signal`, or `"timeout"`
+   * after {@link CallOptions.timeoutMs} without a correlated event.
+   */
+  readonly reason: "cancelled" | "aborted" | "timeout";
+  /** The reason given to `cancel()`, or the signal's abort reason, as text. */
+  readonly detail?: string;
+}
+
+/**
+ * The `[channel, type]` pairs whose payload can carry a {@link CallCancellation}.
+ *
+ * @public
+ */
+export type CancelKey<EM extends EventMapBase> = {
+  [C in keyof EM & string]: {
+    [T in keyof EM[C] & string]: CallCancellation extends EM[C][T] ? readonly [C, T] : never;
+  }[keyof EM[C] & string];
+}[keyof EM & string];
+
+/**
  * Options for {@link StoreInstance.call}.
  *
  * @public
@@ -103,6 +135,20 @@ export interface CallOptions<EM extends EventMapBase> {
    * id **alone**, set {@link CallOptions.correlation} to `"id"`.
    */
   readonly correlationId?: string;
+
+  /**
+   * The event to emit when the call gives up, so the responder can stop working.
+   *
+   * @remarks
+   * Emitted with a {@link CallCancellation} payload when the call is cancelled, aborted by its
+   * `signal`, or times out, and only if the request was sent. Never after a terminal reply, and
+   * never when the store is disposed, since nothing would be left to receive it. When the call has
+   * a {@link CallOptions.correlationId}, the cancellation carries it as `meta.correlationId` too.
+   * Emitting it never throws into the caller.
+   *
+   * Typed to the events whose payload accepts a `CallCancellation`.
+   */
+  readonly cancel?: CancelKey<EM>;
 
   /**
    * Which link correlates a reply. See {@link CallCorrelation}.
