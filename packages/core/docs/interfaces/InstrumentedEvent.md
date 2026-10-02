@@ -22,11 +22,27 @@ Event map.
 
 ## Properties
 
+### at
+
+> **at**: `number`
+
+Defined in: [types.ts:424](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L424)
+
+When the store processed the event, in epoch milliseconds from [StoreSpec.clock](../type-aliases/StoreSpec.md#clock).
+
+#### Remarks
+
+Read once per event, after its reducers ran, and only while an observer is registered. It is
+the timestamp an observer that records or exports events needs; for how long reducing took,
+read [InstrumentedEvent.reduceTimeMs](#reducetimems).
+
+***
+
 ### changedPaths
 
 > **changedPaths**: `string`[]
 
-Defined in: [types.ts:392](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L392)
+Defined in: [types.ts:403](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L403)
 
 Dotted **leaf** paths that changed, prefixed with the slice name (e.g.
 `"todos.items.0.title"`). Empty when nothing changed. These are the exact
@@ -38,7 +54,7 @@ paths the store computed while reducing — no re-diff required.
 
 > **committed**: `boolean`
 
-Defined in: [types.ts:386](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L386)
+Defined in: [types.ts:397](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L397)
 
 `true` if the event passed middleware and ran reducers; `false` if vetoed.
 
@@ -48,14 +64,21 @@ Defined in: [types.ts:386](https://github.com/yoltra/yoltra/blob/main/packages/c
 
 > **event**: `object`
 
-Defined in: [types.ts:384](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L384)
+Defined in: [types.ts:385](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L385)
 
-The processed event, including its `id` and any [EventMeta](../type-aliases/EventMeta.md) the emitter attached.
-`meta` is absent unless it was supplied.
+The processed event, including its `id`, any [EventMeta](../type-aliases/EventMeta.md) the emitter attached, and its
+place in a causal chain. `meta`, `parentId` and `depth` are absent unless the event has them,
+as on [Event](Event.md).
 
 #### channel
 
 > **channel**: `string`
+
+#### depth?
+
+> `optional` **depth**: `number`
+
+[Event.depth](Event.md#depth): how deep in a causal chain this event is. Absent on a root event.
 
 #### id
 
@@ -64,6 +87,12 @@ The processed event, including its `id` and any [EventMeta](../type-aliases/Even
 #### meta?
 
 > `optional` **meta**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
+
+#### parentId?
+
+> `optional` **parentId**: `string`
+
+[Event.parentId](Event.md#parentid): the event whose handling caused this one. Absent on a root event.
 
 #### payload
 
@@ -79,7 +108,7 @@ The processed event, including its `id` and any [EventMeta](../type-aliases/Even
 
 > **nextValues**: `Record`\<`string`, `unknown`\>
 
-Defined in: [types.ts:396](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L396)
+Defined in: [types.ts:407](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L407)
 
 New value at each changed path, keyed by path.
 
@@ -89,7 +118,7 @@ New value at each changed path, keyed by path.
 
 > **prevValues**: `Record`\<`string`, `unknown`\>
 
-Defined in: [types.ts:394](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L394)
+Defined in: [types.ts:405](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L405)
 
 Old value at each changed path, keyed by path.
 
@@ -99,7 +128,7 @@ Old value at each changed path, keyed by path.
 
 > `optional` **reason**: [`NotCommittedReason`](../type-aliases/NotCommittedReason.md)
 
-Defined in: [types.ts:428](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L428)
+Defined in: [types.ts:448](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L448)
 
 Why the event did not commit. Absent when it did.
 
@@ -121,7 +150,7 @@ it is shared with `EmitResult`, not because they are currently reachable.
 
 > **reduceTimeMs**: `number`
 
-Defined in: [types.ts:404](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L404)
+Defined in: [types.ts:415](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L415)
 
 Milliseconds spent in the synchronous reduce phase for this event.
 
@@ -136,7 +165,7 @@ missing), so it is unaffected by changes to the system clock. It is not a time o
 
 > `optional` **rejected**: [`Rejection`](Rejection.md)
 
-Defined in: [types.ts:413](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L413)
+Defined in: [types.ts:433](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L433)
 
 Present when a reducer refused the write, carrying its reason.
 
@@ -152,7 +181,7 @@ identical in state and are entirely different in cause.
 
 > `optional` **vetoedBy**: `string`
 
-Defined in: [types.ts:437](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L437)
+Defined in: [types.ts:457](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L457)
 
 Which middleware vetoed, when one did and it had a name.
 

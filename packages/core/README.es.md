@@ -648,6 +648,36 @@ await store.emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page
 
 ---
 
+## Tiempo y timers
+
+Un store lee la hora a través de un puerto y arma sus timers a través de otro, y ambos se pueden
+reemplazar. Con los valores por defecto escritos:
+
+```typescript
+const store = createStore({
+  name: "app",
+  reducer: { /* ... */ },
+  clock: { now: () => Date.now() },
+  scheduler: {
+    setTimeout: (callback, delayMs) => setTimeout(callback, delayMs),
+    clearTimeout: (handle) => clearTimeout(handle),
+  },
+});
+```
+
+`clock` decide las ventanas de deduplicación y marca `InstrumentedEvent.at`. `scheduler` arma la
+limpieza de la caché de deduplicación y el timeout de inactividad de `store.call()`; `persist` toma
+su propia opción `scheduler`. Las duraciones como `reduceTimeMs` se miden con `performance.now()` en
+cualquier caso.
+
+Los valores por defecto buscan los globales cada vez que se usan, así que `vi.useFakeTimers()`
+funciona aunque se instale después de construir el store. Inyecta los tuyos para controlar el
+tiempo sin falsear globales, o para darle a todas las bibliotecas que configura un host el mismo
+reloj y los mismos timers. Sus métodos se llaman como métodos, así que una instancia de clase
+funciona.
+
+---
+
 ## Protección contra cascadas (activada por defecto)
 
 Dos consumidores conectados entre sí, ya sea un suscriptor que emite lo que su propio reducer atiende o
@@ -1038,9 +1068,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 12.5 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 13.8 KB | 16 KB |
-| todo | 15.3 KB | 18 KB |
+| `{ createStore }` | 12.7 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 13.9 KB | 16 KB |
+| todo | 15.4 KB | 18 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define

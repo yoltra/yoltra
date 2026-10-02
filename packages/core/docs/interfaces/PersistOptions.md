@@ -8,7 +8,7 @@
 
 # Interface: PersistOptions
 
-Defined in: [persistence/persist.ts:30](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L30)
+Defined in: [persistence/persist.ts:32](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L32)
 
 Shared configuration.
 
@@ -18,7 +18,7 @@ Shared configuration.
 
 > `readonly` **adapter**: [`PersistenceAdapter`](PersistenceAdapter.md)
 
-Defined in: [persistence/persist.ts:33](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L33)
+Defined in: [persistence/persist.ts:35](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L35)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [persistence/persist.ts:33](https://github.com/yoltra/yoltra/blob/ma
 
 > `readonly` **key**: `string`
 
-Defined in: [persistence/persist.ts:32](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L32)
+Defined in: [persistence/persist.ts:34](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L34)
 
 Storage key.
 
@@ -36,7 +36,7 @@ Storage key.
 
 > `readonly` `optional` **migrate**: (`persisted`, `from`) => `null` \| `Record`\<`string`, `unknown`\>
 
-Defined in: [persistence/persist.ts:52](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L52)
+Defined in: [persistence/persist.ts:62](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L62)
 
 Upgrades a payload written by an older version.
 
@@ -62,7 +62,7 @@ The slices to restore, or `null` to start fresh.
 
 > `readonly` `optional` **onError**: (`error`, `phase`) => `void`
 
-Defined in: [persistence/persist.ts:61](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L61)
+Defined in: [persistence/persist.ts:71](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L71)
 
 Called on any failure.
 
@@ -88,11 +88,26 @@ disk should not take down a page.
 
 ***
 
+### scheduler?
+
+> `readonly` `optional` **scheduler**: [`Scheduler`](Scheduler.md)
+
+Defined in: [persistence/persist.ts:56](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L56)
+
+Where the coalescing timer is armed. Defaults to the global `setTimeout` and `clearTimeout`,
+looked up when the timer is armed, so fake timers installed later still apply.
+
+#### Remarks
+
+Pass the store's own scheduler to keep every timer a host owns behind one port.
+
+***
+
 ### slices?
 
 > `readonly` `optional` **slices**: readonly `string`[]
 
-Defined in: [persistence/persist.ts:44](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L44)
+Defined in: [persistence/persist.ts:46](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L46)
 
 Slices to persist. Every slice by default.
 
@@ -102,7 +117,7 @@ Slices to persist. Every slice by default.
 
 > `readonly` `optional` **throttleMs**: `number`
 
-Defined in: [persistence/persist.ts:46](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L46)
+Defined in: [persistence/persist.ts:48](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L48)
 
 Coalescing window for writes, in milliseconds. Defaults to 250.
 
@@ -112,7 +127,7 @@ Coalescing window for writes, in milliseconds. Defaults to 250.
 
 > `readonly` **version**: `number`
 
-Defined in: [persistence/persist.ts:42](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L42)
+Defined in: [persistence/persist.ts:44](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L44)
 
 Schema version of what is written.
 

@@ -8,7 +8,7 @@
 
 # Interface: PersistenceAdapter
 
-Defined in: [persistence/persist.ts:20](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L20)
+Defined in: [persistence/persist.ts:22](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L22)
 
 Where persisted state lives. Bring your own; core imports no platform global.
 
@@ -18,7 +18,7 @@ Where persisted state lives. Bring your own; core imports no platform global.
 
 > **read**(`key`): `null` \| `string` \| `Promise`\<`null` \| `string`\>
 
-Defined in: [persistence/persist.ts:21](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L21)
+Defined in: [persistence/persist.ts:23](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L23)
 
 #### Parameters
 
@@ -36,7 +36,7 @@ Defined in: [persistence/persist.ts:21](https://github.com/yoltra/yoltra/blob/ma
 
 > **remove**(`key`): `void` \| `Promise`\<`void`\>
 
-Defined in: [persistence/persist.ts:23](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L23)
+Defined in: [persistence/persist.ts:25](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L25)
 
 #### Parameters
 
@@ -54,7 +54,7 @@ Defined in: [persistence/persist.ts:23](https://github.com/yoltra/yoltra/blob/ma
 
 > **write**(`key`, `value`): `void` \| `Promise`\<`void`\>
 
-Defined in: [persistence/persist.ts:22](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L22)
+Defined in: [persistence/persist.ts:24](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L24)
 
 #### Parameters
 

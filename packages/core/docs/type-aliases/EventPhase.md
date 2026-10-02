@@ -10,7 +10,7 @@
 
 > **EventPhase** = `"committed"` \| `"uncommitted"` \| `"written"` \| `"all"`
 
-Defined in: [types.ts:1888](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1888)
+Defined in: [types.ts:1971](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1971)
 
 Phase of event subscription notification.
 

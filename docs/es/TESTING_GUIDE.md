@@ -227,12 +227,47 @@ function Value() {
 
 ---
 
+## Controlar el tiempo
+
+Un store lee la hora a través de `clock` y arma sus timers a través de `scheduler`, así que un test
+puede controlar ambos sin falsear globales:
+
+```ts
+let now = 1_000;
+const timers: Array<{ run: () => void; delayMs: number }> = [];
+
+const store = createStore({
+  name: "test",
+  reducer: { counter },
+  dedupWindowMs: 50,
+  clock: { now: () => now },
+  scheduler: {
+    setTimeout: (run, delayMs) => timers.push({ run, delayMs }) - 1,
+    clearTimeout: () => undefined,
+  },
+});
+
+await store.emit("ui", "increment", 1);
+await store.emit("ui", "increment", 1); // dentro de la ventana: se fusiona
+now += 60;
+await store.emit("ui", "increment", 1); // fuera de ella: cuenta
+expect(store.getState().counter.value).toBe(2);
+```
+
+`vi.useFakeTimers()` también funciona, aunque se instale después de construir el store, porque los
+valores por defecto buscan `Date.now` y los timers globales cada vez que se usan. El mismo
+`scheduler` maneja el timeout de inactividad de `store.call()`, así que un test de timeout puede
+dispararlo en lugar de esperar.
+
+---
+
 ## Consejos
 
 - **`dispose()` en `afterEach`** para liberar timers y suscripciones del store.
 - **Dedup / timing:** el dedup está apagado por defecto, así que emisiones
   idénticas rápidas *no* se fusionan — no necesitas fake timers salvo que uses
-  `dedupWindowMs`. Si lo usas, aplica `vi.useFakeTimers()`.
+  `dedupWindowMs`. Si lo usas, inyecta un `clock` o aplica `vi.useFakeTimers()` (ver
+  [Controlar el tiempo](#controlar-el-tiempo)).
 - **Sin `await` para leer:** usa `await emit()` solo cuando necesites que los
   effects del evento hayan terminado; `getState()` ya está al día para los
   resultados del reducer.

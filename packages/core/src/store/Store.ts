@@ -11,6 +11,9 @@ import {
 import { EventBus } from "../eventBus/EventBus";
 import { LooseEventBus } from "../eventBus/LooseEventBus";
 import type {
+  Clock,
+  Scheduler,
+  TimerHandle,
   Event,
   EventMapBase,
   EventKey,
@@ -50,6 +53,7 @@ import type {
   NarrowedEventHandler,
   When,
 } from "../types";
+import { globalScheduler, systemClock } from "../utils/ports";
 import { freezeState } from "../utils/immutability";
 import { createKeyCollisionCheck } from "../utils/reservedSeparator";
 import type { KeyCollisionCheck } from "../utils/reservedSeparator";
@@ -542,6 +546,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private readonly idFactory: () => string;
 
+  /** Where the store reads the time. See {@link StoreSpec.clock}. @internal */
+  private readonly clock: Clock;
+
+  /** Where the store arms its timers. See {@link StoreSpec.scheduler}. @internal */
+  private readonly scheduler: Scheduler;
+
   /**
    * Optional hook invoked when an effect throws/rejects. See
    * {@link StoreSpec.onEffectError}. `await emit()` never rejects on effect
@@ -751,11 +761,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   };
 
   /**
-   * Timer for periodic cleanup of processed events.
+   * The pending prune of processed events, or `null` when none is armed.
    *
    * @internal
    */
-  private eventCleanupTimer: ReturnType<typeof setInterval> | null = null;
+  private eventCleanupTimer: TimerHandle | null = null;
 
   /**
    * Creates a store from a {@link StoreSpec}.
@@ -787,6 +797,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.state = {} as any;
     this.replayEnabled = spec.devtools?.allowReplay ?? false;
     this.idFactory = spec.idFactory ?? (() => crypto.randomUUID());
+    this.clock = spec.clock ?? systemClock;
+    this.scheduler = spec.scheduler ?? globalScheduler;
     this.onEffectError = spec.onEffectError;
     this.onReducerError = spec.onReducerError;
     this.onSubscriberError = spec.onSubscriberError;
@@ -879,8 +891,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public dispose(): void {
-    if (this.eventCleanupTimer) {
-      clearInterval(this.eventCleanupTimer);
+    if (this.eventCleanupTimer !== null) {
+      this.scheduler.clearTimeout(this.eventCleanupTimer);
       this.eventCleanupTimer = null;
     }
 
@@ -935,7 +947,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
-  private fingerprint(channel: string, type: string, payload: unknown): string {
+  private fingerprint(channel: string, type: string, payload: unknown): string | null {
     return fingerprintOf(channel, type, payload);
   }
 
@@ -949,7 +961,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private shouldDedupe(fp: string, windowMs: number): boolean {
-    const now = Date.now();
+    const now = this.clock.now();
     const existing = this.processedEvents.get(fp);
 
     if (existing !== undefined) {
@@ -975,19 +987,26 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
-   * Starts the periodic prune interval if it isn't already running. Called when
-   * the first entry is cached so the timer's lifetime tracks actual dedup use
-   * (content window or identity `dedupKey`), independent of `dedupWindowMs`.
+   * Arms the next prune if none is pending. Called when an entry is cached, so the timer's
+   * lifetime tracks actual dedup use (content window or identity `dedupKey`), independent of
+   * `dedupWindowMs`.
+   *
+   * @remarks
+   * A timeout that re-arms itself while entries remain, rather than an interval, because a
+   * {@link Scheduler} offers only `setTimeout`: one port shape for every timer the store arms.
    *
    * @internal
    */
   private ensureCleanupTimer(): void {
     if (this.eventCleanupTimer !== null) return;
-    this.eventCleanupTimer = setInterval(() => {
-      this.pruneProcessedEvents(Date.now());
+    const handle = this.scheduler.setTimeout(() => {
+      this.eventCleanupTimer = null;
+      this.pruneProcessedEvents(this.clock.now());
+      if (this.processedEvents.size > 0) this.ensureCleanupTimer();
     }, 5000);
-    // Never let the cleanup interval by itself keep a Node process alive.
-    (this.eventCleanupTimer as { unref?: () => void }).unref?.();
+    // Never let the prune by itself keep a Node process alive.
+    (handle as { unref?: () => void }).unref?.();
+    this.eventCleanupTimer = handle;
   }
 
   /**
@@ -1009,10 +1028,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       }
     }
 
-    // Once the cache has drained, stop the interval so an idle store doesn't
-    // hold a repeating timer. It restarts on the next cached event.
+    // Once the cache has drained, cancel the pending prune so an idle store holds no timer.
+    // It is armed again by the next cached event.
     if (this.processedEvents.size === 0 && this.eventCleanupTimer !== null) {
-      clearInterval(this.eventCleanupTimer);
+      this.scheduler.clearTimeout(this.eventCleanupTimer);
       this.eventCleanupTimer = null;
     }
   }
@@ -1865,7 +1884,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         dedupKey !== undefined
           ? `${channel}::${type}::#${dedupKey}`
           : this.fingerprint(channel as string, type as string, payload);
-      if (this.shouldDedupe(fp, windowMs)) {
+      // `null` is a payload the fingerprint could not read in full: never deduplicated.
+      if (fp !== null && this.shouldDedupe(fp, windowMs)) {
         // A suppressed duplicate never reaches middleware or a reducer, so it is neither
         // committed nor written. It carries `reason: "deduped"` to say so: a caller handling
         // `committed: false` needs to tell a guard refusing the action from a double-click
@@ -2225,14 +2245,18 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         type: event.type as string,
         payload: event.payload,
         // Conditional, so an event without metadata produces an observer payload
-        // byte-identical to the pre-`meta` shape.
+        // byte-identical to the pre-`meta` shape. Causality likewise: an observer rebuilding a
+        // trace needs the parent, and a root event has none to report.
         ...(event.meta !== undefined ? { meta: event.meta } : {}),
+        ...(event.parentId !== undefined ? { parentId: event.parentId } : {}),
+        ...(event.depth !== undefined ? { depth: event.depth } : {}),
       },
       committed: result.committed,
       changedPaths,
       prevValues,
       nextValues,
       reduceTimeMs,
+      at: this.clock.now(),
       // Present only when a reducer refused, so an observer can tell a refusal from a veto —
       // identical in state, entirely different in cause.
       ...(result.rejected !== undefined ? { rejected: result.rejected } : {}),
@@ -3085,6 +3109,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     return performCall<S, EM, C, T>(
       {
         idFactory: this.idFactory,
+        scheduler: this.scheduler,
         // `internal`, so an in-flight call survives even `replaceEffects(next, { scope: "all" })`.
         // A test harness resetting a store between cases never means "and abandon the call
         // that is currently awaiting a reply", and the symptom would be a hang to the idle
@@ -3895,6 +3920,8 @@ export function createStore<
   effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
   dedupWindowMs?: number;
   idFactory?: () => string;
+  clock?: Clock;
+  scheduler?: Scheduler;
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
   onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
@@ -3943,6 +3970,8 @@ export function createStore<RM extends ReducersMapAny>(cfg: {
   effects?: Array<EffectSpec<DeepReadonly<StateFromReducers<RM>>, EMFromReducersStrict<RM>>>;
   dedupWindowMs?: number;
   idFactory?: () => string;
+  clock?: Clock;
+  scheduler?: Scheduler;
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EMFromReducersStrict<RM>>) => void;
   onReducerError?: (

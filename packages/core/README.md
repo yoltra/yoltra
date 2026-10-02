@@ -633,6 +633,34 @@ await store.emit("analytics", "pageView", { page }, { dedupKey: `pageView:${page
 
 ---
 
+## Time and timers
+
+A store reads the time through one port and arms timers through another, and both can be
+replaced. With the defaults written out:
+
+```typescript
+const store = createStore({
+  name: "app",
+  reducer: { /* ... */ },
+  clock: { now: () => Date.now() },
+  scheduler: {
+    setTimeout: (callback, delayMs) => setTimeout(callback, delayMs),
+    clearTimeout: (handle) => clearTimeout(handle),
+  },
+});
+```
+
+`clock` decides deduplication windows and stamps `InstrumentedEvent.at`. `scheduler` arms the
+deduplication cache prune and the idle timeout of `store.call()`; `persist` takes a `scheduler`
+option of its own. Durations such as `reduceTimeMs` are measured with `performance.now()` either way.
+
+The defaults look the globals up each time they are used, so `vi.useFakeTimers()` works even when
+it is installed after the store was built. Inject your own to control time without faking globals,
+or to hand every library a host configures the same clock and timers. Their methods are called as
+methods, so a class instance works.
+
+---
+
 ## Cascade protection (on by default)
 
 Two consumers wired into each other, whether a subscriber that emits what its own reducer answers or
@@ -1015,9 +1043,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 12.5 KB | 14 KB |
-| `{ createStore, hydrate, persist }` | 13.8 KB | 16 KB |
-| everything | 15.3 KB | 18 KB |
+| `{ createStore }` | 12.7 KB | 14 KB |
+| `{ createStore, hydrate, persist }` | 13.9 KB | 16 KB |
+| everything | 15.4 KB | 18 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines

@@ -202,6 +202,9 @@ However a call ends — resolved, timed out, aborted, cancelled — the subscrip
 any producer parked on backpressure is released. A wedged responder would be worse than the
 unbounded buffer this replaced.
 
+The idle timer is armed on the store's `scheduler`, the same port its other timers use, so a test
+can fire it rather than wait for it (see [Testing a call](#testing-a-call)).
+
 ---
 
 ## When the reply cannot be a direct child
@@ -276,6 +279,20 @@ it("answers", async () => {
   const res = await store.call("rpc", "ask", { q: "?" }, { reply: ["rpc", "answer"] });
   expect(res.payload.text).toBe("hi");
 });
+```
+
+To test a timeout without waiting for it, give the store a scheduler you can fire:
+
+```typescript
+const timers: Array<{ run: () => void; delayMs: number }> = [];
+const store = createStore<{}, EM>({
+  name: "test",
+  scheduler: { setTimeout: (run, delayMs) => timers.push({ run, delayMs }) - 1, clearTimeout: () => undefined },
+});
+
+const call = store.call("rpc", "ask", { q: "?" }, { reply: ["rpc", "answer"], timeoutMs: 5_000 });
+timers.find((t) => t.delayMs === 5_000)!.run();
+await expect(call).rejects.toBeInstanceOf(CallTimeoutError);
 ```
 
 To assert backpressure rather than assume it, record when the producer's `emit` *resolves* and

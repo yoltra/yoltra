@@ -15,6 +15,8 @@
  */
 
 import { decodeState, encodeState } from "../serialize/codec";
+import type { Scheduler, TimerHandle } from "../types";
+import { globalScheduler } from "../utils/ports";
 
 /** Where persisted state lives. Bring your own; core imports no platform global. */
 export interface PersistenceAdapter {
@@ -44,6 +46,14 @@ export interface PersistOptions {
   readonly slices?: readonly string[];
   /** Coalescing window for writes, in milliseconds. Defaults to 250. */
   readonly throttleMs?: number;
+  /**
+   * Where the coalescing timer is armed. Defaults to the global `setTimeout` and `clearTimeout`,
+   * looked up when the timer is armed, so fake timers installed later still apply.
+   *
+   * @remarks
+   * Pass the store's own scheduler to keep every timer a host owns behind one port.
+   */
+  readonly scheduler?: Scheduler;
   /**
    * Upgrades a payload written by an older version.
    *
@@ -243,7 +253,8 @@ function encodeEnvelope(
 export function persist(store: PersistableStore, options: PersistOptions): () => void {
   const throttleMs = options.throttleMs ?? 250;
   const watched = options.slices;
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  const scheduler = options.scheduler ?? globalScheduler;
+  let timer: TimerHandle | null = null;
   let pending = false;
 
   const flush = (): void => {
@@ -267,12 +278,13 @@ export function persist(store: PersistableStore, options: PersistOptions): () =>
       return;
     }
     if (timer !== null) return;
-    timer = setTimeout(() => {
+    const handle = scheduler.setTimeout(() => {
       timer = null;
       flush();
     }, throttleMs);
     // Never hold a process open for a pending write.
-    (timer as unknown as { unref?: () => void }).unref?.();
+    (handle as { unref?: () => void }).unref?.();
+    timer = handle;
   };
 
   const stop = store.instrument((info) => {
@@ -290,7 +302,7 @@ export function persist(store: PersistableStore, options: PersistOptions): () =>
   return () => {
     stop();
     if (timer !== null) {
-      clearTimeout(timer);
+      scheduler.clearTimeout(timer);
       timer = null;
     }
     flush();

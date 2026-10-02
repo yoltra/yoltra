@@ -116,3 +116,14 @@ on one channel: there, the parent link can point at the wrong request. See the
 
 **`ReducerReplacement<R, S, EM>`**, the argument `replaceReducers` takes, for typing an HMR handler
 that builds the map before calling it.
+
+**`clock` and `scheduler` on `createStore`**, with the `Clock`, `Scheduler` and `TimerHandle` types.
+The store reads the time and arms every timer through them: deduplication windows, the dedup cache
+prune, and the idle timeout of `store.call()`. `persist` takes a `scheduler` option too. The
+defaults behave as before. See [Time and timers](../../packages/core/README.md#time-and-timers).
+
+**`at`, `parentId` and `depth` on instrumented events.** `InstrumentedEvent.at` is the clock time
+at which the store processed the event, and `event.parentId` and `event.depth` carry its causal
+position, absent on a root event as they are on `Event`. An observer that records or traces events
+no longer has to take its own timestamp or lose the chain. If you build `InstrumentedEvent` values
+yourself, for a fake observer feed in a test, add `at`.

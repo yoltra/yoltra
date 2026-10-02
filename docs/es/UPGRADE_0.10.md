@@ -120,3 +120,15 @@ equivocada. Consulta la [guía de Petición y Respuesta](./REQUEST_REPLY_GUIDE.m
 
 **`ReducerReplacement<R, S, EM>`**, el argumento que toma `replaceReducers`, para tipar un handler
 de HMR que construye el mapa antes de llamarlo.
+
+**`clock` y `scheduler` en `createStore`**, con los tipos `Clock`, `Scheduler` y `TimerHandle`. El
+store lee la hora y arma todos sus timers a través de ellos: las ventanas de deduplicación, la
+limpieza de la caché de deduplicación y el timeout de inactividad de `store.call()`. `persist` también
+toma una opción `scheduler`. Los valores por defecto se comportan como antes. Consulta
+[Tiempo y timers](../../packages/core/README.es.md#tiempo-y-timers).
+
+**`at`, `parentId` y `depth` en los eventos instrumentados.** `InstrumentedEvent.at` es la hora del
+reloj a la que el store procesó el evento, y `event.parentId` y `event.depth` llevan su posición
+causal, ausentes en un evento raíz como lo están en `Event`. Un observador que registra o traza
+eventos ya no tiene que tomar su propia marca de tiempo ni perder la cadena. Si construyes valores
+`InstrumentedEvent` tú mismo, para alimentar un observador falso en un test, agrega `at`.

@@ -378,10 +378,21 @@ export type Unsubscribe = () => void;
  */
 export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
   /**
-   * The processed event, including its `id` and any {@link EventMeta} the emitter attached.
-   * `meta` is absent unless it was supplied.
+   * The processed event, including its `id`, any {@link EventMeta} the emitter attached, and its
+   * place in a causal chain. `meta`, `parentId` and `depth` are absent unless the event has them,
+   * as on {@link Event}.
    */
-  event: { id: string; channel: string; type: string; payload: unknown; meta?: EventMeta };
+  event: {
+    id: string;
+    channel: string;
+    type: string;
+    payload: unknown;
+    meta?: EventMeta;
+    /** {@link Event.parentId}: the event whose handling caused this one. Absent on a root event. */
+    parentId?: string;
+    /** {@link Event.depth}: how deep in a causal chain this event is. Absent on a root event. */
+    depth?: number;
+  };
   /** `true` if the event passed middleware and ran reducers; `false` if vetoed. */
   committed: boolean;
   /**
@@ -402,6 +413,15 @@ export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
    * missing), so it is unaffected by changes to the system clock. It is not a time of day.
    */
   reduceTimeMs: number;
+  /**
+   * When the store processed the event, in epoch milliseconds from {@link StoreSpec.clock}.
+   *
+   * @remarks
+   * Read once per event, after its reducers ran, and only while an observer is registered. It is
+   * the timestamp an observer that records or exports events needs; for how long reducing took,
+   * read {@link InstrumentedEvent.reduceTimeMs}.
+   */
+  at: number;
   /**
    * Present when a reducer refused the write, carrying its reason.
    *
@@ -508,6 +528,43 @@ export type MiddlewareInput<S = any, EM extends EventMapBase = EventMapBase> =
   | MiddlewareSpec<S, EM>;
 
 /**
+ * A cancellable timer handle, as `setTimeout` returns it: a number in browsers, an object in Node.
+ *
+ * @public
+ */
+export type TimerHandle = number | object;
+
+/**
+ * Where a store reads the time.
+ *
+ * @remarks
+ * Called as a method, so a class instance keeps its `this`. Only `now()` is read, so a clock with
+ * more members is accepted as it is.
+ *
+ * @public
+ */
+export interface Clock {
+  /** Milliseconds since the epoch. */
+  now(): number;
+}
+
+/**
+ * Where a store arms its timers.
+ *
+ * @remarks
+ * Called as methods, so a class instance keeps its `this`. `clearTimeout` receives exactly what
+ * `setTimeout` returned.
+ *
+ * @public
+ */
+export interface Scheduler {
+  /** Runs `callback` once, after `delayMs` milliseconds. */
+  setTimeout(callback: () => void, delayMs: number): TimerHandle;
+  /** Cancels a timer that has not fired yet. */
+  clearTimeout(handle: TimerHandle): void;
+}
+
+/**
  * Store configuration object passed to the {@link Store} constructor or {@link createStore}.
  *
  * @typeParam R  - Reducer name union (string literal union).
@@ -599,6 +656,32 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * ```
    */
   idFactory?: () => string;
+
+  /**
+   * Where the store reads the time: deduplication windows and {@link InstrumentedEvent.at}.
+   *
+   * @remarks
+   * Inject one to control time in a test, or to give every library a host configures the same
+   * clock. The default reads `Date.now()` at each call, so fake timers installed after the store
+   * was created still apply. Durations such as {@link InstrumentedEvent.reduceTimeMs} are measured
+   * with `performance.now()` either way.
+   *
+   * @default `{ now: () => Date.now() }`
+   */
+  clock?: Clock;
+
+  /**
+   * Where the store arms its timers: the deduplication cache prune and the idle timeout of
+   * `store.call()`.
+   *
+   * @remarks
+   * The default calls the global `setTimeout` and `clearTimeout` when a timer is armed or
+   * cleared, so fake timers installed after the store was created still apply. `persist` takes
+   * its own, `PersistOptions.scheduler`.
+   *
+   * @default the global `setTimeout` and `clearTimeout`
+   */
+  scheduler?: Scheduler;
 
   /**
    * DevTools configuration options.

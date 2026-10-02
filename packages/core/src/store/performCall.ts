@@ -19,6 +19,8 @@ import type {
   EmitResult,
   EventMapBase,
   EventUnion,
+  Scheduler,
+  TimerHandle,
 } from "../types";
 import {
   CallAbortedError,
@@ -40,11 +42,13 @@ const DEFAULT_CALL_WATERMARK = 16;
  * What `performCall` needs from the store.
  *
  * @remarks
- * Three members, named rather than structural over the whole class, because three is few enough
+ * Four members, named rather than structural over the whole class, because four is few enough
  * that naming them documents the coupling instead of hiding it.
  */
 export interface CallDeps<St, EM extends EventMapBase> {
   readonly idFactory: () => string;
+  /** Arms the idle timeout: the store's `StoreSpec.scheduler`. */
+  readonly scheduler: Scheduler;
   readonly registerEffect: (spec: EffectSpec<DeepReadonly<St>, EM>) => () => void;
   readonly emit: <C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
@@ -94,7 +98,7 @@ export function performCall<
   // unhandled; the caller's own await still sees it.
   terminal.catch(() => undefined);
 
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  let timer: TimerHandle | null = null;
   let unregister: (() => void) | null = null;
 
   /**
@@ -105,7 +109,7 @@ export function performCall<
   const finish = (fn: () => void, graceful = false): void => {
     if (settled) return;
     settled = true;
-    if (timer !== null) clearTimeout(timer);
+    if (timer !== null) deps.scheduler.clearTimeout(timer);
     timer = null;
     unregister?.();
     unregister = null;
@@ -120,13 +124,14 @@ export function performCall<
   }
 
   const arm = (): void => {
-    if (timer !== null) clearTimeout(timer);
+    if (timer !== null) deps.scheduler.clearTimeout(timer);
     // Idle: every correlated event pushes the deadline out, so a streaming responder is not
     // punished for having a lot to say.
-    timer = setTimeout(() => {
+    const handle = deps.scheduler.setTimeout(() => {
       finish(() => fail(new CallTimeoutError(channel, type, idleMs)));
     }, idleMs);
-    (timer as { unref?: () => void }).unref?.();
+    (handle as { unref?: () => void }).unref?.();
+    timer = handle;
   };
 
   unregister = deps.registerEffect({

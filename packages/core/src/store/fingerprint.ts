@@ -71,7 +71,8 @@ export function stableStringify(value: unknown): string {
  * @param channel - Event channel.
  * @param type - Event type.
  * @param payload - Event payload.
- * @returns A string that is equal for two events with equal content.
+ * @returns A string that is equal for two events with equal content, or `null` when the payload
+ *   could not be read in full, meaning "never deduplicate this event".
  *
  * @remarks
  * Primitives keep a fast path, but a typed one: `String(payload)` alone made the number `1`
@@ -79,14 +80,14 @@ export function stableStringify(value: unknown): string {
  * are likewise distinguished, having previously shared `::null`.
  *
  * When the payload exceeds the node budget the fingerprint degrades to **never dedupe**
- * rather than maybe-wrongly-dedupe. Two large payloads differing only past the cutoff would
+ * (`null`) rather than maybe-wrongly-dedupe. Two large payloads differing only past the cutoff would
  * otherwise collide and the second would be dropped; refusing to dedup merely costs a
  * duplicate, which is the safe direction and matches what already happened to payloads the
  * old implementation could not serialize.
  *
  * @internal
  */
-export function fingerprint(channel: string, type: string, payload: unknown): string {
+export function fingerprint(channel: string, type: string, payload: unknown): string | null {
   const base = `${channel}::${type}`;
 
   if (payload === null) return `${base}::null`;
@@ -95,12 +96,13 @@ export function fingerprint(channel: string, type: string, payload: unknown): st
 
   try {
     const { value, report } = encodeState(payload, { maxNodes: FINGERPRINT_MAX_NODES });
-    if (report.truncated) return `${base}::${Date.now()}::${Math.random()}`;
+    if (report.truncated) return null;
     return `${base}::${stableStringify(value)}`;
   } catch {
     // The codec is total over the values it knows, so reaching here means something threw
     // from a getter or a `sanitize` hook. Unique fingerprint: do not dedup what we could not
-    // read.
-    return `${base}::${Date.now()}::${Math.random()}`;
+    // read. It used to be a unique timestamp-and-random string, which kept the promise but also
+    // filled the dedup cache with entries nothing could ever match.
+    return null;
   }
 }

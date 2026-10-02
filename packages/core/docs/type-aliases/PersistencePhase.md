@@ -10,6 +10,6 @@
 
 > **PersistencePhase** = `"read"` \| `"write"` \| `"decode"` \| `"migrate"` \| `"encode"`
 
-Defined in: [persistence/persist.ts:27](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L27)
+Defined in: [persistence/persist.ts:29](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L29)
 
 Where a failure happened, so a handler can tell a bad write from a bad payload.

@@ -10,7 +10,7 @@
 
 > **EMFromReducersStrict**\<`RM`\> = `UnionToIntersection`\<`EMOfSpec`\<`RM`\[keyof `RM`\]\>\> *extends* infer Merged ? `Merged` *extends* [`EventMapBase`](EventMapBase.md) ? `Merged` : [`EventMapBase`](EventMapBase.md) : [`EventMapBase`](EventMapBase.md)
 
-Defined in: [types.ts:1454](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1454)
+Defined in: [types.ts:1537](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1537)
 
 The event map a reducers map produces, merged across its slices.
 

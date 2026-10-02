@@ -10,7 +10,7 @@
 
 > **RegistrationObserver**\<`EM`\> = (`changes`) => `void`
 
-Defined in: [types.ts:1985](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1985)
+Defined in: [types.ts:2068](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2068)
 
 Observer for [StoreInstance.onRegistrationChange](../interfaces/StoreInstance.md#onregistrationchange).
 

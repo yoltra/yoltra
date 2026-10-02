@@ -227,12 +227,45 @@ function Value() {
 
 ---
 
+## Controlling time
+
+A store reads the time through `clock` and arms its timers through `scheduler`, so a test can own
+both without faking globals:
+
+```ts
+let now = 1_000;
+const timers: Array<{ run: () => void; delayMs: number }> = [];
+
+const store = createStore({
+  name: "test",
+  reducer: { counter },
+  dedupWindowMs: 50,
+  clock: { now: () => now },
+  scheduler: {
+    setTimeout: (run, delayMs) => timers.push({ run, delayMs }) - 1,
+    clearTimeout: () => undefined,
+  },
+});
+
+await store.emit("ui", "increment", 1);
+await store.emit("ui", "increment", 1); // inside the window: coalesced
+now += 60;
+await store.emit("ui", "increment", 1); // past it: counted
+expect(store.getState().counter.value).toBe(2);
+```
+
+`vi.useFakeTimers()` works too, even installed after the store was built, because the defaults
+look `Date.now` and the global timers up each time they are used. The same `scheduler` drives the
+idle timeout of `store.call()`, so a timeout test can fire it instead of waiting.
+
+---
+
 ## Tips
 
 - **`dispose()` in `afterEach`** to release the store's timers and subscriptions.
 - **Dedup / timing:** dedup is off by default, so identical rapid emits are *not*
   coalesced — no fake timers needed unless you set `dedupWindowMs`. If you do,
-  use `vi.useFakeTimers()`.
+  inject a `clock` or use `vi.useFakeTimers()` (see [Controlling time](#controlling-time)).
 - **No `await` for reads:** only `await emit()` when you need the event's effects
   to have finished; `getState()` is already up to date for reducer results.
 - **Prefer store-level tests** for logic and reserve component tests for wiring —

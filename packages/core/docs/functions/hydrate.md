@@ -10,7 +10,7 @@
 
 > **hydrate**(`options`): `Promise`\<[`Hydration`](../interfaces/Hydration.md)\>
 
-Defined in: [persistence/persist.ts:106](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L106)
+Defined in: [persistence/persist.ts:116](https://github.com/yoltra/yoltra/blob/main/packages/core/src/persistence/persist.ts#L116)
 
 Reads persisted state, ready to seed a store.
 

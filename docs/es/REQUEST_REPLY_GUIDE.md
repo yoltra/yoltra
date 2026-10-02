@@ -203,6 +203,10 @@ Termine como termine - resuelta, expirada, abortada, cancelada - la suscripción
 libera cualquier productor detenido por la contrapresión. Si `Quien Responde` queda atascado sería peor que
 el buffer sin límite que esto reemplazo.
 
+El timer de inactividad se arma en el `scheduler` del store, el mismo puerto que usan sus otros
+timers, así que un test puede dispararlo en lugar de esperarlo (ver
+[Probar una llamada](#probar-una-llamada)).
+
 ---
 
 ## Cuando la respuesta no puede ser hija directa
@@ -280,6 +284,20 @@ it("responde", async () => {
   const res = await store.call("rpc", "ask", { q: "?" }, { reply: ["rpc", "answer"] });
   expect(res.payload.text).toBe("hola");
 });
+```
+
+Para probar un timeout sin esperarlo, dale al store un scheduler que puedas disparar:
+
+```typescript
+const timers: Array<{ run: () => void; delayMs: number }> = [];
+const store = createStore<{}, EM>({
+  name: "test",
+  scheduler: { setTimeout: (run, delayMs) => timers.push({ run, delayMs }) - 1, clearTimeout: () => undefined },
+});
+
+const call = store.call("rpc", "ask", { q: "?" }, { reply: ["rpc", "answer"], timeoutMs: 5_000 });
+timers.find((t) => t.delayMs === 5_000)!.run();
+await expect(call).rejects.toBeInstanceOf(CallTimeoutError);
 ```
 
 Para *comprobar* la contrapresión en vez de suponerla, registra cuando *resuelve* el `emit` del

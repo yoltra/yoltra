@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "`createStore` takes `clock` and `scheduler` (new exports `Clock`, `Scheduler`, `TimerHandle`): the store reads the time and arms every timer through them, for deduplication windows, the dedup cache prune (now a self-rearming timeout) and the idle timeout of `store.call()`. `persist` takes a `scheduler` option. The defaults look the globals up at each use, so fake timers installed after a store was built still apply. `InstrumentedEvent` gains `at`, the clock time the event was processed, and its `event` carries `parentId` and `depth`. A payload too large to fingerprint is still never deduplicated, but no longer leaves an unmatchable entry in the dedup cache.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

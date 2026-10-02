@@ -13,6 +13,7 @@ import { describe, expectTypeOf, it } from "vitest";
 import { createStore } from "../../src/store/Store";
 import { defineSlice, eventKeys } from "../../src/types";
 import type {
+  Clock,
   DeepReadonly,
   Dotted,
   EffectSpec,
@@ -25,6 +26,7 @@ import type {
   PathValue,
   ReducerReplacement,
   ReducerSpec,
+  Scheduler,
   StateFromReducers,
   When,
 } from "../../src/types";
@@ -351,5 +353,28 @@ describe("StateFromReducers and EMFromReducersStrict name an inferred store", ()
 
   it("merges the slices' event maps", () => {
     expectTypeOf<EMFromReducersStrict<typeof reducer>>().toEqualTypeOf<A & B>();
+  });
+});
+
+describe("Clock and Scheduler accept the port shapes other libraries already use", () => {
+  it("accepts a clock with more members than now()", () => {
+    type RicherClock = { now(): number; isoNow(): string };
+    expectTypeOf<RicherClock>().toMatchTypeOf<Clock>();
+  });
+
+  it("accepts a scheduler with its own handle type, and is accepted where one is expected", () => {
+    type OwnHandle = { readonly __timer: unique symbol } | number | object;
+    type OwnScheduler = {
+      setTimeout(callback: () => void, delayMs: number): OwnHandle;
+      clearTimeout(handle: OwnHandle): void;
+    };
+    expectTypeOf<OwnScheduler>().toMatchTypeOf<Scheduler>();
+    expectTypeOf<Scheduler>().toMatchTypeOf<OwnScheduler>();
+  });
+
+  it("is accepted by createStore", () => {
+    const clock: Clock = { now: () => 0 };
+    const scheduler: Scheduler = { setTimeout: () => 0, clearTimeout: () => undefined };
+    createStore({ name: "Ports", reducer: {}, clock, scheduler });
   });
 });
