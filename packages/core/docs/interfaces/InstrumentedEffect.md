@@ -8,7 +8,7 @@
 
 # Interface: InstrumentedEffect
 
-Defined in: [types.ts:477](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L477)
+Defined in: [types.ts:493](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L493)
 
 One effect's part in [InstrumentedEffects](InstrumentedEffects.md).
 
@@ -18,7 +18,7 @@ One effect's part in [InstrumentedEffects](InstrumentedEffects.md).
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [types.ts:486](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L486)
+Defined in: [types.ts:502](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L502)
 
 From its start to its settlement, measured with `performance.now()`.
 
@@ -28,7 +28,7 @@ From its start to its settlement, measured with `performance.now()`.
 
 > `readonly` **failed**: `boolean`
 
-Defined in: [types.ts:488](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L488)
+Defined in: [types.ts:504](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L504)
 
 Whether it threw or rejected. The error itself reaches the diagnostics seam as `effect-error`.
 
@@ -38,7 +38,7 @@ Whether it threw or rejected. The error itself reaches the diagnostics seam as `
 
 > `readonly` `optional` **name**: `string`
 
-Defined in: [types.ts:479](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L479)
+Defined in: [types.ts:495](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L495)
 
 `EffectSpec.meta.name`, else the function's own name, when it has one.
 
@@ -48,7 +48,7 @@ Defined in: [types.ts:479](https://github.com/yoltra/yoltra/blob/main/packages/c
 
 > `readonly` **origin**: [`Origin`](../type-aliases/Origin.md)
 
-Defined in: [types.ts:484](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L484)
+Defined in: [types.ts:500](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L500)
 
 How the effect was registered. `internal` is the store's own machinery, such as the reply
 listener behind `store.call()`.

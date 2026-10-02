@@ -8,7 +8,7 @@
 
 # Interface: EventConsumerMeta\<T\>
 
-Defined in: [types.ts:2045](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2045)
+Defined in: [types.ts:2080](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2080)
 
 Metadata for event consumers (reducers, effects, middleware).
 Useful for debugging tools, DevTools integration, and introspection.
@@ -42,7 +42,7 @@ Consumer type discriminator.
 
 > `optional` **description**: `string`
 
-Defined in: [types.ts:2053](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2053)
+Defined in: [types.ts:2088](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2088)
 
 Brief one-liner description of what this consumer does
 
@@ -52,7 +52,7 @@ Brief one-liner description of what this consumer does
 
 > **name**: `string`
 
-Defined in: [types.ts:2050](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2050)
+Defined in: [types.ts:2085](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2085)
 
 Unique identifier for this consumer
 
@@ -62,6 +62,6 @@ Unique identifier for this consumer
 
 > **type**: `T`
 
-Defined in: [types.ts:2047](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2047)
+Defined in: [types.ts:2082](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2082)
 
 Consumer type discriminator

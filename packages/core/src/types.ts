@@ -470,6 +470,22 @@ export type InstrumentationObserver<EM extends EventMapBase = EventMapBase> = (
 ) => void;
 
 /**
+ * A store's current load, from {@link StoreInstance.metrics}.
+ *
+ * @public
+ */
+export interface StoreMetrics {
+  /** Events emitted and waiting to be reduced. Non-zero only during a synchronous drain. */
+  readonly queueDepth: number;
+  /** Events whose effects are still running. */
+  readonly inFlightEffects: number;
+  /** Emits dropped as duplicates since the store was created. */
+  readonly dedupHits: number;
+  /** Fingerprints held for deduplication, which is the cache's memory in entries. */
+  readonly dedupEntries: number;
+}
+
+/**
  * One effect's part in {@link InstrumentedEffects}.
  *
  * @public
@@ -1151,6 +1167,25 @@ export interface StoreInstance<
    * registration methods throw. {@link StoreInstance.signal} aborts last. Idempotent.
    */
   dispose(): void;
+
+  /**
+   * The store's current load: queue depth, effects in flight, deduplication. Cheap enough to read
+   * on every scrape of a metrics endpoint.
+   */
+  metrics(): StoreMetrics;
+
+  /**
+   * Resolves when the store is idle: no event waiting to be reduced and no effect running.
+   *
+   * @remarks
+   * For a graceful shutdown, where a process stops taking new work, waits for what is in
+   * progress, and then disposes. A `call()` waiting for its reply and a pending timer are not
+   * work the store is doing, so they do not delay it. Resolves at once when the store is already
+   * idle or disposed, and every pending wait resolves on dispose. Bound it with a timeout: an
+   * effect that never settles keeps the store busy. Never await it from an effect, which is
+   * itself the work it would wait for.
+   */
+  whenIdle(): Promise<void>;
 
   /**
    * Aborted when the store is disposed. Created on first read; already aborted when read after

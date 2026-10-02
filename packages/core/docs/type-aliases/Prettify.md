@@ -10,7 +10,7 @@
 
 > **Prettify**\<`T`\> = `{ [K in keyof T]: T[K] }` & `object`
 
-Defined in: [types.ts:2405](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2405)
+Defined in: [types.ts:2440](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2440)
 
 Flattens an intersection into a single object type.
 

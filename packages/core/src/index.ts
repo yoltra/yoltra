@@ -74,6 +74,7 @@ export type {
   EffectsObserver,
   Unsubscribe,
   StoreSpec,
+  StoreMetrics,
   Diagnostic,
   DiagnosticCode,
   DiagnosticSink,

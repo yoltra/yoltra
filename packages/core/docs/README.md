@@ -60,6 +60,7 @@
 - [SizeWatchedStore](interfaces/SizeWatchedStore.md)
 - [StoreDecoration](interfaces/StoreDecoration.md)
 - [StoreInstance](interfaces/StoreInstance.md)
+- [StoreMetrics](interfaces/StoreMetrics.md)
 - [WebStorageLike](interfaces/WebStorageLike.md)
 
 ## Type Aliases

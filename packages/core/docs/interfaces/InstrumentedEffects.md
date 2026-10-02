@@ -8,7 +8,7 @@
 
 # Interface: InstrumentedEffects\<EM\>
 
-Defined in: [types.ts:498](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L498)
+Defined in: [types.ts:514](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L514)
 
 What [StoreInstance.instrumentEffects](StoreInstance.md#instrumenteffects) reports once every effect for an event has settled.
 
@@ -26,7 +26,7 @@ Event map.
 
 > `readonly` **at**: `number`
 
-Defined in: [types.ts:502](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L502)
+Defined in: [types.ts:518](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L518)
 
 Clock time ([StoreSpec.clock](../type-aliases/StoreSpec.md#clock)) when the last effect settled.
 
@@ -36,7 +36,7 @@ Clock time ([StoreSpec.clock](../type-aliases/StoreSpec.md#clock)) when the last
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [types.ts:504](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L504)
+Defined in: [types.ts:520](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L520)
 
 The whole effect phase, from the first effect's start to the last one's settlement.
 
@@ -46,7 +46,7 @@ The whole effect phase, from the first effect's start to the last one's settleme
 
 > `readonly` **effects**: readonly [`InstrumentedEffect`](InstrumentedEffect.md)[]
 
-Defined in: [types.ts:506](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L506)
+Defined in: [types.ts:522](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L522)
 
 One entry per effect, in the order they ran.
 
@@ -56,7 +56,7 @@ One entry per effect, in the order they ran.
 
 > `readonly` **event**: `object`
 
-Defined in: [types.ts:500](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L500)
+Defined in: [types.ts:516](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L516)
 
 The event, as [InstrumentedEvent.event](InstrumentedEvent.md#event) describes it.
 

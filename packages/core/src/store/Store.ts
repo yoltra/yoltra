@@ -12,6 +12,7 @@ import { EventBus } from "../eventBus/EventBus";
 import { LooseEventBus } from "../eventBus/LooseEventBus";
 import type {
   Clock,
+  StoreMetrics,
   EffectsObserver,
   InstrumentedEffect,
   InstrumentOptions,
@@ -851,6 +852,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private dedupCount = 0;
 
+  /** Waiting on {@link whenIdle}. @internal */
+  private idleWaiters: Array<() => void> = [];
+
   /**
    * Store-owned metadata for registered effects, keyed by the effect function.
    * Kept **off** the caller's function object: mutating a user-owned function
@@ -1002,6 +1006,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.replaceEffects = this.replaceEffects.bind(this);
     this.replaceReducers = this.replaceReducers.bind(this);
     this.hotReplace = this.hotReplace.bind(this);
+    this.whenIdle = this.whenIdle.bind(this);
   }
 
   /**
@@ -1078,6 +1083,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.queuedRegistrationBatches.length = 0;
     (this.middleware as unknown as unknown[]).length = 0;
     this.changedPathSink = null;
+
+    // A disposed store does no more work, so whoever waits for it to be idle is released.
+    this.releaseIdleWaiters(true);
 
     // Last, so a listener reacting to it finds the store already empty. Pending calls listen
     // here and reject with "store disposed".
@@ -2441,6 +2449,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         this.emitEffectInstrumentation(observers, event, records, now() - t0);
       }
       resolve(result);
+      // Every drained event passes through here, so this is where the store becomes idle.
+      if (this.idleWaiters.length > 0) this.releaseIdleWaiters();
     }
   }
 
@@ -2511,6 +2521,44 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       this.instrumentObservers.delete(observer);
       this.ephemeralObservers.delete(observer);
     };
+  }
+
+  /**
+   * The store's current load. See {@link StoreInstance.metrics}.
+   *
+   * @public
+   */
+  public metrics(): StoreMetrics {
+    return {
+      queueDepth: this.reduceQueue.length,
+      inFlightEffects: this.inFlightEffects,
+      dedupHits: this.dedupCount,
+      dedupEntries: this.processedEvents.size,
+    };
+  }
+
+  /**
+   * Resolves when no event waits to be reduced and no effect runs. See
+   * {@link StoreInstance.whenIdle}.
+   *
+   * @public
+   */
+  public whenIdle(): Promise<void> {
+    if (this.disposed || this.isIdle()) return Promise.resolve();
+    return new Promise((resolve) => this.idleWaiters.push(resolve));
+  }
+
+  /** @internal */
+  private isIdle(): boolean {
+    return !this.isReducing && this.reduceQueue.length === 0 && this.inFlightEffects === 0;
+  }
+
+  /** Resolves every {@link whenIdle} waiter, when the store is idle or `force` says so. @internal */
+  private releaseIdleWaiters(force = false): void {
+    if (!force && !this.isIdle()) return;
+    const waiters = this.idleWaiters;
+    this.idleWaiters = [];
+    for (const resolve of waiters) resolve();
   }
 
   /**

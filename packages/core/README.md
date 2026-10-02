@@ -835,6 +835,25 @@ development, a late `emit` or `call` is reported once per method as `use-after-d
 something still holding the store after its owner released it is a leak worth finding.
 `dispose()` itself can be called again safely.
 
+### Load, and waiting for it to finish
+
+`store.metrics()` returns the store's current load: `queueDepth` (events waiting to be reduced),
+`inFlightEffects`, `dedupHits` and `dedupEntries`. It is cheap enough to read on every scrape of a
+metrics endpoint.
+
+`store.whenIdle()` resolves when no event waits to be reduced and no effect runs, which is the step
+a graceful shutdown waits for before it disposes:
+
+```typescript
+stopTakingWork();                                   // close sockets, stop timers that emit
+await Promise.race([store.whenIdle(), timeout(5_000)]);
+store.dispose();
+```
+
+A `call()` waiting for its reply and a pending timer are not work the store is doing, so they do
+not delay it. It resolves at once on an idle or disposed store, and every wait resolves on
+`dispose()`. Never await it from an effect: that effect is part of the work it waits for.
+
 ---
 
 ## Cascade protection (on by default)
@@ -1144,6 +1163,8 @@ use it ships none of it, and in production it watches nothing.
 | `store.onDiagnostic(observer)`                  | Observe failures, refusals and development warnings. See [Errors and diagnostics](#errors-and-diagnostics) |
 | `store.dispose()`                               | Release the store; it is inert afterwards. See [Tying resources to the store](#tying-resources-to-the-store) |
 | `store.signal`                                  | An `AbortSignal` aborted by `dispose()`        |
+| `store.metrics()`                               | Queue depth, effects in flight, deduplication  |
+| `store.whenIdle()`                              | Resolves when no event waits and no effect runs |
 | `store.instrument(observer, opts?)`             | Observe each event after its reducers          |
 | `store.instrumentEffects(observer, opts?)`      | Observe each event's effect phase once it settles |
 
@@ -1298,9 +1319,9 @@ The number that matters is what you import, not what the package exports:
 <!-- size-table:start -->
 | Import | Size | Budget |
 | --- | --- | --- |
-| `{ createStore }` | 14.1 KB | 16 KB |
-| `{ createStore, hydrate, persist }` | 15.5 KB | 18 KB |
-| everything | 17.4 KB | 20 KB |
+| `{ createStore }` | 14.3 KB | 16 KB |
+| `{ createStore, hydrate, persist }` | 15.7 KB | 18 KB |
+| everything | 17.5 KB | 20 KB |
 <!-- size-table:end -->
 
 These are **production** figures: what you ship once your bundler defines
@@ -1310,7 +1331,7 @@ the larger of the two: dev-only code cannot grow unnoticed just because it never
 user. So the headroom implied here is deliberately conservative.
 
 The **gap between rows** is the tree-shaking claim, and it is what to watch: persistence adds
-1.4 KB to the people who import it and nothing to anyone else, and the whole barrel is 3.3 KB
+1.4 KB to the people who import it and nothing to anyone else, and the whole barrel is 3.2 KB
 past the store. The last row is a growth tripwire; `import * as all` is not something anybody
 writes.
 

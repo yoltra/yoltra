@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "New `store.metrics()` (with `StoreMetrics`): queue depth, effects in flight, dedup hits and dedup entries, cheap enough to read on every metrics scrape. New `store.whenIdle()`: resolves when no event waits to be reduced and no effect runs, for a graceful shutdown; a call waiting for its reply and pending timers do not delay it, and every wait resolves on dispose.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

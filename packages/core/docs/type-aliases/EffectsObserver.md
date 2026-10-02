@@ -10,7 +10,7 @@
 
 > **EffectsObserver**\<`EM`\> = (`info`) => `void`
 
-Defined in: [types.ts:514](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L514)
+Defined in: [types.ts:530](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L530)
 
 Receives an [InstrumentedEffects](../interfaces/InstrumentedEffects.md) per event whose effects ran.
 

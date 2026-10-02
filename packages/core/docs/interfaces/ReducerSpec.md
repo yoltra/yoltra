@@ -8,7 +8,7 @@
 
 # Interface: ReducerSpec\<S, EM\>
 
-Defined in: [types.ts:1469](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1469)
+Defined in: [types.ts:1504](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1504)
 
 One reducer's definition blob (stateful event consumer).
 
@@ -65,7 +65,7 @@ Event map.
 
 > `optional` **meta**: [`EventConsumerMeta`](EventConsumerMeta.md)\<`"reducer"`\>
 
-Defined in: [types.ts:1493](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1493)
+Defined in: [types.ts:1528](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1528)
 
 Optional metadata for debugging tools and DevTools integration.
 
@@ -75,7 +75,7 @@ Optional metadata for debugging tools and DevTools integration.
 
 > **reducer**: [`ReducerFunction`](../type-aliases/ReducerFunction.md)\<`S`, `EM`\>
 
-Defined in: [types.ts:1488](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1488)
+Defined in: [types.ts:1523](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1523)
 
 Pure reducer function: `(state, event) => nextState`, where `state` is this reducer's slice
 and the return value replaces that slice and nothing else.
@@ -86,7 +86,7 @@ and the return value replaces that slice and nothing else.
 
 > **state**: `S`
 
-Defined in: [types.ts:1473](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1473)
+Defined in: [types.ts:1508](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1508)
 
 Initial state for this reducer's own slice.
 
@@ -96,7 +96,7 @@ Initial state for this reducer's own slice.
 
 > `optional` **when**: [`ExactWhen`](../type-aliases/ExactWhen.md)\<`EM`\>
 
-Defined in: [types.ts:1482](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1482)
+Defined in: [types.ts:1517](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1517)
 
 Event targeting: one of the exact forms of the `When` matcher.
 

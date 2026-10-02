@@ -8,7 +8,7 @@
 
 # Interface: RegistrationChange\<EM\>
 
-Defined in: [types.ts:2261](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2261)
+Defined in: [types.ts:2296](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2296)
 
 One change to a store's registrations.
 
@@ -29,7 +29,7 @@ Self-sufficient on purpose: an observer should never need a follow-up
 
 > `readonly` `optional` **description**: `string`
 
-Defined in: [types.ts:2269](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2269)
+Defined in: [types.ts:2304](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2304)
 
 ***
 
@@ -37,7 +37,7 @@ Defined in: [types.ts:2269](https://github.com/yoltra/yoltra/blob/main/packages/
 
 > `readonly` `optional` **dispatch**: `"keyed"` \| `"pattern"`
 
-Defined in: [types.ts:2290](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2290)
+Defined in: [types.ts:2325](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2325)
 
 Whether this registration is dispatched by key (O(1)) or by runtime matching.
 
@@ -47,7 +47,7 @@ Whether this registration is dispatched by key (O(1)) or by runtime matching.
 
 > `readonly` **kind**: `"reducer"` \| `"middleware"` \| `"effect"`
 
-Defined in: [types.ts:2262](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2262)
+Defined in: [types.ts:2297](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2297)
 
 ***
 
@@ -55,7 +55,7 @@ Defined in: [types.ts:2262](https://github.com/yoltra/yoltra/blob/main/packages/
 
 > `readonly` `optional` **name**: `string`
 
-Defined in: [types.ts:2265](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2265)
+Defined in: [types.ts:2300](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2300)
 
 Slice name for a reducer; `meta.name` for middleware and effects; absent when unnamed.
 
@@ -65,7 +65,7 @@ Slice name for a reducer; `meta.name` for middleware and effects; absent when un
 
 > `readonly` **op**: `"mounted"` \| `"unmounted"`
 
-Defined in: [types.ts:2263](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2263)
+Defined in: [types.ts:2298](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2298)
 
 ***
 
@@ -73,7 +73,7 @@ Defined in: [types.ts:2263](https://github.com/yoltra/yoltra/blob/main/packages/
 
 > `readonly` **origin**: [`Origin`](../type-aliases/Origin.md)
 
-Defined in: [types.ts:2266](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2266)
+Defined in: [types.ts:2301](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2301)
 
 ***
 
@@ -81,7 +81,7 @@ Defined in: [types.ts:2266](https://github.com/yoltra/yoltra/blob/main/packages/
 
 > `readonly` `optional` **owner**: `string`
 
-Defined in: [types.ts:2268](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2268)
+Defined in: [types.ts:2303](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2303)
 
 Introspection only, and only ever what a library passed.
 
@@ -91,7 +91,7 @@ Introspection only, and only ever what a library passed.
 
 > `readonly` `optional` **state**: `"initialized"` \| `"preserved"` \| `"deleted"` \| `"retained"`
 
-Defined in: [types.ts:2288](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2288)
+Defined in: [types.ts:2323](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2323)
 
 Reducers only: what happened to the slice's state.
 
@@ -108,7 +108,7 @@ to need. `"retained"` says the state survived; `"deleted"` says it did not.
 
 > `readonly` `optional` **when**: [`When`](../type-aliases/When.md)\<`EM`\>
 
-Defined in: [types.ts:2278](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2278)
+Defined in: [types.ts:2313](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2313)
 
 The **normalized** matcher, as `matchesWhen` will actually use it.
 

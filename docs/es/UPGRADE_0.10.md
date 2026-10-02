@@ -227,3 +227,7 @@ crecieron demasiado, como un import aparte. Consulta
 `InstrumentedEffect` y `EffectsObserver`: cuando todos los efectos de un evento terminaron, el
 nombre, el origen, la duración de cada efecto y si falló. Consulta
 [Observar la fase de efectos](../../packages/core/README.es.md#observar-la-fase-de-efectos).
+
+**`store.metrics()` y `store.whenIdle()`**, con el tipo `StoreMetrics`: la carga actual del store, y
+una promesa que se resuelve cuando ningún evento espera a ser reducido y ningún efecto corre, para un
+apagado ordenado. Consulta [Carga, y esperar a que termine](../../packages/core/README.es.md#carga-y-esperar-a-que-termine).

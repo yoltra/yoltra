@@ -855,6 +855,25 @@ store. En desarrollo, un `emit` o un `call` tardío se reporta una vez por méto
 `use-after-dispose`, porque algo que sigue sosteniendo el store después de que su dueño lo soltó
 es una fuga que vale la pena encontrar. Llamar `dispose()` otra vez es seguro.
 
+### Carga, y esperar a que termine
+
+`store.metrics()` devuelve la carga actual del store: `queueDepth` (eventos esperando a ser
+reducidos), `inFlightEffects`, `dedupHits` y `dedupEntries`. Es lo bastante barato para leerlo en
+cada consulta de un endpoint de métricas.
+
+`store.whenIdle()` se resuelve cuando ningún evento espera a ser reducido y ningún efecto corre, que
+es el paso que un apagado ordenado espera antes de liberar:
+
+```typescript
+stopTakingWork();                                   // cerrar sockets, detener timers que emiten
+await Promise.race([store.whenIdle(), timeout(5_000)]);
+store.dispose();
+```
+
+Un `call()` esperando su respuesta y un timer pendiente no son trabajo que el store esté haciendo,
+así que no lo retrasan. Se resuelve de inmediato en un store ocioso o liberado, y toda espera se
+resuelve en `dispose()`. Nunca lo esperes desde un efecto: ese efecto es parte del trabajo que espera.
+
 ---
 
 ## Protección contra cascadas (activada por defecto)
@@ -1168,6 +1187,8 @@ aparte: una aplicación que no lo usa no envía nada de él, y en producción no
 | `store.onDiagnostic(observer)`                  | Observa fallos, rechazos y avisos de desarrollo. Ver [Errores y diagnósticos](#errores-y-diagnósticos) |
 | `store.dispose()`                               | Libera el store; después es inerte. Ver [Atar recursos al store](#atar-recursos-al-store) |
 | `store.signal`                                  | Un `AbortSignal` que aborta `dispose()`               |
+| `store.metrics()`                               | Profundidad de cola, efectos en curso, deduplicación  |
+| `store.whenIdle()`                              | Se resuelve cuando nada espera y ningún efecto corre  |
 | `store.instrument(observer, opts?)`             | Observa cada evento después de sus reducers           |
 | `store.instrumentEffects(observer, opts?)`      | Observa la fase de efectos de cada evento al terminar |
 
@@ -1326,9 +1347,9 @@ La cifra que importa es lo que importas, no lo que el paquete exporta:
 <!-- size-table:start -->
 | Import | Tamaño | Presupuesto |
 | --- | --- | --- |
-| `{ createStore }` | 14.1 KB | 16 KB |
-| `{ createStore, hydrate, persist }` | 15.5 KB | 18 KB |
-| todo | 17.4 KB | 20 KB |
+| `{ createStore }` | 14.3 KB | 16 KB |
+| `{ createStore, hydrate, persist }` | 15.7 KB | 18 KB |
+| todo | 17.5 KB | 20 KB |
 <!-- size-table:end -->
 
 Estas son cifras de **producción**: lo que publicas una vez que tu empaquetador define
@@ -1340,7 +1361,7 @@ deliberadamente conservador.
 
 La **distancia entre filas** es la afirmación de tree-shaking, y es lo que hay que vigilar: la
 persistencia añade 1.4 KB a quienes la importan y nada a los demás, y el barrel completo está
-3.3 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
+3.2 KB por encima del store. La última fila es un detector de crecimiento; `import * as all` no
 es algo que nadie escriba.
 
 La primera fila solo se mueve cuando crece el store en sí, y ha crecido: acotar las cascadas,

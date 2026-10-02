@@ -217,3 +217,7 @@ too large, as a separate import. See
 `InstrumentedEffect` and `EffectsObserver` types: once every effect for an event has settled, each
 effect's name, origin, duration and whether it failed. See
 [Observing the effect phase](../../packages/core/README.md#observing-the-effect-phase).
+
+**`store.metrics()` and `store.whenIdle()`**, with the `StoreMetrics` type: the store's current
+load, and a promise that resolves when no event waits to be reduced and no effect runs, for a
+graceful shutdown. See [Load, and waiting for it to finish](../../packages/core/README.md#load-and-waiting-for-it-to-finish).

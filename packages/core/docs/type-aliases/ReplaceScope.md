@@ -10,7 +10,7 @@
 
 > **ReplaceScope** = `"spec"` \| `"all"`
 
-Defined in: [types.ts:2336](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2336)
+Defined in: [types.ts:2371](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2371)
 
 Which registrations a `replace*` call is allowed to remove.
 
