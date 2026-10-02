@@ -8,7 +8,7 @@
 
 # Interface: DevtoolsSocketHandle
 
-Defined in: [ws-transport.ts:49](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L49)
+Defined in: [ws-transport.ts:47](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L47)
 
 Minimal socket handle the shared client operates on.
 
@@ -18,7 +18,7 @@ Minimal socket handle the shared client operates on.
 
 > `readonly` **readyState**: `number`
 
-Defined in: [ws-transport.ts:51](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L51)
+Defined in: [ws-transport.ts:49](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L49)
 
 Standard WebSocket readyState (0=connecting, 1=open, 2=closing, 3=closed).
 
@@ -28,7 +28,7 @@ Standard WebSocket readyState (0=connecting, 1=open, 2=closing, 3=closed).
 
 > **close**(`code?`, `reason?`): `void`
 
-Defined in: [ws-transport.ts:53](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L53)
+Defined in: [ws-transport.ts:51](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L51)
 
 #### Parameters
 
@@ -50,7 +50,7 @@ Defined in: [ws-transport.ts:53](https://github.com/yoltra/yoltra/blob/main/devt
 
 > **dispose**(): `void`
 
-Defined in: [ws-transport.ts:55](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L55)
+Defined in: [ws-transport.ts:53](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L53)
 
 Detach every listener from the underlying socket.
 
@@ -64,7 +64,7 @@ Detach every listener from the underlying socket.
 
 > **send**(`data`): `void`
 
-Defined in: [ws-transport.ts:52](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L52)
+Defined in: [ws-transport.ts:50](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L50)
 
 #### Parameters
 

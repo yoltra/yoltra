@@ -81,6 +81,48 @@ node ./bin/devtools-server.js --port 9800
 4. Los eventos recientes se **guardan en un búfer circular**, así que una extensión que se conecta
    tarde recibe el historial
 
+Dentro de `DevtoolsHub`, cada trama pasa los mismos filtros (origen, forma, tasa, handshake) antes
+de llegar al `Router`. Una trama de store se difunde a todos los paneles, y un `STORE_EVENT`
+además se guarda en el `RingBuffer`; un comando de panel va a un solo store, elegido por `storeId`.
+
+```mermaid
+flowchart TD
+    agentIn(["agente de store<br/>withDevtools"])
+    panelIn(["panel<br/>HubProvider en storeview, la CLI o tu propia UI"])
+
+    subgraph hub ["DevtoolsHub"]
+    direction TB
+        verify{"verifyClient: ¿Origin permitido?<br/>ninguno, extensión, loopback o allowedOrigins"}
+        verify -->|"no"| refused(["upgrade rechazado"])
+        verify -->|"sí"| conn["handleConnection<br/>tope de trama 8 MiB, handshake en 5 s"]
+        conn -->|"cada trama"| shape{"¿objeto JSON con type de texto?"}
+        shape -->|"no"| ignored(["ignorada"])
+        shape -->|"sí"| rate{"¿bajo maxMessagesPerSecond?<br/>200 por defecto, ventana de 1 s"}
+        rate -->|"no"| dropped(["descartada, un aviso por ventana"])
+        rate -->|"sí"| shaken{"¿handshake hecho?"}
+        shaken -->|"no"| hs["handleHandshake<br/>authToken, versión mayor, id del rol"]
+        hs -->|"rechazado"| close1008(["cierre 1008"])
+        hs -->|"aceptado"| register["Router.register<br/>mapa de stores o de extensiones"]
+        register -->|"store"| joined["construye STORE_CONNECTED"]
+        register -->|"extensión"| greet["envía STORE_REGISTRY, luego el historial<br/>de los stores aún conectados"]
+        shaken -->|"sí"| route{"routeMessage: ¿rol del emisor?"}
+        route -->|"store"| fan["Router.fanOutToExtensions<br/>STORE_METRICS solo a paneles con performanceMetrics"]
+        fan -->|"solo STORE_EVENT"| ring["RingBuffer.push<br/>historySize, 1000 por defecto, sobrescribe el más antiguo"]
+        ring -.->|"se lee en el siguiente handshake de panel"| greet
+        route -->|"extensión"| target["Router.sendToStore(storeId)<br/>se descarta si ese store ya no está"]
+        conn -->|"cierre del socket"| unreg["Router.unregister"]
+        unreg -->|"store"| left["construye STORE_DISCONNECTED"]
+    end
+
+    agentIn -->|"WebSocket"| verify
+    panelIn -->|"WebSocket"| verify
+    fan --> panelOut(["todos los paneles conectados"])
+    joined --> panelOut
+    left --> panelOut
+    greet --> panelNew(["el panel que acaba de conectarse"])
+    target --> agentOut(["el agente del store destino"])
+```
+
 ---
 
 ## Configuración

@@ -71,6 +71,40 @@ store.registerEffect({
 atiende un evento, así que una respuesta enviada con el `emit` inyectado ya viene correlacionada.
 Nada que generar, nada que devolver, nada que olvidar.
 
+La vida completa de una llamada, incluidos los caminos de progreso y de rendirse que se ven más
+abajo. El colector es un efecto común que la llamada registra en el canal de respuesta y quita
+cuando la llamada termina, termine como termine, y por eso la suscripción nunca sobrevive a la
+llamada.
+
+```mermaid
+sequenceDiagram
+    participant Caller as quien llama
+    participant Store as store
+    participant Collector as colector de respuestas, un efecto interno
+    participant Responder as efecto que responde
+
+    Caller->>Store: call job start, con reply y highWaterMark opcional
+    Store->>Collector: registerEffect en el canal de respuesta
+    Note over Store,Collector: se arma el timer de inactividad, timeoutMs, 30 s por defecto
+    Store->>Responder: emite la petición, su id pasa a ser requestId
+    loop cada evento de progreso
+        Responder->>Store: await emit job tick
+        Store->>Collector: parentId es requestId, así que coincide y rearma el timer
+        Collector->>Caller: lo pone en la cola, esperando mientras la cola está llena
+        Note over Collector,Caller: una llamada que solo se espera acumula hasta highWaterMark, luego cuenta dropped
+        Caller->>Collector: for await toma el elemento
+        Collector-->>Responder: el colector retorna, así que el emit de quien responde se resuelve
+    end
+    alt llega un tipo terminal
+        Responder->>Store: emit job done
+        Store->>Collector: terminal, así que limpia el timer, se desregistra, cierra la cola
+        Collector-->>Caller: await call se resuelve con el evento done
+    else timeout de inactividad, signal abortada o cancel llamado
+        Store-->>Caller: rechaza con CallTimeoutError o CallAbortedError, colector desregistrado
+        Store->>Responder: emite el evento de cancelación, solo si la llamada nombra uno
+    end
+```
+
 ### `payload` es la petición
 
 Vale la pena decirlo porque la firma se lee ambigua: `payload` es lo que estás *enviando*. Lo que
@@ -278,12 +312,12 @@ Todo lo anterior funciona porque el store marca con `parentId` lo que un `Quien 
 mientras atiende la petición, así que la respuesta se correlaciona de forma estructural y nunca hay
 que anotar ningún id.
 
-Ese vínculo solo existe **dentro de un proceso**, y solo para una respuesta emitida
+Ese vínculo solo existe **dentro de un mismo store**, y solo para una respuesta emitida
 **directamente** al atender la petición. No es descendencia: una respuesta emitida un salto más
 abajo en la cascada lleva el id del evento intermedio y no se verá. Así que hay tres casos que
 necesitan un id explícito:
 
-- el `Quien Responde` está en otro nodo, en un worker, o al otro lado de cualquier transporte;
+- el `Quien Responde` está en otra pestaña, en un worker, o al otro lado de cualquier transporte;
 - el `Quien Responde` contesta en un turno posterior, tras encolar la petición;
 - la respuesta la emite algo que la petición causó, y no el manejador mismo.
 

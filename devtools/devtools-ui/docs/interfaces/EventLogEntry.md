@@ -8,7 +8,7 @@
 
 # Interface: EventLogEntry
 
-Defined in: [devtools-ui/src/types.ts:111](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L111)
+Defined in: [devtools-ui/src/types.ts:104](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L104)
 
 A logged event entry in the event log.
 
@@ -25,7 +25,7 @@ entries in chronological order.
 
 > **committed**: `boolean`
 
-Defined in: [devtools-ui/src/types.ts:121](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L121)
+Defined in: [devtools-ui/src/types.ts:114](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L114)
 
 Whether the event was committed to the store.
 
@@ -35,7 +35,7 @@ Whether the event was committed to the store.
 
 > **event**: `object`
 
-Defined in: [devtools-ui/src/types.ts:113](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L113)
+Defined in: [devtools-ui/src/types.ts:106](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L106)
 
 The event descriptor (channel, type, payload).
 
@@ -74,7 +74,7 @@ message dropped. A payload the panel cannot show is better than a session that e
 
 > **patches**: `JsonPatch`[]
 
-Defined in: [devtools-ui/src/types.ts:117](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L117)
+Defined in: [devtools-ui/src/types.ts:110](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L110)
 
 JSON Patch operations produced by the event.
 
@@ -84,7 +84,7 @@ JSON Patch operations produced by the event.
 
 > `optional` **reason**: `"vetoed"` \| `"deduped"` \| `"cascade"`
 
-Defined in: [devtools-ui/src/types.ts:129](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L129)
+Defined in: [devtools-ui/src/types.ts:122](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L122)
 
 Why the event did not commit, when it did not.
 
@@ -99,7 +99,7 @@ event committed, and absent from an agent older than the field.
 
 > **snapshotVersion**: `number`
 
-Defined in: [devtools-ui/src/types.ts:119](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L119)
+Defined in: [devtools-ui/src/types.ts:112](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L112)
 
 Store snapshot version after this event was applied.
 
@@ -109,7 +109,7 @@ Store snapshot version after this event was applied.
 
 > **storeId**: `string`
 
-Defined in: [devtools-ui/src/types.ts:115](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L115)
+Defined in: [devtools-ui/src/types.ts:108](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L108)
 
 Identifier of the store that emitted the event.
 
@@ -119,7 +119,7 @@ Identifier of the store that emitted the event.
 
 > **timestamp**: `string`
 
-Defined in: [devtools-ui/src/types.ts:133](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L133)
+Defined in: [devtools-ui/src/types.ts:126](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L126)
 
 ISO-8601 timestamp of the event.
 
@@ -129,6 +129,6 @@ ISO-8601 timestamp of the event.
 
 > `optional` **vetoedBy**: `string`
 
-Defined in: [devtools-ui/src/types.ts:131](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L131)
+Defined in: [devtools-ui/src/types.ts:124](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L124)
 
 Which middleware vetoed, when one did and it had a name.

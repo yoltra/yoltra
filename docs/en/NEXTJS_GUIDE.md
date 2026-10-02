@@ -94,6 +94,30 @@ A module-scoped store is evaluated **once per server process**, so it would be
 another's. If your components render on the server at all, create the store
 **per render** inside a client provider instead:
 
+Why the two patterns differ on the server. A module is evaluated once per server process, so every
+request rendered by that process reaches the same module-scoped store; a store created in
+`useState` inside the provider exists once per render, and the hooks below the provider use it.
+
+```mermaid
+flowchart TD
+    subgraph patternA ["Pattern A rendered on the server"]
+    direction TB
+        reqA1(["request from user A"]) --> moduleStore["module-scoped store<br/>evaluated once per server process"]
+        reqB1(["request from user B"]) --> moduleStore
+        moduleStore --> shared(["A's state can render into B's page"])
+    end
+
+    subgraph patternB ["Pattern B"]
+    direction TB
+        reqA2(["request from user A"]) --> providerA["AppStoreProvider<br/>useState with makeStore"]
+        reqB2(["request from user B"]) --> providerB["AppStoreProvider<br/>useState with makeStore"]
+        providerA --> storeA["a store for this render"]
+        providerB --> storeB["a store for this render"]
+        storeA --> pageA(["A's page: the hooks below the provider use A's store"])
+        storeB --> pageB(["B's page: the hooks below the provider use B's store"])
+    end
+```
+
 ```tsx
 // state/StoreProvider.tsx
 "use client";

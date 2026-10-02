@@ -32,8 +32,8 @@ transitions say it does.
 middleware and subscriptions actually registered.
 
 **No setup for the usual case.** With the extension installed, a page running `withDevtools()` is
-inspected directly, with no server to start. A local hub is still there for Node processes and remote
-sessions, where a socket is the only way in.
+inspected directly, with no server to start. A local hub is still there for remote sessions, where a
+socket is the only way in.
 
 ## Category
 

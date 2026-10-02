@@ -3,9 +3,8 @@
  *
  * @remarks
  * Injects the native browser `WebSocket` into the shared, transport-agnostic
- * {@link ReconnectingWsClient} from `@yoltra/devtools-protocol`. There is **no**
- * `ws` dependency here — that is what keeps this package installable in the
- * browser without pulling in a Node-only transport.
+ * {@link ReconnectingWsClient} from `@yoltra/devtools-protocol`, with no extra
+ * dependency, so this package stays small in a browser bundle.
  *
  * @module @yoltra/devtools-browser-agent
  */

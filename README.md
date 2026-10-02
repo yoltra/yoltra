@@ -91,6 +91,54 @@ comparison lives in the
 
 ---
 
+## Where Yoltra sits in your code
+
+Your code talks to one store. React components reach it through `@yoltra/react`; other code (a web
+worker, a test, a library that decorates the store) calls it directly. Everything that watches
+from the outside (persistence, the DevTools) attaches through the same `instrument()` seam, so none
+of it asks anything of your reducers. The dotted arrows are DevTools commands, which the agent
+carries out only when they are switched on (`allowReplay`, `allowEmit`).
+
+```mermaid
+flowchart TD
+    subgraph yours ["Your code"]
+    direction TB
+        components(["React components"])
+        service(["code without React: a web worker or a test"])
+        decorator(["a library that decorates a store"])
+        specs["your reducers, middleware and effects"]
+    end
+
+    components -->|"useAtomicProp, useEvent, useEmit"| react["@yoltra/react<br/>createYoltra, typed hooks, StoreProvider"]
+    components -.->|"optional, needs no store"| ds["@yoltra/ds<br/>tokens, themes, accessible primitives"]
+
+    subgraph core ["@yoltra/core"]
+    direction TB
+        store["store<br/>emit, getState, call"]
+        seam["instrument<br/>changed paths, outcome, timing"]
+        store --> seam
+    end
+
+    specs -->|"createStore or createYoltra"| store
+    react -->|"connect, subscribe, onEvent, emit"| store
+    service -->|"emit, call, getState, whenIdle"| store
+    decorator -->|"withSlice, withMiddleware, withEffect"| store
+    store -->|"your effects call out"| apis(["your APIs and services"])
+
+    storage(["web storage, or your own adapter"]) -->|"hydrate: initial state, before the store exists"| store
+    seam -->|"persist: throttled, codec encoded writes"| storage
+
+    seam --> agent["DevTools agent<br/>withDevtools"]
+    agent -->|"WebSocket"| hub["@yoltra/devtools-server<br/>localhost hub, also embedded by the CLI"]
+    hub -->|"events, snapshots, metrics"| hubPanel(["terminal UI, or the storeview panel<br/>mounted in a page of your own"])
+    agent -->|"postMessage relayed by the extension, no hub"| extPanel(["browser extension panel"])
+    hubPanel -.->|"commands: time travel, replay, emit"| hub
+    hub -.->|"to the one store addressed"| agent
+    extPanel -.->|"the same commands"| agent
+```
+
+---
+
 ## How a store works
 
 One event, end to end. The reduce phase is synchronous, so `getState()` is correct the moment
@@ -130,7 +178,7 @@ flowchart TD
     instr --> persistOut(["persist: throttled write, codec encoded"])
     instr --> agent(["devtools agent"])
 
-    commit --> fx["effects, matched by when<br/>async, awaited one after another"]
+    nCommitted -->|"every committed event, even one a slice refused"| fx["effects, matched by when<br/>async, awaited one after another"]
     fx --> call(["store.call rides an internal reply effect"])
 ```
 
@@ -256,7 +304,52 @@ reads. All inside the bundle-size budgets CI enforces.
 | **[@yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)**   | Framework-agnostic store: reducers, middleware, effects, fine-grained change tracking, typed instrumentation, entity adapter, persistence + hydration   |
 | **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** | React hooks: fine-grained subscriptions, typed path accessors, `createYoltra`, entity hooks, Suspense                                                   |
 | **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md)**       | Design system: accessible React primitives (forms, tables, overlays, menus, tabs), three-tier `--yl-*` design tokens, light/dark theming with contrast checked in both. Standalone, usable without the store |
-| **@yoltra/devtools-\***                                                                  | DevTools suite: protocol, hub server, browser/node agents, and the panel UI (browser extension + CLI)                                                   |
+| **@yoltra/devtools-\***                                                                  | DevTools suite: protocol, hub server, browser agent, and the panel UI (browser extension + CLI)                                                         |
+
+How the packages depend on each other. `@yoltra/core` depends on nothing; `@yoltra/react` and the
+DevTools browser agent take it as a peer dependency, so your app always holds exactly one copy.
+`@yoltra/ds` stands alone, and every DevTools package speaks the wire format defined in
+`@yoltra/devtools-protocol`.
+
+```mermaid
+flowchart LR
+    subgraph state ["State"]
+    direction TB
+        core["@yoltra/core<br/>store, codec, persistence<br/>zero dependencies"]
+        react["@yoltra/react<br/>createYoltra and the hooks"]
+    end
+
+    subgraph design ["Design system"]
+    direction TB
+        ds["@yoltra/ds<br/>tokens, themes, primitives<br/>usable without the store"]
+    end
+
+    subgraph devtools ["DevTools"]
+    direction TB
+        browserAgent["@yoltra/devtools-browser-agent<br/>withDevtools"]
+        protocol["@yoltra/devtools-protocol<br/>messages, handshake, JSON Patch"]
+        server["@yoltra/devtools-server<br/>DevtoolsHub"]
+        ui["@yoltra/devtools-ui<br/>headless React hooks"]
+        storeview["@yoltra/devtools-storeview<br/>React DOM inspector"]
+        cli["@yoltra/devtools-cli<br/>Ink terminal UI"]
+        ext["@yoltra/devtools-ext<br/>browser extension"]
+    end
+
+    react -.->|"peer"| core
+    browserAgent -.->|"peer"| core
+
+    browserAgent --> protocol
+    server --> protocol
+    ui --> protocol
+    storeview --> ui
+    storeview --> protocol
+    cli --> ui
+    cli -->|"embeds the hub"| server
+    cli --> protocol
+    ext -->|"renders"| storeview
+    ext --> ui
+    ext --> protocol
+```
 
 ---
 
@@ -266,12 +359,11 @@ reads. All inside the bundle-size budgets CI enforces.
 
 ## DevTools
 
-Yoltra's store exposes a typed instrumentation seam (`store.instrument(...)`) that the agents
-consume with zero `as any` casts. A small hub relays events from your running app to the panel;
+Yoltra's store exposes a typed instrumentation seam (`store.instrument(...)`) that the DevTools
+agent consumes with zero `as any` casts. A small hub relays events from your running app to the panel;
 the panel renders the event log, the live state tree, precise per-event patches, metrics, and
 time-travel. An event that did not commit says why, and names the middleware that vetoed it when
-that middleware has a name. The browser and node agents are deliberately separate packages so a web bundle never
-pulls in a Node-only WebSocket, and vice versa.
+that middleware has a name.
 
 ---
 
@@ -303,7 +395,6 @@ pulls in a Node-only WebSocket, and vice versa.
 - **[Decoration Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/DECORATION_GUIDE.md)**: adding a slice, middleware or effect to somebody else's store, with the types
 - **[Testing Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/TESTING_GUIDE.md)**: unit-test stores, effects, middleware, and components
 - **[Next.js Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/NEXTJS_GUIDE.md)**: client-side usage in the Pages and App Router
-- **[Node Service Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/NODE_SERVICE_GUIDE.md)**: a store as a long-running process under PM2: readiness, graceful shutdown, metrics
 - **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)**: store, middleware, effects, `When` matchers, instrumentation
 - **[@yoltra/react API](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)**: hooks, typed accessors, `createYoltra`, Suspense
 - **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md)**: components, tokens, theming, and the SSR contract
@@ -343,7 +434,7 @@ Yoltra is in **Release Candidate** stage:
 
 - The core and React APIs are stable and used in production applications.
 - TypeScript types are strict and comprehensive; coverage, bundle-size, and benchmark gates run in CI.
-- The DevTools suite attaches zero-config in the browser, and ships an embeddable panel and a Node terminal UI.
+- The DevTools suite attaches zero-config in the browser, and ships an embeddable panel and a terminal UI.
 - Minor APIs may still evolve before v1.0.
 
 Feedback and PRs are welcome.

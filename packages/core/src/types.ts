@@ -609,7 +609,8 @@ export type MiddlewareInput<S = any, EM extends EventMapBase = EventMapBase> =
   | MiddlewareSpec<S, EM>;
 
 /**
- * A cancellable timer handle, as `setTimeout` returns it: a number in browsers, an object in Node.
+ * A cancellable timer handle, as `setTimeout` returns it: a number or an object, depending on the
+ * host.
  *
  * @public
  */
@@ -1178,7 +1179,7 @@ export interface StoreInstance<
    * Resolves when the store is idle: no event waiting to be reduced and no effect running.
    *
    * @remarks
-   * For a graceful shutdown, where a process stops taking new work, waits for what is in
+   * For a clean teardown, which stops whatever feeds the store new work, waits for what is in
    * progress, and then disposes. A `call()` waiting for its reply and a pending timer are not
    * work the store is doing, so they do not delay it. Resolves at once when the store is already
    * idle or disposed, and every pending wait resolves on dispose. Bound it with a timeout: an

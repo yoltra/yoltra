@@ -17,14 +17,14 @@ import { DevtoolsHub } from "./hub";
  * | `--port`           | `9800`  | WebSocket port to bind on.         |
  * | `--history-size`   | `1000`  | Ring-buffer capacity for replays.  |
  *
- * The function installs `SIGINT` and `SIGTERM` handlers for graceful
- * shutdown and exits with code `1` if the server fails to start.
+ * The function stops the hub cleanly when the CLI is interrupted, and exits
+ * with code `1` if the server fails to start.
  *
  * Usage: `npx @yoltra/devtools-server [--port 9800] [--history-size 1000]`
  *
  * @param argv - Argument vector to parse. Defaults to `process.argv`.
  * @returns Resolves once the hub is listening; never resolves during
- *          normal operation (the process stays alive until a signal).
+ *          normal operation (the hub runs until the CLI is interrupted).
  *
  * @public
  */
@@ -45,7 +45,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
 
   const hub = new DevtoolsHub({ port, historySize });
 
-  // Graceful shutdown
+  // Clean stop on interrupt
   const shutdown = async () => {
     console.log("\nShutting down DevTools hub...");
     await hub.stop();

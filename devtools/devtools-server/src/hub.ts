@@ -126,7 +126,7 @@ function tokensMatch(expected: string, offered: unknown): boolean {
  * The hub binds to loopback, but that does not stop a page you visit from
  * opening `ws://127.0.0.1:<port>` — WebSockets are exempt from same-origin/CORS,
  * so a remote page could otherwise exfiltrate state and drive the store. We
- * allow only: no Origin (node agent, CLI, some extension contexts), browser
+ * allow only: no Origin (the CLI, some extension contexts), browser
  * extension origins (narrowed to specific ids when
  * {@link DevtoolsHubOptions.allowedExtensionIds} names any), loopback origins
  * (the local dev app running the agent, or a local storeview), and any
@@ -145,7 +145,7 @@ function isOriginAllowed(
   allowed: readonly string[],
   allowedExtensionIds: readonly string[],
 ): boolean {
-  if (!origin) return true; // non-browser client; not reachable from a web page
+  if (!origin) return true; // no Origin header: not a request a web page can make
   if (allowed.includes(origin)) return true;
   let url: URL;
   try {

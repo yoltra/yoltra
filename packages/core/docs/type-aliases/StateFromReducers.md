@@ -10,7 +10,7 @@
 
 > **StateFromReducers**\<`R`\> = `{ [K in keyof R]: R[K] extends ReducerSpec<infer S, any> ? S : never }`
 
-Defined in: [types.ts:1768](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1768)
+Defined in: [types.ts:1769](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L1769)
 
 The state a reducers map produces: each slice name mapped to its spec's state type.
 

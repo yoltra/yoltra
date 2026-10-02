@@ -291,6 +291,23 @@ De ahí se siguen cuatro detalles:
   una petición que inició antes de la recarga puede cancelarse en lugar de llegar después. Los
   efectos preservados conservan su signal.
 
+Lo que hace una llamada `replace*` con cada registro que ya está en el store. La decisión sale del
+origen que el store anotó cuando se hizo el registro, nunca de algo que pase una librería, así que
+olvidar una opción no puede borrar la slice de una librería.
+
+```mermaid
+flowchart TD
+    replace(["replaceReducers, replaceMiddleware o replaceEffects<br/>hotReplace pasa su scope a los tres"]) --> collision{"¿replaceReducers con scope spec<br/>nombra una slice montada en runtime?"}
+    collision -->|"sí"| throws(["lanza antes de mutar nada<br/>nombrando la slice y a su dueño"])
+    collision -->|"no"| origin{"¿origen de un registro existente?"}
+    origin -->|"spec: pasado a createStore,<br/>o instalado por un replace anterior"| replaced["reemplazado por lo que pasas ahora<br/>una slice omitida se quita junto con su estado"]
+    origin -->|"dynamic: registerSlice, withSlice,<br/>registerMiddleware, registerEffect"| scope{"¿scope?"}
+    scope -->|"spec, por defecto"| kept["se conserva, junto con su estado<br/>una línea de debug en desarrollo lo dice"]
+    scope -->|"all"| replaced
+    origin -->|"internal: el efecto de respuesta detrás de store.call"| kept
+    replaced --> signal(["el ctx.signal de un efecto reemplazado se aborta<br/>con effect replaced"])
+```
+
 ---
 
 ## React

@@ -75,6 +75,40 @@ y así con cada uno. Están en inglés, como el resto del código.
 > Yoltra) puede prescindir de `ThemeProvider` y fijar `data-theme` por su cuenta: el contrato con
 > el DOM es el mismo.
 
+## Cómo encaja todo
+
+Los tokens se escriben una sola vez, en TypeScript, y se convierten en custom properties de CSS.
+Las hojas de estilo de los componentes leen solo los roles semánticos, y un único atributo
+`data-theme` en la raíz del documento decide a qué valor resuelve cada rol. El tema es CSS y no
+estado de React, por eso las primitivas se renderizan en el servidor.
+
+```mermaid
+flowchart TD
+    subgraph authored ["Escrito en TypeScript"]
+    direction TB
+        foundation["foundationTokens<br/>paleta, escala tipográfica, espaciado, radios, elevación, movimiento"]
+        themes["lightTheme y darkTheme<br/>roles semánticos, construidos desde la paleta"]
+        foundation --> themes
+    end
+
+    foundation --> themeCss["themeCss()<br/>las custom properties --yl-*, la paleta no se emite"]
+    themes --> themeCss
+    themeCss -->|"build-styles, al compilar"| tokensCss["styles/tokens.css"]
+    themeCss -->|"o en línea durante un render en servidor"| inline(["una etiqueta style en el head de tu documento"])
+    scss["un .scss por componente<br/>lee roles --yl-*, guarda sus propias variables locales"] -->|"build-styles"| componentCss["styles/button.css y los demás<br/>all.css lleva todo"]
+
+    noFlash["noFlashScript() de @yoltra/ds<br/>en línea, corre antes del primer pintado"] -->|"fija"| attr["data-theme en el elemento html"]
+    provider["ThemeProvider, applyTheme<br/>de @yoltra/ds/client"] -->|"fija"| attr
+    attr -->|"light o dark elige los valores de los roles"| tokensCss
+    attr -->|"light o dark elige los valores de los roles"| inline
+
+    tokensCss --> page(["tu página"])
+    inline --> page
+    componentCss --> page
+    serverEntry["@yoltra/ds<br/>primitivas seguras para el servidor"] --> page
+    clientEntry["@yoltra/ds/client, use client<br/>ThemeProvider, Tabs, CodeBlock, overlays"] --> page
+```
+
 ## Marca
 
 Azul primario `#1A7FE2`, carbón `#0F172A`. Tipografía: **Inter** + **JetBrains Mono**.

@@ -10,6 +10,7 @@
 
 > **TimerHandle** = `number` \| `object`
 
-Defined in: [types.ts:616](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L616)
+Defined in: [types.ts:617](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L617)
 
-A cancellable timer handle, as `setTimeout` returns it: a number in browsers, an object in Node.
+A cancellable timer handle, as `setTimeout` returns it: a number or an object, depending on the
+host.

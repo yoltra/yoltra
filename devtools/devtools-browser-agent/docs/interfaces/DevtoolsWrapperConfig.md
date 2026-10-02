@@ -336,7 +336,7 @@ How the agent reaches the panel.
   itself on the page, and a WebSocket to the hub otherwise. This is what makes attaching a
   browser panel a single step — install the extension — instead of three.
 - `"bridge"` forces `postMessage`, for a relay that installs after the store is created.
-- `"websocket"` forces the hub, which is what a Node process or a remote session needs.
+- `"websocket"` forces the hub, which is what a remote session or the terminal UI needs.
 
 Ignored when `socketFactory` is supplied: an explicit transport is always honoured.
 

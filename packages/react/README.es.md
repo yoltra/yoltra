@@ -175,6 +175,46 @@ El contrato completo, incluido qué hacer con la disposición, está en la
 
 ---
 
+## Cómo llegan los hooks al store
+
+Cada hook es una capa delgada sobre un método del store, así que el store decide qué cambió y
+React re-renderiza solo los componentes cuya suscripción se disparó. `createYoltra` da a sus hooks
+un contexto cuyo valor por defecto es su propio store, por eso ahí el provider es opcional; los
+hooks que exporta el paquete leen un contexto que empieza vacío, y necesitan un `<StoreProvider>`.
+
+```mermaid
+flowchart TD
+    cy(["createYoltra(spec)"]) --> created["createStore<br/>de @yoltra/core"]
+    cy --> ownContext["su propio StoreContext<br/>valor por defecto: ese store"]
+    ownProvider(["yoltra.StoreProvider<br/>opcional, para un subárbol"]) -.->|"lo reemplaza"| ownContext
+    sharedProvider(["StoreProvider del paquete<br/>requerido por los hooks del paquete"]) --> sharedContext["el StoreContext del paquete<br/>valor por defecto: null"]
+
+    ownContext --> factory["createHooks(context)<br/>useStore lee el contexto"]
+    sharedContext --> factory
+
+    subgraph hooks ["Los hooks que devuelve createHooks"]
+    direction TB
+        atomic["useAtomicProp, useAtomicProps<br/>accessor tipado o ruta con puntos, useSyncExternalStore"]
+        suspense["useSuspenseAtomicProp, useSuspenseAtomicProps<br/>suspenseCache lanza una promesa mientras carga"]
+        selector["useSelector<br/>useSyncExternalStore sobre todo el estado"]
+        event["useEvent<br/>useEffect, el handler más reciente en un ref"]
+        emitHook["useEmit"]
+    end
+
+    factory --> hooks
+    entity["useEntity, useEntityIds, useEntityField<br/>ruta tomada de adapter.pathTo(id)"] -->|"envuelve"| atomic
+
+    created --> store(["el store"])
+    atomic -->|"connect: una ruta exacta o con comodines"| store
+    suspense -->|"connect, invalidando su entrada de caché"| store
+    selector -->|"subscribe: cada evento escrito"| store
+    event -->|"onEvent, con una fase"| store
+    emitHook -->|"emit"| store
+    decorate["withSlice, withMiddleware, withEffect"] -->|"registerSlice, registerMiddleware, registerEffect"| store
+```
+
+---
+
 ## API de Hooks
 
 ### `useAtomicProp({ reducer, property }, map?, isEqual?)`

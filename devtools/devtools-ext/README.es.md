@@ -50,23 +50,56 @@ pnpm build
 
 ## Cómo funciona
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Tu app      │     │  Hub de      │     │  Panel de la │
-│  (con        │ WS  │  DevTools    │ WS  │  extensión   │
-│  withDevtools│────►│  (servidor)  │◄────│  (este pkg)  │
-│  )           │     │              │     │              │
-└──────────────┘     └──────────────┘     └──────────────┘
+El panel llega al store de una página por uno de dos caminos. Dentro de DevTools usa el puente:
+el content script y el service worker llevan las tramas entre la página y el panel, y el panel
+ejecuta su propio broker en memoria (`createLoopbackHub`), así que no interviene ningún servidor.
+Fuera de ese contexto se conecta a un hub por WebSocket. Ningún relevo lee ni reescribe una
+trama.
+
+```mermaid
+flowchart TD
+    page(["tu app: withDevtools(store)"])
+    hubNode(["un hub: devtools-server o devtools-cli"])
+
+    page --> mark{"transport auto:<br/>¿__YOLTRA_DEVTOOLS_BRIDGE__ presente?"}
+    mark -->|"sí"| pm["transporte postMessage<br/>canal yoltra-devtools-bridge"]
+    mark -->|"no"| ws["WebSocket a host:port"]
+
+    subgraph ext ["@yoltra/devtools-ext"]
+    direction TB
+        cs["content-script.ts<br/>document_start: inyecta la marca,<br/>retransmite tramas sin leerlas"]
+        bg["background.ts service worker<br/>empareja puertos de página y panel por id de pestaña"]
+        dt["devtools.ts<br/>crea el panel Yoltra"] --> panel{"panel.ts:<br/>¿inspectedWindow.tabId?"}
+        panel -->|"sí"| bridged["mountBridged<br/>createLoopbackHub, la página entra<br/>como una conexión de store normal"]
+        panel -->|"no"| direct["mountDevtools a hubHost:hubPort<br/>por defecto localhost:9800"]
+        popup["popup.ts<br/>guarda hubHost y hubPort"] -.->|"chrome.storage.local"| direct
+        bridged --> loopUi["mountDevtools<br/>WebSocket = la clase loopback"]
+    end
+
+    cs -.->|"window.__YOLTRA_DEVTOOLS_BRIDGE__ = true"| mark
+    pm <-->|"window.postMessage, to-panel y to-page"| cs
+    cs <-->|"puerto runtime yoltra-devtools-bridge"| bg
+    bg <-->|"puerto runtime yoltra-devtools-panel:tabId"| bridged
+    ws <-->|"WebSocket"| hubNode
+    direct <-->|"WebSocket"| hubNode
 ```
 
-1. Tu app instrumenta un store con `withDevtools()` — se conecta al hub
-2. El panel de la extensión monta `@yoltra/devtools-storeview` — se conecta al mismo hub
-3. Eventos y comandos fluyen por el hub entre el store y el panel
+1. En cada página `http://` y `https://`, el content script inyecta un script en línea que fija
+   `__YOLTRA_DEVTOOLS_BRIDGE__` en `document_start`, antes de que corra tu código.
+2. Tu app instrumenta un store con `withDevtools()`. Con el `transport: "auto"` por defecto ve la
+   marca y habla por `postMessage` en lugar de abrir un WebSocket.
+3. El panel Yoltra de DevTools monta `@yoltra/devtools-storeview` sobre su propio broker en
+   memoria, y el service worker lo une a la página de la pestaña inspeccionada.
 
-No hace falta un hub. Cuando esta extensión retransmite la página, el content script anuncia el
-puente y el service worker une esa página con el panel que inspecciona su pestaña, así que las
-tramas cruzan directamente. Conectarse a un hub por socket sigue siendo la alternativa para
-páginas que ninguna extensión retransmite, y para sesiones de Node y remotas.
+**Dentro de un panel de DevTools, la extensión siempre usa el puente.** `panel.ts` elige el hub
+solo cuando falta `chrome.devtools.inspectedWindow.tabId`, lo que ocurre solo si `panel.html` se
+abre fuera de DevTools, por ejemplo como una página de extensión suelta. Así que el panel de
+DevTools no usa el host y el puerto del hub configurados en el popup, y un store cuyo agente habla
+con un hub (`transport: "websocket"`, un `socketFactory` explícito, una página donde no
+corre el content script, como `file://`, o una página cuya Content-Security-Policy bloquea ese
+script en línea) no aparece en él. Inspecciona esos con
+[`@yoltra/devtools-cli`](../devtools-cli/README.es.md), o con `@yoltra/devtools-storeview` montado
+en una página propia, ambos conectados al hub.
 
 ---
 
@@ -98,8 +131,9 @@ Los ajustes se guardan en `chrome.storage.local`.
 
 ## Requisitos previos
 
-La extensión se conecta a un **hub de DevTools en ejecución**. Arranca uno con cualquiera de
-estos:
+El panel de DevTools **no necesita hub**: ver [Cómo funciona](#cómo-funciona). Un hub solo importa
+cuando `panel.html` se abre fuera de DevTools, que entonces se conecta a un **hub de DevTools en
+ejecución**. Arranca uno con cualquiera de estos:
 
 ```bash
 # Servidor independiente

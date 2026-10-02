@@ -124,8 +124,8 @@ catches a buffer kept from a field of the payload, as `{ ...payload }` does.
 
 ## The key-collision warning is kept per store
 
-**You will notice if:** a process runs several stores in development, such as a test suite or a
-server rendering more than one, and two `(channel, type)` pairs in one store join to the same
+**You will notice if:** a process runs several stores in development, such as a test suite or an
+app that creates more than one, and two `(channel, type)` pairs in one store join to the same
 internal key.
 
 The warning used to be remembered for the whole process. Once one store had reported a key, a second
@@ -199,7 +199,7 @@ out, so the responder can stop working. See the
 
 **`ephemeral` channels, and `store.instrument(observer, { ephemeral })`.** Events on an ephemeral
 channel are handled as usual but reach only instrumentation observers that opt in, and replay
-skips them. Devtools agents do not opt in; `persist` does. The README's
+skips them. The DevTools agent does not opt in; `persist` does. The README's
 [Traffic that is not history](../../packages/core/README.md#traffic-that-is-not-history) and
 [Values that change many times a second](../../packages/core/README.md#values-that-change-many-times-a-second)
 describe the pattern for high-frequency values. A `PersistableStore` you implement yourself should
@@ -220,9 +220,8 @@ effect's name, origin, duration and whether it failed. See
 
 **`store.metrics()` and `store.whenIdle()`**, with the `StoreMetrics` type: the store's current
 load, and a promise that resolves when no event waits to be reduced and no effect runs, for a
-graceful shutdown. See [Load, and waiting for it to finish](../../packages/core/README.md#load-and-waiting-for-it-to-finish).
+clean teardown. See [Load, and waiting for it to finish](../../packages/core/README.md#load-and-waiting-for-it-to-finish).
 
 **`persist()`'s stop function returns a promise** that resolves once the last write has settled,
-so a process can await its final write before exiting. It never rejects. Code that ignored the
-return value is unaffected. The [Node Service Guide](./NODE_SERVICE_GUIDE.md) shows the whole
-graceful shutdown under PM2.
+so the final write can be awaited before the store is torn down. It never rejects. Code that
+ignored the return value is unaffected.

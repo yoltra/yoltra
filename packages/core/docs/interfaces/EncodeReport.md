@@ -20,7 +20,7 @@ Reports what an encode had to compromise. Empty when nothing was lost.
 
 Defined in: [serialize/codec.ts:206](https://github.com/yoltra/yoltra/blob/main/packages/core/src/serialize/codec.ts#L206)
 
-Node budget was exhausted and some subtrees were replaced by markers.
+The `maxNodes` budget was exhausted and some subtrees were replaced by markers.
 
 ***
 

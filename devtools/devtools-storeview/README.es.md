@@ -90,6 +90,44 @@ La app ofrece cuatro pestañas, cada una respaldada por hooks de `@yoltra/devtoo
 
 ---
 
+## Cómo funciona
+
+`DevtoolsApp` no tiene lógica de protocolo propia: envuelve `HubProvider` de
+`@yoltra/devtools-ui`, ejecuta los hooks de ese paquete para el store seleccionado y pasa los
+resultados a paneles de presentación. Las pestañas que aparecen dependen de las capacidades que
+anuncia el store, así que un store que no puede hacer replay nunca muestra la pestaña Time Travel.
+
+```mermaid
+flowchart TD
+    host(["una página anfitriona: el panel de la extensión,<br/>un webview o tu app"])
+    hub(["un hub, o un broker loopback"])
+
+    subgraph sv ["@yoltra/devtools-storeview"]
+    direction TB
+        mount["mountDevtools(container, config)<br/>createRoot, devuelve unmount"] --> app["DevtoolsApp<br/>ThemeProvider, oscuro por defecto"]
+        app --> provider["HubProvider<br/>de @yoltra/devtools-ui"]
+        provider --> inner["DevtoolsInner<br/>store seleccionado, el primero por defecto"]
+        inner --> hooks["useStoreRegistry, useEventLog, useStoreState,<br/>useStoreSubscriptions, useStoreMetrics,<br/>useEventEmitter, useEventReplay, useTimeTravel"]
+        inner --> bars["TopBar: selector de store<br/>BottomBar: estado, número de eventos, versión del protocolo"]
+        hooks --> policy{"tabRequires(tab, capabilities)"}
+        policy -->|"siempre"| inspector["Inspector<br/>línea de tiempo, detalle del evento,<br/>EventEmitterPanel si emit está activo"]
+        policy -->|"siempre"| metrics["MetricsDashboard<br/>contadores e inventario de suscripciones"]
+        policy -->|"stateSnapshot"| stateTab["StateTreeExplorer<br/>JsonTree, refrescar"]
+        policy -->|"replay"| ttTab["TimeTravelPanel<br/>barra de desplazamiento, previewState, replay"]
+        inspector -->|"emit: EMIT_TO_STORE"| hooks
+        ttTab -->|"jumpTo, resume: TIME_TRAVEL<br/>replay: EVENT_REPLAY"| hooks
+    end
+
+    host --> mount
+    host -->|"o renderiza DevtoolsApp directamente"| app
+    hub <-->|"tramas del protocolo"| provider
+```
+
+Al cambiar de store, `resolveTab` conserva la pestaña actual solo si el nuevo store la admite, y
+si no vuelve a Inspector.
+
+---
+
 ## Componentes exportados
 
 ### API de montaje

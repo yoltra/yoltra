@@ -5,7 +5,7 @@
  * Attaching the panel used to mean running a hub process, editing the application to add
  * `withDevtools()`, and setting `allowReplay` — three steps at the exact moment somebody is
  * deciding whether the tool is worth it, against Redux DevTools' one. The hub earns its keep for
- * Node processes and remote debugging, where a socket is the only way in. For a page being
+ * remote debugging, where a socket is the only way in. For a page being
  * inspected by an extension running in the same browser, it is a server standing between two
  * things already able to talk.
  *

@@ -107,8 +107,8 @@ const BINARY_CONSTRUCTORS = Object.freeze(
  * The supported kind a view should round-trip as, or `undefined` if there is none.
  *
  * @remarks
- * Resolved by `instanceof`, not by `constructor.name`. Node's `Buffer` is a `Uint8Array`
- * subclass and is everywhere, and its name is not in the allow-list, so a name lookup tagged
+ * Resolved by `instanceof`, not by `constructor.name`. `Buffer` is a common `Uint8Array`
+ * subclass, and its name is not in the allow-list, so a name lookup tagged
  * it `kind: "Buffer"`, reported nothing, and the decoder returned `undefined` for it - a
  * silent total loss of the value, through `persist` as much as through time travel. The same
  * applied to `Float16Array` and to any user subclass.
@@ -168,7 +168,7 @@ function base64ToBytes(b64: string): Uint8Array {
   ).Buffer;
   if (maybeBuffer !== undefined) {
     const buf = maybeBuffer.from(b64, "base64");
-    // Copy out of Node's pooled allocation: a Buffer is a view onto a shared slab, so
+    // Copy out of a pooled allocation: a Buffer can be a view onto a shared slab, so
     // handing its `.buffer` to a typed array would expose unrelated memory.
     return new Uint8Array(buf.subarray(0, buf.length));
   }
@@ -202,7 +202,7 @@ export interface EncodeOptions {
 
 /** Reports what an encode had to compromise. Empty when nothing was lost. */
 export interface EncodeReport {
-  /** Node budget was exhausted and some subtrees were replaced by markers. */
+  /** The `maxNodes` budget was exhausted and some subtrees were replaced by markers. */
   readonly truncated: boolean;
   /** Values no JSON representation exists for, by path — functions, symbols, DOM nodes. */
   readonly unsupported: readonly string[];
@@ -577,7 +577,7 @@ export interface BoundedEncodeResult {
  * a loop with nothing on screen to explain it. The size therefore has to be bounded before the
  * frame is sent rather than discovered afterwards.
  *
- * Node count is a poor proxy for bytes: a hundred nodes holding base64 blobs outweigh a hundred
+ * A node count is a poor proxy for bytes: a hundred nodes holding base64 blobs outweigh a hundred
  * thousand holding integers. So this measures the encoded output and, when it is too large,
  * scales the node budget by how far over it went and measures again. Scaling by the overshoot
  * rather than halving matters: from a default of a hundred thousand nodes, repeated halving

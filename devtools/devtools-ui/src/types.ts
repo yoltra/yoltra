@@ -46,19 +46,12 @@ export interface HubConnectionConfig {
   /** Maximum reconnect attempts. @defaultValue `Infinity` */
   maxReconnectAttempts?: number;
   /**
-   * Custom WebSocket constructor for Node.js environments.
+   * Custom WebSocket constructor.
    *
    * @remarks
-   * In Node.js 18, the global `WebSocket` is not available. Pass the `WebSocket`
-   * class from the `ws` package to enable connectivity:
-   *
-   * ```ts
-   * import WebSocket from "ws";
-   * config.WebSocket = WebSocket as any;
-   * ```
-   *
-   * In browsers or Node.js 21+, this is not needed — the native `WebSocket` is
-   * used automatically.
+   * Defaults to the global `WebSocket`. Pass a constructor to use another
+   * implementation, for example an in-memory loopback such as the one
+   * `createLoopbackHub` returns.
    */
   WebSocket?: { new (url: string): WebSocket };
 }

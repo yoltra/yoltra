@@ -98,6 +98,31 @@ se **compartiría entre requests** durante SSR — el estado de un usuario podr�
 filtrarse al de otro. Si tus componentes renderizan en el servidor, crea el store
 **por render** dentro de un provider de cliente:
 
+Por qué los dos patrones difieren en el servidor. Un módulo se evalúa una vez por proceso de
+servidor, así que cada request que ese proceso renderiza llega al mismo store de módulo; un store
+creado con `useState` dentro del provider existe una vez por render, y los hooks debajo del
+provider lo usan.
+
+```mermaid
+flowchart TD
+    subgraph patternA ["Patrón A renderizado en el servidor"]
+    direction TB
+        reqA1(["request del usuario A"]) --> moduleStore["store a nivel de módulo<br/>evaluado una vez por proceso de servidor"]
+        reqB1(["request del usuario B"]) --> moduleStore
+        moduleStore --> shared(["el estado de A puede renderizarse en la página de B"])
+    end
+
+    subgraph patternB ["Patrón B"]
+    direction TB
+        reqA2(["request del usuario A"]) --> providerA["AppStoreProvider<br/>useState con makeStore"]
+        reqB2(["request del usuario B"]) --> providerB["AppStoreProvider<br/>useState con makeStore"]
+        providerA --> storeA["un store para este render"]
+        providerB --> storeB["un store para este render"]
+        storeA --> pageA(["página de A: los hooks debajo del provider usan el store de A"])
+        storeB --> pageB(["página de B: los hooks debajo del provider usan el store de B"])
+    end
+```
+
 ```tsx
 // state/StoreProvider.tsx
 "use client";

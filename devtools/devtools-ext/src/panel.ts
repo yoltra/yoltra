@@ -24,8 +24,8 @@ const PANEL_CHANNEL = "yoltra-devtools-panel";
  * living in an extension, where none of the test suites reach, would drift from the one both
  * ends actually speak.
  *
- * **The hub.** Node processes, remote sessions, and a page whose extension is not relaying still
- * need a socket, so the previous behaviour is the fallback rather than a replacement.
+ * **The hub.** Remote sessions, and a page whose extension is not relaying, still need a socket,
+ * so the previous behaviour is the fallback rather than a replacement.
  */
 async function init() {
   const root = document.getElementById("root");

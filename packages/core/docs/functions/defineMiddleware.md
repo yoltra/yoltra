@@ -10,7 +10,7 @@
 
 > **defineMiddleware**\<`EMAdd`, `St`\>(): (`spec`) => [`MiddlewareSpec`](../interfaces/MiddlewareSpec.md)\<[`DeepReadonly`](../type-aliases/DeepReadonly.md)\<`St`\>, `EMAdd`\> & [`EventMapCarrier`](../interfaces/EventMapCarrier.md)\<`EMAdd`\>
 
-Defined in: [types.ts:2739](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2739)
+Defined in: [types.ts:2740](https://github.com/yoltra/yoltra/blob/main/packages/core/src/types.ts#L2740)
 
 Declares a middleware spec together with the event map it contributes.
 

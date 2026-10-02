@@ -262,6 +262,33 @@ await emit("ui", "event2", p2); // reducido despues de event1
 > dentro del primer efecto). El orden de los reducers siempre es estricto; el orden de finalización
 > de los efectos no lo es.
 
+Un emit raíz seguido a través de las dos fases. B se emite mientras A se reduce, así que se une al
+mismo pase síncrono; C se emite desde un efecto de A cuando el pase ya terminó, así que inicia uno
+nuevo. `emit(A)` retorna en cuanto el pase termina, y su promesa se resuelve solo cuando terminan
+los efectos de A.
+
+```mermaid
+sequenceDiagram
+    participant App as tu código
+    participant Store as store.emit
+    participant Drain as drainReduce
+    participant Sub as middleware o suscriptor
+    participant FxA as efectos de A
+
+    App->>Store: emit A
+    Store->>Drain: encola A en reduceQueue, drena
+    Drain->>Sub: A pasa el middleware, sus slices se confirman, corren los suscriptores
+    Sub->>Store: emit B
+    Store-->>Sub: B encolado con parentId A y depth 1, el drenado ya está corriendo
+    Drain-)FxA: inicia los efectos de A, sin esperarlos
+    Drain->>Drain: reduce B en el mismo pase, luego inicia los efectos de B
+    Store-->>App: emit retorna, getState ya muestra A y B
+    FxA->>Store: await emit C con el emit con causa
+    Store->>Drain: C lleva parentId A, un pase síncrono nuevo lo reduce
+    Store-->>FxA: se resuelve cuando terminan los efectos de C
+    FxA-->>App: terminan los efectos de A, la promesa de A se resuelve con su EmitResult
+```
+
 ## Deduplicación (opt-in)
 
 La deduplicación está **desactivada por defecto** - Yoltra nunca descarta en silencio eventos
@@ -313,6 +340,27 @@ const { committed, written, rejected, reason, vetoedBy } = await emit("api", "sa
 | `rejected`  | El `Rejection` que devolvió un reducer, cuando alguno rechazó                 |
 | `reason`    | Por qué no se confirmó: `"vetoed"`, `"deduped"` o `"cascade"`. Ausente si se confirmó |
 | `vetoedBy`  | El nombre del middleware que vetó (`meta.name`, o el `name` de una función simple), si lo tiene |
+
+Cada forma en que puede terminar un `emit()`, en el orden en que el store las revisa, y el
+`EmitResult` que produce cada una. Solo el último resultado escribe estado. Los cuatro que terminan
+con `committed: false` nunca llegan a un reducer.
+
+```mermaid
+flowchart TD
+    emit(["emit(channel, type, payload)"]) --> disposed{"¿store liberado?"}
+    disposed -->|"sí"| rDisposed(["committed false, sin reason"])
+    disposed -->|"no"| dedup{"¿duplicado dentro de una<br/>ventana de dedup opt-in?"}
+    dedup -->|"sí"| rDeduped(["committed false<br/>reason deduped"])
+    dedup -->|"no"| depth{"¿un evento causado pasa maxReduceDepth<br/>o maxTransitionsPerDrain?"}
+    depth -->|"sí, reportado por onCascade"| rCascade(["committed false<br/>reason cascade"])
+    depth -->|"no"| mw{"¿un middleware devolvió false,<br/>o lanzó?"}
+    mw -->|"sí"| rVetoed(["committed false<br/>reason vetoed, vetoedBy si tiene nombre"])
+    mw -->|"no"| refused{"¿un reducer devolvió Rejected?"}
+    refused -->|"sí, se descarta toda slice preparada"| rRejected(["committed true, written false<br/>rejected lleva el Rejection"])
+    refused -->|"no"| changed{"¿cambió alguna slice?"}
+    changed -->|"no"| rUnwritten(["committed true, written false"])
+    changed -->|"sí, una nueva raíz"| rWritten(["committed true, written true"])
+```
 
 Los dos son distintos a propósito. `committed` es `true` para todo evento que el middleware
 permite, que es de lo que depende un bus de notificaciones o de analíticas; `written` es el hecho

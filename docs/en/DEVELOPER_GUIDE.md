@@ -58,7 +58,6 @@ yoltra/
 │   ├── devtools-protocol/    @yoltra/devtools-protocol      — message types + patch utils
 │   ├── devtools-server/      @yoltra/devtools-server        — the hub (WebSocket relay)
 │   ├── devtools-browser-agent/ @yoltra/devtools-browser-agent — store-side agent (browser)
-│   ├── devtools-node-agent/  @yoltra/devtools-node-agent    — store-side agent (Node)
 │   ├── devtools-ui/          @yoltra/devtools-ui            — headless hooks + loopback hub
 │   ├── devtools-storeview/   @yoltra/devtools-storeview     — embeddable panel (React)
 │   ├── devtools-ext/         @yoltra/devtools-ext           — MV3 browser extension shell
@@ -268,7 +267,7 @@ just created while Rush insists it does not exist, commit it.
 that depends on a lockstep sibling. Rush ignores a `package.json` diff that only touches a
 project's **own** `version` field, but treats a **dependency-range** edit as real content — so
 those packages, and only those, get flagged. Expect `@yoltra/react`,
-`@yoltra/devtools-node-agent` and `@yoltra/devtools-browser-agent`. Write them a change file
+`@yoltra/devtools-browser-agent` and any other package with a peer range on a lockstep sibling. Write them a change file
 describing your actual work; it is not a stale cache and there is nothing to purge.
 
 ---

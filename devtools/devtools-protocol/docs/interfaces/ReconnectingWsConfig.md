@@ -8,7 +8,7 @@
 
 # Interface: ReconnectingWsConfig
 
-Defined in: [ws-transport.ts:71](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L71)
+Defined in: [ws-transport.ts:69](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L69)
 
 Reconnection/buffering configuration.
 
@@ -18,7 +18,7 @@ Reconnection/buffering configuration.
 
 > `optional` **authToken**: `string`
 
-Defined in: [ws-transport.ts:85](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L85)
+Defined in: [ws-transport.ts:83](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L83)
 
 Shared secret the hub requires, when it was started with one.
 
@@ -33,7 +33,7 @@ token — the usual case on a developer machine, where the hub says so at startu
 
 > **autoReconnect**: `boolean`
 
-Defined in: [ws-transport.ts:72](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L72)
+Defined in: [ws-transport.ts:70](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L70)
 
 ***
 
@@ -41,7 +41,7 @@ Defined in: [ws-transport.ts:72](https://github.com/yoltra/yoltra/blob/main/devt
 
 > **baseDelay**: `number`
 
-Defined in: [ws-transport.ts:74](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L74)
+Defined in: [ws-transport.ts:72](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L72)
 
 ***
 
@@ -49,7 +49,7 @@ Defined in: [ws-transport.ts:74](https://github.com/yoltra/yoltra/blob/main/devt
 
 > `optional` **maxBufferSize**: `number`
 
-Defined in: [ws-transport.ts:77](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L77)
+Defined in: [ws-transport.ts:75](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L75)
 
 Max buffered messages while disconnected before dropping the oldest. Default 100.
 
@@ -59,7 +59,7 @@ Max buffered messages while disconnected before dropping the oldest. Default 100
 
 > **maxDelay**: `number`
 
-Defined in: [ws-transport.ts:75](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L75)
+Defined in: [ws-transport.ts:73](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L73)
 
 ***
 
@@ -67,4 +67,4 @@ Defined in: [ws-transport.ts:75](https://github.com/yoltra/yoltra/blob/main/devt
 
 > **maxReconnectAttempts**: `number`
 
-Defined in: [ws-transport.ts:73](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L73)
+Defined in: [ws-transport.ts:71](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L71)

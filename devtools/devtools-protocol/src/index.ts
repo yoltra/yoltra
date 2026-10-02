@@ -55,8 +55,8 @@ export { computePatches, patchesFromChange, getAtPath } from "./patch-utils";
 // here would mean this package depending on core, and it is deliberately a leaf with no
 // dependencies at all.
 
-// Transport (reconnecting client with an injected socket — each agent supplies
-// its own WebSocket implementation, so this stays free of `ws` / browser globals)
+// Transport (reconnecting client with an injected socket: the agent supplies
+// its own WebSocket implementation, so this stays free of any specific one)
 export { ReconnectingWsClient, WS_OPEN, WS_CONNECTING } from "./ws-transport";
 export type {
   ConnectionState,

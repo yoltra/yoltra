@@ -44,7 +44,7 @@ async function main() {
     });
   }
 
-  // Render Ink app (pass ws WebSocket for Node.js compatibility)
+  // Render the Ink app with an explicit WebSocket implementation
   const { waitUntilExit } = render(
     createElement(App, {
       config: {

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/ds",
+      "comment": "Documentation only: the README (en, es) gains a diagram of how tokens, themes, stylesheets and the `data-theme` attribute fit together.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/ds"
+}

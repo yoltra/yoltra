@@ -14,7 +14,7 @@ navegador.**
 
 `@yoltra/devtools-browser-agent` instrumenta un store de Yoltra de forma transparente, así que
 cada evento, cambio de estado y métrica se reenvía al hub de DevTools en tiempo real. Usa la API
-nativa `WebSocket` del navegador (sin dependencia de `ws`), con reconexión automática y búfer de
+nativa `WebSocket` del navegador (sin dependencias adicionales), con reconexión automática y búfer de
 mensajes.
 
 ---
@@ -83,6 +83,61 @@ sin `{ ephemeral: true }`, así que ese tráfico nunca llega a la línea de tiem
 
 El envoltorio es **transparente**: devuelve la misma instancia del store.
 
+El diagrama muestra las dos direcciones dentro de `withDevtools`. De salida, cada evento observado
+se convierte en un `STORE_EVENT`, muestreado y acotado en tamaño antes de enviarse. De entrada, un
+comando toca el store solo si la capacidad correspondiente está activa: `allowReplay` para
+`TIME_TRAVEL` y `EVENT_REPLAY`, `allowEmit` para `EMIT_TO_STORE`. El transporte se elige una sola
+vez, al envolver el store.
+
+```mermaid
+flowchart TD
+    app(["tu app: withDevtools(store, config)"])
+    store(["el store de @yoltra/core"])
+
+    subgraph agent ["withDevtools"]
+    direction TB
+        pick{"¿qué transporte?"}
+        pick -->|"config.socketFactory"| custom["esa factory<br/>por ejemplo createLoopbackHub"]
+        pick -->|"transport bridge, o auto con<br/>__YOLTRA_DEVTOOLS_BRIDGE__ presente"| pm["createPostMessageSocketFactory<br/>window.postMessage, yoltra-devtools-bridge"]
+        pick -->|"transport websocket, o auto<br/>sin la marca"| native["WebSocket nativo<br/>ws://host:port"]
+        custom --> client
+        pm --> client
+        native --> client["DevtoolsWsClient<br/>ReconnectingWsClient: handshake,<br/>búfer de 100, backoff"]
+
+        obs["observador de instrument<br/>rutas cambiadas, valores anterior y siguiente,<br/>reduceTimeMs, sin canales ephemeral"]
+        obs --> counters["contadores de métricas<br/>intentados, confirmados, tiempo de reducción"]
+        counters --> sample{"¿descartado por muestreo?<br/>ignore, luego throttle, luego skip"}
+        sample -->|"sí"| skipped(["no se envía, pero se cuenta"])
+        sample -->|"no"| build["STORE_EVENT<br/>patchesFromChange, payload y valores de parches<br/>acotados por maxEventBytes, pasados por sanitize"]
+        build -->|"un evento confirmado incrementa snapshotVersion"| client
+        regs["onRegistrationChange<br/>se omite si todos los cambios son internos"] --> subs["STORE_SUBSCRIPTIONS<br/>desde __devtoolsIntrospect"]
+        subs --> client
+
+        client -->|"comando entrante"| cmd{"msg.type"}
+        cmd -->|"REQUEST_STATE"| snap["encodeStateBounded<br/>maxSnapshotBytes, sanitize"]
+        cmd -->|"REQUEST_METRICS"| met["__devtoolsIntrospect más contadores"]
+        cmd -->|"REQUEST_SUBSCRIPTIONS"| subs
+        cmd -->|"TIME_TRAVEL, si allowReplay"| tt["__applyExternalState(decodeState(state))<br/>y luego un STATE_SNAPSHOT nuevo"]
+        cmd -->|"EVENT_REPLAY, si allowReplay"| rep["__replayEvents"]
+        cmd -->|"EMIT_TO_STORE, si allowEmit"| emitCmd["store.emit"]
+        snap -->|"STATE_SNAPSHOT"| client
+        met -->|"STORE_METRICS"| client
+        tt -->|"STATE_SNAPSHOT"| client
+    end
+
+    app --> pick
+    store -->|"cada reducción"| obs
+    store -->|"cambian los registros"| regs
+    tt --> store
+    rep --> store
+    emitCmd --> store
+    client <-->|"tramas del protocolo"| far(["un hub, el puente de la extensión<br/>o un broker loopback"])
+```
+
+El viaje en el tiempo tiene dos candados: el agente ignora `TIME_TRAVEL` sin `allowReplay`, y el
+propio store lanza un error desde `__applyExternalState` salvo que se haya creado con
+`createStore({ devtools: { allowReplay: true } })`.
+
 ---
 
 ## Configuración
@@ -93,7 +148,7 @@ interface DevtoolsWrapperConfig {
   port: number;
   /** Host del servidor hub. @default "localhost" */
   host?: string;
-  /** ID persistente del store (sobrevive a las reconexiones). @default crypto.randomUUID() */
+  /** ID del store con el que lo identifican el hub y los paneles (sobrevive a las reconexiones). @default store.name */
   storeId?: string;
   /** Habilita el viaje en el tiempo y la reproducción de eventos. @default false */
   allowReplay?: boolean;
@@ -144,19 +199,6 @@ El agente usa backoff exponencial con jitter para reconectarse:
 | ----------------------------- | ---------------------------------------------- |
 | `withDevtools(store, config)` | Instrumenta un store y lo conecta al hub       |
 | `DevtoolsWrapperConfig`       | Tipo de configuración                          |
-
----
-
-## Comparación con `@yoltra/devtools-node-agent`
-
-| Característica     | `devtools-browser-agent` | `devtools-node-agent`     |
-| ------------------ | ------------------------ | ------------------------- |
-| Entorno            | Navegador                | Node.js                   |
-| WebSocket          | API nativa `WebSocket`   | Paquete `ws`              |
-| Impacto en bundle  | Cero dependencias        | Añade `ws`                |
-| Caso de uso        | SPAs, apps de navegador  | Servidores, CLIs, SSR     |
-
-Ambos agentes ofrecen la misma instrumentación y el mismo cumplimiento del protocolo.
 
 ---
 

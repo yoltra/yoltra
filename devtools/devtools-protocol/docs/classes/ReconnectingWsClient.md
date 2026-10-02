@@ -8,7 +8,7 @@
 
 # Class: ReconnectingWsClient
 
-Defined in: [ws-transport.ts:100](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L100)
+Defined in: [ws-transport.ts:98](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L98)
 
 Reconnecting WebSocket client that connects a Yoltra store to the DevTools hub.
 
@@ -26,7 +26,7 @@ Reconnecting WebSocket client that connects a Yoltra store to the DevTools hub.
 
 > **new ReconnectingWsClient**(`storeId`, `storeName`, `capabilities`, `config`, `createSocket`): `ReconnectingWsClient`
 
-Defined in: [ws-transport.ts:116](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L116)
+Defined in: [ws-transport.ts:114](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L114)
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Defined in: [ws-transport.ts:116](https://github.com/yoltra/yoltra/blob/main/dev
 
 > **connect**(`host`, `port`): `void`
 
-Defined in: [ws-transport.ts:149](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L149)
+Defined in: [ws-transport.ts:147](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L147)
 
 Connect to the DevTools hub at `host:port`.
 
@@ -84,7 +84,7 @@ Connect to the DevTools hub at `host:port`.
 
 > **disconnect**(): `void`
 
-Defined in: [ws-transport.ts:172](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L172)
+Defined in: [ws-transport.ts:170](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L170)
 
 Disconnect and stop reconnection attempts.
 
@@ -98,7 +98,7 @@ Disconnect and stop reconnection attempts.
 
 > **getDroppedCount**(): `number`
 
-Defined in: [ws-transport.ts:194](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L194)
+Defined in: [ws-transport.ts:192](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L192)
 
 Total messages dropped due to buffer overflow while disconnected.
 
@@ -112,7 +112,7 @@ Total messages dropped due to buffer overflow while disconnected.
 
 > **getState**(): [`ConnectionState`](../type-aliases/ConnectionState.md)
 
-Defined in: [ws-transport.ts:189](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L189)
+Defined in: [ws-transport.ts:187](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L187)
 
 Current connection state.
 
@@ -126,7 +126,7 @@ Current connection state.
 
 > **onBackpressure**(`handler`): `void`
 
-Defined in: [ws-transport.ts:144](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L144)
+Defined in: [ws-transport.ts:142](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L142)
 
 Register a handler fired when a buffered message is dropped because the send
 buffer overflowed while disconnected (backpressure). Receives the running
@@ -148,7 +148,7 @@ total of dropped messages so the loss is never silent.
 
 > **onConnected**(`handler`): `void`
 
-Defined in: [ws-transport.ts:130](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L130)
+Defined in: [ws-transport.ts:128](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L128)
 
 Register a handler for successful connection (post-handshake).
 
@@ -168,7 +168,7 @@ Register a handler for successful connection (post-handshake).
 
 > **onDisconnected**(`handler`): `void`
 
-Defined in: [ws-transport.ts:135](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L135)
+Defined in: [ws-transport.ts:133](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L133)
 
 Register a handler for disconnection.
 
@@ -188,7 +188,7 @@ Register a handler for disconnection.
 
 > **onMessage**(`handler`): `void`
 
-Defined in: [ws-transport.ts:125](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L125)
+Defined in: [ws-transport.ts:123](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L123)
 
 Register a handler for incoming messages (post-handshake).
 
@@ -208,7 +208,7 @@ Register a handler for incoming messages (post-handshake).
 
 > **send**(`message`): `void`
 
-Defined in: [ws-transport.ts:157](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L157)
+Defined in: [ws-transport.ts:155](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L155)
 
 Send a message, buffering (FIFO) while disconnected; drops oldest on overflow.
 

@@ -285,8 +285,8 @@ function encodeEnvelope(
  * Writes state as it changes.
  *
  * @returns A function that stops persisting, flushes anything pending, and returns a promise
- *   that resolves once the last write has settled. Await it before a process exits: with an
- *   asynchronous adapter the final write is otherwise still in flight. It never rejects; a
+ *   that resolves once the last write has settled. Await it before tearing the store down: with
+ *   an asynchronous adapter the final write is otherwise still in flight. It never rejects; a
  *   failed write is reported through `onError`.
  *
  * @remarks
@@ -332,7 +332,7 @@ export function persist(store: PersistableStore, options: PersistOptions): () =>
       timer = null;
       flush();
     }, throttleMs);
-    // Never hold a process open for a pending write.
+    // A pending write must never keep the host alive on its own.
     (handle as { unref?: () => void }).unref?.();
     timer = handle;
   };

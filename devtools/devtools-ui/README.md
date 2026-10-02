@@ -134,6 +134,52 @@ interface HubConnectionConfig {
 
 ---
 
+## How It Works
+
+`HubProvider` owns the one socket and hands every hook the same `send` and `subscribe` through
+`HubContext`. Data hooks filter the incoming frames by `storeId`, and action hooks only send
+commands; `send` writes only while the socket is open, so nothing is buffered on the panel side.
+The hub can be a real one or `createLoopbackHub()`, which speaks the same protocol inside the page.
+
+```mermaid
+flowchart TD
+    hub(["a hub, or createLoopbackHub() in the same page"])
+    view(["a React UI: storeview, the CLI or your own panel"])
+
+    subgraph ui ["@yoltra/devtools-ui"]
+    direction TB
+        provider["HubProvider<br/>config.WebSocket or the global WebSocket"]
+        provider -->|"onopen"| hs["HANDSHAKE_REQUEST<br/>role EXTENSION, every capability on"]
+        hs --> ok{"HANDSHAKE_RESPONSE success?"}
+        ok -->|"no"| closeIt["close the socket"]
+        closeIt --> retry["reconnect with backoff<br/>750 ms doubled plus jitter, capped at 30 s"]
+        retry --> provider
+        ok -->|"yes"| ctx["HubContext<br/>status, send, subscribe"]
+
+        ctx -->|"subscribe"| registry["useStoreRegistry<br/>STORE_REGISTRY, STORE_CONNECTED,<br/>STORE_DISCONNECTED"]
+        ctx -->|"subscribe"| log["useEventLog<br/>STORE_EVENT kept per store, last 2000"]
+        ctx -->|"subscribe and send"| stateHook["useStoreState<br/>REQUEST_STATE every 1.5 s until a snapshot,<br/>then applyPatches per committed STORE_EVENT"]
+        ctx -->|"subscribe and send"| metricsHook["useStoreMetrics<br/>REQUEST_METRICS every 2 s"]
+        ctx -->|"subscribe and send"| subsHook["useStoreSubscriptions<br/>REQUEST_SUBSCRIPTIONS"]
+        log -->|"entries"| travel["useTimeTravel<br/>replayState from the first STATE_SNAPSHOT"]
+        travel -->|"TIME_TRAVEL"| ctx
+        replayHook["useEventReplay"] -->|"EVENT_REPLAY"| ctx
+        emitHook["useEventEmitter"] -->|"EMIT_TO_STORE"| ctx
+    end
+
+    hub <-->|"protocol frames"| provider
+    registry --> view
+    log --> view
+    stateHook --> view
+    metricsHook --> view
+    subsHook --> view
+    travel --> view
+    view -->|"user actions"| replayHook
+    view -->|"user actions"| emitHook
+```
+
+---
+
 ## State Synchronization
 
 `useStoreState` uses an efficient incremental patching strategy:
@@ -169,6 +215,30 @@ function TimeTravelControls({ storeId, entries }) {
     </div>
   );
 }
+```
+
+One jump, end to end. The panel rebuilds the target state itself, replaying patches forward from
+the first snapshot it saw, and sends that whole state; the store does not look anything up in its
+own history. Both the agent and the store refuse unless replay was enabled.
+
+```mermaid
+sequenceDiagram
+    participant P as useTimeTravel (panel)
+    participant H as Hub or loopback broker
+    participant A as Store agent
+    participant S as Store
+    Note over P: baseline is the first STATE_SNAPSHOT, entries come from useEventLog
+    P->>P: jumpTo(index): skipped unless canReplay, freezes frameCount
+    P->>P: replayState(baseline, entries, index) applies patches forward
+    P->>H: TIME_TRAVEL { storeId, state, snapshotVersion }
+    H->>A: routed to the one store with that storeId
+    A->>A: ignored unless allowReplay and state is not null
+    A->>S: __applyExternalState(decodeState(state))
+    Note over S: throws unless createStore devtools.allowReplay is on
+    A->>H: STATE_SNAPSHOT of the traveled state
+    H->>P: fanned out to every panel
+    Note over P: useStoreState shows it, useTimeTravel keeps its first baseline
+    P->>H: resume(): TIME_TRAVEL with the state at the newest entry
 ```
 
 ---

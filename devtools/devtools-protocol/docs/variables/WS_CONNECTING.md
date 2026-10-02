@@ -10,6 +10,6 @@
 
 > `const` **WS\_CONNECTING**: `0` = `0`
 
-Defined in: [ws-transport.ts:25](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L25)
+Defined in: [ws-transport.ts:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L23)
 
 WebSocket `readyState` for a connecting socket (per the WebSocket standard).

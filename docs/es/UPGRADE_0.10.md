@@ -130,8 +130,8 @@ campo del payload, como hace `{ ...payload }`.
 
 ## El aviso de colisión de claves se lleva por store
 
-**Lo notarás si:** un proceso ejecuta varios stores en desarrollo, como una suite de pruebas o un
-servidor que renderiza más de uno, y dos pares `(channel, type)` de un mismo store se unen en la misma
+**Lo notarás si:** un proceso ejecuta varios stores en desarrollo, como una suite de pruebas o una
+app que crea más de uno, y dos pares `(channel, type)` de un mismo store se unen en la misma
 clave interna.
 
 El aviso se recordaba para todo el proceso. Una vez que un store había reportado una clave, un segundo
@@ -209,7 +209,7 @@ para que `Quien Responde` pueda dejar de trabajar. Consulta la
 
 **Canales `ephemeral`, y `store.instrument(observer, { ephemeral })`.** Los eventos de un canal
 efímero se manejan como siempre pero llegan solo a los observadores de instrumentación que se
-suscriben a ellos, y el replay los omite. Los agentes de devtools no se suscriben; `persist` sí.
+suscriben a ellos, y el replay los omite. El agente de DevTools no se suscribe; `persist` sí.
 [Tráfico que no es historia](../../packages/core/README.es.md#tráfico-que-no-es-historia) y
 [Valores que cambian muchas veces por segundo](../../packages/core/README.es.md#valores-que-cambian-muchas-veces-por-segundo)
 en el README describen el patrón para valores de alta frecuencia. Un `PersistableStore` que
@@ -230,9 +230,8 @@ nombre, el origen, la duración de cada efecto y si falló. Consulta
 
 **`store.metrics()` y `store.whenIdle()`**, con el tipo `StoreMetrics`: la carga actual del store, y
 una promesa que se resuelve cuando ningún evento espera a ser reducido y ningún efecto corre, para un
-apagado ordenado. Consulta [Carga, y esperar a que termine](../../packages/core/README.es.md#carga-y-esperar-a-que-termine).
+desmontaje limpio. Consulta [Carga, y esperar a que termine](../../packages/core/README.es.md#carga-y-esperar-a-que-termine).
 
 **La función que detiene `persist()` devuelve una promesa** que se resuelve cuando la última
-escritura terminó, para que un proceso espere su escritura final antes de salir. Nunca se rechaza.
-El código que ignoraba el valor de retorno no se ve afectado. La
-[guía de servicio de Node](./NODE_SERVICE_GUIDE.md) muestra el apagado ordenado completo con PM2.
+escritura terminó, para que la escritura final pueda esperarse antes de desmontar el store. Nunca
+se rechaza. El código que ignoraba el valor de retorno no se ve afectado.

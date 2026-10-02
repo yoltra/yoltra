@@ -27,8 +27,8 @@ Writes state as it changes.
 ## Returns
 
 A function that stops persisting, flushes anything pending, and returns a promise
-  that resolves once the last write has settled. Await it before a process exits: with an
-  asynchronous adapter the final write is otherwise still in flight. It never rejects; a
+  that resolves once the last write has settled. Await it before tearing the store down: with
+  an asynchronous adapter the final write is otherwise still in flight. It never rejects; a
   failed write is reported through `onError`.
 
 > (): `Promise`\<`void`\>

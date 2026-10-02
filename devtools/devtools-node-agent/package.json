@@ -1,7 +1,7 @@
 {
   "name": "@yoltra/devtools-node-agent",
   "version": "0.9.0",
-  "description": "Node.js store agent for Yoltra DevTools — instruments stores and reports to the hub",
+  "description": "Store agent for Yoltra DevTools: instruments stores and reports to the hub",
   "author": {
     "name": "Manu Ramirez <@pixerael>",
     "email": "opensource@yoltra.dev"
@@ -34,10 +34,7 @@
     "test": "vitest --coverage --watch=false",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
     "prepublishOnly": "node ../../common/scripts/copy-license.cjs",
-    "docs": "rushx docs:js && rushx docs:md && rushx docs:stamp",
-    "docs:stamp": "node ../../tools/repo-tools/bin/docs-stamp.mjs docs",
-    "docs:md": "typedoc --options ./typedoc.json",
-    "docs:js": "typedoc --options ./typedoc.json --json ./.typedoc/devtools-node-agent-en.json"
+    "docs": "exit 0"
   },
   "peerDependencies": {
     "@yoltra/core": "^0.9.0"

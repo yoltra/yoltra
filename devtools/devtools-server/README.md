@@ -79,6 +79,48 @@ node ./bin/devtools-server.js --port 9800
    `storeId`
 4. Recent events are **buffered** in a ring buffer so late-connecting extensions receive history
 
+Inside `DevtoolsHub`, every frame passes the same gates (origin, shape, rate, handshake) before
+the `Router` sees it. A store frame fans out to every panel, and a `STORE_EVENT` is also kept in
+the `RingBuffer`; a panel command goes to exactly one store, chosen by `storeId`.
+
+```mermaid
+flowchart TD
+    agentIn(["store agent<br/>withDevtools"])
+    panelIn(["panel<br/>HubProvider in storeview, the CLI or your own UI"])
+
+    subgraph hub ["DevtoolsHub"]
+    direction TB
+        verify{"verifyClient: Origin allowed?<br/>none, extension, loopback or allowedOrigins"}
+        verify -->|"no"| refused(["upgrade refused"])
+        verify -->|"yes"| conn["handleConnection<br/>8 MiB frame cap, 5 s handshake timer"]
+        conn -->|"each frame"| shape{"JSON object with a string type?"}
+        shape -->|"no"| ignored(["ignored"])
+        shape -->|"yes"| rate{"under maxMessagesPerSecond?<br/>default 200, 1 s window"}
+        rate -->|"no"| dropped(["dropped, warned once per window"])
+        rate -->|"yes"| shaken{"handshake done?"}
+        shaken -->|"no"| hs["handleHandshake<br/>authToken, major version, role id"]
+        hs -->|"rejected"| close1008(["close 1008"])
+        hs -->|"accepted"| register["Router.register<br/>stores map or extensions map"]
+        register -->|"store"| joined["build STORE_CONNECTED"]
+        register -->|"extension"| greet["send STORE_REGISTRY, then history<br/>of stores still connected"]
+        shaken -->|"yes"| route{"routeMessage: sender role?"}
+        route -->|"store"| fan["Router.fanOutToExtensions<br/>STORE_METRICS only to panels with performanceMetrics"]
+        fan -->|"STORE_EVENT only"| ring["RingBuffer.push<br/>historySize, default 1000, oldest overwritten"]
+        ring -.->|"read at the next panel handshake"| greet
+        route -->|"extension"| target["Router.sendToStore(storeId)<br/>dropped if that store is gone"]
+        conn -->|"socket close"| unreg["Router.unregister"]
+        unreg -->|"store"| left["build STORE_DISCONNECTED"]
+    end
+
+    agentIn -->|"WebSocket"| verify
+    panelIn -->|"WebSocket"| verify
+    fan --> panelOut(["every connected panel"])
+    joined --> panelOut
+    left --> panelOut
+    greet --> panelNew(["the panel that just connected"])
+    target --> agentOut(["the target store agent"])
+```
+
 ---
 
 ## Configuration

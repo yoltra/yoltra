@@ -124,9 +124,9 @@ export interface CallOptions<EM extends EventMapBase> {
    * The default matching is structural: the store stamps `parentId` on anything emitted while an
    * event is being handled, so a responder that answers through the `emit` it was handed is
    * correlated without either side carrying an id. That is free and cannot be forged, but it only
-   * holds in one process and only for a **direct** reply — see {@link StoreInstance.call}.
+   * holds inside one store and only for a **direct** reply (see {@link StoreInstance.call}).
    *
-   * A reply arriving from another node, a worker, or any transport carries no parent link, so for
+   * A reply arriving from another tab, a worker, or any transport carries no parent link, so for
    * those the responder echoes an id and both sides agree on it here.
    *
    * When set, the id is sent as `meta.correlationId`. By default a reply then matches if it

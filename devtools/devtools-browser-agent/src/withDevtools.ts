@@ -43,7 +43,7 @@ const DEFAULT_MAX_SNAPSHOT_BYTES = 6 * 1024 * 1024;
  *
  * @remarks
  * Far below the snapshot cap, because events are frequent and a snapshot is not. Unbounded,
- * one oversized payload produced a frame past the hub's 8 MiB limit, and `ws` answers that
+ * one oversized payload produced a frame past the hub's 8 MiB limit, and the hub answers that
  * by closing the connection rather than dropping the message: a single large emit ended the
  * devtools session. Faithful binary encoding makes this reachable in ordinary use, since an
  * `ArrayBuffer` now carries its bytes instead of serializing to `{}`.

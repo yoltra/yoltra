@@ -94,6 +94,55 @@ el tiempo real, setup de una llamada y tipado completo - juntos.** Una comparaci
 
 ---
 
+## Dónde encaja Yoltra en tu código
+
+Tu código habla con un solo store. Los componentes de React llegan a él a través de
+`@yoltra/react`; el resto del código (un web worker, una prueba, una librería que decora el store)
+lo llama directamente. Todo lo que observa desde fuera (la persistencia, las DevTools) se conecta por
+el mismo punto de `instrument()`, así que nada de eso le pide algo a tus reducers. Las flechas
+punteadas son comandos de DevTools, que el agente ejecuta solo cuando están activados
+(`allowReplay`, `allowEmit`).
+
+```mermaid
+flowchart TD
+    subgraph yours ["Tu código"]
+    direction TB
+        components(["componentes de React"])
+        service(["código sin React: un web worker o una prueba"])
+        decorator(["una librería que decora un store"])
+        specs["tus reducers, middleware y efectos"]
+    end
+
+    components -->|"useAtomicProp, useEvent, useEmit"| react["@yoltra/react<br/>createYoltra, hooks tipados, StoreProvider"]
+    components -.->|"opcional, no necesita store"| ds["@yoltra/ds<br/>tokens, temas, primitivas accesibles"]
+
+    subgraph core ["@yoltra/core"]
+    direction TB
+        store["store<br/>emit, getState, call"]
+        seam["instrument<br/>rutas cambiadas, resultado, tiempos"]
+        store --> seam
+    end
+
+    specs -->|"createStore o createYoltra"| store
+    react -->|"connect, subscribe, onEvent, emit"| store
+    service -->|"emit, call, getState, whenIdle"| store
+    decorator -->|"withSlice, withMiddleware, withEffect"| store
+    store -->|"tus efectos llaman hacia fuera"| apis(["tus APIs y servicios"])
+
+    storage(["web storage, o tu propio adaptador"]) -->|"hydrate: estado inicial, antes de que exista el store"| store
+    seam -->|"persist: escrituras throttled, codificadas por el codec"| storage
+
+    seam --> agent["agente de DevTools<br/>withDevtools"]
+    agent -->|"WebSocket"| hub["@yoltra/devtools-server<br/>hub en localhost, también incrustado por la CLI"]
+    hub -->|"eventos, instantáneas, métricas"| hubPanel(["UI de terminal, o el panel de storeview<br/>montado en una página propia"])
+    agent -->|"postMessage retransmitido por la extensión, sin hub"| extPanel(["panel de la extensión de navegador"])
+    hubPanel -.->|"comandos: viaje en el tiempo, replay, emit"| hub
+    hub -.->|"al único store al que van dirigidos"| agent
+    extPanel -.->|"los mismos comandos"| agent
+```
+
+---
+
 ## Cómo funciona un store
 
 Un evento, de principio a fin. La fase de reducción es síncrona, así que `getState()` es correcto
@@ -133,7 +182,7 @@ flowchart TD
     instr --> persistOut(["persist: escritura throttled, codificada por el codec"])
     instr --> agent(["agente de devtools"])
 
-    commit --> fx["efectos, seleccionados por when<br/>asíncronos, esperados uno tras otro"]
+    nCommitted -->|"todo evento confirmado, aunque una slice lo haya rechazado"| fx["efectos, seleccionados por when<br/>asíncronos, esperados uno tras otro"]
     fx --> call(["store.call usa un efecto de respuesta interno"])
 ```
 
@@ -266,7 +315,52 @@ de bundle que el CI hace cumplir.
 | **[@yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.es.md)**   | Store agnóstico de framework: reducers, middleware, efectos, detección de cambios de grano fino, instrumentación tipada, entity adapter, persistencia + hidratación     |
 | **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.es.md)** | Hooks de React: suscripciones de grano fino, accessors de ruta tipados, `createYoltra`, hooks de entidades, Suspense                                                    |
 | **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md)**          | Sistema de diseño: primitivas de React accesibles (formularios, tablas, overlays, menús, pestañas), tokens de diseño `--yl-*` en tres niveles, temas claro/oscuro con el contraste verificado en ambos - independiente, usable sin el store |
-| **@yoltra/devtools-\***                                                                     | Suite de DevTools: protocolo, servidor hub, agentes de navegador/node y la UI del panel (extensión de navegador + CLI)                                                  |
+| **@yoltra/devtools-\***                                                                     | Suite de DevTools: protocolo, servidor hub, agente de navegador y la UI del panel (extensión de navegador + CLI)                                                        |
+
+Cómo dependen los paquetes unos de otros. `@yoltra/core` no depende de nada; `@yoltra/react` y el
+agente de navegador de DevTools lo toman como dependencia peer, así que tu app siempre tiene exactamente una
+copia. `@yoltra/ds` es independiente, y todos los paquetes de DevTools hablan el formato de cable
+definido en `@yoltra/devtools-protocol`.
+
+```mermaid
+flowchart LR
+    subgraph state ["Estado"]
+    direction TB
+        core["@yoltra/core<br/>store, codec, persistencia<br/>cero dependencias"]
+        react["@yoltra/react<br/>createYoltra y los hooks"]
+    end
+
+    subgraph design ["Sistema de diseño"]
+    direction TB
+        ds["@yoltra/ds<br/>tokens, temas, primitivas<br/>usable sin el store"]
+    end
+
+    subgraph devtools ["DevTools"]
+    direction TB
+        browserAgent["@yoltra/devtools-browser-agent<br/>withDevtools"]
+        protocol["@yoltra/devtools-protocol<br/>mensajes, handshake, JSON Patch"]
+        server["@yoltra/devtools-server<br/>DevtoolsHub"]
+        ui["@yoltra/devtools-ui<br/>hooks de React sin UI"]
+        storeview["@yoltra/devtools-storeview<br/>inspector en React DOM"]
+        cli["@yoltra/devtools-cli<br/>UI de terminal con Ink"]
+        ext["@yoltra/devtools-ext<br/>extensión de navegador"]
+    end
+
+    react -.->|"peer"| core
+    browserAgent -.->|"peer"| core
+
+    browserAgent --> protocol
+    server --> protocol
+    ui --> protocol
+    storeview --> ui
+    storeview --> protocol
+    cli --> ui
+    cli -->|"incrusta el hub"| server
+    cli --> protocol
+    ext -->|"renderiza"| storeview
+    ext --> ui
+    ext --> protocol
+```
 
 ---
 
@@ -276,13 +370,11 @@ de bundle que el CI hace cumplir.
 
 ## DevTools
 
-El store de Yoltra expone una costura de instrumentación tipada (`store.instrument(...)`) que los
-agentes consumen con cero casts `as any`. Un pequeño hub retransmite los eventos de tu app en
+El store de Yoltra expone una costura de instrumentación tipada (`store.instrument(...)`) que el
+agente de DevTools consume con cero casts `as any`. Un pequeño hub retransmite los eventos de tu app en
 ejecución hacia el panel; el panel renderiza el log de eventos, el árbol de estado en vivo, los
 parches precisos por evento, las métricas y el viaje en el tiempo. Un evento que no se confirmó
-dice por qué, y nombra al middleware que lo vetó cuando ese middleware tiene nombre. Los agentes de navegador y de node
-son paquetes deliberadamente separados para que un bundle web nunca arrastre un WebSocket exclusivo de
-Node, y viceversa.
+dice por qué, y nombra al middleware que lo vetó cuando ese middleware tiene nombre.
 
 ---
 
@@ -315,7 +407,6 @@ Node, y viceversa.
 - **[Petición y respuesta](https://github.com/yoltra/yoltra/blob/main/docs/es/REQUEST_REPLY_GUIDE.md)** - `store.call()`: correlación sin ids, progreso en streaming con backpressure real
 - **[Guía de testing](https://github.com/yoltra/yoltra/blob/main/docs/es/TESTING_GUIDE.md)** - prueba stores, efectos, middleware y componentes
 - **[Guía de Next.js](https://github.com/yoltra/yoltra/blob/main/docs/es/NEXTJS_GUIDE.md)** - uso en cliente con Pages y App Router
-- **[Servicio de Node](https://github.com/yoltra/yoltra/blob/main/docs/es/NODE_SERVICE_GUIDE.md)** - un store como proceso de larga vida con PM2: disponibilidad, apagado ordenado, métricas
 - **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** - store, middleware, efectos, matchers `When`, instrumentación
 - **[API de @yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** - hooks, accessors tipados, `createYoltra`, Suspense
 - **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.es.md)** - componentes, tokens, temas y el contrato con SSR

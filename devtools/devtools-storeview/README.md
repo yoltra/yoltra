@@ -90,6 +90,44 @@ The app provides four tabs, each backed by hooks from `@yoltra/devtools-ui`:
 
 ---
 
+## How It Works
+
+`DevtoolsApp` holds no protocol logic of its own: it wraps `HubProvider` from
+`@yoltra/devtools-ui`, runs that package's hooks for the selected store, and passes the results
+to presentational panels. Which tabs appear is decided by the store's advertised capabilities, so
+a store that cannot replay never shows a Time Travel tab.
+
+```mermaid
+flowchart TD
+    host(["a host page: the extension panel,<br/>a webview or your app"])
+    hub(["a hub, or a loopback broker"])
+
+    subgraph sv ["@yoltra/devtools-storeview"]
+    direction TB
+        mount["mountDevtools(container, config)<br/>createRoot, returns unmount"] --> app["DevtoolsApp<br/>ThemeProvider, dark by default"]
+        app --> provider["HubProvider<br/>from @yoltra/devtools-ui"]
+        provider --> inner["DevtoolsInner<br/>selected store, first one by default"]
+        inner --> hooks["useStoreRegistry, useEventLog, useStoreState,<br/>useStoreSubscriptions, useStoreMetrics,<br/>useEventEmitter, useEventReplay, useTimeTravel"]
+        inner --> bars["TopBar: store selector<br/>BottomBar: status, event count, protocol version"]
+        hooks --> policy{"tabRequires(tab, capabilities)"}
+        policy -->|"always"| inspector["Inspector<br/>timeline, event detail,<br/>EventEmitterPanel when emit is on"]
+        policy -->|"always"| metrics["MetricsDashboard<br/>counters and the subscriptions inventory"]
+        policy -->|"stateSnapshot"| stateTab["StateTreeExplorer<br/>JsonTree, refresh"]
+        policy -->|"replay"| ttTab["TimeTravelPanel<br/>scrubber, previewState, replay"]
+        inspector -->|"emit: EMIT_TO_STORE"| hooks
+        ttTab -->|"jumpTo, resume: TIME_TRAVEL<br/>replay: EVENT_REPLAY"| hooks
+    end
+
+    host --> mount
+    host -->|"or render DevtoolsApp directly"| app
+    hub <-->|"protocol frames"| provider
+```
+
+On a store switch, `resolveTab` keeps the current tab only if the new store still supports it,
+and falls back to Inspector otherwise.
+
+---
+
 ## Exported Components
 
 ### Mount API

@@ -49,23 +49,55 @@ pnpm build
 
 ## How It Works
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Your App    │     │  DevTools    │     │  Extension   │
-│  (with       │ WS  │  Hub         │ WS  │  Panel       │
-│  withDevtools│────►│  (server)    │◄────│  (this pkg)  │
-│  )           │     │              │     │              │
-└──────────────┘     └──────────────┘     └──────────────┘
+The panel reaches a page's store in one of two ways. Inside DevTools it uses the bridge: the
+content script and the service worker carry frames between the page and the panel, and the panel
+runs its own in-memory broker (`createLoopbackHub`), so no server is involved. Outside that
+context it connects to a hub over a WebSocket. None of the relays reads or rewrites a frame.
+
+```mermaid
+flowchart TD
+    page(["your app: withDevtools(store)"])
+    hubNode(["a hub: devtools-server or devtools-cli"])
+
+    page --> mark{"transport auto:<br/>__YOLTRA_DEVTOOLS_BRIDGE__ set?"}
+    mark -->|"yes"| pm["postMessage transport<br/>channel yoltra-devtools-bridge"]
+    mark -->|"no"| ws["WebSocket to host:port"]
+
+    subgraph ext ["@yoltra/devtools-ext"]
+    direction TB
+        cs["content-script.ts<br/>document_start: injects the mark,<br/>relays frames without reading them"]
+        bg["background.ts service worker<br/>pairs page and panel ports by tab id"]
+        dt["devtools.ts<br/>creates the Yoltra panel"] --> panel{"panel.ts:<br/>inspectedWindow.tabId?"}
+        panel -->|"yes"| bridged["mountBridged<br/>createLoopbackHub, the page joins<br/>as an ordinary store connection"]
+        panel -->|"no"| direct["mountDevtools to hubHost:hubPort<br/>default localhost:9800"]
+        popup["popup.ts<br/>saves hubHost and hubPort"] -.->|"chrome.storage.local"| direct
+        bridged --> loopUi["mountDevtools<br/>WebSocket = the loopback class"]
+    end
+
+    cs -.->|"window.__YOLTRA_DEVTOOLS_BRIDGE__ = true"| mark
+    pm <-->|"window.postMessage, to-panel and to-page"| cs
+    cs <-->|"runtime port yoltra-devtools-bridge"| bg
+    bg <-->|"runtime port yoltra-devtools-panel:tabId"| bridged
+    ws <-->|"WebSocket"| hubNode
+    direct <-->|"WebSocket"| hubNode
 ```
 
-1. Your app instruments a store with `withDevtools()` — connects to the hub
-2. The extension panel mounts `@yoltra/devtools-storeview` — connects to the same hub
-3. Events and commands flow through the hub between store and panel
+1. On every `http://` and `https://` page, the content script injects an inline script that sets
+   `__YOLTRA_DEVTOOLS_BRIDGE__` at `document_start`, before your code runs.
+2. Your app instruments a store with `withDevtools()`. With the default `transport: "auto"` it sees
+   the mark and talks `postMessage` instead of opening a WebSocket.
+3. The Yoltra panel in DevTools mounts `@yoltra/devtools-storeview` over its own in-memory broker,
+   and the service worker joins it to the page in the inspected tab.
 
-A hub is not required. When the page is relayed by this extension, the content script announces
-the bridge and the service worker joins that page to the panel inspecting its tab, so frames cross
-directly. Connecting to a hub over a socket remains the fallback for pages no extension is
-relaying, and for Node and remote sessions.
+**Inside a DevTools panel, the extension always takes the bridge.** `panel.ts` chooses the hub only
+when `chrome.devtools.inspectedWindow.tabId` is missing, which happens only when `panel.html` is
+opened outside DevTools, for example as a plain extension page. So the popup's hub host and port
+are not used by the DevTools panel, and a store whose agent talks to a hub (`transport:
+"websocket"`, an explicit `socketFactory`, a page the content script does not run on, such as
+`file://`, or a page whose Content-Security-Policy blocks that inline script) does not appear in
+it. Inspect those with
+[`@yoltra/devtools-cli`](../devtools-cli/README.md), or with `@yoltra/devtools-storeview` mounted
+in a page of your own, both connected to the hub.
 
 ---
 
@@ -97,7 +129,9 @@ Settings are persisted in `chrome.storage.local`.
 
 ## Prerequisites
 
-The extension connects to a **running DevTools hub**. Start one using any of:
+The DevTools panel needs **no hub**: see [How It Works](#how-it-works). A hub matters only when
+`panel.html` is opened outside DevTools, which then connects to a **running DevTools hub**. Start
+one using any of:
 
 ```bash
 # Standalone server

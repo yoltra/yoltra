@@ -174,6 +174,46 @@ The full contract, including what to do about disposal, is in the
 
 ---
 
+## How the hooks reach the store
+
+Every hook is a thin wrapper over one store method, so the store decides what changed and React
+re-renders only the components whose subscription fired. `createYoltra` gives its hooks a context
+whose default value is its own store, which is why a provider is optional there; the hooks exported
+from the package itself read a context that starts empty, and need a `<StoreProvider>`.
+
+```mermaid
+flowchart TD
+    cy(["createYoltra(spec)"]) --> created["createStore<br/>from @yoltra/core"]
+    cy --> ownContext["its own StoreContext<br/>default value: that store"]
+    ownProvider(["yoltra.StoreProvider<br/>optional, for a subtree"]) -.->|"overrides"| ownContext
+    sharedProvider(["StoreProvider from the package<br/>required by the package hooks"]) --> sharedContext["the package StoreContext<br/>default value: null"]
+
+    ownContext --> factory["createHooks(context)<br/>useStore reads the context"]
+    sharedContext --> factory
+
+    subgraph hooks ["The hooks createHooks returns"]
+    direction TB
+        atomic["useAtomicProp, useAtomicProps<br/>typed accessor or dotted path, useSyncExternalStore"]
+        suspense["useSuspenseAtomicProp, useSuspenseAtomicProps<br/>suspenseCache throws a promise while loading"]
+        selector["useSelector<br/>useSyncExternalStore over the whole state"]
+        event["useEvent<br/>useEffect, latest handler kept in a ref"]
+        emitHook["useEmit"]
+    end
+
+    factory --> hooks
+    entity["useEntity, useEntityIds, useEntityField<br/>path from adapter.pathTo(id)"] -->|"wraps"| atomic
+
+    created --> store(["the store"])
+    atomic -->|"connect: one exact or wildcard path"| store
+    suspense -->|"connect, invalidating its cache entry"| store
+    selector -->|"subscribe: every written event"| store
+    event -->|"onEvent, with a phase"| store
+    emitHook -->|"emit"| store
+    decorate["withSlice, withMiddleware, withEffect"] -->|"registerSlice, registerMiddleware, registerEffect"| store
+```
+
+---
+
 ## Hooks API
 
 ### `useAtomicProp({ reducer, property }, map?, isEqual?)`

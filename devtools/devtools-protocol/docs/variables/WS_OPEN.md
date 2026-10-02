@@ -10,6 +10,6 @@
 
 > `const` **WS\_OPEN**: `1` = `1`
 
-Defined in: [ws-transport.ts:27](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L27)
+Defined in: [ws-transport.ts:25](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L25)
 
 WebSocket `readyState` for an open socket (per the WebSocket standard).

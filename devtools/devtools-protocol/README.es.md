@@ -128,6 +128,49 @@ function handle(msg: DevtoolsMessage) {
 
 ---
 
+## Cómo Funciona la Conexión del Store
+
+El agente de store se conecta mediante `ReconnectingWsClient`, que se encarga del
+handshake, del búfer de envío y del ciclo de reconexión. El agente solo inyecta el socket como un
+`DevtoolsSocketFactory`, así que este paquete no importa ningún transporte. Nada sale antes de un
+`HANDSHAKE_RESPONSE` exitoso: hasta entonces las tramas esperan en un búfer FIFO acotado, y un
+desbordamiento descarta la trama más antigua y lo reporta mediante `onBackpressure`. El lado del
+panel (`HubProvider` en `@yoltra/devtools-ui`) tiene su propio código de conexión y no usa este
+cliente.
+
+```mermaid
+flowchart TD
+    agent(["el agente de store<br/>withDevtools"])
+
+    subgraph rwc ["ReconnectingWsClient"]
+    direction TB
+        connect["connect(host, port)"] --> open["createSocket(url, callbacks)<br/>el DevtoolsSocketFactory inyectado"]
+        open -->|"onOpen"| hs["envía HANDSHAKE_REQUEST<br/>role STORE, PROTOCOL_VERSION,<br/>capabilities, authToken si existe"]
+        hs --> ok{"¿HANDSHAKE_RESPONSE con success?"}
+        ok -->|"sí"| live["estado connected<br/>intentos a cero, onConnected"]
+        live --> flush["vacía el búfer, el más antiguo primero"]
+        ok -->|"no"| reject["cierre 1008"]
+        reject --> closed
+        open -->|"onClose"| closed["handleClose<br/>épocas obsoletas ignoradas"]
+        closed --> again{"¿autoReconnect y<br/>quedan intentos?"}
+        again -->|"sí"| backoff["backoff exponencial con jitter<br/>baseDelay se duplica, tope maxDelay,<br/>mínimo 750 ms"]
+        backoff --> open
+        again -->|"no"| down(["desconectado"])
+
+        send{"send: ¿socket abierto y<br/>handshake resuelto?"}
+        send -->|"no"| buffer["búfer FIFO<br/>maxBufferSize, 100 por defecto"]
+        buffer -->|"desbordamiento"| drop["descarta el más antiguo<br/>onBackpressure(droppedTotal)"]
+    end
+
+    agent -->|"factory: WebSocket, postMessage o loopback"| connect
+    agent -->|"STORE_EVENT, STATE_SNAPSHOT, ..."| send
+    send -->|"sí"| far(["el hub, o cualquier otro extremo que hable el protocolo"])
+    flush --> far
+    far -->|"comandos, tras el handshake: onMessage"| agent
+```
+
+---
+
 ## Flujo de Handshake
 
 ```
@@ -144,6 +187,38 @@ Cliente (Store/Extensión)              Hub
   │                                     │
   │  (si es extensión) Hub envía        │
   │  STORE_REGISTRY + eventos bufferizados |
+```
+
+El mismo intercambio con cada resultado que produce el hub. Un cliente se registra solo cuando el
+token, la versión mayor y el id de su rol son válidos; cualquier fallo termina con el código de
+cierre `1008`, igual que un cliente que no envía `HANDSHAKE_REQUEST` en 5 segundos.
+
+```mermaid
+sequenceDiagram
+    participant C as Cliente (agente de store o panel)
+    participant H as Hub
+    participant E as Paneles conectados
+    C->>H: Upgrade a WebSocket (se valida el Origin)
+    Note over H: arranca el temporizador de handshake de 5 s
+    C->>H: HANDSHAKE_REQUEST { role, protocolVersion, authToken?, store o extension }
+    alt authToken ausente o incorrecto
+        H-->>C: HANDSHAKE_RESPONSE { success: false, error }
+        H--xC: cierre 1008
+    else versión mayor distinta
+        H-->>C: HANDSHAKE_RESPONSE { success: false, error }
+        H--xC: cierre 1008
+    else rol sin su id de store o de extensión
+        H--xC: cierre 1008, sin respuesta
+    else aceptado
+        H-->>C: HANDSHAKE_RESPONSE { success: true, negotiatedVersion, hubCapabilities }
+        opt el rol es STORE
+            H->>E: STORE_CONNECTED
+        end
+        opt el rol es EXTENSION
+            H-->>C: STORE_REGISTRY
+            H-->>C: tramas STORE_EVENT en búfer de stores aún conectados
+        end
+    end
 ```
 
 ---

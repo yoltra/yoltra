@@ -73,6 +73,40 @@ so on for each.
 > theme through a Yoltra store) can skip `ThemeProvider` and set `data-theme`
 > themselves — the DOM contract is the same.
 
+## How it fits together
+
+Tokens are authored once, in TypeScript, and turned into CSS custom properties. Component
+stylesheets read only the semantic roles, and one `data-theme` attribute on the document root
+decides which value each role resolves to. Theming is CSS rather than React state, which is why the
+primitives render on the server.
+
+```mermaid
+flowchart TD
+    subgraph authored ["Authored in TypeScript"]
+    direction TB
+        foundation["foundationTokens<br/>palette, type scale, spacing, radius, elevation, motion"]
+        themes["lightTheme and darkTheme<br/>semantic roles, built from the palette"]
+        foundation --> themes
+    end
+
+    foundation --> themeCss["themeCss()<br/>the --yl-* custom properties, palette not emitted"]
+    themes --> themeCss
+    themeCss -->|"build-styles, at build time"| tokensCss["styles/tokens.css"]
+    themeCss -->|"or inlined during a server render"| inline(["a style tag in your document head"])
+    scss["one .scss per component<br/>reads --yl-* roles, keeps its own locals"] -->|"build-styles"| componentCss["styles/button.css and the rest<br/>all.css carries everything"]
+
+    noFlash["noFlashScript() from @yoltra/ds<br/>inline, runs before the first paint"] -->|"sets"| attr["data-theme on the html element"]
+    provider["ThemeProvider, applyTheme<br/>from @yoltra/ds/client"] -->|"sets"| attr
+    attr -->|"light or dark picks the role values"| tokensCss
+    attr -->|"light or dark picks the role values"| inline
+
+    tokensCss --> page(["your page"])
+    inline --> page
+    componentCss --> page
+    serverEntry["@yoltra/ds<br/>server-safe primitives"] --> page
+    clientEntry["@yoltra/ds/client, use client<br/>ThemeProvider, Tabs, CodeBlock, overlays"] --> page
+```
+
 ## Brand
 
 Primary blue `#1A7FE2`, carbon `#0F172A`. Type: **Inter** + **JetBrains Mono**.

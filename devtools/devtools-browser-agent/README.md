@@ -15,7 +15,7 @@
 
 `@yoltra/devtools-browser-agent` transparently instruments a Yoltra store so every event, state
 change, and metric is forwarded to the DevTools hub in real time. Uses the native browser
-`WebSocket` API (no `ws` dependency) with automatic reconnection and message buffering.
+`WebSocket` API (no extra dependency) with automatic reconnection and message buffering.
 
 ---
 
@@ -81,6 +81,60 @@ without `{ ephemeral: true }`, so that traffic never reaches the timeline and co
 
 The wrapper is **transparent** — it returns the same store instance.
 
+The diagram below shows both directions inside `withDevtools`. Outbound, each observed event
+becomes one `STORE_EVENT`, sampled and size-bounded before it is sent. Inbound, a command touches
+the store only when the matching capability is on: `allowReplay` for `TIME_TRAVEL` and
+`EVENT_REPLAY`, `allowEmit` for `EMIT_TO_STORE`. The transport is picked once, at wrap time.
+
+```mermaid
+flowchart TD
+    app(["your app: withDevtools(store, config)"])
+    store(["the @yoltra/core store"])
+
+    subgraph agent ["withDevtools"]
+    direction TB
+        pick{"which transport?"}
+        pick -->|"config.socketFactory"| custom["that factory<br/>for example createLoopbackHub"]
+        pick -->|"transport bridge, or auto with<br/>__YOLTRA_DEVTOOLS_BRIDGE__ set"| pm["createPostMessageSocketFactory<br/>window.postMessage, yoltra-devtools-bridge"]
+        pick -->|"transport websocket, or auto<br/>without the mark"| native["native WebSocket<br/>ws://host:port"]
+        custom --> client
+        pm --> client
+        native --> client["DevtoolsWsClient<br/>ReconnectingWsClient: handshake,<br/>buffer of 100, backoff"]
+
+        obs["instrument observer<br/>changed paths, prev and next values,<br/>reduceTimeMs, ephemeral channels excluded"]
+        obs --> counters["metric counters<br/>attempted, committed, reduce time"]
+        counters --> sample{"sampled out?<br/>ignore, then throttle, then skip"}
+        sample -->|"yes"| skipped(["not sent, still counted"])
+        sample -->|"no"| build["STORE_EVENT<br/>patchesFromChange, payload and patch values<br/>bounded by maxEventBytes, run through sanitize"]
+        build -->|"a committed event bumps snapshotVersion"| client
+        regs["onRegistrationChange<br/>skipped when every change is internal"] --> subs["STORE_SUBSCRIPTIONS<br/>from __devtoolsIntrospect"]
+        subs --> client
+
+        client -->|"incoming command"| cmd{"msg.type"}
+        cmd -->|"REQUEST_STATE"| snap["encodeStateBounded<br/>maxSnapshotBytes, sanitize"]
+        cmd -->|"REQUEST_METRICS"| met["__devtoolsIntrospect plus counters"]
+        cmd -->|"REQUEST_SUBSCRIPTIONS"| subs
+        cmd -->|"TIME_TRAVEL, if allowReplay"| tt["__applyExternalState(decodeState(state))<br/>then a fresh STATE_SNAPSHOT"]
+        cmd -->|"EVENT_REPLAY, if allowReplay"| rep["__replayEvents"]
+        cmd -->|"EMIT_TO_STORE, if allowEmit"| emitCmd["store.emit"]
+        snap -->|"STATE_SNAPSHOT"| client
+        met -->|"STORE_METRICS"| client
+        tt -->|"STATE_SNAPSHOT"| client
+    end
+
+    app --> pick
+    store -->|"every reduce"| obs
+    store -->|"registrations change"| regs
+    tt --> store
+    rep --> store
+    emitCmd --> store
+    client <-->|"protocol frames"| far(["a hub, the extension bridge,<br/>or a loopback broker"])
+```
+
+Time-travel is gated twice: the agent ignores `TIME_TRAVEL` without `allowReplay`, and the store
+itself throws from `__applyExternalState` unless it was created with
+`createStore({ devtools: { allowReplay: true } })`.
+
 ---
 
 ## Configuration
@@ -91,7 +145,7 @@ interface DevtoolsWrapperConfig {
   port: number;
   /** Hub server host. @default "localhost" */
   host?: string;
-  /** Persisted store ID (survives reconnects). @default crypto.randomUUID() */
+  /** Store ID the hub and panels key on (survives reconnects). @default store.name */
   storeId?: string;
   /** Enable time-travel and event replay. @default false */
   allowReplay?: boolean;
@@ -142,19 +196,6 @@ The agent uses exponential backoff with jitter for reconnection:
 | ----------------------------- | ----------------------------------------- |
 | `withDevtools(store, config)` | Instrument a store and connect to the hub |
 | `DevtoolsWrapperConfig`       | Configuration type                        |
-
----
-
-## vs `@yoltra/devtools-node-agent`
-
-| Feature       | `devtools-browser-agent` | `devtools-node-agent`   |
-| ------------- | ------------------------ | ----------------------- |
-| Environment   | Browser                  | Node.js                 |
-| WebSocket     | Native `WebSocket` API   | `ws` package            |
-| Bundle impact | Zero dependencies        | Adds `ws`               |
-| Use case      | SPAs, browser apps       | Servers, CLI tools, SSR |
-
-Both agents provide identical instrumentation and protocol compliance.
 
 ---
 

@@ -100,9 +100,9 @@ Hub server port.
 
 > `optional` **WebSocket**: (`url`) => `WebSocket`
 
-Defined in: [devtools-ui/src/types.ts:63](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L63)
+Defined in: [devtools-ui/src/types.ts:56](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L56)
 
-Custom WebSocket constructor for Node.js environments.
+Custom WebSocket constructor.
 
 #### Parameters
 
@@ -116,13 +116,6 @@ Custom WebSocket constructor for Node.js environments.
 
 #### Remarks
 
-In Node.js 18, the global `WebSocket` is not available. Pass the `WebSocket`
-class from the `ws` package to enable connectivity:
-
-```ts
-import WebSocket from "ws";
-config.WebSocket = WebSocket as any;
-```
-
-In browsers or Node.js 21+, this is not needed — the native `WebSocket` is
-used automatically.
+Defaults to the global `WebSocket`. Pass a constructor to use another
+implementation, for example an in-memory loopback such as the one
+`createLoopbackHub` returns.

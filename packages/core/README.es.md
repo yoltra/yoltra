@@ -56,6 +56,60 @@ o rechazado por la cascada nunca llega a la instrumentación. Ver la
 [Arquitectura del Pipeline de Eventos](../../docs/es/design/event-queue-architecture.md) para el
 modelo completo.
 
+### Dentro del store
+
+Lo que guarda el store, y qué parte toca cada etapa. Los reducers se encuentran por dos rutas (un
+mapa exacto de `channel::type`, o un matcher evaluado en cada evento), y tres canales separados
+llevan el resultado hacia fuera: el bus de rutas para los suscriptores de grano fino, los
+suscriptores de eventos, y los observers de instrumentación sobre los que se construyen la
+persistencia y las DevTools.
+
+```mermaid
+flowchart TD
+    emit(["emit, o un emit con causa desde un efecto"]) --> fingerprint{"¿se pidió dedup?"}
+    fingerprint -->|"no, por defecto"| queue
+    fingerprint -->|"dedupWindowMs o dedupKey"| fp["huella<br/>contenido a través del codec, o la clave"]
+    fp -->|"vista dentro de la ventana"| skipped(["no se encola: reason deduped"])
+    fp -->|"nueva"| queue["reduceQueue<br/>FIFO, drenada por drainReduce"]
+
+    subgraph registered ["Registrado en el store"]
+    direction TB
+        middleware["middleware<br/>en orden de registro, seleccionado por when"]
+        reducerBus["reducerBus, un EventBus<br/>slices por clave, O(1) por canal y tipo"]
+        patternReducers["patternReducers<br/>slices seleccionadas por any, channel o channels"]
+        reducers["un Reducer por slice<br/>prepara, detectChangedProps para rutas hoja"]
+        effects["efectos, mapa por clave<br/>más patternEffects"]
+    end
+
+    queue --> middleware
+    middleware -->|"permitido"| reducerBus
+    middleware -->|"permitido"| patternReducers
+    reducerBus --> reducers
+    patternReducers --> reducers
+    reducers -->|"todas las slices preparadas aceptan"| commit["commitStaged<br/>una nueva raíz de estado"]
+
+    subgraph told ["A quién se avisa"]
+    direction TB
+        connectorBus["connectorBus, un LooseEventBus<br/>slice y ruta con puntos, comodines * y **"]
+        eventSubs["suscriptores de onEvent<br/>committed, written, uncommitted, all"]
+        listeners["listeners de subscribe<br/>una vez por evento escrito"]
+        observers["observers de instrument e instrumentEffects<br/>rutas cambiadas, valores previo y nuevo, tiempos"]
+    end
+
+    middleware -->|"vetado"| eventSubs
+    commit --> connectorBus
+    commit --> eventSubs
+    commit --> listeners
+    queue -->|"cada evento drenado, mientras alguien observa"| observers
+    queue -->|"eventos confirmados, una tarea async cada uno"| effects
+    effects -->|"medidos, mientras alguien observa"| observers
+    effects -->|"emit lleva parentId y depth"| emit
+
+    connectorBus --> connect(["store.connect y los hooks atómicos de React"])
+    observers --> outside(["persist, warnOnLargeValues, el agente de DevTools"])
+    call(["store.call"]) -->|"registra un efecto de respuesta interno"| effects
+```
+
 ---
 
 ## Conceptos Fundamentales
@@ -732,7 +786,7 @@ cambia es todo lo que registra:
 
 - **La instrumentación** lo entrega solo a los observadores registrados con
   `store.instrument(observer, { ephemeral: true })`. Mientras no haya ninguno, el store no hace
-  ningún trabajo de instrumentación para él. Los agentes de devtools no se suscriben; `persist` sí,
+  ningún trabajo de instrumentación para él. El agente de DevTools no se suscribe; `persist` sí,
   porque el almacenamiento debe seguir cada cambio del estado.
 - **El replay** lo omite, así que una historia reproducida es la historia de lo que importó.
 - **Escribir estado** desde un evento efímero se avisa una vez por evento en desarrollo
@@ -858,11 +912,11 @@ es una fuga que vale la pena encontrar. Llamar `dispose()` otra vez es seguro.
 ### Carga, y esperar a que termine
 
 `store.metrics()` devuelve la carga actual del store: `queueDepth` (eventos esperando a ser
-reducidos), `inFlightEffects`, `dedupHits` y `dedupEntries`. Es lo bastante barato para leerlo en
-cada consulta de un endpoint de métricas.
+reducidos), `inFlightEffects`, `dedupHits` y `dedupEntries`. Es lo bastante barato para leerlo tan
+seguido como se refresque una vista de estado.
 
 `store.whenIdle()` se resuelve cuando ningún evento espera a ser reducido y ningún efecto corre, que
-es el paso que un apagado ordenado espera antes de liberar:
+es el paso que un desmontaje limpio espera antes de liberar:
 
 ```typescript
 stopTakingWork();                                   // cerrar sockets, detener timers que emiten
@@ -873,10 +927,6 @@ store.dispose();
 Un `call()` esperando su respuesta y un timer pendiente no son trabajo que el store esté haciendo,
 así que no lo retrasan. Se resuelve de inmediato en un store ocioso o liberado, y toda espera se
 resuelve en `dispose()`. Nunca lo esperes desde un efecto: ese efecto es parte del trabajo que espera.
-
-La [guía de servicio de Node](https://github.com/yoltra/yoltra/blob/main/docs/es/NODE_SERVICE_GUIDE.md)
-lo junta todo para un proceso que corre bajo PM2: disponibilidad, señales, la escritura final y
-métricas.
 
 ---
 
@@ -1249,6 +1299,48 @@ instantánea a un store vivo emite un cambio en todas las rutas, lo que en el ar
 parpadeo, una ráfaga de entradas de instrumentación que describen cambios que nadie hizo, y
 efectos observando una transición que nunca ocurrió.
 
+Las dos mitades, con cada forma en que recaen en los valores por defecto. El lado de lectura nunca
+lanza: un fallo se reporta por `onError` y el store arranca con los valores que declaraste. El lado
+de escritura va sobre el punto de instrumentación, así que solo un evento que cambió una slice
+observada programa una escritura, y una instantánea que no cabe nunca se escribe a medias.
+
+```mermaid
+flowchart TD
+    subgraph read ["hydrate: antes de que exista el store"]
+    direction TB
+        source["adapter.read(key)<br/>o un texto fuente de dehydrate"] -->|"encontrado"| parse["JSON.parse, luego decodeState"]
+        parse -->|"un envelope"| version{"¿la versión del envelope<br/>coincide?"}
+        version -->|"sí"| restored["slices restauradas"]
+        version -->|"no"| migrate{"¿se aportó migrate?"}
+        migrate -->|"sí: migrate(slices, from)"| restored
+        source -->|"no hay nada guardado"| empty["nada que restaurar"]
+    end
+
+    source -->|"la lectura lanza, fase read"| failed["reportado por onError"]
+    parse -->|"falla, fase decode"| failed
+    migrate -->|"no, fase migrate"| failed
+    failed --> empty
+
+    restored --> withHydration["withHydration<br/>una slice restaurada reemplaza su estado declarado"]
+    empty --> withHydration
+    withHydration --> create(["createStore: nace hidratado"])
+
+    subgraph write ["persist: mientras el store corre"]
+    direction TB
+        instr["store.instrument<br/>incluye eventos efímeros"] --> changed{"¿cambió una slice observada?"}
+        changed -->|"no"| skip(["no se escribe"])
+        changed -->|"sí"| throttle["throttle, 250 ms por defecto<br/>en el scheduler inyectado"]
+        throttle --> encode["encodeState<br/>versión y slices, hasta maxNodes"]
+        encode --> truncated{"¿truncado?"}
+        truncated -->|"no"| adapterWrite["adapter.write(key, payload)"]
+        truncated -->|"sí, fase encode"| keep["no se escribe nada<br/>el almacenamiento conserva la última instantánea completa"]
+    end
+
+    create -->|"persist(store, options)"| instr
+    keep --> writeError(["onError: PersistEncodeError"])
+    adapterWrite -->|"la escritura falla, fase write"| writeFailed(["onError: el error del adaptador"])
+```
+
 **Nada lanza en el arranque.** Un payload ausente, ilegible o no migrable recae en los valores
 por defecto que declaraste y se reporta por `onError`. Un store que no arranca porque el
 almacenamiento guarda JSON obsoleto es peor que uno que arranca de cero, y un disco lleno no
@@ -1273,7 +1365,7 @@ fiel, como una instancia de clase, es distinto: el resto del estado está intact
 escribe, con `unsupported` del error nombrando cada ruta y `written: true`.
 
 `persist` devuelve una función que lo detiene, vacía lo pendiente y devuelve una promesa que se
-resuelve cuando la última escritura terminó. Espérala antes de que un proceso salga: con un
+resuelve cuando la última escritura terminó. Espérala antes de desmontar el store: con un
 adaptador asíncrono la escritura final sigue en curso de otro modo. Nunca se rechaza; una escritura
 fallida va a `onError`.
 

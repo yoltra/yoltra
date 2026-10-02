@@ -55,6 +55,59 @@ when a named middleware vetoed it, `vetoedBy`, the same attribution `emit` retur
 instrumentation. See the
 [Event Pipeline Architecture](../../docs/en/design/event-queue-architecture.md) for the full model.
 
+### Inside the store
+
+What the store holds, and which part of it each stage touches. Reducers are found through two
+routes (an exact `channel::type` map, or a matcher tested per event), and three separate channels
+carry the result outward: the path bus for fine-grained subscribers, the event subscribers, and
+the instrumentation observers that persistence and the DevTools build on.
+
+```mermaid
+flowchart TD
+    emit(["emit, or a scoped emit from an effect"]) --> fingerprint{"dedup requested?"}
+    fingerprint -->|"no, the default"| queue
+    fingerprint -->|"dedupWindowMs or dedupKey"| fp["fingerprint<br/>content through the codec, or the key"]
+    fp -->|"seen inside the window"| skipped(["not queued: reason deduped"])
+    fp -->|"new"| queue["reduceQueue<br/>FIFO, drained by drainReduce"]
+
+    subgraph registered ["Registered on the store"]
+    direction TB
+        middleware["middleware<br/>run in registration order, matched by when"]
+        reducerBus["reducerBus, an EventBus<br/>keyed slices, O(1) by channel and type"]
+        patternReducers["patternReducers<br/>slices matched by any, channel or channels"]
+        reducers["one Reducer per slice<br/>stage, detectChangedProps for leaf paths"]
+        effects["effects, keyed map<br/>plus patternEffects"]
+    end
+
+    queue --> middleware
+    middleware -->|"allowed"| reducerBus
+    middleware -->|"allowed"| patternReducers
+    reducerBus --> reducers
+    patternReducers --> reducers
+    reducers -->|"every staged slice accepted"| commit["commitStaged<br/>one new state root"]
+
+    subgraph told ["Who is told"]
+    direction TB
+        connectorBus["connectorBus, a LooseEventBus<br/>slice and dotted path, * and ** wildcards"]
+        eventSubs["onEvent subscribers<br/>committed, written, uncommitted, all"]
+        listeners["subscribe listeners<br/>once per written event"]
+        observers["instrument and instrumentEffects observers<br/>changed paths, old and new values, timing"]
+    end
+
+    middleware -->|"vetoed"| eventSubs
+    commit --> connectorBus
+    commit --> eventSubs
+    commit --> listeners
+    queue -->|"every drained event, while someone observes"| observers
+    queue -->|"committed events, one async task each"| effects
+    effects -->|"timed, while someone observes"| observers
+    effects -->|"emit carries parentId and depth"| emit
+
+    connectorBus --> connect(["store.connect and the React atomic hooks"])
+    observers --> outside(["persist, warnOnLargeValues, the DevTools agent"])
+    call(["store.call"]) -->|"registers an internal reply effect"| effects
+```
+
 ---
 
 ## Core Concepts
@@ -716,7 +769,7 @@ everything that records:
 
 - **Instrumentation** delivers it only to observers registered with
   `store.instrument(observer, { ephemeral: true })`. While none is, the store does no
-  instrumentation work for it at all. The devtools agents do not opt in; `persist` does, because
+  instrumentation work for it at all. The DevTools agent does not opt in; `persist` does, because
   storage must follow every change to state.
 - **Replay** skips it, so a replayed history is the history of what mattered.
 - **Writing state** from an ephemeral event is warned about once per event in development
@@ -838,11 +891,11 @@ something still holding the store after its owner released it is a leak worth fi
 ### Load, and waiting for it to finish
 
 `store.metrics()` returns the store's current load: `queueDepth` (events waiting to be reduced),
-`inFlightEffects`, `dedupHits` and `dedupEntries`. It is cheap enough to read on every scrape of a
-metrics endpoint.
+`inFlightEffects`, `dedupHits` and `dedupEntries`. It is cheap enough to read as often as a status
+display refreshes.
 
 `store.whenIdle()` resolves when no event waits to be reduced and no effect runs, which is the step
-a graceful shutdown waits for before it disposes:
+a clean teardown waits for before it disposes:
 
 ```typescript
 stopTakingWork();                                   // close sockets, stop timers that emit
@@ -853,9 +906,6 @@ store.dispose();
 A `call()` waiting for its reply and a pending timer are not work the store is doing, so they do
 not delay it. It resolves at once on an idle or disposed store, and every wait resolves on
 `dispose()`. Never await it from an effect: that effect is part of the work it waits for.
-
-The [Node Service Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/NODE_SERVICE_GUIDE.md)
-puts this together for a process run by PM2: readiness, signals, the final write, and metrics.
 
 ---
 
@@ -1224,6 +1274,48 @@ snapshot to a live store emits a change across every path, which on boot is a fl
 of instrumentation entries describing changes nobody made, and effects observing a transition
 that never happened.
 
+Both halves, with every way they fall back. The read side never throws: a failure is reported
+through `onError` and the store starts from your declared defaults. The write side rides the
+instrumentation seam, so only an event that changed a watched slice schedules a write, and a
+snapshot that does not fit is never written in part.
+
+```mermaid
+flowchart TD
+    subgraph read ["hydrate: before the store exists"]
+    direction TB
+        source["adapter.read(key)<br/>or a source string from dehydrate"] -->|"found"| parse["JSON.parse, then decodeState"]
+        parse -->|"an envelope"| version{"envelope version<br/>matches?"}
+        version -->|"yes"| restored["restored slices"]
+        version -->|"no"| migrate{"migrate supplied?"}
+        migrate -->|"yes: migrate(slices, from)"| restored
+        source -->|"nothing stored"| empty["nothing to restore"]
+    end
+
+    source -->|"read throws, phase read"| failed["reported through onError"]
+    parse -->|"fails, phase decode"| failed
+    migrate -->|"no, phase migrate"| failed
+    failed --> empty
+
+    restored --> withHydration["withHydration<br/>a restored slice replaces its declared state"]
+    empty --> withHydration
+    withHydration --> create(["createStore: born hydrated"])
+
+    subgraph write ["persist: while the store runs"]
+    direction TB
+        instr["store.instrument<br/>ephemeral events included"] --> changed{"a watched slice changed?"}
+        changed -->|"no"| skip(["no write"])
+        changed -->|"yes"| throttle["throttle, 250 ms by default<br/>on the injected scheduler"]
+        throttle --> encode["encodeState<br/>version and slices, up to maxNodes"]
+        encode --> truncated{"truncated?"}
+        truncated -->|"no"| adapterWrite["adapter.write(key, payload)"]
+        truncated -->|"yes, phase encode"| keep["nothing written<br/>storage keeps the last complete snapshot"]
+    end
+
+    create -->|"persist(store, options)"| instr
+    keep --> writeError(["onError: PersistEncodeError"])
+    adapterWrite -->|"write fails, phase write"| writeFailed(["onError: the adapter's error"])
+```
+
 **Nothing throws on boot.** A missing, unparseable or unmigratable payload falls back to your
 declared defaults and reports through `onError`. A store that will not start because storage
 holds stale JSON is worse than one that starts fresh, and a full disk should not take down a
@@ -1248,8 +1340,8 @@ different: the rest of the state is intact, so it is written, with the error's `
 naming each path and `written: true`.
 
 `persist` returns a function that stops it, flushes what is pending and returns a promise that
-resolves once the last write has landed. Await it before a process exits: with an asynchronous
-adapter the final write is otherwise still in flight. It never rejects; a failed write goes to
+resolves once the last write has landed. Await it before you tear the store down: with an
+asynchronous adapter the final write is otherwise still in flight. It never rejects; a failed write goes to
 `onError`.
 
 For a server render, `dehydrate(store, { version })` produces the payload and

@@ -70,6 +70,39 @@ store.registerEffect({
 being handled, so a reply sent through the injected `emit` is already correlated. Nothing to mint,
 nothing to echo, nothing to forget.
 
+The whole life of a call, including the progress and give-up paths covered below. The collector is
+an ordinary effect the call registers on the reply channel and removes when the call ends, however
+it ends, which is why the subscription can never outlive the call.
+
+```mermaid
+sequenceDiagram
+    participant Caller as caller
+    participant Store as store
+    participant Collector as reply collector, an internal effect
+    participant Responder as responder effect
+
+    Caller->>Store: call job start, with reply and optional highWaterMark
+    Store->>Collector: registerEffect on the reply channel
+    Note over Store,Collector: idle timer armed, timeoutMs, 30 s by default
+    Store->>Responder: emit the request, its id becomes requestId
+    loop every progress event
+        Responder->>Store: await emit job tick
+        Store->>Collector: parentId equals requestId, so it matches and re-arms the timer
+        Collector->>Caller: put it in the queue, waiting while the queue is full
+        Note over Collector,Caller: a call that is only awaited buffers to highWaterMark, then counts dropped
+        Caller->>Collector: for await takes the item
+        Collector-->>Responder: the collector returns, so the responder's emit resolves
+    end
+    alt a terminal type arrives
+        Responder->>Store: emit job done
+        Store->>Collector: terminal, so clear the timer, unregister, end the queue
+        Collector-->>Caller: await call resolves to the done event
+    else idle timeout, signal aborted or cancel called
+        Store-->>Caller: rejects with CallTimeoutError or CallAbortedError, collector unregistered
+        Store->>Responder: emit the cancel event, only when the call names one
+    end
+```
+
 ### `payload` is the request
 
 Worth stating because the signature reads ambiguously at a glance: `payload` is what you are
@@ -273,11 +306,11 @@ store.registerEffect({
 Everything above works because the store stamps `parentId` on whatever a responder emits while it
 is handling the request, so the reply is matched structurally and no id is ever written down.
 
-That link only exists **in one process**, and only for a reply emitted **directly** while handling
+That link only exists **inside one store**, and only for a reply emitted **directly** while handling
 the request. It is not descent: a reply emitted a further hop down a cascade carries the
 intermediate event's id and will not be seen. So three cases need an explicit id:
 
-- the responder is on another node, a worker, or the far side of any transport;
+- the responder is in another tab, a worker, or on the far side of any transport;
 - the responder answers on a later turn, having queued the request;
 - the reply is emitted by something the request caused, rather than by the handler itself.
 

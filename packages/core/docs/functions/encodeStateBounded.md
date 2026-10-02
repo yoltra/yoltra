@@ -47,7 +47,7 @@ it, so the client reconnects, asks again, is refused again, and the panel sits w
 a loop with nothing on screen to explain it. The size therefore has to be bounded before the
 frame is sent rather than discovered afterwards.
 
-Node count is a poor proxy for bytes: a hundred nodes holding base64 blobs outweigh a hundred
+A node count is a poor proxy for bytes: a hundred nodes holding base64 blobs outweigh a hundred
 thousand holding integers. So this measures the encoded output and, when it is too large,
 scales the node budget by how far over it went and measures again. Scaling by the overshoot
 rather than halving matters: from a default of a hundred thousand nodes, repeated halving

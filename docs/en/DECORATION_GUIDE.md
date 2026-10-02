@@ -286,6 +286,23 @@ Four details follow from it:
   started before the reload can be cancelled instead of landing afterwards. Preserved effects keep
   their signal.
 
+What a `replace*` call does with each registration already on the store. The decision is made from
+the origin the store recorded when the registration was made, never from anything a library
+passes, so forgetting an option cannot delete a library's slice.
+
+```mermaid
+flowchart TD
+    replace(["replaceReducers, replaceMiddleware or replaceEffects<br/>hotReplace forwards its scope to all three"]) --> collision{"replaceReducers under scope spec<br/>names a slice mounted at runtime?"}
+    collision -->|"yes"| throws(["throws before anything is mutated<br/>naming the slice and its owner"])
+    collision -->|"no"| origin{"origin of an existing registration?"}
+    origin -->|"spec: passed to createStore,<br/>or installed by an earlier replace"| replaced["replaced by what you pass now<br/>a slice left out is removed with its state"]
+    origin -->|"dynamic: registerSlice, withSlice,<br/>registerMiddleware, registerEffect"| scope{"scope?"}
+    scope -->|"spec, the default"| kept["kept, along with its state<br/>a debug line in development says so"]
+    scope -->|"all"| replaced
+    origin -->|"internal: the reply effect behind store.call"| kept
+    replaced --> signal(["a replaced effect's ctx.signal aborts<br/>with effect replaced"])
+```
+
 ---
 
 ## React

@@ -21,7 +21,7 @@
 import { encodeState } from "../serialize/codec";
 
 /**
- * Node budget for a fingerprint walk.
+ * The node budget for a fingerprint walk.
  *
  * @remarks
  * Deliberately far below the codec's 100 000 default. A fingerprint is a dedup optimisation,

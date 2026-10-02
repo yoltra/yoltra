@@ -8,7 +8,7 @@
 
 # Interface: DevtoolsSocketCallbacks
 
-Defined in: [ws-transport.ts:41](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L41)
+Defined in: [ws-transport.ts:39](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L39)
 
 Lifecycle callbacks the transport wires to the underlying socket.
 
@@ -18,7 +18,7 @@ Lifecycle callbacks the transport wires to the underlying socket.
 
 > **onClose**(): `void`
 
-Defined in: [ws-transport.ts:44](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L44)
+Defined in: [ws-transport.ts:42](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L42)
 
 #### Returns
 
@@ -30,7 +30,7 @@ Defined in: [ws-transport.ts:44](https://github.com/yoltra/yoltra/blob/main/devt
 
 > **onError**(): `void`
 
-Defined in: [ws-transport.ts:45](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L45)
+Defined in: [ws-transport.ts:43](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L43)
 
 #### Returns
 
@@ -42,7 +42,7 @@ Defined in: [ws-transport.ts:45](https://github.com/yoltra/yoltra/blob/main/devt
 
 > **onMessage**(`data`): `void`
 
-Defined in: [ws-transport.ts:43](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L43)
+Defined in: [ws-transport.ts:41](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L41)
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Defined in: [ws-transport.ts:43](https://github.com/yoltra/yoltra/blob/main/devt
 
 > **onOpen**(): `void`
 
-Defined in: [ws-transport.ts:42](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L42)
+Defined in: [ws-transport.ts:40](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/ws-transport.ts#L40)
 
 #### Returns
 

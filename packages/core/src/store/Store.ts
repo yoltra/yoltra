@@ -1160,7 +1160,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       this.pruneProcessedEvents(this.clock.now());
       if (this.processedEvents.size > 0) this.ensureCleanupTimer();
     }, 5000);
-    // Never let the prune by itself keep a Node process alive.
+    // Never let the prune by itself keep the host alive.
     (handle as { unref?: () => void }).unref?.();
     this.eventCleanupTimer = handle;
   }
