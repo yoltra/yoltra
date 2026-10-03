@@ -47,7 +47,7 @@ Collects nothing. Sends nothing anywhere. See PRIVACY.md, published alongside th
 
 Reviewers ask for these individually.
 
-- **storage**: remembers the hub host and port between sessions. Nothing else is stored.
+- **storage**: remembers the hub host, port and token between sessions. Nothing else is stored.
 - **Content script on http/https**: relays protocol frames between an inspected page and the
   DevTools panel. It reads only messages tagged for this extension.
 - **Background service worker**: pairs a page with the panel inspecting its tab, forwarding

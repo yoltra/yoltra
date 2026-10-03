@@ -7,6 +7,7 @@
 import {
   DevtoolsRole,
   PROTOCOL_VERSION,
+  duplicateStoreIdError,
   type HandshakeRequest,
   type HandshakeResponse,
 } from "@yoltra/devtools-protocol";
@@ -483,7 +484,7 @@ export class DevtoolsHub {
       };
       ws.send(JSON.stringify(response));
       console.warn(
-        `[yoltra devtools] Rejected a ${req.role} handshake: wrong or missing auth token`,
+        `[yoltra devtools] Rejected ${/^[aeiou]/i.test(String(req.role)) ? "an" : "a"} ${req.role} handshake: wrong or missing auth token`,
       );
       return null;
     }
@@ -512,6 +513,30 @@ export class DevtoolsHub {
     if (!id) {
       console.warn(
         `[yoltra devtools] Rejected handshake: role ${req.role} without a matching id payload`,
+      );
+      return null;
+    }
+
+    // One connection per store id. The router keys stores by id, so a second store presenting a
+    // connected id used to replace the first without a word: both streamed events under one id,
+    // commands reached only the newer, and either one leaving removed the other's entry. Agents
+    // default the id to the store's name, so two stores with the same name and no explicit
+    // `storeId` arrive this way. Refusing is visible on both sides and needs nothing new from the
+    // protocol; a refused agent retries with backoff and attaches once the first store has gone.
+    if (req.role === DevtoolsRole.STORE && this.router.hasStore(id)) {
+      const response: HandshakeResponse = {
+        type: "HANDSHAKE_RESPONSE",
+        success: false,
+        negotiatedVersion: PROTOCOL_VERSION,
+        hubCapabilities: {
+          maxHistorySize: this.history.capacity,
+          supportedFeatures: [],
+        },
+        error: duplicateStoreIdError(id),
+      };
+      ws.send(JSON.stringify(response));
+      console.warn(
+        `[yoltra devtools] Rejected a store handshake: store id "${id}" is already connected`,
       );
       return null;
     }

@@ -8,7 +8,7 @@
 
 # Interface: HandshakeResponse
 
-Defined in: [handshake.ts:85](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L85)
+Defined in: [handshake.ts:88](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L88)
 
 Hub response to a [HandshakeRequest](HandshakeRequest.md).
 
@@ -24,7 +24,7 @@ the WebSocket and report the error to the user.
 
 > `optional` **error**: `string`
 
-Defined in: [handshake.ts:94](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L94)
+Defined in: [handshake.ts:97](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L97)
 
 Error message when `success` is `false`.
 
@@ -34,7 +34,7 @@ Error message when `success` is `false`.
 
 > **hubCapabilities**: [`HubCapabilities`](HubCapabilities.md)
 
-Defined in: [handshake.ts:92](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L92)
+Defined in: [handshake.ts:95](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L95)
 
 Hub-side capabilities.
 
@@ -44,7 +44,7 @@ Hub-side capabilities.
 
 > **negotiatedVersion**: `string`
 
-Defined in: [handshake.ts:90](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L90)
+Defined in: [handshake.ts:93](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L93)
 
 The negotiated protocol version (may differ from requested).
 
@@ -54,7 +54,7 @@ The negotiated protocol version (may differ from requested).
 
 > **success**: `boolean`
 
-Defined in: [handshake.ts:88](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L88)
+Defined in: [handshake.ts:91](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L91)
 
 Whether the handshake was successful.
 
@@ -64,4 +64,4 @@ Whether the handshake was successful.
 
 > **type**: `"HANDSHAKE_RESPONSE"`
 
-Defined in: [handshake.ts:86](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L86)
+Defined in: [handshake.ts:89](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/src/handshake.ts#L89)

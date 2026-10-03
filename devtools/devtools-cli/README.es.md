@@ -39,6 +39,9 @@ npx @yoltra/devtools-cli
 
 # Puerto y tamaño de historial personalizados
 npx @yoltra/devtools-cli --port 8900 --history-size 2000
+
+# Un hub que exige un token (el panel presenta el mismo)
+YOLTRA_DEVTOOLS_TOKEN=s3cret npx @yoltra/devtools-cli
 ```
 
 Después, conecta el store de tu app a ese hub. `transport: "websocket"` lo envía al hub aunque la
@@ -89,6 +92,12 @@ Seis paneles, en este orden. No hay atajos por panel: `Tab` pasa al siguiente pa
 | `←` / `→`           | En Time Travel: retrocede / avanza un evento                   |
 | `r`                 | En Time Travel: vuelve al estado en vivo                       |
 | `q`                 | Salir                                                          |
+| `Esc`               | En Emit: sale del formulario y reactiva las teclas de arriba   |
+| `Enter`             | En Emit, fuera del formulario: vuelve a él                     |
+
+El formulario de Emit toma el teclado al abrir su pestaña. Mientras un campo tiene el foco, toda
+tecla de arriba se escribe en él, así que un payload como `["a"]` o un canal con una `q` se
+escriben sin problema.
 
 ---
 
@@ -98,9 +107,15 @@ Seis paneles, en este orden. No hay atajos por panel: `Tab` pasa al siguiente pa
 | ---------------- | ----------- | ------------------------------------------------------ |
 | `--port`         | `9800`      | Puerto del servidor hub                                |
 | `--history-size` | `1000`      | Máximo de eventos retenidos para clientes tardíos      |
+| `--token`        | ninguno     | Token que el hub exige a cada cliente                  |
+
+`--token` también puede venir de la variable de entorno `YOLTRA_DEVTOOLS_TOKEN`, que lo mantiene
+fuera de la lista de procesos; si están las dos, gana el flag. El hub empotrado exige el token y
+el panel de terminal lo presenta, así que el mismo valor también permite a la CLI conectarse a un
+hub que ya corre con él. Pasa el mismo token a cada agente de store (`authToken`).
 
 Estos símbolos también se exportan (`parseArgs`, `CliArgs`, `CliArgsError`, `DEFAULT_PORT`,
-`DEFAULT_HISTORY_SIZE`), así que una herramienta que empotre el hub puede reutilizar el mismo contrato
+`DEFAULT_HISTORY_SIZE`, `TOKEN_ENV`), así que una herramienta que empotre el hub puede reutilizar el mismo contrato
 de argumentos en vez de volver a deducirlo.
 
 ---

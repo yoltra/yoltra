@@ -8,7 +8,7 @@
 
 # Class: DevtoolsHub
 
-Defined in: [hub.ts:229](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L229)
+Defined in: [hub.ts:230](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L230)
 
 Central WebSocket hub that brokers messages between Yoltra stores and DevTools extensions.
 
@@ -37,7 +37,7 @@ await hub.stop();
 
 > **new DevtoolsHub**(`opts`): `DevtoolsHub`
 
-Defined in: [hub.ts:250](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L250)
+Defined in: [hub.ts:251](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L251)
 
 Create a new DevTools hub instance.
 
@@ -61,7 +61,7 @@ Hub configuration. All fields are optional.
 
 > **get** **extensionCount**(): `number`
 
-Defined in: [hub.ts:648](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L648)
+Defined in: [hub.ts:673](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L673)
 
 Current number of connected extensions.
 
@@ -77,7 +77,7 @@ Current number of connected extensions.
 
 > **get** **historySize**(): `number`
 
-Defined in: [hub.ts:657](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L657)
+Defined in: [hub.ts:682](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L682)
 
 Number of events in the history ring buffer.
 
@@ -93,7 +93,7 @@ Number of events in the history ring buffer.
 
 > **get** **storeCount**(): `number`
 
-Defined in: [hub.ts:639](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L639)
+Defined in: [hub.ts:664](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L664)
 
 Current number of connected stores.
 
@@ -107,7 +107,7 @@ Current number of connected stores.
 
 > **start**(): `Promise`\<`void`\>
 
-Defined in: [hub.ts:269](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L269)
+Defined in: [hub.ts:270](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L270)
 
 Start the WebSocket server and begin accepting connections.
 
@@ -128,7 +128,7 @@ If the underlying `WebSocketServer` emits an error during
 
 > **stop**(): `Promise`\<`void`\>
 
-Defined in: [hub.ts:326](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L326)
+Defined in: [hub.ts:327](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L327)
 
 Stop the server and close all connections.
 
@@ -149,7 +149,7 @@ before the server socket is torn down.
 
 > `static` **probe**(`port`): `Promise`\<`boolean`\>
 
-Defined in: [hub.ts:351](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L351)
+Defined in: [hub.ts:352](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L352)
 
 Check if a DevTools hub is already running on the given port.
 

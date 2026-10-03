@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-ext",
+      "comment": "A page with several stores works through the bridge as it does through a hub: the panel gives each page socket its own broker connection, so every store registers under its own id, receives only the commands that name it, and is announced as gone when it is disposed or the page goes away. The content script carries the connection id and the closing notice alongside each frame. The README (en, es) describes it.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-ext"
+}

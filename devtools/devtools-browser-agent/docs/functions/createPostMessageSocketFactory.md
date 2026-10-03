@@ -10,7 +10,7 @@
 
 > **createPostMessageSocketFactory**(`target?`): `DevtoolsSocketFactory`
 
-Defined in: [postMessage-client.ts:84](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/postMessage-client.ts#L84)
+Defined in: [postMessage-client.ts:104](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/postMessage-client.ts#L104)
 
 Builds a socket factory that carries the protocol over `window.postMessage`.
 

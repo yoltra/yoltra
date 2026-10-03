@@ -34,6 +34,22 @@ const config: HubConnectionConfig = {
 
 ## Properties
 
+### authToken?
+
+> `optional` **authToken**: `string`
+
+Defined in: [devtools-ui/src/types.ts:56](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L56)
+
+Shared secret required by a hub that was started with one.
+
+#### Remarks
+
+Sent in the handshake, and again on every reconnect. A hub with a token refuses any panel
+that does not present the same value, so pass the token the hub and the store agents were
+given. Omit it for a hub running without one.
+
+***
+
 ### autoReconnect?
 
 > `optional` **autoReconnect**: `boolean`
@@ -100,7 +116,7 @@ Hub server port.
 
 > `optional` **WebSocket**: (`url`) => `WebSocket`
 
-Defined in: [devtools-ui/src/types.ts:56](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L56)
+Defined in: [devtools-ui/src/types.ts:65](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L65)
 
 Custom WebSocket constructor.
 

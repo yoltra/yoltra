@@ -8,7 +8,7 @@
 
 # Class: CliArgsError
 
-Defined in: [args.ts:23](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-cli/src/args.ts#L23)
+Defined in: [args.ts:34](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-cli/src/args.ts#L34)
 
 A rejected invocation, with something a user can act on.
 
@@ -22,7 +22,7 @@ A rejected invocation, with something a user can act on.
 
 > **new CliArgsError**(`message`): `CliArgsError`
 
-Defined in: [args.ts:24](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-cli/src/args.ts#L24)
+Defined in: [args.ts:35](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-cli/src/args.ts#L35)
 
 #### Parameters
 

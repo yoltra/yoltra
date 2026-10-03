@@ -129,6 +129,7 @@ interface HubConnectionConfig {
   extensionName?: string; // display name for this extension
   autoReconnect?: boolean; // default: true
   maxReconnectAttempts?: number; // default: Infinity
+  authToken?: string; // the hub's token, when it was started with one
 }
 ```
 

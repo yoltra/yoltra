@@ -23,7 +23,8 @@ import "./styles/vscode-theme.css";
  * Mount the DevTools React app into a DOM container.
  *
  * @param container - The DOM element to mount into.
- * @param config - Hub connection configuration.
+ * @param config - Hub connection configuration. For a hub started with a token, include the same
+ * value as `authToken`.
  * @returns An unmount function.
  *
  * @public

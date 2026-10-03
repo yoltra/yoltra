@@ -10,6 +10,7 @@
 import {
   DevtoolsRole,
   PROTOCOL_VERSION,
+  duplicateStoreIdError,
   type DevtoolsSocketCallbacks,
   type DevtoolsSocketFactory,
   type DevtoolsSocketHandle,
@@ -110,7 +111,14 @@ class LoopbackBroker {
           ? msg.extension?.id
           : undefined;
     const compatible = majorOf(String(msg.protocolVersion ?? "")) === majorOf(PROTOCOL_VERSION);
-    const success = compatible && typeof id === "string";
+    // One connection per store id, as the real hub holds. A second store presenting a connected
+    // id is refused with the hub's own message rather than registered beside the first, which
+    // would leave two stores answering to one id.
+    const taken =
+      role === DevtoolsRole.STORE &&
+      typeof id === "string" &&
+      [...this.peers].some((p) => p !== peer && p.role === DevtoolsRole.STORE && p.id === id);
+    const success = compatible && typeof id === "string" && !taken;
 
     peer.deliver(
       JSON.stringify({
@@ -122,7 +130,13 @@ class LoopbackBroker {
         // in the one path with no server to inspect.
         negotiatedVersion: PROTOCOL_VERSION,
         ...hubMeta(),
-        ...(success ? {} : { error: "Loopback handshake rejected (version or id mismatch)" }),
+        ...(success
+          ? {}
+          : {
+              error: taken
+                ? duplicateStoreIdError(id as string)
+                : "Loopback handshake rejected (version or id mismatch)",
+            }),
       }),
     );
     if (!success) return;

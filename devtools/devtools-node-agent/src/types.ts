@@ -32,11 +32,15 @@ export interface DevtoolsWrapperConfig {
   /** Hub server port number. Required -- there is no default. */
   port: number;
   /**
-   * Persisted store identifier that survives reconnects.
+   * Store identifier presented to the hub, kept across reconnects.
    *
    * @remarks
-   * If omitted a random UUID is generated via `crypto.randomUUID()`.
-   * Providing a stable ID lets the hub correlate a store across restarts.
+   * Defaults to the store's `name`, so it is stable across restarts without configuration.
+   *
+   * The hub accepts one connection per id. A store presenting an id that is already connected is
+   * refused with a handshake error naming the id, and keeps retrying until the first store
+   * disconnects. Two stores with the same `name` therefore need distinct `storeId` values to be
+   * inspected side by side.
    */
   storeId?: string;
   /**

@@ -57,5 +57,6 @@
 ## Functions
 
 - [computePatches](functions/computePatches.md)
+- [duplicateStoreIdError](functions/duplicateStoreIdError.md)
 - [getAtPath](functions/getAtPath.md)
 - [patchesFromChange](functions/patchesFromChange.md)

@@ -8,7 +8,7 @@
 
 # Interface: LoopbackHub
 
-Defined in: [devtools-ui/src/transport/loopback.ts:165](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/transport/loopback.ts#L165)
+Defined in: [devtools-ui/src/transport/loopback.ts:179](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/transport/loopback.ts#L179)
 
 A loopback hub instance. Wire the agent and the panel to the *same* instance.
 
@@ -18,7 +18,7 @@ A loopback hub instance. Wire the agent and the panel to the *same* instance.
 
 > **agentSocketFactory**: `DevtoolsSocketFactory`
 
-Defined in: [devtools-ui/src/transport/loopback.ts:167](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/transport/loopback.ts#L167)
+Defined in: [devtools-ui/src/transport/loopback.ts:181](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/transport/loopback.ts#L181)
 
 Inject into the browser agent: `withDevtools(store, { socketFactory })`.
 
@@ -28,7 +28,7 @@ Inject into the browser agent: `withDevtools(store, { socketFactory })`.
 
 > **WebSocket**: (`url`) => `WebSocket`
 
-Defined in: [devtools-ui/src/transport/loopback.ts:169](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/transport/loopback.ts#L169)
+Defined in: [devtools-ui/src/transport/loopback.ts:183](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/transport/loopback.ts#L183)
 
 Pass to the DevTools UI as `config.WebSocket` (e.g. `<DevtoolsApp>`).
 

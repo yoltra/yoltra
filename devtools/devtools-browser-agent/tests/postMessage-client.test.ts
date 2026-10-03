@@ -64,8 +64,61 @@ describe("postMessage transport", () => {
     socket.send('{"type":"HANDSHAKE_REQUEST"}');
 
     expect(page.posted).toEqual([
-      { channel: BRIDGE_CHANNEL, direction: "to-panel", data: '{"type":"HANDSHAKE_REQUEST"}' },
+      {
+        channel: BRIDGE_CHANNEL,
+        direction: "to-panel",
+        data: '{"type":"HANDSHAKE_REQUEST"}',
+        connection: expect.any(String),
+      },
     ]);
+  });
+
+  it("stamps each socket's frames with its own connection", async () => {
+    const page = fakeWindow();
+    const factory = createPostMessageSocketFactory(page.win);
+    const a = factory("ignored", callbacks());
+    const b = factory("ignored", callbacks());
+    await tick();
+
+    a.send("from a");
+    b.send("from b");
+
+    // Every store on a page posts into one window. Without an id per socket, the relay sees a
+    // single stream where a hub would see one connection per store.
+    const [fromA, fromB] = page.posted as Array<{ connection: string }>;
+    expect(fromA?.connection).not.toBe(fromB?.connection);
+  });
+
+  it("delivers a frame for another connection to nobody but that one", async () => {
+    const page = fakeWindow();
+    const factory = createPostMessageSocketFactory(page.win);
+    const cbA = callbacks();
+    const cbB = callbacks();
+    const a = factory("ignored", cbA);
+    factory("ignored", cbB);
+    await tick();
+    a.send("hello");
+    const { connection } = page.posted[0] as { connection: string };
+
+    page.dispatch({ channel: BRIDGE_CHANNEL, direction: "to-page", data: "for a", connection });
+
+    expect(cbA.onMessage).toHaveBeenCalledWith("for a");
+    expect(cbB.onMessage).not.toHaveBeenCalled();
+  });
+
+  it("delivers a frame without a connection to every socket, as a relay without ids sends", async () => {
+    const page = fakeWindow();
+    const factory = createPostMessageSocketFactory(page.win);
+    const cbA = callbacks();
+    const cbB = callbacks();
+    factory("ignored", cbA);
+    factory("ignored", cbB);
+    await tick();
+
+    page.dispatch({ channel: BRIDGE_CHANNEL, direction: "to-page", data: "for all" });
+
+    expect(cbA.onMessage).toHaveBeenCalledWith("for all");
+    expect(cbB.onMessage).toHaveBeenCalledWith("for all");
   });
 
   it("delivers inbound frames addressed to the page", async () => {
@@ -106,7 +159,34 @@ describe("postMessage transport", () => {
     expect(cb.onClose).toHaveBeenCalledOnce();
     expect(page.listenerCount()).toBe(0);
     socket.send("dropped");
-    expect(page.posted).toHaveLength(0);
+    // Only the notice that it closed.
+    expect(page.posted).toEqual([
+      {
+        channel: BRIDGE_CHANNEL,
+        direction: "to-panel",
+        data: "",
+        connection: expect.any(String),
+        closed: true,
+      },
+    ]);
+  });
+
+  it("tells the relay it closed, so the relay can end the connection", async () => {
+    // Over a hub, a closed socket is how the hub learns a store has gone. Through the bridge
+    // nothing closes on the relay's side, so a disposed store stayed listed and its id stayed
+    // taken.
+    const page = fakeWindow();
+    const socket = createPostMessageSocketFactory(page.win)("ignored", callbacks());
+    await tick();
+    socket.send("hello");
+    const { connection } = page.posted[0] as { connection: string };
+
+    socket.close();
+    socket.close();
+
+    expect(page.posted.slice(1)).toEqual([
+      { channel: BRIDGE_CHANNEL, direction: "to-panel", data: "", connection, closed: true },
+    ]);
   });
 
   it("reports a closed socket where there is no window at all", () => {

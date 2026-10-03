@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CliArgsError, DEFAULT_HISTORY_SIZE, DEFAULT_PORT, parseArgs } from "../src/args";
+import { CliArgsError, DEFAULT_HISTORY_SIZE, DEFAULT_PORT, TOKEN_ENV, parseArgs } from "../src/args";
 
 describe("parseArgs", () => {
   it("falls back to the defaults when nothing is passed", () => {
@@ -43,5 +43,31 @@ describe("parseArgs", () => {
 
   it("ignores arguments it does not know", () => {
     expect(parseArgs(["--verbose", "--port", "9900"]).port).toBe(9900);
+  });
+
+  it("reads the hub token from --token", () => {
+    expect(parseArgs(["--token", "s3cret"]).token).toBe("s3cret");
+  });
+
+  it("reads the hub token from the environment when the flag is absent", () => {
+    expect(parseArgs([], { [TOKEN_ENV]: "from-env" }).token).toBe("from-env");
+    expect(TOKEN_ENV).toBe("YOLTRA_DEVTOOLS_TOKEN");
+  });
+
+  it("prefers --token over the environment", () => {
+    expect(parseArgs(["--token", "from-flag"], { [TOKEN_ENV]: "from-env" }).token).toBe(
+      "from-flag",
+    );
+  });
+
+  it("has no token when neither is set, or the variable is empty", () => {
+    expect("token" in parseArgs([])).toBe(false);
+    expect("token" in parseArgs([], { [TOKEN_ENV]: "" })).toBe(false);
+  });
+
+  it("refuses --token without a value instead of running open", () => {
+    expect(() => parseArgs(["--token"])).toThrow(/--token needs a value/);
+    expect(() => parseArgs(["--token", "--port", "9900"])).toThrow(/--token needs a value/);
+    expect(() => parseArgs(["--token", ""])).toThrow(/--token needs a value/);
   });
 });

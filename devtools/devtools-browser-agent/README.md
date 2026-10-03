@@ -162,6 +162,11 @@ interface DevtoolsWrapperConfig {
 }
 ```
 
+The hub accepts one connection per store id. Two stores with the same `name` and no `storeId`
+present the same id, so the second is refused with a handshake error naming the id, and retries
+until the first disconnects. Give such stores distinct `storeId` values. The same holds through
+the extension's bridge, where each store on a page keeps its own connection to the panel.
+
 ### Full-Featured Setup
 
 ```typescript

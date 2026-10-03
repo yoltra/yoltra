@@ -10,7 +10,7 @@
 
 > **HubConnectionStatus** = `"disconnected"` \| `"connecting"` \| `"connected"`
 
-Defined in: [devtools-ui/src/types.ts:69](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L69)
+Defined in: [devtools-ui/src/types.ts:78](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L78)
 
 Connection status for the hub WebSocket.
 

@@ -8,7 +8,7 @@
 
 # Interface: DevtoolsHubOptions
 
-Defined in: [hub.ts:26](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L26)
+Defined in: [hub.ts:27](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L27)
 
 Configuration for the DevTools hub server.
 
@@ -22,7 +22,7 @@ All fields are optional; sensible defaults are applied when omitted.
 
 > `optional` **allowedExtensionIds**: `string`[]
 
-Defined in: [hub.ts:68](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L68)
+Defined in: [hub.ts:69](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L69)
 
 Extension ids allowed to connect, e.g. `["abcdefghijklmnopabcdefghijklmnop"]`.
 
@@ -43,7 +43,7 @@ other extensions are not automatically trusted.
 
 > `optional` **allowedOrigins**: `string`[]
 
-Defined in: [hub.ts:39](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L39)
+Defined in: [hub.ts:40](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L40)
 
 Extra WebSocket `Origin` values to accept, beyond the always-allowed set
 (no Origin, browser-extension origins, and loopback origins). Use this only
@@ -56,7 +56,7 @@ remote origin re-opens the cross-site hijack surface — don't.
 
 > `optional` **authToken**: `string`
 
-Defined in: [hub.ts:54](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L54)
+Defined in: [hub.ts:55](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L55)
 
 Shared secret every client must present in its handshake.
 
@@ -78,7 +78,7 @@ the exposure unmentioned.
 
 > `optional` **historySize**: `number`
 
-Defined in: [hub.ts:32](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L32)
+Defined in: [hub.ts:33](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L33)
 
 Maximum events retained in the ring buffer for late-connecting extensions.
 
@@ -94,7 +94,7 @@ Maximum events retained in the ring buffer for late-connecting extensions.
 
 > `optional` **host**: `string`
 
-Defined in: [hub.ts:30](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L30)
+Defined in: [hub.ts:31](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L31)
 
 Host to bind on.
 
@@ -110,7 +110,7 @@ Host to bind on.
 
 > `optional` **maxMessagesPerSecond**: `number`
 
-Defined in: [hub.ts:80](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L80)
+Defined in: [hub.ts:81](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L81)
 
 Most messages one client may send per second before the excess is dropped.
 
@@ -133,7 +133,7 @@ normally, which sends a handful of commands per interaction.
 
 > `optional` **port**: `number`
 
-Defined in: [hub.ts:28](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L28)
+Defined in: [hub.ts:29](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-server/src/hub.ts#L29)
 
 Port to bind on.
 

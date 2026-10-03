@@ -20,6 +20,7 @@ export type {
 } from "./capabilities";
 
 // Handshake
+export { duplicateStoreIdError } from "./handshake";
 export type { HandshakeRequest, HandshakeResponse } from "./handshake";
 
 // JSON Patch (RFC 6902)

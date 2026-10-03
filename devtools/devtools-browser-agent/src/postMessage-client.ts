@@ -33,8 +33,21 @@ export type BridgeDirection = "to-panel" | "to-page";
 export interface BridgeMessage {
   readonly channel: typeof BRIDGE_CHANNEL;
   readonly direction: BridgeDirection;
-  /** A serialized DevTools protocol message. */
+  /** A serialized DevTools protocol message. Empty on a `closed` notice. */
   readonly data: string;
+  /**
+   * Which of the page's sockets the frame belongs to.
+   *
+   * @remarks
+   * Every store on a page posts into the same window, so without this the relay sees one stream
+   * where a hub would see one connection per store. Each socket stamps its frames to the panel
+   * with its own id, and accepts a frame to the page only when it carries that id or none. A
+   * relay keeps one connection per id, which lets several stores on one page register, and be
+   * addressed, separately.
+   */
+  readonly connection?: string;
+  /** Set on the frame a socket posts when it closes, so the relay can end that connection. */
+  readonly closed?: true;
 }
 
 /** `true` when `value` is a bridge frame travelling in `direction`. */
@@ -56,6 +69,13 @@ export interface BridgeWindow {
 const CONNECTING = 0;
 const OPEN = 1;
 const CLOSED = 3;
+
+/** Distinguishes the sockets of one page. Unique within a page, which is all a relay needs. */
+let socketCount = 0;
+function nextConnectionId(): string {
+  socketCount += 1;
+  return `${socketCount.toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 /**
  * Builds a socket factory that carries the protocol over `window.postMessage`.
@@ -96,11 +116,15 @@ export function createPostMessageSocketFactory(target?: BridgeWindow): DevtoolsS
     }
 
     let readyState: number = CONNECTING;
+    const connection = nextConnectionId();
 
     const onMessage = (event: MessageEvent): void => {
       // Only frames addressed to the page, on our channel. Everything else on this window —
       // application traffic, other tools — is none of our business.
       if (!isBridgeMessage(event.data, "to-page")) return;
+      // Another store's frame. One without an id comes from a relay that predates them, and
+      // is meant for every socket on the page.
+      if (event.data.connection !== undefined && event.data.connection !== connection) return;
       callbacks.onMessage(event.data.data);
     };
 
@@ -124,13 +148,28 @@ export function createPostMessageSocketFactory(target?: BridgeWindow): DevtoolsS
       },
       send: (data: string) => {
         if (readyState !== OPEN) return;
-        const message: BridgeMessage = { channel: BRIDGE_CHANNEL, direction: "to-panel", data };
+        const message: BridgeMessage = {
+          channel: BRIDGE_CHANNEL,
+          direction: "to-panel",
+          data,
+          connection,
+        };
         win.postMessage(message, "*");
       },
       close: () => {
         if (readyState === CLOSED) return;
         readyState = CLOSED;
         detach();
+        // Over a hub, a closed socket is how the hub learns a store has gone. Here nothing
+        // closes on the relay's side, so the socket says so.
+        const notice: BridgeMessage = {
+          channel: BRIDGE_CHANNEL,
+          direction: "to-panel",
+          data: "",
+          connection,
+          closed: true,
+        };
+        win.postMessage(notice, "*");
         callbacks.onClose();
       },
       dispose: detach,

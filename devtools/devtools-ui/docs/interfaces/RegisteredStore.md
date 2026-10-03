@@ -8,7 +8,7 @@
 
 # Interface: RegisteredStore
 
-Defined in: [devtools-ui/src/types.ts:80](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L80)
+Defined in: [devtools-ui/src/types.ts:89](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L89)
 
 Registered store entry tracked by the store registry.
 
@@ -23,7 +23,7 @@ Populated automatically by the [useStoreRegistry](../functions/useStoreRegistry.
 
 > **capabilities**: `StoreCapabilities`
 
-Defined in: [devtools-ui/src/types.ts:88](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L88)
+Defined in: [devtools-ui/src/types.ts:97](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L97)
 
 Capabilities advertised by the store during handshake.
 
@@ -33,7 +33,7 @@ Capabilities advertised by the store during handshake.
 
 > **connectedAt**: `string`
 
-Defined in: [devtools-ui/src/types.ts:90](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L90)
+Defined in: [devtools-ui/src/types.ts:99](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L99)
 
 ISO-8601 timestamp of when the store first connected.
 
@@ -43,9 +43,9 @@ ISO-8601 timestamp of when the store first connected.
 
 > **id**: `string`
 
-Defined in: [devtools-ui/src/types.ts:82](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L82)
+Defined in: [devtools-ui/src/types.ts:91](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L91)
 
-Unique store identifier assigned by the hub.
+Store identifier the agent presented (its `storeId`, or the store's name by default).
 
 ***
 
@@ -53,7 +53,7 @@ Unique store identifier assigned by the hub.
 
 > **name**: `string`
 
-Defined in: [devtools-ui/src/types.ts:84](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L84)
+Defined in: [devtools-ui/src/types.ts:93](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L93)
 
 Human-readable store name.
 
@@ -63,6 +63,6 @@ Human-readable store name.
 
 > **status**: `"disconnected"` \| `"connecting"` \| `"connected"`
 
-Defined in: [devtools-ui/src/types.ts:86](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L86)
+Defined in: [devtools-ui/src/types.ts:95](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/types.ts#L95)
 
 Current connectivity status of the store.

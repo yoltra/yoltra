@@ -47,6 +47,9 @@ const unmount = mountDevtools(container, {
 unmount();
 ```
 
+Si el hub se inició con un token, pasa el mismo valor en `authToken`; el hub rechaza un panel que
+no lo envía.
+
 ### Usar como componente de React
 
 ```tsx

@@ -8,7 +8,7 @@
 
 `@yoltra/devtools-ext` es una extensión de navegador ligera que añade un panel «Yoltra» a las
 DevTools de Chrome y Firefox. El panel renderiza `@yoltra/devtools-storeview` y se conecta al hub
-de DevTools que corre en localhost. Un popup permite configurar el host y el puerto del hub.
+de DevTools que corre en localhost. Un popup permite configurar el host, el puerto y el token del hub.
 
 ---
 
@@ -70,9 +70,9 @@ flowchart TD
         cs["content-script.ts<br/>document_start: inyecta la marca,<br/>retransmite tramas sin leerlas"]
         bg["background.ts service worker<br/>empareja puertos de página y panel por id de pestaña"]
         dt["devtools.ts<br/>crea el panel Yoltra"] --> panel{"panel.ts:<br/>¿inspectedWindow.tabId?"}
-        panel -->|"sí"| bridged["mountBridged<br/>createLoopbackHub, la página entra<br/>como una conexión de store normal"]
+        panel -->|"sí"| bridged["mountBridged y bridge.ts<br/>createLoopbackHub, una conexión de store<br/>por socket de la página"]
         panel -->|"no"| direct["mountDevtools a hubHost:hubPort<br/>por defecto localhost:9800"]
-        popup["popup.ts<br/>guarda hubHost y hubPort"] -.->|"chrome.storage.local"| direct
+        popup["popup.ts<br/>guarda hubHost, hubPort y hubToken"] -.->|"chrome.storage.local"| direct
         bridged --> loopUi["mountDevtools<br/>WebSocket = la clase loopback"]
     end
 
@@ -91,6 +91,13 @@ flowchart TD
 3. El panel Yoltra de DevTools monta `@yoltra/devtools-storeview` sobre su propio broker en
    memoria, y el service worker lo une a la página de la pestaña inspeccionada.
 
+Una página con varios stores funciona por el puente igual que por un hub. El socket de cada store
+marca sus tramas con su propio id de conexión, y el panel da a cada uno su propia conexión al
+broker, así que cada store se registra con su propio `storeId` y recibe solo los comandos que lo
+nombran. Un segundo store que presenta un id ya conectado se rechaza con el mensaje del hub, y un
+store desechado se anuncia como desconectado. Los relevos llevan el id de conexión sin leerlo,
+junto a la trama.
+
 **Dentro de un panel de DevTools, la extensión siempre usa el puente.** `panel.ts` elige el hub
 solo cuando falta `chrome.devtools.inspectedWindow.tabId`, lo que ocurre solo si `panel.html` se
 abre fuera de DevTools, por ejemplo como una página de extensión suelta. Así que el panel de
@@ -107,12 +114,14 @@ en una página propia, ambos conectados al hub.
 
 Pulsa el icono del popup de la extensión para configurar:
 
-| Ajuste | Por defecto | Descripción                  |
-| ------ | ----------- | ---------------------------- |
-| Host   | `localhost` | Nombre de host del hub       |
-| Port   | `9800`      | Puerto del servidor hub      |
+| Ajuste | Por defecto | Descripción                                        |
+| ------ | ----------- | -------------------------------------------------- |
+| Host   | `localhost` | Nombre de host del hub                             |
+| Port   | `9800`      | Puerto del servidor hub                            |
+| Token  | ninguno     | El token del hub, solo si se inició con uno        |
 
-Los ajustes se guardan en `chrome.storage.local`.
+Los ajustes se guardan en `chrome.storage.local`. El token se envía en el handshake; un hub
+iniciado con un token rechaza un panel que no presenta el mismo.
 
 ---
 
@@ -124,6 +133,8 @@ Los ajustes se guardan en `chrome.storage.local`.
 | `devtools.html` / `devtools.ts` | Registra el panel de DevTools                              |
 | `panel.html` / `panel.ts`       | Monta `@yoltra/devtools-storeview` en el panel             |
 | `popup.html` / `popup.ts`       | UI de ajustes de conexión al hub                           |
+| `hub-config.ts`                 | Convierte los ajustes guardados en la conexión al hub      |
+| `bridge.ts`                     | Una conexión al broker por socket de la página             |
 | `content-script.ts`             | Relevo página ↔ extensión; anuncia el puente               |
 | `background.ts`                 | Service worker que une una página con su panel por pestaña |
 

@@ -35,7 +35,7 @@ const config: DevtoolsWrapperConfig = {
 
 > `optional` **allowEmit**: `boolean`
 
-Defined in: [types.ts:70](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L70)
+Defined in: [types.ts:74](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L74)
 
 Allow DevTools extensions to emit events to this store.
 
@@ -54,7 +54,7 @@ arbitrary events that will be dispatched via `store.emit()`.
 
 > `optional` **allowReplay**: `boolean`
 
-Defined in: [types.ts:59](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L59)
+Defined in: [types.ts:63](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L63)
 
 Enable event replay capability.
 
@@ -73,7 +73,7 @@ The store must also support replay internally.
 
 > `optional` **authToken**: `string`
 
-Defined in: [types.ts:80](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L80)
+Defined in: [types.ts:84](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L84)
 
 Shared secret required by a hub that was started with one.
 
@@ -89,7 +89,7 @@ developer machine, where the hub warns at startup that it is open.
 
 > `optional` **autoReconnect**: `boolean`
 
-Defined in: [types.ts:155](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L155)
+Defined in: [types.ts:159](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L159)
 
 Automatically reconnect to the hub on disconnect.
 
@@ -103,7 +103,7 @@ Automatically reconnect to the hub on disconnect.
 
 > `optional` **baseDelay**: `number`
 
-Defined in: [types.ts:167](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L167)
+Defined in: [types.ts:171](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L171)
 
 Base delay for exponential reconnection backoff (ms).
 
@@ -131,7 +131,7 @@ Hub server host.
 
 > `optional` **maxDelay**: `number`
 
-Defined in: [types.ts:173](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L173)
+Defined in: [types.ts:177](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L177)
 
 Maximum delay cap for reconnection backoff (ms).
 
@@ -145,7 +145,7 @@ Maximum delay cap for reconnection backoff (ms).
 
 > `optional` **maxEventBytes**: `number`
 
-Defined in: [types.ts:105](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L105)
+Defined in: [types.ts:109](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L109)
 
 Byte cap for a single event payload or patch value.
 
@@ -167,7 +167,7 @@ dropping the message, so one large emit used to end the session.
 
 > `optional` **maxReconnectAttempts**: `number`
 
-Defined in: [types.ts:161](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L161)
+Defined in: [types.ts:165](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L165)
 
 Maximum number of reconnection attempts before giving up.
 
@@ -181,7 +181,7 @@ Maximum number of reconnection attempts before giving up.
 
 > `optional` **maxSnapshotBytes**: `number`
 
-Defined in: [types.ts:93](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L93)
+Defined in: [types.ts:97](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L97)
 
 Byte budget for a state snapshot before parts of it are omitted.
 
@@ -214,7 +214,7 @@ Hub server port. Required.
 
 > `optional` **sampling**: `SamplingConfig`
 
-Defined in: [types.ts:149](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L149)
+Defined in: [types.ts:153](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L153)
 
 Which events the agent forwards to the hub.
 
@@ -233,7 +233,7 @@ advertised to the hub as part of the store's capabilities.
 
 > `optional` **sanitize**: (`path`, `value`) => `unknown`
 
-Defined in: [types.ts:130](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L130)
+Defined in: [types.ts:134](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L134)
 
 Redacts a value before it leaves the process.
 
@@ -278,7 +278,7 @@ production or on a shared machine.
 
 > `optional` **socketFactory**: `DevtoolsSocketFactory`
 
-Defined in: [types.ts:182](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L182)
+Defined in: [types.ts:186](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L186)
 
 Custom socket factory (advanced). By default the agent opens a native
 browser `WebSocket`. Inject a different transport — e.g. an in-memory
@@ -297,14 +297,18 @@ the native browser WebSocket factory
 
 > `optional` **storeId**: `string`
 
-Defined in: [types.ts:48](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L48)
+Defined in: [types.ts:52](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L52)
 
-Persisted store identifier that survives reconnects.
+Store identifier presented to the hub, kept across reconnects.
 
 #### Remarks
 
-When omitted a random UUID is generated via `crypto.randomUUID()`.
-Provide an explicit value to correlate store sessions across page reloads.
+Defaults to the store's `name`, so it is stable across page reloads without configuration.
+
+The hub accepts one connection per id. A store presenting an id that is already connected is
+refused with a handshake error naming the id, and keeps retrying until the first store
+disconnects. Two stores with the same `name` therefore need distinct `storeId` values to be
+inspected side by side.
 
 ***
 
@@ -312,7 +316,7 @@ Provide an explicit value to correlate store sessions across page reloads.
 
 > `optional` **throttleMs**: `number`
 
-Defined in: [types.ts:136](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L136)
+Defined in: [types.ts:140](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L140)
 
 Throttle interval for DevTools updates (ms). `0` disables throttling.
 
@@ -326,7 +330,7 @@ Throttle interval for DevTools updates (ms). `0` disables throttling.
 
 > `optional` **transport**: `"auto"` \| `"bridge"` \| `"websocket"`
 
-Defined in: [types.ts:198](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L198)
+Defined in: [types.ts:202](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-browser-agent/src/types.ts#L202)
 
 How the agent reaches the panel.
 

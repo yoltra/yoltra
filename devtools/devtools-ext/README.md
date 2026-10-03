@@ -8,7 +8,7 @@
 
 `@yoltra/devtools-ext` is a lightweight browser extension that adds a "Yoltra" panel to
 Chrome/Firefox DevTools. The panel renders `@yoltra/devtools-storeview` and connects to the
-DevTools hub running on localhost. A popup allows configuring the hub host and port.
+DevTools hub running on localhost. A popup allows configuring the hub host, port and token.
 
 ---
 
@@ -68,9 +68,9 @@ flowchart TD
         cs["content-script.ts<br/>document_start: injects the mark,<br/>relays frames without reading them"]
         bg["background.ts service worker<br/>pairs page and panel ports by tab id"]
         dt["devtools.ts<br/>creates the Yoltra panel"] --> panel{"panel.ts:<br/>inspectedWindow.tabId?"}
-        panel -->|"yes"| bridged["mountBridged<br/>createLoopbackHub, the page joins<br/>as an ordinary store connection"]
+        panel -->|"yes"| bridged["mountBridged and bridge.ts<br/>createLoopbackHub, one store connection<br/>per page socket"]
         panel -->|"no"| direct["mountDevtools to hubHost:hubPort<br/>default localhost:9800"]
-        popup["popup.ts<br/>saves hubHost and hubPort"] -.->|"chrome.storage.local"| direct
+        popup["popup.ts<br/>saves hubHost, hubPort and hubToken"] -.->|"chrome.storage.local"| direct
         bridged --> loopUi["mountDevtools<br/>WebSocket = the loopback class"]
     end
 
@@ -89,6 +89,13 @@ flowchart TD
 3. The Yoltra panel in DevTools mounts `@yoltra/devtools-storeview` over its own in-memory broker,
    and the service worker joins it to the page in the inspected tab.
 
+A page with several stores works through the bridge as it does through a hub. Each store's socket
+stamps its frames with its own connection id, and the panel gives each one its own connection to
+the broker, so every store registers under its own `storeId` and receives only the commands that
+name it. A second store presenting an id that is already connected is refused with the hub's
+message, and a disposed store is announced as gone. The relays carry the connection id unread,
+alongside the frame.
+
 **Inside a DevTools panel, the extension always takes the bridge.** `panel.ts` chooses the hub only
 when `chrome.devtools.inspectedWindow.tabId` is missing, which happens only when `panel.html` is
 opened outside DevTools, for example as a plain extension page. So the popup's hub host and port
@@ -105,12 +112,14 @@ in a page of your own, both connected to the hub.
 
 Click the extension popup icon to configure:
 
-| Setting | Default     | Description         |
-| ------- | ----------- | ------------------- |
-| Host    | `localhost` | Hub server hostname |
-| Port    | `9800`      | Hub server port     |
+| Setting | Default     | Description                                          |
+| ------- | ----------- | ---------------------------------------------------- |
+| Host    | `localhost` | Hub server hostname                                  |
+| Port    | `9800`      | Hub server port                                      |
+| Token   | none        | The hub's token, if the hub was started with one     |
 
-Settings are persisted in `chrome.storage.local`.
+Settings are persisted in `chrome.storage.local`. The token is sent in the handshake; a hub
+started with a token refuses a panel that does not present the same one.
 
 ---
 
@@ -122,6 +131,8 @@ Settings are persisted in `chrome.storage.local`.
 | `devtools.html` / `devtools.ts` | Registers the DevTools panel                        |
 | `panel.html` / `panel.ts`       | Mounts `@yoltra/devtools-storeview` in the panel    |
 | `popup.html` / `popup.ts`       | Hub connection settings UI                          |
+| `hub-config.ts`                 | Maps the saved settings to the hub connection       |
+| `bridge.ts`                     | One broker connection per page socket               |
 | `content-script.ts`             | Page ↔ extension relay; announces the bridge        |
 | `background.ts`                 | Service worker joining a page to its panel by tab   |
 

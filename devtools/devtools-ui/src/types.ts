@@ -46,6 +46,15 @@ export interface HubConnectionConfig {
   /** Maximum reconnect attempts. @defaultValue `Infinity` */
   maxReconnectAttempts?: number;
   /**
+   * Shared secret required by a hub that was started with one.
+   *
+   * @remarks
+   * Sent in the handshake, and again on every reconnect. A hub with a token refuses any panel
+   * that does not present the same value, so pass the token the hub and the store agents were
+   * given. Omit it for a hub running without one.
+   */
+  authToken?: string;
+  /**
    * Custom WebSocket constructor.
    *
    * @remarks
@@ -78,7 +87,7 @@ export type HubConnectionStatus = "disconnected" | "connecting" | "connected";
  * @public
  */
 export interface RegisteredStore {
-  /** Unique store identifier assigned by the hub. */
+  /** Store identifier the agent presented (its `storeId`, or the store's name by default). */
   id: string;
   /** Human-readable store name. */
   name: string;

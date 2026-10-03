@@ -53,6 +53,14 @@ await hub.stop();
 npx @yoltra/devtools-server --port 9800 --history-size 1000
 ```
 
+Para exigir un token a cada cliente, pasa `--token <secreto>` o define `YOLTRA_DEVTOOLS_TOKEN`, que
+lo mantiene fuera de la lista de procesos; si están los dos, gana el flag. Da el mismo valor a
+cada agente de store y a cada panel en `authToken`.
+
+```bash
+YOLTRA_DEVTOOLS_TOKEN=s3cret npx @yoltra/devtools-server --port 9800
+```
+
 O mediante el binario del proyecto:
 
 ```bash
@@ -85,6 +93,11 @@ Dentro de `DevtoolsHub`, cada trama pasa los mismos filtros (origen, forma, tasa
 de llegar al `Router`. Una trama de store se difunde a todos los paneles, y un `STORE_EVENT`
 además se guarda en el `RingBuffer`; un comando de panel va a un solo store, elegido por `storeId`.
 
+Un id de store pertenece a una sola conexión a la vez. Un store que presenta un id ya conectado se
+rechaza con un error de handshake que nombra el id, y su agente sigue reintentando hasta que el
+primer store se va. Los agentes usan el nombre del store cuando no se da `storeId`, así que dos
+stores con el mismo nombre necesitan valores de `storeId` distintos para inspeccionarse a la vez.
+
 ```mermaid
 flowchart TD
     agentIn(["agente de store<br/>withDevtools"])
@@ -100,7 +113,7 @@ flowchart TD
         shape -->|"sí"| rate{"¿bajo maxMessagesPerSecond?<br/>200 por defecto, ventana de 1 s"}
         rate -->|"no"| dropped(["descartada, un aviso por ventana"])
         rate -->|"sí"| shaken{"¿handshake hecho?"}
-        shaken -->|"no"| hs["handleHandshake<br/>authToken, versión mayor, id del rol"]
+        shaken -->|"no"| hs["handleHandshake<br/>authToken, versión mayor, id del rol,<br/>id de store que no esté ya conectado"]
         hs -->|"rechazado"| close1008(["cierre 1008"])
         hs -->|"aceptado"| register["Router.register<br/>mapa de stores o de extensiones"]
         register -->|"store"| joined["construye STORE_CONNECTED"]

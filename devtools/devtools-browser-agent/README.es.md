@@ -165,6 +165,12 @@ interface DevtoolsWrapperConfig {
 }
 ```
 
+El hub acepta una conexión por id de store. Dos stores con el mismo `name` y sin `storeId`
+presentan el mismo id, así que el segundo se rechaza con un error de handshake que nombra el id,
+y reintenta hasta que el primero se desconecta. Da a esos stores valores de `storeId` distintos.
+Lo mismo vale por el puente de la extensión, donde cada store de una página mantiene su propia
+conexión con el panel.
+
 ### Configuración completa
 
 ```typescript

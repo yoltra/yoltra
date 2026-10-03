@@ -32,6 +32,17 @@ function announce(): void {
   script.remove();
 }
 
+/**
+ * The envelope fields carried across besides the frame: which of the page's sockets it belongs
+ * to, and whether it is that socket's closing notice. Copied as they are, never interpreted.
+ */
+function envelope(msg: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...(typeof msg.connection === "string" ? { connection: msg.connection } : {}),
+    ...(msg.closed === true ? { closed: true } : {}),
+  };
+}
+
 /** `true` when `value` is one of our frames travelling in `direction`. */
 function isFrame(value: unknown, direction: "to-panel" | "to-page"): boolean {
   if (value === null || typeof value !== "object") return false;
@@ -49,8 +60,9 @@ function start(): void {
   window.addEventListener("message", (event: MessageEvent) => {
     if (event.source !== window) return;
     if (!isFrame(event.data, "to-panel")) return;
+    const frame = event.data as Record<string, unknown> & { data: string };
     try {
-      port.postMessage({ channel: CHANNEL, data: (event.data as { data: string }).data });
+      port.postMessage({ channel: CHANNEL, data: frame.data, ...envelope(frame) });
     } catch {
       // The panel closed. The page keeps running, and the agent keeps buffering, exactly as it
       // would against a hub that went away.
@@ -62,7 +74,10 @@ function start(): void {
     if (message === null || typeof message !== "object") return;
     const msg = message as Record<string, unknown>;
     if (msg.channel !== CHANNEL || typeof msg.data !== "string") return;
-    window.postMessage({ channel: CHANNEL, direction: "to-page", data: msg.data }, "*");
+    window.postMessage(
+      { channel: CHANNEL, direction: "to-page", data: msg.data, ...envelope(msg) },
+      "*",
+    );
   });
 }
 

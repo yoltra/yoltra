@@ -8,11 +8,11 @@
 
 # Function: parseArgs()
 
-> **parseArgs**(`argv`): [`CliArgs`](../interfaces/CliArgs.md)
+> **parseArgs**(`argv`, `env`): [`CliArgs`](../interfaces/CliArgs.md)
 
-Defined in: [args.ts:51](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-cli/src/args.ts#L51)
+Defined in: [args.ts:65](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-cli/src/args.ts#L65)
 
-Reads `--port` and `--history-size` from an argument list.
+Reads `--port`, `--history-size` and `--token` from an argument list.
 
 ## Parameters
 
@@ -21,6 +21,13 @@ Reads `--port` and `--history-size` from an argument list.
 readonly `string`[]
 
 Arguments after the executable and script (i.e. `process.argv.slice(2)`).
+
+### env
+
+`Readonly`\<`Record`\<`string`, `string` \| `undefined`\>\> = `{}`
+
+Environment to read [TOKEN\_ENV](../variables/TOKEN_ENV.md) from when `--token` is absent (pass
+`process.env`). An empty value counts as unset. Defaults to an empty environment.
 
 ## Returns
 
@@ -43,4 +50,5 @@ back to the default, and the tool then listened somewhere the user had not asked
 
 ```ts
 parseArgs(["--port", "9900"]); // { port: 9900, historySize: 1000 }
+parseArgs([], { YOLTRA_DEVTOOLS_TOKEN: "s3cret" }); // { port: 9800, historySize: 1000, token: "s3cret" }
 ```

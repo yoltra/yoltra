@@ -10,7 +10,7 @@
 
 > **mountDevtools**(`container`, `config`): () => `void`
 
-Defined in: [devtools-storeview/src/index.tsx:31](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/index.tsx#L31)
+Defined in: [devtools-storeview/src/index.tsx:32](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-storeview/src/index.tsx#L32)
 
 Mount the DevTools React app into a DOM container.
 
@@ -26,7 +26,8 @@ The DOM element to mount into.
 
 `HubConnectionConfig`
 
-Hub connection configuration.
+Hub connection configuration. For a hub started with a token, include the same
+value as `authToken`.
 
 ## Returns
 

@@ -39,6 +39,9 @@ npx @yoltra/devtools-cli
 
 # Custom port and history size
 npx @yoltra/devtools-cli --port 8900 --history-size 2000
+
+# A hub that requires a token (the panel presents the same one)
+YOLTRA_DEVTOOLS_TOKEN=s3cret npx @yoltra/devtools-cli
 ```
 
 Then connect your app's store to that hub. `transport: "websocket"` sends it to the hub even when
@@ -89,6 +92,11 @@ Six panels, in this order. There are no per-panel shortcuts: `Tab` moves to the 
 | `←` / `→`           | On Time Travel: step one event back / forward                  |
 | `r`                 | On Time Travel: resume live state                              |
 | `q`                 | Quit                                                           |
+| `Esc`               | On Emit: leave the form, so the keys above work again          |
+| `Enter`             | On Emit, outside the form: back into it                        |
+
+The Emit form takes the keyboard when its tab opens. While a field has focus, every key above is
+typed into it, so a payload such as `["a"]` or a channel with a `q` in it is safe to enter.
 
 ---
 
@@ -98,6 +106,16 @@ Six panels, in this order. There are no per-panel shortcuts: `Tab` moves to the 
 | ---------------- | ------- | ----------------------------------------------- |
 | `--port`         | `9800`  | Hub server port                                 |
 | `--history-size` | `1000`  | Max events retained for late-connecting clients |
+| `--token`        | none    | Token the hub requires of every client          |
+
+`--token` can also come from the `YOLTRA_DEVTOOLS_TOKEN` environment variable, which keeps it out
+of the process list; the flag wins when both are set. The embedded hub requires the token, and the
+terminal panel presents it, so the same value also lets the CLI attach to a hub already running
+with it. Pass the same token to each store agent (`authToken`).
+
+These symbols are exported too (`parseArgs`, `CliArgs`, `CliArgsError`, `DEFAULT_PORT`,
+`DEFAULT_HISTORY_SIZE`, `TOKEN_ENV`), so a tool that embeds the hub can reuse the same argument
+contract instead of deriving it again.
 
 ---
 

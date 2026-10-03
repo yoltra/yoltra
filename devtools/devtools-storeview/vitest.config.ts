@@ -11,9 +11,12 @@ export default defineConfig({
       // `JsonTree.tsx` is covered through it. They stay in the measurement so the number says
       // what is true, and the threshold below is low because that is the honest figure.
       exclude: ["src/index.tsx", "src/theme/**", "src/**/*.module.css", "src/global.d.ts"],
-      // Set at the measured floor. Statements sit low because the panels carry no tests yet.
-      // Raising it means testing them, not narrowing what is measured.
-      thresholds: { lines: 16, statements: 16, branches: 83, functions: 86 },
+      // Set at the measured floor. The mount test renders the whole app and `panels.test.tsx`
+      // renders each panel with data, which lifted lines and statements from 16% to 89% and
+      // functions from 86% to 93%. Branches sit below their earlier 83%: rendering a component
+      // brings its inner branches into the count, and the panels' many display conditions are
+      // mostly untested. Raising it means testing the panels, not narrowing what is measured.
+      thresholds: { lines: 89, statements: 89, branches: 76, functions: 93 },
     },
   },
 });

@@ -18,6 +18,7 @@
 
 - [DEFAULT\_HISTORY\_SIZE](variables/DEFAULT_HISTORY_SIZE.md)
 - [DEFAULT\_PORT](variables/DEFAULT_PORT.md)
+- [TOKEN\_ENV](variables/TOKEN_ENV.md)
 
 ## Functions
 

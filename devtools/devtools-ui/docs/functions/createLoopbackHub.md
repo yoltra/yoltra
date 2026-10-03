@@ -10,7 +10,7 @@
 
 > **createLoopbackHub**(): [`LoopbackHub`](../interfaces/LoopbackHub.md)
 
-Defined in: [devtools-ui/src/transport/loopback.ts:187](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/transport/loopback.ts#L187)
+Defined in: [devtools-ui/src/transport/loopback.ts:201](https://github.com/yoltra/yoltra/blob/main/devtools/devtools-ui/src/transport/loopback.ts#L201)
 
 Creates a self-contained in-memory DevTools hub plus the two client transports
 that connect to it — a `socketFactory` for the store agent and a

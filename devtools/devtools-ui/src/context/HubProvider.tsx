@@ -115,6 +115,7 @@ export function HubProvider({
           type: "HANDSHAKE_REQUEST",
           protocolVersion: PROTOCOL_VERSION,
           role: DevtoolsRole.EXTENSION,
+          ...(cfg.authToken !== undefined ? { authToken: cfg.authToken } : {}),
           extension: {
             id: extensionIdRef.current,
             name: cfg.extensionName ?? "DevTools UI",

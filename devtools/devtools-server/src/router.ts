@@ -69,6 +69,18 @@ export class Router {
   }
 
   /**
+   * Whether a store with this id is registered.
+   *
+   * @param storeId - Store id to look up.
+   * @returns `true` while a store holds the id.
+   *
+   * @public
+   */
+  hasStore(storeId: string): boolean {
+    return this.stores.has(storeId);
+  }
+
+  /**
    * Get the WebSocket for a specific store.
    *
    * @param storeId - Store UUID.

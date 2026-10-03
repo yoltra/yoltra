@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-protocol",
+      "comment": "Documentation only: the handshake's store `id` is described as the agent's `storeId`, which defaults to the store's name, rather than a generated UUID, and as refused by the hub while another store holds it.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-protocol"
+}
