@@ -9,15 +9,15 @@
 [![tipos](https://img.shields.io/npm/types/@yoltra/devtools-browser-agent)](https://www.npmjs.com/package/@yoltra/devtools-browser-agent)
 [![Licencia](https://img.shields.io/npm/l/@yoltra/devtools-browser-agent)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
 
-**Agente de DevTools para el navegador — conecta un store de Yoltra al hub de DevTools desde el
+**Agente de DevTools para el navegador: conecta un store de Yoltra al hub de DevTools desde el
 navegador.**
 
 `@yoltra/devtools-browser-agent` instrumenta un store de Yoltra de forma transparente, así que
 cada evento, cambio de estado y métrica se reenvía al hub de DevTools en tiempo real. Usa la API
-nativa `WebSocket` del navegador (sin dependencias adicionales), con reconexión automática y búfer de
-mensajes.
+nativa `WebSocket` del navegador (sin dependencias adicionales), con reconexión automática y
+búfer de mensajes.
 
----
+> **Documentación completa:** [@yoltra/devtools-browser-agent en yoltra.dev](https://yoltra.dev/es/yoltra/packages/devtools-browser-agent/)
 
 ## Instalación
 
@@ -27,70 +27,69 @@ npm install @yoltra/devtools-browser-agent
 
 **Dependencia peer:** `@yoltra/core`
 
----
-
 ## Inicio rápido
 
 ```typescript
-import { createStore } from "@yoltra/core";
 import { withDevtools } from "@yoltra/devtools-browser-agent";
 
-const store = createStore({
-  name: "TodoApp",
-  reducer: {
-    todos: {
-      state: { items: [] },
-      when: { channel: "todos" },
-      reducer: (state, event) => {
-        if (event.type === "add") return { items: [...state.items, event.payload] };
-        return state;
-      },
-    },
-  },
-});
-
-// Instrumenta el store — se conecta al hub en ws://localhost:9800
+// Instrumenta el store: se conecta al hub en ws://localhost:9800
 withDevtools(store, { port: 9800 });
 
-// Usa el store con normalidad — los eventos se reenvían automáticamente
+// Usa el store con normalidad: los eventos se reenvían automáticamente
 await store.emit("todos", "add", { title: "Comprar leche" });
 ```
 
----
-
 ## Cómo funciona
 
-1. **Se engancha a la costura tipada de instrumentación**, `store.instrument(observer)`. El store
-   reporta cada evento con sus rutas hoja cambiadas exactas, los valores anterior y siguiente, el
-   estado de confirmación y los tiempos de reducción, y para un evento que no se confirmó, `reason`
-   y `vetoedBy`. No hay efecto interceptor ni diferenciación de estado, y la costura no cuesta nada
-   mientras no hay ningún observador adjunto.
-2. **Traduce las rutas reportadas a parches RFC-6902** con `patchesFromChange`, y reenvía `reason`
-   y `vetoedBy` en `STORE_EVENT` para que el panel pueda decir por qué un evento no se confirmó
-3. **Envía mensajes `STORE_EVENT`** con los parches al hub
-4. **Almacena mensajes en un búfer** (hasta 100) mientras está desconectado, y los vacía al
-   reconectar
-5. **Atiende los comandos entrantes** de las extensiones:
-   - `REQUEST_STATE` → instantánea completa del estado
-   - `REQUEST_METRICS` → contadores de rendimiento
-   - `REQUEST_SUBSCRIPTIONS` → inventario de reducers y efectos
-   - `TIME_TRAVEL` → restaura el store a un estado anterior
-   - `EVENT_REPLAY` → reproduce eventos pasando solo por los reducers
-   - `EMIT_TO_STORE` → inyecta un evento sintético
+El agente se engancha a la costura de instrumentación tipada del store,
+`store.instrument(observer)`, convierte las rutas cambiadas de cada evento en parches RFC-6902 y
+los envía como mensajes `STORE_EVENT`, con `reason` y `vetoedBy` para un evento no confirmado.
+Guarda hasta 100 mensajes mientras está desconectado y responde a `REQUEST_STATE`,
+`REQUEST_METRICS`, `REQUEST_SUBSCRIPTIONS`, `TIME_TRAVEL`, `EVENT_REPLAY` y `EMIT_TO_STORE`. Los
+eventos de canales `ephemeral` no se reportan, y el envoltorio es **transparente**: devuelve la
+misma instancia del store.
 
-Los eventos de los canales `ephemeral` del store no se reportan: el agente registra su observador
-sin `{ ephemeral: true }`, así que ese tráfico nunca llega a la línea de tiempo y no le cuesta nada.
+El transporte es un `socketFactory` propio, el puente `postMessage` de la extensión o un
+`WebSocket` nativo. Los payloads se muestrean, se acotan con `maxEventBytes` y
+`maxSnapshotBytes` y pasan por `sanitize`. El viaje en el tiempo tiene dos candados: el agente
+necesita `allowReplay`, y el store debe crearse con `createStore({ devtools: { allowReplay: true } })`.
 
-El envoltorio es **transparente**: devuelve la misma instancia del store.
+## Configuración
 
-El diagrama muestra las dos direcciones dentro de `withDevtools`. De salida, cada evento observado
-se convierte en un `STORE_EVENT`, muestreado y acotado en tamaño antes de enviarse. De entrada, un
-comando toca el store solo si la capacidad correspondiente está activa: `allowReplay` para
-`TIME_TRAVEL` y `EVENT_REPLAY`, `allowEmit` para `EMIT_TO_STORE`. El transporte se elige una sola
-vez, al envolver el store.
+`withDevtools(store, config)` recibe un `DevtoolsWrapperConfig`: `port` (obligatorio), `host`
+(`"localhost"`), `storeId` (`store.name`), `allowReplay` y `allowEmit` (ambos `false`),
+`autoReconnect` (`true`), `maxReconnectAttempts`, `baseDelay` y `maxDelay`.
+
+```typescript
+withDevtools(store, {
+  port: 9800,
+  storeId: "my-app-store",
+  allowReplay: true,
+  allowEmit: true,
+  autoReconnect: true,
+  maxReconnectAttempts: 20,
+  baseDelay: 1000,
+  maxDelay: 15000,
+});
+```
+
+El hub acepta una conexión por id de store: da `storeId` distintos a stores con el mismo `name`.
+
+## Reconexión
+
+Backoff exponencial con 10 % de jitter, desde `baseDelay` (1 s) hasta `maxDelay` (30 s). Los
+mensajes se guardan en un búfer durante la desconexión y se vacían al reconectar.
+
+## Referencia de la API
+
+`withDevtools(store, config)` y el tipo `DevtoolsWrapperConfig`, en la
+[referencia de la API](https://yoltra.dev/es/yoltra/api/devtools-browser-agent/). La página del
+paquete diagrama [cómo funciona](https://yoltra.dev/es/yoltra/packages/devtools-browser-agent/#cómo-funciona).
 
 ```mermaid
 flowchart TD
+    accTitle: Cómo funciona el agente de navegador
+    accDescr: withDevtools elige un transporte, reporta eventos instrumentados y métricas al hub o a la extensión, y responde comandos de estado, replay y emit cuando están permitidos
     app(["tu app: withDevtools(store, config)"])
     store(["el store de @yoltra/core"])
 
@@ -134,91 +133,15 @@ flowchart TD
     client <-->|"tramas del protocolo"| far(["un hub, el puente de la extensión<br/>o un broker loopback"])
 ```
 
-El viaje en el tiempo tiene dos candados: el agente ignora `TIME_TRAVEL` sin `allowReplay`, y el
-propio store lanza un error desde `__applyExternalState` salvo que se haya creado con
-`createStore({ devtools: { allowReplay: true } })`.
-
----
-
-## Configuración
-
-```typescript
-interface DevtoolsWrapperConfig {
-  /** Puerto del servidor hub. Requerido. */
-  port: number;
-  /** Host del servidor hub. @default "localhost" */
-  host?: string;
-  /** ID del store con el que lo identifican el hub y los paneles (sobrevive a las reconexiones). @default store.name */
-  storeId?: string;
-  /** Habilita el viaje en el tiempo y la reproducción de eventos. @default false */
-  allowReplay?: boolean;
-  /** Permite que las extensiones emitan eventos a este store. @default false */
-  allowEmit?: boolean;
-  /** Reconexión automática al desconectarse. @default true */
-  autoReconnect?: boolean;
-  /** Máximo de intentos de reconexión. @default Infinity */
-  maxReconnectAttempts?: number;
-  /** Retardo base para el backoff exponencial (ms). @default 1000 */
-  baseDelay?: number;
-  /** Tope máximo de retardo para el backoff (ms). @default 30000 */
-  maxDelay?: number;
-}
-```
-
-El hub acepta una conexión por id de store. Dos stores con el mismo `name` y sin `storeId`
-presentan el mismo id, así que el segundo se rechaza con un error de handshake que nombra el id,
-y reintenta hasta que el primero se desconecta. Da a esos stores valores de `storeId` distintos.
-Lo mismo vale por el puente de la extensión, donde cada store de una página mantiene su propia
-conexión con el panel.
-
-### Configuración completa
-
-```typescript
-withDevtools(store, {
-  port: 9800,
-  storeId: "my-app-store",
-  allowReplay: true,
-  allowEmit: true,
-  autoReconnect: true,
-  maxReconnectAttempts: 20,
-  baseDelay: 1000,
-  maxDelay: 15000,
-});
-```
-
----
-
-## Reconexión
-
-El agente usa backoff exponencial con jitter para reconectarse:
-
-- Empieza en `baseDelay` (1 s por defecto)
-- Se duplica en cada intento, con tope en `maxDelay` (30 s por defecto)
-- Añade un 10 % de jitter para evitar la estampida de reconexiones
-- Los mensajes se guardan en un búfer durante las desconexiones y se vacían al reconectar
-
----
-
-## Referencia de la API
-
-| Export                        | Descripción                                    |
-| ----------------------------- | ---------------------------------------------- |
-| `withDevtools(store, config)` | Instrumenta un store y lo conecta al hub       |
-| `DevtoolsWrapperConfig`       | Tipo de configuración                          |
-
----
-
 ## Paquetes relacionados
 
-- **[@yoltra/devtools-protocol](../devtools-protocol/README.md)** — Formato de cable y tipos de
-  mensaje
-- **[@yoltra/devtools-server](../devtools-server/README.md)** — El hub al que se conecta este
-  agente
-- **[@yoltra/devtools-ext](../devtools-ext/README.md)** — Extensión de navegador que muestra la UI
-- **[@yoltra/core](../../packages/core/README.md)** — El store que se instrumenta
-
----
+- **[@yoltra/devtools-protocol](../devtools-protocol/README.es.md)**: formato de cable y tipos de mensaje
+- **[@yoltra/devtools-server](../devtools-server/README.es.md)**: el hub al que se conecta este agente
+- **[@yoltra/devtools-ext](../devtools-ext/README.es.md)**: extensión de navegador que muestra la UI
+- **[@yoltra/core](../../packages/core/README.es.md)**: el store que se instrumenta
 
 ## Licencia
 
-**MIT** — De uso libre en proyectos comerciales y de código abierto.
+**MIT**. De uso libre en proyectos comerciales y de código abierto.
+
+> **Documentación completa:** [@yoltra/devtools-browser-agent en yoltra.dev](https://yoltra.dev/es/yoltra/packages/devtools-browser-agent/)

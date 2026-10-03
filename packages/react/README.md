@@ -15,10 +15,9 @@ fine-grained path subscriptions.**
 
 Subscribe to `"items.0.title"` or `"items.*.done"`. The component re-renders only when that
 exact path changes. No selectors, no memoization, no manual optimization.
-
 [See the flamegraph comparison (Redux vs yoltra).](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
 
----
+> **Full documentation:** [@yoltra/react on yoltra.dev](https://yoltra.dev/en/yoltra/packages/react/)
 
 ## Installation
 
@@ -28,58 +27,13 @@ npm install @yoltra/core @yoltra/react
 
 **Peer dependencies:** React 18+
 
----
-
 ## Setup with `createYoltra` (recommended)
 
-`createYoltra` creates the store **and** every fully-typed hook in one call, with no separate context
-file, no `createHooks` wiring, no required provider. All type parameters are inferred from your
-reducer, so components need no explicit generics.
-
-### 1. Create the store and hooks
-
-```tsx
-// yoltra.ts
-import { eventKeys } from "@yoltra/core";
-import { createYoltra } from "@yoltra/react";
-
-export type AppEM = {
-  counter: { increment: number; decrement: number; reset: null };
-};
-
-export const { store, useAtomicProp, useEmit, StoreProvider } = createYoltra({
-  name: "App",
-  reducer: {
-    counter: {
-      state: { value: 0 },
-      when: {
-        keys: eventKeys<AppEM>()([
-          ["counter", "increment"],
-          ["counter", "decrement"],
-          ["counter", "reset"],
-        ]),
-      },
-      reducer: (state, event) => {
-        switch (event.type) {
-          case "increment":
-            return { value: state.value + event.payload };
-          case "decrement":
-            return { value: state.value - event.payload };
-          case "reset":
-            return { value: 0 };
-          default:
-            return state;
-        }
-      },
-    },
-  },
-});
-```
-
-### 2. Use the hooks, no provider required
-
-The hooks default to the store above, so you can render components directly. Subscribe with a
-**`{ reducer, property }`** spec: the dotted `property` names the exact path to read.
+`createYoltra(spec)` takes the same spec as `createStore` and returns the store **and** every
+fully-typed hook in one call (`export const { store, useAtomicProp, useEmit, StoreProvider } =
+createYoltra({ ... })` in a `yoltra.ts` module), with no context file and no required provider.
+Type parameters are inferred from your reducer, so components need no generics. Subscribe with a
+**`{ reducer, property }`** spec, where the dotted `property` names the exact path to read:
 
 ```tsx
 // Counter.tsx
@@ -102,87 +56,28 @@ export function Counter() {
 ```
 
 A `<StoreProvider>` is only needed to scope a **different** store instance to a subtree (e.g. a
-fresh store per test). `createYoltra` returns one for exactly that.
+fresh store per test).
 
----
+## Manual wiring and decoration
 
-## Advanced: manual wiring with `createHooks`
-
-When you need one set of hooks shared across several store instances through your own React
-context, bind them yourself with `createHooks(context)`. `createYoltra` is this same wiring
-collapsed into a single call.
-
-```typescript
-// hooks.ts
-import { createContext } from "react";
-import { createHooks } from "@yoltra/react";
-import type { StoreInstance } from "@yoltra/core";
-import type { AppState, AppEM } from "./store";
-
-export const AppStoreContext = createContext<StoreInstance<"counter", AppState, AppEM> | null>(
-  null,
-);
-
-export const {
-  useStore,
-  useEmit,
-  useSelector,
-  useAtomicProp,
-  useAtomicProps,
-  useEvent,
-  useSuspenseAtomicProp,
-  useSuspenseAtomicProps,
-  shallowEqual,
-} = createHooks(AppStoreContext);
-```
-
-Provide the store with `<AppStoreContext.Provider value={store}>` at your root.
-
----
-
-## Adding to a store, with its types
-
-A library can mount a slice on a store it did not create, and the hooks grow to know about it.
-`withSlice`, `withMiddleware` and `withEffect` return a `Yoltra` whose types have widened.
-
-```tsx
-import { defineSlice } from "@yoltra/core";
-
-// Module scope, once, before the first render.
-export const app = createYoltra({ name: "App", reducer: { counter } })
-  .withSlice("flags", defineSlice<FlagsEM>()({ ... }));
-
-export const { useAtomicProp, useEmit } = app;
-
-// Typed, on a slice the application never declared.
-const enabled = useAtomicProp({ reducer: "flags", property: "enabled" });
-```
-
-Three things to know:
-
-- **Module scope, once, before the first render.** Each call builds a new hook set, because
-  `createHooks` allocates fresh function objects. Calling one inside a component would hand React
-  a different `useAtomicProp` on every render.
-- **The store and the context are the same objects.** Only the types change, so a
-  `<StoreProvider>` from any view in the chain serves the hooks of every other, and the Suspense
-  cache is shared.
-- **Free functions exist too**, for a library handed a `Yoltra` it did not create:
-  `withSlice(yoltra, name, spec)`.
-
-The full contract, including what to do about disposal, is in the
-[decoration guide](https://github.com/yoltra/yoltra/blob/main/docs/en/DECORATION_GUIDE.md).
-
----
+`createHooks(context)` binds the same hooks to a React context of your own, for one set of hooks
+shared across several store instances; provide the store with `<AppStoreContext.Provider>`.
+A library can also mount a slice on a store it did not create: `withSlice`, `withMiddleware` and
+`withEffect` on a `Yoltra` return one whose hooks know the new slice. Call them at module scope,
+once, before the first render; the store and context stay the same objects. The
+[decoration guide](https://yoltra.dev/en/yoltra/docs/decoration/) has the full contract.
 
 ## How the hooks reach the store
 
 Every hook is a thin wrapper over one store method, so the store decides what changed and React
 re-renders only the components whose subscription fired. `createYoltra` gives its hooks a context
-whose default value is its own store, which is why a provider is optional there; the hooks exported
-from the package itself read a context that starts empty, and need a `<StoreProvider>`.
+whose default value is its own store; the hooks exported from the package itself read a context
+that starts empty, and need a `<StoreProvider>`.
 
 ```mermaid
 flowchart TD
+    accTitle: How the hooks reach the store
+    accDescr: createYoltra and createHooks bind each hook to a context, and every hook calls one store method such as connect, subscribe, onEvent or emit.
     cy(["createYoltra(spec)"]) --> created["createStore<br/>from @yoltra/core"]
     cy --> ownContext["its own StoreContext<br/>default value: that store"]
     ownProvider(["yoltra.StoreProvider<br/>optional, for a subtree"]) -.->|"overrides"| ownContext
@@ -212,355 +107,58 @@ flowchart TD
     decorate["withSlice, withMiddleware, withEffect"] -->|"registerSlice, registerMiddleware, registerEffect"| store
 ```
 
----
-
 ## Hooks API
 
-### `useAtomicProp({ reducer, property }, map?, isEqual?)`
-
-Fine-grained single-path selector. Re-renders only when the specified leaf changes. The dotted
-`property` names the exact path, including dynamic (`` `items.${id}.title` ``) and wildcard paths.
-
-```tsx
-// Object form (recommended): subscribe to the exact path
-const title = useAtomicProp({ reducer: "todos", property: "items.0.title" });
-
-// Dynamic path: interpolate the key
-const byId = useAtomicProp({ reducer: "todos", property: `items.${id}.title` });
-
-// With mapper: derive a value from the path
-const count = useAtomicProp({ reducer: "todos", property: "items" }, (items) => items.length);
-
-// Wildcard pattern: re-renders when any item changes
-const allTitles = useAtomicProp(
-  { reducer: "todos", property: "items.**" },
-  (state) => state.items.map((t) => t.title),
-  shallowEqual,
-);
-```
-
-> A typed-accessor overload, `useAtomicProp("todos", (s) => s.items[0].title)`, is also available
-> for static paths; it autocompletes the state shape and infers the return type.
-
-**Supported patterns:**
-
-- `"items.0.title"`: exact path (including numeric array indices)
-- `"items.*.title"`: `*` matches one segment
-- `"items.**"`: `**` matches zero or more segments
-
-With a wildcard, `map` receives the **whole slice**, not the values the pattern matched: the
-pattern decides when the hook re-renders, and `map` decides what it returns. Without a `map`, a
-wildcard path returns the slice itself. Pass one, plus an `isEqual` such as `shallowEqual` when it
-builds a new array.
-
----
-
-### `useAtomicProps(specs, selector, isEqual?)`
-
-Multi-path selector. Subscribes to several paths and recomputes when any change.
-
-```tsx
-const filtered = useAtomicProps(
-  [
-    { reducer: "todos", property: "items.**" },
-    { reducer: "filter", property: "q" },
-  ],
-  (state) => state.todos.items.filter((item) => item.title.includes(state.filter.q)),
-  shallowEqual,
-);
-```
-
-In development, the selector reads through a guard that throws, naming the path, when it reads
-state you did not declare in `specs`. It works on frozen state too, at any depth: immer's `produce` and core's `deepFreeze`
-both hand the selector objects it cannot wrap in place, so the guard reads a shallow copy
-instead.
-
----
-
-### `useEvent(channel, type, handler, phase?, options?)`
-
-Subscribe to store events from a component. Does not affect event flow. Fire-and-forget.
-
-```tsx
-// Committed events (default): events that passed middleware
-useEvent("ui", "save", (event) => {
-  showToast("Saved!");
-});
-
-// Uncommitted events: events rejected by middleware
-useEvent(
-  "ui",
-  "delete",
-  (event) => {
-    showToast("Delete was blocked by permissions");
-  },
-  "uncommitted",
-);
-
-// All events: distinguish by phase
-useEvent(
-  "ui",
-  "action",
-  (event, getState, emit, phase) => {
-    console.log(`Action ${phase}:`, event.type);
-  },
-  "all",
-);
-```
-
-**Phases:**
-
-- `'committed'` (default): events that passed middleware and reached reducers
-- `'uncommitted'`: events rejected by middleware
-- `'written'`: events that actually changed state
-- `'all'`: committed and uncommitted, with `phase` parameter to distinguish
-
-**Time travel.** A handler does **not** run while DevTools is replaying. Scrubbing a timeline
-used to re-run every handler exactly as a live event would, which meant re-publishing, re-writing
-and re-firing analytics for events that were not happening again. Opt in only for a handler that
-derives view state from the event stream and performs no I/O:
-
-```tsx
-useEvent("ui", "save", handler, "committed", { duringReplay: true });
-```
-
----
-
-### `useEmit()`
-
-Returns the store's typed `emit` function (stable reference).
-
-```tsx
-const emit = useEmit();
-await emit("counter", "increment", 1);
-```
-
----
-
-### `useSelector(selector, isEqual?)`
-
-Coarse-grained selector via `useSyncExternalStore`. Re-renders when the selected value changes.
-
-```tsx
-const count = useSelector((state) => state.counter.value);
-```
-
----
-
-### `useStore()`
-
-Returns the store instance. Throws if called outside a provider.
-
-```tsx
-const store = useStore();
-
-// ✅ In a callback or an effect: read the value at the moment it is wanted.
-const onSave = () => save(store.getState());
-
-// ❌ In the render body: this subscribes to nothing.
-const value = store.getState().counter.value;
-```
-
-`getState()` is a read, not a subscription. Called while rendering, the component renders once
-with that value and never again, because nothing told it the value moved. It looks like it works right
-up until the state changes and the screen does not. Read what you render with `useAtomicProp` or
-`useSelector`, and keep `getState()` for callbacks and effects, which is what it is for.
-
----
-
-## Suspense Hooks
-
-### `useSuspenseAtomicProp(spec, options)`
-
-Suspense-compatible version of `useAtomicProp`. Throws a promise while loading, caught by the
-nearest `<Suspense>` boundary.
-
-```tsx
-function UserName({ userId }: { userId: string }) {
-  const name = useSuspenseAtomicProp(
-    { reducer: "users", property: `byId.${userId}.name` },
-    {
-      load: async (name, slice) => name ?? (await fetchUser(userId)).name,
-      staleTime: 30_000,
-    },
-  );
-  return <span>{name}</span>;
-}
-
-// Usage
-<Suspense fallback={<Spinner />}>
-  <UserName userId='123' />
-</Suspense>;
-```
-
-### `useSuspenseAtomicProps(specs, options)`
-
-Multi-path Suspense selector.
-
-```tsx
-const stats = useSuspenseAtomicProps(
-  [
-    { reducer: "orders", property: "items.**" },
-    { reducer: "users", property: "active" },
-  ],
-  { load: async (state) => computeDashboardStats(state) },
-);
-```
-
-### Import them from your hook set, not the barrel
-
-`createYoltra` and `createHooks` return these two alongside the rest, bound to the same context.
-They are deliberately **not** exported from the package barrel: a package-level copy would be
-identical in shape and still throw `[yoltra] No store in context` at runtime
-whenever the context it reads was never filled, a mistake the types could not catch. Importing
-them from anywhere but your own `createYoltra`/`createHooks` result is now a compile error,
-which is the same warning arriving at the right time.
-
-```tsx
-// store.ts
-export const { store, useAtomicProp, useSuspenseAtomicProp } = createYoltra({ ... });
-
-// Forecast.tsx
-import { useSuspenseAtomicProp } from "./store";   // ✅ knows the store
-```
-
-Cached values are scoped per store, so two stores sharing a reducer name and path keep separate
-entries; the invalidation helpers below take a path and clear it in every store that cached it.
-
-### Cache utilities
-
-```typescript
-import {
-  invalidateAtomicProp,
-  invalidateAtomicPropsByReducer,
-  clearSuspenseCache,
-} from "@yoltra/react";
-
-// Invalidate a specific path's cache
-invalidateAtomicProp("users", "byId.123.name");
-
-// Invalidate all cache entries for a reducer
-invalidateAtomicPropsByReducer("users");
-
-// Clear everything
-clearSuspenseCache();
-```
-
----
-
-## `shallowEqual`
-
-Shallow object equality comparator. Use as the `isEqual` argument when your derived value is a
-plain object:
-
-```tsx
-const todos = useAtomicProp(
-  { reducer: "todos", property: "items.**" },
-  (state) => state.items.map((t) => ({ id: t.id, title: t.title })),
-  shallowEqual,
-);
-```
-
----
-
-## Performance: Before and After
-
-### Before (coarse-grained)
-
-```tsx
-// Every TodoItem re-renders when ANY todo changes
-function TodoList() {
-  const todos = useSelector((state) => state.todos.items);
-  return todos.map((todo) => <TodoItem key={todo.id} todo={todo} />);
-}
-```
-
-### After (fine-grained with yoltra)
-
-```tsx
-// Each TodoItem re-renders ONLY when its own data changes
-function TodoItem({ index }: { index: number }) {
-  const title = useAtomicProp({
-    reducer: "todos",
-    property: `items.${index}.title`,
-  });
-  const done = useAtomicProp({
-    reducer: "todos",
-    property: `items.${index}.done`,
-  });
-  return <div className={done ? "done" : ""}>{title}</div>;
-}
-```
-
-[See the full flamegraph comparison.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
-
-----
-
-## Normalised collections
-
-`useEntityIds`, `useEntity` and `useEntityField` pair with `createEntityAdapter` from
-`@yoltra/core`. They are thin wrappers over `useAtomicProp`; the value is that the path comes
-from the adapter rather than being typed into a component, where nothing checks it.
-
-```tsx
-function List() {
-  const ids = useEntityIds('todos', todos);
-  return <>{ids.map((id) => <Row key={id} id={id} />)}</>;
-}
-
-function Row({ id }: { id: string }) {
-  // Wakes when this title changes, and not when any other row does.
-  const title = useEntityField('todos', todos, id, 'title');
-  return <li>{title}</li>;
-}
-```
+- **`useAtomicProp({ reducer, property }, map?, isEqual?)`**: one path, exact (`"items.0.title"`),
+  dynamic or wildcard (`*` one segment, `**` zero or more). With a wildcard, `map` receives the
+  whole slice. A typed-accessor overload, `useAtomicProp("todos", (s) => s.items[0].title)`, also
+  exists.
+- **`useAtomicProps(specs, selector, isEqual?)`**: several paths, recomputed when any changes. In
+  development the selector throws, naming the path, when it reads state not declared in `specs`.
+- **`useEvent(channel, type, handler, phase?, options?)`**: store events in a component, with the
+  phases `committed` (default), `uncommitted`, `written` and `all`. Silent during DevTools replay
+  unless `{ duringReplay: true }`.
+- **`useEmit()`**: the typed `emit`, a stable reference.
+- **`useSelector(selector, isEqual?)`**: coarse selector over the whole state.
+- **`useStore()`**: the store instance. `getState()` in a render body subscribes to nothing, so
+  read what you render with `useAtomicProp` or `useSelector`.
+- **`useSuspenseAtomicProp(spec, options)`** and **`useSuspenseAtomicProps(specs, options)`**: throw
+  a promise while `load` runs, for a `<Suspense>` boundary. Import them from your own
+  `createYoltra` or `createHooks` result, not the package barrel. The cache is per store, cleared
+  with `invalidateAtomicProp`, `invalidateAtomicPropsByReducer` and `clearSuspenseCache`.
+- **`shallowEqual`**: shallow comparator for the `isEqual` argument.
+- **`useEntityIds`, `useEntity`, `useEntityField`**: normalised collections built with
+  `createEntityAdapter`, so a row wakes only when its own entity changes.
 
 ## React 18+ Compatibility
 
-- **Concurrent Mode:** Fully compatible. All hooks use `useSyncExternalStore`.
-- **Strict Mode:** Event deduplication prevents double-processing.
-- **Suspense:** `useSuspenseAtomicProp` and `useSuspenseAtomicProps` throw promises for
-  `<Suspense>` boundaries.
-
----
+All hooks use `useSyncExternalStore`, so they are safe in Concurrent Mode; event deduplication
+covers Strict Mode double-processing. Each row of a list subscribes to its own path, so a change
+re-renders that row and not the whole list.
 
 ## Examples
 
 - **[Todo App with Profiler](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-in-react)**: Full CRUD with flamegraph
-  comparison · [▶ Open the live demo](https://yoltra.dev/en/demos/in-react)
+  comparison · [▶ Open the live demo](https://yoltra.dev/en/demos/in-react/)
 - **[Kinetic Logo (3000 particles)](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-kinetic-logo)**: Independent
-  subscriptions per circle · [▶ Open the live demo](https://yoltra.dev/en/demos/kinetic-logo)
-- **[Next.js (Pages Router)](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-in-nextjs)**: client-side state + theme switcher · [▶ Open the live demo](https://yoltra.dev/en/demos/in-nextjs)
-
----
+  subscriptions per circle · [▶ Open the live demo](https://yoltra.dev/en/demos/kinetic-logo/)
+- **[Next.js (Pages Router)](https://github.com/yoltra/yoltra/tree/main/examples/v0/yoltra-in-nextjs)**: client-side state + theme switcher · [▶ Open the live demo](https://yoltra.dev/en/demos/in-nextjs/)
 
 ## Documentation
 
-- **[yoltra Root README](../../README.md)**: Overview and
-  quick start
-- **[@yoltra/core API](../core/README.md)**:
-  Store, middleware, effects, `When` matchers
-- **[Quick Start Guide](https://github.com/yoltra/yoltra/blob/main/docs/en/QUICK_START_GUIDE.md)**:
-  Five steps to a working app
-- **[Library Comparison](https://github.com/yoltra/yoltra/blob/main/docs/en/design/state-management-library-comparison.md)**:
-  Architectural comparison
+- [API reference](https://yoltra.dev/en/yoltra/api/react/), the [root README](../../README.md),
+  [@yoltra/core](../core/README.md) and the [Quick Start](https://yoltra.dev/en/yoltra/docs/quick-start/).
+- Every section in full on the package page:
+  [Setup with createYoltra](https://yoltra.dev/en/yoltra/packages/react/#setup-with-createyoltra-recommended), [Manual wiring with createHooks](https://yoltra.dev/en/yoltra/packages/react/#advanced-manual-wiring-with-createhooks),
+  [Adding to a store](https://yoltra.dev/en/yoltra/packages/react/#adding-to-a-store-with-its-types), [How the hooks reach the store](https://yoltra.dev/en/yoltra/packages/react/#how-the-hooks-reach-the-store),
+  [Hooks API](https://yoltra.dev/en/yoltra/packages/react/#hooks-api), [Suspense Hooks](https://yoltra.dev/en/yoltra/packages/react/#suspense-hooks),
+  [shallowEqual](https://yoltra.dev/en/yoltra/packages/react/#shallowequal), [Performance: Before and After](https://yoltra.dev/en/yoltra/packages/react/#performance-before-and-after),
+  [Normalised collections](https://yoltra.dev/en/yoltra/packages/react/#normalised-collections), [React 18+ Compatibility](https://yoltra.dev/en/yoltra/packages/react/#react-18-compatibility).
 
----
+## Status and license
 
-## Contributing
+**Release Candidate**. APIs are stable, used in production, minor changes possible before v1.0.0.
+**MIT** licensed. To contribute, see the [monorepo root](https://github.com/yoltra/yoltra) and the
+[Contributing Guide](../../CONTRIBUTING.md).
 
-- [Monorepo Root](https://github.com/yoltra/yoltra)
-- [Contributing Guide](../../CONTRIBUTING.md)
-
----
-
-## Status
-
-**Release Candidate**. APIs are stable, used in production, minor changes possible before
-v1.0.0.
-
----
-
-## License
-
-**MIT**. Free to use in commercial and open-source projects.
+> **Full documentation:** [@yoltra/react on yoltra.dev](https://yoltra.dev/en/yoltra/packages/react/)

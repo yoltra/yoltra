@@ -4,60 +4,40 @@
 
 > 👉 🇲🇽 Versión en Español&nbsp; | &nbsp;[ 🇺🇸 English Version](./README.md)&nbsp;
 
-**Extensión de navegador para Yoltra DevTools — Chrome y Firefox (Manifest V3).**
+**Extensión de navegador para Yoltra DevTools: Chrome y Firefox (Manifest V3).**
 
-`@yoltra/devtools-ext` es una extensión de navegador ligera que añade un panel «Yoltra» a las
-DevTools de Chrome y Firefox. El panel renderiza `@yoltra/devtools-storeview` y se conecta al hub
-de DevTools que corre en localhost. Un popup permite configurar el host, el puerto y el token del hub.
+`@yoltra/devtools-ext` añade un panel «Yoltra» a las DevTools de Chrome y Firefox que renderiza
+`@yoltra/devtools-storeview`: eventos, árbol de estado, suscripciones, viaje en el tiempo,
+emisión y métricas. Inspecciona una página **sin hub**, mediante un puente; un popup configura el hub
+cuando hace falta. No recopila ni envía nada: ver la [política de privacidad](./PRIVACY.md).
 
----
-
-## Características
-
-- Añade una pestaña «Yoltra» a las DevTools del navegador
-- Inspector de store completo: eventos, árbol de estado, suscripciones, viaje en el tiempo,
-  emisión y métricas
-- Conexión al hub configurable desde los ajustes del popup
-- Inspecciona una página **sin hub**: un content script retransmite las tramas del protocolo y un
-  service worker empareja cada página con el panel que inspecciona su pestaña
-- Compatible con MV3 (Chrome + Firefox)
-
----
+> **Documentación completa:** [@yoltra/devtools-ext en yoltra.dev](https://yoltra.dev/es/yoltra/packages/devtools-ext/)
 
 ## Instalación
 
-### Desde el código fuente (desarrollo)
+Desde el código fuente (desarrollo):
 
 ```bash
 # Compila la extensión
 cd devtools/devtools-ext
 pnpm build
-
-# Cargar en Chrome:
-# 1. Abre chrome://extensions
-# 2. Activa el «Modo de desarrollador»
-# 3. Pulsa «Cargar descomprimida»
-# 4. Selecciona la carpeta dist/
-
-# Cargar en Firefox:
-# 1. Abre about:debugging
-# 2. Pulsa «Este Firefox»
-# 3. Pulsa «Cargar complemento temporal»
-# 4. Selecciona dist/manifest.json
 ```
 
----
+- **Chrome:** abre `chrome://extensions`, activa el «Modo de desarrollador», «Cargar
+  descomprimida» y selecciona `dist/`.
+- **Firefox:** abre `about:debugging`, «Este Firefox», «Cargar complemento temporal» y
+  selecciona `dist/manifest.json`.
 
 ## Cómo funciona
 
-El panel llega al store de una página por uno de dos caminos. Dentro de DevTools usa el puente:
-el content script y el service worker llevan las tramas entre la página y el panel, y el panel
-ejecuta su propio broker en memoria (`createLoopbackHub`), así que no interviene ningún servidor.
-Fuera de ese contexto se conecta a un hub por WebSocket. Ningún relevo lee ni reescribe una
-trama.
+Dentro de DevTools el panel usa el puente: el content script y el service worker llevan las
+tramas entre página y panel, que ejecuta su propio broker en memoria (`createLoopbackHub`), sin
+servidor. Fuera de DevTools se conecta a un hub por WebSocket. Ningún relevo lee una trama.
 
 ```mermaid
 flowchart TD
+    accTitle: Cómo llega la extensión a un store
+    accDescr: El store de una página habla por postMessage con el content script y el service worker, que lo emparejan con el panel, o habla por WebSocket con un hub.
     page(["tu app: withDevtools(store)"])
     hubNode(["un hub: devtools-server o devtools-cli"])
 
@@ -84,31 +64,12 @@ flowchart TD
     direct <-->|"WebSocket"| hubNode
 ```
 
-1. En cada página `http://` y `https://`, el content script inyecta un script en línea que fija
-   `__YOLTRA_DEVTOOLS_BRIDGE__` en `document_start`, antes de que corra tu código.
-2. Tu app instrumenta un store con `withDevtools()`. Con el `transport: "auto"` por defecto ve la
-   marca y habla por `postMessage` en lugar de abrir un WebSocket.
-3. El panel Yoltra de DevTools monta `@yoltra/devtools-storeview` sobre su propio broker en
-   memoria, y el service worker lo une a la página de la pestaña inspeccionada.
-
-Una página con varios stores funciona por el puente igual que por un hub. El socket de cada store
-marca sus tramas con su propio id de conexión, y el panel da a cada uno su propia conexión al
-broker, así que cada store se registra con su propio `storeId` y recibe solo los comandos que lo
-nombran. Un segundo store que presenta un id ya conectado se rechaza con el mensaje del hub, y un
-store desechado se anuncia como desconectado. Los relevos llevan el id de conexión sin leerlo,
-junto a la trama.
-
-**Dentro de un panel de DevTools, la extensión siempre usa el puente.** `panel.ts` elige el hub
-solo cuando falta `chrome.devtools.inspectedWindow.tabId`, lo que ocurre solo si `panel.html` se
-abre fuera de DevTools, por ejemplo como una página de extensión suelta. Así que el panel de
-DevTools no usa el host y el puerto del hub configurados en el popup, y un store cuyo agente habla
-con un hub (`transport: "websocket"`, un `socketFactory` explícito, una página donde no
-corre el content script, como `file://`, o una página cuya Content-Security-Policy bloquea ese
-script en línea) no aparece en él. Inspecciona esos con
-[`@yoltra/devtools-cli`](../devtools-cli/README.es.md), o con `@yoltra/devtools-storeview` montado
-en una página propia, ambos conectados al hub.
-
----
+En las páginas `http://` y `https://` el content script fija `__YOLTRA_DEVTOOLS_BRIDGE__` antes de
+que corra tu código, así que `withDevtools()` con el `transport: "auto"` por defecto habla por
+`postMessage`, una conexión por store. Un store cuyo agente habla con un hub (`transport:
+"websocket"`, un `socketFactory`, una página `file://`, o una Content-Security-Policy que bloquea
+el script en línea) no aparece en el panel: inspecciónalo con [`@yoltra/devtools-cli`](../devtools-cli/README.es.md).
+Ver la [arquitectura](https://yoltra.dev/es/yoltra/packages/devtools-ext/#arquitectura).
 
 ## Configuración
 
@@ -120,63 +81,20 @@ Pulsa el icono del popup de la extensión para configurar:
 | Port   | `9800`      | Puerto del servidor hub                            |
 | Token  | ninguno     | El token del hub, solo si se inició con uno        |
 
-Los ajustes se guardan en `chrome.storage.local`. El token se envía en el handshake; un hub
-iniciado con un token rechaza un panel que no presenta el mismo.
-
----
-
-## Arquitectura
-
-| Archivo                         | Responsabilidad                                            |
-| ------------------------------- | ---------------------------------------------------------- |
-| `manifest.json`                 | Manifiesto MV3 (permisos, página de devtools)              |
-| `devtools.html` / `devtools.ts` | Registra el panel de DevTools                              |
-| `panel.html` / `panel.ts`       | Monta `@yoltra/devtools-storeview` en el panel             |
-| `popup.html` / `popup.ts`       | UI de ajustes de conexión al hub                           |
-| `hub-config.ts`                 | Convierte los ajustes guardados en la conexión al hub      |
-| `bridge.ts`                     | Una conexión al broker por socket de la página             |
-| `content-script.ts`             | Relevo página ↔ extensión; anuncia el puente               |
-| `background.ts`                 | Service worker que une una página con su panel por pestaña |
-
----
-
-## Requisitos previos
-
-El panel de DevTools **no necesita hub**: ver [Cómo funciona](#cómo-funciona). Un hub solo importa
-cuando `panel.html` se abre fuera de DevTools, que entonces se conecta a un **hub de DevTools en
-ejecución**. Arranca uno con cualquiera de estos:
-
-```bash
-# Servidor independiente
-npx @yoltra/devtools-server --port 9800
-
-# Empotrado en la UI de terminal
-npx @yoltra/devtools-cli --port 9800
-```
-
-Después, instrumenta tu store:
-
-```typescript
-import { withDevtools } from "@yoltra/devtools-browser-agent";
-
-withDevtools(store, { port: 9800 });
-```
-
----
+Los ajustes se guardan en `chrome.storage.local`; el token se envía en el handshake. El panel de
+DevTools **no necesita hub**: estos ajustes aplican solo a `panel.html` abierto fuera de DevTools,
+que necesita un hub en ejecución (`npx @yoltra/devtools-server --port 9800`, ver los
+[requisitos previos](https://yoltra.dev/es/yoltra/packages/devtools-ext/#requisitos-previos)).
 
 ## Paquetes relacionados
 
-- **[@yoltra/devtools-storeview](../devtools-storeview/README.md)** — La UI de React que se
-  renderiza en el panel
-- **[@yoltra/devtools-server](../devtools-server/README.md)** — El hub al que se conecta esta
-  extensión
-- **[@yoltra/devtools-browser-agent](../devtools-browser-agent/README.md)** — Instrumenta stores
-  del navegador
-- **[@yoltra/devtools-protocol](../devtools-protocol/README.md)** — Formato de cable para hablar
-  con el hub
-
----
+- **[@yoltra/devtools-storeview](../devtools-storeview/README.es.md)**: la UI de React que se renderiza en el panel
+- **[@yoltra/devtools-server](../devtools-server/README.es.md)**: el hub al que se conecta esta extensión
+- **[@yoltra/devtools-browser-agent](../devtools-browser-agent/README.es.md)**: instrumenta stores del navegador
+- **[@yoltra/devtools-protocol](../devtools-protocol/README.es.md)**: formato de cable para hablar con el hub
 
 ## Licencia
 
-**MIT** — De uso libre en proyectos comerciales y de código abierto.
+**MIT**. De uso libre en proyectos comerciales y de código abierto. Privacidad: [PRIVACY.md](./PRIVACY.md).
+
+> **Documentación completa:** [@yoltra/devtools-ext en yoltra.dev](https://yoltra.dev/es/yoltra/packages/devtools-ext/)

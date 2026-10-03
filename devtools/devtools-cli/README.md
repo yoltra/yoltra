@@ -9,13 +9,13 @@
 [![types](https://img.shields.io/npm/types/@yoltra/devtools-cli)](https://www.npmjs.com/package/@yoltra/devtools-cli)
 [![License](https://img.shields.io/npm/l/@yoltra/devtools-cli)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
 
-**Terminal UI for Yoltra DevTools — inspect stores from the command line.**
+**Terminal UI for Yoltra DevTools: inspect stores from the command line.**
 
 `@yoltra/devtools-cli` is a React + Ink terminal application that embeds a DevTools hub and
 renders a full-featured TUI for inspecting Yoltra stores. Useful when you would rather keep the
 inspector in a terminal, or in an SSH session where a browser is not available.
 
----
+> **Full documentation:** [@yoltra/devtools-cli on yoltra.dev](https://yoltra.dev/en/yoltra/packages/devtools-cli/)
 
 ## Installation
 
@@ -23,13 +23,7 @@ inspector in a terminal, or in an SSH session where a browser is not available.
 npm install -g @yoltra/devtools-cli
 ```
 
-Or run directly:
-
-```bash
-npx @yoltra/devtools-cli
-```
-
----
+Or run it directly with `npx @yoltra/devtools-cli`.
 
 ## Quick Start
 
@@ -39,9 +33,6 @@ npx @yoltra/devtools-cli
 
 # Custom port and history size
 npx @yoltra/devtools-cli --port 8900 --history-size 2000
-
-# A hub that requires a token (the panel presents the same one)
-YOLTRA_DEVTOOLS_TOKEN=s3cret npx @yoltra/devtools-cli
 ```
 
 Then connect your app's store to that hub. `transport: "websocket"` sends it to the hub even when
@@ -53,52 +44,14 @@ import { withDevtools } from "@yoltra/devtools-browser-agent";
 withDevtools(store, { port: 9800, transport: "websocket" });
 ```
 
-The CLI will display connected stores and live event data.
+## Panels and features
 
----
-
-## Features
-
-- Embedded DevTools hub (auto-starts, skips if one is already running)
-- Tabbed store selector for multiple connected stores
-- Event timeline with channel/type display
-- Interactive state tree explorer
-- Time travel through the recorded events, for a store that allows replay
-- Subscriptions panel (reducers, effects, middleware)
-- Performance metrics dashboard
-- Event emitter for injecting test events
-- Keyboard navigation with focus management
-
----
-
-## Panels
-
-Six panels, in this order. There are no per-panel shortcuts: `Tab` moves to the next panel and
-`Shift+Tab` to the previous one.
-
-| Panel         | Description                                                                      |
-| ------------- | -------------------------------------------------------------------------------- |
-| Events        | Live event stream with channel, type, and timestamp                              |
-| State         | Collapsible state tree with current values                                       |
-| Time Travel   | Scrub the recorded events; only for a store that allows replay (`allowReplay`)   |
-| Subscriptions | Registered reducers, effects, middleware                                         |
-| Metrics       | Event count, rate, processing time, queue depth                                  |
-| Emit          | Compose and emit events to the selected store                                    |
-
-| Key                 | Action                                                         |
-| ------------------- | -------------------------------------------------------------- |
-| `Tab` / `Shift+Tab` | Next / previous panel                                          |
-| `]` / `[`           | Next / previous connected store                                |
-| `←` / `→`           | On Time Travel: step one event back / forward                  |
-| `r`                 | On Time Travel: resume live state                              |
-| `q`                 | Quit                                                           |
-| `Esc`               | On Emit: leave the form, so the keys above work again          |
-| `Enter`             | On Emit, outside the form: back into it                        |
-
-The Emit form takes the keyboard when its tab opens. While a field has focus, every key above is
-typed into it, so a payload such as `["a"]` or a channel with a `q` in it is safe to enter.
-
----
+The embedded hub starts only if none is running. A tabbed selector lists the connected stores,
+and six panels show them: **Events** (live stream), **State** (collapsible tree), **Time Travel**
+(for a store with `allowReplay`), **Subscriptions** (reducers, effects, middleware), **Metrics**
+and **Emit** (compose test events). `Tab` and `Shift+Tab` move between panels, `]` and `[`
+between stores, `←`, `→` and `r` step and resume time travel, and `q` quits. While an Emit field
+has focus every key is typed into it; `Esc` leaves the form.
 
 ## CLI Options
 
@@ -109,39 +62,21 @@ typed into it, so a payload such as `["a"]` or a channel with a `q` in it is saf
 | `--token`        | none    | Token the hub requires of every client          |
 
 `--token` can also come from the `YOLTRA_DEVTOOLS_TOKEN` environment variable, which keeps it out
-of the process list; the flag wins when both are set. The embedded hub requires the token, and the
-terminal panel presents it, so the same value also lets the CLI attach to a hub already running
-with it. Pass the same token to each store agent (`authToken`).
-
-These symbols are exported too (`parseArgs`, `CliArgs`, `CliArgsError`, `DEFAULT_PORT`,
-`DEFAULT_HISTORY_SIZE`, `TOKEN_ENV`), so a tool that embeds the hub can reuse the same argument
-contract instead of deriving it again.
-
----
+of the process list; pass the same token to each store agent (`authToken`). `parseArgs`,
+`CliArgs`, `CliArgsError` and the defaults are exported for tools that embed the hub.
 
 ## How It Works
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Your App    │     │  CLI         │     │  Ink TUI     │
-│  (with       │ WS  │  (embedded   │     │  (React +    │
-│  withDevtools│────►│   hub)       │────►│   Ink)       │
-│  )           │     │              │     │              │
-└──────────────┘     └──────────────┘     └──────────────┘
-```
-
-1. The CLI starts an embedded `DevtoolsHub` (or detects an existing one via `probe()`)
-2. The Ink TUI connects to the hub as an extension using `@yoltra/devtools-ui` hooks
-3. Your app's store agent connects to the hub via WebSocket
-4. Events, state, and commands flow through the hub in real time
-
-The CLI is two things in one process: an optional hub and a panel. It starts the hub only when
-`DevtoolsHub.probe` finds nothing listening on the port, and the terminal UI always connects as a
-regular extension through `HubProvider`, so it behaves the same against its own hub or one
-already running.
+The CLI is an optional hub and a panel in one process. It starts a `DevtoolsHub` only when
+`DevtoolsHub.probe` finds nothing listening on the port, and the Ink UI always connects as a
+regular extension through `HubProvider` from `@yoltra/devtools-ui`, so it behaves the same
+against its own hub or one already running. The package page has the
+[diagram and the source layout](https://yoltra.dev/en/yoltra/packages/devtools-cli/#architecture).
 
 ```mermaid
 flowchart TD
+    accTitle: How the CLI starts
+    accDescr: The CLI parses its options, reuses a running hub or starts its own, and renders the panels in the terminal through the devtools-ui hooks
     run(["npx @yoltra/devtools-cli --port 9800 --history-size 1000"])
     agent(["your app's store agent<br/>withDevtools"])
     hubNode(["hub on 127.0.0.1:port"])
@@ -167,38 +102,16 @@ flowchart TD
     hubNode <-->|"WebSocket"| provider
 ```
 
----
-
-## Architecture
-
-| File                                | Responsibility                                   |
-| ----------------------------------- | ------------------------------------------------ |
-| `index.ts`                          | CLI entry point, argument parsing, hub lifecycle |
-| `app.tsx`                           | Root Ink component with `HubProvider`            |
-| `components/StoreTabs.tsx`          | Tabbed store selector                            |
-| `components/EventTimeline.tsx`      | Terminal event log                               |
-| `components/StateTree.tsx`          | Collapsible state tree                           |
-| `components/SubscriptionsPanel.tsx` | Subscription inventory                           |
-| `components/MetricsDashboard.tsx`   | Performance counters                             |
-| `components/EventEmitter.tsx`       | Event composition form                           |
-| `components/StatusBar.tsx`          | Connection status bar                            |
-| `hooks/useKeyBindings.ts`           | Keyboard shortcut management                     |
-| `hooks/useFocusManager.ts`          | Focus cycling between panels                     |
-
----
-
 ## Related Packages
 
-- **[@yoltra/devtools-server](../devtools-server/README.md)** — The hub embedded by this CLI
-- **[@yoltra/devtools-ui](../devtools-ui/README.md)** — React hooks powering the TUI logic
-- **[@yoltra/devtools-protocol](../devtools-protocol/README.md)** — Wire format for hub
-  communication
-- **[@yoltra/devtools-browser-agent](../devtools-browser-agent/README.md)** — Agent for
-  connecting browser stores
-- **[@yoltra/devtools-ext](../devtools-ext/README.md)** — Alternative: Browser extension
-
----
+- **[@yoltra/devtools-server](../devtools-server/README.md)**: the hub embedded by this CLI
+- **[@yoltra/devtools-ui](../devtools-ui/README.md)**: React hooks powering the TUI logic
+- **[@yoltra/devtools-protocol](../devtools-protocol/README.md)**: wire format for hub communication
+- **[@yoltra/devtools-browser-agent](../devtools-browser-agent/README.md)**: agent for browser stores
+- **[@yoltra/devtools-ext](../devtools-ext/README.md)**: the alternative, a browser extension
 
 ## License
 
-**MIT** — Free to use in commercial and open-source projects.
+**MIT**. Free to use in commercial and open-source projects.
+
+> **Full documentation:** [@yoltra/devtools-cli on yoltra.dev](https://yoltra.dev/en/yoltra/packages/devtools-cli/)

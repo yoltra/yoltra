@@ -4,10 +4,11 @@
 
 > 👉 English &nbsp;|&nbsp; [🇲🇽 Español](../es/QUICK_START_GUIDE.md)
 
-Three steps from install to a working, fully-typed app. Or jump straight to
-[the example app](../../examples/v0/yoltra-react-counter/README.md) · [▶ open the live demo](https://yoltra.dev/en/demos/react-counter).
+Three steps from install to a working, fully-typed app (`@yoltra/react` is only required when using
+React). Or jump straight to
+[the example app](../../examples/v0/yoltra-react-counter/README.md) · [▶ open the live demo](https://yoltra.dev/en/demos/react-counter/).
 
----
+> **Full guide:** [Quick start on yoltra.dev](https://yoltra.dev/en/yoltra/docs/quick-start/)
 
 ## 1. Install
 
@@ -15,14 +16,9 @@ Three steps from install to a working, fully-typed app. Or jump straight to
 npm install @yoltra/core @yoltra/react
 ```
 
-(`@yoltra/react` is only required when using React.)
-
----
-
 ## 2. Create your store and typed hooks in one call
 
-`createYoltra` collapses the store, the React context, `createHooks`, and the provider into a
-single call. It returns the `store` **and** every hook, already typed to your state and event map.
+`createYoltra` returns the `store` **and** every hook, already typed to your state and event map.
 
 ```tsx
 // yoltra.ts
@@ -69,12 +65,9 @@ export const { store, useAtomicProp, useEmit } = createYoltra({
 });
 ```
 
----
-
 ## 3. Use the hooks in components
 
-The hooks default to the store you just created, so **no `<Provider>` is required**. Subscribe to
-a leaf with a typed accessor. The component re-renders only when that exact leaf changes.
+The hooks default to the store you just created, so **no `<Provider>` is required**.
 
 ```tsx
 // Counter.tsx
@@ -97,16 +90,11 @@ export function Counter() {
 }
 ```
 
-That's a complete, type-safe app. `emit("counter", "increment", 1)` is checked against your event
-map. A wrong channel, type, or payload is a compile error.
-
----
+That's a complete, type-safe app: a wrong channel, type, or payload in `emit` is a compile error.
 
 ## (Optional) Scope a store with `StoreProvider`
 
-You only need a provider to hand a **different** store instance to part of the tree, for example a
-fresh store per test, or two independent instances of the same app. `createYoltra` also returns a
-`StoreProvider` for exactly that:
+A provider only hands a **different** store to part of the tree, such as a fresh store per test:
 
 ```tsx
 import { createYoltra } from "@yoltra/react";
@@ -119,21 +107,14 @@ const { store, StoreProvider, useAtomicProp } = createYoltra({ name: "App", redu
 </StoreProvider>;
 ```
 
-For advanced cases, such as sharing one set of hooks across several stores wired through your own
-React context, the lower-level `createHooks(context)` API is still available.
-
----
+To share one set of hooks across stores in your own React context, use `createHooks(context)`.
 
 ## What's next?
 
-- **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)**:
-  Middleware, effects, `When` matchers, event subscriptions, instrumentation
-- **[@yoltra/react API](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)**:
-  `useAtomicProps`, typed accessors, wildcards, Suspense hooks
-- **[Event Pipeline Architecture](./design/event-queue-architecture.md)**: how the synchronous
-  reduce / async effect pipeline works under the hood
-- **[Library Comparison](./design/state-management-library-comparison.md)**: honest architectural
-  comparison with Redux, Zustand, Jotai, and others
-- **[Examples](https://github.com/yoltra/yoltra/blob/main/README.md#live-examples)**: todo app,
-  kinetic logo, counter
+- **[@yoltra/core API](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** (middleware, effects, `When` matchers, event subscriptions, instrumentation) and **[@yoltra/react API](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** (`useAtomicProps`, typed accessors, wildcards, Suspense hooks)
+- **[Event Pipeline Architecture](./design/event-queue-architecture.md)**: the synchronous reduce / async effect pipeline
+- **[Library Comparison](./design/state-management-library-comparison.md)**: architectural comparison with Redux, Zustand, Jotai, and others
+- **[Examples](https://github.com/yoltra/yoltra/blob/main/README.md#live-examples)**: todo app, kinetic logo, counter
 - **[Developer Guide](./DEVELOPER_GUIDE.md)**: setting up the monorepo and contributing
+
+> **Full guide:** [Quick start on yoltra.dev](https://yoltra.dev/en/yoltra/docs/quick-start/)
