@@ -221,7 +221,7 @@ sequenceDiagram
 
 ## Technical Docs
 
-[TypeDoc](./docs/README.md) auto-generated documentation.
+The full API reference, generated from the source, is on [yoltra.dev](https://yoltra.dev/en/yoltra/api/devtools-protocol/).
 
 ## API Reference
 

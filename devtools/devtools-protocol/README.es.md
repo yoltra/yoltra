@@ -225,7 +225,7 @@ sequenceDiagram
 
 ## Documentación Técnica
 
-[TypeDoc](./docs/README.md) documentación generada automáticamente (en Inglés).
+La referencia completa de la API, generada a partir del código fuente, está en [yoltra.dev](https://yoltra.dev/es/yoltra/api/devtools-protocol/) (en inglés).
 
 ## Referencia de API
 

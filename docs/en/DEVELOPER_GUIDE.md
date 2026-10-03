@@ -129,7 +129,7 @@ rushx typecheck     # TypeScript type checking
 cd packages/react
 rushx build
 rushx test
-rushx docs          # Generate TypeDoc API docs
+rushx docs          # TypeDoc JSON into .typedoc/ (checks the TSDoc)
 ```
 
 ---

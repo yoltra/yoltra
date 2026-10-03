@@ -45,10 +45,7 @@
     "lint": "node ../../tools/repo-tools/bin/repo-eslint.cjs --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vitest.json --noEmit",
     "prepublishOnly": "node ../../common/scripts/copy-license.cjs",
-    "docs": "rushx docs:js && rushx docs:md && rushx docs:stamp",
-    "docs:stamp": "node ../../tools/repo-tools/bin/docs-stamp.mjs docs",
-    "docs:md": "typedoc --options ./typedoc.json",
-    "docs:js": "typedoc --options ./typedoc.json --json ./.typedoc/devtools-ui-en.json",
+    "docs": "typedoc --options ./typedoc.json --json ./.typedoc/devtools-ui-en.json",
     "size": "node ../../tools/repo-tools/bin/size-check.cjs"
   },
   "peerDependencies": {
@@ -68,7 +65,6 @@
     "react-dom": "19.1.1",
     "typedoc": "^0.28.13",
     "typedoc-plugin-localization": "3.0.6",
-    "typedoc-plugin-markdown": "4.9.0",
     "typescript": "5.9.3",
     "vite": "^7.3.6",
     "vite-plugin-banner": "0.8.1",
