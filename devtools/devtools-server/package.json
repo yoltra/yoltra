@@ -1,6 +1,6 @@
 {
   "name": "@yoltra/devtools-server",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Hub WebSocket server for Yoltra DevTools: a standalone CLI and an embeddable library",
   "license": "MIT",
   "author": {

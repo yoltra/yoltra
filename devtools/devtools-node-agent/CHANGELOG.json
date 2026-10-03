@@ -2,6 +2,32 @@
   "name": "@yoltra/devtools-node-agent",
   "entries": [
     {
+      "version": "0.10.0",
+      "tag": "@yoltra/devtools-node-agent_v0.10.0",
+      "date": "Sat, 03 Oct 2026 10:16:52 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Repository tooling only: drops a documentation dependency it never used."
+          },
+          {
+            "comment": "Events on a store's ephemeral channels are not reported: the agent registers its observer without opting in. No code change."
+          },
+          {
+            "comment": "The agent forwards `reason` and `vetoedBy` for an event that did not commit."
+          },
+          {
+            "comment": "`sampling` is implemented (ignore, then throttle, then skip, applied before an event is sent), no longer described as deferred. No code change."
+          }
+        ],
+        "patch": [
+          {
+            "comment": "`authToken` is forwarded to the hub. The `storeId` comment gives the real default, the store's `name`."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.9.0",
       "tag": "@yoltra/devtools-node-agent_v0.9.0",
       "date": "Wed, 30 Sep 2026 04:53:54 GMT",

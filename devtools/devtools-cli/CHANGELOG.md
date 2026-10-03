@@ -1,6 +1,19 @@
 # Change Log - @yoltra/devtools-cli
 
-This log was last generated on Wed, 30 Sep 2026 04:53:54 GMT and should not be manually modified.
+This log was last generated on Sat, 03 Oct 2026 10:16:52 GMT and should not be manually modified.
+
+## 0.10.0
+Sat, 03 Oct 2026 10:16:52 GMT
+
+### Minor changes
+
+- `--token <secret>` and the `YOLTRA_DEVTOOLS_TOKEN` environment variable (exported as `TOKEN_ENV`; `parseArgs` takes the environment as an optional second argument): the embedded hub requires the token and the terminal panel presents it. In the Emit tab, `q`, `[`, `]`, Tab and `r` no longer act while a field has focus, so they can be typed into a channel, a type or a payload; Esc leaves the form and Enter returns to it.
+
+### Updates
+
+- Repository tooling only: the API reference is no longer committed as Markdown. `rush docs` now writes TypeDoc JSON, from which the reference on yoltra.dev is generated at each release, and source links point at the documented commit.
+- Documentation only: the README (en, es) is now a brief version that covers every feature and links each topic to its full page on yoltra.dev, where the detailed documentation lives, versioned.
+- Documentation only: the README (en, es) gains a diagram of how the CLI starts or reuses a hub, lists the six panels including Time Travel, and documents the key bindings it actually has.
 
 ## 0.9.0
 Wed, 30 Sep 2026 04:53:54 GMT

@@ -1,6 +1,19 @@
 # Change Log - @yoltra/devtools-server
 
-This log was last generated on Wed, 30 Sep 2026 04:53:54 GMT and should not be manually modified.
+This log was last generated on Sat, 03 Oct 2026 10:16:52 GMT and should not be manually modified.
+
+## 0.10.0
+Sat, 03 Oct 2026 10:16:52 GMT
+
+### Minor changes
+
+- The standalone CLI takes the hub's token from `--token <secret>` or the `YOLTRA_DEVTOOLS_TOKEN` environment variable (the flag wins), and refuses `--token` without a value instead of starting an open hub. A store presenting a store id that is already connected is refused with a handshake error naming the id, instead of silently replacing the first store's registration (after which events from both shared one id, commands reached only the newer store, and either one leaving removed the other). The refusal log reads "Rejected an extension handshake".
+
+### Updates
+
+- Repository tooling only: the API reference is no longer committed as Markdown. `rush docs` now writes TypeDoc JSON, from which the reference on yoltra.dev is generated at each release, and source links point at the documented commit. The package description is reworded.
+- Documentation only: the README (en, es) is now a brief version that covers every feature and links each topic to its full page on yoltra.dev, where the detailed documentation lives, versioned.
+- Documentation only: the README (en, es) gains a diagram of how the hub checks, registers and routes frames, and the `startCli` reference describes how the hub stops when the CLI is interrupted.
 
 ## 0.9.0
 Wed, 30 Sep 2026 04:53:54 GMT

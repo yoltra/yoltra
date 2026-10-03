@@ -2,6 +2,91 @@
   "name": "@yoltra/core",
   "entries": [
     {
+      "version": "0.10.0",
+      "tag": "@yoltra/core_v0.10.0",
+      "date": "Sat, 03 Oct 2026 10:16:52 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Repository tooling only: the API reference is no longer committed as Markdown. `rush docs` now writes TypeDoc JSON, from which the reference on yoltra.dev is generated at each release, and source links point at the documented commit."
+          },
+          {
+            "comment": "Documentation only: the README (en, es) is now a brief version that covers every feature and links each topic to its full page on yoltra.dev, where the detailed documentation lives, versioned."
+          },
+          {
+            "comment": "`EMFromReducersStrict` no longer refers to two internal helper types, which left its API reference pointing at pages that do not exist; the type it resolves to is unchanged."
+          },
+          {
+            "comment": "Two internal comments said `*` in a `channelPattern` stands for one or more characters. The implementation and the public documentation both say zero or more, which is what makes `\"*plan\"` cover `plan` itself; the comments now agree."
+          },
+          {
+            "comment": "Documentation only: the decoration examples use a neutral feature-flags library, and namespaced channels are described as a peer's channel. No API or behaviour change."
+          }
+        ],
+        "patch": [
+          {
+            "comment": "The error for an effect registered with `channelPattern` says \"an effect takes\", not \"a effect takes\"."
+          },
+          {
+            "comment": "The development warning for two `(channel, type)` pairs that join to one internal key is now remembered per store and names the store. It was remembered for the whole process, which got both directions wrong: once one store had reported a key, a second store with the same collision stayed silent, and two stores that each used one of the pairs, which cannot interfere, were reported as colliding."
+          },
+          {
+            "comment": "The development warning for a state key containing a dot is kept per store and names the store and the slice; it used to be kept for the whole process, so one store reporting a key silenced every other. The entity adapter keeps its dotted-id warning per adapter for the same reason. `EventFromWhen`, `ReducersMapAny`, `StateFromReducers` and `EMFromReducersStrict`, already exported, are now documented in the API reference. `Store` gains a class description, `LooseEventBus` gets its description back, and `InstrumentedEvent.reduceTimeMs` is described as the monotonic duration it is. The README says that effects for one event run in sequence and that `emit()` waits for them, and gives current figures for the cost of diffing an array against a normalised collection."
+          }
+        ],
+        "minor": [
+          {
+            "comment": "A typed array, `DataView` or `ArrayBuffer` in state is now one value at its own path, compared by reference like `Map` and `Set`. Replacing a 4-byte `Uint8Array` used to report four paths, one per byte, in `changedPaths`, `prevValues` and `nextValues`; it now reports the view's path once, and a subscription to an index inside a view is no longer notified. The development warning for a payload kept by reference now says that binary data cannot be frozen, so a later write changes the slice unseen, and it also catches a buffer kept from a field of the payload."
+          },
+          {
+            "comment": "`store.call()` takes `cancel: [channel, type]`, typed to events whose payload accepts a `CallCancellation` (new exports `CallCancellation`, `CancelKey`). When the call is cancelled, aborted by its signal, or times out, it emits that event with `{ requestId, reason, detail? }` so the responder can stop working; never after a terminal reply, never on store disposal, never for a request that was not sent, and never throwing. `meta.correlationId` carries over when set."
+          },
+          {
+            "comment": "`store.call()` takes `correlation: \"either\" | \"causal\" | \"id\"` (new type `CallCorrelation`). `\"either\"` is the default and unchanged: a reply matches by its parent link or an echoed `correlationId`. `\"id\"` matches on the echoed id alone, for a responder whose protocol carries its own request id and keeps several requests in flight on one channel, where a reply can descend from the wrong request and used to settle it. `\"causal\"` ignores an echoed id. `\"id\"` without a `correlationId`, or an unknown mode, throws when the call is made, before anything is emitted."
+          },
+          {
+            "comment": "`createStore` takes `clock` and `scheduler` (new exports `Clock`, `Scheduler`, `TimerHandle`): the store reads the time and arms every timer through them, for deduplication windows, the dedup cache prune (now a self-rearming timeout) and the idle timeout of `store.call()`. `persist` takes a `scheduler` option. The defaults look the globals up at each use, so fake timers installed after a store was built still apply. `InstrumentedEvent` gains `at`, the clock time the event was processed, and its `event` carries `parentId` and `depth`. A payload too large to fingerprint is still never deduplicated, but no longer leaves an unmatchable entry in the dedup cache."
+          },
+          {
+            "comment": "One diagnostics seam. `createStore` takes `diagnostics`, a `DiagnosticSink` (new exports `Diagnostic`, `DiagnosticCode`, `DiagnosticSink`), and stores gain `onDiagnostic(observer)`. Every failure the store contains (effect, reducer, subscriber, connect handler, middleware, observer), every refusal (cascade, rejected write) and every development warning (key collision, payload by reference, dotted key, missing snapshot slice) is reported as a `Diagnostic` with a stable `code`. The sink replaces the console output; without one the console output is unchanged. Runtime observers are additive and never silence the console. The `on*` hooks still fire. `EventBus` and `LooseEventBus` take an optional handler-error callback, defaulting to the console."
+          },
+          {
+            "comment": "New `store.instrumentEffects(observer, options?)` (with `InstrumentedEffects`, `InstrumentedEffect`, `EffectsObserver`): once every effect for an event has settled, reports each effect's name, origin, duration and whether it failed, plus the whole phase's duration and the clock time. Nothing is timed while no observer is registered; ephemeral events reach only observers that opt in; a throwing observer is reported as `observer-error`."
+          },
+          {
+            "comment": "Effects receive a fourth argument, an `EffectContext` (new export), whose `signal` aborts when the effect stops being registered: its disposer runs, `replaceEffects` or `hotReplace` removes it (`\"effect replaced\"`), or the store is disposed. Created on first read, one per registration. `onEffect` handlers receive it as their fifth argument. Effects written with three parameters are unaffected."
+          },
+          {
+            "comment": "`createStore` takes `ephemeral`, a list of channels whose events are traffic, not history: they are handled as usual but reach only instrumentation observers registered with `store.instrument(observer, { ephemeral: true })` (new `InstrumentOptions` export), cost no instrumentation work while none is, and are skipped by replay. An ephemeral event that writes state is warned about once in development (`ephemeral-write`). `persist` opts in. The README documents the pattern for values that change many times a second."
+          },
+          {
+            "comment": "A reducer or an effect registered with `when: { channelPattern }` now throws, naming the registration. `channelPattern` was only ever honoured by middleware: on a reducer or an effect it was accepted without a word and handled nothing, so the reducer never ran and the effect was not even reported to `onRegistrationChange`. `ReducerSpec.when` and `EffectSpec.when` are now typed `ExactWhen` (new export: `When` without its pattern form), so the mistake is a compile error too. A `when` of none of the five forms (`{}`, `{ any: false }`, `{ keys: \"x\" }`) also throws, on reducers, effects and middleware alike. Every entry point checks the whole batch before changing anything, so a refused `replaceReducers`, `replaceEffects`, `replaceMiddleware` or `hotReplace` leaves the store as it was. Breaking for code that registered either form, which never worked: name the channels, or keep the pattern on a middleware. See docs/en/UPGRADE_0.10.md."
+          },
+          {
+            "comment": "`matchesWhen(when, event)` and `describeWhenProblem(when, consumer)` are exported, with the `WhenConsumer` type: the matcher every seam of the store uses and the check that refuses a malformed matcher, for code that filters events by a `When` outside the store. `matchesWhen` reads only `channel` and `type`, so an instrumented event's `event` is accepted as is."
+          },
+          {
+            "comment": "New `warnOnLargeValues(store, limits?)` (with `LargeValueLimits` and `SizeWatchedStore`): a development-only check that warns once per event key and once per slice when a committed payload or a changed slice exceeds a node or estimated byte limit. A separate import, tree-shaken when unused, and a no-op in production. Built on `instrument(..., { ephemeral: true })`, with a bounded measurement that stops at the limit."
+          },
+          {
+            "comment": "New `store.metrics()` (with `StoreMetrics`): queue depth, effects in flight, dedup hits and dedup entries, cheap enough to read on every metrics scrape. New `store.whenIdle()`: resolves when no event waits to be reduced and no effect runs, for a graceful shutdown; a call waiting for its reply and pending timers do not delay it, and every wait resolves on dispose."
+          },
+          {
+            "comment": "`persist` never writes a partial state. State past the node budget (`PersistOptions.maxNodes`, new, default 100 000) is not written, storage keeps its previous value, and `onError` receives a `PersistEncodeError` (new export) with `truncated: true` and `written: false`; `dehydrate` returns `\"\"` in that case. Unsupported values are still written and reported as a `PersistEncodeError` with `written: true`. `persist` also writes only after an event that changed state, not after a vetoed, refused or no-op one."
+          },
+          {
+            "comment": "The function `persist()` returns now returns a promise that resolves once the last write has settled, so the final write can be awaited before the store is torn down; it never rejects, and a failed write still goes to `onError`."
+          },
+          {
+            "comment": "`replaceReducers` and `hotReplace({ reducer })` now take `ReducerReplacement` (new export): every slice optional, each typed with its own slice's state. The argument used to require every slice name and type each reducer with the union of all slice states, so an annotated reducer failed on any store with two slices, a reducer could return another slice's state, and on a decorated store the only call that compiled named a slice mounted at runtime, which the runtime refuses. `StoreSpec.reducer` is typed per slice the same way. `EventFromWhen` gains its `channelPattern` arm, resolving to the whole event union a middleware receives instead of `never`."
+          },
+          {
+            "comment": "A disposed store is inert: `emit()` resolves `{ committed: false }` without running anything, `call()` rejects with `CallAbortedError(\"store disposed\")` as does every call still pending, and `register*`, `with*`, `onEffect`, `replace*` and `hotReplace` throw naming the store. A late `emit` or `call` is reported once per method in development as `use-after-dispose`. `dispose()` is idempotent. New `store.signal`, an `AbortSignal` created on first read and aborted last in `dispose()`. A `call()` whose signal is already aborted no longer sends its request or arms a timer."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.9.0",
       "tag": "@yoltra/core_v0.9.0",
       "date": "Wed, 30 Sep 2026 04:53:54 GMT",

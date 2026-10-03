@@ -1,6 +1,20 @@
 # Change Log - @yoltra/devtools-node-agent
 
-This log was last generated on Wed, 30 Sep 2026 04:53:54 GMT and should not be manually modified.
+This log was last generated on Sat, 03 Oct 2026 10:16:52 GMT and should not be manually modified.
+
+## 0.10.0
+Sat, 03 Oct 2026 10:16:52 GMT
+
+### Patches
+
+- `authToken` is forwarded to the hub. The `storeId` comment gives the real default, the store's `name`.
+
+### Updates
+
+- Repository tooling only: drops a documentation dependency it never used.
+- Events on a store's ephemeral channels are not reported: the agent registers its observer without opting in. No code change.
+- The agent forwards `reason` and `vetoedBy` for an event that did not commit.
+- `sampling` is implemented (ignore, then throttle, then skip, applied before an event is sent), no longer described as deferred. No code change.
 
 ## 0.9.0
 Wed, 30 Sep 2026 04:53:54 GMT

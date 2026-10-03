@@ -1,6 +1,24 @@
 # Change Log - @yoltra/devtools-ui
 
-This log was last generated on Wed, 30 Sep 2026 04:53:54 GMT and should not be manually modified.
+This log was last generated on Sat, 03 Oct 2026 10:16:52 GMT and should not be manually modified.
+
+## 0.10.0
+Sat, 03 Oct 2026 10:16:52 GMT
+
+### Minor changes
+
+- `HubConnectionConfig.authToken`: `HubProvider` sends it in the handshake, so a panel can connect to a hub started with a token. `useStoreState` no longer freezes when the first snapshot is version 0 (a store that has committed nothing yet): it tracks whether a snapshot has arrived separately from the version, so later patches apply instead of being buffered until the next snapshot.
+
+### Patches
+
+- The loopback hub refuses a second store presenting a connected store id, with the same message as the hub, instead of registering it beside the first.
+
+### Updates
+
+- Repository tooling only: the API reference is no longer committed as Markdown. `rush docs` now writes TypeDoc JSON, from which the reference on yoltra.dev is generated at each release, and source links point at the documented commit.
+- Documentation only: the README (en, es) is now a brief version that covers every feature and links each topic to its full page on yoltra.dev, where the detailed documentation lives, versioned.
+- Documentation only: the README (en, es) gains diagrams of the hooks and of a time-travel jump, and `HubConnectionConfig.WebSocket` is described as an optional custom constructor that defaults to the global `WebSocket`.
+- The README notes that `EventLogEntry` carries `reason` and `vetoedBy`.
 
 ## 0.9.0
 Wed, 30 Sep 2026 04:53:54 GMT

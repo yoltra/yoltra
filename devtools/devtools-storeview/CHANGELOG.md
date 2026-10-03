@@ -1,6 +1,20 @@
 # Change Log - @yoltra/devtools-storeview
 
-This log was last generated on Wed, 30 Sep 2026 04:53:54 GMT and should not be manually modified.
+This log was last generated on Sat, 03 Oct 2026 10:16:52 GMT and should not be manually modified.
+
+## 0.10.0
+Sat, 03 Oct 2026 10:16:52 GMT
+
+### Patches
+
+- `mountDevtools` and `DevtoolsApp` pass `authToken` to the hub through their config (the hub connection config gained the field), so the panel can connect to a hub started with a token. The README (en, es) says so.
+- The event status toggle reads Uncommitted instead of Bounced, and the event detail badge reads uncommitted instead of vetoed, matching the store, which reports events that did not commit for reasons other than a veto too.
+
+### Updates
+
+- Repository tooling only: the API reference is no longer committed as Markdown. `rush docs` now writes TypeDoc JSON, from which the reference on yoltra.dev is generated at each release, and source links point at the documented commit. Links to devtools-ui symbols now go to their pages on yoltra.dev.
+- Documentation only: the README (en, es) is now a brief version that covers every feature and links each topic to its full page on yoltra.dev, where the detailed documentation lives, versioned.
+- The README describes the timeline's label for an event that did not commit, naming the middleware when it has a name.
 
 ## 0.9.0
 Wed, 30 Sep 2026 04:53:54 GMT
