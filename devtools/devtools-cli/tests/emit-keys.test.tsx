@@ -31,7 +31,9 @@ async function until(fn: () => boolean, label: string): Promise<void> {
     if (Date.now() - start > 10_000) throw new Error(`timed out waiting for ${label}`);
     await pause(10);
   }
-  await pause(50);
+  // Long enough for the effects of a loaded machine: a key written before they run reaches the
+  // previous frame's handlers, which is how a `[` once switched stores mid-payload in this test.
+  await pause(150);
 }
 
 /** A loopback hub with one store attached, so the panels have something to show. */
@@ -77,6 +79,8 @@ async function openEmitTab() {
     app.stdin.write(TAB);
     await until(() => frame().includes(`[${tab}]`), `the ${tab} tab`);
   }
+  // The form's own hint is what says it holds the keyboard; the tab label alone appears a render earlier.
+  await until(() => frame().includes("Esc: leave the form"), "the form to take the keyboard");
   return { stdin: app.stdin, frame };
 }
 
