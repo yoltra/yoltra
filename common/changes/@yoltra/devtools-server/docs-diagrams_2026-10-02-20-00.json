@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-server",
+      "comment": "Documentation only: the README (en, es) gains a diagram of how the hub checks, registers and routes frames, and the `startCli` reference describes how the hub stops when the CLI is interrupted.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-server"
+}

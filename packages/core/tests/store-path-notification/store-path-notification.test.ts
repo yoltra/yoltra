@@ -174,3 +174,39 @@ describe("cost of a slice nobody watches", () => {
     expect(reads()).toBeGreaterThan(0);
   });
 });
+
+describe("path notification for binary values", () => {
+  type BinEvents = { bin: { put: number } };
+  type BinState = { buf: Uint8Array; n: number };
+
+  function buildBinary() {
+    return createStore<{ s: BinState }, BinEvents>({
+      name: "Binary",
+      reducer: {
+        s: {
+          state: { buf: new Uint8Array(4), n: 0 },
+          when: { keys: [["bin", "put"]] },
+          reducer: (state, event) => ({ ...state, buf: new Uint8Array(4).fill(event.payload as number) }),
+        },
+      },
+    });
+  }
+
+  it("notifies the view's own path once per replacement, and no index inside it", async () => {
+    const store = buildBinary();
+    const whole: unknown[] = [];
+    const firstByte: unknown[] = [];
+    const other: unknown[] = [];
+    store.connect({ reducer: "s", property: "buf" } as never, (change) => whole.push(change));
+    store.connect({ reducer: "s", property: "buf.0" } as never, (change) => firstByte.push(change));
+    store.connect({ reducer: "s", property: "n" } as never, (change) => other.push(change));
+
+    await store.emit("bin", "put", 7);
+    await store.emit("bin", "put", 9);
+
+    // A view is one value, like a Map: its bytes are not paths a subscriber can address.
+    expect(whole).toHaveLength(2);
+    expect(firstByte).toHaveLength(0);
+    expect(other).toHaveLength(0);
+  });
+});

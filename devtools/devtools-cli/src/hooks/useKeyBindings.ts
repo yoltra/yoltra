@@ -32,10 +32,15 @@ export interface KeyBindings {
  * {@link KeyBindings} callbacks: Tab / Shift+Tab for panel switching,
  * `]` / `[` for store cycling, `q` for quit, and `r` for refresh.
  *
+ * Pass `isActive: false` while a text field has the keyboard: these keys are ordinary
+ * characters there, and typing a payload such as `["a"]` must not switch stores, nor a `q`
+ * quit the program.
+ *
  * @param bindings - The key binding handler map.
+ * @param options - `isActive` (default `true`) turns the bindings off while it is `false`.
  * @public
  */
-export function useKeyBindings(bindings: KeyBindings): void {
+export function useKeyBindings(bindings: KeyBindings, options: { isActive?: boolean } = {}): void {
   useInput((input, key) => {
     if (key.tab && !key.shift) {
       bindings.onNextTab?.();
@@ -54,5 +59,5 @@ export function useKeyBindings(bindings: KeyBindings): void {
     } else if (key.rightArrow) {
       bindings.onStepForward?.();
     }
-  });
+  }, { isActive: options.isActive ?? true });
 }

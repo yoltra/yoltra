@@ -9,14 +9,14 @@
 [![tipos](https://img.shields.io/npm/types/@yoltra/devtools-storeview)](https://www.npmjs.com/package/@yoltra/devtools-storeview)
 [![Licencia](https://img.shields.io/npm/l/@yoltra/devtools-storeview)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
 
-**UI de React DOM para Yoltra DevTools — el inspector visual de stores.**
+**UI de React DOM para Yoltra DevTools: el inspector visual de stores.**
 
 `@yoltra/devtools-storeview` ofrece una aplicación de React completa para inspeccionar stores de
-Yoltra en tiempo real. Renderiza líneas de tiempo de eventos, árboles de estado, grafos de
-suscripciones, métricas de rendimiento, controles de viaje en el tiempo y un emisor de eventos. La
-usan tanto el panel de la extensión de navegador como la webview de VSCode.
+Yoltra en tiempo real: líneas de tiempo de eventos, árboles de estado, suscripciones, métricas de
+rendimiento, controles de viaje en el tiempo y un emisor de eventos. La usan tanto el panel de la
+extensión de navegador como la webview de VSCode.
 
----
+> **Documentación completa:** [@yoltra/devtools-storeview en yoltra.dev](https://yoltra.dev/es/yoltra/packages/devtools-storeview/)
 
 ## Instalación
 
@@ -26,28 +26,11 @@ npm install @yoltra/devtools-storeview
 
 **Dependencias peer:** `react` ^18, `react-dom` ^18
 
----
-
 ## Inicio rápido
 
-### Montar en un elemento del DOM
-
-```typescript
-import { mountDevtools } from "@yoltra/devtools-storeview";
-
-const container = document.getElementById("root")!;
-
-const unmount = mountDevtools(container, {
-  port: 9800,
-  extensionName: "My DevTools",
-  autoReconnect: true,
-});
-
-// Más tarde...
-unmount();
-```
-
-### Usar como componente de React
+`mountDevtools(container, { port: 9800, extensionName, autoReconnect })` monta la app completa en
+un elemento del DOM y devuelve `unmount()`. Si el hub se inició con un token, pasa el mismo valor
+en `authToken`. En React, renderiza el componente raíz:
 
 ```tsx
 import { DevtoolsApp } from "@yoltra/devtools-storeview";
@@ -57,93 +40,71 @@ function MyPanel() {
 }
 ```
 
----
-
 ## Paneles
 
-La app ofrece cuatro pestañas, cada una respaldada por hooks de `@yoltra/devtools-ui`:
+Cuatro pestañas, cada una respaldada por hooks de `@yoltra/devtools-ui`: **Inspector** (línea de
+tiempo de eventos con filtros, detalle por evento, el motivo de un evento no confirmado y un
+compositor **Emit**), **State** (árbol JSON en vivo), **Time Travel** (avanzar, saltar, volver al
+modo en vivo) y **Metrics** (tiempos, aciertos de dedup, profundidad de cola y el inventario de
+suscripciones). La disposición es un `TopBar` con el selector de store, una barra de pestañas, el
+panel activo y un `BottomBar` con el estado de la conexión.
 
-| Panel           | Descripción                                                                                                                                                        |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Inspector**   | Línea de tiempo de eventos (filtrable por canal/tipo y por estado confirmado/no confirmado; un evento que no se confirmó se etiqueta con su motivo, como `vetoed: authGuard`, nombrando al middleware cuando tiene nombre) con detalle por evento — rutas cambiadas, parches — más un compositor **Emit** ad-hoc |
-| **State**       | Explorador interactivo del árbol JSON, con actualización en vivo y refresco manual                                                                                 |
-| **Time Travel** | Recorre el historial de eventos, salta a cualquier índice y vuelve al modo en vivo                                                                                  |
-| **Metrics**     | Panel de métricas del store (tiempos de reducción, aciertos de dedup, profundidad de cola) más el inventario de **suscripciones** de reducers, efectos y middleware  |
+## Cómo funciona
 
----
+`DevtoolsApp` no tiene lógica de protocolo propia: envuelve `HubProvider` de
+`@yoltra/devtools-ui`, ejecuta los hooks de ese paquete para el store seleccionado y pasa los
+resultados a paneles de presentación. Las capacidades del store deciden qué pestañas aparecen, así
+que un store que no puede hacer replay nunca muestra Time Travel. La página del paquete tiene el
+[diagrama](https://yoltra.dev/es/yoltra/packages/devtools-storeview/#cómo-funciona).
 
-## Disposición
+```mermaid
+flowchart TD
+    accTitle: Cómo se monta storeview
+    accDescr: mountDevtools dibuja DevtoolsApp, que se conecta por HubProvider y muestra cada pestaña solo cuando las capacidades del store seleccionado lo permiten
+    host(["una página anfitriona: el panel de la extensión,<br/>un webview o tu app"])
+    hub(["un hub, o un broker loopback"])
 
+    subgraph sv ["@yoltra/devtools-storeview"]
+    direction TB
+        mount["mountDevtools(container, config)<br/>createRoot, devuelve unmount"] --> app["DevtoolsApp<br/>ThemeProvider, oscuro por defecto"]
+        app --> provider["HubProvider<br/>de @yoltra/devtools-ui"]
+        provider --> inner["DevtoolsInner<br/>store seleccionado, el primero por defecto"]
+        inner --> hooks["useStoreRegistry, useEventLog, useStoreState,<br/>useStoreSubscriptions, useStoreMetrics,<br/>useEventEmitter, useEventReplay, useTimeTravel"]
+        inner --> bars["TopBar: selector de store<br/>BottomBar: estado, número de eventos, versión del protocolo"]
+        hooks --> policy{"tabRequires(tab, capabilities)"}
+        policy -->|"siempre"| inspector["Inspector<br/>línea de tiempo, detalle del evento,<br/>EventEmitterPanel si emit está activo"]
+        policy -->|"siempre"| metrics["MetricsDashboard<br/>contadores e inventario de suscripciones"]
+        policy -->|"stateSnapshot"| stateTab["StateTreeExplorer<br/>JsonTree, refrescar"]
+        policy -->|"replay"| ttTab["TimeTravelPanel<br/>barra de desplazamiento, previewState, replay"]
+        inspector -->|"emit: EMIT_TO_STORE"| hooks
+        ttTab -->|"jumpTo, resume: TIME_TRAVEL<br/>replay: EVENT_REPLAY"| hooks
+    end
+
+    host --> mount
+    host -->|"o renderiza DevtoolsApp directamente"| app
+    hub <-->|"tramas del protocolo"| provider
 ```
-┌─────────────────────────────────────────────┐
-│  TopBar  (selector de store + punto de con.)│
-├─────────────────────────────────────────────┤
-│  TabBar  (Events | State | Subscriptions…)  │
-├─────────────────────────────────────────────┤
-│                                             │
-│         Contenido del panel activo          │
-│                                             │
-├─────────────────────────────────────────────┤
-│  BottomBar  (estado de la conexión)         │
-└─────────────────────────────────────────────┘
-```
-
----
 
 ## Componentes exportados
 
-### API de montaje
-
-| Export                             | Descripción                                                     |
-| ---------------------------------- | --------------------------------------------------------------- |
-| `mountDevtools(container, config)` | Monta la app completa en un elemento del DOM; devuelve `unmount()` |
-| `DevtoolsApp`                      | Componente raíz de React, con `HubProvider` incluido             |
-
-### Disposición
-
-| Export      | Descripción                                            |
-| ----------- | ------------------------------------------------------ |
-| `TopBar`    | Desplegable de selección de store con indicador de conexión |
-| `BottomBar` | Barra de estado de la conexión                         |
-
-### Paneles
-
-| Export               | Descripción                                              |
-| -------------------- | -------------------------------------------------------- |
-| `EventTimeline`      | Registro de eventos con filtrado e inspección de detalle |
-| `StateTreeExplorer`  | Árbol de estado JSON plegable, con refresco              |
-| `SubscriptionsPanel` | Tablas de reducers, efectos, middleware y suscripciones  |
-| `TimeTravelPanel`    | Control del historial con paso, salto y reanudación      |
-| `EventEmitterPanel`  | Formulario para componer y emitir eventos                |
-| `MetricsDashboard`   | Contadores de rendimiento y estadísticas en tiempo real  |
-
-### Compartidos
-
-| Export          | Descripción                              |
-| --------------- | ---------------------------------------- |
-| `JsonTree`      | Renderizador recursivo de árboles JSON   |
-| `FilterBar`     | Controles de filtro por texto y toggles  |
-| `ConnectionDot` | Indicador de estado por color            |
-
----
+`mountDevtools` y `DevtoolsApp`; las piezas de disposición `TopBar` y `BottomBar`; los paneles
+`EventTimeline`, `StateTreeExplorer`, `SubscriptionsPanel`, `TimeTravelPanel`,
+`EventEmitterPanel` y `MetricsDashboard`; y los compartidos `JsonTree`, `FilterBar` y
+`ConnectionDot`. Ver la [referencia de la API](https://yoltra.dev/es/yoltra/api/devtools-storeview/).
 
 ## Temas
 
-La app usa CSS Modules con propiedades personalizadas de CSS. Se incluye un tema compatible con
-VSCode en `styles/vscode-theme.css` para empotrar la UI en paneles de tipo webview.
-
----
+CSS Modules con propiedades personalizadas de CSS. `styles/vscode-theme.css` es un tema
+compatible con VSCode para paneles de tipo webview.
 
 ## Paquetes relacionados
 
-- **[@yoltra/devtools-ui](../devtools-ui/README.md)** — Hooks y lógica sobre los que se construye
-  esta UI
-- **[@yoltra/devtools-protocol](../devtools-protocol/README.md)** — Formato de cable y tipos de
-  mensaje
-- **[@yoltra/devtools-ext](../devtools-ext/README.md)** — Extensión de navegador que monta esta app
-
----
+- **[@yoltra/devtools-ui](../devtools-ui/README.es.md)**: hooks y lógica sobre los que se construye esta UI
+- **[@yoltra/devtools-protocol](../devtools-protocol/README.es.md)**: formato de cable y tipos de mensaje
+- **[@yoltra/devtools-ext](../devtools-ext/README.es.md)**: extensión de navegador que monta esta app
 
 ## Licencia
 
-**MIT** — De uso libre en proyectos comerciales y de código abierto.
+**MIT**. De uso libre en proyectos comerciales y de código abierto.
+
+> **Documentación completa:** [@yoltra/devtools-storeview en yoltra.dev](https://yoltra.dev/es/yoltra/packages/devtools-storeview/)

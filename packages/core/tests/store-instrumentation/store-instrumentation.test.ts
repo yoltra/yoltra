@@ -252,3 +252,30 @@ describe("an uncommitted event says why, and who", () => {
     expect(seen[0]).not.toHaveProperty("vetoedBy");
   });
 });
+
+describe("Store - instrumentation of binary values", () => {
+  it("reports a replaced typed array once, with the views as its values", async () => {
+    type BinEvents = { bin: { put: number } };
+    const store = createStore<{ s: { buf: Uint8Array } }, BinEvents>({
+      name: "Binary",
+      reducer: {
+        s: {
+          state: { buf: new Uint8Array(4) },
+          when: { keys: [["bin", "put"]] },
+          reducer: (_state, event) => ({ buf: new Uint8Array(4).fill(event.payload as number) }),
+        },
+      },
+    });
+    const before = store.getState().s.buf;
+    const seen: InstrumentedEvent[] = [];
+    store.instrument((info) => seen.push(info));
+
+    await store.emit("bin", "put", 7);
+
+    // One path, not one per byte: an observer copying these values does not pay per element.
+    expect(seen[0]!.changedPaths).toEqual(["s.buf"]);
+    expect(Object.keys(seen[0]!.prevValues)).toEqual(["s.buf"]);
+    expect(seen[0]!.prevValues["s.buf"]).toBe(before);
+    expect(seen[0]!.nextValues["s.buf"]).toBe(store.getState().s.buf);
+  });
+});

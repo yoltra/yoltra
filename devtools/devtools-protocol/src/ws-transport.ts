@@ -4,11 +4,9 @@
  * @remarks
  * Owns the shared reconnection state machine, protocol handshake, message
  * buffering, and exponential backoff. The actual WebSocket implementation is
- * **injected** via a {@link DevtoolsSocketFactory}, so this module depends on
- * neither the browser `WebSocket` global nor the Node `ws` package — each agent
- * supplies its own. That is what lets the browser and node agents stay separate
- * packages without either pulling in a transport that cannot run in its
- * environment.
+ * **injected** via a {@link DevtoolsSocketFactory}, so this module depends on no
+ * particular WebSocket implementation: the agent supplies its own, and nothing
+ * here pulls in a transport its environment cannot run.
  *
  * Note for maintainers: do **not** reference the `WebSocket` global here. Sockets
  * arrive only through the injected {@link DevtoolsSocketFactory}.
@@ -57,8 +55,8 @@ export interface DevtoolsSocketHandle {
 
 /**
  * Opens a socket to `url`, wiring the given callbacks, and returns a handle.
- * Each agent supplies one (native `WebSocket` for browsers, the `ws` package for
- * Node), so the shared client never imports a specific transport.
+ * The agent supplies one (the native `WebSocket`, a `postMessage` bridge or an
+ * in-memory loopback), so the shared client never imports a specific transport.
  *
  * @public
  */

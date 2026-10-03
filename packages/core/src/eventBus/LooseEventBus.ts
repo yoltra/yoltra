@@ -3,6 +3,26 @@
  */
 
 /**
+ * One registered pattern, kept pre-split.
+ * @internal
+ */
+interface PatternEntry {
+  readonly pattern: string;
+  readonly segments: readonly string[];
+}
+
+/**
+ * The patterns on one channel, arranged by what a subject's first segment can match.
+ * @internal
+ */
+interface PatternIndex {
+  /** Keyed by a literal first segment. */
+  readonly byHead: Map<string, PatternEntry[]>;
+  /** Patterns beginning with `*` or `**`, which every subject has to test. */
+  readonly anyHead: PatternEntry[];
+}
+
+/**
  * Flexible, synchronous pub/sub bus that supports **exact** and **pattern** event subscriptions.
  *
  * @typeParam C - Channel name type (defaults to `string`).
@@ -41,26 +61,6 @@
  *
  * @public
  */
-/**
- * One registered pattern, kept pre-split.
- * @internal
- */
-interface PatternEntry {
-  readonly pattern: string;
-  readonly segments: readonly string[];
-}
-
-/**
- * The patterns on one channel, arranged by what a subject's first segment can match.
- * @internal
- */
-interface PatternIndex {
-  /** Keyed by a literal first segment. */
-  readonly byHead: Map<string, PatternEntry[]>;
-  /** Patterns beginning with `*` or `**`, which every subject has to test. */
-  readonly anyHead: PatternEntry[];
-}
-
 export class LooseEventBus<C extends string = string, T extends string = string, P = any> {
   /**
    * Exact handlers: `channel → type → [handlers]`.
@@ -92,6 +92,12 @@ export class LooseEventBus<C extends string = string, T extends string = string,
    * still be tested. That is the honest worst case, and it is unchanged rather than worsened.
    */
   private patternIndex = new Map<C, PatternIndex>();
+
+  /**
+   * @param onHandlerError - Receives what a handler threw. The remaining handlers still run.
+   *   Defaults to `console.error`.
+   */
+  constructor(private readonly onHandlerError: (error: unknown) => void = (error) => console.error(error)) {}
 
   /**
    * Subscribes a handler to either an **exact** type or a **pattern**.
@@ -276,7 +282,7 @@ export class LooseEventBus<C extends string = string, T extends string = string,
         try {
           h(payload);
         } catch (exc) {
-          console.error(exc);
+          this.onHandlerError(exc);
           continue;
         }
       }
@@ -323,7 +329,7 @@ export class LooseEventBus<C extends string = string, T extends string = string,
         try {
           h(payload);
         } catch (exc) {
-          console.error(exc);
+          this.onHandlerError(exc);
           continue;
         }
       }

@@ -15,7 +15,7 @@
 ecosystem. It defines the wire format, message types, capability negotiation, and JSON Patch
 utilities that all other DevTools packages depend on.
 
----
+> **Full documentation:** [@yoltra/devtools-protocol on yoltra.dev](https://yoltra.dev/en/yoltra/packages/devtools-protocol/)
 
 ## Installation
 
@@ -23,174 +23,75 @@ utilities that all other DevTools packages depend on.
 npm install @yoltra/devtools-protocol
 ```
 
----
-
 ## What's Inside
 
-### Protocol Version
+`PROTOCOL_VERSION` (`"0.1.0"`) is negotiated in the handshake; the hub rejects another major.
+`DevtoolsRole` names the participants (`STORE`, `EXTENSION`, `HUB`), which advertise their
+capabilities in the handshake. Messages go store to extensions (`STORE_EVENT`, a JSON Patch delta
+with `committed`, `reason` and `vetoedBy`; `STATE_SNAPSHOT`; `STORE_METRICS`;
+`STORE_SUBSCRIPTIONS`), hub to extensions (`STORE_CONNECTED`, `STORE_DISCONNECTED`,
+`STORE_REGISTRY`) and extension to store (`REQUEST_STATE`, `REQUEST_METRICS`,
+`REQUEST_SUBSCRIPTIONS`, `TIME_TRAVEL`, `EVENT_REPLAY`, `EMIT_TO_STORE`). `computePatches` turns
+Yoltra change-detection output into RFC 6902 operations, and `getAtPath` reads a dotted path.
 
-A semver string used during handshake negotiation. The hub rejects connections with an
-incompatible major version.
+`DevtoolsMessage` is a discriminated union, so a `switch (msg.type)` is checked for exhaustiveness:
+see [type-safe message handling](https://yoltra.dev/en/yoltra/packages/devtools-protocol/#type-safe-message-handling).
 
-```typescript
-import { PROTOCOL_VERSION } from "@yoltra/devtools-protocol";
+## How the Store Connection Works
 
-console.log(PROTOCOL_VERSION); // "0.1.0"
-```
-
-### Roles
-
-An enum identifying the three participants in the DevTools protocol:
-
-```typescript
-import { DevtoolsRole } from "@yoltra/devtools-protocol";
-
-DevtoolsRole.STORE; // A Yoltra store instance
-DevtoolsRole.EXTENSION; // A DevTools UI (browser panel, CLI, VSCode)
-DevtoolsRole.HUB; // The central message broker
-```
-
-### Message Types
-
-All messages are discriminated on a `type` field for type-safe routing:
-
-| Direction          | Message                 | Description                         |
-| ------------------ | ----------------------- | ----------------------------------- |
-| Store → Extensions | `STORE_EVENT`           | Event with JSON Patch delta, `committed`, and for an event that did not commit, optional `reason` and `vetoedBy` |
-| Store → Extensions | `STATE_SNAPSHOT`        | Full state tree at a version        |
-| Store → Extensions | `STORE_METRICS`         | Performance counters                |
-| Store → Extensions | `STORE_SUBSCRIPTIONS`   | Reducer/effect/middleware inventory |
-| Hub → Extensions   | `STORE_CONNECTED`       | A store completed handshake         |
-| Hub → Extensions   | `STORE_DISCONNECTED`    | A store disconnected                |
-| Hub → Extensions   | `STORE_REGISTRY`        | Full registry snapshot              |
-| Extension → Store  | `REQUEST_STATE`         | Request a state snapshot            |
-| Extension → Store  | `REQUEST_METRICS`       | Request performance metrics         |
-| Extension → Store  | `REQUEST_SUBSCRIPTIONS` | Request subscription info           |
-| Extension → Store  | `TIME_TRAVEL`           | Jump store to a specific state      |
-| Extension → Store  | `EVENT_REPLAY`          | Replay events through reducers      |
-| Extension → Store  | `EMIT_TO_STORE`         | Inject a synthetic event            |
-
-### Capabilities
-
-Stores, extensions, and the hub advertise capabilities during handshake:
-
-```typescript
-import type { StoreCapabilities, ExtensionCapabilities } from "@yoltra/devtools-protocol";
-
-const storeCaps: StoreCapabilities = {
-  replay: true,
-  stateSnapshot: true,
-  emit: false,
-};
-```
-
-### JSON Patch Utilities
-
-Convert Yoltra change-detection output into RFC 6902 JSON Patch operations:
-
-```typescript
-import { computePatches, getAtPath } from "@yoltra/devtools-protocol";
-
-const prev = { counter: { value: 1 } };
-const next = { counter: { value: 2 } };
-
-const patches = computePatches(prev, next, ["counter.value"]);
-// [{ op: "replace", path: "/counter/value", value: 2 }]
-
-getAtPath(next, "counter.value"); // 2
-```
-
----
-
-## Type-Safe Message Handling
-
-```typescript
-import type { DevtoolsMessage } from "@yoltra/devtools-protocol";
-
-function handle(msg: DevtoolsMessage) {
-  switch (msg.type) {
-    case "STORE_EVENT":
-      console.log("Patches:", msg.patches);
-      break;
-    case "STATE_SNAPSHOT":
-      console.log("State:", msg.state, "v" + msg.version);
-      break;
-    case "STORE_CONNECTED":
-      console.log("Store joined:", msg.store.name);
-      break;
-    // TypeScript enforces exhaustive handling
-  }
-}
-```
-
----
+The store agent connects through `ReconnectingWsClient` (handshake, send buffer, reconnection),
+with the socket injected as a `DevtoolsSocketFactory`, so this package imports no transport. Until
+a successful `HANDSHAKE_RESPONSE`, frames wait in a bounded FIFO buffer that calls `onBackpressure`.
 
 ## Handshake Flow
 
+A client is registered only after the token, the major version and the role's id all pass; any
+failure, or no `HANDSHAKE_REQUEST` within 5 seconds, ends with close code `1008`.
+
+```mermaid
+sequenceDiagram
+    accTitle: Handshake flow
+    accDescr: A client sends a handshake request, the hub checks the token, the major version and the role id, then accepts it or closes the socket.
+    participant C as Client (store agent or panel)
+    participant H as Hub
+    participant E as Connected panels
+    C->>H: WebSocket upgrade (Origin checked)
+    Note over H: 5 s handshake timer starts
+    C->>H: HANDSHAKE_REQUEST { role, protocolVersion, authToken?, store or extension }
+    alt authToken missing or wrong
+        H-->>C: HANDSHAKE_RESPONSE { success: false, error }
+        H--xC: close 1008
+    else different major version
+        H-->>C: HANDSHAKE_RESPONSE { success: false, error }
+        H--xC: close 1008
+    else role without its store or extension id
+        H--xC: close 1008, no response
+    else accepted
+        H-->>C: HANDSHAKE_RESPONSE { success: true, negotiatedVersion, hubCapabilities }
+        opt role is STORE
+            H->>E: STORE_CONNECTED
+        end
+        opt role is EXTENSION
+            H-->>C: STORE_REGISTRY
+            H-->>C: buffered STORE_EVENT frames of stores still connected
+        end
+    end
 ```
-Client (Store/Extension)              Hub
-  │                                     │
-  ├─ HANDSHAKE_REQUEST ───────────────► │
-  │  { role, protocolVersion, ... }     │
-  │                                     │
-  │ ◄─────────────── HANDSHAKE_RESPONSE │
-  │  { success, negotiatedVersion }     │
-  │                                     │
-  │  (if store) Hub broadcasts          │
-  │  STORE_CONNECTED to all extensions  │
-  │                                     │
-  │  (if extension) Hub sends           │
-  │  STORE_REGISTRY + buffered events   │
-```
-
----
-
-## Technical Docs
-
-[TypeDoc](./docs/README.md) auto-generated documentation.
 
 ## API Reference
 
-### Constants
-
-| Export             | Description                                 |
-| ------------------ | ------------------------------------------- |
-| `PROTOCOL_VERSION` | Current protocol version string (`"0.1.0"`) |
-| `DevtoolsRole`     | Enum of protocol participant roles          |
-
-### Functions
-
-| Export                              | Description                                    |
-| ----------------------------------- | ---------------------------------------------- |
-| `computePatches(prev, next, paths)` | Convert changed paths to JSON Patch operations |
-| `getAtPath(obj, dottedPath)`        | Read a value from an object by dotted path     |
-
-### Types
-
-| Export                  | Description                              |
-| ----------------------- | ---------------------------------------- |
-| `DevtoolsMessage`       | Discriminated union of all message types |
-| `StoreCapabilities`     | Store capability flags                   |
-| `ExtensionCapabilities` | Extension capability flags               |
-| `HubCapabilities`       | Hub capability flags                     |
-| `HandshakeRequest`      | Handshake request payload                |
-| `HandshakeResponse`     | Handshake response payload               |
-| `JsonPatch`             | Single RFC 6902 patch operation          |
-| `BaseMessage`           | Common fields on all messages            |
-
----
+`PROTOCOL_VERSION`, `DevtoolsRole`, `computePatches`, `getAtPath`, and the types `DevtoolsMessage`,
+`StoreCapabilities`, `ExtensionCapabilities`, `HubCapabilities`, `HandshakeRequest`,
+`HandshakeResponse`, `JsonPatch`, `BaseMessage`: see the [full reference](https://yoltra.dev/en/yoltra/api/devtools-protocol/).
 
 ## Related Packages
 
-- **[@yoltra/devtools-server](../devtools-server/README.md)** — WebSocket hub that routes
-  protocol messages
-- **[@yoltra/devtools-browser-agent](../devtools-browser-agent/README.md)** — Browser store
-  wrapper
-- **[@yoltra/devtools-ui](../devtools-ui/README.md)** — React hooks for consuming protocol
-  messages
-
----
+- **[@yoltra/devtools-server](../devtools-server/README.md)**: WebSocket hub that routes protocol messages
+- **[@yoltra/devtools-browser-agent](../devtools-browser-agent/README.md)**: browser store wrapper
+- **[@yoltra/devtools-ui](../devtools-ui/README.md)**: React hooks for consuming protocol messages
 
 ## License
 
-**MIT** — Free to use in commercial and open-source projects.
+**MIT**. Free to use in commercial and open-source projects.
+
+> **Full documentation:** [@yoltra/devtools-protocol on yoltra.dev](https://yoltra.dev/en/yoltra/packages/devtools-protocol/)

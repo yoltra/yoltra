@@ -158,20 +158,16 @@ npm add @yoltra/core@next @yoltra/react@next
 
 ## Documentación TypeDoc
 
-Actualiza la documentación de la API siempre que añadas o modifiques una API pública:
+La referencia de la API se genera a partir de los comentarios TSDoc del código fuente. Cuando
+añadas o modifiques una API pública, documéntala en el mismo cambio: una frase de resumen,
+`@param` y `@returns` donde apliquen, y `{@link}` para los símbolos que menciona.
 
 ```bash
-# En el paquete correspondiente
-cd packages/core
-rushx docs          # Genera los formatos Markdown y JSON
-
-cd packages/react
-rushx docs
+rush build
+rush docs           # TypeDoc para cada paquete, escrito como JSON en el .typedoc/ de cada paquete
 ```
 
-Haz commit de los archivos generados bajo `.typedoc/` junto con el cambio de código usando un
-commit de tipo `docs`:
-
-```
-docs(core): actualizar API docs para el matcher de wildcard
-```
+`rush docs` falla ante cualquier advertencia de TypeDoc, como un `{@link}` a un símbolo que no
+existe o una etiqueta mal formada, y CI lo ejecuta en cada pull request. Git ignora su salida, así
+que no hay nada que confirmar. La [referencia de la API en yoltra.dev](https://yoltra.dev/es/yoltra/api/)
+se genera a partir de la etiqueta de cada versión cuando se publica.

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "comment": "Several stores in one page work through the extension's bridge. Each `postMessage` socket stamps its frames with its own `connection` id, accepts only frames to the page that carry its id (or none), and posts a `closed` notice when it closes; `BridgeMessage` gains the optional `connection` and `closed` fields. Before, every store on a page reached the panel as one connection: only the first store registered, and a command for one store, time travel included, was applied by all of them.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-browser-agent"
+}

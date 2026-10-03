@@ -46,19 +46,21 @@ export interface HubConnectionConfig {
   /** Maximum reconnect attempts. @defaultValue `Infinity` */
   maxReconnectAttempts?: number;
   /**
-   * Custom WebSocket constructor for Node.js environments.
+   * Shared secret required by a hub that was started with one.
    *
    * @remarks
-   * In Node.js 18, the global `WebSocket` is not available. Pass the `WebSocket`
-   * class from the `ws` package to enable connectivity:
+   * Sent in the handshake, and again on every reconnect. A hub with a token refuses any panel
+   * that does not present the same value, so pass the token the hub and the store agents were
+   * given. Omit it for a hub running without one.
+   */
+  authToken?: string;
+  /**
+   * Custom WebSocket constructor.
    *
-   * ```ts
-   * import WebSocket from "ws";
-   * config.WebSocket = WebSocket as any;
-   * ```
-   *
-   * In browsers or Node.js 21+, this is not needed — the native `WebSocket` is
-   * used automatically.
+   * @remarks
+   * Defaults to the global `WebSocket`. Pass a constructor to use another
+   * implementation, for example an in-memory loopback such as the one
+   * `createLoopbackHub` returns.
    */
   WebSocket?: { new (url: string): WebSocket };
 }
@@ -85,7 +87,7 @@ export type HubConnectionStatus = "disconnected" | "connecting" | "connected";
  * @public
  */
 export interface RegisteredStore {
-  /** Unique store identifier assigned by the hub. */
+  /** Store identifier the agent presented (its `storeId`, or the store's name by default). */
   id: string;
   /** Human-readable store name. */
   name: string;

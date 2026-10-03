@@ -15,6 +15,7 @@ import {
   type HubConnectionConfig,
 } from "@yoltra/devtools-ui";
 import { Box, Text } from "ink";
+import { useState } from "react";
 import { EventEmitter } from "./components/EventEmitter";
 import { EventTimeline } from "./components/EventTimeline";
 import { MetricsDashboard } from "./components/MetricsDashboard";
@@ -62,9 +63,19 @@ function AppInner() {
   const canReplay = stores[selectedStoreIndex]?.capabilities?.replay ?? false;
   const timeTravel = useTimeTravel(effectiveStoreId, entries, canReplay);
 
+  // The Emit form takes the keyboard when its tab opens. While it has it, the global keys are
+  // characters like any other: a payload such as `["a"]` must not switch stores, nor a `q` quit.
+  // Esc hands the keyboard back, and Enter takes it again.
+  const [emitEditing, setEmitEditing] = useState(true);
+  const emitFocused = activeTab === "Emit" && emitEditing && effectiveStoreId != null;
+  const leaveTab = (move: () => void) => () => {
+    move();
+    setEmitEditing(true);
+  };
+
   useKeyBindings({
-    onNextTab: nextTab,
-    onPrevTab: prevTab,
+    onNextTab: leaveTab(nextTab),
+    onPrevTab: leaveTab(prevTab),
     onNextStore: () => nextStore(stores.length),
     onPrevStore: () => prevStore(stores.length),
     onQuit: () => process.exit(0),
@@ -79,7 +90,7 @@ function AppInner() {
     onRefresh: () => {
       if (activeTab === "Time Travel") timeTravel.resume();
     },
-  });
+  }, { isActive: !emitFocused });
 
   return (
     <Box flexDirection='column' height='100%'>
@@ -152,7 +163,14 @@ function AppInner() {
                 canReplay={canReplay}
               />
             )}
-            {activeTab === "Emit" && <EventEmitter onEmit={emit} />}
+            {activeTab === "Emit" && (
+              <EventEmitter
+                onEmit={emit}
+                focused={emitFocused}
+                onLeave={() => setEmitEditing(false)}
+                onEnter={() => setEmitEditing(true)}
+              />
+            )}
           </>
         )}
       </Box>

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/react",
+      "comment": "Documentation only: the decoration examples use a neutral feature-flags library, and namespaced channels are described as a peer's channel. No API or behaviour change.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/react"
+}

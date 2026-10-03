@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-storeview",
+      "comment": "`mountDevtools` and `DevtoolsApp` pass `authToken` to the hub through their config (the hub connection config gained the field), so the panel can connect to a hub started with a token. The README (en, es) says so.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-storeview"
+}

@@ -7,6 +7,7 @@
 import {
   DevtoolsRole,
   PROTOCOL_VERSION,
+  duplicateStoreIdError,
   type HandshakeRequest,
   type HandshakeResponse,
 } from "@yoltra/devtools-protocol";
@@ -126,7 +127,7 @@ function tokensMatch(expected: string, offered: unknown): boolean {
  * The hub binds to loopback, but that does not stop a page you visit from
  * opening `ws://127.0.0.1:<port>` — WebSockets are exempt from same-origin/CORS,
  * so a remote page could otherwise exfiltrate state and drive the store. We
- * allow only: no Origin (node agent, CLI, some extension contexts), browser
+ * allow only: no Origin (the CLI, some extension contexts), browser
  * extension origins (narrowed to specific ids when
  * {@link DevtoolsHubOptions.allowedExtensionIds} names any), loopback origins
  * (the local dev app running the agent, or a local storeview), and any
@@ -145,7 +146,7 @@ function isOriginAllowed(
   allowed: readonly string[],
   allowedExtensionIds: readonly string[],
 ): boolean {
-  if (!origin) return true; // non-browser client; not reachable from a web page
+  if (!origin) return true; // no Origin header: not a request a web page can make
   if (allowed.includes(origin)) return true;
   let url: URL;
   try {
@@ -483,7 +484,7 @@ export class DevtoolsHub {
       };
       ws.send(JSON.stringify(response));
       console.warn(
-        `[yoltra devtools] Rejected a ${req.role} handshake: wrong or missing auth token`,
+        `[yoltra devtools] Rejected ${/^[aeiou]/i.test(String(req.role)) ? "an" : "a"} ${req.role} handshake: wrong or missing auth token`,
       );
       return null;
     }
@@ -512,6 +513,30 @@ export class DevtoolsHub {
     if (!id) {
       console.warn(
         `[yoltra devtools] Rejected handshake: role ${req.role} without a matching id payload`,
+      );
+      return null;
+    }
+
+    // One connection per store id. The router keys stores by id, so a second store presenting a
+    // connected id used to replace the first without a word: both streamed events under one id,
+    // commands reached only the newer, and either one leaving removed the other's entry. Agents
+    // default the id to the store's name, so two stores with the same name and no explicit
+    // `storeId` arrive this way. Refusing is visible on both sides and needs nothing new from the
+    // protocol; a refused agent retries with backoff and attaches once the first store has gone.
+    if (req.role === DevtoolsRole.STORE && this.router.hasStore(id)) {
+      const response: HandshakeResponse = {
+        type: "HANDSHAKE_RESPONSE",
+        success: false,
+        negotiatedVersion: PROTOCOL_VERSION,
+        hubCapabilities: {
+          maxHistorySize: this.history.capacity,
+          supportedFeatures: [],
+        },
+        error: duplicateStoreIdError(id),
+      };
+      ws.send(JSON.stringify(response));
+      console.warn(
+        `[yoltra devtools] Rejected a store handshake: store id "${id}" is already connected`,
       );
       return null;
     }

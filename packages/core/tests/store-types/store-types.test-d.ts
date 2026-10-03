@@ -11,12 +11,27 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import { createStore } from "../../src/store/Store";
+import { defineSlice, eventKeys } from "../../src/types";
 import type {
+  Clock,
+  EffectContext,
+  EffectFunction,
   DeepReadonly,
+  DiagnosticSink,
   Dotted,
+  EffectSpec,
+  EMFromReducersStrict,
+  Event,
+  EventFromWhen,
+  EventUnion,
+  ExactWhen,
   MiddlewareSpec,
   PathValue,
+  ReducerReplacement,
   ReducerSpec,
+  Scheduler,
+  StateFromReducers,
+  When,
 } from "../../src/types";
 
 type Doc = { id: string; title: string };
@@ -217,5 +232,207 @@ describe("PathValue agrees with the code that reads the path", () => {
     // subscription to a root-value slice was typed as nothing at all.
     expectTypeOf<PathValue<number, "">>().toEqualTypeOf<number>();
     expectTypeOf<PathValue<CatalogState, "">>().toEqualTypeOf<CatalogState>();
+  });
+});
+
+describe("Reducers and effects take exact matchers only", () => {
+  type EM = { plan: { go: null } };
+
+  it("refuses channelPattern on a reducer or an effect spec, and keeps it on middleware", () => {
+    const reducer: ReducerSpec<number, EM> = {
+      state: 0,
+      // @ts-expect-error channelPattern is middleware-only
+      when: { channelPattern: "*plan" },
+      reducer: (s) => s,
+    };
+    const effect: EffectSpec<unknown, EM> = {
+      // @ts-expect-error channelPattern is middleware-only
+      when: { channelPattern: "*plan" },
+      effect: () => {},
+    };
+    const middleware: MiddlewareSpec<unknown, EM> = {
+      when: { channelPattern: "*plan" },
+      middleware: () => true,
+    };
+    void [reducer, effect, middleware];
+  });
+
+  it("is When without its pattern form", () => {
+    expectTypeOf<ExactWhen<EM>>().toEqualTypeOf<Exclude<When<EM>, { channelPattern: string }>>();
+    expectTypeOf<{ channel: "plan" }>().toMatchTypeOf<ExactWhen<EM>>();
+    expectTypeOf<{ channelPattern: string }>().not.toMatchTypeOf<ExactWhen<EM>>();
+  });
+});
+
+describe("replaceReducers and hotReplace type each slice on its own", () => {
+  /**
+   * The argument was `Record<R, ReducerSpec<S[R], EM>>`: every slice required, each typed with the
+   * union of all slice states. An annotated reducer failed on any store with two slices, a reducer
+   * for one slice could return another's state, and on a decorated store the only call that
+   * typechecked named the runtime slice, which the runtime then refuses.
+   */
+  type EM = { a: { inc: number }; b: { set: string } };
+  const store = createStore<{ a: number; b: string }, EM>({
+    name: "ReplaceTyping",
+    reducer: {
+      a: { state: 0, when: { keys: [["a", "inc"]] }, reducer: (s) => s },
+      b: { state: "", when: { keys: [["b", "set"]] }, reducer: (s) => s },
+    },
+  });
+
+  it("types each entry with its own slice's state", () => {
+    store.replaceReducers({
+      a: { state: 0, when: { keys: [["a", "inc"]] }, reducer: (s: number) => s + 1 },
+      b: { state: "", when: { keys: [["b", "set"]] }, reducer: (s: string) => s },
+    });
+    store.replaceReducers({
+      // @ts-expect-error a reducer for `a` cannot return `b`'s state
+      a: { state: 0, when: { keys: [["a", "inc"]] }, reducer: () => "not a number" },
+    });
+  });
+
+  it("lets every key be omitted, which the runtime handles", () => {
+    store.replaceReducers({ a: { state: 0, when: { keys: [["a", "inc"]] }, reducer: (s) => s } });
+    store.hotReplace({ reducer: {} });
+  });
+
+  it("lets a decorated store omit the slice a library mounted", () => {
+    type LibEM = { lib: { ping: null } };
+    const lib = defineSlice<LibEM>()({
+      state: { n: 0 },
+      when: { keys: [["lib", "ping"]] },
+      reducer: (s) => s,
+    });
+    const decorated = store.withSlice("lib", lib);
+    decorated.replaceReducers({
+      a: { state: 0, when: { keys: [["a", "inc"]] }, reducer: (s) => s },
+      b: { state: "", when: { keys: [["b", "set"]] }, reducer: (s) => s },
+    });
+    decorated.hotReplace({
+      reducer: { a: { state: 0, when: { keys: [["a", "inc"]] }, reducer: (s) => s } },
+    });
+  });
+
+  it("is the mapped optional form", () => {
+    expectTypeOf<ReducerReplacement<"a" | "b", { a: number; b: string }, EM>>().toEqualTypeOf<{
+      a?: ReducerSpec<number, EM>;
+      b?: ReducerSpec<string, EM>;
+    }>();
+  });
+});
+
+describe("EventFromWhen covers every form", () => {
+  type EM = { plan: { go: null }; other: { stop: number } };
+
+  it("resolves a pattern to the whole union a middleware receives, not never", () => {
+    expectTypeOf<EventFromWhen<EM, { channelPattern: string }>>().toEqualTypeOf<EventUnion<EM>>();
+    expectTypeOf<EventFromWhen<EM, { channelPattern: string }>>().not.toBeNever();
+  });
+
+  it("still narrows the exact forms", () => {
+    expectTypeOf<EventFromWhen<EM, { channel: "other" }>["payload"]>().toEqualTypeOf<number>();
+  });
+
+  it("narrows keys built with eventKeys, as its documented example does", () => {
+    type AppEM = { ui: { increment: number; reset: null; rename: string } };
+    const when = { keys: eventKeys<AppEM>()([["ui", "increment"], ["ui", "reset"]]) };
+    expectTypeOf<EventFromWhen<AppEM, typeof when>>().toEqualTypeOf<
+      Event<AppEM, "ui", "increment"> | Event<AppEM, "ui", "reset">
+    >();
+  });
+});
+
+describe("StateFromReducers and EMFromReducersStrict name an inferred store", () => {
+  type A = { a: { inc: number } };
+  type B = { b: { set: string } };
+  const reducer = {
+    counter: { state: 0, when: { keys: [["a", "inc"]] }, reducer: (s: number) => s } as ReducerSpec<number, A>,
+    label: { state: "", when: { keys: [["b", "set"]] }, reducer: (s: string) => s } as ReducerSpec<string, B>,
+  };
+
+  it("maps each slice to its state", () => {
+    expectTypeOf<StateFromReducers<typeof reducer>>().toEqualTypeOf<{ counter: number; label: string }>();
+  });
+
+  it("merges the slices' event maps", () => {
+    expectTypeOf<EMFromReducersStrict<typeof reducer>>().toEqualTypeOf<A & B>();
+  });
+});
+
+describe("Clock and Scheduler accept the port shapes other libraries already use", () => {
+  it("accepts a clock with more members than now()", () => {
+    type RicherClock = { now(): number; isoNow(): string };
+    expectTypeOf<RicherClock>().toMatchTypeOf<Clock>();
+  });
+
+  it("accepts a scheduler with its own handle type, and is accepted where one is expected", () => {
+    type OwnHandle = { readonly __timer: unique symbol } | number | object;
+    type OwnScheduler = {
+      setTimeout(callback: () => void, delayMs: number): OwnHandle;
+      clearTimeout(handle: OwnHandle): void;
+    };
+    expectTypeOf<OwnScheduler>().toMatchTypeOf<Scheduler>();
+    expectTypeOf<Scheduler>().toMatchTypeOf<OwnScheduler>();
+  });
+
+  it("is accepted by createStore", () => {
+    const clock: Clock = { now: () => 0 };
+    const scheduler: Scheduler = { setTimeout: () => 0, clearTimeout: () => undefined };
+    createStore({ name: "Ports", reducer: {}, clock, scheduler });
+  });
+});
+
+describe("DiagnosticSink accepts the sink shapes other libraries already use", () => {
+  it("accepts a sink that takes more levels and any code", () => {
+    type WiderSink = (diagnostic: {
+      readonly level: "debug" | "info" | "warn" | "error";
+      readonly code: string;
+      readonly message: string;
+      readonly detail?: Readonly<Record<string, unknown>>;
+    }) => void;
+    expectTypeOf<WiderSink>().toMatchTypeOf<DiagnosticSink>();
+  });
+
+  it("is accepted by createStore", () => {
+    const sink: DiagnosticSink = () => undefined;
+    const store = createStore({ name: "Diag", reducer: {}, diagnostics: sink });
+    expectTypeOf(store.onDiagnostic).parameter(0).toEqualTypeOf<DiagnosticSink>();
+  });
+});
+
+describe("EffectFunction gained a context without breaking older effects", () => {
+  type EM = { ui: { go: number } };
+
+  it("still accepts an effect written with three parameters", () => {
+    const old = (_event: unknown, _getState: () => unknown, _emit: unknown): void => undefined;
+    expectTypeOf(old).toMatchTypeOf<EffectFunction<unknown, EM>>();
+  });
+
+  it("types the fourth parameter as the effect's context", () => {
+    expectTypeOf<Parameters<EffectFunction<unknown, EM>>[3]>().toEqualTypeOf<EffectContext>();
+    expectTypeOf<EffectContext["signal"]>().toEqualTypeOf<AbortSignal>();
+  });
+});
+
+describe("CallOptions.cancel accepts only events that can carry a cancellation", () => {
+  type CEM = {
+    rpc: { ask: null; answer: null; cancel: { requestId: string; reason: "cancelled" | "aborted" | "timeout"; detail?: string }; count: number };
+  };
+
+  it("accepts a matching event and refuses one whose payload cannot hold it", () => {
+    const store = createStore<Record<string, never>, CEM>({ name: "CancelTypes" });
+    void store.call("rpc", "ask", null, { reply: ["rpc", "answer"], cancel: ["rpc", "cancel"] }).catch(() => undefined);
+    // @ts-expect-error a number payload cannot carry a CallCancellation
+    void store.call("rpc", "ask", null, { reply: ["rpc", "answer"], cancel: ["rpc", "count"] }).catch(() => undefined);
+  });
+});
+
+describe("StoreSpec.ephemeral names channels of the store's event map", () => {
+  type EM = { presence: { ping: null }; doc: { edit: string } };
+
+  it("accepts a channel and refuses an unknown one", () => {
+    createStore<Record<string, never>, EM>({ name: "Eph", ephemeral: ["presence"] });
+    // @ts-expect-error not a channel of EM
+    createStore<Record<string, never>, EM>({ name: "Eph", ephemeral: ["cursor"] });
   });
 });

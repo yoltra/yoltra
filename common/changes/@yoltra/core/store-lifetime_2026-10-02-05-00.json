@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "A disposed store is inert: `emit()` resolves `{ committed: false }` without running anything, `call()` rejects with `CallAbortedError(\"store disposed\")` as does every call still pending, and `register*`, `with*`, `onEffect`, `replace*` and `hotReplace` throw naming the store. A late `emit` or `call` is reported once per method in development as `use-after-dispose`. `dispose()` is idempotent. New `store.signal`, an `AbortSignal` created on first read and aborted last in `dispose()`. A `call()` whose signal is already aborted no longer sends its request or arms a timer.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

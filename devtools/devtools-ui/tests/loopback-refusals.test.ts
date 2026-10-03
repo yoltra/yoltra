@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { DevtoolsRole, PROTOCOL_VERSION } from "@yoltra/devtools-protocol";
+import { DevtoolsRole, PROTOCOL_VERSION, duplicateStoreIdError } from "@yoltra/devtools-protocol";
 
 import { createLoopbackHub } from "../src/transport/loopback";
 
@@ -43,6 +43,40 @@ describe("the loopback hub refuses what the real hub refuses", () => {
     expect(response(received)?.success).toBe(false);
     expect(response(received)?.error).toMatch(/rejected/i);
     expect(response(received)?.negotiatedVersion).toBe(PROTOCOL_VERSION);
+  });
+
+  it("rejects a second store presenting a connected id, with the hub's message", async () => {
+    const hub = createLoopbackHub();
+    const join = () => {
+      const received: AnyMsg[] = [];
+      const socket = hub.agentSocketFactory("ws://loopback", {
+        onOpen: () => {},
+        onMessage: (raw) => received.push(JSON.parse(raw) as AnyMsg),
+        onClose: () => {},
+        onError: () => {},
+      });
+      socket.send(
+        JSON.stringify({
+          type: "HANDSHAKE_REQUEST",
+          protocolVersion: PROTOCOL_VERSION,
+          role: DevtoolsRole.STORE,
+          store: { id: "Cart", name: "Cart", capabilities: {} },
+        }),
+      );
+      return { socket, received };
+    };
+
+    const first = join();
+    const second = join();
+
+    expect(response(first.received)?.success).toBe(true);
+    expect(response(second.received)?.success).toBe(false);
+    expect(response(second.received)?.error).toBe(duplicateStoreIdError("Cart"));
+
+    // Once the first has gone, the id is free again.
+    first.socket.close();
+    const third = join();
+    expect(response(third.received)?.success).toBe(true);
   });
 
   it("rejects a store that names no id", async () => {

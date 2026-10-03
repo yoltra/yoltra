@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "comment": "Documentation only: `sampling` is described as implemented (ignore, then throttle, then skip, applied before an event is sent), no longer as deferred.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-browser-agent"
+}

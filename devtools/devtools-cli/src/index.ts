@@ -11,6 +11,7 @@ import { createElement } from "react";
 import { WebSocket } from "ws";
 import { App } from "./app";
 import { CliArgsError, parseArgs } from "./args";
+import { hubOptions, panelConfig } from "./session";
 
 /**
  * The command-line surface, re-exported so the package's declared types entry point resolves to
@@ -22,14 +23,16 @@ import { CliArgsError, parseArgs } from "./args";
  * already covers — publishing them costs nothing and lets a caller embedding the hub reuse the
  * argument contract instead of re-deriving it.
  */
-export { CliArgsError, DEFAULT_HISTORY_SIZE, DEFAULT_PORT, parseArgs } from "./args";
+export { CliArgsError, DEFAULT_HISTORY_SIZE, DEFAULT_PORT, TOKEN_ENV, parseArgs } from "./args";
 export type { CliArgs } from "./args";
 
 async function main() {
-  const { port, historySize } = parseArgs(process.argv.slice(2));
+  const args = parseArgs(process.argv.slice(2), process.env);
+  const { port } = args;
 
-  // Start embedded hub (or skip if one is already running)
-  const hub = new DevtoolsHub({ port, historySize });
+  // Start embedded hub (or skip if one is already running). Either way the panel presents the
+  // token, so it is admitted by a running hub that was started with the same one.
+  const hub = new DevtoolsHub(hubOptions(args));
   const alreadyRunning = await DevtoolsHub.probe(port);
 
   if (!alreadyRunning) {
@@ -44,16 +47,10 @@ async function main() {
     });
   }
 
-  // Render Ink app (pass ws WebSocket for Node.js compatibility)
+  // Render the Ink app with an explicit WebSocket implementation
   const { waitUntilExit } = render(
     createElement(App, {
-      config: {
-        host: "localhost",
-        port,
-        extensionName: "CLI DevTools",
-        autoReconnect: true,
-        WebSocket: WebSocket as any,
-      },
+      config: panelConfig(args, WebSocket as any),
     }),
   );
 

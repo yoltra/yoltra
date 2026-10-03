@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "The function `persist()` returns now returns a promise that resolves once the last write has settled, so the final write can be awaited before the store is torn down; it never rejects, and a failed write still goes to `onError`.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

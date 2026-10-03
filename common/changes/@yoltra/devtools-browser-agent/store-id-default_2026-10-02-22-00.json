@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "comment": "Documentation only: the `storeId` reference gives the real default, the store's `name`, instead of a random UUID, and the reference and the README (en, es) say that the hub refuses a second store presenting an id that is already connected.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-browser-agent"
+}

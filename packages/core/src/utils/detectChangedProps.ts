@@ -3,24 +3,49 @@
  */
 
 /**
- * Keys already warned about, so a hot path does not turn into a log.
+ * Reports a state key that contains a dot. Called in development only, once per occurrence;
+ * the receiver decides whether it has already said so.
+ *
+ * @internal
+ */
+export type DottedKeyReporter = (path: string, key: string) => void;
+
+/**
+ * The development warning for a dotted state key, worded for whoever is reporting it.
+ *
+ * @param path - Where the key sits, relative to the diffed root.
+ * @param where - A prefix naming the owner, such as `Store "App", slice "todos": `, or `""`.
+ *
+ * @internal
+ */
+export function dottedKeyMessage(path: string, key: string, where = ""): string {
+  const full = path ? `${path}.${key}` : key;
+  return (
+    `[yoltra] ${where}State key "${key}"${path ? ` under "${path}"` : ""} contains a dot. Paths ` +
+    `are dotted, so this key is indistinguishable from nested objects of the same name: a ` +
+    `subscription to "${full}" may match the wrong value, and DevTools patches for it will ` +
+    `address the wrong node. Rename the key, or nest it.`
+  );
+}
+
+/**
+ * Keys already warned about by standalone calls, so a hot path does not turn into a log.
+ *
+ * @remarks
+ * Only for {@link detectChangedProps} called directly, which has no owner to keep it. A store
+ * keeps its own, so one store having reported a key does not silence another.
  *
  * @internal
  */
 const warnedDottedKeys = new Set<string>();
 
 /** @internal */
-function warnDottedKey(path: string, key: string): void {
+const warnDottedKeyOnce: DottedKeyReporter = (path, key) => {
   const full = path ? `${path}.${key}` : key;
   if (warnedDottedKeys.has(full)) return;
   warnedDottedKeys.add(full);
-  console.warn(
-    `[yoltra] State key "${key}"${path ? ` under "${path}"` : ""} contains a dot. Paths are ` +
-      `dotted, so this key is indistinguishable from nested objects of the same name: a ` +
-      `subscription to "${full}" may match the wrong value, and DevTools patches for it will ` +
-      `address the wrong node. Rename the key, or nest it.`,
-  );
-}
+  console.warn(dottedKeyMessage(path, key));
+};
 
 
 /**
@@ -30,8 +55,11 @@ function warnDottedKey(path: string, key: string): void {
  * - **Primitives / null** → treated as leafs (change = current `path`; two `NaN`s are equal)
  * - **Date** → compares `getTime()`
  * - **RegExp** → compares `source` and `flags`
- * - **Arrays** → if lengths differ, the whole array path is marked changed; otherwise compares
- *   element-by-element producing paths like `"items.0.title"`
+ * - **`Map`, `Set` and binary values** (typed arrays, `DataView`, `ArrayBuffer`) → one value at their
+ *   own path, compared by reference
+ * - **Arrays** → compared element by element, producing paths like `"items.0.title"`; when the
+ *   lengths differ, the array path itself is reported too, along with each index present on one
+ *   side only
  * - **Objects** → compares by the **union of keys**, recursing into shared keys and marking
  *   added/removed keys as changed at their **full path**
  *
@@ -67,10 +95,12 @@ function warnDottedKey(path: string, key: string): void {
  * // => ['items.0.title']
  * ```
  *
- * @example Array length change (marks the array path)
+ * @example Array length change (the array path, then what moved)
  * ```ts
  * detectChangedProps({ nums: [1,2] }, { nums: [1,2,3] });
- * // => ['nums']
+ * // => ['nums', 'nums.2']
+ * detectChangedProps({ nums: [1,2,3] }, { nums: [0,2] });
+ * // => ['nums', 'nums.0', 'nums.2']
  * ```
  *
  * @example Dates & RegExps
@@ -91,7 +121,7 @@ function warnDottedKey(path: string, key: string): void {
  *   primitive once silently refused every update it was given.
  * - For objects, only **own enumerable** keys are compared (via `Object.keys`).
  * - Returned paths are **leaf paths** where a primitive/terminal difference was detected; for arrays,
- *   a length change is treated as a leaf change at the array path.
+ *   a length change also reports the array path, so a subscriber on the array hears it.
  *
  * @public
  */
@@ -102,7 +132,24 @@ export function detectChangedProps(
   ancestors: Map<object, Set<object>> = new Map(),
 ): string[] {
   const out: string[] = [];
-  walk(oldState, newState, path, ancestors, out);
+  walk(oldState, newState, path, ancestors, out, warnDottedKeyOnce);
+  return out;
+}
+
+/**
+ * {@link detectChangedProps} from the root, reporting dotted keys to `onDottedKey` instead of the
+ * process-wide warning. How a store diffs a slice, so its warning names the store and the slice
+ * and is remembered per store.
+ *
+ * @internal
+ */
+export function detectChangedPropsReporting(
+  oldState: unknown,
+  newState: unknown,
+  onDottedKey: DottedKeyReporter,
+): string[] {
+  const out: string[] = [];
+  walk(oldState, newState, "", new Map(), out, onDottedKey);
   return out;
 }
 
@@ -123,6 +170,7 @@ function walk(
   path: string,
   ancestors: Map<object, Set<object>>,
   out: string[],
+  onDottedKey: DottedKeyReporter,
 ): void {
   if (oldState === newState) return;
 
@@ -163,6 +211,21 @@ function walk(
     return;
   }
   if (oldState instanceof Set || newState instanceof Set) {
+    out.push(path);
+    return;
+  }
+
+  // Binary values, for the same reason and one more. A typed array's indices are its own enumerable
+  // keys, so the object walk below reported one path per changed byte: replacing a 1 MB buffer
+  // produced up to a million changed paths, a million path notifications and, when instrumented, a
+  // million entries in `prevValues`/`nextValues`. A view is one value, like a `Map`.
+  //
+  // By reference rather than by bytes: a view cannot be frozen, so writing into the same view in
+  // place is invisible to any comparison of references, and comparing bytes would cost a full scan
+  // of every buffer on every commit to report what immutable updates already say. A new view is a
+  // change; the same view is not. `ArrayBuffer` and `DataView` already landed on the "no enumerable
+  // keys" rule below and stay one value; this makes the rule explicit for all of them.
+  if (ArrayBuffer.isView(oldState) || ArrayBuffer.isView(newState)) {
     out.push(path);
     return;
   }
@@ -210,7 +273,7 @@ function walk(
       const overlap = Math.min(a.length, b.length);
       for (let i = 0; i < overlap; i++) {
         if (a[i] === b[i]) continue;
-        walk(a[i], b[i], path ? `${path}.${i}` : `${i}`, ancestors, out);
+        walk(a[i], b[i], path ? `${path}.${i}` : `${i}`, ancestors, out, onDottedKey);
       }
 
       // Indices present in only one of the two: the element as a whole appeared or vanished,
@@ -264,8 +327,8 @@ function walk(
         // both produce "a.b", so a subscription and a devtools patch pointing at one silently
         // address the other. Nothing downstream can recover the difference from the string, which
         // is why this is said here, where the key is still intact.
-        if (process.env.NODE_ENV !== "production" && key.includes(".")) warnDottedKey(path, key);
-        walk(oldState[key], newState[key], path ? `${path}.${key}` : key, ancestors, out);
+        if (process.env.NODE_ENV !== "production" && key.includes(".")) onDottedKey(path, key);
+        walk(oldState[key], newState[key], path ? `${path}.${key}` : key, ancestors, out, onDottedKey);
       }
       return;
     }
@@ -279,18 +342,18 @@ function walk(
       // and `newState[key]` both read `undefined` for a key genuinely absent from one side, and
       // that is a change rather than a match.
       if (hasOld && oldState[key] === newState[key]) continue;
-      if (process.env.NODE_ENV !== "production" && key.includes(".")) warnDottedKey(path, key);
+      if (process.env.NODE_ENV !== "production" && key.includes(".")) onDottedKey(path, key);
       const nextPath = path ? `${path}.${key}` : key;
       if (!hasOld) {
         out.push(nextPath);
         continue;
       }
-      walk(oldState[key], newState[key], nextPath, ancestors, out);
+      walk(oldState[key], newState[key], nextPath, ancestors, out, onDottedKey);
     }
 
     for (const key of oldKeys) {
       if (Object.prototype.hasOwnProperty.call(newState, key)) continue;
-      if (process.env.NODE_ENV !== "production" && key.includes(".")) warnDottedKey(path, key);
+      if (process.env.NODE_ENV !== "production" && key.includes(".")) onDottedKey(path, key);
       out.push(path ? `${path}.${key}` : key);
     }
   } finally {

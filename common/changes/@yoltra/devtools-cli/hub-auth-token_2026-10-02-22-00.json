@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-cli",
+      "comment": "`--token <secret>` and the `YOLTRA_DEVTOOLS_TOKEN` environment variable (exported as `TOKEN_ENV`; `parseArgs` takes the environment as an optional second argument): the embedded hub requires the token and the terminal panel presents it. In the Emit tab, `q`, `[`, `]`, Tab and `r` no longer act while a field has focus, so they can be typed into a channel, a type or a payload; Esc leaves the form and Enter returns to it.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-cli"
+}

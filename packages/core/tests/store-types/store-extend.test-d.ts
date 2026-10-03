@@ -37,7 +37,7 @@ type AppState = { counter: { value: number } };
 // A real store now, not a declared one: the runtime carries the surface the spike proved.
 //
 // The explicit `<S, EM>` overload, not the inferring one. An unannotated spec literal gives
-// `EMOfSpec` nothing to infer an event map from, so `EM` lands on `EventMapBase` - whose
+// `EMFromReducersStrict` nothing to infer an event map from, so `EM` lands on `EventMapBase` - whose
 // index signatures accept **any** channel and payload, which would quietly make every
 // negative assertion below vacuous.
 const store = createStore<AppState, AppEM>({

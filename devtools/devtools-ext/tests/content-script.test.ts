@@ -96,6 +96,21 @@ describe("page → panel", () => {
     expect(h.portPost).toHaveBeenCalledWith({ channel: CHANNEL, data: "payload" });
   });
 
+  it("carries which page socket a frame belongs to, and its closing notice", () => {
+    // Every store on a page posts into one window. The connection id is what lets the panel
+    // keep the stores apart, so dropping it here would merge them back into one stream.
+    h.fromPage({ channel: CHANNEL, direction: "to-panel", data: "payload", connection: "c1" });
+    h.fromPage({ channel: CHANNEL, direction: "to-panel", data: "", connection: "c1", closed: true });
+
+    expect(h.portPost).toHaveBeenNthCalledWith(1, { channel: CHANNEL, data: "payload", connection: "c1" });
+    expect(h.portPost).toHaveBeenNthCalledWith(2, {
+      channel: CHANNEL,
+      data: "",
+      connection: "c1",
+      closed: true,
+    });
+  });
+
   it("ignores a message from a nested frame", () => {
     // Without the source check, an iframe could post into our window and be relayed as though it
     // were the page under inspection.
@@ -128,6 +143,15 @@ describe("page → panel", () => {
 });
 
 describe("panel → page", () => {
+  it("addresses a frame to the page socket it names", () => {
+    h.fromPanel({ channel: CHANNEL, data: "down", connection: "c1" });
+
+    expect(h.postMessage).toHaveBeenCalledWith(
+      { channel: CHANNEL, direction: "to-page", data: "down", connection: "c1" },
+      "*",
+    );
+  });
+
   it("posts a frame into the page, stamped with its direction", () => {
     h.fromPanel({ channel: CHANNEL, data: "down" });
 

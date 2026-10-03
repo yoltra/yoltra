@@ -11,13 +11,13 @@
 [![types](https://img.shields.io/npm/types/@yoltra/devtools-browser-agent)](https://www.npmjs.com/package/@yoltra/devtools-browser-agent)
 [![License](https://img.shields.io/npm/l/@yoltra/devtools-browser-agent)](https://github.com/yoltra/yoltra/blob/main/LICENSE)
 
-**Browser DevTools agent — connect a Yoltra store to the DevTools hub from the browser.**
+**Browser DevTools agent: connect a Yoltra store to the DevTools hub from the browser.**
 
 `@yoltra/devtools-browser-agent` transparently instruments a Yoltra store so every event, state
 change, and metric is forwarded to the DevTools hub in real time. Uses the native browser
-`WebSocket` API (no `ws` dependency) with automatic reconnection and message buffering.
+`WebSocket` API (no extra dependency) with automatic reconnection and message buffering.
 
----
+> **Full documentation:** [@yoltra/devtools-browser-agent on yoltra.dev](https://yoltra.dev/en/yoltra/packages/devtools-browser-agent/)
 
 ## Installation
 
@@ -27,85 +27,37 @@ npm install @yoltra/devtools-browser-agent
 
 **Peer dependency:** `@yoltra/core`
 
----
-
 ## Quick Start
 
 ```typescript
-import { createStore } from "@yoltra/core";
 import { withDevtools } from "@yoltra/devtools-browser-agent";
 
-const store = createStore({
-  name: "TodoApp",
-  reducer: {
-    todos: {
-      state: { items: [] },
-      when: { channel: "todos" },
-      reducer: (state, event) => {
-        if (event.type === "add") return { items: [...state.items, event.payload] };
-        return state;
-      },
-    },
-  },
-});
-
-// Instrument the store — connects to hub on ws://localhost:9800
+// Instrument the store: connects to hub on ws://localhost:9800
 withDevtools(store, { port: 9800 });
 
-// Use the store as normal — events are automatically forwarded
+// Use the store as normal: events are automatically forwarded
 await store.emit("todos", "add", { title: "Buy milk" });
 ```
 
----
-
 ## How It Works
 
-1. **Attaches to the typed instrumentation seam**, `store.instrument(observer)`. The store reports
-   each event with its exact changed leaf paths, previous and next values, commit status and
-   reduce timing, and for an event that did not commit, `reason` and `vetoedBy`. There is no
-   interceptor effect and no state diffing, and the seam costs nothing while no observer is attached.
-2. **Maps the reported paths to RFC-6902 patches** with `patchesFromChange`, and forwards
-   `reason` and `vetoedBy` on `STORE_EVENT` so the panel can say why an event did not commit
-3. **Sends `STORE_EVENT` messages** with patches to the hub
-4. **Buffers messages** (up to 100) while disconnected, flushes on reconnect
-5. **Handles incoming commands** from extensions:
-   - `REQUEST_STATE` → full state snapshot
-   - `REQUEST_METRICS` → performance counters
-   - `REQUEST_SUBSCRIPTIONS` → reducer/effect inventory
-   - `TIME_TRAVEL` → restore store to a previous state
-   - `EVENT_REPLAY` → replay events through reducers only
-   - `EMIT_TO_STORE` → inject a synthetic event
+The agent attaches to the store's typed instrumentation seam, `store.instrument(observer)`, maps
+each event's changed paths to RFC-6902 patches and sends them as `STORE_EVENT` messages, with
+`reason` and `vetoedBy` for an event that did not commit. It buffers up to 100 messages while
+disconnected and answers `REQUEST_STATE`, `REQUEST_METRICS`, `REQUEST_SUBSCRIPTIONS`,
+`TIME_TRAVEL`, `EVENT_REPLAY` and `EMIT_TO_STORE`. Events on `ephemeral` channels are not
+reported, and the wrapper is **transparent**: it returns the same store instance.
 
-The wrapper is **transparent** — it returns the same store instance.
-
----
+The transport is a custom `socketFactory`, the extension's `postMessage` bridge, or a native
+`WebSocket`. Payloads are sampled, bounded by `maxEventBytes` and `maxSnapshotBytes` and run
+through `sanitize`. Time-travel is gated twice: the agent needs `allowReplay`, and the store
+must be created with `createStore({ devtools: { allowReplay: true } })`.
 
 ## Configuration
 
-```typescript
-interface DevtoolsWrapperConfig {
-  /** Hub server port. Required. */
-  port: number;
-  /** Hub server host. @default "localhost" */
-  host?: string;
-  /** Persisted store ID (survives reconnects). @default crypto.randomUUID() */
-  storeId?: string;
-  /** Enable time-travel and event replay. @default false */
-  allowReplay?: boolean;
-  /** Allow extensions to emit events to this store. @default false */
-  allowEmit?: boolean;
-  /** Auto-reconnect on disconnect. @default true */
-  autoReconnect?: boolean;
-  /** Max reconnection attempts. @default Infinity */
-  maxReconnectAttempts?: number;
-  /** Base delay for exponential backoff (ms). @default 1000 */
-  baseDelay?: number;
-  /** Max delay cap for backoff (ms). @default 30000 */
-  maxDelay?: number;
-}
-```
-
-### Full-Featured Setup
+`withDevtools(store, config)` takes a `DevtoolsWrapperConfig`: `port` (required), `host`
+(`"localhost"`), `storeId` (`store.name`), `allowReplay` and `allowEmit` (both `false`),
+`autoReconnect` (`true`), `maxReconnectAttempts`, `baseDelay` and `maxDelay`.
 
 ```typescript
 withDevtools(store, {
@@ -120,51 +72,75 @@ withDevtools(store, {
 });
 ```
 
----
+The hub accepts one connection per store id: give stores that share a `name` distinct `storeId`s.
 
 ## Reconnection
 
-The agent uses exponential backoff with jitter for reconnection:
-
-- Starts at `baseDelay` (default 1s)
-- Doubles each attempt, capped at `maxDelay` (default 30s)
-- Adds 10% jitter to prevent thundering herd
-- Messages are buffered during disconnects and flushed on reconnect
-
----
+Exponential backoff with 10% jitter, from `baseDelay` (1 s) up to `maxDelay` (30 s). Messages
+are buffered during a disconnect and flushed on reconnect.
 
 ## API Reference
 
-| Export                        | Description                               |
-| ----------------------------- | ----------------------------------------- |
-| `withDevtools(store, config)` | Instrument a store and connect to the hub |
-| `DevtoolsWrapperConfig`       | Configuration type                        |
+`withDevtools(store, config)` and the `DevtoolsWrapperConfig` type, in the
+[API reference](https://yoltra.dev/en/yoltra/api/devtools-browser-agent/). The package page
+diagrams [how it works](https://yoltra.dev/en/yoltra/packages/devtools-browser-agent/#how-it-works).
 
----
+```mermaid
+flowchart TD
+    accTitle: How the browser agent works
+    accDescr: withDevtools picks a transport, reports instrumented events and metrics to the hub or the extension, and answers state, replay and emit commands when they are allowed
+    app(["your app: withDevtools(store, config)"])
+    store(["the @yoltra/core store"])
 
-## vs `@yoltra/devtools-node-agent`
+    subgraph agent ["withDevtools"]
+    direction TB
+        pick{"which transport?"}
+        pick -->|"config.socketFactory"| custom["that factory<br/>for example createLoopbackHub"]
+        pick -->|"transport bridge, or auto with<br/>__YOLTRA_DEVTOOLS_BRIDGE__ set"| pm["createPostMessageSocketFactory<br/>window.postMessage, yoltra-devtools-bridge"]
+        pick -->|"transport websocket, or auto<br/>without the mark"| native["native WebSocket<br/>ws://host:port"]
+        custom --> client
+        pm --> client
+        native --> client["DevtoolsWsClient<br/>ReconnectingWsClient: handshake,<br/>buffer of 100, backoff"]
 
-| Feature       | `devtools-browser-agent` | `devtools-node-agent`   |
-| ------------- | ------------------------ | ----------------------- |
-| Environment   | Browser                  | Node.js                 |
-| WebSocket     | Native `WebSocket` API   | `ws` package            |
-| Bundle impact | Zero dependencies        | Adds `ws`               |
-| Use case      | SPAs, browser apps       | Servers, CLI tools, SSR |
+        obs["instrument observer<br/>changed paths, prev and next values,<br/>reduceTimeMs, ephemeral channels excluded"]
+        obs --> counters["metric counters<br/>attempted, committed, reduce time"]
+        counters --> sample{"sampled out?<br/>ignore, then throttle, then skip"}
+        sample -->|"yes"| skipped(["not sent, still counted"])
+        sample -->|"no"| build["STORE_EVENT<br/>patchesFromChange, payload and patch values<br/>bounded by maxEventBytes, run through sanitize"]
+        build -->|"a committed event bumps snapshotVersion"| client
+        regs["onRegistrationChange<br/>skipped when every change is internal"] --> subs["STORE_SUBSCRIPTIONS<br/>from __devtoolsIntrospect"]
+        subs --> client
 
-Both agents provide identical instrumentation and protocol compliance.
+        client -->|"incoming command"| cmd{"msg.type"}
+        cmd -->|"REQUEST_STATE"| snap["encodeStateBounded<br/>maxSnapshotBytes, sanitize"]
+        cmd -->|"REQUEST_METRICS"| met["__devtoolsIntrospect plus counters"]
+        cmd -->|"REQUEST_SUBSCRIPTIONS"| subs
+        cmd -->|"TIME_TRAVEL, if allowReplay"| tt["__applyExternalState(decodeState(state))<br/>then a fresh STATE_SNAPSHOT"]
+        cmd -->|"EVENT_REPLAY, if allowReplay"| rep["__replayEvents"]
+        cmd -->|"EMIT_TO_STORE, if allowEmit"| emitCmd["store.emit"]
+        snap -->|"STATE_SNAPSHOT"| client
+        met -->|"STORE_METRICS"| client
+        tt -->|"STATE_SNAPSHOT"| client
+    end
 
----
+    app --> pick
+    store -->|"every reduce"| obs
+    store -->|"registrations change"| regs
+    tt --> store
+    rep --> store
+    emitCmd --> store
+    client <-->|"protocol frames"| far(["a hub, the extension bridge,<br/>or a loopback broker"])
+```
 
 ## Related Packages
 
-- **[@yoltra/devtools-protocol](../devtools-protocol/README.md)** — Wire format and message
-  types
-- **[@yoltra/devtools-server](../devtools-server/README.md)** — The hub this agent connects to
-- **[@yoltra/devtools-ext](../devtools-ext/README.md)** — Browser extension that displays the UI
-- **[@yoltra/core](../../packages/core/README.md)** — The store being instrumented
-
----
+- **[@yoltra/devtools-protocol](../devtools-protocol/README.md)**: wire format and message types
+- **[@yoltra/devtools-server](../devtools-server/README.md)**: the hub this agent connects to
+- **[@yoltra/devtools-ext](../devtools-ext/README.md)**: browser extension that displays the UI
+- **[@yoltra/core](../../packages/core/README.md)**: the store being instrumented
 
 ## License
 
-**MIT** — Free to use in commercial and open-source projects.
+**MIT**. Free to use in commercial and open-source projects.
+
+> **Full documentation:** [@yoltra/devtools-browser-agent on yoltra.dev](https://yoltra.dev/en/yoltra/packages/devtools-browser-agent/)

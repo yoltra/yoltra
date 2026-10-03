@@ -10,8 +10,6 @@ overrides:
   typedoc: 0.28.13
   typescript: 5.9.3
   typedoc>typescript: 5.9.3
-  typedoc-plugin-markdown>typedoc: 0.28.13
-  typedoc-plugin-markdown>typescript: 5.9.3
 
 pnpmfileChecksum: fm2bgttvmfglngapbjspr7zf2u
 
@@ -40,9 +38,6 @@ importers:
       typedoc-plugin-localization:
         specifier: 3.0.6
         version: 3.0.6
-      typedoc-plugin-markdown:
-        specifier: 4.9.0
-        version: 4.9.0(typedoc@0.28.13(typescript@5.9.3))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -104,9 +99,6 @@ importers:
       typedoc-plugin-localization:
         specifier: 3.0.6
         version: 3.0.6
-      typedoc-plugin-markdown:
-        specifier: 4.9.0
-        version: 4.9.0(typedoc@0.28.13(typescript@5.9.3))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -144,6 +136,12 @@ importers:
       '@vitest/coverage-v8':
         specifier: 3.2.7
         version: 3.2.7(vitest@3.2.7)
+      '@yoltra/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yoltra/devtools-browser-agent':
+        specifier: workspace:*
+        version: link:../devtools-browser-agent
       react:
         specifier: 19.1.1
         version: 19.1.1
@@ -156,9 +154,6 @@ importers:
       typedoc-plugin-localization:
         specifier: 3.0.6
         version: 3.0.6
-      typedoc-plugin-markdown:
-        specifier: 4.9.0
-        version: 4.9.0(typedoc@0.28.13(typescript@5.9.3))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -205,9 +200,6 @@ importers:
       typedoc-plugin-localization:
         specifier: 3.0.6
         version: 3.0.6
-      typedoc-plugin-markdown:
-        specifier: 4.9.0
-        version: 4.9.0(typedoc@0.28.13(typescript@5.9.3))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -232,9 +224,6 @@ importers:
       typedoc-plugin-localization:
         specifier: 3.0.6
         version: 3.0.6
-      typedoc-plugin-markdown:
-        specifier: 4.9.0
-        version: 4.9.0(typedoc@0.28.13(typescript@5.9.3))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -275,9 +264,6 @@ importers:
       typedoc-plugin-localization:
         specifier: 3.0.6
         version: 3.0.6
-      typedoc-plugin-markdown:
-        specifier: 4.9.0
-        version: 4.9.0(typedoc@0.28.13(typescript@5.9.3))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -336,9 +322,6 @@ importers:
       typedoc-plugin-localization:
         specifier: 3.0.6
         version: 3.0.6
-      typedoc-plugin-markdown:
-        specifier: 4.9.0
-        version: 4.9.0(typedoc@0.28.13(typescript@5.9.3))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -361,24 +344,36 @@ importers:
         specifier: workspace:*
         version: link:../devtools-protocol
     devDependencies:
+      '@testing-library/dom':
+        specifier: 10.4.1
+        version: 10.4.1
+      '@testing-library/react':
+        specifier: 16.3.0
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@types/react':
         specifier: ^19.1.8
         version: 19.2.18
+      '@types/react-dom':
+        specifier: ^19.1.6
+        version: 19.2.4(@types/react@19.2.18)
       '@vitest/coverage-v8':
         specifier: 3.2.7
         version: 3.2.7(vitest@3.2.7)
+      jsdom:
+        specifier: ^24.0.0
+        version: 24.1.3
       react:
         specifier: 19.1.1
         version: 19.1.1
+      react-dom:
+        specifier: 19.1.1
+        version: 19.1.1(react@19.1.1)
       typedoc:
         specifier: 0.28.13
         version: 0.28.13(typescript@5.9.3)
       typedoc-plugin-localization:
         specifier: 3.0.6
         version: 3.0.6
-      typedoc-plugin-markdown:
-        specifier: 4.9.0
-        version: 4.9.0(typedoc@0.28.13(typescript@5.9.3))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -759,9 +754,6 @@ importers:
       typedoc-plugin-localization:
         specifier: 3.0.6
         version: 3.0.6
-      typedoc-plugin-markdown:
-        specifier: 4.9.0
-        version: 4.9.0(typedoc@0.28.13(typescript@5.9.3))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -823,9 +815,6 @@ importers:
       typedoc:
         specifier: 0.28.13
         version: 0.28.13(typescript@5.9.3)
-      typedoc-plugin-markdown:
-        specifier: 4.9.0
-        version: 4.9.0(typedoc@0.28.13(typescript@5.9.3))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -923,9 +912,6 @@ importers:
       typedoc-plugin-localization:
         specifier: 3.0.6
         version: 3.0.6
-      typedoc-plugin-markdown:
-        specifier: 4.9.0
-        version: 4.9.0(typedoc@0.28.13(typescript@5.9.3))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -5224,12 +5210,6 @@ packages:
 
   typedoc-plugin-localization@3.0.6:
     resolution: {integrity: sha512-v4falP3swMv+YzlTBkOgYx/59Y1D8RZufqwPrch9s3j3CsQ7aRlYP6n1Vqjuk/SLCxdou8L3tJmPvfVBoPhJRg==}
-
-  typedoc-plugin-markdown@4.9.0:
-    resolution: {integrity: sha512-9Uu4WR9L7ZBgAl60N/h+jqmPxxvnC9nQAlnnO/OujtG2ubjnKTVUFY1XDhcMY+pCqlX3N2HsQM2QTYZIU9tJuw==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      typedoc: 0.28.13
 
   typedoc@0.28.13:
     resolution: {integrity: sha512-dNWY8msnYB2a+7Audha+aTF1Pu3euiE7ySp53w8kEsXoYw7dMouV5A1UsTUY345aB152RHnmRMDiovuBi7BD+w==}
@@ -10058,10 +10038,6 @@ snapshots:
   typedoc-plugin-localization@3.0.6:
     dependencies:
       fs-extra: 11.4.0
-
-  typedoc-plugin-markdown@4.9.0(typedoc@0.28.13(typescript@5.9.3)):
-    dependencies:
-      typedoc: 0.28.13(typescript@5.9.3)
 
   typedoc@0.28.13(typescript@5.9.3):
     dependencies:

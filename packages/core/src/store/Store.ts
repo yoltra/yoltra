@@ -3,10 +3,25 @@
  */
 
 import { Reducer } from "../reducer/Reducer";
-import { detectChangedProps } from "../utils/detectChangedProps";
+import {
+  detectChangedPropsReporting,
+  dottedKeyMessage,
+  type DottedKeyReporter,
+} from "../utils/detectChangedProps";
 import { EventBus } from "../eventBus/EventBus";
 import { LooseEventBus } from "../eventBus/LooseEventBus";
 import type {
+  Clock,
+  StoreMetrics,
+  EffectsObserver,
+  InstrumentedEffect,
+  InstrumentOptions,
+  EffectContext,
+  Diagnostic,
+  DiagnosticCode,
+  DiagnosticSink,
+  Scheduler,
+  TimerHandle,
   Event,
   EventMapBase,
   EventKey,
@@ -21,6 +36,7 @@ import type {
   MiddlewareInput,
   MiddlewareSpec,
   ReducersMapAny,
+  ReducerReplacement,
   ReducerSpec,
   StateFromReducers,
   StoreInstance,
@@ -45,11 +61,14 @@ import type {
   NarrowedEventHandler,
   When,
 } from "../types";
+import { globalScheduler, systemClock } from "../utils/ports";
 import { freezeState } from "../utils/immutability";
-import { warnOnKeyCollision } from "../utils/reservedSeparator";
+import { createKeyCollisionCheck } from "../utils/reservedSeparator";
+import type { KeyCollisionCheck } from "../utils/reservedSeparator";
 import { isRejected } from "./rejection";
 import type { CallHandle, CallOptions } from "./call";
 import { performCall } from "./performCall";
+import { assertRegistrable } from "./matching";
 import type { Rejection } from "./rejection";
 import type { AliasWatch } from "../utils/immutability";
 import {
@@ -205,6 +224,59 @@ const now = (): number =>
     : Date.now();
 
 /**
+ * The binary values held directly by an event payload, for the by-reference warning.
+ *
+ * @remarks
+ * Reads data properties through their descriptors and never calls a getter: this feeds a
+ * development warning, and a warning must not run the caller's code or turn its throw into a
+ * reducer error. A payload that refuses introspection (a revoked proxy, a throwing trap) gets no
+ * watch at all.
+ *
+ * @internal
+ */
+function binaryFieldsOf(payload: object): ReadonlySet<object> | undefined {
+  let found: Set<object> | undefined;
+  try {
+    for (const key of Object.keys(payload)) {
+      const value: unknown = Object.getOwnPropertyDescriptor(payload, key)?.value;
+      if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer) (found ??= new Set()).add(value);
+    }
+  } catch {
+    return undefined;
+  }
+  return found;
+}
+
+/**
+ * One effect registration's {@link EffectContext}.
+ *
+ * @remarks
+ * The `AbortController` is created only when an effect reads `signal`, so registrations that
+ * never ask cost one small object. Ended at most once; read after ending, the signal is already
+ * aborted.
+ *
+ * @internal
+ */
+class EffectLifetime implements EffectContext {
+  private controller: AbortController | undefined;
+  private ended: string | undefined;
+
+  get signal(): AbortSignal {
+    if (this.controller === undefined) {
+      this.controller = new AbortController();
+      if (this.ended !== undefined) this.controller.abort(this.ended);
+    }
+    return this.controller.signal;
+  }
+
+  end(reason: string): void {
+    if (this.ended !== undefined) return;
+    this.ended = reason;
+    this.controller?.abort(reason);
+  }
+}
+
+/**
  * Splits a `"channel::type"` key back into its two halves.
  *
  * @remarks
@@ -214,9 +286,9 @@ const now = (): number =>
  * entirely. `String.split("::")` yielded three parts for `"bb::plan::load"` and the destructuring
  * took the first two, so the registration was reported as channel `bb`, type `plan`.
  *
- * `::` is reserved and warned about at `emit` (see `warnOnReservedSeparator`), so this is the
- * belt to that braces: the warning tells an author, and this keeps introspection honest for
- * anyone who has not read it yet.
+ * `::` is not reserved, but two pairs that join to the same key are warned about at `emit` (see
+ * `createKeyCollisionCheck`), so this is the belt to that braces: the warning tells an author, and
+ * this keeps introspection honest for anyone who has not read it yet.
  *
  * @internal
  */
@@ -226,6 +298,21 @@ function splitEventKey(key: string): [channel: string, type: string] {
   return [key.slice(0, at), key.slice(at + 2)];
 }
 
+/**
+ * A store: its state, the event pipeline that changes it, and the subscriptions it notifies.
+ *
+ * @remarks
+ * Create one with {@link createStore}, which infers the type parameters from the spec; the class
+ * is exported for typing. Each event emitted runs through middleware, is reduced by every slice
+ * whose `when` matches it, is committed as one state change, and then reaches subscribers and
+ * effects. {@link StoreInstance} describes the whole surface.
+ *
+ * @typeParam EM - The event map: channel, then type, then payload.
+ * @typeParam R - The slice names.
+ * @typeParam S - The state, keyed by slice name.
+ *
+ * @public
+ */
 export class Store<EM extends EventMapBase, R extends string, S extends Record<R, any>>
   implements StoreInstance<R, S, EM> {
   /**
@@ -293,7 +380,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private readonly effects = new Map<
     string,
-    Set<{ effect: EffectFunction<DeepReadonly<S>, EM>; origin: Origin }>
+    Set<{ effect: EffectFunction<DeepReadonly<S>, EM>; origin: Origin; ctx: EffectLifetime }>
   >();
 
   /**
@@ -307,6 +394,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     effect: EffectFunction<DeepReadonly<S>, EM>;
     when: When<EM>;
     origin: Origin;
+    ctx: EffectLifetime;
   }>();
 
   /**
@@ -385,6 +473,15 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private readonly patternReducers = new Map<R, When<EM>>();
+
+  /**
+   * This store's `channel::type` collision check. Per store because the keys only collide inside
+   * one store's maps; assigned in the constructor, once the name is known, since the warning
+   * names it.
+   *
+   * @internal
+   */
+  private readonly checkKeyCollision: KeyCollisionCheck;
 
   /**
    * Maps slice name to the matcher an observer is told about, for every slice.
@@ -487,6 +584,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private readonly idFactory: () => string;
 
+  /** Where the store reads the time. See {@link StoreSpec.clock}. @internal */
+  private readonly clock: Clock;
+
+  /** Where the store arms its timers. See {@link StoreSpec.scheduler}. @internal */
+  private readonly scheduler: Scheduler;
+
   /**
    * Optional hook invoked when an effect throws/rejects. See
    * {@link StoreSpec.onEffectError}. `await emit()` never rejects on effect
@@ -520,6 +623,30 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * pattern; repeating it once per event would bury it.
    */
   private readonly warnedPayloadAliases = new Set<string>();
+
+  /**
+   * `slice:path` of dotted state keys already warned about.
+   *
+   * @remarks
+   * Per store for the reason the key-collision latch is: kept for the whole process, one store
+   * reporting a key silenced every other store holding the same one.
+   */
+  private readonly warnedDottedKeys = new Set<string>();
+
+  /**
+   * The dotted-key reporter for one slice's diff: names this store and the slice, once each.
+   *
+   * @internal
+   */
+  private dottedKeysIn(slice: string): DottedKeyReporter {
+    return (path, key) => {
+      const seen = `${slice}:${path ? `${path}.${key}` : key}`;
+      if (this.warnedDottedKeys.has(seen)) return;
+      this.warnedDottedKeys.add(seen);
+      const message = dottedKeyMessage(path, key, `Store "${this.name}", slice "${slice}": `);
+      this.report("warn", "dotted-key", message, { slice, path, key }, message);
+    };
+  }
 
   /**
    * Pending events awaiting the **synchronous** reduce phase (middleware +
@@ -591,6 +718,80 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private readonly instrumentObservers = new Set<InstrumentationObserver<EM>>();
 
+  /** The observers in {@link instrumentObservers} that opted into ephemeral events. @internal */
+  private readonly ephemeralObservers = new Set<InstrumentationObserver<EM>>();
+
+  /** Effect-phase observers. See {@link StoreInstance.instrumentEffects}. @internal */
+  private readonly effectObservers = new Set<EffectsObserver<EM>>();
+
+  /** The observers in {@link effectObservers} that opted into ephemeral events. @internal */
+  private readonly ephemeralEffectObservers = new Set<EffectsObserver<EM>>();
+
+  /** {@link StoreSpec.ephemeral}. @internal */
+  private readonly ephemeralChannels: ReadonlySet<string>;
+
+  /** `channel::type` of ephemeral events already warned about for writing state. @internal */
+  private readonly warnedEphemeralWrites = new Set<string>();
+
+  /** The owner's sink. See {@link StoreSpec.diagnostics}. @internal */
+  private readonly diagnosticSink: DiagnosticSink | undefined;
+
+  /** Observers added at runtime. See {@link StoreInstance.onDiagnostic}. @internal */
+  private readonly diagnosticObservers = new Set<DiagnosticSink>();
+
+  /** Set by {@link dispose}. A disposed store is inert. @internal */
+  private disposed = false;
+
+  /** Backs {@link signal}, created only when someone reads it. @internal */
+  private lifetime: AbortController | undefined;
+
+  /** Calls already warned about on a disposed store, once each. @internal */
+  private readonly warnedAfterDispose = new Set<string>();
+
+  /**
+   * Aborted when the store is disposed.
+   *
+   * @remarks
+   * Tie anything that should live exactly as long as the store to it: a fetch, a socket, a
+   * listener on something the store does not own. Created on first read, so a store nobody
+   * asks has no `AbortController` at all; read after disposal, it is already aborted. It aborts
+   * last in {@link dispose}, after every registry is cleared.
+   *
+   * @public
+   */
+  public get signal(): AbortSignal {
+    if (this.lifetime === undefined) {
+      this.lifetime = new AbortController();
+      if (this.disposed) this.lifetime.abort("store disposed");
+    }
+    return this.lifetime.signal;
+  }
+
+  /**
+   * Says once, in development, that something was asked of a disposed store.
+   *
+   * @internal
+   */
+  private warnDisposed(method: string): void {
+    if (process.env.NODE_ENV === "production" || this.warnedAfterDispose.has(method)) return;
+    this.warnedAfterDispose.add(method);
+    const message =
+      `[yoltra] Store "${this.name}" is disposed, so ${method}() does nothing. Something still ` +
+      `holds the store after its owner released it; tie its work to store.signal.`;
+    this.report("warn", "use-after-dispose", message, { method }, message);
+  }
+
+  /**
+   * Refuses a registration on a disposed store.
+   *
+   * @internal
+   */
+  private assertLive(method: string): void {
+    if (this.disposed) {
+      throw new Error(`[yoltra] Store "${this.name}" is disposed: ${method}() cannot register anything.`);
+    }
+  }
+
   /**
    * Scratch array collecting slice-prefixed changed leaf paths during an
    * instrumented reduce. Set by {@link drainReduce} while observers are active;
@@ -651,6 +852,9 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   private dedupCount = 0;
 
+  /** Waiting on {@link whenIdle}. @internal */
+  private idleWaiters: Array<() => void> = [];
+
   /**
    * Store-owned metadata for registered effects, keyed by the effect function.
    * Kept **off** the caller's function object: mutating a user-owned function
@@ -673,11 +877,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   };
 
   /**
-   * Timer for periodic cleanup of processed events.
+   * The pending prune of processed events, or `null` when none is armed.
    *
    * @internal
    */
-  private eventCleanupTimer: ReturnType<typeof setInterval> | null = null;
+  private eventCleanupTimer: TimerHandle | null = null;
 
   /**
    * Creates a store from a {@link StoreSpec}.
@@ -688,12 +892,34 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    */
   constructor(spec: StoreSpec<R, S, EM>) {
     this.name = spec.name ?? "yoltra Store";
-    this.reducerBus = new EventBus<EM>();
-    this.connectorBus = new LooseEventBus();
+    this.diagnosticSink = spec.diagnostics;
+    this.ephemeralChannels = new Set<string>(spec.ephemeral ?? []);
+    this.checkKeyCollision = createKeyCollisionCheck(this.name, (message, detail) =>
+      this.report("warn", "key-collision", message, detail, message),
+    );
+    this.reducerBus = new EventBus<EM>((error) =>
+      this.report(
+        "error",
+        "emit-error",
+        "A reducer handler threw.",
+        { error },
+        "EventBus handler error:",
+        error,
+      ),
+    );
+    this.connectorBus = new LooseEventBus((error) =>
+      this.report("error", "connect-error", "A connect() handler threw.", { error }, error),
+    );
     // Tagged `spec`, not left bare. If this tag is missing, `replaceMiddleware` silently
     // becomes a no-op: it would find nothing of `spec` provenance to remove and preserve
     // everything instead. No test notices unless one asserts that spec registrations ARE
     // still replaced, which is why that test exists.
+    // Before anything is wired, so a refused spec never yields a half-built store.
+    assertRegistrable({
+      reducers: spec.reducer as Record<string, ReducerSpec<any, any>>,
+      effects: spec.effects as ReadonlyArray<EffectSpec<any, any>> | undefined,
+      middleware: spec.middleware as ReadonlyArray<MiddlewareInput<any, any>> | undefined,
+    });
     this.middleware = (spec.middleware ?? []).map((input) => ({
       input: input as MiddlewareInput<DeepReadonly<S>, EM>,
       origin: "spec" as Origin,
@@ -702,6 +928,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.state = {} as any;
     this.replayEnabled = spec.devtools?.allowReplay ?? false;
     this.idFactory = spec.idFactory ?? (() => crypto.randomUUID());
+    this.clock = spec.clock ?? systemClock;
+    this.scheduler = spec.scheduler ?? globalScheduler;
     this.onEffectError = spec.onEffectError;
     this.onReducerError = spec.onReducerError;
     this.onSubscriberError = spec.onSubscriberError;
@@ -778,11 +1006,18 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.replaceEffects = this.replaceEffects.bind(this);
     this.replaceReducers = this.replaceReducers.bind(this);
     this.hotReplace = this.hotReplace.bind(this);
+    this.whenIdle = this.whenIdle.bind(this);
   }
 
   /**
-   * Cleanup resources (timers, etc.) when disposing the store.
-   * Call this if you're dynamically creating/destroying stores.
+   * Releases the store: its timers, subscriptions, observers and registrations.
+   *
+   * @remarks
+   * Afterwards the store is inert. `emit()` resolves `{ committed: false }` without running
+   * anything, `call()` rejects with `CallAbortedError`, as does every call still pending, and the
+   * `register*`, `with*` and `replace*` methods throw. Development builds warn once per method
+   * about an `emit` or a `call` that arrives late. {@link signal} aborts last. Calling `dispose()`
+   * again does nothing.
    *
    * @example
    * ```ts
@@ -794,12 +1029,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public dispose(): void {
-    if (this.eventCleanupTimer) {
-      clearInterval(this.eventCleanupTimer);
+    // Once. A second call has nothing left to release, and must not abort a signal twice.
+    if (this.disposed) return;
+    this.disposed = true;
+
+    if (this.eventCleanupTimer !== null) {
+      this.scheduler.clearTimeout(this.eventCleanupTimer);
       this.eventCleanupTimer = null;
     }
 
     this.processedEvents.clear();
+    // Every effect's signal aborts with the store, before its registration is dropped.
+    for (const set of this.effects.values()) for (const entry of set) entry.ctx.end("store disposed");
+    for (const entry of this.patternEffects) entry.ctx.end("store disposed");
     this.effects.clear();
     this.patternEffects.clear();
     this.effectMeta = new WeakMap();
@@ -809,6 +1051,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // inherits the suppression and stays quiet about aliasing in code that has never been warned
     // about. The latch exists to stop a hot path becoming a log, not to silence the next store.
     this.warnedPayloadAliases.clear();
+    this.warnedDottedKeys.clear();
 
     // Release every subscription and observer. Without this, the closures they
     // hold (React fibers, DevTools sockets, effect handlers) pin the store and
@@ -819,6 +1062,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.writtenEventSubscribers.clear();
     this.allEventSubscribers.clear();
     this.instrumentObservers.clear();
+    this.ephemeralObservers.clear();
+    this.effectObservers.clear();
+    this.ephemeralEffectObservers.clear();
+    this.diagnosticObservers.clear();
     this.connectorBus.clear();
     this.reducerBus.clear();
     this.patternReducers.clear();
@@ -836,6 +1083,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     this.queuedRegistrationBatches.length = 0;
     (this.middleware as unknown as unknown[]).length = 0;
     this.changedPathSink = null;
+
+    // A disposed store does no more work, so whoever waits for it to be idle is released.
+    this.releaseIdleWaiters(true);
+
+    // Last, so a listener reacting to it finds the store already empty. Pending calls listen
+    // here and reject with "store disposed".
+    this.lifetime?.abort("store disposed");
   }
 
   /**
@@ -849,7 +1103,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @internal
    */
-  private fingerprint(channel: string, type: string, payload: unknown): string {
+  private fingerprint(channel: string, type: string, payload: unknown): string | null {
     return fingerprintOf(channel, type, payload);
   }
 
@@ -863,7 +1117,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private shouldDedupe(fp: string, windowMs: number): boolean {
-    const now = Date.now();
+    const now = this.clock.now();
     const existing = this.processedEvents.get(fp);
 
     if (existing !== undefined) {
@@ -889,19 +1143,26 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   /**
-   * Starts the periodic prune interval if it isn't already running. Called when
-   * the first entry is cached so the timer's lifetime tracks actual dedup use
-   * (content window or identity `dedupKey`), independent of `dedupWindowMs`.
+   * Arms the next prune if none is pending. Called when an entry is cached, so the timer's
+   * lifetime tracks actual dedup use (content window or identity `dedupKey`), independent of
+   * `dedupWindowMs`.
+   *
+   * @remarks
+   * A timeout that re-arms itself while entries remain, rather than an interval, because a
+   * {@link Scheduler} offers only `setTimeout`: one port shape for every timer the store arms.
    *
    * @internal
    */
   private ensureCleanupTimer(): void {
     if (this.eventCleanupTimer !== null) return;
-    this.eventCleanupTimer = setInterval(() => {
-      this.pruneProcessedEvents(Date.now());
+    const handle = this.scheduler.setTimeout(() => {
+      this.eventCleanupTimer = null;
+      this.pruneProcessedEvents(this.clock.now());
+      if (this.processedEvents.size > 0) this.ensureCleanupTimer();
     }, 5000);
-    // Never let the cleanup interval by itself keep a Node process alive.
-    (this.eventCleanupTimer as { unref?: () => void }).unref?.();
+    // Never let the prune by itself keep the host alive.
+    (handle as { unref?: () => void }).unref?.();
+    this.eventCleanupTimer = handle;
   }
 
   /**
@@ -923,10 +1184,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       }
     }
 
-    // Once the cache has drained, stop the interval so an idle store doesn't
-    // hold a repeating timer. It restarts on the next cached event.
+    // Once the cache has drained, cancel the pending prune so an idle store holds no timer.
+    // It is armed again by the next cached event.
     if (this.processedEvents.size === 0 && this.eventCleanupTimer !== null) {
-      clearInterval(this.eventCleanupTimer);
+      this.scheduler.clearTimeout(this.eventCleanupTimer);
       this.eventCleanupTimer = null;
     }
   }
@@ -949,19 +1210,32 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     depth: number,
     chain: readonly string[],
   ): void {
-    console.error(
+    const message =
       `[yoltra] Cascade stopped: "${event.channel}/${event.type}" would exceed ${limit} ` +
-        `(${limitValue}). This event was refused and the chain ends here. A chain this long is ` +
-        `almost always two consumers emitting into each other — check what reacts to ` +
-        `"${event.channel}/${event.type}" and what that emits in turn.` +
-        (chain.length > 0 ? ` Recent causal chain: ${chain.join(" → ")} → (refused).` : ""),
+      `(${limitValue}). This event was refused and the chain ends here. A chain this long is ` +
+      `almost always two consumers emitting into each other; check what reacts to ` +
+      `"${event.channel}/${event.type}" and what that emits in turn.` +
+      (chain.length > 0 ? ` Recent causal chain: ${chain.join(" → ")} → (refused).` : "");
+    this.report(
+      "error",
+      "cascade",
+      message,
+      { limit, limitValue, event, depth, chain },
+      message,
     );
 
     try {
       this.onCascade?.({ limit, limitValue, event, depth, chain });
     } catch (err) {
       // A throwing diagnostic must not become the failure it was reporting.
-      console.error("onCascade handler error:", err);
+      this.report(
+        "error",
+        "observer-error",
+        "onCascade threw.",
+        { hook: "onCascade", error: err },
+        "onCascade handler error:",
+        err,
+      );
     }
   }
 
@@ -973,7 +1247,19 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @param event - The event that was reduced.
    * @internal
    */
-  private async notifyEffects(event: EventUnion<EM>) {
+  /** @internal */
+  private reportEffectError(error: unknown, event: EventUnion<EM>): void {
+    this.report(
+      "error",
+      "effect-error",
+      `An effect for "${event.channel}/${event.type}" threw.`,
+      { event, error },
+      "Effect error:",
+      error,
+    );
+  }
+
+  private async notifyEffects(event: EventUnion<EM>, records?: InstrumentedEffect[]) {
     // Effects resume in their own task, after the drain that produced this event has ended, so
     // `currentEvent` is null by the time they run and cannot speak for them. This closure is how
     // an effect's emits stay attached to the event that triggered them — which is what bounds a
@@ -984,27 +1270,35 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const key = `${String(event.channel)}::${String(event.type)}`;
     const effectSet = this.effects.get(key);
 
-    if (effectSet && effectSet.size > 0) {
-      for (const h of [...effectSet]) {
-        try {
-          await h.effect(event, this.getState, emit);
-        } catch (e) {
-          console.error("Effect error:", e);
-          this.onEffectError?.(e, event);
-        }
+    // One effect, timed only when the effect phase is being observed.
+    const run = async (
+      effect: EffectFunction<DeepReadonly<S>, EM>,
+      ctx: EffectLifetime,
+      origin: Origin,
+    ): Promise<void> => {
+      const start = records !== undefined ? now() : 0;
+      let failed = false;
+      try {
+        await effect(event, this.getState, emit, ctx);
+      } catch (e) {
+        failed = true;
+        this.reportEffectError(e, event);
+        this.onEffectError?.(e, event);
       }
+      if (records !== undefined) {
+        const name = this.effectMeta.get(effect)?.name ?? (effect.name || undefined);
+        const durationMs = now() - start;
+        records.push({ ...(name !== undefined ? { name } : {}), origin, durationMs, failed });
+      }
+    };
+
+    if (effectSet && effectSet.size > 0) {
+      for (const h of [...effectSet]) await run(h.effect, h.ctx, h.origin);
     }
 
     // 2. Call pattern-based effects (runtime matching)
-    for (const { effect, when } of this.patternEffects) {
-      if (matchesWhen(when, event)) {
-        try {
-          await effect(event, this.getState, emit);
-        } catch (e) {
-          console.error("Effect error:", e);
-          this.onEffectError?.(e, event);
-        }
-      }
+    for (const { effect, when, ctx, origin } of this.patternEffects) {
+      if (matchesWhen(when, event)) await run(effect, ctx, origin);
     }
   }
 
@@ -1089,7 +1383,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     phase: "committed" | "uncommitted" | "written",
   ): void {
     const report = (e: unknown): void => {
-      console.error("Event subscription error:", e);
+      this.report(
+        "error",
+        "subscriber-error",
+        `An event subscriber for "${event.channel}/${event.type}" (${phase}) threw.`,
+        { event, phase, error: e },
+        "Event subscription error:",
+        e,
+      );
       // Reported as well as logged, so an application can route this to whatever it uses for
       // errors. Reducers, effects, rejections and cascades all had a hook; subscribers had
       // the console and nothing else.
@@ -1167,7 +1468,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // Reported through a hook as well as the console: a reducer throwing is a bug in
       // application code, and until now the only trace of it was a console line in one case and
       // an exception surfacing somewhere unrelated in the other.
-      console.error(`Reducer error in slice "${rName as string}":`, err);
+      this.report(
+        "error",
+        "reducer-error",
+        `The reducer of slice "${rName as string}" threw on "${event.channel}/${event.type}".`,
+        { event, slice: rName, error: err },
+        `Reducer error in slice "${rName as string}":`,
+        err,
+      );
       this.onReducerError?.(err, event as EventUnion<EM>, rName as string);
       return null;
     }
@@ -1213,7 +1521,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // length check below read "nothing changed", so the write path returned before assigning
     // `this.state`: the reducer ran, its result was thrown away, and nothing said so. A store
     // holding `state: 0` could never leave `0`.
-    const leafPaths = detectChangedProps(prev, next);
+    const leafPaths = detectChangedPropsReporting(prev, next, this.dottedKeysIn(rName as string));
 
     // if nothing actually changed at the leaves, treat as a no-op
     if (leafPaths.length === 0) return null;
@@ -1225,21 +1533,36 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // the caller still holds the object, mutating it later throws from an unrelated stack, and
     // the same code works in production because the freeze is compiled out. Warned once per
     // slice and event so a hot path does not become a log.
+    //
+    // Binary values get their own message, because the usual one would be false for them: a
+    // typed array or DataView cannot be frozen, so nothing throws, in development or production.
+    // A write into it changes the slice in place and no subscriber is told. Binary fields one
+    // level inside the payload are watched too, since `{ ...payload }` copies the object and keeps
+    // the buffer.
     const payload = (event as { payload?: unknown }).payload;
     const alias: AliasWatch | undefined =
       process.env.NODE_ENV !== "production" && payload !== null && typeof payload === "object"
         ? {
             watch: payload,
-            onFound: () => {
+            also: binaryFieldsOf(payload),
+            onFound: (node) => {
               const key = `${rName as string}:${event.channel}:${event.type}`;
               if (this.warnedPayloadAliases.has(key)) return;
               this.warnedPayloadAliases.add(key);
-              console.warn(
-                `[yoltra] Slice "${rName as string}" stored the payload of ` +
-                  `"${event.channel}/${event.type}" by reference. It is now frozen along with ` +
-                  `the rest of the state, so the emitter mutating it later will throw in ` +
-                  `development and silently corrupt state in production. Copy the payload in ` +
-                  `the reducer instead.`,
+              const where = `[yoltra] Slice "${rName as string}" stored ${node === payload ? "the payload" : "binary data from the payload"} of "${event.channel}/${event.type}" by reference.`;
+              const binary = ArrayBuffer.isView(node) || node instanceof ArrayBuffer;
+              const message = binary
+                ? `${where} Binary data cannot be frozen, so a later write into it changes this ` +
+                  `slice in place, unseen by subscribers. Copy it in the reducer (\`.slice()\`).`
+                : `${where} It is now frozen along with the rest of the state, so the emitter ` +
+                  `mutating it later will throw in development and silently corrupt state in ` +
+                  `production. Copy the payload in the reducer instead.`;
+              this.report(
+                "warn",
+                "payload-by-reference",
+                message,
+                { slice: rName, event, binary },
+                message,
               );
             },
           }
@@ -1521,11 +1844,10 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           process.env.NODE_ENV !== "production" &&
           (this.sliceOrigin.get(rName) ?? "spec") === "spec"
         ) {
-          console.warn(
-            `[yoltra] External state is missing slice "${String(
-              rName,
-            )}"; retaining its current value. Time-travel snapshots should contain all slices.`,
-          );
+          const message =
+            `[yoltra] External state is missing slice "${String(rName)}"; retaining its current ` +
+            `value. Time-travel snapshots should contain all slices.`;
+          this.report("warn", "snapshot-missing-slice", message, { slice: rName }, message);
         }
         return;
       }
@@ -1543,7 +1865,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // `stageSlice`: `""` is a genuine root-level change, not an absent one. Time travel
       // onto a primitive slice committed the state here but emitted nothing, so a component
       // subscribed through `connect` kept rendering the value it had before the jump.
-      const leafPaths = detectChangedProps(prevSlice, nextSlice);
+      const leafPaths = detectChangedPropsReporting(prevSlice, nextSlice, this.dottedKeysIn(rName as string));
       if (leafPaths.length === 0) return;
 
       // emit every leaf AND its ancestors once
@@ -1628,6 +1950,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // 2. Replay each event through reducers + event subscribers only
     for (const evt of events) {
       const event = evt as EventUnion<EM>;
+      // Traffic, not history: an ephemeral event is not part of what a replay reproduces.
+      if (this.ephemeralChannels.has(evt.channel)) continue;
 
       // Staged and committed exactly as a live event is, so a replay reproduces the same state
       // by the same path — including a reducer that refuses, which must refuse identically or
@@ -1748,11 +2072,18 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     payload: EM[C][T],
     opts?: EmitOptions,
   ): Promise<EmitResult> {
+    // A disposed store runs nothing. Not committed, without a reason: the reasons describe what
+    // the pipeline decided, and no pipeline ran.
+    if (this.disposed) {
+      this.warnDisposed("emit");
+      return NOT_COMMITTED;
+    }
+
     // Before anything keys on `${channel}::${type}`. Development only, and reports an actual
-    // ambiguity rather than the mere presence of a separator: `alias::channel` is how a federated
-    // peer's channel is namespaced, so warning on `::` itself would fire for correct code.
+    // ambiguity rather than the mere presence of a separator: `alias::channel` is how a peer's
+    // channel is namespaced, so warning on `::` itself would fire for correct code.
     if (process.env.NODE_ENV !== "production") {
-      warnOnKeyCollision(channel as string, type as string);
+      this.checkKeyCollision(channel as string, type as string);
     }
 
     // Deduplication is OPT-IN (see EmitOptions / StoreSpec.dedupWindowMs).
@@ -1770,7 +2101,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         dedupKey !== undefined
           ? `${channel}::${type}::#${dedupKey}`
           : this.fingerprint(channel as string, type as string, payload);
-      if (this.shouldDedupe(fp, windowMs)) {
+      // `null` is a payload the fingerprint could not read in full: never deduplicated.
+      if (fp !== null && this.shouldDedupe(fp, windowMs)) {
         // A suppressed duplicate never reaches middleware or a reducer, so it is neither
         // committed nor written. It carries `reason: "deduped"` to say so: a caller handling
         // `committed: false` needs to tell a guard refusing the action from a double-click
@@ -1901,8 +2233,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         };
 
         // Instrumentation: capture prev state, collect changed paths, and time
-        // the synchronous reduce — all skipped entirely when no observers.
-        const instrumenting = this.instrumentObservers.size > 0;
+        // the synchronous reduce, all skipped entirely when no observers. An ephemeral event
+        // counts only the observers that opted in, so traffic costs nothing while nobody does.
+        const ephemeral = this.ephemeralChannels.has(event.channel as string);
+        const observers = ephemeral ? this.ephemeralObservers : this.instrumentObservers;
+        const instrumenting = observers.size > 0;
         const prevState = instrumenting ? this.state : undefined;
         const sink: string[] | undefined = instrumenting ? [] : undefined;
         if (sink !== undefined) this.changedPathSink = sink;
@@ -1912,7 +2247,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         try {
           result = this.applyEventSync(event);
         } catch (err) {
-          console.error("Emit reduce error:", err);
+          this.report(
+            "error",
+            "emit-error",
+            `Reducing "${event.channel}/${event.type}" failed.`,
+            { event, error: err },
+            "Emit reduce error:",
+            err,
+          );
         } finally {
           if (instrumenting) this.changedPathSink = null;
           // Cleared before effects are scheduled. Effects resume in a later task, when this
@@ -1921,8 +2263,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           this.currentEvent = null;
         }
 
+        if (ephemeral && result.written) this.warnEphemeralWrite(event);
+
         if (instrumenting) {
           this.emitInstrumentation(
+            observers,
             event,
             result,
             sink ?? [],
@@ -1969,22 +2314,21 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           // commits while the middleware is still deciding, and the veto it was written to
           // perform can never fire. Caught here because the symptom — a rule that simply does
           // not apply — looks nothing like its cause.
-          console.error(
+          const message =
             `[yoltra] Middleware for "${event.channel}/${event.type}" returned a Promise. ` +
-              `Middleware is synchronous: a Promise is truthy, so this event was allowed ` +
-              `without waiting and a "return false" inside it can never veto. Do the check ` +
-              `synchronously, and put anything that must await in an effect.`,
-          );
+            `Middleware is synchronous: a Promise is truthy, so this event was allowed ` +
+            `without waiting and a "return false" inside it can never veto. Do the check ` +
+            `synchronously, and put anything that must await in an effect.`;
+          this.report("error", "middleware-promise", message, { event }, message);
         }
       } catch (err) {
         // A throw is still a veto: middleware guards things, and a guard that crashed has
         // not decided the event is safe. But say so, because "the event vanished" and "the
         // middleware threw" look nothing alike from the outside.
-        console.error(
+        const message =
           `[yoltra] Middleware threw for "${event.channel}/${event.type}"; the event was ` +
-            `vetoed and did not reach any reducer.`,
-          err,
-        );
+          `vetoed and did not reach any reducer.`;
+        this.report("error", "middleware-error", message, { event, error: err }, message, err);
         ok = false;
       }
       // Only an explicit `false` vetoes. Middleware that does its work and falls off the end
@@ -2049,6 +2393,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // "rejected" must not find half of its event applied.
     if (rejection !== null) {
       this.onRejected?.(rejection, event, rejectedBy);
+      // Info, and never written to the console: a refusal is a normal outcome. Reported so an
+      // observer attached later can count refusals as a hook set at creation can.
+      this.report(
+        "info",
+        "rejected",
+        `Slice "${rejectedBy}" refused "${event.channel}/${event.type}".`,
+        { rejection, event, slice: rejectedBy },
+      );
       this.notifyEventSubscribers(event, "committed");
       return { committed: true, written: false, rejected: rejection };
     }
@@ -2080,14 +2432,81 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     resolve: (result: EmitResult) => void,
   ): Promise<void> {
     this.inFlightEffects++;
+    // The effect phase is timed only while someone observes it, and an ephemeral event only for
+    // observers that opted in, as with `instrument`.
+    const observers = this.ephemeralChannels.has(event.channel as string)
+      ? this.ephemeralEffectObservers
+      : this.effectObservers;
+    const records: InstrumentedEffect[] | undefined = observers.size > 0 ? [] : undefined;
+    const t0 = records !== undefined ? now() : 0;
     try {
-      if (result.committed) await this.notifyEffects(event);
+      if (result.committed) await this.notifyEffects(event, records);
     } catch (err) {
-      console.error("Effect error:", err);
+      this.reportEffectError(err, event);
     } finally {
       this.inFlightEffects--;
+      if (records !== undefined && records.length > 0) {
+        this.emitEffectInstrumentation(observers, event, records, now() - t0);
+      }
       resolve(result);
+      // Every drained event passes through here, so this is where the store becomes idle.
+      if (this.idleWaiters.length > 0) this.releaseIdleWaiters();
     }
+  }
+
+  /**
+   * Sends one diagnostic to the owner's sink, or to the console when there is none, and to every
+   * runtime observer.
+   *
+   * @param detail - The values involved, or `undefined` for none.
+   * @param consoleArgs - What the console receives when no sink is set: exactly what the store
+   *   wrote before diagnostics existed. Empty for a diagnostic that was never logged, such as a
+   *   rejection.
+   *
+   * @remarks
+   * One helper for every site, so the routing rule cannot drift between them. A sink or an
+   * observer that throws is ignored: a diagnostic must not become the failure it reports.
+   *
+   * @internal
+   */
+  private report(
+    level: Diagnostic["level"],
+    code: DiagnosticCode,
+    message: string,
+    detail: Diagnostic["detail"],
+    ...consoleArgs: unknown[]
+  ): void {
+    const diagnostic: Diagnostic =
+      detail === undefined ? { level, code, message } : { level, code, message, detail };
+    const sink = this.diagnosticSink;
+    if (sink === undefined) {
+      if (consoleArgs.length > 0) console[level](...consoleArgs);
+    } else {
+      try {
+        sink(diagnostic);
+      } catch {
+        // Ignored, as documented on StoreSpec.diagnostics.
+      }
+    }
+    for (const observer of [...this.diagnosticObservers]) {
+      try {
+        observer(diagnostic);
+      } catch {
+        // Ignored, as documented on StoreInstance.onDiagnostic.
+      }
+    }
+  }
+
+  /**
+   * Observes the store's diagnostics. See {@link StoreInstance.onDiagnostic}.
+   *
+   * @public
+   */
+  public onDiagnostic(observer: DiagnosticSink): Unsubscribe {
+    this.diagnosticObservers.add(observer);
+    return () => {
+      this.diagnosticObservers.delete(observer);
+    };
   }
 
   /**
@@ -2095,10 +2514,125 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    *
    * @public
    */
-  public instrument(observer: InstrumentationObserver<EM>): Unsubscribe {
+  public instrument(observer: InstrumentationObserver<EM>, options?: InstrumentOptions): Unsubscribe {
     this.instrumentObservers.add(observer);
+    if (options?.ephemeral === true) this.ephemeralObservers.add(observer);
     return () => {
       this.instrumentObservers.delete(observer);
+      this.ephemeralObservers.delete(observer);
+    };
+  }
+
+  /**
+   * The store's current load. See {@link StoreInstance.metrics}.
+   *
+   * @public
+   */
+  public metrics(): StoreMetrics {
+    return {
+      queueDepth: this.reduceQueue.length,
+      inFlightEffects: this.inFlightEffects,
+      dedupHits: this.dedupCount,
+      dedupEntries: this.processedEvents.size,
+    };
+  }
+
+  /**
+   * Resolves when no event waits to be reduced and no effect runs. See
+   * {@link StoreInstance.whenIdle}.
+   *
+   * @public
+   */
+  public whenIdle(): Promise<void> {
+    if (this.disposed || this.isIdle()) return Promise.resolve();
+    return new Promise((resolve) => this.idleWaiters.push(resolve));
+  }
+
+  /** @internal */
+  private isIdle(): boolean {
+    return !this.isReducing && this.reduceQueue.length === 0 && this.inFlightEffects === 0;
+  }
+
+  /** Resolves every {@link whenIdle} waiter, when the store is idle or `force` says so. @internal */
+  private releaseIdleWaiters(force = false): void {
+    if (!force && !this.isIdle()) return;
+    const waiters = this.idleWaiters;
+    this.idleWaiters = [];
+    for (const resolve of waiters) resolve();
+  }
+
+  /**
+   * Registers an effect-phase observer. See {@link StoreInstance.instrumentEffects}.
+   *
+   * @public
+   */
+  public instrumentEffects(observer: EffectsObserver<EM>, options?: InstrumentOptions): Unsubscribe {
+    this.effectObservers.add(observer);
+    if (options?.ephemeral === true) this.ephemeralEffectObservers.add(observer);
+    return () => {
+      this.effectObservers.delete(observer);
+      this.ephemeralEffectObservers.delete(observer);
+    };
+  }
+
+  /** @internal */
+  private emitEffectInstrumentation(
+    observers: ReadonlySet<EffectsObserver<EM>>,
+    event: EventUnion<EM>,
+    effects: InstrumentedEffect[],
+    durationMs: number,
+  ): void {
+    const info = { event: this.describeEvent(event), at: this.clock.now(), durationMs, effects };
+    for (const observer of [...observers]) {
+      try {
+        observer(info);
+      } catch (e) {
+        this.report(
+          "error",
+          "observer-error",
+          "An effect-phase observer threw.",
+          { observer: "effects", error: e },
+          "Instrumentation observer error:",
+          e,
+        );
+      }
+    }
+  }
+
+  /**
+   * Says once per event key, in development, that an ephemeral event wrote state.
+   *
+   * @internal
+   */
+  private warnEphemeralWrite(event: EventUnion<EM>): void {
+    const key = `${event.channel}::${event.type}`;
+    if (process.env.NODE_ENV === "production" || this.warnedEphemeralWrites.has(key)) return;
+    this.warnedEphemeralWrites.add(key);
+    const message =
+      `[yoltra] Store "${this.name}": "${event.channel}/${event.type}" is on an ephemeral channel ` +
+      `but wrote state. Replay skips ephemeral events, so a replayed history will not reproduce ` +
+      `this change. Keep per-frame values outside the store, or take the channel out of ` +
+      `"ephemeral".`;
+    this.report("warn", "ephemeral-write", message, { event }, message);
+  }
+
+  /**
+   * The event as observers see it, shared by both instrumentation seams.
+   *
+   * @internal
+   */
+  private describeEvent(event: EventUnion<EM>): InstrumentedEvent<EM>["event"] {
+    return {
+      id: event.id,
+      channel: event.channel as string,
+      type: event.type as string,
+      payload: event.payload,
+      // Conditional, so an event without metadata produces an observer payload
+      // byte-identical to the pre-`meta` shape. Causality likewise: an observer rebuilding a
+      // trace needs the parent, and a root event has none to report.
+      ...(event.meta !== undefined ? { meta: event.meta } : {}),
+      ...(event.parentId !== undefined ? { parentId: event.parentId } : {}),
+      ...(event.depth !== undefined ? { depth: event.depth } : {}),
     };
   }
 
@@ -2111,6 +2645,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @internal
    */
   private emitInstrumentation(
+    observers: ReadonlySet<InstrumentationObserver<EM>>,
     event: EventUnion<EM>,
     result: EmitResult,
     changedPaths: string[],
@@ -2124,20 +2659,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       nextValues[path] = this.getAtPath(this.state, path);
     }
     const info: InstrumentedEvent<EM> = {
-      event: {
-        id: event.id,
-        channel: event.channel as string,
-        type: event.type as string,
-        payload: event.payload,
-        // Conditional, so an event without metadata produces an observer payload
-        // byte-identical to the pre-`meta` shape.
-        ...(event.meta !== undefined ? { meta: event.meta } : {}),
-      },
+      event: this.describeEvent(event),
       committed: result.committed,
       changedPaths,
       prevValues,
       nextValues,
       reduceTimeMs,
+      at: this.clock.now(),
       // Present only when a reducer refused, so an observer can tell a refusal from a veto —
       // identical in state, entirely different in cause.
       ...(result.rejected !== undefined ? { rejected: result.rejected } : {}),
@@ -2147,11 +2675,18 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       ...(result.reason !== undefined ? { reason: result.reason } : {}),
       ...(result.vetoedBy !== undefined ? { vetoedBy: result.vetoedBy } : {}),
     };
-    for (const observer of [...this.instrumentObservers]) {
+    for (const observer of [...observers]) {
       try {
         observer(info);
       } catch (e) {
-        console.error("Instrumentation observer error:", e);
+        this.report(
+          "error",
+          "observer-error",
+          "An instrumentation observer threw.",
+          { observer: "instrument", error: e },
+          "Instrumentation observer error:",
+          e,
+        );
       }
     }
   }
@@ -2420,11 +2955,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     let drained = 0;
     while (this.queuedRegistrationBatches.length > 0) {
       if (drained >= MAX_REGISTRATION_CASCADE) {
-        console.error(
+        const message =
           `[yoltra] Registration notifications exceeded ${MAX_REGISTRATION_CASCADE} rounds; ` +
-            `dropping the rest. Two observers are most likely registering in response to ` +
-            `each other.`,
-        );
+          `dropping the rest. Two observers are most likely registering in response to ` +
+          `each other.`;
+        this.report("error", "registration-cascade", message, undefined, message);
         this.queuedRegistrationBatches.length = 0;
         break;
       }
@@ -2457,15 +2992,22 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         // adopting this promise. Registration notification is synchronous, so by the time it
         // resolves the store has moved on and anything it does lands at an unpredictable
         // point relative to everything else.
-        console.error(
+        const message =
           "[yoltra] A registration observer returned a Promise. Registration notifications " +
-            "are synchronous: the store has already moved on by the time it resolves. Do the " +
-            "work synchronously, or schedule it yourself and accept that the topology may " +
-            "have changed again.",
-        );
+          "are synchronous: the store has already moved on by the time it resolves. Do the " +
+          "work synchronously, or schedule it yourself and accept that the topology may " +
+          "have changed again.";
+        this.report("error", "observer-promise", message, undefined, message);
       }
     } catch (e) {
-      console.error("Registration observer error:", e);
+      this.report(
+        "error",
+        "observer-error",
+        "A registration observer threw.",
+        { observer: "registration", error: e },
+        "Registration observer error:",
+        e,
+      );
     }
   }
 
@@ -2639,6 +3181,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public registerMiddleware(mw: MiddlewareInput<any, any>): any {
+    this.assertLive("registerMiddleware");
+    assertRegistrable({ middleware: [mw] });
     const entry = { input: mw, origin: "dynamic" as Origin };
     this.middleware.push(entry);
     this.recordMiddlewareChange(entry, "mounted");
@@ -2783,6 +3327,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public registerSlice(name: string, spec: ReducerSpec<any, any>, options?: { owner?: string }): any {
+    this.assertLive("registerSlice");
     // One transaction, so observers are notified *after* the state broadcast below rather
     // than from inside `mountSlice`. The view layer should learn a fact before a library
     // gets to react to it; reversed, a library's own registration would publish before the
@@ -2803,6 +3348,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     if (Object.prototype.hasOwnProperty.call(this.reducers, name)) {
       throw new Error(`Reducer ${name} already exists`);
     }
+    assertRegistrable({ reducers: { [name]: spec } });
 
     this.mountSlice(name as R, spec as ReducerSpec<S[R], EM>, {
       preserveState: false,
@@ -2929,7 +3475,8 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * The match tests the **immediate** parent, not descent: a reply emitted a further hop down a
    * cascade carries the intermediate event's id and will not be seen. A responder that cannot
    * reply directly — because it answers later, on another turn, or across a transport — echoes
-   * {@link CallOptions.correlationId} instead, which widens the match rather than replacing it.
+   * {@link CallOptions.correlationId} instead, which widens the match by default and replaces it
+   * under `correlation: "id"` (see {@link CallOptions.correlation}).
    *
    * **The reply carries its own discriminant.** A call resolves to the *event*, not the payload,
    * because a caller often cannot know which kind of reply it will get:
@@ -2984,9 +3531,12 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     payload: EM[C][T],
     opts: CallOptions<EM>,
   ): CallHandle<EventUnion<EM>, EventUnion<EM>> {
+    if (this.disposed) this.warnDisposed("call");
     return performCall<S, EM, C, T>(
       {
         idFactory: this.idFactory,
+        scheduler: this.scheduler,
+        signal: this.signal,
         // `internal`, so an in-flight call survives even `replaceEffects(next, { scope: "all" })`.
         // A test harness resetting a store between cases never means "and abandon the call
         // that is currently awaiting a reply", and the symptom would be a hang to the idle
@@ -3002,6 +3552,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
   }
 
   public registerEffect(spec: EffectSpec<DeepReadonly<S>, EM>): any {
+    this.assertLive("registerEffect");
     return this.asRegistration(this.registerEffectWithOrigin(spec, "dynamic"));
   }
 
@@ -3018,8 +3569,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     spec: EffectSpec<DeepReadonly<S>, EM>,
     origin: Origin,
   ): () => void {
+    assertRegistrable({ effects: [spec] });
     const { effect, meta, when } = spec;
     const unsubs: Array<() => void> = [];
+    // One per registration, shared by every key it is filed under.
+    const ctx = new EffectLifetime();
 
     // Record metadata in a store-owned map keyed by the effect function, rather
     // than mutating the caller's function (which would bleed across stores).
@@ -3037,7 +3591,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
 
     if (isPatternBased) {
       // Store as pattern-based effect for runtime matching
-      const entry = { effect, when: when!, origin };
+      const entry = { effect, when: when!, origin, ctx };
       this.patternEffects.add(entry);
       this.recordEffectChange(effect, when!, origin, "mounted", "pattern");
 
@@ -3045,6 +3599,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         this.recordEffectChange(effect, when!, origin, "unmounted", "pattern");
         this.patternEffects.delete(entry);
         this.releaseEffectMeta(effect);
+        ctx.end("effect unregistered");
       };
     }
 
@@ -3057,7 +3612,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       // Normalized, not raw: no targeting at all means "every event", and an observer told
       // `undefined` would have to re-derive that for itself.
       const normalized = { any: true } as When<EM>;
-      const entry = { effect, when: normalized, origin };
+      const entry = { effect, when: normalized, origin, ctx };
       this.patternEffects.add(entry);
       this.recordEffectChange(effect, normalized, origin, "mounted", "pattern");
 
@@ -3065,6 +3620,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         this.recordEffectChange(effect, normalized, origin, "unmounted", "pattern");
         this.patternEffects.delete(entry);
         this.releaseEffectMeta(effect);
+        ctx.end("effect unregistered");
       };
     }
 
@@ -3074,7 +3630,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       if (!this.effects.has(key)) {
         this.effects.set(key, new Set());
       }
-      const entry = { effect, origin };
+      const entry = { effect, origin, ctx };
       this.effects.get(key)!.add(entry);
       const keyedWhen = { keys: [[channel, type]] } as When<EM>;
       this.recordEffectChange(effect, keyedWhen, origin, "mounted", "keyed");
@@ -3093,6 +3649,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     return () => {
       for (const u of unsubs) u();
       this.releaseEffectMeta(effect);
+      ctx.end("effect unregistered");
     };
   }
 
@@ -3130,13 +3687,14 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       getState: () => DeepReadonly<S>,
       emit: Emit<EM>,
       event: Event<EM, C, T>,
+      ctx: EffectContext,
     ) => void | Promise<void>,
   ): () => void {
-    const effect: EffectFunction<DeepReadonly<S>, EM> = async (evt, getState, emit) => {
+    const effect: EffectFunction<DeepReadonly<S>, EM> = async (evt, getState, emit, ctx) => {
       if (evt.channel !== channel || evt.type !== type) return;
 
       const typed = evt as Event<EM, C, T>;
-      return handler(typed.payload, getState, emit, typed);
+      return handler(typed.payload, getState, emit, typed, ctx);
     };
 
     return this.registerEffect({
@@ -3165,6 +3723,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     next: MiddlewareInput<DeepReadonly<S>, EM>[],
     opts: { scope?: ReplaceScope } = {},
   ): void {
+    this.assertLive("replaceMiddleware");
     this.inRegistrationTransaction(() => this.replaceMiddlewareInner(next, opts));
   }
 
@@ -3176,6 +3735,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // Accepts either form. Taking only the bare function meant a hot reload silently discarded
     // the `when` targeting and `meta` of every spec-form middleware, so after an HMR pass a
     // middleware scoped to one channel began running on all of them.
+    assertRegistrable({ middleware: next });
     const scope = opts.scope ?? "spec";
     const retained = this.middleware.filter((e) =>
       scope === "all" ? e.origin === "internal" : e.origin !== "spec",
@@ -3219,6 +3779,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     next: Array<EffectSpec<DeepReadonly<S>, EM>>,
     opts: { scope?: ReplaceScope } = {},
   ): void {
+    this.assertLive("replaceEffects");
     this.inRegistrationTransaction(() => this.replaceEffectsInner(next, opts));
   }
 
@@ -3227,6 +3788,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     next: Array<EffectSpec<DeepReadonly<S>, EM>>,
     opts: { scope?: ReplaceScope } = {},
   ): void {
+    assertRegistrable({ effects: next });
     const scope = opts.scope ?? "spec";
     const keeps = (origin: Origin): boolean =>
       scope === "all" ? origin === "internal" : origin !== "spec";
@@ -3246,6 +3808,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
           "keyed",
         );
         set.delete(entry);
+        entry.ctx.end("effect replaced");
         // Pruned per dropped function rather than wholesale. `effectMeta` was never cleared
         // here at all, so it grew stale entries forever; clearing all of it would instead
         // strip the metadata of every effect being preserved.
@@ -3261,6 +3824,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
       this.recordEffectChange(entry.effect, entry.when, entry.origin, "unmounted", "pattern");
       this.patternEffects.delete(entry);
       this.releaseEffectMeta(entry.effect);
+      entry.ctx.end("effect replaced");
     }
 
     for (const spec of next) {
@@ -3295,15 +3859,16 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public replaceReducers(
-    next: Record<R, ReducerSpec<S[R], EM>>,
+    next: ReducerReplacement<R, S, EM>,
     opts: { preserveState?: boolean; scope?: ReplaceScope } = {},
   ): void {
+    this.assertLive("replaceReducers");
     this.inRegistrationTransaction(() => this.replaceReducersInner(next, opts));
   }
 
   /** @internal */
   private replaceReducersInner(
-    next: Record<R, ReducerSpec<S[R], EM>>,
+    next: ReducerReplacement<R, S, EM>,
     opts: { preserveState?: boolean; scope?: ReplaceScope } = {},
   ): void {
     const preserveState = opts.preserveState !== false; // default true
@@ -3314,6 +3879,7 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     const nextKeys = new Set(nextEntries.map(([k]) => k));
 
     this.assertNoSliceCollision(next, scope);
+    assertRegistrable({ reducers: next as Record<string, ReducerSpec<any, any>> });
 
     const rootBefore = this.state;
 
@@ -3426,12 +3992,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
    * @public
    */
   public hotReplace(partial: {
-    reducer?: Record<R, ReducerSpec<S[R], EM>>;
+    reducer?: ReducerReplacement<R, S, EM>;
     middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
     effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
     preserveState?: boolean;
     scope?: ReplaceScope;
   }): void {
+    this.assertLive("hotReplace");
     // `scope` is forwarded to all three rather than living on `replaceReducers` alone: this
     // is the documented HMR entry point, and a harness that wants the old wholesale
     // semantics should need one flag, not three.
@@ -3443,6 +4010,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // reducers, which is a worse state than either before or after. A partial hot reload is
     // harder to diagnose than a refused one.
     if (partial.reducer) this.assertNoSliceCollision(partial.reducer, scope ?? "spec");
+    assertRegistrable({
+      reducers: partial.reducer as Record<string, ReducerSpec<any, any>> | undefined,
+      effects: partial.effects,
+      middleware: partial.middleware,
+    });
 
     // One transaction across all three, so a hot reload produces a single batch rather than
     // three snapshots of a topology mid-rebuild.
@@ -3620,7 +4192,11 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
     // x)` reports only `""`, the root, so a subscriber watching `"n"` inside the new slice
     // would hear nothing at all - which is the very failure this method exists to fix.
     const isObjectLike = typeof nextSlice === "object" && nextSlice !== null;
-    const leafPaths = detectChangedProps(isObjectLike ? {} : undefined, nextSlice);
+    const leafPaths = detectChangedPropsReporting(
+      isObjectLike ? {} : undefined,
+      nextSlice,
+      this.dottedKeysIn(rName as string),
+    );
 
     // The root always appears: a whole-slice subscription (`property: ""`) is watching for
     // exactly this, and a slice that *is* one value has no leaf to report.
@@ -3680,7 +4256,13 @@ export class Store<EM extends EventMapBase, R extends string, S extends Record<R
         try {
           u();
         } catch (e) {
-          console.error(`[Store error]: ${e}`);
+          this.report(
+            "error",
+            "slice-teardown-error",
+            `A disposer threw while slice "${rName as string}" was unregistered.`,
+            { slice: rName, error: e },
+            `[Store error]: ${e}`,
+          );
         }
 
       this.sliceUnsubs.delete(rName);
@@ -3784,6 +4366,10 @@ export function createStore<
   effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
   dedupWindowMs?: number;
   idFactory?: () => string;
+  clock?: Clock;
+  scheduler?: Scheduler;
+  diagnostics?: DiagnosticSink;
+  ephemeral?: readonly (keyof EM & string)[];
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EM>) => void;
   onReducerError?: (error: unknown, event: EventUnion<EM>, slice: string) => void;
@@ -3832,6 +4418,10 @@ export function createStore<RM extends ReducersMapAny>(cfg: {
   effects?: Array<EffectSpec<DeepReadonly<StateFromReducers<RM>>, EMFromReducersStrict<RM>>>;
   dedupWindowMs?: number;
   idFactory?: () => string;
+  clock?: Clock;
+  scheduler?: Scheduler;
+  diagnostics?: DiagnosticSink;
+  ephemeral?: readonly (keyof EMFromReducersStrict<RM> & string)[];
   devtools?: { allowReplay?: boolean };
   onEffectError?: (error: unknown, event: EventUnion<EMFromReducersStrict<RM>>) => void;
   onReducerError?: (

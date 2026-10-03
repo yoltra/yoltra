@@ -2,23 +2,21 @@
   "$schema": "https://typedoc.org/schema.json",
   "name": "@yoltra/devtools-node-agent",
   "entryPoints": ["src/index.ts"],
-  "plugin": ["typedoc-plugin-markdown"],
   "tsconfig": "./tsconfig.json",
   // Pinned rather than derived. TypeDoc builds "Defined in" links from the local git remote, so
-  // generating from a clone that does not point at GitHub silently emits plain text instead of
-  // links — a whole-file diff that looks like churn and is easy to commit by accident. Targeting
-  // `main` also stops the links rotting to whichever commit last regenerated them.
-  "sourceLinkTemplate": "https://github.com/yoltra/yoltra/blob/main/{path}#L{line}",
+  // generating from a clone that does not point at GitHub would emit plain text instead of links.
+  // {gitRevision} is the commit being documented, so a reference generated from a release tag
+  // links to the source as it was released, not to whatever `main` holds later.
+  "sourceLinkTemplate": "https://github.com/yoltra/yoltra/blob/{gitRevision}/{path}#L{line}",
   // TypeDoc cannot follow a {@link} across package boundaries on its own, so a cross-package
-  // reference renders as dead text rather than a link. These map the few symbols this package
-  // names to the pages that actually document them, which is why they point at real files rather
-  // than "#" — a "#" silences the warning and still gives the reader nowhere to go.
+  // reference would render as dead text. These map the few symbols this package names to their
+  // pages in the API reference on yoltra.dev.
   "externalSymbolLinkMappings": {
     "@yoltra/core": {
-      "StoreInstance.emit": "https://github.com/yoltra/yoltra/blob/main/packages/core/docs/interfaces/StoreInstance.md#emit"
+      "StoreInstance.emit": "https://yoltra.dev/en/yoltra/api/core/StoreInstance/#emit"
     },
     "@yoltra/devtools-protocol": {
-      "SamplingConfig": "https://github.com/yoltra/yoltra/blob/main/devtools/devtools-protocol/docs/interfaces/SamplingConfig.md"
+      "SamplingConfig": "https://yoltra.dev/en/yoltra/api/devtools-protocol/SamplingConfig/"
     }
   },
   "entryPointStrategy": "resolve",

@@ -2,7 +2,7 @@
   "changes": [
     {
       "packageName": "@yoltra/devtools-node-agent",
-      "comment": "The README says the agent forwards `reason` and `vetoedBy` for an event that did not commit.",
+      "comment": "The agent forwards `reason` and `vetoedBy` for an event that did not commit.",
       "type": "none"
     }
   ],

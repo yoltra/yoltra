@@ -13,13 +13,16 @@
 **Estado reactivo de grano fino, basado en eventos (event-sourced), con devtools que incluyen viaje en el
 tiempo. Para aplicaciones complejas e interactivas.**
 
-![Kinetic Logo Demo](../../assets/yoltra-dots.gif)
+![Kinetic Logo Demo](https://yoltra.dev/assets/yoltra-dots.gif)
 
 > 3000 círculos, cada uno suscrito a su propia posición. Cada círculo se re-renderiza de forma
-> independiente - el resto del árbol no se toca. Sin selectores. Sin memoización.
-> [Ver el código fuente de la demo.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.md) · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/kinetic-logo)
+> independiente; el resto del árbol no se toca. Sin selectores. Sin memoización.
+> [Ver el código fuente de la demo.](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.es.md) · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/kinetic-logo/)
 
----
+Una librería de estado para TypeScript y React: emites eventos, reducers puros calculan el siguiente
+estado, cada componente se suscribe a las rutas exactas que lee, y las DevTools reproducen el log.
+
+> **Guía completa:** [Yoltra en yoltra.dev](https://yoltra.dev/es/yoltra/)
 
 ## La propuesta en 30 segundos
 
@@ -58,24 +61,14 @@ La suscripción **_es_** la optimización.
 > Yoltra es un fork de [Quo.js](https://github.com/quojs/quojs). Dejamos de usar el nombre
 > **Quo.js** para no luchar en SEO con librerías zombis.
 
----
-
 ## Para quién es Yoltra
 
-> **Para equipos que construyen aplicaciones complejas e interactivas** (dashboards
-> operativos, UIs de trading y back-office, productos multi-pestaña, plataformas de
-> micro-frontends) **cansados de intercambiar depurabilidad por rendimiento de render**,
-> **Yoltra** es un **ecosistema de estado basado en eventos** que entrega re-renders de grano
-> fino _y_ un log de eventos totalmente observable y reproducible.
-> **A diferencia de** Redux (observable, pero grueso y verboso) **o** Jotai, Valtio y signals
-> (de grano fino, pero opacos), Yoltra rechaza ese intercambio.
-
----
+Equipos que construyen aplicaciones complejas e interactivas (dashboards operativos, UIs de trading
+y back-office, productos multi-pestaña, plataformas de micro-frontends) cansados de intercambiar
+depurabilidad por rendimiento de render. Redux es observable pero grueso; Jotai, Valtio y signals
+son de grano fino pero opacos. Yoltra rechaza ese intercambio.
 
 ## Qué hace diferente a Yoltra
-
-La mayoría de las librerías de estado te obligan a elegir dos de las siguientes. Yoltra está
-construido para darte las cuatro a la vez - y en esa intersección es donde vive:
 
 |                    | Grano fino (sin memo manual) | Log de eventos + viaje en el tiempo | Setup de una llamada | Rutas tipadas / tipos de extremo a extremo |
 | ---------------- | :--------------------------: | :---------------------------------: | :------------------: | :----------------------------------------: |
@@ -86,13 +79,63 @@ construido para darte las cuatro a la vez - y en esa intersección es donde vive
 | **Signals**        |              ✓               |                  ✗                  |          ✓           |                     ✓                      |
 | **Yoltra**         |   ✓ suscripciones por ruta   |           ✓ **integrado**           |   ✓ `createYoltra`   |            ✓ accessors tipados             |
 
-El campo de grano fino (Jotai, Valtio, signals) tiene devtools pobres y no tiene log de eventos. El
-campo basado en eventos (Redux) tiene grandes devtools pero reactividad gruesa y boilerplate.
-**Yoltra es el único lugar donde obtienes reactividad de grano fino, un log de eventos con viaje en
-el tiempo real, setup de una llamada y tipado completo - juntos.** Una comparación más profunda y honesta está en la
-[comparación de librerías](./design/state-management-library-comparison.md).
+- **Sin optimización manual de renders:** suscríbete a `items.0.title` o al comodín `items.*.done`; sin selectores ni memo.
+- **El estado está al día cuando `emit()` retorna:** la reducción es síncrona; la promesa resuelve al terminar los efectos.
+- **Sin sorpresas silenciosas:** el dedup está apagado por defecto (`dedupWindowMs`, o `dedupKey` por emit); escribir cuesta O(cambio).
+- **Eventos que puedes interceptar:** tuplas `(channel, type, payload)`; el middleware puede rechazar uno como evento _no confirmado_.
+- **Baterías:** `createEntityAdapter`, `persist`/`hydrate` versionados, `dehydrate()` para SSR, hooks de Suspense.
 
----
+Más en yoltra.dev: [los dolores que Yoltra elimina](https://yoltra.dev/es/yoltra/docs/overview/#lo-que-dejas-de-hacer---los-dolores-que-yoltra-elimina),
+[las ganancias que crea](https://yoltra.dev/es/yoltra/docs/overview/#lo-que-empiezas-a-entregar---las-ganancias-que-yoltra-crea) y la [comparación de librerías](./design/state-management-library-comparison.md).
+
+## Dónde encaja Yoltra en tu código
+
+Tu código habla con un solo store. Los componentes de React llegan a él a través de
+`@yoltra/react`; el resto del código (un web worker, una prueba, una librería que decora el store)
+lo llama directamente. Todo lo que observa desde fuera (la persistencia, las DevTools) se conecta por
+el mismo punto de `instrument()`, así que nada de eso le pide algo a tus reducers. Las flechas
+punteadas son comandos de DevTools, que el agente ejecuta solo cuando están activados
+(`allowReplay`, `allowEmit`).
+
+```mermaid
+flowchart TD
+    accTitle: Dónde encaja Yoltra en tu código
+    accDescr: Tus componentes, el resto de tu código y las librerías llegan a un store, y la persistencia y las DevTools se conectan por su punto de instrumentación
+    subgraph yours ["Tu código"]
+    direction TB
+        components(["componentes de React"])
+        service(["código sin React: un web worker o una prueba"])
+        decorator(["una librería que decora un store"])
+        specs["tus reducers, middleware y efectos"]
+    end
+
+    components -->|"useAtomicProp, useEvent, useEmit"| react["@yoltra/react<br/>createYoltra, hooks tipados, StoreProvider"]
+    components -.->|"opcional, no necesita store"| ds["@yoltra/ds<br/>tokens, temas, primitivas accesibles"]
+
+    subgraph core ["@yoltra/core"]
+    direction TB
+        store["store<br/>emit, getState, call"]
+        seam["instrument<br/>rutas cambiadas, resultado, tiempos"]
+        store --> seam
+    end
+
+    specs -->|"createStore o createYoltra"| store
+    react -->|"connect, subscribe, onEvent, emit"| store
+    service -->|"emit, call, getState, whenIdle"| store
+    decorator -->|"withSlice, withMiddleware, withEffect"| store
+    store -->|"tus efectos llaman hacia fuera"| apis(["tus APIs y servicios"])
+
+    storage(["web storage, o tu propio adaptador"]) -->|"hydrate: estado inicial, antes de que exista el store"| store
+    seam -->|"persist: escrituras throttled, codificadas por el codec"| storage
+
+    seam --> agent["agente de DevTools<br/>withDevtools"]
+    agent -->|"WebSocket"| hub["@yoltra/devtools-server<br/>hub en localhost, también incrustado por la CLI"]
+    hub -->|"eventos, instantáneas, métricas"| hubPanel(["UI de terminal, o el panel de storeview<br/>montado en una página propia"])
+    agent -->|"postMessage retransmitido por la extensión, sin hub"| extPanel(["panel de la extensión de navegador"])
+    hubPanel -.->|"comandos: viaje en el tiempo, replay, emit"| hub
+    hub -.->|"al único store al que van dirigidos"| agent
+    extPanel -.->|"los mismos comandos"| agent
+```
 
 ## Cómo funciona un store
 
@@ -101,6 +144,8 @@ en el instante en que `emit()` retorna; los efectos corren después, como una ta
 
 ```mermaid
 flowchart TD
+    accTitle: Cómo funciona un store
+    accDescr: Un evento pasa por el dedup opcional, la fase de reducción síncrona, la confirmación y las notificaciones, y luego los efectos asíncronos
     emit["emit canal, tipo, payload"] --> dedup{"dedup activa?"}
     dedup -->|"desactivada por defecto"| queue
     dedup -->|"activa"| fp["huella a través del codec:<br/>Map, Set, Date, BigInt, binarios y<br/>ciclos comparan por contenido"]
@@ -133,243 +178,133 @@ flowchart TD
     instr --> persistOut(["persist: escritura throttled, codificada por el codec"])
     instr --> agent(["agente de devtools"])
 
-    commit --> fx["efectos, seleccionados por when<br/>asíncronos, esperados uno tras otro"]
+    nCommitted -->|"todo evento confirmado, aunque una slice lo haya rechazado"| fx["efectos, seleccionados por when<br/>asíncronos, esperados uno tras otro"]
     fx --> call(["store.call usa un efecto de respuesta interno"])
 ```
 
-### `when`: un matcher, dos rutas de despacho
-
-Reducers, middleware y efectos apuntan a los eventos de la misma forma, y la forma que elijas
-decide cómo los encuentra el store.
-
-```mermaid
-flowchart LR
-    when["when"] --> keys["keys<br/>pares exactos de canal y tipo"]
-    when --> any["any"]
-    when --> chan["channel"]
-    when --> chans["channels"]
-
-    keys --> keyed["despacho por clave<br/>búsqueda O(1) en un mapa"]
-    any --> scan["despacho por patrón<br/>evaluado en cada evento"]
-    chan --> scan
-    chans --> scan
-
-    keyed --> run(["el handler se ejecuta"])
-    scan --> run
-```
-
-`keys` es exacto y está tipado contra tu mapa de eventos, así que un typo es un error de
-compilación. Los otros tres se resuelven en tiempo de ejecución, que es lo que permite que un
-solo handler cubra un canal completo.
-
-### Las comodidades, y dónde se conectan
-
-| Pieza | Dónde encaja |
-| --- | --- |
-| **codec** | Dedup por contenido, persistencia al leer y al escribir, snapshots y payloads de eventos en devtools. Lleva y trae `Map`, `Set`, `Date`, `RegExp`, `Error`, `BigInt`, typed arrays, ciclos y referencias compartidas, y reporta lo que no puede representar en lugar de descartarlo |
-| **persistencia** | `hydrate()` siembra el estado inicial antes de que el store exista, así que no hay parpadeo al arrancar; `persist()` se monta sobre la costura de instrumentación |
-| **devtools** | `instrument()` transmite eventos y parches; el viaje en el tiempo devuelve estado por `__applyExternalState`. El replay no vuelve a ejecutar tus handlers de `onEvent` salvo que lo pidan |
-| **registros** | `registerSlice`, `registerMiddleware` y `registerEffect` agregan a un store vivo y amplían sus tipos. `replace*` reemplaza solo lo que escribió la aplicación, así que una recarga en caliente deja en paz la slice de una librería |
-| **guard de cascada** | Un evento emitido desde un handler lleva su causa y su profundidad, así que un ciclo se detiene y se nombra en lugar de colgar la pestaña |
-
----
-
-## Lo que dejas de hacer - los dolores que Yoltra elimina
-
-### Optimización manual de renders - borra tus `useMemo`
-
-Suscríbete a `items.0.title` o al comodín `items.*.done` y re-renderiza solo cuando esa ruta exacta
-cambie - a través de objetos anidados, arrays y claves dinámicas. Sin selectores, sin memoización,
-sin `React.memo` en cada hoja.
-
-```tsx
-// Forma objeto: suscríbete a la ruta exacta
-const title = useAtomicProp({ reducer: "todos", property: "items.0.title" });
-
-// Ruta con comodín + deriva con un mapper
-const allDone = useAtomicProp({ reducer: "todos", property: "items.*.done" }, (s) =>
-  s.items.every((i) => i.done),
-);
-```
-
-[Ver la comparación de `flamegraph` (Redux vs Yoltra).](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.md)
-
-### Cableado del store y boilerplate
-
-`createYoltra(spec)` devuelve el store y cada hook tipado (`useAtomicProp`, `useEmit`, `useEvent`,
-`useSelector`, …). Los hooks usan ese store por defecto, así que un `<Provider>` es opcional. Sin
-archivo de context aparte, sin cableado.
-
-### Adivinar cuándo el estado está al día
-
-La fase de reducción (middleware → reducers → suscriptores → oyentes) se ejecuta de forma
-**síncrona**, así que `getState()` es correcto en el instante en que `emit()` retorna, incluso con
-middleware. Los efectos corren después, de forma asíncrona, y la promesa devuelta se resuelve solo
-cuando los efectos de _ese_ evento terminan. Sin lecturas obsoletas, sin "a veces síncrono, a veces
-asíncrono".
-
-### Sorpresas silenciosas de estado
-
-La deduplicación por contenido está **desactivada por defecto** - Yoltra nunca traga en silencio
-dos eventos rápidos legítimos (doble-clic, `+1` repetido). Actívala con `dedupWindowMs`, o usa un
-`dedupKey` por-emit para dedup basado en identidad (p. ej. un doble-render de React Strict Mode). Las
-escrituras cuestan O(cambio), no O(tamaño del estado): una actualización de un solo campo nunca clona
-ni vuelve a congelar toda la slice.
-
----
-
-## Lo que empiezas a entregar - las ganancias que Yoltra crea
-
-### DevTools de viaje en el tiempo que muestran exactamente qué cambió
-
-Como Yoltra está basado en eventos, sus devtools son de primera clase, no algo agregado después.
-El store reporta las **rutas precisas** que cambiaron en cada evento, así que el panel renderiza
-parches RFC-6902 exactos (`replace /todos/items/0/title`), un log de eventos filtrable con eventos
-confirmados/rechazados, métricas reales (tiempo de reducción, aciertos de dedup, profundidad de cola)
-y **viaje en el tiempo + repetición de eventos**. Esta es la capacidad que el campo de grano fino no
-puede igualar fácilmente.
-
-> **Véelo en vivo →** [**Orbital Mission Control**](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/README.es.md)
-> ejecuta el store, el hub y este mismo panel en una sola página - sin instalar nada. Pausa la
-> telemetría, recorre la línea de tiempo de la misión y mira cómo se reconstruye el estado.
-> ([Tour guiado](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/GUIDE.es.md).) · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/mission-control)
-
-### Eventos que puedes interceptar, rechazar y auditar
-
-Los eventos son tuplas `(channel, type, payload)`, un _namespacing_ natural que escala sin
-colisiones. Fluyen a través de un pipeline interceptable. El middleware puede **rechazar** un evento,
-produciendo un evento _no confirmado_ al que tu UI puede reaccionar, ideal para autorización,
-validación y UI optimista:
-
-```tsx
-await emit("auth", "login", credentials);
-await emit("analytics", "track", event);
-
-// Reacciona cuando el middleware bloquea un delete
-useEvent("ui", "delete", () => showToast("La eliminación fue bloqueada por permisos"), "uncommitted");
-```
-
-### Baterías para apps reales: entidades, persistencia, Suspense
-
-`createEntityAdapter` da a las colecciones rutas estables por identidad (`entities.<id>.title`)
-que sobreviven reordenamientos; `persist`/`hydrate` toman snapshots de slices con envelopes
-versionados y migraciones (web storage, adaptadores propios, `dehydrate()` para el traspaso en
-SSR); los hooks de Suspense cubren lecturas asíncronas. Todo dentro de los presupuestos de tamaño
-de bundle que el CI hace cumplir.
-
----
+Un solo matcher `when` apunta eventos para reducers, middleware y efectos: `keys` (pares tipados,
+búsqueda O(1)) o `any`, `channel`, `channels` (evaluados en tiempo de ejecución). El **codec** lleva
+y trae `Map`, `Set`, `Date`, `BigInt` y ciclos; `registerSlice` y compañía amplían un store vivo y sus
+tipos; el **guard de cascada** detiene y nombra un ciclo de eventos. Más en yoltra.dev: [despacho de `when`](https://yoltra.dev/es/yoltra/docs/overview/#when-un-matcher-dos-rutas-de-despacho), [las comodidades](https://yoltra.dev/es/yoltra/docs/overview/#las-comodidades-y-dónde-se-conectan).
 
 ## Paquetes
 
-| Paquete                                                                                     | Descripción                                                                                                                                                             |
-| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[@yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.es.md)**   | Store agnóstico de framework: reducers, middleware, efectos, detección de cambios de grano fino, instrumentación tipada, entity adapter, persistencia + hidratación     |
-| **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.es.md)** | Hooks de React: suscripciones de grano fino, accessors de ruta tipados, `createYoltra`, hooks de entidades, Suspense                                                    |
-| **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.md)**          | Sistema de diseño: primitivas de React accesibles (formularios, tablas, overlays, menús, pestañas), tokens de diseño `--yl-*` en tres niveles, temas claro/oscuro con el contraste verificado en ambos - independiente, usable sin el store |
-| **@yoltra/devtools-\***                                                                     | Suite de DevTools: protocolo, servidor hub, agentes de navegador/node y la UI del panel (extensión de navegador + CLI)                                                  |
+| Paquete | Descripción |
+| --- | --- |
+| **[@yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.es.md)** | Store agnóstico de framework: reducers, middleware, efectos, detección de cambios de grano fino, instrumentación tipada, entity adapter, persistencia + hidratación. Cero dependencias |
+| **[@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.es.md)** | Hooks de React: suscripciones de grano fino, accessors de ruta tipados, `createYoltra`, hooks de entidades, Suspense. Toma core como peer |
+| **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.es.md)** | Sistema de diseño: primitivas de React accesibles, tokens `--yl-*` en tres niveles, temas claro/oscuro con el contraste verificado en ambos. Independiente, usable sin el store |
+| **@yoltra/devtools-\*** | Suite de DevTools: protocolo, servidor hub, agente de navegador y la UI del panel (extensión de navegador + CLI) |
 
----
+```mermaid
+flowchart LR
+    accTitle: Cómo encajan los paquetes
+    accDescr: Los paquetes y de qué depende cada uno, desde el store en la base hasta los paneles de DevTools
+    subgraph state ["Estado"]
+    direction TB
+        core["@yoltra/core<br/>store, codec, persistencia<br/>cero dependencias"]
+        react["@yoltra/react<br/>createYoltra y los hooks"]
+    end
+
+    subgraph design ["Sistema de diseño"]
+    direction TB
+        ds["@yoltra/ds<br/>tokens, temas, primitivas<br/>usable sin el store"]
+    end
+
+    subgraph devtools ["DevTools"]
+    direction TB
+        browserAgent["@yoltra/devtools-browser-agent<br/>withDevtools"]
+        protocol["@yoltra/devtools-protocol<br/>mensajes, handshake, JSON Patch"]
+        server["@yoltra/devtools-server<br/>DevtoolsHub"]
+        ui["@yoltra/devtools-ui<br/>hooks de React sin UI"]
+        storeview["@yoltra/devtools-storeview<br/>inspector en React DOM"]
+        cli["@yoltra/devtools-cli<br/>UI de terminal con Ink"]
+        ext["@yoltra/devtools-ext<br/>extensión de navegador"]
+    end
+
+    react -.->|"peer"| core
+    browserAgent -.->|"peer"| core
+
+    browserAgent --> protocol
+    server --> protocol
+    ui --> protocol
+    storeview --> ui
+    storeview --> protocol
+    cli --> ui
+    cli -->|"incrusta el hub"| server
+    cli --> protocol
+    ext -->|"renderiza"| storeview
+    ext --> ui
+    ext --> protocol
+```
 
 ## Inicio rápido (React)
 
-[Guía de inicio rápido](./QUICK_START_GUIDE.md), una app funcional en menos de 3 minutos.
+Tres pasos, desde la instalación hasta una app funcional y totalmente tipada:
+
+1. **Instala:** `npm install @yoltra/core @yoltra/react` (`@yoltra/react` solo es necesario al usar React).
+2. **Crea el store y sus hooks tipados** con una sola llamada a `createYoltra`, como en la propuesta de arriba.
+3. **Usa los hooks:** lee con `useAtomicProp`, cambia el estado con `useEmit`. No necesitas `<Provider>`.
+
+La [Guía de inicio rápido](https://github.com/yoltra/yoltra/blob/main/docs/es/QUICK_START_GUIDE.md) recorre los mismos tres pasos con un contador tipado.
 
 ## DevTools
 
-El store de Yoltra expone una costura de instrumentación tipada (`store.instrument(...)`) que los
-agentes consumen con cero casts `as any`. Un pequeño hub retransmite los eventos de tu app en
-ejecución hacia el panel; el panel renderiza el log de eventos, el árbol de estado en vivo, los
-parches precisos por evento, las métricas y el viaje en el tiempo. Un evento que no se confirmó
-dice por qué, y nombra al middleware que lo vetó cuando ese middleware tiene nombre. Los agentes de navegador y de node
-son paquetes deliberadamente separados para que un bundle web nunca arrastre un WebSocket exclusivo de
-Node, y viceversa.
-
----
+El agente de navegador (`withDevtools`) consume la costura tipada `store.instrument(...)` y alimenta
+la extensión de navegador, o el hub en localhost detrás de la CLI de terminal y del panel storeview
+embebible: log de eventos, árbol de estado en vivo, parches RFC-6902 exactos, métricas, viaje en el
+tiempo y replay. Un evento que no se confirmó dice por qué, y nombra al middleware que lo vetó.
 
 ## Ejemplos en vivo
 
-> ### 🛰️ [Orbital Mission Control](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/README.es.md) - la demo insignia
->
-> **Empieza aquí.** Cada funcionalidad de Yoltra _y_ el **panel de DevTools** en vivo en una sola
-> pantalla - contadores de render de grano fino, suscripciones con comodín, efectos asíncronos,
-> veto de middleware y viaje en el tiempo, corriendo sobre un hub en memoria **sin instalar
-> nada**. → **[Tour guiado](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/GUIDE.es.md)** · **[▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/mission-control)**
-
-| Ejemplo                                                                                                                        | Descripción                                                                                                                                                                                                                 |
-| ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[Logo cinético (3000 partículas)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.es.md)** | Simulación de física con una suscripción de ruta independiente por círculo · [▶ Demo en vivo](https://yoltra.dev/es/demos/kinetic-logo)                                                                                     |
-| **[App de tareas con Profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.es.md)**          | Comparación de flamegraph lado a lado con Redux ([resultados](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.es.md)) · [▶ Demo en vivo](https://yoltra.dev/es/demos/in-react) |
-| **[Contador](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-react-counter/README.es.md)**                       | El ejemplo mínimo de extremo a extremo · [▶ Demo en vivo](https://yoltra.dev/es/demos/react-counter)                                                                                                                        |
-| **[Selector de tema en Next.js](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs/README.es.md)**        | Yoltra del lado del cliente dentro de una app Next.js (Pages Router) · [▶ Demo en vivo](https://yoltra.dev/es/demos/in-nextjs)                                                                                              |
-
----
+- **[Orbital Mission Control](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/README.es.md)**, la demo insignia: cada funcionalidad y el panel de DevTools en una pantalla, sin instalar nada · [Tour guiado](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-mission-control/GUIDE.es.md) · [▶ Demo en vivo](https://yoltra.dev/es/demos/mission-control/)
+- **[Logo cinético (3000 partículas)](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-kinetic-logo/README.es.md)**: una suscripción de ruta independiente por círculo · [▶ Demo en vivo](https://yoltra.dev/es/demos/kinetic-logo/)
+- **[App de tareas con Profiler](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/README.es.md)**: flamegraphs lado a lado con Redux ([resultados](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-react/redux-yoltra-profiler.es.md)) · [▶ Demo en vivo](https://yoltra.dev/es/demos/in-react/)
+- **[Contador](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-react-counter/README.es.md)**: el ejemplo mínimo de extremo a extremo · [▶ Demo en vivo](https://yoltra.dev/es/demos/react-counter/)
+- **[Selector de tema en Next.js](https://github.com/yoltra/yoltra/blob/main/examples/v0/yoltra-in-nextjs/README.es.md)**: Yoltra del lado del cliente en el Pages Router · [▶ Demo en vivo](https://yoltra.dev/es/demos/in-nextjs/)
 
 ## Documentación
 
-- **[Guía de inicio rápido](https://github.com/yoltra/yoltra/blob/main/docs/es/QUICK_START_GUIDE.md)** - cinco pasos hacia una app funcional
-- **[Guía de migración](https://github.com/yoltra/yoltra/blob/main/docs/es/MIGRATION_GUIDE.md)** - si vienes de Redux, Zustand o Jotai
-- **[Actualizar a 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/es/UPGRADE_0.8.md)** - qué cambió, cómo lo notarías, y qué hacer
-- **[Actualizar @yoltra/ds a 0.4.0](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.es.md#migrar-desde-03x)** - 38 tokens renombrados, el codemod que viene en el paquete, y un tamaño por defecto más compacto
-- **[Guía de decoración](https://github.com/yoltra/yoltra/blob/main/docs/es/DECORATION_GUIDE.md)** - agregar una slice, middleware o efecto al store de alguien más, con los tipos
-- **[Petición y respuesta](https://github.com/yoltra/yoltra/blob/main/docs/es/REQUEST_REPLY_GUIDE.md)** - `store.call()`: correlación sin ids, progreso en streaming con backpressure real
-- **[Guía de testing](https://github.com/yoltra/yoltra/blob/main/docs/es/TESTING_GUIDE.md)** - prueba stores, efectos, middleware y componentes
-- **[Guía de Next.js](https://github.com/yoltra/yoltra/blob/main/docs/es/NEXTJS_GUIDE.md)** - uso en cliente con Pages y App Router
-- **[API de @yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.md)** - store, middleware, efectos, matchers `When`, instrumentación
-- **[API de @yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.md)** - hooks, accessors tipados, `createYoltra`, Suspense
-- **[@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.es.md)** - componentes, tokens, temas y el contrato con SSR
-- **[Arquitectura del pipeline de eventos](https://github.com/yoltra/yoltra/blob/main/docs/es/design/event-queue-architecture.md)** - cómo funciona el pipeline de reducción síncrona / efectos asíncronos
-- **[Comparación de librerías](https://github.com/yoltra/yoltra/blob/main/docs/es/design/state-management-library-comparison.md)** - comparación arquitectónica honesta con Redux, Zustand, Jotai y otras
+Cada documento del repositorio es la versión breve; su página completa vive en yoltra.dev, junto a
+la [referencia de la API](https://yoltra.dev/es/yoltra/api/) y [lo nuevo en 0.10](https://yoltra.dev/es/yoltra/releases/0.10/).
 
----
+| En el repositorio | Qué cubre | En yoltra.dev |
+| --- | --- | --- |
+| [Guía de inicio rápido](https://github.com/yoltra/yoltra/blob/main/docs/es/QUICK_START_GUIDE.md) | 3 pasos hacia una app funcional | [Inicio rápido](https://yoltra.dev/es/yoltra/docs/quick-start/) |
+| [Guía de migración](https://github.com/yoltra/yoltra/blob/main/docs/es/MIGRATION_GUIDE.md) | Si vienes de Redux, Zustand o Jotai | [Migración](https://yoltra.dev/es/yoltra/docs/migration/) |
+| [Petición y respuesta](https://github.com/yoltra/yoltra/blob/main/docs/es/REQUEST_REPLY_GUIDE.md) | `store.call()`: correlación sin ids, progreso en streaming con backpressure | [Petición y respuesta](https://yoltra.dev/es/yoltra/docs/request-reply/) |
+| [Guía de decoración](https://github.com/yoltra/yoltra/blob/main/docs/es/DECORATION_GUIDE.md) | Agregar una slice, middleware o efecto al store de alguien más, con los tipos | [Decoración](https://yoltra.dev/es/yoltra/docs/decoration/) |
+| [Guía de testing](https://github.com/yoltra/yoltra/blob/main/docs/es/TESTING_GUIDE.md) | Probar stores, efectos, middleware y componentes | [Testing](https://yoltra.dev/es/yoltra/docs/testing/) |
+| [Guía de Next.js](https://github.com/yoltra/yoltra/blob/main/docs/es/NEXTJS_GUIDE.md) | Uso en cliente con Pages y App Router | [Next.js](https://yoltra.dev/es/yoltra/docs/nextjs/) |
+| [Actualizar a 0.10.0](https://github.com/yoltra/yoltra/blob/main/docs/es/UPGRADE_0.10.md) | Qué cambió, cómo lo notarías, qué hacer | [Migración a 0.10](https://yoltra.dev/es/yoltra/releases/0.10/migration/) |
+| [Actualizar a 0.8.0](https://github.com/yoltra/yoltra/blob/main/docs/es/UPGRADE_0.8.md) | Qué cambió, cómo lo notarías, qué hacer | [Migración a 0.8](https://yoltra.dev/es/yoltra/releases/0.8/migration/) |
+| [@yoltra/core](https://github.com/yoltra/yoltra/blob/main/packages/core/README.es.md) | Store, middleware, efectos, matchers `When`, instrumentación | [core](https://yoltra.dev/es/yoltra/packages/core/) |
+| [@yoltra/react](https://github.com/yoltra/yoltra/blob/main/packages/react/README.es.md) | Hooks, accessors tipados, `createYoltra`, Suspense | [react](https://yoltra.dev/es/yoltra/packages/react/) |
+| [@yoltra/ds](https://github.com/yoltra/yoltra/blob/main/packages/ds/README.es.md) | Componentes, tokens, temas, el contrato con SSR y la migración a 0.4.0 (38 tokens renombrados, un codemod) | [ds](https://yoltra.dev/es/ds/docs/overview/) |
+| [Arquitectura del pipeline de eventos](https://github.com/yoltra/yoltra/blob/main/docs/es/design/event-queue-architecture.md) | El pipeline de reducción síncrona y efectos asíncronos | [Pipeline de eventos](https://yoltra.dev/es/yoltra/docs/design/event-queue-architecture/) |
+| [Comparación de librerías](https://github.com/yoltra/yoltra/blob/main/docs/es/design/state-management-library-comparison.md) | Comparación arquitectónica con Redux, Zustand, Jotai y otras | [Comparación](https://yoltra.dev/es/yoltra/docs/design/state-management-comparison/) |
 
 ## Contribuir
 
-¡Damos la bienvenida a las contribuciones! Por favor, lee la
-[Guía de contribución](https://github.com/yoltra/yoltra/blob/main/CONTRIBUTING.md),
-el [Código de conducta](https://github.com/yoltra/yoltra/blob/main/CODE_OF_CONDUCT.md),
-la [Gobernanza](https://github.com/yoltra/yoltra/blob/main/GOVERNANCE.md) y la
-[Política de seguridad](https://github.com/yoltra/yoltra/blob/main/SECURITY.md).
-
----
+Las contribuciones son bienvenidas. Lee la [Guía de contribución](https://github.com/yoltra/yoltra/blob/main/docs/es/CONTRIBUTING.md), el [Código de conducta](https://github.com/yoltra/yoltra/blob/main/docs/es/CODE_OF_CONDUCT.md),
+la [Gobernanza](https://github.com/yoltra/yoltra/blob/main/docs/es/GOVERNANCE.md) y la [Política de seguridad](https://github.com/yoltra/yoltra/blob/main/docs/es/SECURITY.md).
 
 ## Desarrollo (Monorepo)
 
-```bash
-npm i -g @microsoft/rush
-rush install
-rush build
-rush test
-```
-
-Consulta la
-**[Guía del desarrollador](https://github.com/yoltra/yoltra/blob/main/docs/es/DEVELOPER_GUIDE.md)**
-para más detalles.
-
----
+`npm i -g @microsoft/rush`, luego `rush install`, `rush build` y `rush test`. La
+**[Guía del desarrollador](https://github.com/yoltra/yoltra/blob/main/docs/es/DEVELOPER_GUIDE.md)** tiene el resto.
 
 ## Estado
 
-Yoltra está en etapa de **Release Candidate**:
-
-- Las APIs de core y React son estables y se usan en aplicaciones en producción.
-- Los tipos de TypeScript son estrictos y completos; el CI hace cumplir umbrales de cobertura, presupuestos de tamaño de bundle y benchmarks.
-- La suite de DevTools se conecta sin configuración en el navegador, y además ofrece un panel embebible y una UI de terminal.
-- Las APIs menores aún pueden evolucionar antes de v1.0.
-
-Los comentarios y PRs son bienvenidos.
-
----
+**Release Candidate.** Las APIs de core y React son estables y se usan en producción; los tipos son
+estrictos; el CI hace cumplir cobertura, tamaño de bundle y benchmarks. Las APIs menores aún pueden
+evolucionar antes de v1.0.
 
 ## Licencia
 
-**MIT**: libre para usar en proyectos comerciales y de código abierto. Cada paquete
-`@yoltra/*` publicado se distribuye bajo la misma licencia MIT. Consulta [LICENSE](https://github.com/yoltra/yoltra/blob/main/LICENSE) para más
-detalles.
-
-**Marcas registradas:** «Yoltra» y el logo de Yoltra son marcas. La licencia MIT cubre el código, no las marcas, consulta
-[TRADEMARKS](https://github.com/yoltra/yoltra/blob/main/docs/es/TRADEMARKS.md).
-
----
+**MIT**, para proyectos comerciales y de código abierto; cada paquete `@yoltra/*` publicado se
+distribuye bajo ella. Consulta [LICENSE](https://github.com/yoltra/yoltra/blob/main/LICENSE). «Yoltra» y el logo de
+Yoltra son marcas; la licencia cubre el código, no las marcas. Consulta [TRADEMARKS](https://github.com/yoltra/yoltra/blob/main/docs/es/TRADEMARKS.md).
 
 ## Comunidad
 
@@ -377,3 +312,5 @@ detalles.
 - **Twitter/X:** [@yoltra_dev](https://twitter.com/yoltra_dev)
 - **GitHub Discussions:** [Únete a la conversación](https://github.com/yoltra/yoltra/discussions)
 - **Issues:** [Reporta errores o solicita funcionalidades](https://github.com/yoltra/yoltra/issues)
+
+> **Guía completa:** [Yoltra en yoltra.dev](https://yoltra.dev/es/yoltra/)

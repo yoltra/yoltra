@@ -346,8 +346,8 @@ export interface EmitOptions {
  * `("a", "b::c")` both become `"a::b::c"`, and a subscriber registered for one is invoked for the
  * other, while a dedup window lets one drop the other.
  *
- * A `::` in a channel is fine on its own — it is how a federated peer's channel is namespaced —
- * so development builds warn on the **collision**, naming both pairs, rather than on the
+ * A `::` in a channel is fine on its own (it is how a peer's channel is namespaced), so
+ * development builds warn on the **collision**, naming both pairs, rather than on the
  * separator. Nothing throws.
  *
  * @public
@@ -378,10 +378,21 @@ export type Unsubscribe = () => void;
  */
 export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
   /**
-   * The processed event, including its `id` and any {@link EventMeta} the emitter attached.
-   * `meta` is absent unless it was supplied.
+   * The processed event, including its `id`, any {@link EventMeta} the emitter attached, and its
+   * place in a causal chain. `meta`, `parentId` and `depth` are absent unless the event has them,
+   * as on {@link Event}.
    */
-  event: { id: string; channel: string; type: string; payload: unknown; meta?: EventMeta };
+  event: {
+    id: string;
+    channel: string;
+    type: string;
+    payload: unknown;
+    meta?: EventMeta;
+    /** {@link Event.parentId}: the event whose handling caused this one. Absent on a root event. */
+    parentId?: string;
+    /** {@link Event.depth}: how deep in a causal chain this event is. Absent on a root event. */
+    depth?: number;
+  };
   /** `true` if the event passed middleware and ran reducers; `false` if vetoed. */
   committed: boolean;
   /**
@@ -394,8 +405,23 @@ export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
   prevValues: Record<string, unknown>;
   /** New value at each changed path, keyed by path. */
   nextValues: Record<string, unknown>;
-  /** Wall-clock milliseconds spent in the synchronous reduce phase for this event. */
+  /**
+   * Milliseconds spent in the synchronous reduce phase for this event.
+   *
+   * @remarks
+   * A duration, measured with `performance.now()` (falling back to `Date.now()` where it is
+   * missing), so it is unaffected by changes to the system clock. It is not a time of day.
+   */
   reduceTimeMs: number;
+  /**
+   * When the store processed the event, in epoch milliseconds from {@link StoreSpec.clock}.
+   *
+   * @remarks
+   * Read once per event, after its reducers ran, and only while an observer is registered. It is
+   * the timestamp an observer that records or exports events needs; for how long reducing took,
+   * read {@link InstrumentedEvent.reduceTimeMs}.
+   */
+  at: number;
   /**
    * Present when a reducer refused the write, carrying its reason.
    *
@@ -442,6 +468,87 @@ export interface InstrumentedEvent<EM extends EventMapBase = EventMapBase> {
 export type InstrumentationObserver<EM extends EventMapBase = EventMapBase> = (
   info: InstrumentedEvent<EM>,
 ) => void;
+
+/**
+ * A store's current load, from {@link StoreInstance.metrics}.
+ *
+ * @public
+ */
+export interface StoreMetrics {
+  /** Events emitted and waiting to be reduced. Non-zero only during a synchronous drain. */
+  readonly queueDepth: number;
+  /** Events whose effects are still running. */
+  readonly inFlightEffects: number;
+  /** Emits dropped as duplicates since the store was created. */
+  readonly dedupHits: number;
+  /** Fingerprints held for deduplication, which is the cache's memory in entries. */
+  readonly dedupEntries: number;
+}
+
+/**
+ * One effect's part in {@link InstrumentedEffects}.
+ *
+ * @public
+ */
+export interface InstrumentedEffect {
+  /** `EffectSpec.meta.name`, else the function's own name, when it has one. */
+  readonly name?: string;
+  /**
+   * How the effect was registered. `internal` is the store's own machinery, such as the reply
+   * listener behind `store.call()`.
+   */
+  readonly origin: Origin;
+  /** From its start to its settlement, measured with `performance.now()`. */
+  readonly durationMs: number;
+  /** Whether it threw or rejected. The error itself reaches the diagnostics seam as `effect-error`. */
+  readonly failed: boolean;
+}
+
+/**
+ * What {@link StoreInstance.instrumentEffects} reports once every effect for an event has settled.
+ *
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export interface InstrumentedEffects<EM extends EventMapBase = EventMapBase> {
+  /** The event, as {@link InstrumentedEvent.event} describes it. */
+  readonly event: InstrumentedEvent<EM>["event"];
+  /** Clock time ({@link StoreSpec.clock}) when the last effect settled. */
+  readonly at: number;
+  /** The whole effect phase, from the first effect's start to the last one's settlement. */
+  readonly durationMs: number;
+  /** One entry per effect, in the order they ran. */
+  readonly effects: readonly InstrumentedEffect[];
+}
+
+/**
+ * Receives an {@link InstrumentedEffects} per event whose effects ran.
+ *
+ * @public
+ */
+export type EffectsObserver<EM extends EventMapBase = EventMapBase> = (
+  info: InstrumentedEffects<EM>,
+) => void;
+
+/**
+ * Options for {@link StoreInstance.instrument}.
+ *
+ * @public
+ */
+export interface InstrumentOptions {
+  /**
+   * Also receive events on {@link StoreSpec.ephemeral} channels.
+   *
+   * @remarks
+   * Off by default, so an observer that records history (a devtools timeline, an audit trail)
+   * never pays for traffic. Turn it on for an observer that must see every state change whatever
+   * caused it, such as persistence.
+   *
+   * @default false
+   */
+  readonly ephemeral?: boolean;
+}
 
 /**
  * Store spec - what you feed into the constructor / factory.
@@ -502,6 +609,114 @@ export type MiddlewareInput<S = any, EM extends EventMapBase = EventMapBase> =
   | MiddlewareSpec<S, EM>;
 
 /**
+ * A cancellable timer handle, as `setTimeout` returns it: a number or an object, depending on the
+ * host.
+ *
+ * @public
+ */
+export type TimerHandle = number | object;
+
+/**
+ * Where a store reads the time.
+ *
+ * @remarks
+ * Called as a method, so a class instance keeps its `this`. Only `now()` is read, so a clock with
+ * more members is accepted as it is.
+ *
+ * @public
+ */
+export interface Clock {
+  /** Milliseconds since the epoch. */
+  now(): number;
+}
+
+/**
+ * Where a store arms its timers.
+ *
+ * @remarks
+ * Called as methods, so a class instance keeps its `this`. `clearTimeout` receives exactly what
+ * `setTimeout` returned.
+ *
+ * @public
+ */
+export interface Scheduler {
+  /** Runs `callback` once, after `delayMs` milliseconds. */
+  setTimeout(callback: () => void, delayMs: number): TimerHandle;
+  /** Cancels a timer that has not fired yet. */
+  clearTimeout(handle: TimerHandle): void;
+}
+
+/**
+ * The stable identifier of a {@link Diagnostic}, for routing and filtering.
+ *
+ * @remarks
+ * Failures the store contained:
+ * - `effect-error`, `reducer-error`, `subscriber-error` (an `onEvent` handler), `connect-error`
+ *   (a `connect` handler), `middleware-error` (a middleware threw, which vetoes the event)
+ * - `observer-error`: an instrumentation or registration observer, or a hook, threw
+ * - `emit-error`: the reduce phase failed outside any one consumer
+ * - `slice-teardown-error`: a disposer threw while a slice was unregistered
+ *
+ * Refusals: `cascade` (a causal chain exceeded its ceiling), `rejected` (a reducer declined the
+ * write; level `info`, since a refusal is a normal outcome), `registration-cascade`.
+ *
+ * Development warnings, never sent in production: `key-collision`, `payload-by-reference`,
+ * `dotted-key`, `snapshot-missing-slice`, `middleware-promise`, `observer-promise`,
+ * `use-after-dispose` (an `emit` or `call` on a disposed store), `ephemeral-write` (an event on
+ * an ephemeral channel wrote state).
+ *
+ * @public
+ */
+export type DiagnosticCode =
+  | "effect-error"
+  | "reducer-error"
+  | "subscriber-error"
+  | "connect-error"
+  | "middleware-error"
+  | "observer-error"
+  | "emit-error"
+  | "slice-teardown-error"
+  | "cascade"
+  | "rejected"
+  | "registration-cascade"
+  | "key-collision"
+  | "payload-by-reference"
+  | "dotted-key"
+  | "snapshot-missing-slice"
+  | "middleware-promise"
+  | "observer-promise"
+  | "use-after-dispose"
+  | "ephemeral-write";
+
+/**
+ * Something a store has to say: a failure it contained, a refusal, or a development warning.
+ *
+ * @remarks
+ * `code` is stable, for a program; `message` is for a person and may be reworded. `detail` holds
+ * the values involved, such as `event`, `error` and `slice`, so a sink can forward them without
+ * parsing the message.
+ *
+ * @public
+ */
+export interface Diagnostic {
+  /** How serious it is. A sink that also accepts other levels is still accepted. */
+  readonly level: "info" | "warn" | "error";
+  /** What happened, stably. See {@link DiagnosticCode}. */
+  readonly code: DiagnosticCode;
+  /** A sentence for a person. May be reworded between versions; route on `code`. */
+  readonly message: string;
+  /** The values involved. */
+  readonly detail?: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * Receives a store's {@link Diagnostic}s. See {@link StoreSpec.diagnostics}.
+ *
+ * @public
+ */
+export type DiagnosticSink = (diagnostic: Diagnostic) => void;
+
+/**
  * Store configuration object passed to the {@link Store} constructor or {@link createStore}.
  *
  * @typeParam R  - Reducer name union (string literal union).
@@ -540,7 +755,7 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * Map of slice name → reducer spec.
    * Each entry declares initial state, the reducer function, and the event targeting.
    */
-  reducer: Record<R, ReducerSpec<S[R], EM>>;
+  reducer: { [K in R]: ReducerSpec<S[K], EM> };
 
   /**
    * Middleware chain executed before reducers/effects.
@@ -593,6 +808,32 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * ```
    */
   idFactory?: () => string;
+
+  /**
+   * Where the store reads the time: deduplication windows and {@link InstrumentedEvent.at}.
+   *
+   * @remarks
+   * Inject one to control time in a test, or to give every library a host configures the same
+   * clock. The default reads `Date.now()` at each call, so fake timers installed after the store
+   * was created still apply. Durations such as {@link InstrumentedEvent.reduceTimeMs} are measured
+   * with `performance.now()` either way.
+   *
+   * @default `{ now: () => Date.now() }`
+   */
+  clock?: Clock;
+
+  /**
+   * Where the store arms its timers: the deduplication cache prune and the idle timeout of
+   * `store.call()`.
+   *
+   * @remarks
+   * The default calls the global `setTimeout` and `clearTimeout` when a timer is armed or
+   * cleared, so fake timers installed after the store was created still apply. `persist` takes
+   * its own, `PersistOptions.scheduler`.
+   *
+   * @default the global `setTimeout` and `clearTimeout`
+   */
+  scheduler?: Scheduler;
 
   /**
    * DevTools configuration options.
@@ -737,6 +978,35 @@ export type StoreSpec<R extends string, S extends Record<R, any>, EM extends Eve
    * @param slice - Name of the slice whose reducer refused.
    */
   onRejected?: (rejection: Rejection, event: EventUnion<EM>, slice: string) => void;
+
+  /**
+   * Channels whose events are traffic, not history.
+   *
+   * @remarks
+   * Reducers, subscribers and effects handle them as usual. What changes is everything that
+   * records: they reach only instrumentation observers registered with `{ ephemeral: true }`, so
+   * a devtools timeline or an audit log skips them and the store does no instrumentation work for
+   * them while nobody opted in, and replay skips them. Use it for high-frequency signals such as
+   * presence, cursor positions, typing indicators or progress ticks.
+   *
+   * An ephemeral event that writes state is warned about once in development (the
+   * `ephemeral-write` diagnostic): replay would skip it, so a replayed history would diverge.
+   */
+  ephemeral?: readonly (keyof EM & string)[];
+
+  /**
+   * Where the store sends its diagnostics: every failure it contained, every refusal, and its
+   * development warnings. See {@link Diagnostic}.
+   *
+   * @remarks
+   * Without a sink the store writes to the console exactly as it always has. With one, the sink
+   * replaces that output: the store's owner decides where its diagnostics go, and the store
+   * itself writes nothing. The `on*` hooks above are still called either way.
+   *
+   * A sink that throws is ignored; it cannot break the store. Observers added later with
+   * {@link StoreInstance.onDiagnostic} receive the same diagnostics, in addition to this sink.
+   */
+  diagnostics?: DiagnosticSink;
 };
 
 /**
@@ -854,6 +1124,7 @@ export interface StoreInstance<
       getState: () => DeepReadonly<S>,
       emit: Emit<EM>,
       event: Event<EM, C, T>,
+      ctx: EffectContext,
     ) => void | Promise<void>,
   ): Unsubscribe;
 
@@ -892,10 +1163,36 @@ export interface StoreInstance<
   ): Unsubscribe & { store: WidenedSlice<R, S, EM, N, Spec>; dispose(): void };
 
   /**
-   * Cleanup resources (timers, etc.) when disposing the store.
-   * Call this if you're dynamically creating/destroying stores.
+   * Releases the store. Afterwards it is inert: `emit()` resolves `{ committed: false }` without
+   * running anything, `call()` rejects with `CallAbortedError` (as does every pending call), and
+   * registration methods throw. {@link StoreInstance.signal} aborts last. Idempotent.
    */
   dispose(): void;
+
+  /**
+   * The store's current load: queue depth, effects in flight, deduplication. Cheap enough to read
+   * on every scrape of a metrics endpoint.
+   */
+  metrics(): StoreMetrics;
+
+  /**
+   * Resolves when the store is idle: no event waiting to be reduced and no effect running.
+   *
+   * @remarks
+   * For a clean teardown, which stops whatever feeds the store new work, waits for what is in
+   * progress, and then disposes. A `call()` waiting for its reply and a pending timer are not
+   * work the store is doing, so they do not delay it. Resolves at once when the store is already
+   * idle or disposed, and every pending wait resolves on dispose. Bound it with a timeout: an
+   * effect that never settles keeps the store busy. Never await it from an effect, which is
+   * itself the work it would wait for.
+   */
+  whenIdle(): Promise<void>;
+
+  /**
+   * Aborted when the store is disposed. Created on first read; already aborted when read after
+   * disposal. Tie work that should live exactly as long as the store to it.
+   */
+  readonly signal: AbortSignal;
 
   /**
    * Subscribe to events by channel and type.
@@ -1034,11 +1331,13 @@ export interface StoreInstance<
   /**
    * Replaces the entire reducer set (HMR-friendly).
    *
-   * @param next - Map of slice specs keyed by slice name.
+   * @param next - Slice specs keyed by slice name, each typed with its own slice's state. Every
+   *   key is optional: an omitted slice this call owns is removed, and an omitted slice mounted
+   *   at runtime is kept. See {@link ReducerReplacement}.
    * @param opts - `{ preserveState?: boolean }` (default `true`).
    */
   replaceReducers(
-    next: Record<R, ReducerSpec<S[R], EM>>,
+    next: ReducerReplacement<R, S, EM>,
     opts?: { preserveState?: boolean; scope?: ReplaceScope },
   ): void;
 
@@ -1048,7 +1347,7 @@ export interface StoreInstance<
    * @param partial - Partial replacement set.
    */
   hotReplace(partial: {
-    reducer?: Record<R, ReducerSpec<S[R], EM>>;
+    reducer?: ReducerReplacement<R, S, EM>;
     middleware?: MiddlewareInput<DeepReadonly<S>, EM>[];
     effects?: Array<EffectSpec<DeepReadonly<S>, EM>>;
     preserveState?: boolean;
@@ -1118,7 +1417,39 @@ export interface StoreInstance<
    * @param observer - Receives an {@link InstrumentedEvent} per emit.
    * @returns Unsubscribe function.
    */
-  instrument(observer: InstrumentationObserver<EM>): Unsubscribe;
+  instrument(observer: InstrumentationObserver<EM>, options?: InstrumentOptions): Unsubscribe;
+
+  /**
+   * Observes the effect phase: once every effect for an event has settled, reports how long each
+   * took, whether it failed, and what it is called.
+   *
+   * @remarks
+   * {@link StoreInstance.instrument} reports an event after its reducers ran, before its
+   * effects. This is the other half, for tracing and timing: effect spans, slow handlers, failure
+   * rates by effect. Called only for an event whose effects ran at least one effect, and only
+   * while an observer is registered is any timing taken. Events on an ephemeral channel reach it
+   * only with `{ ephemeral: true }`, as with `instrument`. An observer that throws is reported
+   * as `observer-error` and does not affect the store.
+   *
+   * @param observer - Called once per event whose effects ran.
+   * @returns Unsubscribe function.
+   */
+  instrumentEffects(observer: EffectsObserver<EM>, options?: InstrumentOptions): Unsubscribe;
+
+  /**
+   * Observes the store's diagnostics: the failures it contained, its refusals and its
+   * development warnings, as {@link Diagnostic}s.
+   *
+   * @remarks
+   * For code attached to a store it did not create, such as a library that decorates one, which
+   * cannot set {@link StoreSpec.diagnostics} or the `on*` hooks. An observer is additive: it
+   * does not silence the console output a store without a sink produces, and it receives what a
+   * sink receives. One that throws is ignored.
+   *
+   * @param observer - Called once per diagnostic.
+   * @returns Unsubscribe function.
+   */
+  onDiagnostic(observer: DiagnosticSink): Unsubscribe;
 
   /**
    * Applies an externally-provided whole-state snapshot (DevTools time-travel),
@@ -1178,9 +1509,13 @@ export interface ReducerSpec<S = any, EM extends EventMapBase = EventMapBase> {
   state: S;
 
   /**
-   * Event targeting using the unified `When` matcher.
+   * Event targeting: one of the exact forms of the `When` matcher.
+   *
+   * @remarks
+   * `channelPattern` is not accepted here, by the type and at registration: a reducer's input
+   * set has to be closed and readable from its spec. See {@link ExactWhen}.
    */
-  when?: When<EM>;
+  when?: ExactWhen<EM>;
 
   /**
    * Pure reducer function: `(state, event) => nextState`, where `state` is this reducer's slice
@@ -1245,9 +1580,14 @@ export type ReducerFunction<S = any, EM extends EventMapBase = EventMapBase> = (
  */
 export interface EffectSpec<S = any, EM extends EventMapBase = EventMapBase> {
   /**
-   * Event targeting using the unified `When` matcher.
+   * Event targeting: one of the exact forms of the `When` matcher.
+   *
+   * @remarks
+   * `channelPattern` is not accepted here, by the type and at registration: every effect for
+   * an event runs in sequence, and a pattern would hide which chains an effect joins. See
+   * {@link ExactWhen}.
    */
-  when?: When<EM>;
+  when?: ExactWhen<EM>;
 
   /**
    * Async effect handler: `(event, getState, emit) => void | Promise<void>`.
@@ -1360,7 +1700,32 @@ export interface MiddlewareSpec<S = any, EM extends EventMapBase = EventMapBase>
 }
 
 /**
+ * What an effect receives about its own registration.
+ *
+ * @public
+ */
+export interface EffectContext {
+  /**
+   * Aborted when this effect stops being registered: its disposer ran, `replaceEffects` or
+   * `hotReplace` removed it, or the store was disposed.
+   *
+   * @remarks
+   * Hand it to work the effect starts, such as a `fetch`, so a reload or an unmount cancels the
+   * request instead of letting it land in a store that no longer wants it. Created on first
+   * read, and shared by every event the registration handles. An effect that is still running
+   * when it aborts is not stopped, and what it emits afterwards is not dropped: unregistering an
+   * effect is not the end of the store. Check `signal.aborted` before emitting a result that only
+   * made sense while the effect was installed.
+   */
+  readonly signal: AbortSignal;
+}
+
+/**
  * Effect handler: runs AFTER reducers, sees the final state.
+ *
+ * @remarks
+ * The fourth argument is optional to declare, so an effect written with three parameters is still
+ * an `EffectFunction`.
  *
  * @typeParam S  - Store state (readonly).
  * @typeParam EM - Event map.
@@ -1371,58 +1736,61 @@ export type EffectFunction<S = any, EM extends EventMapBase = EventMapBase> = (
   event: EventUnion<EM>,
   getState: () => S,
   emit: Emit<EM>,
+  ctx: EffectContext,
 ) => void | Promise<void>;
 
 /**
- * Helper: extract state shape from a reducers map.
+ * Any map of slice names to reducer specs.
  *
- * @internal
+ * @remarks
+ * The constraint for a helper that takes a store's `reducer` option and infers from it, as
+ * {@link StateFromReducers} and {@link EMFromReducersStrict} do.
+ *
+ * @public
  */
 export type ReducersMapAny = Record<string, ReducerSpec<any, any>>;
 
 /**
- * Helper: derive state type from a reducers map.
+ * The state a reducers map produces: each slice name mapped to its spec's state type.
  *
- * @internal
+ * @remarks
+ * This is the state `createStore` infers when it is given only `reducer`. Use it to name that
+ * state without writing it out a second time.
+ *
+ * @example
+ * ```ts
+ * const reducer = { counter: counterSpec, todos: todosSpec };
+ * type AppState = StateFromReducers<typeof reducer>;
+ * // { counter: CounterState; todos: TodosState }
+ * ```
+ *
+ * @public
  */
 export type StateFromReducers<R> = {
   [K in keyof R]: R[K] extends ReducerSpec<infer S, any> ? S : never;
 };
 
 /**
- * Helper: turn a union into an intersection.
+ * The event map a reducers map produces, merged across its slices.
  *
- * @internal
+ * @remarks
+ * This is the event map the `createStore` inference overload derives. Each slice contributes its
+ * own event map, and those maps are **merged** (channels, and each channel's `type → payload`
+ * entries, combined across slices) rather than collapsed to one slice's map, so a store whose
+ * slices declare different event maps still types `emit` against every slice's channels and
+ * types. Pair it with {@link StateFromReducers} to name both halves of an inferred store.
+ *
+ * @public
  */
-export type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends (
-  k: infer I,
-) => void
-  ? I
-  : never;
-
-/**
- * Helper: the event map of a single reducer spec.
- *
- * @internal
- */
-export type EMOfSpec<Spec> = Spec extends ReducerSpec<any, infer EM> ? EM : never;
-
-/**
- * Helper: derive the combined event map from a reducers map (strict).
- * Used by the createStore inference overload.
- *
- * Each slice contributes its own event map; those maps are **merged** (channels,
- * and each channel's `type → payload` entries, combined across slices) rather
- * than collapsed to a single slice's map. `EMOfSpec` distributes over the union
- * of specs to yield the union of per-slice event maps, and `UnionToIntersection`
- * merges them — so a store whose slices declare divergent event maps still types
- * `emit` against the union of every slice's channels/types.
- *
- * @internal
- */
-export type EMFromReducersStrict<RM extends ReducersMapAny> = UnionToIntersection<
-  EMOfSpec<RM[keyof RM]>
-> extends infer Merged
+export type EMFromReducersStrict<RM extends ReducersMapAny> = (
+  // Each slice's event map as a function parameter, distributed over the union of specs; inferring
+  // one parameter back from that union of functions intersects the maps.
+  RM[keyof RM] extends infer Spec
+    ? Spec extends ReducerSpec<any, infer EM>
+      ? (k: EM) => void
+      : never
+    : never
+) extends (k: infer Merged) => void
   ? Merged extends EventMapBase
     ? Merged
     : EventMapBase
@@ -1445,7 +1813,7 @@ export type EMFromReducersStrict<RM extends ReducersMapAny> = UnionToIntersectio
  *
  * @remarks
  * The first four compare exactly. `channelPattern` is for the case they cannot express: a channel
- * that arrives namespaced, such as a federated peer's `alias::plan` beside a local `plan`, where a
+ * that arrives namespaced, such as a peer's `alias::plan` beside a local `plan`, where a
  * guard wants both and cannot know the aliases in advance.
  *
  * Without it such a guard has to match everything and filter in its own body, which costs the
@@ -1454,6 +1822,15 @@ export type EMFromReducersStrict<RM extends ReducersMapAny> = UnionToIntersectio
  *
  * `*` stands for zero or more characters, so `"*plan"` covers `plan` and `bb::plan` with one rule,
  * and `"*::plan"` covers only the namespaced forms. Everything else in the pattern is literal.
+ *
+ * **`channelPattern` is for middleware only.** Reducers and effects take {@link ExactWhen}, and
+ * registering one with a pattern throws. A reducer's input set has to be closed and readable from
+ * its spec, or replaying the same log against the same code could fold a different set of events
+ * once something adds a channel; and a pattern on an effect would enlist it, unseen, in the
+ * sequential chain of every channel it matched.
+ *
+ * A matcher of none of the five forms (`{}`, `{ any: false }`, `{ keys: "x" }`) also throws at
+ * registration, on every seam: it used to be accepted and match nothing.
  *
  * **It stays a string rather than a predicate on purpose.** A matcher is reported to observers and
  * travels to a devtools panel; a function would make every one of them opaque.
@@ -1495,6 +1872,51 @@ export type When<EM extends EventMapBase> =
   | { channelPattern: string };
 
 /**
+ * The exact forms of {@link When}: every form but `channelPattern`. What reducers and effects
+ * accept.
+ *
+ * @remarks
+ * Exact rather than pattern-matched on purpose, and refused rather than ignored: before 0.10.0 a
+ * reducer or effect given a `channelPattern` registered without complaint and then handled
+ * nothing at all.
+ *
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export type ExactWhen<EM extends EventMapBase> = Exclude<When<EM>, { channelPattern: string }>;
+
+/**
+ * What `replaceReducers` and `hotReplace({ reducer })` take: slice specs keyed by slice name,
+ * each typed with **its own** slice's state, and every key optional.
+ *
+ * @remarks
+ * Optional because the runtime treats an omitted slice in two ways, both legitimate: a slice the
+ * replaced set owned is removed, and a slice mounted at runtime (`registerSlice`, `withSlice`, a
+ * decorating library) is kept along with its state. Requiring every name made the only call that
+ * typechecked on a decorated store one the runtime refuses, because naming a runtime slice
+ * without `{ scope: "all" }` throws.
+ *
+ * Per slice because a reducer for one slice must not be able to return another's state. Typing
+ * each entry with the union of every slice's state allowed exactly that, and refused an
+ * annotated reducer on any store with two slices.
+ *
+ * Naming a slice mounted at runtime still typechecks and throws: telling the two kinds apart in
+ * the type would need the store to track them separately, and the throw already says what to do.
+ *
+ * @typeParam R  - Slice names.
+ * @typeParam S  - State by slice name.
+ * @typeParam EM - Event map.
+ *
+ * @public
+ */
+export type ReducerReplacement<
+  R extends string,
+  S extends Record<R, any>,
+  EM extends EventMapBase,
+> = { [K in R]?: ReducerSpec<S[K], EM> };
+
+/**
  * Helper to create type-safe EventKey arrays without requiring `as const`.
  * Preserves literal tuple types for proper type correlation in handlers.
  *
@@ -1526,13 +1948,24 @@ export const eventKeys =
     keys;
 
 /**
- * Extracts the event union from a `When` matcher.
- * Used internally to narrow handler `event` parameter types based on the matcher.
+ * Extracts the event union from a `When` matcher, for typing a handler from its matcher.
+ *
+ * @remarks
+ * `{ channelPattern }` resolves to the whole {@link EventUnion}: a pattern is untyped by
+ * construction, and the whole union is exactly what a middleware handler receives, which is the
+ * only consumer a pattern can reach. It used to fall through to `never`.
  *
  * @typeParam EM - Event map.
  * @typeParam W  - When matcher type.
  *
- * @internal
+ * @example
+ * ```ts
+ * const when = { keys: eventKeys<AppEM>()([["ui", "increment"], ["ui", "reset"]]) };
+ * type Handled = EventFromWhen<AppEM, typeof when>;
+ * // Event<AppEM, "ui", "increment"> | Event<AppEM, "ui", "reset">
+ * ```
+ *
+ * @public
  */
 export type EventFromWhen<EM extends EventMapBase, W extends When<EM>> = W extends { any: true }
   ? EventUnion<EM>
@@ -1552,7 +1985,9 @@ export type EventFromWhen<EM extends EventMapBase, W extends When<EM>> = W exten
         ? C extends keyof EM & string
           ? { [T in keyof EM[C] & string]: Event<EM, C, T> }[keyof EM[C] & string]
           : never
-        : never;
+        : W extends { channelPattern: string }
+          ? EventUnion<EM>
+          : never;
 
 // ============================================
 // Path Value Resolution
@@ -2093,7 +2528,7 @@ export type StateOfSpec<X> = X extends ReducerSpec<infer St, any> ? St : never;
  *
  * @example
  * ```ts
- * type TransfersDecoration = Decoration<{ transfers: TransferState }, TransfersEM>;
+ * type FlagsDecoration = Decoration<{ flags: FlagsState }, FlagsEM>;
  * ```
  *
  * @public
@@ -2142,13 +2577,13 @@ export type Decorated<R extends string, S extends Record<R, any>, EM extends Eve
  *
  * @example
  * ```ts
- * export function withTransfers<
+ * export function withFlags<
  *   R extends string,
  *   S extends Record<R, any>,
  *   EM extends EventMapBase,
- * >(store: StoreInstance<R, S, EM>, config: TransfersConfig) {
- *   return store.withSlice("transfers", defineSlice<TransfersEM>()({ ... }), {
- *     owner: "@scope/transfers",
+ * >(store: StoreInstance<R, S, EM>, config: FlagsConfig) {
+ *   return store.withSlice("flags", defineSlice<FlagsEM>()({ ... }), {
+ *     owner: "@scope/flags",
  *   });
  * }
  * ```
@@ -2274,16 +2709,16 @@ export interface StoreDecoration<
  *
  * @example
  * ```ts
- * type LibEM = { "lib.transfer": { granted: { id: string } } };
+ * type LibEM = { "lib.flag": { enabled: { id: string } } };
  *
- * const transfers = defineSlice<LibEM>()({
- *   state: { granted: [] as string[] },
- *   when: { keys: [["lib.transfer", "granted"]] },
- *   reducer: (s, e) => (e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s),
+ * const flags = defineSlice<LibEM>()({
+ *   state: { enabled: [] as string[] },
+ *   when: { keys: [["lib.flag", "enabled"]] },
+ *   reducer: (s, e) => (e.type === "enabled" ? { enabled: [...s.enabled, e.payload.id] } : s),
  * });
  *
- * const widened = store.withSlice("transfers", transfers);
- * // widened.getState().transfers.granted is string[], and `lib.transfer` is emittable
+ * const widened = store.withSlice("flags", flags);
+ * // widened.getState().flags.enabled is string[], and `lib.flag` is emittable
  * ```
  *
  * @public

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-protocol",
+      "comment": "`duplicateStoreIdError(storeId)`: the handshake error every hub uses to refuse a store whose id is already connected, so the refusal reads the same over a socket and through an in-memory broker.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/devtools-protocol"
+}

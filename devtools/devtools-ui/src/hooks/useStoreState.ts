@@ -70,7 +70,11 @@ export function useStoreState(storeId: string | null): {
   const [state, setState] = useState<unknown>(null);
   const [version, setVersion] = useState(0);
   const [loading, setLoading] = useState(false);
+  // Ordering only: the version of the last snapshot or patch applied. It cannot also mean "a
+  // snapshot has arrived", because a store that has committed nothing answers with version 0;
+  // read that way, the view froze on the first snapshot and buffered every later patch.
   const versionRef = useRef(0);
+  const hasSnapshotRef = useRef(false);
   const pendingPatchesRef = useRef<Array<{ patches: JsonPatch[]; version: number }>>([]);
   const cancelRetryRef = useRef<(() => void) | null>(null);
 
@@ -96,8 +100,13 @@ export function useStoreState(storeId: string | null): {
       setState(null);
       setVersion(0);
       versionRef.current = 0;
+      hasSnapshotRef.current = false;
       return;
     }
+
+    // A different store starts over: its first snapshot is the baseline, not this one's.
+    hasSnapshotRef.current = false;
+    versionRef.current = 0;
 
     requestState();
 
@@ -107,7 +116,7 @@ export function useStoreState(storeId: string | null): {
     // snapshot handler below cancels this the moment a snapshot arrives.
     cancelRetryRef.current = startSnapshotRetry({
       request: requestState,
-      isSettled: () => versionRef.current !== 0,
+      isSettled: () => hasSnapshotRef.current,
       intervalMs: SNAPSHOT_RETRY_INTERVAL_MS,
     });
 
@@ -117,6 +126,7 @@ export function useStoreState(storeId: string | null): {
         setState(msg.state);
         setVersion(msg.version);
         versionRef.current = msg.version;
+        hasSnapshotRef.current = true;
         setLoading(false);
 
         // Apply any buffered patches that arrived after the snapshot version
@@ -141,7 +151,7 @@ export function useStoreState(storeId: string | null): {
       }
 
       if (msg.type === "STORE_EVENT" && msg.storeId === storeId && msg.committed) {
-        if (versionRef.current === 0) {
+        if (!hasSnapshotRef.current) {
           // No snapshot yet — buffer patches
           pendingPatchesRef.current.push({
             patches: msg.patches,

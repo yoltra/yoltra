@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-ext",
+      "comment": "The popup saves a hub token beside the host and port, and the panel sends it when it connects to a hub, so it can use a hub started with a token. The README (en, es), the privacy policy and the store listing say what is stored.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@yoltra/devtools-ext"
+}

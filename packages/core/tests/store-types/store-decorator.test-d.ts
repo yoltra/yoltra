@@ -27,8 +27,8 @@ type AppEM = { ui: { increment: number } };
 type AppState = { counter: { value: number } };
 
 type LogEM = { log: { line: string } };
-type TransferState = { granted: string[] };
-type TransferEM = { transfer: { granted: { id: string } } };
+type FlagsState = { enabled: string[] };
+type FlagsEM = { flag: { enabled: { id: string } } };
 
 const store = createStore<AppState, AppEM>({
   name: "DecoratorContract",
@@ -47,28 +47,28 @@ function withLogging<R extends string, S extends Record<R, any>, EM extends Even
 }
 
 // A slice-and-events decorator.
-function withTransfers<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
+function withFlags<R extends string, S extends Record<R, any>, EM extends EventMapBase>(
   s: StoreInstance<R, S, EM>,
 ) {
   return s.withSlice(
-    "transfers",
-    defineSlice<TransferEM>()({
-      state: { granted: [] } as TransferState,
-      when: { keys: [["transfer", "granted"]] },
+    "flags",
+    defineSlice<FlagsEM>()({
+      state: { enabled: [] } as FlagsState,
+      when: { keys: [["flag", "enabled"]] },
       reducer: (st) => st,
     }),
-    { owner: "@scope/transfers" },
+    { owner: "@scope/flags" },
   );
 }
 
 describe("decorators compose by nesting", () => {
   it("reaches the same store type in either order", () => {
-    const a = withTransfers(withLogging(store));
-    const b = withLogging(withTransfers(store));
+    const a = withFlags(withLogging(store));
+    const b = withLogging(withFlags(store));
 
     // Both orders see the added slice with its real state type.
-    expectTypeOf(a.getState().transfers).toEqualTypeOf<DeepReadonly<TransferState>>();
-    expectTypeOf(b.getState().transfers).toEqualTypeOf<DeepReadonly<TransferState>>();
+    expectTypeOf(a.getState().flags).toEqualTypeOf<DeepReadonly<FlagsState>>();
+    expectTypeOf(b.getState().flags).toEqualTypeOf<DeepReadonly<FlagsState>>();
 
     // And the application's own slice survives both.
     expectTypeOf(a.getState().counter).toEqualTypeOf<DeepReadonly<{ value: number }>>();
@@ -77,10 +77,10 @@ describe("decorators compose by nesting", () => {
     // Every channel from every step is emittable from either order.
     a.emit("ui", "increment", 1);
     a.emit("log", "line", "x");
-    a.emit("transfer", "granted", { id: "1" });
+    a.emit("flag", "enabled", { id: "1" });
     b.emit("ui", "increment", 1);
     b.emit("log", "line", "x");
-    b.emit("transfer", "granted", { id: "1" });
+    b.emit("flag", "enabled", { id: "1" });
   });
 });
 
@@ -90,7 +90,7 @@ describe("a decorator can require another decoration", () => {
   function withAudit<
     R extends string,
     S extends Record<R, any>,
-    EM extends EventMapBase & TransferEM,
+    EM extends EventMapBase & FlagsEM,
   >(s: StoreInstance<R, S, EM>) {
     return s.withEffect(
       defineEffect<LogEM>()({ when: { keys: [["log", "line"]] }, effect: async () => {} }),
@@ -98,11 +98,11 @@ describe("a decorator can require another decoration", () => {
   }
 
   it("accepts a store that already has the decoration", () => {
-    withAudit(withTransfers(store));
+    withAudit(withFlags(store));
   });
 
   it("rejects one that does not, at the call site", () => {
-    // @ts-expect-error - `transfer` is not a channel on this store yet
+    // @ts-expect-error - `flag` is not a channel on this store yet
     withAudit(store);
   });
 });

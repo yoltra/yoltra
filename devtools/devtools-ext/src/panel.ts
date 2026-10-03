@@ -3,11 +3,11 @@
  */
 
 import { mountDevtools } from "@yoltra/devtools-storeview";
-import { createLoopbackHub } from "@yoltra/devtools-ui";
+import { createLoopbackHub, type HubConnectionConfig } from "@yoltra/devtools-ui";
 
-const DEFAULT_HOST = "localhost";
-const DEFAULT_PORT = 9800;
-const CHANNEL = "yoltra-devtools-bridge";
+import { bridgePage } from "./bridge";
+import { SETTINGS_KEYS, hubConnection } from "./hub-config";
+
 const PANEL_CHANNEL = "yoltra-devtools-panel";
 
 /**
@@ -24,8 +24,8 @@ const PANEL_CHANNEL = "yoltra-devtools-panel";
  * living in an extension, where none of the test suites reach, would drift from the one both
  * ends actually speak.
  *
- * **The hub.** Node processes, remote sessions, and a page whose extension is not relaying still
- * need a socket, so the previous behaviour is the fallback rather than a replacement.
+ * **The hub.** Remote sessions, and a page whose extension is not relaying, still need a socket,
+ * so the previous behaviour is the fallback rather than a replacement.
  */
 async function init() {
   const root = document.getElementById("root");
@@ -37,13 +37,7 @@ async function init() {
     return;
   }
 
-  const config = await getConfig();
-  mountDevtools(root, {
-    host: config.host,
-    port: config.port,
-    extensionName: "Browser DevTools",
-    autoReconnect: true,
-  });
+  mountDevtools(root, await getConfig());
 }
 
 /**
@@ -54,31 +48,7 @@ async function init() {
  */
 function mountBridged(root: HTMLElement, tabId: number): void {
   const hub = createLoopbackHub();
-  const port = chrome.runtime.connect({ name: `${PANEL_CHANNEL}:${tabId}` });
-
-  // The page joins the broker as an ordinary peer: frames it sends are handed to the broker, and
-  // frames the broker addresses to it go back over the port. Nothing here inspects them.
-  const pageSocket = hub.agentSocketFactory("bridge://page", {
-    onOpen: () => undefined,
-    onClose: () => undefined,
-    onError: () => undefined,
-    onMessage: (raw: string) => {
-      try {
-        port.postMessage({ channel: CHANNEL, data: raw });
-      } catch {
-        // The tab went away; its content script reconnects on reload.
-      }
-    },
-  });
-
-  port.onMessage.addListener((message: unknown) => {
-    if (message === null || typeof message !== "object") return;
-    const msg = message as Record<string, unknown>;
-    if (msg.channel !== CHANNEL || typeof msg.data !== "string") return;
-    pageSocket.send(msg.data);
-  });
-
-  port.onDisconnect.addListener(() => pageSocket.close());
+  bridgePage(hub, chrome.runtime.connect({ name: `${PANEL_CHANNEL}:${tabId}` }));
 
   mountDevtools(root, {
     port: 0,
@@ -88,29 +58,19 @@ function mountBridged(root: HTMLElement, tabId: number): void {
   });
 }
 
-interface ExtensionConfig {
-  host: string;
-  port: number;
-}
-
 /**
  * Retrieve hub connection configuration from `chrome.storage.local`.
  *
- * Falls back to `localhost:9800` when storage is unavailable or empty.
+ * Falls back to `localhost:9800` without a token when storage is unavailable or empty.
  *
- * @returns A promise resolving to the host and port configuration.
+ * @returns A promise resolving to the connection the panel mounts with.
  */
-function getConfig(): Promise<ExtensionConfig> {
+function getConfig(): Promise<HubConnectionConfig> {
   return new Promise((resolve) => {
     if (typeof chrome !== "undefined" && chrome.storage?.local) {
-      chrome.storage.local.get(["hubHost", "hubPort"], (result) => {
-        resolve({
-          host: (result.hubHost as string) || DEFAULT_HOST,
-          port: (result.hubPort as number) || DEFAULT_PORT,
-        });
-      });
+      chrome.storage.local.get([...SETTINGS_KEYS], (result) => resolve(hubConnection(result)));
     } else {
-      resolve({ host: DEFAULT_HOST, port: DEFAULT_PORT });
+      resolve(hubConnection({}));
     }
   });
 }

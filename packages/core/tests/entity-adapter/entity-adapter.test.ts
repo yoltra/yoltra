@@ -197,6 +197,19 @@ describe("selectors and paths", () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("contains a dot"));
     warn.mockRestore();
   });
+
+  it("warns once per adapter, not once per process", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const first = createEntityAdapter<Todo>();
+    const second = createEntityAdapter<Todo>();
+
+    first.addOne(first.getInitialState(), todo("x.y"));
+    first.addOne(first.getInitialState(), todo("x.y"));
+    second.addOne(second.getInitialState(), todo("x.y"));
+
+    expect(warn.mock.calls.filter((c) => String(c[0]).includes('"x.y"'))).toHaveLength(2);
+    warn.mockRestore();
+  });
 });
 
 describe("extra slice fields", () => {

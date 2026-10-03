@@ -24,6 +24,56 @@ export type ReplySpec<EM extends EventMapBase> =
   | readonly [channel: keyof EM & string, types: readonly string[]];
 
 /**
+ * Which link correlates a reply with its {@link StoreInstance.call | call}.
+ *
+ * @remarks
+ * - `"either"`: the parent link, or an echoed {@link CallOptions.correlationId}. The default.
+ * - `"causal"`: the parent link only. An echoed id is ignored, even when one is set.
+ * - `"id"`: the echoed `correlationId` only. Requires `correlationId`.
+ *
+ * `"id"` exists for a responder whose protocol already carries its own request id, typically one
+ * that answers across a transport and keeps several requests in flight on one channel. There, the
+ * parent link can point at the wrong request: a reply emitted while a *different* request is
+ * being handled descends from that one, and under `"either"` it would settle whichever call
+ * matched first.
+ *
+ * @public
+ */
+export type CallCorrelation = "either" | "causal" | "id";
+
+/**
+ * What a responder is told when a {@link StoreInstance.call | call} gives up on it.
+ *
+ * @remarks
+ * Sent as the payload of the event named by {@link CallOptions.cancel}, so a responder doing long
+ * work can stop it instead of finishing for nobody.
+ *
+ * @public
+ */
+export interface CallCancellation {
+  /** The `id` of the request event being abandoned, which the responder saw as `event.id`. */
+  readonly requestId: string;
+  /**
+   * Why: `"cancelled"` by `call.cancel()`, `"aborted"` by the call's `signal`, or `"timeout"`
+   * after {@link CallOptions.timeoutMs} without a correlated event.
+   */
+  readonly reason: "cancelled" | "aborted" | "timeout";
+  /** The reason given to `cancel()`, or the signal's abort reason, as text. */
+  readonly detail?: string;
+}
+
+/**
+ * The `[channel, type]` pairs whose payload can carry a {@link CallCancellation}.
+ *
+ * @public
+ */
+export type CancelKey<EM extends EventMapBase> = {
+  [C in keyof EM & string]: {
+    [T in keyof EM[C] & string]: CallCancellation extends EM[C][T] ? readonly [C, T] : never;
+  }[keyof EM[C] & string];
+}[keyof EM & string];
+
+/**
  * Options for {@link StoreInstance.call}.
  *
  * @public
@@ -74,17 +124,42 @@ export interface CallOptions<EM extends EventMapBase> {
    * The default matching is structural: the store stamps `parentId` on anything emitted while an
    * event is being handled, so a responder that answers through the `emit` it was handed is
    * correlated without either side carrying an id. That is free and cannot be forged, but it only
-   * holds in one process and only for a **direct** reply — see {@link StoreInstance.call}.
+   * holds inside one store and only for a **direct** reply (see {@link StoreInstance.call}).
    *
-   * A reply arriving from another node, a worker, or any transport carries no parent link, so for
+   * A reply arriving from another tab, a worker, or any transport carries no parent link, so for
    * those the responder echoes an id and both sides agree on it here.
    *
-   * When set, the id is sent as `meta.correlationId` and a reply matches if it echoes that value
-   * **or** is a direct child of the request. This option *widens* the match; it does not replace
-   * the parent check, which still runs first. There is deliberately no way to match on the echoed
-   * id alone: a local responder therefore needs no changes to be compatible with a remote one.
+   * When set, the id is sent as `meta.correlationId`. By default a reply then matches if it
+   * echoes that value **or** is a direct child of the request: the id *widens* the match, so a
+   * local responder needs no changes to be compatible with a remote one. To match on the echoed
+   * id **alone**, set {@link CallOptions.correlation} to `"id"`.
    */
   readonly correlationId?: string;
+
+  /**
+   * The event to emit when the call gives up, so the responder can stop working.
+   *
+   * @remarks
+   * Emitted with a {@link CallCancellation} payload when the call is cancelled, aborted by its
+   * `signal`, or times out, and only if the request was sent. Never after a terminal reply, and
+   * never when the store is disposed, since nothing would be left to receive it. When the call has
+   * a {@link CallOptions.correlationId}, the cancellation carries it as `meta.correlationId` too.
+   * Emitting it never throws into the caller.
+   *
+   * Typed to the events whose payload accepts a `CallCancellation`.
+   */
+  readonly cancel?: CancelKey<EM>;
+
+  /**
+   * Which link correlates a reply. See {@link CallCorrelation}.
+   *
+   * @remarks
+   * `"id"` without a {@link CallOptions.correlationId} throws when the call is made, before
+   * anything is emitted: it could never match.
+   *
+   * @default "either"
+   */
+  readonly correlation?: CallCorrelation;
 }
 
 /**

@@ -104,14 +104,19 @@ export interface EntityAdapter<T, Id extends EntityId = string> {
   anyField(field: string): string;
 }
 
-/** @internal */
-const warnedDottedIds = new Set<string>();
-
-/** @internal */
-function warnDottedId(id: EntityId): void {
+/**
+ * Warns once per id for one adapter.
+ *
+ * @remarks
+ * The latch belongs to the adapter that warned. Kept for the whole process, one adapter (or one
+ * test) reporting an id silenced every other adapter that later met the same id.
+ *
+ * @internal
+ */
+function warnDottedId(warned: Set<string>, id: EntityId): void {
   const key = String(id);
-  if (warnedDottedIds.has(key)) return;
-  warnedDottedIds.add(key);
+  if (warned.has(key)) return;
+  warned.add(key);
   console.warn(
     `[yoltra] Entity id "${key}" contains a dot. Paths are dotted, so a subscription to ` +
       `"entities.${key}" is indistinguishable from one to a nested object of the same name. ` +
@@ -164,6 +169,7 @@ export function createEntityAdapter<T, Id extends EntityId = string>(
   options: EntityAdapterOptions<T, Id> = {},
 ): EntityAdapter<T, Id> {
   const selectId = options.selectId ?? ((entity: T) => (entity as { id: Id }).id);
+  const warnedDottedIds = new Set<string>();
   const { sortComparer } = options;
 
   const order = <S extends EntityState<T, Id>>(state: S, ids: readonly Id[]): readonly Id[] => {
@@ -196,7 +202,7 @@ export function createEntityAdapter<T, Id extends EntityId = string>(
 
     for (const entity of incoming) {
       const id = selectId(entity);
-      if (process.env.NODE_ENV !== "production" && String(id).includes(".")) warnDottedId(id);
+      if (process.env.NODE_ENV !== "production" && String(id).includes(".")) warnDottedId(warnedDottedIds, id);
 
       const existing = (entities ?? state.entities)[id];
       if (existing !== undefined && mode === "add") continue;

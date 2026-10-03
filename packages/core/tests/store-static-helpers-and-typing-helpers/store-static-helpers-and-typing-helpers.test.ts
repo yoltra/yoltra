@@ -44,13 +44,13 @@ describe("spec builders (defineSlice / defineMiddleware / defineEffect)", () => 
   // These exist for their return *type*: they park the event map a decoration contributes in
   // a value position, which is the only place TypeScript can infer it from. At runtime they
   // must do nothing at all, and these tests pin that.
-  type LibEM = { "lib.transfer": { granted: { id: string } } };
+  type LibEM = { "lib.flag": { enabled: { id: string } } };
 
   it("returns the very same spec object, not a copy", () => {
     const spec = {
-      state: { granted: [] as string[] },
-      when: { keys: eventKeys<LibEM>()([["lib.transfer", "granted"]]) },
-      reducer: (s: { granted: string[] }) => s,
+      state: { enabled: [] as string[] },
+      when: { keys: eventKeys<LibEM>()([["lib.flag", "enabled"]]) },
+      reducer: (s: { enabled: string[] }) => s,
     };
 
     expect(defineSlice<LibEM>()(spec)).toBe(spec);
@@ -83,19 +83,19 @@ describe("spec builders (defineSlice / defineMiddleware / defineEffect)", () => 
     // The point of the builders is that the spec they return is an ordinary spec. If the
     // brand ever became real, this would break.
     const slice = defineSlice<LibEM>()({
-      state: { granted: [] as string[] },
-      when: { keys: [["lib.transfer", "granted"]] },
+      state: { enabled: [] as string[] },
+      when: { keys: [["lib.flag", "enabled"]] },
       reducer: (s, e) =>
-        e.type === "granted" ? { granted: [...s.granted, e.payload.id] } : s,
+        e.type === "enabled" ? { enabled: [...s.enabled, e.payload.id] } : s,
     });
 
     const store = createStore({
       name: "BuilderStore",
-      reducer: { transfers: slice },
+      reducer: { flags: slice },
     });
 
-    return store.emit("lib.transfer", "granted", { id: "a1" }).then(() => {
-      expect(store.getState().transfers.granted).toEqual(["a1"]);
+    return store.emit("lib.flag", "enabled", { id: "a1" }).then(() => {
+      expect(store.getState().flags.enabled).toEqual(["a1"]);
     });
   });
 });

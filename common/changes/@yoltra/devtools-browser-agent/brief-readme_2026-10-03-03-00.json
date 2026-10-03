@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-browser-agent",
+      "comment": "Documentation only: the README (en, es) is now a brief version that covers every feature and links each topic to its full page on yoltra.dev, where the detailed documentation lives, versioned.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-browser-agent"
+}

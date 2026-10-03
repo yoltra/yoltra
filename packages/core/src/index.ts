@@ -11,8 +11,17 @@ export { LooseEventBus } from "./eventBus/LooseEventBus";
 export { Reducer } from "./reducer/Reducer";
 export { Store, createStore, typedEvents } from "./store/Store";
 export { Rejected, isRejected } from "./store/rejection";
+export { describeWhenProblem, matchesWhen } from "./store/matching";
+export type { WhenConsumer } from "./store/matching";
 export { CallAbortedError, CallTimeoutError } from "./store/call";
-export type { CallHandle, CallOptions, ReplySpec } from "./store/call";
+export type {
+  CallCancellation,
+  CallCorrelation,
+  CallHandle,
+  CallOptions,
+  CancelKey,
+  ReplySpec,
+} from "./store/call";
 export type { Rejection } from "./store/rejection";
 export { detectChangedProps } from "./utils/detectChangedProps";
 export { freezeState } from "./utils/immutability";
@@ -59,8 +68,19 @@ export type {
   InstrumentedEvent,
   CascadeInfo,
   InstrumentationObserver,
+  InstrumentOptions,
+  InstrumentedEffect,
+  InstrumentedEffects,
+  EffectsObserver,
   Unsubscribe,
   StoreSpec,
+  StoreMetrics,
+  Diagnostic,
+  DiagnosticCode,
+  DiagnosticSink,
+  Clock,
+  Scheduler,
+  TimerHandle,
   StoreInstance,
   ReducerSpec,
   ReducerFunction,
@@ -68,6 +88,7 @@ export type {
   StateFromReducers,
   EMFromReducersStrict,
   EffectSpec,
+  EffectContext,
   EffectFunction,
   MiddlewareFunction,
   MiddlewareSpec,
@@ -86,6 +107,8 @@ export type {
   NarrowedEventHandler,
   // Event targeting (When matcher)
   When,
+  ExactWhen,
+  ReducerReplacement,
   EventFromWhen,
   // Metadata for debugging
   EventConsumerType,
@@ -109,7 +132,13 @@ export type {
   EncodeResult,
 } from "./serialize/codec";
 
-export { dehydrate, hydrate, persist, withHydration } from "./persistence/persist";
+export {
+  PersistEncodeError,
+  dehydrate,
+  hydrate,
+  persist,
+  withHydration,
+} from "./persistence/persist";
 export type {
   Hydration,
   PersistableStore,
@@ -118,4 +147,6 @@ export type {
   PersistOptions,
 } from "./persistence/persist";
 export { createMemoryAdapter, createWebStorageAdapter } from "./persistence/adapters";
+export { warnOnLargeValues } from "./diagnostics/warnOnLargeValues";
+export type { LargeValueLimits, SizeWatchedStore } from "./diagnostics/warnOnLargeValues";
 export type { WebStorageLike } from "./persistence/adapters";

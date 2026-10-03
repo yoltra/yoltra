@@ -19,10 +19,14 @@ import type {
   EmitResult,
   EventMapBase,
   EventUnion,
+  Scheduler,
+  TimerHandle,
 } from "../types";
 import {
   CallAbortedError,
   CallTimeoutError,
+  type CallCancellation,
+  type CallCorrelation,
   type CallHandle,
   type CallOptions,
   type ReplySpec,
@@ -39,11 +43,15 @@ const DEFAULT_CALL_WATERMARK = 16;
  * What `performCall` needs from the store.
  *
  * @remarks
- * Three members, named rather than structural over the whole class, because three is few enough
+ * Five members, named rather than structural over the whole class, because five is few enough
  * that naming them documents the coupling instead of hiding it.
  */
 export interface CallDeps<St, EM extends EventMapBase> {
   readonly idFactory: () => string;
+  /** Arms the idle timeout: the store's `StoreSpec.scheduler`. */
+  readonly scheduler: Scheduler;
+  /** The store's lifetime. A call still pending when it aborts is rejected. */
+  readonly signal: AbortSignal;
   readonly registerEffect: (spec: EffectSpec<DeepReadonly<St>, EM>) => () => void;
   readonly emit: <C extends keyof EM & string, T extends keyof EM[C] & string>(
     channel: C,
@@ -65,6 +73,15 @@ export function performCall<
   payload: EM[C][T],
   opts: CallOptions<EM>,
 ): CallHandle<EventUnion<EM>, EventUnion<EM>> {
+  const correlation: CallCorrelation = opts.correlation ?? "either";
+  // Before anything is registered or emitted: either mistake would leave a call that can only
+  // time out, thirty seconds later and far from the line that caused it.
+  if (correlation !== "either" && correlation !== "causal" && correlation !== "id") {
+    throw new Error(`[yoltra] call: correlation must be "either", "causal" or "id", got ${JSON.stringify(correlation)}`);
+  }
+  if (correlation === "id" && opts.correlationId === undefined) {
+    throw new Error(`[yoltra] call: correlation "id" needs a correlationId to match on`);
+  }
   const { channel: replyChannel, isTerminal } = parseReply<EM>(opts.reply);
   const idleMs = opts.timeoutMs ?? DEFAULT_CALL_TIMEOUT_MS;
   const queue = new CallQueue<EventUnion<EM>>(opts.highWaterMark ?? DEFAULT_CALL_WATERMARK);
@@ -84,7 +101,7 @@ export function performCall<
   // unhandled; the caller's own await still sees it.
   terminal.catch(() => undefined);
 
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  let timer: TimerHandle | null = null;
   let unregister: (() => void) | null = null;
 
   /**
@@ -95,37 +112,83 @@ export function performCall<
   const finish = (fn: () => void, graceful = false): void => {
     if (settled) return;
     settled = true;
-    if (timer !== null) clearTimeout(timer);
+    if (timer !== null) deps.scheduler.clearTimeout(timer);
     timer = null;
     unregister?.();
     unregister = null;
     if (graceful) queue.end();
     else queue.close();
     opts.signal?.removeEventListener("abort", onAbort);
+    deps.signal.removeEventListener("abort", onStoreDisposed);
     fn();
   };
 
+  // Whether the request went out. A call that settles before sending it has no responder to tell.
+  let sent = false;
+
+  /**
+   * Tells the responder that this call gave up, through {@link CallOptions.cancel}. After the
+   * call has settled, so the cancellation cannot be mistaken for progress, and never throwing:
+   * the caller is already being told why the call ended.
+   */
+  const tellResponder = (reason: CallCancellation["reason"], detail?: string): void => {
+    if (!sent || opts.cancel === undefined) return;
+    const [cancelChannel, cancelType] = opts.cancel;
+    const payload: CallCancellation =
+      detail === undefined ? { requestId, reason } : { requestId, reason, detail };
+    const emitOpts =
+      opts.correlationId !== undefined ? { meta: { correlationId: opts.correlationId } } : undefined;
+    try {
+      void deps.emit(cancelChannel, cancelType, payload as never, emitOpts).catch(() => undefined);
+    } catch {
+      // Ignored: see above.
+    }
+  };
+
+  /** Settles the call as given up, then tells the responder, unless it had already settled. */
+  const giveUp = (error: Error, reason: CallCancellation["reason"], detail?: string): void => {
+    if (settled) return;
+    finish(() => fail(error));
+    tellResponder(reason, detail);
+  };
+
   function onAbort(): void {
-    finish(() => fail(new CallAbortedError(String(opts.signal?.reason ?? "signal aborted"))));
+    const why = String(opts.signal?.reason ?? "signal aborted");
+    giveUp(new CallAbortedError(why), "aborted", why);
+  }
+
+  function onStoreDisposed(): void {
+    finish(() => fail(new CallAbortedError("store disposed")));
+  }
+
+  // Before anything is registered, armed or sent. A store already disposed, or a signal already
+  // aborted, settles the call here, and nothing after this point runs: the request used to go
+  // out and an idle timer was armed for a call that had already failed.
+  if (deps.signal.aborted) onStoreDisposed();
+  else deps.signal.addEventListener("abort", onStoreDisposed, { once: true });
+  if (opts.signal !== undefined) {
+    if (opts.signal.aborted) onAbort();
+    else if (!settled) opts.signal.addEventListener("abort", onAbort, { once: true });
   }
 
   const arm = (): void => {
-    if (timer !== null) clearTimeout(timer);
+    if (timer !== null) deps.scheduler.clearTimeout(timer);
     // Idle: every correlated event pushes the deadline out, so a streaming responder is not
     // punished for having a lot to say.
-    timer = setTimeout(() => {
-      finish(() => fail(new CallTimeoutError(channel, type, idleMs)));
+    const handle = deps.scheduler.setTimeout(() => {
+      giveUp(new CallTimeoutError(channel, type, idleMs), "timeout");
     }, idleMs);
-    (timer as { unref?: () => void }).unref?.();
+    (handle as { unref?: () => void }).unref?.();
+    timer = handle;
   };
 
-  unregister = deps.registerEffect({
+  if (!settled) unregister = deps.registerEffect({
     // A pattern effect on the reply channel: which types are terminal is known, which are
     // progress is not, so the filter cannot be a key list.
     when: { channel: replyChannel as keyof EM & string },
     effect: async (event) => {
       if (settled) return;
-      if (!isReplyTo<EM>(event, requestId, opts.correlationId)) return;
+      if (!isReplyTo<EM>(event, requestId, opts.correlationId, correlation)) return;
 
       arm();
 
@@ -140,19 +203,16 @@ export function performCall<
     },
   });
 
-  if (opts.signal !== undefined) {
-    if (opts.signal.aborted) onAbort();
-    else opts.signal.addEventListener("abort", onAbort, { once: true });
+  if (!settled) {
+    arm();
+    sent = true;
+    void deps.emit(channel, type, payload, {
+      id: requestId,
+      ...(opts.correlationId !== undefined
+        ? { meta: { correlationId: opts.correlationId } }
+        : {}),
+    });
   }
-
-  arm();
-
-  void deps.emit(channel, type, payload, {
-    id: requestId,
-    ...(opts.correlationId !== undefined
-      ? { meta: { correlationId: opts.correlationId } }
-      : {}),
-  });
 
   const handle = {
     then: (onOk?: never, onErr?: never) => terminal.then(onOk, onErr),
@@ -162,7 +222,7 @@ export function performCall<
       return queue.droppedCount;
     },
     cancel: (reason = "cancelled") => {
-      finish(() => fail(new CallAbortedError(reason)));
+      giveUp(new CallAbortedError(reason), "cancelled", reason);
     },
     [Symbol.asyncIterator]: (): AsyncIterator<EventUnion<EM>> => {
       queue.beginConsuming();
@@ -214,10 +274,10 @@ function parseReply<EM extends EventMapBase>(
  * Whether `event` is a reply to the request identified by `requestId` / `correlationId`.
  *
  * @remarks
- * The parent link first: the store stamps `parentId` on anything emitted while handling an event,
- * so a responder that answers through the `emit` it was given is correlated without doing
- * anything. The explicit id is the fallback for replies that crossed a boundary the parent link
- * cannot.
+ * Under `"either"`, the parent link first: the store stamps `parentId` on anything emitted while
+ * handling an event, so a responder that answers through the `emit` it was given is correlated
+ * without doing anything. The explicit id is the fallback for replies that crossed a boundary the
+ * parent link cannot. `"causal"` and `"id"` each use one link and ignore the other.
  *
  * Note this tests the **immediate** parent, not descent. A reply emitted a further hop down a
  * cascade carries the intermediate event's id as its `parentId` and does not match; such a
@@ -229,8 +289,9 @@ function isReplyTo<EM extends EventMapBase>(
   event: EventUnion<EM>,
   requestId: string,
   correlationId: string | undefined,
+  correlation: CallCorrelation,
 ): boolean {
-  if (event.parentId === requestId) return true;
-  if (correlationId === undefined) return false;
+  if (correlation !== "id" && event.parentId === requestId) return true;
+  if (correlation === "causal" || correlationId === undefined) return false;
   return (event.meta as { correlationId?: unknown } | undefined)?.correlationId === correlationId;
 }

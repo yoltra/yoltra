@@ -58,7 +58,6 @@ yoltra/
 │   ├── devtools-protocol/    @yoltra/devtools-protocol      — tipos de mensajes + utilidades de parches
 │   ├── devtools-server/      @yoltra/devtools-server        — el hub (relay WebSocket)
 │   ├── devtools-browser-agent/ @yoltra/devtools-browser-agent — agente del lado del store (navegador)
-│   ├── devtools-node-agent/  @yoltra/devtools-node-agent    — agente del lado del store (Node)
 │   ├── devtools-ui/          @yoltra/devtools-ui            — hooks headless + hub de loopback
 │   ├── devtools-storeview/   @yoltra/devtools-storeview     — panel embebible (React)
 │   ├── devtools-ext/         @yoltra/devtools-ext           — shell de extensión MV3
@@ -131,7 +130,7 @@ rushx typecheck     # Verificación de tipos TypeScript
 cd packages/react
 rushx build
 rushx test
-rushx docs          # Generar documentación de la API con TypeDoc
+rushx docs          # JSON de TypeDoc en .typedoc/ (revisa el TSDoc)
 ```
 
 ---
@@ -262,8 +261,9 @@ ganó.** `rush version --bump` reescribe los rangos de dependencias (`"@yoltra/c
 `"^0.4.0"`) en cada paquete que depende de un hermano en lockstep. Rush ignora un diff de
 `package.json` que solo toca el campo `version` **propio** del proyecto, pero trata la edición de
 un **rango de dependencia** como contenido real — así que esos paquetes, y solo esos, quedan
-marcados. Espera `@yoltra/react`, `@yoltra/devtools-node-agent` y
-`@yoltra/devtools-browser-agent`. Escríbeles un archivo de cambio que describa tu trabajo real;
+marcados. Espera `@yoltra/react`,
+`@yoltra/devtools-browser-agent` y cualquier otro paquete con un rango peer sobre un hermano en
+lockstep. Escríbeles un archivo de cambio que describa tu trabajo real;
 no es un caché viejo y no hay nada que purgar.
 
 ---

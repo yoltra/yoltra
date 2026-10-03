@@ -91,5 +91,8 @@ common/autoinstallers/*/.npmrc
 # Guard against leftover files if someone ran verdaccio directly.
 tools/registry/storage/
 
-# TypeDocs artifacts
+# TypeDoc output. `rush docs` writes JSON to .typedoc/; the API reference itself is published on
+# the website, so a stray Markdown reference under a package's docs/ never gets committed.
 .typedoc/
+/packages/*/docs/
+/devtools/*/docs/

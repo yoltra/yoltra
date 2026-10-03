@@ -4,99 +4,49 @@
 
 > [🇺🇸 English](../en/NEXTJS_GUIDE.md) &nbsp;|&nbsp; 👉 Español
 
-Yoltra funciona muy bien en Next.js — como estado **del lado del cliente**. Esta
-guía cubre ambos routers y los dos patrones que mantienen seguro el renderizado
-en servidor.
+Yoltra funciona en Next.js como estado **del lado del cliente**, en ambos routers, con un patrón para SSR seguro.
 
----
+> **Guía completa:** [Next.js en yoltra.dev](https://yoltra.dev/es/yoltra/docs/nextjs/)
 
 ## Alcance: Yoltra es estado de cliente
 
-Yoltra es un contenedor de estado **del lado del cliente**: reactividad de grano
-fino, un log de eventos y DevTools con time-travel para UIs interactivas. **El
-renderizado en servidor (SSR) y los React Server Components están fuera de
-alcance por diseño** — el estado de Yoltra vive y muta en el navegador. Eso no es
-una carencia; es el nicho. Trae y renderiza tus datos iniciales con las
-herramientas de Next (Server Components, `getServerSideProps`, route handlers), y
-usa Yoltra para el estado interactivo de cliente encima.
-
-En la práctica, eso significa que los hooks de Yoltra corren en **Client
-Components** (`"use client"` en el App Router; en el Pages Router cada componente
-ya lo es).
-
----
+SSR y los React Server Components están fuera de alcance por diseño: el estado vive en el navegador.
+Trae los datos iniciales con las herramientas de Next (Server Components, `getServerSideProps`, route
+handlers). **Los hooks corren en Client Components**: `"use client"` en el App Router; en el Pages Router ya lo son.
 
 ## Pages Router (el ejemplo incluido)
 
-El ejemplo [`yoltra-in-nextjs`](../../examples/v0/yoltra-in-nextjs) ([▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)) usa el Pages
-Router, donde cada componente es un Client Component — así que el modelo "sin
-provider" de `createYoltra` simplemente funciona.
-
-```ts
-// state/yoltra.ts — creado una vez, los hooks usan este store
-import { createYoltra } from "@yoltra/react";
-
-export const { useAtomicProp, useEmit } = createYoltra({
-  name: "App",
-  reducer: { theme: themeReducer },
-});
-```
-
-```tsx
-// components/ThemeToggle.tsx — sin Provider
-import { useAtomicProp, useEmit } from "@/state/yoltra";
-
-export function ThemeToggle() {
-  const theme = useAtomicProp({ reducer: "theme", property: "mode" });
-  const emit = useEmit();
-  return <button onClick={() => emit("theme", "toggle", null)}>{theme}</button>;
-}
-```
-
-Envuelve con `<StoreProvider>` en `_app.tsx` solo si quieres acotar una instancia
-específica del store; si no, el default del módulo está bien.
-
----
+En el ejemplo [`yoltra-in-nextjs`](../../examples/v0/yoltra-in-nextjs) ([▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs/)),
+`createYoltra` se llama una vez en `state/yoltra.ts` y los componentes importan sus hooks sin
+Provider. Envuelve con `<StoreProvider>` en `_app.tsx` solo para acotar una instancia específica.
 
 ## App Router
 
-Los componentes del App Router son **Server Components por defecto**, y los hooks
-de Yoltra son solo de cliente. Pon el store y los componentes que lo leen detrás
-de `"use client"`.
+Los componentes del App Router son **Server Components por defecto**; pon el store y quien lo lee
+detrás de `"use client"`. Un store de módulo (Patrón A) se evalúa una vez por proceso de servidor,
+así que en SSR se comparte entre requests. Si renderizas en el servidor, créalo por render (Patrón B):
 
-### Patrón A — singleton de cliente simple
+```mermaid
+flowchart TD
+    accTitle: Store de módulo frente a store por render
+    accDescr: Un store a nivel de módulo lo comparten todas las requests que renderiza un proceso de servidor, mientras que un store creado en el provider existe una vez por render
+    subgraph patternA ["Patrón A renderizado en el servidor"]
+    direction TB
+        reqA1(["request del usuario A"]) --> moduleStore["store a nivel de módulo<br/>evaluado una vez por proceso de servidor"]
+        reqB1(["request del usuario B"]) --> moduleStore
+        moduleStore --> shared(["el estado de A puede renderizarse en la página de B"])
+    end
 
-Para un store puramente de cliente (inicializado en el navegador, no desde datos
-del servidor), un store a nivel de módulo está bien:
-
-```ts
-// state/yoltra.ts
-"use client";
-import { createYoltra } from "@yoltra/react";
-
-export const { useAtomicProp, useEmit } = createYoltra({
-  name: "App",
-  reducer: { cart: cartReducer },
-});
+    subgraph patternB ["Patrón B"]
+    direction TB
+        reqA2(["request del usuario A"]) --> providerA["AppStoreProvider<br/>useState con makeStore"]
+        reqB2(["request del usuario B"]) --> providerB["AppStoreProvider<br/>useState con makeStore"]
+        providerA --> storeA["un store para este render"]
+        providerB --> storeB["un store para este render"]
+        storeA --> pageA(["página de A: los hooks debajo del provider usan el store de A"])
+        storeB --> pageB(["página de B: los hooks debajo del provider usan el store de B"])
+    end
 ```
-
-```tsx
-// components/Cart.tsx
-"use client";
-import { useAtomicProp, useEmit } from "@/state/yoltra";
-
-export function Cart() {
-  const count = useAtomicProp({ reducer: "cart", property: "items" }, (items) => items.length);
-  // …
-}
-```
-
-### Patrón B — aislamiento por request (recomendado para SSR)
-
-Un store a nivel de módulo se evalúa **una vez por proceso de servidor**, así que
-se **compartiría entre requests** durante SSR — el estado de un usuario podría
-filtrarse al de otro. Si tus componentes renderizan en el servidor, crea el store
-**por render** dentro de un provider de cliente:
 
 ```tsx
 // state/StoreProvider.tsx
@@ -106,60 +56,25 @@ import { StoreProvider as YoltraProvider } from "@/state/yoltra";
 import { makeStore } from "@/state/makeStore";
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
-  // Un store nuevo por render de cliente — nunca compartido entre requests.
+  // Un store nuevo por render de cliente, nunca compartido entre requests.
   const [store] = useState(() => makeStore());
   return <YoltraProvider store={store}>{children}</YoltraProvider>;
 }
 ```
 
-```tsx
-// app/layout.tsx (Server Component) — monta el provider de cliente una vez
-import { AppStoreProvider } from "@/state/StoreProvider";
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html><body><AppStoreProvider>{children}</AppStoreProvider></body></html>
-  );
-}
-```
-
-Donde `makeStore()` devuelve `createStore({...})` con tus reducers. Los hooks de
-`createYoltra` prefieren el store provisto vía `StoreProvider`, así que todos los
-componentes de cliente debajo del provider comparten esa instancia por request.
-
----
+Monta `AppStoreProvider` una vez en `app/layout.tsx`; los hooks debajo de él usan esa instancia.
 
 ## DevTools en Next.js
 
-`withDevtools` usa el `WebSocket` del navegador, que no existe durante el
-renderizado en servidor — protégelo para que solo corra en el navegador:
-
-```ts
-import { withDevtools } from "@yoltra/devtools-browser-agent";
-
-if (typeof window !== "undefined") {
-  withDevtools(store, { port: 9800, allowReplay: true });
-}
-```
-
-Inicia el hub (`npx @yoltra/devtools-server --port 9800`) y abre el panel de la
-extensión — ver los [pasos de configuración local](../../devtools/devtools-ext/README.md)
-una vez instalada la extensión.
-
----
+`withDevtools` usa el `WebSocket` del navegador, así que protégelo con `typeof window !== "undefined"`,
+inicia el hub (`npx @yoltra/devtools-server --port 9800`) y abre el [panel de la extensión](../../devtools/devtools-ext/README.es.md).
 
 ## Checklist
 
-- [ ] Los hooks de Yoltra viven en Client Components (`"use client"` en App Router).
-- [ ] Para SSR, crea el store **por request** (Patrón B), no a nivel de módulo.
-- [ ] Protege `withDevtools` con `typeof window !== "undefined"`.
-- [ ] Trae los datos iniciales/de servidor con las herramientas de Next; hidrátalos
-      en el store en el cliente (p. ej. emite un evento `init` en un effect o al montar).
-
----
+Client Components; un store **por request** en SSR; `withDevtools` protegido; datos de servidor emitidos en el cliente.
 
 ## Siguientes pasos
 
-- [Guía de Migración](./MIGRATION_GUIDE.md) · [Guía de Testing](./TESTING_GUIDE.md)
-- [Ejemplo de Next.js](../../examples/v0/yoltra-in-nextjs) — Pages Router + cambio de tema · [▶ Abrir la demo en vivo](https://yoltra.dev/es/demos/in-nextjs)
-- [API de @yoltra/react](../../packages/react/README.es.md)
+- [Guía de Migración](./MIGRATION_GUIDE.md) · [Guía de Testing](./TESTING_GUIDE.md) · [API de @yoltra/react](../../packages/react/README.es.md)
+
+> **Guía completa:** [Next.js en yoltra.dev](https://yoltra.dev/es/yoltra/docs/nextjs/)

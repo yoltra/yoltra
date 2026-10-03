@@ -21,15 +21,15 @@ no crash reporting, no remote endpoint, and no account.
 
 ## What it stores
 
-`chrome.storage.local` holds the host and port of the hub you last connected to, so the panel can
-reconnect. That is the entire contents. It never leaves your browser and is removed when you
+`chrome.storage.local` holds the host, port and, if you entered one, the token of the hub you
+last connected to, so the panel can reconnect. That is the entire contents. It never leaves your browser and is removed when you
 uninstall the extension.
 
 ## Permissions, and why each one exists
 
 | Permission | Why |
 | --- | --- |
-| `storage` | Remembers the hub host and port between sessions. |
+| `storage` | Remembers the hub host, port and token between sessions. |
 | `content_scripts` on `http` and `https` pages | Relays protocol frames between an inspected page and the panel. It reads only messages tagged for this extension and injects nothing else. |
 | `background` service worker | Pairs a page with the panel inspecting its tab. It forwards frames and does not read them. |
 
@@ -45,8 +45,9 @@ only you know. Two things follow:
 - Anything the panel displays came from a page you opened DevTools on, and stays on your machine.
 - If you connect to a hub, state crosses a local socket. Hubs bind to loopback by default, but
   loopback is not an authentication boundary: other processes on the same machine can reach it.
-  On a shared or containerised host, start the hub with an auth token. The agent supports a
-  `sanitize` hook for redacting values before they leave the process at all.
+  On a shared or containerised host, start the hub with an auth token and enter it in the popup.
+  The token is kept in `chrome.storage.local` and sent only to the hub you configured. The agent
+  supports a `sanitize` hook for redacting values before they leave the process at all.
 
 ## Contact
 

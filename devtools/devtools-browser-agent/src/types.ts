@@ -39,11 +39,15 @@ export interface DevtoolsWrapperConfig {
   port: number;
 
   /**
-   * Persisted store identifier that survives reconnects.
+   * Store identifier presented to the hub, kept across reconnects.
    *
    * @remarks
-   * When omitted a random UUID is generated via `crypto.randomUUID()`.
-   * Provide an explicit value to correlate store sessions across page reloads.
+   * Defaults to the store's `name`, so it is stable across page reloads without configuration.
+   *
+   * The hub accepts one connection per id. A store presenting an id that is already connected is
+   * refused with a handshake error naming the id, and keeps retrying until the first store
+   * disconnects. Two stores with the same `name` therefore need distinct `storeId` values to be
+   * inspected side by side.
    */
   storeId?: string;
 
@@ -136,10 +140,15 @@ export interface DevtoolsWrapperConfig {
   throttleMs?: number;
 
   /**
-   * Sampling configuration (protocol v1 design, implementation deferred).
+   * Which events the agent forwards to the hub.
    *
    * @remarks
-   * When provided, advertised to the hub as part of the store's capabilities.
+   * Applied by the agent before an event is sent, in this order: `ignore` drops every matching
+   * event; the first matching `throttle` rule forwards at most one event per `intervalMs` for each
+   * event key; the first matching `skip` rule forwards every `every`th one. `"*"` in a key matches
+   * any channel or any type. The store itself still processes every event; only what the hub sees
+   * changes, so its timeline, and any state it rebuilds from events, misses the ones dropped. Also
+   * advertised to the hub as part of the store's capabilities.
    */
   sampling?: SamplingConfig;
 
@@ -184,7 +193,7 @@ export interface DevtoolsWrapperConfig {
    *   itself on the page, and a WebSocket to the hub otherwise. This is what makes attaching a
    *   browser panel a single step — install the extension — instead of three.
    * - `"bridge"` forces `postMessage`, for a relay that installs after the store is created.
-   * - `"websocket"` forces the hub, which is what a Node process or a remote session needs.
+   * - `"websocket"` forces the hub, which is what a remote session or the terminal UI needs.
    *
    * Ignored when `socketFactory` is supplied: an explicit transport is always honoured.
    *

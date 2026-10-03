@@ -18,11 +18,11 @@ export interface FilterBarProps {
   placeholder?: string;
   /** Whether the Committed toggle is active. */
   showCommitted?: boolean;
-  /** Whether the Bounced toggle is active. */
+  /** Whether the Uncommitted toggle is active. */
   showBounced?: boolean;
   /** Callback to toggle committed visibility. */
   onToggleCommitted?: () => void;
-  /** Callback to toggle bounced visibility. */
+  /** Callback to toggle the visibility of events that did not commit. */
   onToggleBounced?: () => void;
 }
 
@@ -30,7 +30,7 @@ export interface FilterBarProps {
  * Filter bar with text input and optional toggle buttons.
  *
  * Provides a text field for `channel::type` filtering and optional
- * Committed / Bounced toggle buttons for event status filtering.
+ * Committed / Uncommitted toggle buttons for event status filtering.
  *
  * @public
  */
@@ -65,9 +65,9 @@ export function FilterBar({
         <button
           className={`${styles.filterToggle} ${showBounced ? styles.filterToggleActive : ""}`}
           onClick={onToggleBounced}
-          title='Show bounced events'
+          title='Show events that did not commit'
         >
-          Bounced
+          Uncommitted
         </button>
       )}
     </div>

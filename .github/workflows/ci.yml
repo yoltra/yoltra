@@ -53,24 +53,15 @@ jobs:
       - name: Rush size
         run: node common/scripts/install-run-rush.js size
 
-      # The committed API reference must carry the logo on every page. TypeDoc rewrites the whole
-      # tree on each run, so a regeneration that skipped the stamping step would silently strip it
-      # from hundreds of files — and a docs diff that large is exactly the kind nobody reads line
-      # by line before approving.
-      - name: Verify docs are stamped
-        run: |
-          node tools/repo-tools/bin/docs-stamp.mjs --check \
-            packages/*/docs devtools/*/docs
-
-      # Stamping proves a page carries a logo, not that it is true. The reference drifted a whole
-      # minor release once — eight public symbols with no page at all — because nothing regenerated
-      # it and compared. TypeDoc output is deterministic, so a clean tree after `rush docs` means
-      # the committed reference matches the source. The check uses `git status` rather than
-      # `git diff` on purpose: a release that adds API adds untracked pages, which diff cannot see.
-      - name: Verify docs are current
+      # TypeDoc runs on every package even though its output is not committed: the API reference
+      # on the website is built from this JSON at each release, and TypeDoc warns on a broken
+      # {@link} or a malformed TSDoc tag, which `rush docs` treats as a failure. That keeps the
+      # comments honest between releases. The clean-tree check catches a docs script that writes
+      # somewhere other than the ignored .typedoc/ folder.
+      - name: Rush docs
         run: |
           node common/scripts/install-run-rush.js docs
-          node tools/repo-tools/bin/check-docs-current.mjs
+          test -z "$(git status --porcelain)" || { git status --porcelain; exit 1; }
 
       # Fails if a changed project is missing a change file (keeps CHANGELOGs honest).
       - name: Verify change files

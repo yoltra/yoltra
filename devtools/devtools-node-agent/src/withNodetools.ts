@@ -123,6 +123,7 @@ export function withNodetools<
     maxReconnectAttempts: config.maxReconnectAttempts ?? Infinity,
     baseDelay: config.baseDelay ?? 1000,
     maxDelay: config.maxDelay ?? 30000,
+    ...(config.authToken !== undefined ? { authToken: config.authToken } : {}),
   });
 
   // Surface backpressure: warn (throttled) instead of dropping events silently

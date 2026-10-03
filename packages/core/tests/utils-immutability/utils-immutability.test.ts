@@ -106,3 +106,24 @@ describe("freezeState alias watching", () => {
     expect(found).toHaveBeenCalledOnce();
   });
 });
+
+describe("freezeState alias watching: further references", () => {
+  it("reports a reference listed in `also`, passing the node found", () => {
+    const buf = new Uint8Array([1, 2]);
+    const payload = { buf };
+    const found = vi.fn();
+
+    // The reducer copied the payload object but kept its buffer.
+    freezeState({ data: { ...payload } }, new WeakSet<object>(), { watch: payload, also: new Set([buf]), onFound: found });
+
+    expect(found).toHaveBeenCalledOnce();
+    expect(found).toHaveBeenCalledWith(buf);
+  });
+
+  it("passes the watched reference itself when that is what was stored", () => {
+    const payload = { title: "A" };
+    const found = vi.fn();
+    freezeState({ items: [payload] }, new WeakSet<object>(), { watch: payload, onFound: found });
+    expect(found).toHaveBeenCalledWith(payload);
+  });
+});

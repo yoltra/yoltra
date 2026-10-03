@@ -115,6 +115,7 @@ export function HubProvider({
           type: "HANDSHAKE_REQUEST",
           protocolVersion: PROTOCOL_VERSION,
           role: DevtoolsRole.EXTENSION,
+          ...(cfg.authToken !== undefined ? { authToken: cfg.authToken } : {}),
           extension: {
             id: extensionIdRef.current,
             name: cfg.extensionName ?? "DevTools UI",
@@ -126,7 +127,7 @@ export function HubProvider({
 
       ws.onmessage = (event) => {
         try {
-          // Handle both string (browser) and Buffer (Node.js ws package) data
+          // Handle both string and binary frame data
           const raw = typeof event.data === "string" ? event.data : String(event.data);
           const msg: DevtoolsMessage = JSON.parse(raw);
 

@@ -2,6 +2,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 
 import { createStore } from "../../src/store/Store";
 import { CallAbortedError, CallTimeoutError } from "../../src/store/call";
+import type { CallCancellation } from "../../src/store/call";
+import type { Scheduler } from "../../src/types";
 
 /**
  * `call` is request/reply over the event bus. The parts worth pinning are the ones a hand-rolled
@@ -90,6 +92,107 @@ describe("correlation", () => {
     );
 
     expect((res.payload as { text: string }).text).toBe("from afar");
+  });
+});
+
+describe("correlation modes", () => {
+  /**
+   * The parent link and the echoed id can disagree. A responder whose protocol carries its own
+   * request id may answer request N from whatever turn is current, which may be request N+1's:
+   * that reply descends from the wrong request. Under the default it matches by parentage and
+   * settles the wrong call; `correlation: "id"` matches on the echoed id alone.
+   */
+  function misroutingResponder(store: ReturnType<typeof bus>) {
+    store.registerEffect({
+      when: { keys: [["rpc", "ask"]] },
+      effect: async (_event, _get, emit) => {
+        // Emitted through the handed `emit`, so it descends from this request, but it answers
+        // a different one.
+        await emit("rpc", "answer", { text: "wrong" }, { meta: { correlationId: "someone-else" } });
+      },
+    });
+    store.onEvent("rpc", "ask", (event) => {
+      const id = (event.meta as { correlationId?: string } | undefined)?.correlationId;
+      setTimeout(() => {
+        void store.emit("rpc", "answer", { text: "right" }, { meta: { correlationId: id } });
+      }, 0);
+    });
+  }
+
+  it("settles on the first related reply by default, which may be the wrong one", async () => {
+    const store = bus();
+    misroutingResponder(store);
+    const res = await store.call(
+      "rpc",
+      "ask",
+      { q: "?" },
+      { reply: ["rpc", "answer"], correlationId: "mine" },
+    );
+    expect((res.payload as { text: string }).text).toBe("wrong");
+  });
+
+  it('matches on the echoed id alone under correlation: "id"', async () => {
+    const store = bus();
+    misroutingResponder(store);
+    const res = await store.call(
+      "rpc",
+      "ask",
+      { q: "?" },
+      { reply: ["rpc", "answer"], correlationId: "mine", correlation: "id" },
+    );
+    expect((res.payload as { text: string }).text).toBe("right");
+  });
+
+  it('ignores an echoed id under correlation: "causal"', async () => {
+    const store = bus();
+    store.onEvent("rpc", "ask", (event) => {
+      const id = (event.meta as { correlationId: string }).correlationId;
+      setTimeout(() => {
+        void store.emit("rpc", "answer", { text: "from afar" }, { meta: { correlationId: id } });
+      }, 0);
+    });
+    await expect(
+      store.call(
+        "rpc",
+        "ask",
+        { q: "?" },
+        { reply: ["rpc", "answer"], correlationId: "mine", correlation: "causal", timeoutMs: 30 },
+      ),
+    ).rejects.toBeInstanceOf(CallTimeoutError);
+  });
+
+  it('still matches a direct reply under correlation: "causal"', async () => {
+    const store = bus();
+    store.registerEffect({
+      when: { keys: [["rpc", "ask"]] },
+      effect: async (_event, _get, emit) => {
+        await emit("rpc", "answer", { text: "direct" });
+      },
+    });
+    const res = await store.call(
+      "rpc",
+      "ask",
+      { q: "?" },
+      { reply: ["rpc", "answer"], correlation: "causal" },
+    );
+    expect((res.payload as { text: string }).text).toBe("direct");
+  });
+
+  it('refuses correlation: "id" without an id, before anything is emitted', () => {
+    const store = bus();
+    const asked = vi.fn();
+    store.onEvent("rpc", "ask", asked);
+    expect(() =>
+      store.call("rpc", "ask", { q: "?" }, { reply: ["rpc", "answer"], correlation: "id" }),
+    ).toThrow(/correlation "id" needs a correlationId/);
+    expect(asked).not.toHaveBeenCalled();
+  });
+
+  it("refuses an unknown correlation mode", () => {
+    const store = bus();
+    expect(() =>
+      store.call("rpc", "ask", { q: "?" }, { reply: ["rpc", "answer"], correlation: "both" as never }),
+    ).toThrow(/correlation must be "either", "causal" or "id", got "both"/);
   });
 });
 
@@ -452,5 +555,164 @@ describe("an in-flight call survives a hot reload", () => {
     release();
     const res = await pending;
     expect((res.payload as { text: string }).text).toBe("re: x");
+  });
+});
+
+describe("telling the responder that the call gave up", () => {
+  type CEM = {
+    rpc: { ask: { q: string }; answer: { text: string }; cancel: CallCancellation; nope: number };
+  };
+  const cbus = (scheduler?: Scheduler) =>
+    createStore<Record<string, never>, CEM>({ name: "cancel", ...(scheduler ? { scheduler } : {}) });
+
+  /** Records the request ids the responder saw, and every cancellation it was sent. */
+  function watch(store: ReturnType<typeof cbus>) {
+    const requests: string[] = [];
+    const cancellations: Array<{ payload: CallCancellation; meta?: unknown }> = [];
+    store.onEvent("rpc", "ask", (event) => void requests.push(event.id));
+    store.onEvent("rpc", "cancel", (event) =>
+      void cancellations.push({ payload: event.payload as CallCancellation, meta: event.meta }),
+    );
+    return { requests, cancellations };
+  }
+
+  it("is told when the caller cancels, with the request's id and the reason given", async () => {
+    const store = cbus();
+    const seen = watch(store);
+
+    const call = store.call("rpc", "ask", { q: "?" }, { reply: ["rpc", "answer"], cancel: ["rpc", "cancel"] });
+    call.cancel("user left");
+    await expect(call).rejects.toBeInstanceOf(CallAbortedError);
+    await Promise.resolve();
+
+    expect(seen.cancellations).toEqual([
+      { payload: { requestId: seen.requests[0], reason: "cancelled", detail: "user left" }, meta: undefined },
+    ]);
+  });
+
+  it("is told when the call's signal aborts", async () => {
+    const store = cbus();
+    const seen = watch(store);
+    const controller = new AbortController();
+
+    const call = store.call("rpc", "ask", { q: "?" }, {
+      reply: ["rpc", "answer"],
+      cancel: ["rpc", "cancel"],
+      signal: controller.signal,
+    });
+    controller.abort("deadline");
+    await expect(call).rejects.toThrow(/deadline/);
+    await Promise.resolve();
+
+    expect(seen.cancellations.map((c) => c.payload)).toEqual([
+      { requestId: seen.requests[0], reason: "aborted", detail: "deadline" },
+    ]);
+  });
+
+  it("is told when the call times out", async () => {
+    const timers: Array<() => void> = [];
+    const store = cbus({ setTimeout: (run) => timers.push(run), clearTimeout: () => undefined });
+    const seen = watch(store);
+
+    const call = store.call("rpc", "ask", { q: "?" }, { reply: ["rpc", "answer"], cancel: ["rpc", "cancel"] });
+    timers.at(-1)!();
+    await expect(call).rejects.toBeInstanceOf(CallTimeoutError);
+    await Promise.resolve();
+
+    expect(seen.cancellations.map((c) => c.payload)).toEqual([{ requestId: seen.requests[0], reason: "timeout" }]);
+  });
+
+  it("carries the call's correlationId", async () => {
+    const store = cbus();
+    const seen = watch(store);
+
+    const call = store.call("rpc", "ask", { q: "?" }, {
+      reply: ["rpc", "answer"],
+      cancel: ["rpc", "cancel"],
+      correlationId: "req-7",
+    });
+    call.cancel();
+    await call.catch(() => undefined);
+    await Promise.resolve();
+
+    expect(seen.cancellations[0]!.meta).toEqual({ correlationId: "req-7" });
+  });
+
+  it("is not told after a terminal reply, on dispose, or for a request never sent", async () => {
+    const store = cbus();
+    const seen = watch(store);
+    store.registerEffect({
+      when: { keys: [["rpc", "ask"]] },
+      effect: async (event, _get, emit) => {
+        if ((event.payload as { q: string }).q === "answer me") await emit("rpc", "answer", { text: "ok" });
+      },
+    });
+
+    const answered = store.call("rpc", "ask", { q: "answer me" }, { reply: ["rpc", "answer"], cancel: ["rpc", "cancel"] });
+    await answered;
+    answered.cancel();
+
+    const neverSent = store.call("rpc", "ask", { q: "?" }, {
+      reply: ["rpc", "answer"],
+      cancel: ["rpc", "cancel"],
+      signal: AbortSignal.abort("already"),
+    });
+    await neverSent.catch(() => undefined);
+
+    const pending = store.call("rpc", "ask", { q: "?" }, { reply: ["rpc", "answer"], cancel: ["rpc", "cancel"] });
+    store.dispose();
+    await pending.catch(() => undefined);
+    await Promise.resolve();
+
+    expect(seen.cancellations).toEqual([]);
+  });
+
+  it("never throws into the caller, even when emitting the cancellation fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const store = cbus();
+    store.registerMiddleware((_s, event) => {
+      if (event.type === "cancel") throw new Error("guard exploded");
+      return true;
+    });
+
+    const call = store.call("rpc", "ask", { q: "?" }, { reply: ["rpc", "answer"], cancel: ["rpc", "cancel"] });
+
+    expect(() => call.cancel()).not.toThrow();
+    await expect(call).rejects.toBeInstanceOf(CallAbortedError);
+  });
+
+  it("lets a responder stop its work, together with its own ctx.signal", async () => {
+    const store = cbus();
+    const inFlight = new Map<string, AbortController>();
+    const stopped: string[] = [];
+
+    // The responder: long work per request, abandoned when its caller gives up or when the
+    // responder itself is unregistered.
+    store.registerEffect({
+      when: { keys: [["rpc", "ask"]] },
+      effect: async (event, _get, emit, ctx) => {
+        const mine = new AbortController();
+        inFlight.set(event.id, mine);
+        const signal = AbortSignal.any([mine.signal, ctx.signal]);
+        await new Promise<void>((resolve) => signal.addEventListener("abort", () => resolve(), { once: true }));
+        stopped.push(event.id);
+        inFlight.delete(event.id);
+        if (!signal.aborted) await emit("rpc", "answer", { text: "late" });
+      },
+    });
+    store.registerEffect({
+      when: { keys: [["rpc", "cancel"]] },
+      effect: (event) => inFlight.get((event.payload as CallCancellation).requestId)?.abort(),
+    });
+    const requests: string[] = [];
+    store.onEvent("rpc", "ask", (event) => void requests.push(event.id));
+
+    const call = store.call("rpc", "ask", { q: "slow" }, { reply: ["rpc", "answer"], cancel: ["rpc", "cancel"] });
+    call.cancel();
+    await call.catch(() => undefined);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(stopped).toEqual(requests);
+    expect(inFlight.size).toBe(0);
   });
 });

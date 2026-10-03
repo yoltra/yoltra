@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/devtools-ui",
+      "comment": "Documentation only: the README (en, es) gains diagrams of the hooks and of a time-travel jump, and `HubConnectionConfig.WebSocket` is described as an optional custom constructor that defaults to the global `WebSocket`.",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yoltra/devtools-ui"
+}

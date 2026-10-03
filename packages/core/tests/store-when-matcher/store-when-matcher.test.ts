@@ -506,9 +506,9 @@ describe("Store - channelPattern targeting", () => {
   /**
    * The case the four exact forms cannot express.
    *
-   * A federated peer's channel arrives namespaced — `bb::plan` beside a local `plan` — so a guard
+   * A peer's channel arrives namespaced (`bb::plan` beside a local `plan`), so a guard
    * that means "this channel, however it is namespaced" could not use `when` at all: `channel`
-   * and `channels` compare literally, and the aliases are invented by whoever federates. It had
+   * and `channels` compare literally, and the aliases are chosen by whoever connects the peers. It had
    * to match everything and filter in its own body, which costs the pre-call skip and makes the
    * middleware report to every observer that it matches the whole store.
    *
@@ -586,5 +586,218 @@ describe("Store - channelPattern targeting", () => {
     await store.emit("bb::plan", "go", null);
     expect(seen).toContain("bb::plan");
     store.dispose();
+  });
+});
+
+describe("Store - a matcher that would match nothing is refused", () => {
+  /**
+   * Reducers and effects take exact matchers only, and `channelPattern` was honoured by middleware
+   * alone. Handed one anyway, both seams read it as keyed, found no keys and mounted on nothing: a
+   * reducer that never ran, and an effect that `onRegistrationChange` did not even report. Nothing
+   * threw, so the first symptom was a slice that stayed at its initial state. The same was true of
+   * any matcher of none of the five forms, on every seam.
+   *
+   * The refusal is the fix, not a pattern implementation: a reducer's input set stays closed.
+   */
+  type EM = { plan: { go: null }; other: { go: null } };
+  type S = { n: { c: number } };
+
+  const inc = (s: { c: number }) => ({ c: s.c + 1 });
+  const keyed: ReducerSpec<{ c: number }, EM> = {
+    state: { c: 0 },
+    when: { keys: [["plan", "go"]] },
+    reducer: inc,
+  };
+  const patterned = { state: { c: 0 }, when: { channelPattern: "*plan" }, reducer: inc } as any;
+
+  function plainStore() {
+    return createStore<S, EM>({ name: "Refusals", reducer: { n: keyed } });
+  }
+
+  describe("channelPattern on a reducer or an effect", () => {
+    it("refuses a reducer in createStore, naming the slice and the alternative", () => {
+      expect(() =>
+        createStore<any, EM>({ name: "R", reducer: { plan: patterned } }),
+      ).toThrow(/reducer "plan": channelPattern is middleware-only.*move the pattern to a middleware/s);
+    });
+
+    it("refuses an effect in createStore, naming it by meta, then by function name", () => {
+      const named = { when: { channelPattern: "*" }, effect: () => {}, meta: { name: "audit" } } as any;
+      expect(() =>
+        createStore<S, EM>({ name: "E", reducer: { n: keyed }, effects: [named] }),
+      ).toThrow(/effect "audit": channelPattern is middleware-only; an effect takes/);
+
+      function relay() {}
+      expect(() =>
+        createStore<S, EM>({
+          name: "E2",
+          reducer: { n: keyed },
+          effects: [{ when: { channelPattern: "*" }, effect: relay } as any],
+        }),
+      ).toThrow(/effect "relay"/);
+
+      expect(() =>
+        createStore<S, EM>({
+          name: "E3",
+          reducer: { n: keyed },
+          effects: [{ when: { channelPattern: "*" }, effect: (() => () => {})() } as any],
+        }),
+      ).toThrow(/an anonymous effect/);
+    });
+
+    it("refuses registerReducer and registerSlice, and mounts nothing", () => {
+      const store = plainStore();
+      const changes: unknown[] = [];
+      store.onRegistrationChange((batch) => changes.push(...batch));
+
+      expect(() => store.registerReducer("plan", patterned)).toThrow(/reducer "plan"/);
+      expect(() => store.registerSlice("plan", patterned)).toThrow(/reducer "plan"/);
+
+      expect(Object.keys(store.getState())).toEqual(["n"]);
+      expect(changes).toEqual([]);
+      store.dispose();
+    });
+
+    it("refuses registerEffect, and reports nothing", () => {
+      const store = plainStore();
+      const changes: unknown[] = [];
+      store.onRegistrationChange((batch) => changes.push(...batch));
+
+      expect(() =>
+        store.registerEffect({ when: { channelPattern: "*plan" }, effect: () => {} } as any),
+      ).toThrow(/effect: channelPattern is middleware-only/);
+      expect(changes).toEqual([]);
+      store.dispose();
+    });
+
+    it("refuses replaceReducers before removing anything", async () => {
+      const store = plainStore();
+      await store.emit("plan", "go", null);
+
+      expect(() =>
+        store.replaceReducers({ n: keyed, other: patterned } as any, { preserveState: true }),
+      ).toThrow(/reducer "other"/);
+
+      // The old set is untouched and still running.
+      await store.emit("plan", "go", null);
+      expect(store.getState()).toEqual({ n: { c: 2 } });
+      store.dispose();
+    });
+
+    it("refuses replaceEffects before removing anything", async () => {
+      const ran: string[] = [];
+      const store = createStore<S, EM>({
+        name: "ReplaceEffects",
+        reducer: { n: keyed },
+        effects: [{ when: { channel: "plan" }, effect: () => void ran.push("old") }],
+      });
+
+      expect(() =>
+        store.replaceEffects([
+          { when: { channel: "plan" }, effect: () => void ran.push("new") },
+          { when: { channelPattern: "*" }, effect: () => {} } as any,
+        ]),
+      ).toThrow(/effect/);
+
+      await store.emit("plan", "go", null);
+      await new Promise((r) => setTimeout(r, 0));
+      expect(ran).toEqual(["old"]);
+      store.dispose();
+    });
+
+    it("refuses a whole hotReplace before swapping its middleware", async () => {
+      const seen: string[] = [];
+      const store = createStore<S, EM>({
+        name: "HotReplace",
+        reducer: { n: keyed },
+        middleware: [{ when: { any: true }, middleware: () => (seen.push("old"), true) }],
+      });
+
+      expect(() =>
+        store.hotReplace({
+          middleware: [{ when: { any: true }, middleware: () => (seen.push("new"), true) }],
+          effects: [{ when: { channelPattern: "*" }, effect: () => {} } as any],
+        }),
+      ).toThrow(/effect/);
+
+      await store.emit("plan", "go", null);
+      expect(seen).toEqual(["old"]);
+      store.dispose();
+    });
+
+    it("still accepts the pattern on middleware", () => {
+      const store = plainStore();
+      expect(() =>
+        store.registerMiddleware({ when: { channelPattern: "*plan" }, middleware: () => true }),
+      ).not.toThrow();
+      store.dispose();
+    });
+  });
+
+  describe("a matcher of none of the five forms", () => {
+    const notAForm = /is not \{ keys \}, \{ channel \}, \{ channels \} or \{ any: true \}/;
+    const shapes: Array<[string, unknown, RegExp]> = [
+      ["no fields", {}, /when \{\} is not/],
+      ["an unknown field", { chanel: "plan" }, /when \{"chanel":"plan"\} is not/],
+      ["any: false", { any: false }, /when \{"any":false\} is not/],
+      ["keys that is not an array", { keys: "plan" }, notAForm],
+      ["a channel that is not a string", { channel: 1 }, notAForm],
+      ["channels that is not an array", { channels: "plan" }, notAForm],
+      ["null", null, /when null is not/],
+      ["an array", [["plan", "go"]], /when \[\["plan","go"\]\] is not/],
+    ];
+
+    it.each(shapes)("refuses %s on a reducer", (_label, when, message) => {
+      expect(() =>
+        createStore<any, EM>({ name: "Shape", reducer: { n: { state: {}, when, reducer: (s: any) => s } as any } }),
+      ).toThrow(message);
+    });
+
+    it.each(shapes)("refuses %s on an effect", (_label, when, message) => {
+      const store = plainStore();
+      expect(() => store.registerEffect({ when, effect: () => {} } as any)).toThrow(message);
+      store.dispose();
+    });
+
+    it.each(shapes)("refuses %s on a middleware", (_label, when, message) => {
+      const store = plainStore();
+      expect(() => store.registerMiddleware({ when, middleware: () => true } as any)).toThrow(message);
+      store.dispose();
+    });
+
+    it("refuses a middleware pattern that is not a string, and names the middleware", () => {
+      const store = plainStore();
+      expect(() =>
+        store.registerMiddleware({
+          when: { channelPattern: 7 },
+          middleware: () => true,
+          meta: { name: "guard" },
+        } as any),
+      ).toThrow(/middleware "guard": when \{"channelPattern":7\} is not .* or \{ channelPattern \}/);
+      expect(() =>
+        store.replaceMiddleware([{ when: {}, middleware: () => true } as any]),
+      ).toThrow(/an anonymous middleware/);
+      store.dispose();
+    });
+
+    it("accepts a well-formed matcher that happens to be empty", () => {
+      // Built from a list that turned out empty: well-formed, and deliberately matching nothing.
+      expect(() =>
+        createStore<any, EM>({
+          name: "Empty",
+          reducer: {
+            a: { state: 0, when: { keys: [] }, reducer: (s: number) => s },
+            b: { state: 0, when: { channels: [] }, reducer: (s: number) => s },
+          },
+          effects: [{ when: { keys: [] }, effect: () => {} }],
+        }).dispose(),
+      ).not.toThrow();
+    });
+
+    it("leaves a raw middleware function alone", () => {
+      const store = plainStore();
+      expect(() => store.registerMiddleware(() => true)).not.toThrow();
+      store.dispose();
+    });
   });
 });

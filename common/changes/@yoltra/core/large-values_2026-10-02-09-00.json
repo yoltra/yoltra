@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "New `warnOnLargeValues(store, limits?)` (with `LargeValueLimits` and `SizeWatchedStore`): a development-only check that warns once per event key and once per slice when a committed payload or a changed slice exceeds a node or estimated byte limit. A separate import, tree-shaken when unused, and a no-op in production. Built on `instrument(..., { ephemeral: true })`, with a bounded measurement that stops at the limit.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

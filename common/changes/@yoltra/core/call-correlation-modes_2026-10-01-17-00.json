@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "`store.call()` takes `correlation: \"either\" | \"causal\" | \"id\"` (new type `CallCorrelation`). `\"either\"` is the default and unchanged: a reply matches by its parent link or an echoed `correlationId`. `\"id\"` matches on the echoed id alone, for a responder whose protocol carries its own request id and keeps several requests in flight on one channel, where a reply can descend from the wrong request and used to settle it. `\"causal\"` ignores an echoed id. `\"id\"` without a `correlationId`, or an unknown mode, throws when the call is made, before anything is emitted.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}

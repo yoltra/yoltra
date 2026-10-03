@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { createStore } from "../../src/store/Store";
 import { detectChangedProps } from "../../src/utils/detectChangedProps";
 
 describe("detectChangedProps", () => {
@@ -282,5 +283,111 @@ describe("keys that dotted paths cannot express", () => {
     detectChangedProps({ user: { name: "Ada" } }, { user: { name: "Grace" } });
     expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+describe("dotted keys in a store's state", () => {
+  type Events = { cfg: { set: number } };
+  type Cfg = { "release.version": number };
+
+  const build = (name: string) =>
+    createStore<{ cfg: Cfg }, Events>({
+      name,
+      reducer: {
+        cfg: {
+          state: { "release.version": 0 },
+          when: { keys: [["cfg", "set"]] },
+          reducer: (_state, event) => ({ "release.version": event.payload as number }),
+        },
+      },
+    });
+
+  const dotted = (warn: { mock: { calls: unknown[][] } }) =>
+    warn.mock.calls.map((c) => String(c[0])).filter((m) => m.includes("contains a dot"));
+
+  it("names the store and the slice, once per store", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const store = build("Settings");
+
+    await store.emit("cfg", "set", 1);
+    await store.emit("cfg", "set", 2);
+
+    expect(dotted(warn)).toHaveLength(1);
+    expect(dotted(warn)[0]).toContain('Store "Settings", slice "cfg"');
+    expect(dotted(warn)[0]).toContain('"release.version"');
+    warn.mockRestore();
+  });
+
+  it("is not silenced by another store having reported the same key", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    // The latch used to be kept for the whole process: the second store, which may be the one
+    // whose author needed telling, stayed quiet.
+    await build("First").emit("cfg", "set", 1);
+    await build("Second").emit("cfg", "set", 1);
+
+    expect(dotted(warn)).toHaveLength(2);
+    expect(dotted(warn)[1]).toContain('Store "Second"');
+    warn.mockRestore();
+  });
+
+  it("warns again for a store built after the first was disposed", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const first = build("Route");
+    await first.emit("cfg", "set", 1);
+    first.dispose();
+
+    await build("Route").emit("cfg", "set", 1);
+
+    expect(dotted(warn)).toHaveLength(2);
+    warn.mockRestore();
+  });
+
+  it("stays silent in production", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.stubEnv("NODE_ENV", "production");
+    try {
+      await build("Prod").emit("cfg", "set", 1);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    expect(dotted(warn)).toHaveLength(0);
+    warn.mockRestore();
+  });
+});
+
+describe("detectChangedProps: binary values are one value", () => {
+  /**
+   * A typed array's indices are its own enumerable keys, so the object walk used to report one path
+   * per changed byte. A view is now compared by reference and reported once at its own path, like a
+   * `Map`: a view cannot be frozen, so a new reference is the only change the store can see.
+   */
+  it("reports a replaced typed array once, at its own path", () => {
+    const before = { buf: new Uint8Array([1, 2, 3, 4]) };
+    const after = { buf: new Uint8Array([9, 9, 9, 9]) };
+    expect(detectChangedProps(before, after, "s")).toEqual(["s.buf"]);
+  });
+
+  it("reports a replacement with equal bytes too, because the reference changed", () => {
+    expect(detectChangedProps({ buf: new Uint8Array([1]) }, { buf: new Uint8Array([1]) }, "s")).toEqual(["s.buf"]);
+  });
+
+  it("reports nothing for the same view returned again", () => {
+    const buf = new Uint8Array([1, 2]);
+    expect(detectChangedProps({ buf }, { buf }, "s")).toEqual([]);
+  });
+
+  it("reports a typed array replaced by a plain array as one change", () => {
+    expect(detectChangedProps({ buf: new Uint8Array([1]) }, { buf: [1] }, "s")).toEqual(["s.buf"]);
+  });
+
+  it("treats DataView, ArrayBuffer and other typed arrays the same way", () => {
+    expect(detectChangedProps({ v: new DataView(new ArrayBuffer(4)) }, { v: new DataView(new ArrayBuffer(4)) }, "s")).toEqual(["s.v"]);
+    expect(detectChangedProps({ v: new ArrayBuffer(2) }, { v: new ArrayBuffer(2) }, "s")).toEqual(["s.v"]);
+    expect(detectChangedProps({ v: new Float32Array(3) }, { v: new Float32Array(5) }, "s")).toEqual(["s.v"]);
+  });
+
+  it("reports a slice that is itself a view at the slice root", () => {
+    expect(detectChangedProps(new Uint8Array(2), new Uint8Array(2), "s")).toEqual(["s"]);
   });
 });

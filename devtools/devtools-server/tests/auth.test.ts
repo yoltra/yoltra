@@ -116,6 +116,15 @@ describe("hub authentication", () => {
     expect(response.success).toBe(true);
   });
 
+  it("names the refused role with the right article", async () => {
+    const { port } = await startHub("s3cret");
+
+    await handshake(port, "wrong");
+
+    const message = warn.mock.calls.map((c) => String(c[0])).find((m) => m.includes("Rejected"));
+    expect(message).toContain("Rejected an extension handshake");
+  });
+
   it("registers nothing for a rejected client", async () => {
     const { hub, port } = await startHub("s3cret");
 

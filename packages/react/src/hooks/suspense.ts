@@ -26,8 +26,15 @@ type UseStoreHook<
 /** @internal */
 type CacheKey = string;
 
+/**
+ * The state values an entry was loaded from, compared element by element with `Object.is`.
+ *
+ * @internal
+ */
+type CacheSource = readonly unknown[];
+
 /** @internal */
-type CacheEntry<T> =
+type CacheEntry<T> = (
   | { status: "ready"; value: T; expiresAt: number | null }
   | { status: "pending"; promise: Promise<void>; expiresAt: number | null }
   | {
@@ -45,7 +52,11 @@ type CacheEntry<T> =
        * retry loop in place of a visible failure.
        */
       delivered?: boolean;
-    };
+    }
+) & {
+  /** What the entry was loaded from; absent for a caller that passes none. */
+  source?: CacheSource;
+};
 
 /**
  * Time-based expiry for a **settled** (`ready`) entry. A non-positive or `null`
@@ -102,6 +113,18 @@ function computeErrorExpiry(errorTtlMs: number | null | undefined): number | nul
 const MAX_ENTRIES = 2000;
 
 /**
+ * Whether an entry loaded from `a` still describes `b`.
+ *
+ * @internal
+ */
+function sameSource(a: CacheSource | undefined, b: CacheSource | undefined): boolean {
+  if (a === undefined || b === undefined) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (!Object.is(a[i], b[i])) return false;
+  return true;
+}
+
+/**
  * Backing store for the `useSuspense*` hooks.
  *
  * @remarks
@@ -151,14 +174,33 @@ class SuspenseCache {
     return this.store.size;
   }
 
+  /**
+   * Returns the value cached under `key`, or starts `load` and throws its promise.
+   *
+   * @param source - The state values the load reads, compared element by element with
+   *   `Object.is`. An entry loaded from different values is discarded and loaded again, so a
+   *   read always describes the current state even when an invalidation was missed. Omit it to
+   *   rely on invalidation alone.
+   */
   read<T>(
     key: CacheKey,
     load: () => T | Promise<T>,
     staleTime: number | null,
     errorTtlMs: number | null | undefined,
+    source?: readonly unknown[],
   ): T {
     const now = Date.now();
-    const entry = this.store.get(key);
+    let entry = this.store.get(key);
+
+    // An entry loaded from other values describes state that no longer exists. Invalidation
+    // alone cannot catch every change: the hooks subscribe after commit, so a change landing
+    // between a render and its subscription was never seen, and the stale value was served
+    // for good. Comparing the source makes a read a function of the current state, which is
+    // what lets React's own re-check on subscribe find the change.
+    if (entry !== undefined && !sameSource(entry.source, source)) {
+      this.store.delete(key);
+      entry = undefined;
+    }
 
     // A ready value is served until it time-expires (staleTime > 0) or is
     // invalidated. With staleTime 0/null it never time-expires (expiresAt null).
@@ -191,20 +233,27 @@ class SuspenseCache {
       this.store.delete(key);
     }
 
+    // Settles only the entry it was started for. A load overtaken by a newer one (the key was
+    // invalidated, or its source changed) must not overwrite the newer entry with an older value.
+    const settle = (next: CacheEntry<T>): void => {
+      if (this.store.get(key) === pending) this.store.set(key, next);
+    };
     const promise = Promise.resolve()
       .then(load)
       .then((value) => {
-        this.store.set(key, { status: "ready", value, expiresAt: computeExpiry(staleTime) });
+        settle({ status: "ready", value, expiresAt: computeExpiry(staleTime), source });
       })
       .catch((err) => {
-        this.store.set(key, {
+        settle({
           status: "error",
           error: err,
           expiresAt: computeErrorExpiry(errorTtlMs),
+          source,
         });
       });
 
-    this.store.set(key, { status: "pending", promise, expiresAt: null });
+    const pending: CacheEntry<T> = { status: "pending", promise, expiresAt: null, source };
+    this.store.set(key, pending);
     this.evict();
     throw promise;
   }
@@ -457,7 +506,14 @@ function useSuspenseAtomicPropImpl<
       const slice = state[reducer];
       const val = isGlob ? slice : getAtPath(slice, path);
       const opts = optionsRef.current;
-      return suspenseCache.read<T>(key, () => opts.load(val, slice), opts.staleTime ?? 0, opts.errorTtlMs);
+      // A glob has no single value to compare, so its source is the slice.
+      return suspenseCache.read<T>(
+        key,
+        () => opts.load(val, slice),
+        opts.staleTime ?? 0,
+        opts.errorTtlMs,
+        [val],
+      );
     };
   }, [store, reducer, path, key]);
 
@@ -640,9 +696,23 @@ function useSuspenseAtomicPropsImpl<
     return () => {
       const state = store.getState() as S;
       const opts = optionsRef.current;
-      return suspenseCache.read<T>(key, () => opts.load(state), opts.staleTime ?? 0, opts.errorTtlMs);
+      // The value at every watched path, so a change to an unwatched path does not reload.
+      const source: unknown[] = [];
+      for (const sp of normalized) {
+        const slice = (state as Record<string, unknown>)[sp.reducer];
+        for (const p of Array.isArray(sp.property) ? sp.property : [sp.property]) {
+          source.push(hasWildcard(p as string) ? slice : getAtPath(slice, p as string));
+        }
+      }
+      return suspenseCache.read<T>(
+        key,
+        () => opts.load(state),
+        opts.staleTime ?? 0,
+        opts.errorTtlMs,
+        source,
+      );
     };
-  }, [store, key]);
+  }, [store, key, normalized]);
 
   // Server render must NOT suspend. Use a synchronous load result if one is
   // available; otherwise render `undefined` rather than throwing a promise.

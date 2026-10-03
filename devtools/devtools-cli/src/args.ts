@@ -13,10 +13,21 @@ export const DEFAULT_PORT = 9800;
 /** Default number of events retained for late-connecting clients. */
 export const DEFAULT_HISTORY_SIZE = 1000;
 
+/** Environment variable read for the hub token when `--token` is not given. */
+export const TOKEN_ENV = "YOLTRA_DEVTOOLS_TOKEN";
+
 /** Parsed and validated invocation. */
 export interface CliArgs {
   readonly port: number;
   readonly historySize: number;
+  /**
+   * Shared secret for the hub, from `--token` or {@link TOKEN_ENV}. Absent when neither is set.
+   *
+   * @remarks
+   * The embedded hub requires it of every client, and the terminal panel presents it, so the
+   * same value works whether the CLI starts its own hub or attaches to one already running.
+   */
+  readonly token?: string;
 }
 
 /** A rejected invocation, with something a user can act on. */
@@ -28,9 +39,11 @@ export class CliArgsError extends Error {
 }
 
 /**
- * Reads `--port` and `--history-size` from an argument list.
+ * Reads `--port`, `--history-size` and `--token` from an argument list.
  *
  * @param argv - Arguments after the executable and script (i.e. `process.argv.slice(2)`).
+ * @param env - Environment to read {@link TOKEN_ENV} from when `--token` is absent (pass
+ * `process.env`). An empty value counts as unset. Defaults to an empty environment.
  * @returns The validated options.
  *
  * @throws {@link CliArgsError} when a value is missing, not a number, or out of range.
@@ -44,15 +57,35 @@ export class CliArgsError extends Error {
  * @example
  * ```ts
  * parseArgs(["--port", "9900"]); // { port: 9900, historySize: 1000 }
+ * parseArgs([], { YOLTRA_DEVTOOLS_TOKEN: "s3cret" }); // { port: 9800, historySize: 1000, token: "s3cret" }
  * ```
  *
  * @public
  */
-export function parseArgs(argv: readonly string[]): CliArgs {
+export function parseArgs(
+  argv: readonly string[],
+  env: Readonly<Record<string, string | undefined>> = {},
+): CliArgs {
+  const token = readString(argv, "--token") ?? (env[TOKEN_ENV] || undefined);
   return {
     port: readNumber(argv, "--port", DEFAULT_PORT, 1, 65_535),
     historySize: readNumber(argv, "--history-size", DEFAULT_HISTORY_SIZE, 1, 1_000_000),
+    ...(token !== undefined ? { token } : {}),
   };
+}
+
+/** @internal */
+function readString(argv: readonly string[], flag: string): string | undefined {
+  const index = argv.indexOf(flag);
+  if (index < 0) return undefined;
+
+  // A missing value is refused rather than read as "no token": an open hub is the one outcome
+  // someone typing the flag did not ask for.
+  const raw = argv[index + 1];
+  if (raw === undefined || raw === "" || raw.startsWith("--")) {
+    throw new CliArgsError(`${flag} needs a value, for example \`${flag} <secret>\`.`);
+  }
+  return raw;
 }
 
 /** @internal */

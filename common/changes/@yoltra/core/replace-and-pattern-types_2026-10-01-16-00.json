@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yoltra/core",
+      "comment": "`replaceReducers` and `hotReplace({ reducer })` now take `ReducerReplacement` (new export): every slice optional, each typed with its own slice's state. The argument used to require every slice name and type each reducer with the union of all slice states, so an annotated reducer failed on any store with two slices, a reducer could return another slice's state, and on a decorated store the only call that compiled named a slice mounted at runtime, which the runtime refuses. `StoreSpec.reducer` is typed per slice the same way. `EventFromWhen` gains its `channelPattern` arm, resolving to the whole event union a middleware receives instead of `never`.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@yoltra/core"
+}
